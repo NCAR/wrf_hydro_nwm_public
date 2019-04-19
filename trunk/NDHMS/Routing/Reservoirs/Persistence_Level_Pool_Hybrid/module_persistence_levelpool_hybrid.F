@@ -78,7 +78,7 @@ contains
 
         ! Create diagnostic log file
         ! Uncomment this call only for development/debugging purposes
-        call create_hybrid_diagnostic_log_file(lake_number)
+        !call create_hybrid_diagnostic_log_file(lake_number)
 
         ! Call to initialize read timeslice data object
         call read_timeslice_data%init(start_date, &
@@ -201,9 +201,6 @@ contains
 
         local_water_elevation = reservoir_data%state%water_elevation
 
-        print *, 'local_water_elevation'
-        print *, local_water_elevation
-
         ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
@@ -294,16 +291,11 @@ contains
         ! Warn if there is a negative inflow
         call warn_negative_inflow(reservoir_data%input%inflow, reservoir_data%parameters%lake_number, reservoir_data%state%current_time)
 
-        !if (reservoir_data%state%levelpool_current_weight .ne. 1.0) then
-
         ! Modify if exceeding storage boundary conditions
         call modify_for_projected_storage(reservoir_data%input%inflow, &
         reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
         reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
         reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
-
-        !end if
-
 
         ! Calculate change in storage
         delta_storage = (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
@@ -329,12 +321,12 @@ contains
 
         ! Log diagnostic data
         ! Uncomment this call only for development/debugging purposes
-        call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
-        reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
-        reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
-        reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
-        reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
-        levelpool_outflow, reservoir_data%output%outflow)
+        !call log_hybrid_diagnostic_data(reservoir_data%parameters%lake_number, reservoir_data%state%current_time, &
+        !reservoir_data%state%timeslice_update_time, reservoir_data%state%weight_update_time, gage_lookback_seconds, &
+        !reservoir_data%parameters%gage_id, reservoir_data%state%persistence_weight_index, &
+        !reservoir_data%state%persistence_current_weight, reservoir_data%input%inflow, reservoir_data%state%current_storage, &
+        !reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
+        !levelpool_outflow, reservoir_data%output%outflow)
 
     end subroutine run_hybrid_release
 
