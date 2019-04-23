@@ -170,7 +170,7 @@ CONTAINS
            rt_domain(did)%groundwater%input%soldrain = soldrain
         end if
 
-           if(nlst(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
+        if(nlst(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
 
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
@@ -236,7 +236,6 @@ CONTAINS
            nlst(did)%dt = dt
            nlst(did)%olddate(1:19) = olddate(1:19)
            nlst(did)%startdate(1:19) = olddate(1:19)
-
            nlst(did)%nsoil = kk
            !write(*,*) "Assigning kk to nsoil"
 #ifdef MPP_LAND

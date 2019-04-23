@@ -3,28 +3,30 @@ import shutil
 import socket
 import subprocess
 import sys
-import warnings
 from argparse import ArgumentParser
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
 from utils.gdrive_download import download_file_from_google_drive
 
-def run_tests(config: str,
-              compiler: str,
-              domain_dir: str,
-              candidate_dir: str,
-              reference_dir: str,
-              output_dir: str,
-              scheduler: bool=False,
-              ncores: int=216,
-              nnodes: int=6,
-              account: str='NRAL0017',
-              walltime: str='02:00:00',
-              queue: str='regular',
-              print_log: bool=False,
-              pdb: bool=False,
-              pdb_x: bool=False):
+def run_tests(
+    config: str,
+    compiler: str,
+    domain_dir: str,
+    candidate_dir: str,
+    reference_dir: str,
+    output_dir: str,
+    scheduler: bool=False,
+    exe_cmd: str=None,
+    ncores: int=216,
+    nnodes: int=6,
+    account: str='NRAL0017',
+    walltime: str='02:00:00',
+    queue: str='regular',
+    print_log: bool=False,
+    pdb: bool=False,
+    pdb_x: bool=False
+):
 
     """Function to run wrf_hydro_nwm pytests
         Args:
@@ -36,6 +38,7 @@ def run_tests(config: str,
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
             output_dir: The directory to hold test outputs
             scheduler: Use PBSCheyenne scheduler?
+            exe_cmd: Optional. The MPI dependent run command which zeroth variable for ncores. 
             ncores: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
@@ -70,11 +73,17 @@ def run_tests(config: str,
 
     if print_log:
         pytest_cmd += " -s"
+
     # Ignore section: for cleaner tests with less skipps!
-    # NWM
-    # If it is not NWM, ignore channel-only. (This is probably not the right way to do this.)
-    if config.lower().find('nwm') < 0:
+
+    # NWM Supplementals.
+    # If it is not NWM, ignore channel-only and nwm_output tests.
+    # (This is likely not the right way to do this.)
+    if config != 'nwm_ana':
         pytest_cmd += " --ignore=tests/test_supp_1_channel_only.py "
+
+    if config.lower().find('nwm') < 0:
+        pytest_cmd += " --ignore=tests/test_supp_2_nwm_output.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
     pytest_cmd += " --config " + config.lower()
@@ -83,6 +92,7 @@ def run_tests(config: str,
     pytest_cmd += " --candidate_dir " + candidate_source_dir
     pytest_cmd += " --reference_dir " + reference_source_dir
     pytest_cmd += " --output_dir " + output_dir
+    pytest_cmd += " --exe_cmd " + exe_cmd
     pytest_cmd += " --ncores " + str(ncores)
 
     if scheduler:
@@ -100,100 +110,141 @@ def run_tests(config: str,
 
 
 def main():
-    parser = ArgumentParser(description='Run WRF-Hydro test suite locally',
-                            epilog='Example usage: python -B run_tests.py '
-                                   '--config nwm_ana nwm_long_range '
-                                   '--compiler gfort '
-                                   '--candidate_dir '
-                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_origin '
-                                   '--reference_dir '
-                                   '/glade/scratch/jmills/wrf_hydro_nwm_public_upstream '
-                                   '--domain_dir /glade/scratch/jmills/CONUS_V2 '
-                                   '--scheduler '
-                                   '--output_dir /glade/scratch/jmills/conus_v2_testing_gfort')
+    parser = ArgumentParser(
+        description='Run WRF-Hydro test suite locally',
+        epilog='Example usage: python -B run_tests.py '
+        '--config nwm_ana nwm_long_range '
+        '--compiler gfort '
+        '--candidate_dir '
+        '/glade/scratch/jmills/wrf_hydro_nwm_public_origin '
+        '--reference_dir '
+        '/glade/scratch/jmills/wrf_hydro_nwm_public_upstream '
+        '--domain_dir /glade/scratch/jmills/CONUS_V2 '
+        '--scheduler '
+        '--output_dir /glade/scratch/jmills/conus_v2_testing_gfort'
+    )
 
-    parser.add_argument("--config",
-                        required=True,
-                        nargs='+',
-                        help="<Required> The configuration(s) to test, "
-                             "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
+    parser.add_argument(
+        "--config",
+        required=True,
+        nargs='+',
+        help="<Required> The configuration(s) to test, "
+        "must be one listed in trunk/NDHMS/hydro_namelist.json keys."
+    )
 
-    parser.add_argument('--compiler',
-                        required=True,
-                        help='<Required> compiler, options are intel or gfort')
+    parser.add_argument(
+        '--compiler',
+        required=True,
+        help='<Required> compiler, options are intel or gfort'
+    )
 
-    parser.add_argument('--output_dir',
-                        required=True,
-                        help='<Required> test output directory')
+    parser.add_argument(
+        '--output_dir',
+        required=True,
+        help='<Required> test output directory'
+    )
+    
+    parser.add_argument(
+        '--candidate_dir',
+        required=True,
+        help='<Required> candidate model directory'
+    )
 
-    parser.add_argument('--candidate_dir',
-                        required=True,
-                        help='<Required> candidate model directory')
+    parser.add_argument(
+        '--reference_dir',
+        required=True,
+        help='<Required> reference model directory'
+    )
 
-    parser.add_argument('--reference_dir',
-                        required=True,
-                        help='<Required> reference model directory')
+    parser.add_argument(
+        '--domain_dir',
+        required=False,
+        help='optional domain directory'
+    )
 
-    parser.add_argument('--domain_dir',
-                        required=False,
-                        help='optional domain directory')
+    parser.add_argument(
+        "--domain_tag",
+        required=False,
+        help="The release tag of the domain to retrieve, e.g. v5.0.1. or dev. If "
+             "specified, a small test domain will be retrieved and placed in the "
+             "specified output_dir and used for the testing domain"
+    )
 
-    parser.add_argument("--domain_tag",
-                        required=False,
-                        help="The release tag of the domain to retrieve, e.g. v5.0.1. or dev. If "
-                             "specified, a small test domain will be retrieved and placed in the "
-                             "specified output_dir and used for the testing domain")
+    parser.add_argument(
+        '--exe_cmd',
+        default="'mpirun -np {0} ./wrf_hydro.exe'",
+        required=False,
+        help='The MPI-dependent model execution command. Default is best guess. '
+        'The first/zeroth variable is set to the total number of cores (ncores). The '
+        'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
+    )
+    
+    parser.add_argument(
+        '--ncores',
+        default='2',
+        required=False,
+        help='Number of cores to use for testing'
+    )
 
-    parser.add_argument('--ncores',
-                        default='2',
-                        required=False,
-                        help='Number of cores to use for testing')
+    parser.add_argument(
+        '--scheduler',
+        required=False,
+        action='store_true',
+        help='Scheduler to use for testing, options are PBSCheyenne or do not '
+        'specify for no scheduler'
+    )
 
-    parser.add_argument('--scheduler',
-                        required=False,
-                        action='store_true',
-                        help='Scheduler to use for testing, options are PBSCheyenne or do not '
-                             'specify for no scheduler')
+    parser.add_argument(
+        '--nnodes',
+        default='6',
+        required=False,
+        help='Number of nodes to use for testing if running on scheduler'
+    )
 
-    parser.add_argument('--nnodes',
-                        default='6',
-                        required=False,
-                        help='Number of nodes to use for testing if running on scheduler')
+    parser.add_argument(
+        '--account',
+        default='NRAL0017',
+        required=False,
+        action='store',
+        help='Account number to use if using a scheduler.'
+    )
 
-    parser.add_argument('--account',
-                        default='NRAL0017',
-                        required=False,
-                        action='store',
-                        help='Account number to use if using a scheduler.')
+    parser.add_argument(
+        '--walltime',
+        default='02:00:00',
+        required=False,
+        action='store',
+        help='Account number to use if using a scheduler.'
+    )
 
-    parser.add_argument('--walltime',
-                        default='02:00:00',
-                        required=False,
-                        action='store',
-                        help='Account number to use if using a scheduler.')
+    parser.add_argument(
+        '--queue',
+        default='regular',
+        required=False,
+        action='store',
+        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+        'premium, or shared'
+    )
 
-    parser.add_argument('--queue',
-                        default='regular',
-                        required=False,
-                        action='store',
-                        help='Queue to use if running on NCAR Cheyenne, options are regular, '
-                             'premium, or shared')
+    parser.add_argument(
+        '--print',
+        required=False,
+        action='store_true',
+        help='Print log to stdout instead of html'
+    )
 
-    parser.add_argument('--print',
-                        required=False,
-                        action='store_true',
-                        help='Print log to stdout instead of html')
+    parser.add_argument(
+        '--pdb',
+        required=False,
+        action='store_true',
+        help='pdb (debug) in pytest')
 
-    parser.add_argument('--pdb',
-                        required=False,
-                        action='store_true',
-                        help='pdb (debug) in pytest')
-
-    parser.add_argument('-x',
-                        required=False,
-                        action='store_true',
-                        help='Exit pdb on first failure.')
-
+    parser.add_argument(
+        '-x',
+        required=False,
+        action='store_true',
+        help='Exit pdb on first failure.'
+    )
 
     args = parser.parse_args()
 
@@ -211,6 +262,7 @@ def main():
 
     compiler = args.compiler
     domain_tag = args.domain_tag
+    exe_cmd = args.exe_cmd
     ncores = int(args.ncores)
     nnodes = int(args.nnodes)
     scheduler = args.scheduler
@@ -278,21 +330,24 @@ def main():
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
 
-        test_result = run_tests(config=config,
-                                compiler=compiler,
-                                domain_dir=str(domain_dir),
-                                candidate_dir=str(candidate_copy),
-                                reference_dir=str(reference_copy),
-                                output_dir=str(output_dir),
-                                scheduler=scheduler,
-                                ncores=ncores,
-                                nnodes=nnodes,
-                                account=account,
-                                walltime=walltime,
-                                queue=queue,
-                                print_log=print_log,
-                                pdb=pdb,
-                                pdb_x=pdb_x)
+        test_result = run_tests(
+            config=config,
+            compiler=compiler,
+            domain_dir=str(domain_dir),
+            candidate_dir=str(candidate_copy),
+            reference_dir=str(reference_copy),
+            output_dir=str(output_dir),
+            scheduler=scheduler,
+            exe_cmd=exe_cmd,
+            ncores=ncores,
+            nnodes=nnodes,
+            account=account,
+            walltime=walltime,
+            queue=queue,
+            print_log=print_log,
+            pdb=pdb,
+            pdb_x=pdb_x
+        )
 
         if test_result.returncode != 0:
             has_failure = True

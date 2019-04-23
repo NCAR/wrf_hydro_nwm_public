@@ -252,7 +252,6 @@ module module_HYDRO_drv
                     call output_lsmOut_NWM(did)
                 endif
             endif
-
         endif
         if(nlst(did)%SUBRTSWCRT         .gt. 0 .or. &
                 nlst(did)%OVRTSWCRT          .gt. 0 .or. &
@@ -338,7 +337,6 @@ module module_HYDRO_drv
 #endif
 #endif
             if (nlst(did)%CHANRTSWCRT.eq.1.or.nlst(did)%CHANRTSWCRT.eq.2) then
-
                 !ADCHANGE: Change values for within lake reaches to NA
                 str_out = RT_DOMAIN(did)%QLINK
                 vel_out = RT_DOMAIN(did)%velocity
@@ -762,7 +760,6 @@ end if
 subroutine driveGwBaseflow(did)
     implicit none
     integer, intent(in) :: did
-
     integer :: i, jj, ii
 
     !------------------------------------------------------------------
@@ -826,7 +823,6 @@ subroutine driveGwBaseflow(did)
             !#ifndef HYDRO_REALTIME
             !        call output_GW_Diag(did)
             !#endif
-
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
             write(6,*) "*****yw******end simp_gw_buck "
@@ -1335,7 +1331,6 @@ if(nlst(did)%rtFlag .eq. 0) return
 
 ! get the dimension
 call get_file_dimension(trim(nlst(did)%geo_static_flnm), ix,jx)
-
 
 #ifdef MPP_LAND
 

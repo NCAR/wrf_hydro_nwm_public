@@ -242,6 +242,7 @@ CONTAINS
             allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
             rt_domain(did)%SMC   = 0.25
             allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
+
             rt_domain(did)%SICE  = 0.
             ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
             ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
@@ -309,12 +310,12 @@ CONTAINS
         endif
 
         if (CHANRTSWCRT.eq.1 .or. CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
-
-            !! JLM TODO: clean up this section for routing options, group 2D variables.
-            allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )
-            rt_domain(did)%CH_NETLNK = 0.0
-            allocate( rt_domain(did)%GCH_NETLNK (IXRT,JXRT) )
-            rt_domain(did)%GCH_NETLNK = 0.0
+           
+           !! JLM TODO: clean up this section for routing options, group 2D variables.
+           allocate( rt_domain(did)%CH_NETLNK (IXRT,JXRT) )
+           rt_domain(did)%CH_NETLNK = 0.0
+           allocate( rt_domain(did)%GCH_NETLNK (IXRT,JXRT) )
+           rt_domain(did)%GCH_NETLNK = 0.0
 
 #ifdef MPP_LAND
             allocate( rt_domain(did)%LAKE_INDEX(NLAKES) )
@@ -412,7 +413,7 @@ CONTAINS
            allocate( rt_domain(did)%qBtmVertRunoff(nsizes) )
            rt_domain(did)%qBtmVertRunoff  = zeroFlt
         endif
-        
+
         if(nlst(did)%output_channelBucket_influx .eq. 3) then
            allocate( rt_domain(did)%accSfcLatRunoff(nsizes) )
            allocate( rt_domain(did)%accBucket(      nsizes) )
@@ -491,7 +492,6 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING
          rt_domain(did)%nudge = 0
 #endif
-         
          rt_domain(did)%HLINK = -999.  !--default to -999 if not found in the restart.
          rt_domain(did)%MannN = 0.0
          rt_domain(did)%LINKID = 0.0
@@ -519,7 +519,6 @@ CONTAINS
    use module_RT_data, only: rt_domain
    implicit none
 
-
    integer ixrt,jxrt, ix,jx, did, i,j
    integer, allocatable,dimension(:,:) :: CH_NETLNK, GCH_NETLNK
    !INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
@@ -542,7 +541,6 @@ CONTAINS
          call get_NLINKSL(rt_domain(did)%NLINKSL, nlst(did)%channel_option, nlst(did)%route_link_f)
       end if
       call mpp_land_bcast_int1(rt_domain(did)%NLINKSL)
-      
 
       if(nlst(did)%channel_option .eq. 1 .or. nlst(did)%channel_option .eq. 2) then
          rt_domain(did)%GNLINKSL = rt_domain(did)%NLINKSL
@@ -562,12 +560,13 @@ CONTAINS
       return
       
    endif
+   
+endif
 
+  allocate(CH_NETLNK(ixrt,jxrt))
+  allocate(GCH_NETLNK(ixrt,jxrt))
 
-   allocate(CH_NETLNK(ixrt,jxrt))
-   allocate(GCH_NETLNK(ixrt,jxrt))
-
-        if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
+  if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 #ifdef MPP_LAND
             call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
                 GCH_NETLNK, rt_domain(did)%GNLINKS, &
@@ -640,7 +639,6 @@ CONTAINS
 #ifdef OUTPUT_CHAN_CONN
       use module_nudging_io,        only: output_chan_connectivity
 #endif
-      
       implicit none
       
       integer :: did
@@ -693,10 +691,7 @@ CONTAINS
                  rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
                  nlst(did)%channel_option, nlst(did)%udmp_opt)
 
-
-
             !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
-
 
             if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
 
@@ -743,9 +738,9 @@ CONTAINS
 
    end if  !! neither channel_only nor channelBucket_only
 
-
    if((nlst(did)%CHANRTSWCRT    .eq. 1 .or. nlst(did)%CHANRTSWCRT    .eq. 2) .and. &
       (nlst(did)%channel_option .eq. 1 .or. nlst(did)%channel_option .eq. 2)        ) then
+
       call read_routelink( &
            rt_domain(did)%TO_NODE,       rt_domain(did)%TYPEL,      &
            rt_domain(did)%ORDER,         rt_domain(did)%MAXORDER,   &
@@ -990,7 +985,6 @@ end if ! end of if (nlst(did)%SUBRTSWCRT  .eq.1 .or. &    nlst(did)%OVRTSWCRT   
 
 !yw       allocate(tmp_int(rt_domain(did)%GNLINKS))
 !yw       allocate(tmp_real(rt_domain(did)%GNLINKS))
-
 
 if(nlst(did)%channel_only       .eq. 0 .and. &
    nlst(did)%channelBucket_only .eq. 0        ) then
@@ -1391,9 +1385,8 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
               gw2d(did)%hycond, gw2d(did)%ho, &
               gw2d(did)%bot, gw2d(did)%poros, &
               gw2d(did)%ltype, nlst(did)%gwIhShift)
-
+         
          gw2d(did)%elev = rt_domain(did)%elrt
-
       end if ! end if (nlst(did)%GWBASESWCRT.eq.1.or.nlst(did)%GWBASESWCRT.eq.2)
 
    end if ! end if (nlst(did)%GWBASESWCRT.ge.1)

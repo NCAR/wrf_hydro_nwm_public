@@ -1077,7 +1077,7 @@ module module_NoahMP_hrldas_driver
 !----------------------------------------------------------------------
 ! Read Landuse Type and Soil Texture and Other Information
 !----------------------------------------------------------------------
- 
+
   CALL READLAND_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
        ISWATER, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND, SEAICE,MSFTX,MSFTY)
 
@@ -1334,7 +1334,7 @@ module module_NoahMP_hrldas_driver
 
 
   endif  ! end of restart if block
-  
+
   NTIME = khour*3600./nint(dtbl)
 
 #ifdef HYDRO_D
@@ -2147,7 +2147,7 @@ subroutine lsm_rst_bi_out()
 #endif
 
   write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13),igrid
-  iunit =56 
+  iunit =56
 
 #ifdef MPP_LAND
              if(my_id .lt. 10) then
