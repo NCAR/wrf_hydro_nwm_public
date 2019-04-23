@@ -35,7 +35,7 @@ module config_base
      integer            :: surface_resistance_option
      integer            :: split_output_count = 1
      integer            :: khour
-     integer            :: kday
+     integer            :: kday = -999
      real               :: zlvl 
      character(len=256) :: hrldas_setup_file = " "
      character(len=256) :: mmf_runoff_file = " "
@@ -878,7 +878,7 @@ contains
     noah_lsm%surface_resistance_option = surface_resistance_option
     noah_lsm%split_output_count = split_output_count
     noah_lsm%khour = khour
-    noah_lsm%kday = kday
+    noah_lsm%kday = -999!kday
     noah_lsm%zlvl = zlvl
     noah_lsm%hrldas_setup_file = hrldas_setup_file
     noah_lsm%mmf_runoff_file = mmf_runoff_file
