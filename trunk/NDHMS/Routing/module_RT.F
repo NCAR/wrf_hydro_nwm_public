@@ -561,7 +561,7 @@ CONTAINS
       
    endif
    
-endif
+!endif
 
   allocate(CH_NETLNK(ixrt,jxrt))
   allocate(GCH_NETLNK(ixrt,jxrt))
