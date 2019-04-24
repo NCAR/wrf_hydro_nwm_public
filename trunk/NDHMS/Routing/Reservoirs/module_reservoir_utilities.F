@@ -147,7 +147,7 @@ contains
 
         else if (projected_next_time_interval_storage <= 0.0) then
             outflow = previous_time_storage / time_interval
-            write(log_warning,*)  "Modified release to conserve mass for reservoir ", lake_number
+            write(log_warning,*)  "Modified release to prevent storage deficit for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         end if
