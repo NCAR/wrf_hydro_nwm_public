@@ -113,7 +113,8 @@ contains
     ! Checks and modifies for boundary conditions of negative outflow or exceeding min or max storage
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
         lake_number, current_time, time_interval, outflow)
-        real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage
+        real, intent(in)    :: inflow, min_storage, max_storage
+        real*8, intent(in)  :: previous_time_storage
         integer, intent(in) :: lake_number, current_time, time_interval
         real, intent(inout) :: outflow
         real                :: excess, projected_next_time_interval_storage
@@ -388,7 +389,8 @@ contains
         integer, intent(in) :: lake_number, current_time, timeslice_update_time
         integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
         integer, intent(in) :: persistence_weight_index
-        real,    intent(in) :: persistence_current_weight, inflow, current_storage
+        real,    intent(in) :: persistence_current_weight, inflow
+        real*8,  intent(in) :: current_storage
         real,    intent(in) :: water_elevation, gage_discharge, persisted_outflow
         real,    intent(in) :: levelpool_outflow, outflow
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
@@ -401,7 +403,7 @@ contains
         open (113, file=filename_string, status="unknown", access = 'append')
 
         write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, &
-        A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
+        A1, F15.15, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
         current_time, ',', timeslice_update_time, ',', weight_update_time, ',', &
         gage_lookback_seconds, ',', gage_id, ',', persistence_weight_index, ',', &
         persistence_current_weight, ',', inflow, ',', current_storage, ',', &

@@ -17,7 +17,7 @@ module module_persistence_levelpool_hybrid_state
     ! struct for reservoir state.
     type, extends(reservoir_base_state_struct) :: hybrid_state_interface
         real    :: water_elevation              ! meters AMSL
-        real*4  :: current_storage              ! cubic meters
+        real*8  :: current_storage              ! cubic meters
         real    :: gage_discharge               ! cubic meters per second (cms)
         real    :: persisted_outflow            ! cubic meters per second (cms)
         integer :: weight_update_time           ! seconds
