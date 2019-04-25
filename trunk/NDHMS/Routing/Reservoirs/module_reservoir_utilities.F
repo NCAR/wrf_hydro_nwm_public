@@ -116,7 +116,7 @@ contains
         real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage
         integer, intent(in) :: lake_number, current_time, time_interval
         real, intent(inout) :: outflow
-        real                :: projected_next_time_interval_storage
+        real                :: excess, projected_next_time_interval_storage
 
         if (outflow < 0.0) then
             write(log_warning,*) "Calculations return a negative outflow for reservoir ", lake_number
@@ -131,9 +131,14 @@ contains
 
         if (projected_next_time_interval_storage > max_storage) then
 
-            ! This releases only the excess water. If the new outflow is added to the existing outflow,
-            ! then the reservoir maintains storage at the last value before exceeding maximum.
-            outflow = inflow - (max_storage - previous_time_storage) / time_interval
+            ! Calculate and release excess water.
+            excess = inflow - (max_storage - previous_time_storage) / time_interval
+
+            if (outflow > excess) then
+                outflow = excess + outflow
+            else
+                outflow = excess
+            end if
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
@@ -223,7 +228,7 @@ contains
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_gages)
+        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_gages)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
     end subroutine read_persistence_netcdf_gage_ids_all
@@ -269,9 +274,12 @@ contains
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
         integer, intent(out) :: gage_id
-        integer, allocatable, dimension(:) :: temp_gage_id_array
+        character(len=15) :: gage_id_string, gage_id_string_trimmed
+        character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
+        integer        :: char_index, number_counter
+        character(len=1)   :: temp_char
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
@@ -279,7 +287,7 @@ contains
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
-        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         allocate(temp_gage_id_array(number_of_lakes))
@@ -287,7 +295,26 @@ contains
         status = nf90_get_var(ncid, var_id, temp_gage_id_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        gage_id = temp_gage_id_array(lake_id_index)
+        gage_id_string = temp_gage_id_array(lake_id_index)
+
+        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
+
+        number_counter = 0
+
+        do char_index = 1, 15
+
+            temp_char = gage_id_string_trimmed(char_index:char_index)
+
+            if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
+            .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
+            .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
+            .or. temp_char .eq. '9') then
+                number_counter = number_counter + 1
+            end if
+
+        end do
+
+        read(gage_id_string_trimmed(1:number_counter), *) gage_id
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 

@@ -41,6 +41,7 @@ module module_read_timeslice_data
         integer                                       :: last_update_time_seconds
         integer,            allocatable, dimension(:) :: gage_lookback_seconds
         integer,            allocatable, dimension(:) :: reservoir_gage_ids
+        !character(len=15),            allocatable, dimension(:) :: reservoir_gage_ids
         real,               allocatable, dimension(:) :: reservoir_gage_discharges
         character(len=256), allocatable, dimension(:) :: timeslice_file_names
         character(len=15),  allocatable, dimension(:) :: gage_id
@@ -72,6 +73,12 @@ contains
         integer,            intent(in)                   :: observation_lookback_hours
         integer                                          :: ncid, var_id
         integer                                          :: status  ! status of reading NetCDF
+        integer                                          :: timeslice_gage_index
+        character(len=15), allocatable, dimension(:)     :: gage_ids_string_array
+        character(len=15)                                :: gage_id_string, gage_id_string_trimmed
+        integer                                          :: gage_id_integer
+        integer                                          :: char_index, number_counter
+        character(len=1)                                 :: temp_char
 
         ! Return from subroutine if this singleton is already initialized
         if (this%initialized) return
@@ -83,12 +90,43 @@ contains
         call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
+        allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
-        status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids)
+        !status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids)
+        status = nf90_get_var(ncid, var_id, gage_ids_string_array)
         if (status /= nf90_noerr) call handle_err(status, "gage_id")
 
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
+
+        ! Convert gage ids to integers
+        do timeslice_gage_index = 1, this%number_of_reservoir_gages
+
+            gage_id_string = gage_ids_string_array(timeslice_gage_index)
+
+            gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
+
+            number_counter = 0
+
+            do char_index = 1, 15
+                temp_char = gage_id_string_trimmed(char_index:char_index)
+
+                if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
+                .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
+                .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
+                .or. temp_char .eq. '9') then
+                    number_counter = number_counter + 1
+                end if
+
+            end do
+
+            read(gage_id_string_trimmed(1:number_counter), *) gage_id_integer
+
+            this%reservoir_gage_ids(timeslice_gage_index) = gage_id_integer
+
+        end do
+
+        if(allocated(gage_ids_string_array)) deallocate(gage_ids_string_array)
 
         this%start_date = start_date
         this%current_date = start_date
