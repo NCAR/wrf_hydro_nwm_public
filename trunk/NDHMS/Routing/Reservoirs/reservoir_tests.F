@@ -14,7 +14,7 @@ program reservoir_unit_tests
 
     !rv1 = test_levelpool()
 
-    !rv2 = test_persistence_levelpool_hybrid2()
+    rv2 = test_persistence_levelpool_hybrid2()
 
     !rv2_LP = test_levelpool2()
 
@@ -234,14 +234,14 @@ inflow_array = (/91.27196,&
         print *, "calling init for persistence_levelpool_hybrid_struct"
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 1.509490013122558594e+01, 9.626000022888183238e+00 , &
         4.000000000000000222e-01, 1.000000000000000000e+01, 7.733333269755045869e+00, 1.000000000000000056e-01, 1.0, 9.960000038146972656e+00, 8.999999761581420898e-01, 166758723, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
-        "2010-10-01_07:00:00", ".", 12, 86400)
+        "2010-10-01_07:00:00", "./Testing_Files/", 12, 86400)
 
 
 
 
         !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 123.829002380371, 63.6739971160889 , &
         !0.4, 10.0, 50.3799997965495, 0.1, 1.0, 66.0199966430664, 0.9, 16944276, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
-        !"2010-10-01_07:00:00", ".", 12, 86400)
+        !"2010-10-01_07:00:00", "", 12, 86400)
 
 
         print *, "testing data in persistence_levelpool_hybrid_struct"
@@ -261,6 +261,9 @@ inflow_array = (/91.27196,&
             inflow, 0.0, water_elevation, outflow, 300.0)
 
             prev_time_inflow = inflow
+
+            print *, 'outflow'
+            print *, outflow
 
         end do
 
