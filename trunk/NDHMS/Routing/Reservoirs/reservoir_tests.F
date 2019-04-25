@@ -234,7 +234,8 @@ inflow_array = (/91.27196,&
         print *, "calling init for persistence_levelpool_hybrid_struct"
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, 1.509490013122558594e+01, 9.626000022888183238e+00 , &
         4.000000000000000222e-01, 1.000000000000000000e+01, 7.733333269755045869e+00, 1.000000000000000056e-01, 1.0, 9.960000038146972656e+00, 8.999999761581420898e-01, 166758723, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
-        "2010-10-01_07:00:00", "./Testing_Files/", 12, 86400)
+        "2010-10-01_07:00:00", "./Testing_Files/", 12, 1000000000)
+        !"2010-10-01_07:00:00", "./Testing_Files/", 12, 86400)
 
 
 
@@ -258,7 +259,7 @@ inflow_array = (/91.27196,&
 
             inflow = inflow_array(timestep_count)
             call persistence_levelpool_hybrid_reservoir_data%run_release(inflow, &
-            inflow, 0.0, water_elevation, outflow, 300.0)
+            inflow, 0.0, water_elevation, outflow, 3600.0)
 
             prev_time_inflow = inflow
 
