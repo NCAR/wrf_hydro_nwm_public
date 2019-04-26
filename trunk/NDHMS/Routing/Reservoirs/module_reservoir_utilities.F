@@ -113,8 +113,7 @@ contains
     ! Checks and modifies for boundary conditions of negative outflow or exceeding min or max storage
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
         lake_number, current_time, time_interval, outflow)
-        real, intent(in)    :: inflow, min_storage, max_storage
-        real*8, intent(in)  :: previous_time_storage
+        real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage
         integer, intent(in) :: lake_number, current_time, time_interval
         real, intent(inout) :: outflow
         real                :: excess, projected_next_time_interval_storage
@@ -132,21 +131,16 @@ contains
 
         if (projected_next_time_interval_storage > max_storage) then
 
-            ! Calculate and release excess water.
-            excess = inflow - (max_storage - previous_time_storage) / time_interval
-
-            if (outflow > excess) then
-                outflow = excess + outflow
-            else
-                outflow = excess
-            end if
+            ! This releases only the excess water. If the new outflow is added to the existing outflow,
+            ! then the reservoir maintains storage at the last value before exceeding maximum.
+            outflow = (projected_next_time_interval_storage - max_storage) / time_interval
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
 
-            outflow = (projected_next_time_interval_storage - min_storage) / time_interval
+            outflow = (projected_next_time_interval_storage - min_storage) / time_interval + outflow
 
             write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
@@ -276,6 +270,7 @@ contains
         character(len=*), intent(in) :: netcdf_array_name
         integer, intent(out) :: gage_id
         character(len=15) :: gage_id_string, gage_id_string_trimmed
+        !integer, allocatable, dimension(:) :: temp_gage_id_array
         character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
@@ -303,6 +298,7 @@ contains
         number_counter = 0
 
         do char_index = 1, 15
+            print *, gage_id_string_trimmed(char_index:char_index)
 
             temp_char = gage_id_string_trimmed(char_index:char_index)
 
@@ -389,8 +385,7 @@ contains
         integer, intent(in) :: lake_number, current_time, timeslice_update_time
         integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
         integer, intent(in) :: persistence_weight_index
-        real,    intent(in) :: persistence_current_weight, inflow
-        real*8,  intent(in) :: current_storage
+        real,    intent(in) :: persistence_current_weight, inflow, current_storage
         real,    intent(in) :: water_elevation, gage_discharge, persisted_outflow
         real,    intent(in) :: levelpool_outflow, outflow
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
