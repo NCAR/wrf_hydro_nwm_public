@@ -1,8 +1,6 @@
 program reservoir_unit_tests
     use module_levelpool_tests
-    !use module_levelpool
     use module_persistence_levelpool_hybrid_tests
-    !use module_persistence_levelpool_hybrid
 
     implicit none
 
@@ -12,11 +10,11 @@ program reservoir_unit_tests
     rv2 = .false.
     rv3 = .false.
 
-    !rv1 = test_levelpool()
+    rv1 = test_levelpool()
 
     !rv2 = test_persistence_levelpool_hybrid2()
 
-    rv2_LP = test_levelpool2()
+    !rv2_LP = test_levelpool2()
 
 
     !rv3 = test_persistence_levelpool_hybrid3()
@@ -28,7 +26,8 @@ program reservoir_unit_tests
     !rv4_LP = test_levelpool4()
 
 
-    if (rv1 .and. rv2) then
+!    if (rv1 .and. rv2) then
+    if (rv1) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -52,16 +51,24 @@ program reservoir_unit_tests
         implicit none
 
         logical rv                        ! test result
+        logical :: call_status
 
         type (levelpool_struct) :: levelpool_reservoir_data
         real :: water_elevation = 2.
-        integer :: call_status = 0
+        !integer :: call_status = 0
+
+
+        call_status = .false.
 
         print *, "calling init for levelpool_struct"
         call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 20)
 
         print *, "testing data in levelpool_struct"
         call_status = levelpool_data_info(levelpool_reservoir_data)
+
+        if (call_status) then
+            rv = .true.
+        end if
 
     end function test_levelpool
 

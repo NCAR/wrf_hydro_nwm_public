@@ -151,7 +151,7 @@ contains
         reservoir_data%input%lateral_inflow,                    &
         routing_period,                                         &
         reservoir_data%state%water_elevation,                   &
-        reservoir_data%parameters%lake_area,          		&
+        reservoir_data%parameters%lake_area,          		    &
         reservoir_data%parameters%weir_elevation,               &
         reservoir_data%parameters%max_depth,                    &
         reservoir_data%parameters%weir_coeffecient,             &

@@ -4,14 +4,17 @@ module module_levelpool_tests
 
 contains
 
-    function levelpool_data_info(levelpool_data) result(rv)
+    function levelpool_data_info(levelpool_data) result(data_info_result1)
     implicit none
     type (levelpool_struct) :: levelpool_data
-    integer :: rv
+    !integer :: rv
+    logical  :: data_info_result1
     logical, dimension(1) :: ptr_state
     logical, dimension(1) :: data_state
 
-    rv = 0
+    !rv = 0
+    data_info_result1 = .false.
+    print *, data_info_result1
 
     ! Check to see if the levelpool_state data structure exists
     print *, "Checking pointer association on data%state "
@@ -23,6 +26,8 @@ contains
         ptr_state(1) = .false.
     end if
     print *, " "
+    print *, data_info_result1
+
 
     ! Check to see if the levelpool_parameters data structure exists
     print *, "Checking pointer association on data%parameters "
@@ -34,6 +39,8 @@ contains
         ptr_state(2) = .false.
     end if
     print *, " "
+        print *, data_info_result1
+
 
     ! Check to see if the levelpool_input data structure exists
     print *, "Checking pointer association on data%input "
@@ -56,6 +63,8 @@ contains
         ptr_state(4) = .false.
     end if
     print *, " "
+        print *, data_info_result1
+
 
 
     ! Now check the data members of each substructure
@@ -74,14 +83,21 @@ contains
     if ( ptr_state(4) ) then
         data_state(4) = test_output(levelpool_data%output)
     end if
+    print *, data_info_result1
 
 
     if ( all(ptr_state) .and. all(data_state) ) then
+        !data_info_result = .true.
         print *, "========================================================================"
         print *, "All Level Pool Tests Passed"
         print *, "========================================================================"
     end if
-    rv = 1
+    !rv = 1
+    !rv = .false.
+
+    !data_info_result = .false.
+
+    print *, data_info_result1
 
     end function levelpool_data_info
 
