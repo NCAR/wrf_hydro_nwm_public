@@ -298,8 +298,6 @@ contains
         number_counter = 0
 
         do char_index = 1, 15
-            print *, gage_id_string_trimmed(char_index:char_index)
-
             temp_char = gage_id_string_trimmed(char_index:char_index)
 
             if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
