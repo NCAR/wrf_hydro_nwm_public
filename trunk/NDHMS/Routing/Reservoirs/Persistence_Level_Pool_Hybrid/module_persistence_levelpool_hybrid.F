@@ -295,17 +295,25 @@ contains
         call modify_for_projected_storage(reservoir_data%input%inflow, &
         reservoir_data%state%current_storage, reservoir_data%parameters%min_storage, &
         reservoir_data%parameters%max_storage, reservoir_data%parameters%lake_number, &
-        reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow)
+        reservoir_data%state%current_time, int(routing_period), reservoir_data%output%outflow, &
+        reservoir_data%state%water_elevation, reservoir_data%state%levelpool_ptr%parameters%max_depth)
 
-        ! Calculate change in storage
-        delta_storage = (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
+        ! If max water elevation reached, then set storage to max
+        if (reservoir_data%state%water_elevation == reservoir_data%state%levelpool_ptr%parameters%max_depth) then
+            reservoir_data%state%current_storage = reservoir_data%parameters%max_storage
 
-        ! Update storage from the most recent model states
-        reservoir_data%state%current_storage = reservoir_data%state%current_storage + delta_storage
+        else
+            ! Calculate change in storage
+            delta_storage = (reservoir_data%input%inflow - reservoir_data%output%outflow) * routing_period
 
-        ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
-        ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
-        reservoir_data%state%water_elevation = reservoir_data%state%water_elevation + delta_storage / reservoir_data%parameters%lake_area
+            ! Update storage from the most recent model states
+            reservoir_data%state%current_storage = reservoir_data%state%current_storage + delta_storage
+
+            ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
+            ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
+            reservoir_data%state%water_elevation = reservoir_data%state%water_elevation + delta_storage / reservoir_data%parameters%lake_area
+
+        end if
 
         ! Update output variable returned from this subroutine
         outflow = reservoir_data%output%outflow
