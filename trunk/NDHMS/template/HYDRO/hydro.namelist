@@ -153,6 +153,9 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 
+! Switch to activate bucket model loss (0=no, 1=yes)
+bucket_loss = 0
+
 ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
 !Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
 gwbasmskfil = "./DOMAIN/GWBASINS.nc"
