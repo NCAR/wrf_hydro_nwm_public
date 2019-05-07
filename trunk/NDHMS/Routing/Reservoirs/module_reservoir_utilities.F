@@ -277,7 +277,6 @@ contains
         character(len=*), intent(in) :: netcdf_array_name
         integer, intent(out) :: gage_id
         character(len=15) :: gage_id_string, gage_id_string_trimmed
-        !integer, allocatable, dimension(:) :: temp_gage_id_array
         character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids

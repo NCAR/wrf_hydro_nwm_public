@@ -92,7 +92,6 @@ contains
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
-        !status = nf90_get_var(ncid, var_id, this%reservoir_gage_ids)
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
         if (status /= nf90_noerr) call handle_err(status, "gage_id")
 
