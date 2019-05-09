@@ -132,7 +132,7 @@ contains
             this%state%persistence_weight_index = SIZE(this%parameters%persistence_weighted_coefficients) + 1
 
             ! Call hydro stop if the initial storage is greater than max storage or less than zero.
-            if (this%state%current_storage > this%parameters%max_storage .or. this%state%current_storage < this%parameters%min_storage) then
+            if (this%state%current_storage > this%parameters%max_storage) then
                 write(lake_number_string, "(I15)") lake_number
                 call hydro_stop("Initial storage exceeds max storage for reservoir " // lake_number_string)
 

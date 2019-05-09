@@ -4488,16 +4488,16 @@ inflow_array = (/189.22899	,&
 
     !Set static params here
     !!!!!!!!!!!!!!!!!
-        lake_area = 2.096320037841796875e+02
-        weir_elevation = 1.332074047851562455e+03
+        lake_area = 1.20616996
+        weir_elevation = 207.73100586
         weir_coeffecient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
-        orifice_elevation = 1.314473347981770758e+03
+        orifice_elevation = 202.80667114
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0
-        max_depth = 1.335180053710937500e+03
+        max_depth = 208.6000061
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 120052939
+        lake_number = 12231326
     !!!!!!!!!!!!!!!!!
 
 
