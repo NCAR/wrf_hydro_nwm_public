@@ -1,6 +1,6 @@
 &NOAHLSM_OFFLINE
 
- HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01"
+ HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01.nc"
  INDIR = "./FORCING"
  SPATIAL_FILENAME = "./DOMAIN/soil_properties.nc"
  OUTDIR = "./"
@@ -39,6 +39,7 @@
  OUTPUT_TIMESTEP  = 3600 
 
  ! Land surface model restart file write frequency
+ ! A value of -99999 will output restarts on the first day of the month only.
  RESTART_FREQUENCY_HOURS = 2
 
  ! Split output after split_output_count output times.
