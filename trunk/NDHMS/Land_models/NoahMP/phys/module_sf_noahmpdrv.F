@@ -1467,6 +1467,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     call read_mp_soil_parameters()
     call read_mp_rad_parameters()
     call read_mp_global_parameters()
+    call read_mp_crop_parameters()
 
     IF( .NOT. restart ) THEN
 
