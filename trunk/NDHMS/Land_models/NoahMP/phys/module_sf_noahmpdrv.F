@@ -35,7 +35,7 @@ CONTAINS
 		 XLAND,     XICE,XICE_THRES,                                & ! IN : Vegetation/Soil characteristics
                  IDVEG, IOPT_CRS,  IOPT_BTR, IOPT_RUN, IOPT_SFC, IOPT_FRZ,  & ! IN : User options
               IOPT_INF, IOPT_RAD,  IOPT_ALB, IOPT_SNF,IOPT_TBOT, IOPT_STC,  & ! IN : User options
-              IOPT_GLA, IOPT_RSF, IOPT_CROP,  IZ0TLND,                      & ! IN : User options
+              IOPT_GLA, IOPT_RSF, IOPT_SOIL,IOPT_PEDO,IOPT_CROP,  IZ0TLND,  & ! IN : User options
                    T3D,     QV3D,     U_PHY,    V_PHY,   SWDOWN,      GLW,  & ! IN : Forcing
 		 P8W3D,PRECIP_IN,        SR,                                & ! IN : Forcing
                    TSK,      HFX,      QFX,        LH,   GRDFLX,    SMSTAV, & ! IN/OUT LSM eqv
@@ -118,6 +118,8 @@ CONTAINS
     INTEGER,                                         INTENT(IN   ) ::  IOPT_STC  ! snow/soil temperature time scheme
     INTEGER,                                         INTENT(IN   ) ::  IOPT_GLA  ! glacier option (1->phase change; 2->simple)
     INTEGER,                                         INTENT(IN   ) ::  IOPT_RSF  ! surface resistance (1->Sakaguchi/Zeng; 2->Seller; 3->mod Sellers; 4->1+snow)
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_SOIL ! soil configuration option
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_PEDO ! soil pedotransfer function option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.; 2->Gecros)
     INTEGER,                                         INTENT(IN   ) ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
@@ -469,7 +471,7 @@ CONTAINS
 
     CALL NOAHMP_OPTIONS(IDVEG  ,IOPT_CRS  ,IOPT_BTR  ,IOPT_RUN  ,IOPT_SFC  ,IOPT_FRZ , &
                      IOPT_INF  ,IOPT_RAD  ,IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC , &
-		     IOPT_RSF  ,IOPT_CROP )
+		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP )
 
     IPRINT    =  .false.                     ! debug printout
 
@@ -1211,6 +1213,122 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     END IF
 
  END SUBROUTINE TRANSFER_MP_PARAMETERS
+
+SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
+
+  use module_sf_noahmplsm
+  use noahmp_tables
+        
+  implicit none
+        
+  integer,                    intent(in   ) :: nsoil     ! number of soil layers
+  real, dimension( 1:nsoil ), intent(inout) :: sand
+  real, dimension( 1:nsoil ), intent(inout) :: clay
+  real, dimension( 1:nsoil ), intent(inout) :: orgm
+    
+  real, dimension( 1:nsoil ) :: theta_1500t
+  real, dimension( 1:nsoil ) :: theta_1500
+  real, dimension( 1:nsoil ) :: theta_33t
+  real, dimension( 1:nsoil ) :: theta_33
+  real, dimension( 1:nsoil ) :: theta_s33t
+  real, dimension( 1:nsoil ) :: theta_s33
+  real, dimension( 1:nsoil ) :: psi_et
+  real, dimension( 1:nsoil ) :: psi_e
+    
+  type(noahmp_parameters), intent(inout) :: parameters
+  integer :: k
+
+  do k = 1,4
+    if(sand(k) <= 0 .or. clay(k) <= 0) then
+      sand(k) = 0.41
+      clay(k) = 0.18
+    end if
+    if(orgm(k) <= 0 ) orgm(k) = 0.0
+  end do
+        
+  theta_1500t =   sr2006_theta_1500t_a*sand       &
+                + sr2006_theta_1500t_b*clay       &
+                + sr2006_theta_1500t_c*orgm       &
+                + sr2006_theta_1500t_d*sand*orgm  &
+                + sr2006_theta_1500t_e*clay*orgm  &
+                + sr2006_theta_1500t_f*sand*clay  &
+                + sr2006_theta_1500t_g
+
+  theta_1500  =   theta_1500t                      &
+                + sr2006_theta_1500_a*theta_1500t  &
+                + sr2006_theta_1500_b
+
+  theta_33t   =   sr2006_theta_33t_a*sand       &
+                + sr2006_theta_33t_b*clay       &
+                + sr2006_theta_33t_c*orgm       &
+                + sr2006_theta_33t_d*sand*orgm  &
+                + sr2006_theta_33t_e*clay*orgm  &
+                + sr2006_theta_33t_f*sand*clay  &
+                + sr2006_theta_33t_g
+
+  theta_33    =   theta_33t                              &
+                + sr2006_theta_33_a*theta_33t*theta_33t  &
+                + sr2006_theta_33_b*theta_33t            &
+                + sr2006_theta_33_c
+
+  theta_s33t  =   sr2006_theta_s33t_a*sand      &
+                + sr2006_theta_s33t_b*clay      &
+                + sr2006_theta_s33t_c*orgm      &
+                + sr2006_theta_s33t_d*sand*orgm &
+                + sr2006_theta_s33t_e*clay*orgm &
+                + sr2006_theta_s33t_f*sand*clay &
+                + sr2006_theta_s33t_g
+
+  theta_s33   = theta_s33t                       &
+                + sr2006_theta_s33_a*theta_s33t  &
+                + sr2006_theta_s33_b
+
+  psi_et      =   sr2006_psi_et_a*sand           &
+                + sr2006_psi_et_b*clay           &
+                + sr2006_psi_et_c*theta_s33      &
+                + sr2006_psi_et_d*sand*theta_s33 &
+                + sr2006_psi_et_e*clay*theta_s33 &
+                + sr2006_psi_et_f*sand*clay      &
+                + sr2006_psi_et_g
+ 
+  psi_e       =   psi_et                        &
+                + sr2006_psi_e_a*psi_et*psi_et  &
+                + sr2006_psi_e_b*psi_et         &
+                + sr2006_psi_e_c
+    
+  parameters%smcwlt = theta_1500
+  parameters%smcref = theta_33
+  parameters%smcmax =   theta_33    &
+                      + theta_s33            &
+                      + sr2006_smcmax_a*sand &
+                      + sr2006_smcmax_b
+
+  parameters%bexp   = 3.816712826 / (log(theta_33) - log(theta_1500) )
+  parameters%psisat = psi_e
+  parameters%dksat  = 1930.0 * (parameters%smcmax - theta_33) ** (3.0 - 1.0/parameters%bexp)
+  parameters%quartz = sand
+    
+! Units conversion
+    
+  parameters%psisat = max(0.1,parameters%psisat)     ! arbitrarily impose a limit of 0.1kpa
+  parameters%psisat = 0.101997 * parameters%psisat   ! convert kpa to m
+  parameters%dksat  = parameters%dksat / 3600000.0   ! convert mm/h to m/s
+  parameters%dwsat  = parameters%dksat * parameters%psisat *parameters%bexp / parameters%smcmax  ! units should be m*m/s
+  parameters%smcdry = parameters%smcwlt
+  
+! Introducing somewhat arbitrary limits (based on SOILPARM) to prevent bad things
+  
+  parameters%smcmax = max(0.32 ,min(parameters%smcmax,             0.50 ))
+  parameters%smcref = max(0.17 ,min(parameters%smcref,parameters%smcmax ))
+  parameters%smcwlt = max(0.01 ,min(parameters%smcwlt,parameters%smcref ))
+  parameters%smcdry = max(0.01 ,min(parameters%smcdry,parameters%smcref ))
+  parameters%bexp   = max(2.50 ,min(parameters%bexp,               12.0 ))
+  parameters%psisat = max(0.03 ,min(parameters%psisat,             1.00 ))
+  parameters%dksat  = max(5.e-7,min(parameters%dksat,              1.e-5))
+  parameters%dwsat  = max(1.e-6,min(parameters%dwsat,              3.e-5))
+  parameters%quartz = max(0.05 ,min(parameters%quartz,             0.95 ))
+    
+ END SUBROUTINE PEDOTRANSFER_SR2006
 
   SUBROUTINE NOAHMP_INIT ( MMINLU, SNOW , SNOWH , CANWAT , ISLTYP ,   IVGTYP, &
        TSLB , SMOIS , SH2O , DZS , FNDSOILW , FNDSNOWH ,             &
