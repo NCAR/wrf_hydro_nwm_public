@@ -1,3 +1,9 @@
+! This program unit tests the various reservoir implementations along with edge cases.
+! It is important to run these unit tests whenever making any changes to code in this
+! module to ensure nothing is broken. If nothing is broken, the user will see
+! "All Reservoir Tests Passed". To compile and run these tests, go to the Reservoir
+! directory in the terminal and type "make test". Then type "./reservoir_tests".
+
 program reservoir_unit_tests
     use module_levelpool_tests
     use module_levelpool
