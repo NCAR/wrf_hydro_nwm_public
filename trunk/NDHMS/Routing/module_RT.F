@@ -723,7 +723,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
-             nlst_rt(did)%persistence,    rt_domain(did)%q_type,   &
+             nlst_rt(did)%reservoir_persistence, rt_domain(did)%q_type, &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -765,7 +765,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst_rt(did)%persistence,     rt_domain(did)%q_type,     &
+           nlst_rt(did)%reservoir_persistence,                      &
+           rt_domain(did)%q_type,                                   &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
@@ -822,21 +823,21 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
           type is (persistence_levelpool_hybrid_struct)
 
               ! Call to initialize a persistence_levelpool_hybrid type reservoir
-              call hybrid%init(                            &
-              rt_domain(did)%RESHT(lake_index),            &
-              rt_domain(did)%HRZAREA(lake_index),          &
-              rt_domain(did)%WEIRH(lake_index),            &
-              rt_domain(did)%WEIRC(lake_index),            &
-              rt_domain(did)%WEIRL(lake_index),            &
-              rt_domain(did)%ORIFICEE(lake_index),         &
-              rt_domain(did)%ORIFICEC(lake_index),         &
-              rt_domain(did)%ORIFICEA(lake_index),         &
-              rt_domain(did)%LAKEMAXH(lake_index),         &
-              rt_domain(did)%ELEVLAKE(lake_index),         &
-              rt_domain(did)%LAKEIDM(lake_index),          &
-              nlst_rt(did)%persistence_parameter_file,      &
-              nlst_rt(did)%startdate(1:19),                &
-              nlst_rt(did)%reservoir_timeslice_path,       &
+              call hybrid%init(                                  &
+              rt_domain(did)%RESHT(lake_index),                  &
+              rt_domain(did)%HRZAREA(lake_index),                &
+              rt_domain(did)%WEIRH(lake_index),                  &
+              rt_domain(did)%WEIRC(lake_index),                  &
+              rt_domain(did)%WEIRL(lake_index),                  &
+              rt_domain(did)%ORIFICEE(lake_index),               &
+              rt_domain(did)%ORIFICEC(lake_index),               &
+              rt_domain(did)%ORIFICEA(lake_index),               &
+              rt_domain(did)%LAKEMAXH(lake_index),               &
+              rt_domain(did)%ELEVLAKE(lake_index),               &
+              rt_domain(did)%LAKEIDM(lake_index),                &
+              nlst_rt(did)%reservoir_persistence_parameter_file, &
+              nlst_rt(did)%startdate(1:19),                      &
+              nlst_rt(did)%reservoir_timeslice_path,             &
               nlst_rt(did)%reservoir_observation_lookback_hours, &
               nlst_rt(did)%reservoir_observation_update_time_interval_seconds)
 

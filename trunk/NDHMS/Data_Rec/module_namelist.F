@@ -53,8 +53,8 @@ CONTAINS
           character(len=256) :: route_lake_f=""
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
-          logical            :: persistence
-          character(len=256) :: persistence_parameter_file=""
+          logical            :: reservoir_persistence
+          character(len=256) :: reservoir_persistence_parameter_file=""
           character(len=256) :: reservoir_timeslice_path = ""
           integer            :: reservoir_observation_lookback_hours
           integer            :: reservoir_observation_update_time_interval_seconds
@@ -121,7 +121,7 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-                    persistence, persistence_parameter_file, reservoir_timeslice_path, &
+                    reservoir_persistence, reservoir_persistence_parameter_file, reservoir_timeslice_path, &
                     reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
                     route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
                     GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -157,7 +157,7 @@ CONTAINS
    reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
    compound_channel = .FALSE.
    bucket_loss = 0
-   persistence = .FALSE.
+   reservoir_persistence = .FALSE.
    reservoir_observation_lookback_hours = 18
    reservoir_observation_update_time_interval_seconds = 86400
 
@@ -257,8 +257,8 @@ CONTAINS
   nlst%DEEPGWSPIN = DEEPGWSPIN
   nlst%SOLVEG_INITSWC = SOLVEG_INITSWC
   nlst%reservoir_obs_dir = "testDirectory"
-  nlst%persistence = persistence
-  nlst%persistence_parameter_file = persistence_parameter_file
+  nlst%reservoir_persistence = reservoir_persistence
+  nlst%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
   nlst%reservoir_timeslice_path = reservoir_timeslice_path
   nlst%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
 
@@ -268,7 +268,7 @@ CONTAINS
   else
     nlst%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
 
-    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst%persistence) then
+    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst%reservoir_persistence) then
         print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
     end if
   end if
@@ -277,8 +277,8 @@ CONTAINS
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
   call mpp_land_bcast_char(256,nlst%hydrotbl_f)
   call mpp_land_bcast_char(1024,nlst%reservoir_obs_dir)
-  call mpp_land_bcast_log1(nlst%persistence)
-  call mpp_land_bcast_char(256,nlst%persistence_parameter_file )
+  call mpp_land_bcast_log1(nlst%reservoir_persistence)
+  call mpp_land_bcast_char(256,nlst%reservoir_persistence_parameter_file )
   call mpp_land_bcast_char(256,nlst%reservoir_timeslice_path)
   call mpp_land_bcast_int1(nlst%reservoir_observation_lookback_hours)
   call mpp_land_bcast_int1(nlst%reservoir_observation_update_time_interval_seconds)
@@ -500,7 +500,7 @@ CONTAINS
     write(6,*) " nlst%route_link_f ", route_link_f
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
-    write(6,*) " nlst%persistence_parameter_file ", persistence_parameter_file
+    write(6,*) " nlst%reservoir_persistence_parameter_file ", persistence_parameter_file
     write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
     write(6,*) " nlst%reservoir_observation_lookback_hours ", nlst%reservoir_observation_lookback_hours
     write(6,*) " nlst%reservoir_observation_update_time_interval_seconds ", nlst%reservoir_observation_update_time_interval_seconds
@@ -771,17 +771,17 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
-   if(nlst%persistence) then
-      if(len(trim(nlst%persistence_parameter_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a persistence_parameter_file for &
+   if(nlst%reservoir_persistence) then
+      if(len(trim(nlst%reservoir_persistence_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir persistence_parameter_file for &
          inputs to persistence type reservoirs.')
       endif
       if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
          reservoir persistence capability.')
       endif
-      if(len(trim(nlst%persistence_parameter_file)) .ne. 0) then
-        inquire(file=trim(nlst%persistence_parameter_file),exist=fileExists)
+      if(len(trim(nlst%reservoir_persistence_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%reservoir_persistence_parameter_file),exist=fileExists)
         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: persistence_parameter_file not found.')
       endif
       ! Can leave both blocks below commented out because the reservoir module_read_timeslice_data.F will
