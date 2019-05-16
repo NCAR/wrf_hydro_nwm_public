@@ -7,10 +7,8 @@ trunk/NDHMS/macros
 trunk/NDHMS/HRLDAS/user_build_options
 *exe
 /.project
-trunk/NDHMS/Run/*.exe
-trunk/NDHMS/Run/*
-trunk/NDHMS/NWM/*
-trunk/NDHMS/NWM2/*
+trunk/NDHMS/Run
+trunk/NDHMS/Run/
 trunk/NDHMS/setEnvar.sh
 trunk/NDHMS/Makefile.comm
 trunk/NDHMS/Land_models/NoahMP/user_build_options
