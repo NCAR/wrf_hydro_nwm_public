@@ -68,13 +68,15 @@ MODEL_DIR    := $(abspath $(DIR)/../..)
 else
 MODEL_DIR    := $(abspath $(WRFHYDRO_DIR))
 endif
+MODEL_MKDIR  := $(abspath $(MODEL_DIR))
 MODEL_LIBDIR := $(abspath $(MODEL_DIR)/lib)
 MODEL_MODDIR := $(abspath $(MODEL_DIR)/mod)
 MODEL_MPPDIR := $(abspath $(MODEL_DIR)/MPP)
-MODEL_LIB    := $(abspath $(MODEL_LIBDIR)/libHYDRO.a)
-MODEL_MKDIR  := $(abspath $(MODEL_DIR))
+MODEL_RTGDIR := $(abspath $(MODEL_DIR)/Routing)
+
 MODEL_MK     := $(abspath $(MODEL_MKDIR)/Makefile.comm)
 MODEL_MKINC  := $(abspath $(MODEL_DIR)/macros)
+MODEL_LIB    := $(abspath $(MODEL_LIBDIR)/libHYDRO.a)
 
 MODEL_MODS   := $(abspath $(MODEL_MPPDIR)/module_mpp_land.mod)
 MODEL_MODS   += $(abspath $(MODEL_MPPDIR)/module_cpl_land.mod)
@@ -83,6 +85,8 @@ MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_rt_data.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_namelist.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_hydro_io.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_lsm_forcing.mod)
+MODEL_MODS   += $(abspath $(MODEL_RTGDIR)/Overland/overland_data.mod)
+MODEL_MODS   += $(abspath $(MODEL_RTGDIR)/Overland/overland_control.mod)
 
 MODEL_FILES  := $(MODEL_LIB) $(MODEL_MODS)
 
