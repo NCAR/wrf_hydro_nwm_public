@@ -44,6 +44,10 @@ module wrfhydro_nuopc_gluecode
     cpl_outdate
   use module_rt_data, only: &
     rt_domain
+  use overland_data, only: &
+    overland_struct
+  use overland_control, only: &
+    overland_control_struct
   use module_namelist, only: &
     nlst_rt, &
     read_rt_nlst
@@ -781,7 +785,7 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
       CASE ('surface_water_depth')
         WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%sfcheadrt, &
+          farray=rt_domain(did)%overland%control%surface_water_head_lsm, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
       CASE ('time_step_infiltration_excess')
