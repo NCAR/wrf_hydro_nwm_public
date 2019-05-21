@@ -28,7 +28,7 @@ program Noah_hrldas_driver
   USE module_date_utilities
 
 #ifdef MPP_LAND
-  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init
+  use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, HYDRO_COMM_WORLD
   IMPLICIT NONE
   include "mpif.h"
 #else
@@ -1215,10 +1215,10 @@ program Noah_hrldas_driver
  endif  ! end of rank if block
 
 #ifdef MPP_LAND
-   call mpi_bcast(ix,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-   call mpi_bcast(jx,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-   call mpi_bcast(nsoil,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-   call mpi_bcast(ntime,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+   call mpi_bcast(ix,1,MPI_INTEGER,0,HYDRO_COMM_WORLD,ierr)
+   call mpi_bcast(jx,1,MPI_INTEGER,0,HYDRO_COMM_WORLD,ierr)
+   call mpi_bcast(nsoil,1,MPI_INTEGER,0,HYDRO_COMM_WORLD,ierr)
+   call mpi_bcast(ntime,1,MPI_INTEGER,0,HYDRO_COMM_WORLD,ierr)
 #endif
 
   print*, "ix =, jx =", ix,jx
