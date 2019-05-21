@@ -152,10 +152,10 @@ compound_channel = .FALSE.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
 ! If using Persistence Reservoirs, set to True. (Default=.FALSE.)
-persistence = .FALSE.
+reservoir_persistence = .FALSE.
 
 ! Specify the Persistence Reservoir parameter file
-persistence_parameter_file = "./DOMAIN/persistence_parm.nc"
+reservoir_persistence_parameter_file = "./DOMAIN/persistence_parm.nc"
 
 ! Specify the path to the Timeslice files to be used by Reservoirs
 reservoir_timeslice_path = "./Timeslices/"
