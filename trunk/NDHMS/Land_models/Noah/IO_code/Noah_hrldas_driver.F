@@ -510,6 +510,7 @@ program Noah_hrldas_driver
 
 #ifdef MPP_LAND
   call MPP_LAND_INIT()
+  call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
 #else
   rank = 0
 #endif
