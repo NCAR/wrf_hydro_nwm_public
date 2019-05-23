@@ -169,6 +169,7 @@ source /glade/u/home/katelynw/python/envs/testing/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
+cd $candidate_dir
 branch_name="$(git symbolic-ref HEAD 2>/dev/null)" || branch_name="$(git rev-parse --short HEAD)"
 branch_name=${branch_name##refs/heads/}
 printf "\e[7;49;94mTesting branch: $branch_name in $candidate_dir\e[0m\n"
