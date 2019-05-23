@@ -8,7 +8,7 @@ module module_simple_groundwater_data
     use module_simple_basin
     use MODULE_mpp_GWBUCKET, only: gw_sum_real
     use config_base, only: nlst
-    ! use module_RT_data, only: rt_domain
+    use module_RT_data, only: rt_domain
     implicit none
 
     !> data type that hold necessary data for exponential bucket groundwater model

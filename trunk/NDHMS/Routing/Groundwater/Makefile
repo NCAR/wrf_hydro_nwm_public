@@ -36,7 +36,7 @@ mod:
 	make -C bucket
 	make -C nhd
 	#make -C non-nhd
-	make -C simple
+	#make -C simple
 # test:
 # 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
 # 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F

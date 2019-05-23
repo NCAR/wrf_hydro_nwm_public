@@ -26,7 +26,7 @@ mod:
 	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_simple_data.F
 	ar -r ../../../lib/libHYDRO.a module_simple_basin.o
 	ar -r ../../../lib/libHYDRO.a module_simple_data.o
-	
+
 	cp *.mod ../../../mod
 test:
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
