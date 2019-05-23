@@ -35,7 +35,29 @@ mod:
 	#Build the modules
 	make -C bucket
 	make -C nhd
+	#make -C non-nhd
 	make -C simple
+# test:
+# 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
+# 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F
+# 	$(COMPILER90) $(NETCDFLIB) -o groundwater_tests \
+# 		module_groundwater_base.o \
+# 		module_nhd_properties.o \
+# 		module_nhd_state.o \
+# 		module_nhd_basin.o \
+# 		module_non_nhd_state.o \
+# 		module_non_nhd_basin.o \
+# 		module_groundwater_static_data.o \
+# 		module_nhd_data.o \
+# 		module_non_nhd_data.o \
+# 		module_UDMAP.o \
+# 		module_nhd_tests.o \
+# 		../../MPP/mpp_land.o \
+# 		../../MPP/CPL_WRF.o \
+# 		../../MPP/module_mpp_ReachLS.o\
+# 		groundwater_tests.o \
+# 		hydro_stop.o
+
 test:
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  groundwater_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F
@@ -60,4 +82,5 @@ clean:
 
 	make -C bucket clean
 	make -C nhd clean
+	#make -C non_nhd clean
 	make -C simple clean
