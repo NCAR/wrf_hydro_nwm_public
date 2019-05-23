@@ -121,7 +121,6 @@ contains
       implicit none
       class(simple_groundwater_struct), intent(inout) :: ground_water_data
       logical :: rv
-      real, dimension(ground_water_data%static_data%ix_rt, ground_water_data%static_data%jx_rt,9) :: dist
 
                       !call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
                 !    RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,&
@@ -157,8 +156,7 @@ contains
             ground_water_data%output%qinflowbase, &
             ground_water_data%basin%stream_mask, &
             ground_water_data%basin%basin_stream_pixels, &
-            ! rt_domain(1)%overland%properties%distance_to_neighbor, &
-            dist, &
+            rt_domain(1)%overland%properties%distance_to_neighbor, &
             nlst(1)%dt, & !supposed to be nlst(did)
             ground_water_data%properties%gw_buck_coeff, &
             ground_water_data%properties%gw_buck_exp, &
