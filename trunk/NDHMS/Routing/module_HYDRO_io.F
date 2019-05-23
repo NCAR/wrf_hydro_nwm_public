@@ -9670,7 +9670,7 @@ if (io_config_outputs .le. 0) then
      !-- prevChild
 !        iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/stationdim/), varid)
 !        iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same station')
-        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+!        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- lastChild
 !        iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
