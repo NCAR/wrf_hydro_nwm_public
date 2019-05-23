@@ -165,7 +165,7 @@ module list
 #-------------------------------------------------------
 # Python Env
 deactivate > /dev/null 2>&1
-source /glade/scratch/katelynw/test-env/bin/activate || exit 9
+source /glade/u/home/katelynw/python/envs/testing/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
