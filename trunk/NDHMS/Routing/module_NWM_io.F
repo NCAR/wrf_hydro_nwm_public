@@ -5045,7 +5045,8 @@ subroutine output_gw_NWM(domainId,iGrid)
             if(nlst(domainId)%bucket_loss .eq. 1) then
                fileMeta%outFlag(3) = 1
                call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qloss_gwsubbas, &
-                    rt_domain(domainId)%basnsInd,g_qloss_gwsubbas)
+                    gwd%basin%basin_index, g_qloss_gwsubbas)
+                    !rt_domain(domainId)%basnsInd,g_qloss_gwsubbas)
             endif
          class default
          end select
