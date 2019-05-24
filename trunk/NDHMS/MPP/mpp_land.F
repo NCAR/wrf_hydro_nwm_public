@@ -108,7 +108,7 @@ MODULE MODULE_MPP_LAND
         right_id = my_id + 1 
         if( left_right_p .eq. 0) left_id = -1
         if( left_right_p .eq. (left_right_np-1) ) right_id =-1
-    
+
 !    ### the IO node is the last processor.
 !yw        IO_id = numprocs - 1
          IO_id = 0
@@ -153,11 +153,14 @@ MODULE MODULE_MPP_LAND
     call mpi_initialized( mpi_inited, ierr )
     if ( .not. mpi_inited ) then
        call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
+       if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_INIT faile"
        call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+       if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_COMM_DUP failed"
     endif
 
     call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
     call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+    if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed"
 
     !     create 2d logical mapping of the CPU.
     call log_map2d()
