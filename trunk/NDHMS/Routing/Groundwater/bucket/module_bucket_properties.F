@@ -31,6 +31,8 @@ module module_bucket_properties
         !> Max water table parameter in the GW exponential decay equation
         real, allocatable, dimension(:) :: z_max
 
+        real, allocatable, dimension(:) :: gw_buck_loss
+
     contains
 
       final :: bucket_properties_destroy
@@ -103,6 +105,11 @@ contains
        new_properties%z_max = 0.1
     else
        allocation_error = .true.
+    end if
+
+    if(nlst(did)%bucket_loss .eq. 1) then
+       allocate(new_properties%gw_buck_loss(numbasins))
+       new_properties%gw_buck_loss = 0.0
     end if
 
     if ( allocation_error ) &

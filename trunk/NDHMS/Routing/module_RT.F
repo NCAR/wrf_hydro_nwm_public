@@ -1210,6 +1210,7 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                       rt_domain(did)%numbasns, &
                       gwd%properties%gw_buck_coeff, &
                       gwd%properties%gw_buck_exp, &
+                      gwd%properties%gw_buck_loss, &
                       gwd%properties%z_max, &
                       gwd%state%z_gwsubbas, &
                       rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
@@ -1253,7 +1254,6 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
               !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
               !for UDMP=1 so we convert units.
               !rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.
-
 #ifdef HYDRO_D
               write(6,*) "finish readBucket_nhd "
               call flush(6)
@@ -1334,12 +1334,13 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
 
                     !Temporary hardwire...
                     !rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
+                    
+                    ! Alessandro: This function takes the new gw_buck_loss argument
 
-                    !call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
-                    !    rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
-                    !    rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
-                    !    rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
-
+                    ! call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
+                    !      rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
+                    !      rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%gw_buck_loss, &
+                    !      rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
 
                     !!! Determine number of stream pixels per GW basin for distribution...
 #ifdef MPP_LAND

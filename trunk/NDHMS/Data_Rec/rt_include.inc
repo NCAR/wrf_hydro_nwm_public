@@ -87,6 +87,7 @@
   !REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
   !REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
+  REAL,    allocatable, DIMENSION(:)     :: qloss_gwsubbas   !flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
   !REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
@@ -95,11 +96,14 @@
   !INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
   INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
+
   INTEGER                                :: bas
-  INTEGER, allocatable, DIMENSION(:)        :: bas_id
+  INTEGER, allocatable, DIMENSION(:)     :: bas_id
   CHARACTER(len=19)                      :: header
   CHARACTER(len=1)                       :: jnk
   !REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_loss     !GW bucket model loss fraction
+
 !DJG Switch for Deep Sat GW Init:
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
 !BF Variables for gw2d

@@ -4913,8 +4913,8 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: indVarId,indTmp ! For the feature_id sorting process.
    integer :: ierr, myId ! MPI return status, process ID
    integer :: gnbasns
-   ! Allocatable arrays to hold output variables.
-   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_z_gwsubbas
+   ! Allocatable arrays to hold output variables. 
+   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_qloss_gwsubbas,g_z_gwsubbas
    integer, allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after
@@ -4958,25 +4958,25 @@ subroutine output_gw_NWM(domainId,iGrid)
 
    if(nlst(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -5000,11 +5000,13 @@ subroutine output_gw_NWM(domainId,iGrid)
       if(myId .eq. 0) then
          allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+         allocate(g_qloss_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
       else
          allocate(g_qin_gwsubbas(1))
          allocate(g_qout_gwsubbas(1))
+         allocate(g_qloss_gwsubbas(1))
          allocate(g_z_gwsubbas(1))
          allocate(g_basnsInd(1))
       endif
@@ -5012,7 +5014,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       if(nlst(domainId)%UDMP_OPT .eq. 1) then
          select type (gwd => rt_domain(domainId)%groundwater)
          type is (nhd_groundwater_struct)
-            ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
+            ! This is ONLY for NWM configuration with NHD channel routing. NCAR
             ! reach-based routing has the GW physics initialized the same as with
             ! gridded routing.
             !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
@@ -5021,6 +5023,10 @@ subroutine output_gw_NWM(domainId,iGrid)
             !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
             call ReachLS_write_io(gwd%state%z_gwsubbas*1000.,g_z_gwsubbas)
             call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+            if(nlst(domainId)%bucket_loss .eq. 1) then
+               fileMeta%outFlag(3) = 1
+               call ReachLS_write_io(rt_domain(domainId)%qloss_gwsubbas,g_qloss_gwsubbas)
+            endif
          class default
             ! TODO add error for wrong groundwater type
          end select
@@ -5036,12 +5042,18 @@ subroutine output_gw_NWM(domainId,iGrid)
             !                      rt_domain(domainId)%basnsInd,g_z_gwsubbas)
             call gw_write_io_int(rt_domain(domainId)%numbasns, gwd%basin%basin_index, &
                  gwd%basin%basin_index, g_basnsInd)
+            if(nlst(domainId)%bucket_loss .eq. 1) then
+               fileMeta%outFlag(3) = 1
+               call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qloss_gwsubbas, &
+                    rt_domain(domainId)%basnsInd,g_qloss_gwsubbas)
+            endif
          class default
          end select
       endif
    else
       allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+      allocate(g_qloss_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
 
@@ -5059,7 +5071,11 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
       g_basnsInd = rt_domain(domainId)%linkid
-   endif
+      if(nlst_rt(domainId)%bucket_loss .eq. 1) then
+         fileMeta%outFlag(3) = 1
+         g_qloss_gwsubbas = rt_domain(domainId)%qloss_gwsubbas
+      endif
+   endif   
 
    ! Sync all processes up.
    if(mppFlag .eq. 1) then
@@ -5122,7 +5138,8 @@ subroutine output_gw_NWM(domainId,iGrid)
 
       varOutReal(1,:) = g_qin_gwsubbas
       varOutReal(2,:) = g_qout_gwsubbas
-      varOutReal(3,:) = g_z_gwsubbas
+      varOutReal(3,:) = g_qloss_gwsubbas
+      varOutReal(4,:) = g_z_gwsubbas
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -5336,6 +5353,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    endif
    deallocate(g_qin_gwsubbas)
    deallocate(g_qout_gwsubbas)
+   deallocate(g_qloss_gwsubbas)
    deallocate(g_z_gwsubbas)
    deallocate(g_basnsInd)
 end subroutine output_gw_NWM

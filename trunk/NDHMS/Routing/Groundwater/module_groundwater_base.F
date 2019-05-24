@@ -44,7 +44,7 @@ module module_groundwater_base
     type :: groundwater_base_output_struct
         real, allocatable, dimension(:) :: qout_gwsubbas  !< flow from the GW bucket
         real, allocatable, dimension(:,:) :: qinflowbase     !< inflow/baseflow from QW to stream network
-
+        real, allocatable, dimension(:) :: qloss_gwsubbas
     contains
 
         procedure :: init => groundwater_base_output_struct_init
@@ -200,6 +200,11 @@ contains
             this%qinflowbase = 0.0
         else
             allocation_error = .true.
+        end if
+
+        if ( nlst(did)%bucket_loss .eq. 1 ) then
+           allocate(this%qloss_gwsubbas(numbasins))
+           this%qloss_gwsubbas(numbasins) = 0.0
         end if
 
         if ( allocation_error ) &

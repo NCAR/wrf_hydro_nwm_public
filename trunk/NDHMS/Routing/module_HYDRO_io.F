@@ -1432,20 +1432,19 @@ end subroutine get_albedo12m_netcdf
 !     return
 !  end subroutine SIMP_GW_IND
 
-!Wei Yu
-  subroutine read_GWBUCKPARM (inFile,numbasns,gnumbasns, basnsInd, &
-                 gw_buck_coeff, gw_buck_exp, z_max, &
-                 z_gwsubbas, bas_id,basns_area)
+  subroutine read_GWBUCKPARM (inFile, numbasns, gnumbasns, basnsInd, &
+                 gw_buck_coeff, gw_buck_exp, gw_buck_loss, &
+                 z_max, z_gwsubbas, bas_id, basns_area)
 ! read GWBUCKPARM file
 
    implicit none
    integer, intent(in) :: gnumbasns, numbasns
-   integer, intent(in),dimension(numbasns)  :: basnsInd
-   real, intent(out),dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, &
-                 z_gwsubbas, basns_area
-   integer, intent(out),dimension(numbasns) :: bas_id
-   real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_z_max, &
-                  tmp_z_gwsubbas,  tmp_basns_area
+   integer, intent(in),  dimension(numbasns) :: basnsInd
+   real,    intent(out), dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
+   real,    intent(out), dimension(numbasns) :: z_max, z_gwsubbas, basns_area
+   integer, intent(out), dimension(numbasns) :: bas_id
+   real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_buck_loss
+   real, dimension(gnumbasns) :: tmp_z_max, tmp_z_gwsubbas,  tmp_basns_area
    integer, dimension(gnumbasns) :: tmp_bas_id
    CHARACTER(len=100)                     :: header
    CHARACTER(len=1)                       :: jnk
@@ -1465,9 +1464,11 @@ end subroutine get_albedo12m_netcdf
      if(iret .eq. 0 ) then
         print*, "read GWBUCKPARM file as nc format: " , trim(inFile)
         call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
-!        call get_1d_netcdf_int(ncid, "ComID", tmp_bas_id, "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Coeff",tmp_buck_coeff , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Expon",tmp_buck_exp   , "read GWBUCKPARM", .true.)
+        if(nlst_rt(did)%bucket_loss .eq. 1) then
+           call get_1d_netcdf_real(ncid, "Loss",tmp_buck_loss, "read GWBUCKPARM", .true.)
+        endif
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
@@ -1509,6 +1510,9 @@ end subroutine get_albedo12m_netcdf
    if(gnumbasns .gt. 0 ) then
       call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
       call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
+      if(nlst_rt(did)%bucket_loss .eq. 1) then
+         call mpp_land_bcast_real(gnumbasns,tmp_buck_loss   )
+      endif
       call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
       call mpp_land_bcast_real(gnumbasns,tmp_z_gwsubbas   )
       call mpp_land_bcast_real(gnumbasns,tmp_basns_area   )
@@ -1520,6 +1524,9 @@ end subroutine get_albedo12m_netcdf
        bas = basnsInd(k)
        gw_buck_coeff(k) = tmp_buck_coeff(bas)
        gw_buck_exp(k) = tmp_buck_exp(bas)
+       if(nlst_rt(did)%bucket_loss .eq. 1) then
+          gw_buck_loss(k) = tmp_buck_loss(bas)
+       endif
        z_max(k) = tmp_z_max(bas)
        z_gwsubbas(k) = tmp_z_gwsubbas(bas)
        basns_area(k) = tmp_basns_area(bas)
@@ -9205,17 +9212,19 @@ end function get_netcdf_dim
 
 ! read the GWBUCKET Parm for NHDPlus
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
-                z_max, z_init, LINKID, nhdBuckMask)
+                gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
     integer :: numbasns
     integer, dimension(numbasns) :: LINKID
-    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, z_max, z_init
+    real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
+    real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
     character(len=*) :: infile
 !   define temp array
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer, allocatable, dimension(:) :: tmpLinkid
-    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpz_max, tmpz_init
+    real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
+    real, allocatable, dimension(:) :: tmpz_max, tmpz_init
     integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
 
 !   get gnid
@@ -9242,6 +9251,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     allocate(tmpLinkid(gnid))
     allocate(tmpCoeff(gnid))
     allocate(tmpExp(gnid))
+    allocate(tmpLoss(gnid))
     allocate(tmpz_max(gnid))
     allocate(tmpz_init(gnid))
 #ifdef MPP_LAND
@@ -9261,6 +9271,15 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                call hydro_stop("Failed to read BUCKETPARM")
           endif
           iret = nf90_get_var(ncid, varid, tmpExp)
+
+          if(nlst_rt(did)%bucket_loss .eq. 1) then
+               iret = nf90_inq_varid(ncid,"Loss",  varid)
+               if(iret /= 0) then
+                    print * , "could not find Loss from ", infile
+                    call hydro_stop("Failed to read BUCKETPARM")
+               endif
+               iret = nf90_get_var(ncid, varid, tmpLoss)
+          endif
 
           iret = nf90_inq_varid(ncid,"Zmax",  varid)
           if(iret /= 0) then
@@ -9290,6 +9309,9 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           print * , "--DEBUG-- broadcast of temp arrays"  ! DEBUG STATEMENT
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
+          if(nlst(did)%bucket_loss .eq. 1) then
+             call mpp_land_bcast_real_1d(tmpLoss)
+          endif
           call mpp_land_bcast_real_1d(tmpz_max)
           call mpp_land_bcast_real_1d(tmpz_init)
           call mpp_land_bcast_int(gnid ,tmpLinkid)
@@ -9318,6 +9340,9 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                    print * , "--DEBUG-- writing gw_buck_exp "  ! DEBUG STATEMENT
                    gw_buck_exp(k) = tmpExp(i)
                    print * , "--DEBUG-- writing z_max "  ! DEBUG STATEMENT
+                   if(nlst(did)%bucket_loss .eq. 1) then
+                      gw_buck_loss(k) = tmpLoss(i)
+                   endif
                    z_max(k) = tmpz_max(i)
                    print * , "--DEBUG-- writing z_init "  ! DEBUG STATEMENT
                    print *, "tmpz_init(i) =", tmpz_init(i)
@@ -9333,6 +9358,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
+    if(allocated(tmpLoss)) deallocate(tmpLoss)
     if(allocated(tmpz_max)) deallocate(tmpz_max)
     if(allocated(tmpz_init)) deallocate(tmpz_init)
     if(allocated(tmpLinkid)) deallocate(tmpLinkid)
@@ -9715,7 +9741,7 @@ if (io_config_outputs .le. 0) then
      !-- prevChild
 !        iret = nf90_def_var(ncid, "prevChild", NF90_INT, (/stationdim/), varid)
 !        iret = nf90_put_att(ncid, varid, 'long_name', 'record number of the previous record for the same station')
-        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
+!        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 
      !-- lastChild
 !        iret = nf90_def_var(ncid, "lastChild", NF90_INT, (/stationdim/), varid)
