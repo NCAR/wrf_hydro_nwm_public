@@ -1466,7 +1466,7 @@ end subroutine get_albedo12m_netcdf
         call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Coeff",tmp_buck_coeff , "read GWBUCKPARM", .true.)
         call get_1d_netcdf_real(ncid, "Expon",tmp_buck_exp   , "read GWBUCKPARM", .true.)
-        if(nlst_rt(did)%bucket_loss .eq. 1) then
+        if(nlst(1)%bucket_loss .eq. 1) then
            call get_1d_netcdf_real(ncid, "Loss",tmp_buck_loss, "read GWBUCKPARM", .true.)
         endif
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
@@ -1510,7 +1510,7 @@ end subroutine get_albedo12m_netcdf
    if(gnumbasns .gt. 0 ) then
       call mpp_land_bcast_real(gnumbasns,tmp_buck_coeff)
       call mpp_land_bcast_real(gnumbasns,tmp_buck_exp  )
-      if(nlst_rt(did)%bucket_loss .eq. 1) then
+      if(nlst(1)%bucket_loss .eq. 1) then
          call mpp_land_bcast_real(gnumbasns,tmp_buck_loss   )
       endif
       call mpp_land_bcast_real(gnumbasns,tmp_z_max   )
@@ -1524,7 +1524,7 @@ end subroutine get_albedo12m_netcdf
        bas = basnsInd(k)
        gw_buck_coeff(k) = tmp_buck_coeff(bas)
        gw_buck_exp(k) = tmp_buck_exp(bas)
-       if(nlst_rt(did)%bucket_loss .eq. 1) then
+       if(nlst(1)%bucket_loss .eq. 1) then
           gw_buck_loss(k) = tmp_buck_loss(bas)
        endif
        z_max(k) = tmp_z_max(bas)
@@ -9272,7 +9272,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           endif
           iret = nf90_get_var(ncid, varid, tmpExp)
 
-          if(nlst_rt(did)%bucket_loss .eq. 1) then
+          if(nlst(1)%bucket_loss .eq. 1) then
                iret = nf90_inq_varid(ncid,"Loss",  varid)
                if(iret /= 0) then
                     print * , "could not find Loss from ", infile
@@ -9309,7 +9309,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           print * , "--DEBUG-- broadcast of temp arrays"  ! DEBUG STATEMENT
           call mpp_land_bcast_real_1d(tmpCoeff)
           call mpp_land_bcast_real_1d(tmpExp)
-          if(nlst(did)%bucket_loss .eq. 1) then
+          if(nlst(1)%bucket_loss .eq. 1) then
              call mpp_land_bcast_real_1d(tmpLoss)
           endif
           call mpp_land_bcast_real_1d(tmpz_max)
@@ -9340,7 +9340,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                    print * , "--DEBUG-- writing gw_buck_exp "  ! DEBUG STATEMENT
                    gw_buck_exp(k) = tmpExp(i)
                    print * , "--DEBUG-- writing z_max "  ! DEBUG STATEMENT
-                   if(nlst(did)%bucket_loss .eq. 1) then
+                   if(nlst(1)%bucket_loss .eq. 1) then
                       gw_buck_loss(k) = tmpLoss(i)
                    endif
                    z_max(k) = tmpz_max(i)

@@ -86,7 +86,7 @@ contains
             !     write(0,*) "Failure to allocate groundwater output structure"
             ! else
                 ! initialize the output structure
-           call this%output%init(ixrt,jxrt,numbasins, qloss_gwsubbas)
+           call this%output%init(ixrt,jxrt,numbasins)!, qloss_gwsubbas)
             !end if
 
             !try to allocate aggregation
@@ -112,7 +112,7 @@ contains
 
             ! try to allocate properties
             !allocate ( this%properties )
-            this%properties = bucket_properties_interface(ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm, bucket_loss)
+            this%properties = bucket_properties_interface(ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)!, bucket_loss)
             ! if ( .not. associated(this%properties) ) then
             !     ! if the properties structure could not be created write and error
             !     write(0,*) "Failure to allocate groundwater properties structure"

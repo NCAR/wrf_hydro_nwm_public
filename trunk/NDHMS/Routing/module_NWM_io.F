@@ -5025,7 +5025,7 @@ subroutine output_gw_NWM(domainId,iGrid)
             call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
             if(nlst(domainId)%bucket_loss .eq. 1) then
                fileMeta%outFlag(3) = 1
-               call ReachLS_write_io(rt_domain(domainId)%qloss_gwsubbas,g_qloss_gwsubbas)
+               call ReachLS_write_io(rt_domain(domainId)%groundwater%output%qloss_gwsubbas,g_qloss_gwsubbas)
             endif
          class default
             ! TODO add error for wrong groundwater type
@@ -5044,7 +5044,7 @@ subroutine output_gw_NWM(domainId,iGrid)
                  gwd%basin%basin_index, g_basnsInd)
             if(nlst(domainId)%bucket_loss .eq. 1) then
                fileMeta%outFlag(3) = 1
-               call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qloss_gwsubbas, &
+               call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qloss_gwsubbas, &
                     rt_domain(domainId)%basnsInd,g_qloss_gwsubbas)
             endif
          class default
@@ -5071,7 +5071,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
       g_basnsInd = rt_domain(domainId)%linkid
-      if(nlst_rt(domainId)%bucket_loss .eq. 1) then
+      if(nlst(domainId)%bucket_loss .eq. 1) then
          fileMeta%outFlag(3) = 1
          g_qloss_gwsubbas = rt_domain(domainId)%qloss_gwsubbas
       endif

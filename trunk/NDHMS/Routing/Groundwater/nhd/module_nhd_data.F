@@ -170,10 +170,12 @@ contains
             ground_water_data%properties%cell_area_lsm, &
             ground_water_data%properties%gw_buck_coeff, &
             ground_water_data%properties%gw_buck_exp, &
+            ground_water_data%properties%gw_buck_loss, &
             ground_water_data%properties%z_max, &
             ground_water_data%state%z_gwsubbas, &
             ground_water_data%output%qout_gwsubbas, &
             ground_water_data%input%qin_gwsubbas, &
+            ground_water_data%output%qloss_gwsubbas, &
             ground_water_data%static_data%gwbaseswcrt, &
             ground_water_data%static_data%ovrtswcrt, &
 #ifdef MPP_LAND
@@ -183,6 +185,7 @@ contains
 #endif
             ground_water_data%basin%basin_area, &
             ground_water_data%basin%nhd_bucket_mask, &
+            nlst(1)%bucket_loss, &
             ground_water_data%basin%channel_bucket_only)
 
     end subroutine
