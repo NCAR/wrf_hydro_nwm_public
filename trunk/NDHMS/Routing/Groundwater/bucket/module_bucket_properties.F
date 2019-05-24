@@ -107,7 +107,7 @@ contains
        allocation_error = .true.
     end if
 
-    if(nlst(did)%bucket_loss .eq. 1) then
+    if(nlst(1)%bucket_loss .eq. 1) then
        allocate(new_properties%gw_buck_loss(numbasins))
        new_properties%gw_buck_loss = 0.0
     end if

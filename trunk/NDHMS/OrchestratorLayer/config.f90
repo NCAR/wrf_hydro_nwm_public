@@ -135,6 +135,7 @@ module config_base
      logical            :: noConstInterfBias  
      character(len=256) :: timeSlicePath
      integer            :: nLastObs
+     integer            :: bucket_loss
 
    contains
 
@@ -322,6 +323,12 @@ contains
           if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_link_f not found.')
        endif
     endif
+   if( (self%bucket_loss .lt. 0 ) .or. (self%bucket_loss .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid bucket_loss specified')
+   endif
+   if( (self%bucket_loss .eq. 1 ) .and. (self%UDMP_OPT .ne. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Bucket loss only available when UDMP=1')
+   endif
     if( (self%GWBASESWCRT .lt. 0 ) .or. (self%GWBASESWCRT .gt. 2) ) then
        call hydro_stop('hydro.namelist ERROR: Invalid GWBASESWCRT specified')
     endif
@@ -390,7 +397,7 @@ contains
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-         UDMP_OPT, io_form_outputs
+         UDMP_OPT, io_form_outputs, bucket_loss
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -465,7 +472,7 @@ contains
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
-         frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, &
+         frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
          io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
 
 #ifdef WRF_HYDRO_NUDGING
@@ -493,6 +500,7 @@ contains
     TERADJ_SOLAR = 0
     reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
     compound_channel = .FALSE.
+    bucket_loss = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -629,6 +637,7 @@ contains
     nlst(did)%dxrt0 = dxrt
     nlst(did)%AGGFACTRT = AGGFACTRT
     nlst(did)%GWBASESWCRT = GWBASESWCRT
+    nlst(did)%bucket_loss = bucket_loss
     nlst(did)%GWSOILCPL= GWSOILCPL
     nlst(did)%gwChanCondSw = gwChanCondSw
     nlst(did)%gwChanCondConstIn = gwChanCondConstIn

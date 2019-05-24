@@ -7,6 +7,7 @@
 !! this information would require modification of other parts of the model.
 
 module module_groundwater_base
+  use config_base, only: nlst
 
     !> Virtual base for groundwater state classes
     type, abstract ::  groundwater_base_state_struct
@@ -202,7 +203,7 @@ contains
             allocation_error = .true.
         end if
 
-        if ( nlst(did)%bucket_loss .eq. 1 ) then
+        if ( nlst(1)%bucket_loss .eq. 1 ) then
            allocate(this%qloss_gwsubbas(numbasins))
            this%qloss_gwsubbas(numbasins) = 0.0
         end if
