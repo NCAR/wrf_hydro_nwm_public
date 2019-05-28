@@ -60,6 +60,7 @@ endif
 
 RMD	    = rm -f
 COMPILER90  = mpif90
+PREPROC     = -fpp
 FORMAT_FREE = -FR
 BYTESWAPIO  = -convert big_endian
 F90FLAGS    = -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise $(FORMAT_FREE) $(BYTESWAPIO)
