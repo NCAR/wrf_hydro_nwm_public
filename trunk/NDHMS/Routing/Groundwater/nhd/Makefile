@@ -32,7 +32,7 @@ mod:
 	ar -r ../../../lib/libHYDRO.a module_nhd_basin.o
 	ar -r ../../../lib/libHYDRO.a module_nhd_tests.o
 	ar -r ../../../lib/libHYDRO.a module_nhd_data.o
-	
+
 	cp *.mod ../../../mod
 clean:
 	rm -f *.o

@@ -52,6 +52,11 @@ else
 PRECIP_DOUBLE = 
 endif
 
+ifeq ($(NCEP_WCOSS),1)
+NCEP_WCOSS = -DNCEP_WCOSS
+else
+NCEP_WCOSS =
+endif
 
 RMD		=	rm -f
 COMPILER90=	mpif90
@@ -61,7 +66,7 @@ MODFLAG	=	-I"./" -I"../../MPP" -I"../MPP" -I"../mod"
 LDFLAGS	=	
 CPP	=       cpp
 CPPFLAGS	=        -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT)  $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
-
+FPPFLAGS    = -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE) $(NCEP_WCOSS)
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
 NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
