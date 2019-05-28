@@ -9,10 +9,10 @@ module netcdf_layer_base
      procedure (nf90_inq_varid), pointer, nopass :: inq_varid => nf90_inq_varid
      procedure (nf90_close), pointer, nopass :: close_file => nf90_close
 
-     procedure (), pointer, nopass :: put_var => nf_put_var
-     procedure (), pointer, nopass :: get_var => nf_get_var
-     procedure (), pointer, nopass :: put_att => nf_put_att
-     procedure (), pointer, nopass :: def_var => nf_def_var
+     procedure (integer), pointer, nopass :: put_var => nf_put_var
+     procedure (integer), pointer, nopass :: get_var => nf_get_var
+     procedure (integer), pointer, nopass :: put_att => nf_put_att
+     procedure (integer), pointer, nopass :: def_var => nf_def_var
    contains
      procedure (create_file_signature), pass(object), deferred :: create_file
   end type NetCDF_layer_
