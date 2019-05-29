@@ -1877,9 +1877,12 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
       iret = nf90_def_dim(ftn,'reference_time',1,dimId(4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
-      iret = nf90_def_dim(ftn,'soil_layers_stag',fileMeta%numSoilLayers,dimId(5))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
-
+      ! Only create soil layers stag dimension if we are outputting to the soil moisture grid. 
+      ! Otherwise this creates unused dimensions. 
+      if (fileMeta%outFlag(5) .eq. 1) then
+         iret = nf90_def_dim(ftn,'soil_layers_stag',fileMeta%numSoilLayers,dimId(5))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
+      end if
       ! Create and populate reference_time and time variables.
       iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create time variable')
