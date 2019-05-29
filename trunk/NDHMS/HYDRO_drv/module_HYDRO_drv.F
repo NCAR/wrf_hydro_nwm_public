@@ -50,6 +50,7 @@ module module_HYDRO_drv
 
    use module_UDMAP, only: get_basn_area_nhd
    use module_nhd_data
+   use module_simple_groundwater_data
    use netcdf
 
    implicit none
@@ -1530,8 +1531,8 @@ select type (gwd => rt_domain(did)%groundwater)
     type is (nhd_groundwater_struct)
         call get_basn_area_nhd(gwd%basin%basin_area)
     !FIXME
-    !type is (simple_groundwater_struct)
-    !    call get_basn_area(did)
+    type is (simple_groundwater_struct)
+       call get_basn_area(did)
     class default
         call HYDRO_stop("unexpected groundwater type")
 end select

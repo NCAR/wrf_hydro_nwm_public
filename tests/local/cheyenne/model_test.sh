@@ -78,6 +78,8 @@ Usage Examples:
     --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
 "
 
+orig_dir=`pwd`
+
 ## Default options
 compiler=ifort
 mpi=impi
@@ -88,7 +90,7 @@ nnodes=to_calculate
 queue=regular
 account=NRAL0017
 walltime=01:00:00
-reference_update=true
+reference_update=false
 domain_dir=/glade/work/jamesmcc/domains/private/CONUS
 
 # Getops
@@ -143,7 +145,7 @@ exe_cmd=`eval "echo $exe_cmd"`
 if [ "$compiler" == ifort ]; then
     compiler_module=intel/17.0.1
 elif [ "$compiler" == gfort ]; then
-    compiler_module=gnu/7.0.1
+    compiler_module=gnu/8.1.0
 else
     compiler_module=$compiler
     if [[ "$compiler" == *intel* ]]; then
@@ -159,16 +161,17 @@ echo
 printf "\e[7;49;94mModule information\e[0m\n"
 module purge
 # Is this strict enough in the sense that things might be changing?
-module load  $compiler_module  $mpi  ncarcompilers  netcdf  ncarenv || exit 4
+module load  $compiler_module  $mpi  ncarcompilers  netcdf/4.4.1.1  ncarenv || exit 4
 module list
 
 #-------------------------------------------------------
 # Python Env
 deactivate > /dev/null 2>&1
-source /glade/scratch/katelynw/test-env/bin/activate || exit 9
+source /glade/u/home/katelynw/python/envs/testing/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
+cd $candidate_dir
 branch_name="$(git symbolic-ref HEAD 2>/dev/null)" || branch_name="$(git rev-parse --short HEAD)"
 branch_name=${branch_name##refs/heads/}
 printf "\e[7;49;94mTesting branch: $branch_name in $candidate_dir\e[0m\n"
@@ -187,12 +190,12 @@ if [[ $reference_update == 'true' ]]; then
     if [[ `hostname` != *cheyenne* ]]; then
         ssh cheyenne1 "cd $reference_dir && git fetch upstream" || exit 9
     else
-        cd $reference_dir || exit 9
         git fetch upstream || exit 9
     fi             
-    git checkout origin/$branch_name  || exit 9
-    cd - 2> /dev/null cd 1> /dev/null
+    git checkout upstream/$branch_name  || exit 9
 fi
+
+cd $orig_dir
 
 #-------------------------------------------------------
 echo; echo

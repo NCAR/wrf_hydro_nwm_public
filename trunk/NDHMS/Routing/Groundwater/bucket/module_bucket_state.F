@@ -21,7 +21,7 @@ module module_bucket_state
      real, allocatable, dimension(:) :: z_gwsubbas
      
    contains
-     final :: bucket_state_destroy
+     !final :: bucket_state_destroy
      !procedure :: init => bucket_state_init
      !procedure :: destroy => buket_state_destroy
   end type bucket_state_interface

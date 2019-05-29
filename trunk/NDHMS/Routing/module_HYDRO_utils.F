@@ -347,6 +347,7 @@ contains
 
     subroutine get_basn_area(did)
         use module_nhd_data
+        use module_simple_groundwater_data
         implicit none
         integer :: did, ix,jx, k
         real :: basns_area(rt_domain(did)%gnumbasns)
@@ -382,9 +383,9 @@ contains
             class is (nhd_groundwater_struct)
                 call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
             ! FIXME UNCOMMENT when simple groundwater module is done
-            !class is (simple_groundwater_struct)
-            !    call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
-            !    rt_domain(did)%basnsInd, basns_area,gwd%basin%basin_area)
+            class is (simple_groundwater_struct)
+               call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
+               gwd%basin%basin_index, basns_area,gwd%basin%basin_area)
             class default
                 call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
 
@@ -394,8 +395,8 @@ contains
             class is (nhd_groundwater_struct)
                 call HYDRO_stop("Nhd_groundwater_object passed to get_basn_area(). This groundwater type is not valid for this subroutine")
             ! FIXME UNCOMMENT when simple groundwater module is done
-            !class is (simple_groundwater_struct)
-            !call get_area_g(gwd%basin%basin_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+            class is (simple_groundwater_struct)
+               call get_area_g(gwd%basin%basin_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
             class default
                 call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
 #endif

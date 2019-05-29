@@ -35,7 +35,7 @@ module module_bucket_properties
 
     contains
 
-      final :: bucket_properties_destroy
+      !final :: bucket_properties_destroy
         !procedure :: init => bucket_properties_init
         !procedure :: destroy => bucket_properties_destroy
     end type bucket_properties_interface

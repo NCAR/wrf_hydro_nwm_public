@@ -6133,9 +6133,9 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
                     ,rt_domain(did)%gnlinksl  &
 #endif
                     )
-                type is (simple_groundwater_struct)
+                 type is (simple_groundwater_struct)
                     call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
-                        gwd%basin%basin_index, gwd%state%z_gwsubbas,"z_gwsubbas" )
+                         gwd%basin%basin_index, gwd%state%z_gwsubbas,"z_gwsubbas" )
                 class default
                     stop 'Unexpected groundwater type structure in RESTART_OUT_nc()'
                     !call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas, "z_gwsubbas"  &
