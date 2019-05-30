@@ -5041,8 +5041,8 @@ subroutine output_gw_NWM(domainId,iGrid)
             call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%groundwater%output%qout_gwsubbas,  &
                  gwd%basin%basin_index,g_qout_gwsubbas)
             ! TODO update this when simple groundwater module is completed
-            !call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%z_gwsubbas,  &
-            !                      rt_domain(domainId)%basnsInd,g_z_gwsubbas)
+            call gw_write_io_real(rt_domain(domainId)%numbasns,gwd%state%z_gwsubbas,  &
+                 gwd%basin%basin_index,g_z_gwsubbas)
             call gw_write_io_int(rt_domain(domainId)%numbasns, gwd%basin%basin_index, &
                  gwd%basin%basin_index, g_basnsInd)
             if(nlst(domainId)%bucket_loss .eq. 1) then

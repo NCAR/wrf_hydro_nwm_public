@@ -1292,7 +1292,7 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                          rt_domain(did)%dist_lsm(:,:,9))
                     
 #ifdef HYDRO_D
-                    write(6,*) "rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, ", rt_domain(did)%gnumbasns , rt_domain(did)%numbasns
+                    write(6,*) "rt_domain(did)%gnumbasns, gwd%basin%num_basins, ", rt_domain(did)%gnumbasns, gwd%basin%num_basins
 #endif
                     
 #ifdef MPP_LAND
@@ -1306,12 +1306,12 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                     
                     
                     call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
-                         rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                         gwd%basin%num_basins,gwd%basin%global_num_basins,gwd%basin%basin_index)
 #ifdef MPP_LAND
-                    call collectSizeInd(rt_domain(did)%numbasns)
+                    call collectSizeInd(gwd%basin%num_basins)
 #endif
                     call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
-                         rt_domain(did)%numbasns,gwd%basin%basin_index,gwd%basin%stream_mask_index)
+                         gwd%basin%num_basins,gwd%basin%basin_index,gwd%basin%stream_mask_index)
                  class default
                  end select
                  
@@ -1334,20 +1334,24 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
 
                     !Temporary hardwire...
                     !rt_domain(did)%z_gwsubbas = 1.     ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
-                    
-                    ! Alessandro: This function takes the new gw_buck_loss argument
-
-                    ! call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
-                    !      rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
-                    !      rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%gw_buck_loss, &
-                    !      rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
 
                     !!! Determine number of stream pixels per GW basin for distribution...
 #ifdef MPP_LAND
                     select type (gwd => rt_domain(did)%groundwater)
                         type is (simple_groundwater_struct)
-                            call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
-                                rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                           ! Alessandro: This function takes the new gw_buck_loss argument
+                           call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file), &
+                                gwd%basin%num_basins,   &
+                                gwd%basin%global_num_basins, &
+                                gwd%basin%basin_index, &
+                                gwd%properties%gw_buck_coeff, &
+                                gwd%properties%gw_buck_exp, &
+                                gwd%properties%gw_buck_loss, &
+                                gwd%properties%z_max, &
+                                gwd%state%z_gwsubbas, rt_domain(did)%bas_id,gwd%basin%basin_area)
+                           
+                           call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,gwd%basin%num_basins, &
+                                gwd%basin%global_num_basins,gwd%basin%basin_index)
                     end select
 #else
                     select type (gwd => rt_domain(did)%groundwater)

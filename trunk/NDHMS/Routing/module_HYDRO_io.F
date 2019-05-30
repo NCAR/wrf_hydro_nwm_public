@@ -6231,7 +6231,7 @@ end if  ! end if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
                             write(iunit,ERR=101) gwd%state%z_gwsubbas
                         class default
                             ! TODO update when simple groundwater is complete
-                            !write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                            ! write(iunit,ERR=101) gwd%state%z_gwsubbas
                     end select
                 end if
                 if(nlst(did)%SUBRTSWCRT.EQ.1.OR.nlst(did)%OVRTSWCRT.EQ.1) then
@@ -6328,10 +6328,10 @@ end if  ! end if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
                 if(nlst(did)%GWBASESWCRT.EQ.1) then
                     select type ( gwd => rt_domain(did)%groundwater )
                         type is (nhd_groundwater_struct)
-                            read(iunit,ERR=101) gwd%state%z_gwsubbas
+                           read(iunit,ERR=101) gwd%state%z_gwsubbas
                         class default
                         !TODO update when simple groundwater is complete
-                        !read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
+                           ! read(iunit,ERR=101) gwd%state%z_gwsubbas
                     end select
                 end if
                 if(nlst(did)%SUBRTSWCRT.EQ.1.OR.nlst(did)%OVRTSWCRT.EQ.1) then

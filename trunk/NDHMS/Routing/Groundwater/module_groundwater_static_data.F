@@ -25,7 +25,7 @@ module module_groundwater_static_data
 
 contains
 
-  final :: groundwater_static_struct_destroy
+  !final :: groundwater_static_struct_destroy
   !procedure :: init => groundwater_static_struct_init
   !procedure :: destroy => groundwater_static_struct_destroy
 end type groundwater_static_struct
