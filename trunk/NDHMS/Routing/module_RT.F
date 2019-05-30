@@ -1303,15 +1303,22 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                          rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
                          rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst(did)%gwbasmskfil,&
                          gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
-                    
+                         ! gwd%basin%stream_mask,gwd%basin%num_basins,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
                     
                     call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
-                         gwd%basin%num_basins,gwd%basin%global_num_basins,gwd%basin%basin_index)
+                         rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                         ! gwd%basin%num_basins,gwd%basin%global_num_basins,gwd%basin%basin_index)
 #ifdef MPP_LAND
-                    call collectSizeInd(gwd%basin%num_basins)
+                    call collectSizeInd(rt_domain(did)%numbasns)
+                    ! call collectSizeInd(gwd%basin%num_basins)
 #endif
                     call get_gw_strm_msk_lind (rt_domain(did)%IXRT, rt_domain(did)%JXRT, gwd%basin%stream_mask, &
-                         gwd%basin%num_basins,gwd%basin%basin_index,gwd%basin%stream_mask_index)
+                         rt_domain(did)%numbasns,gwd%basin%basin_index,gwd%basin%stream_mask_index)
+                         ! gwd%basin%num_basins,gwd%basin%basin_index,gwd%basin%stream_mask_index)
+                    ! They must go eventually
+                    ! rt_domain(did)%numbasns = gwd%basin%num_basins
+                    ! rt_domain(did)%gnumbasns = gwd%basin%global_num_basins
+                    
                  class default
                  end select
                  
@@ -1341,17 +1348,27 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                         type is (simple_groundwater_struct)
                            ! Alessandro: This function takes the new gw_buck_loss argument
                            call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file), &
-                                gwd%basin%num_basins,   &
-                                gwd%basin%global_num_basins, &
+                                rt_domain(did)%numbasns,   &
+                                rt_domain(did)%gnumbasns, &
                                 gwd%basin%basin_index, &
                                 gwd%properties%gw_buck_coeff, &
                                 gwd%properties%gw_buck_exp, &
                                 gwd%properties%gw_buck_loss, &
                                 gwd%properties%z_max, &
                                 gwd%state%z_gwsubbas, rt_domain(did)%bas_id,gwd%basin%basin_area)
-                           
-                           call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,gwd%basin%num_basins, &
-                                gwd%basin%global_num_basins,gwd%basin%basin_index)
+                           ! call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file), &
+                           !      gwd%basin%num_basins,   &
+                           !      gwd%basin%global_num_basins, &
+                           !      gwd%basin%basin_index, &
+                           !      gwd%properties%gw_buck_coeff, &
+                           !      gwd%properties%gw_buck_exp, &
+                           !      gwd%properties%gw_buck_loss, &
+                           !      gwd%properties%z_max, &
+                           !      gwd%state%z_gwsubbas, rt_domain(did)%bas_id,gwd%basin%basin_area)
+                           call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,rt_domain(did)%numbasns, &
+                                rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+                           ! call pix_ct_1(gwd%basin%stream_mask,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%gwbas_pix_ct,gwd%basin%num_basins, &
+                           !      gwd%basin%global_num_basins,gwd%basin%basin_index)
                     end select
 #else
                     select type (gwd => rt_domain(did)%groundwater)

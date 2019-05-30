@@ -1532,7 +1532,9 @@ select type (gwd => rt_domain(did)%groundwater)
         call get_basn_area_nhd(gwd%basin%basin_area)
     !FIXME
     type is (simple_groundwater_struct)
+       print *, "About to enter get_basn_area"
        call get_basn_area(did)
+       print *, "Out of get_bsn_area"
     class default
         call HYDRO_stop("unexpected groundwater type")
 end select

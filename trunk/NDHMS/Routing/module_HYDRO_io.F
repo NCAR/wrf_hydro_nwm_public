@@ -1298,7 +1298,7 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
     character(len=*)                      :: gwbasmskfil
     integer                                 :: i,j,aggfacxrt,aggfacyrt,ixxrt,jyyrt
-    integer :: iret, ncid
+    integer :: iret, ncid, info
     logical :: fexist
     integer, allocatable, dimension(:,:)  :: GWSUBBASMSK_tmp
 
@@ -1314,7 +1314,8 @@ end subroutine get_albedo12m_netcdf
     if( iret .eq. 0 ) then
        iret = nf90_close(ncid)
        print*, "read gwbasmskfil as nc format: ", trim(gwbasmskfil)
-         allocate(GWSUBBASMSK_tmp(ix,jx))
+         allocate(GWSUBBASMSK_tmp(ix,jx),stat=info)
+         print*, "GWSUBBASMSK allocated", info
          call get2d_int("BASIN",GWSUBBASMSK_tmp,ix,jx,trim(gwbasmskfil), .true.)
          do j = jx, 1, -1
               GWSUBBASMSK(:,j) = GWSUBBASMSK_tmp (:,jx-j+1)
@@ -1464,14 +1465,21 @@ end subroutine get_albedo12m_netcdf
      if(iret .eq. 0 ) then
         print*, "read GWBUCKPARM file as nc format: " , trim(inFile)
         call get_1d_netcdf_int(ncid, "Basin", tmp_bas_id, "read GWBUCKPARM", .true.)
+        print*, "Basin just read"
         call get_1d_netcdf_real(ncid, "Coeff",tmp_buck_coeff , "read GWBUCKPARM", .true.)
+        print*, "Coeff just read"
         call get_1d_netcdf_real(ncid, "Expon",tmp_buck_exp   , "read GWBUCKPARM", .true.)
+        print*, "Expon just read"
         if(nlst(1)%bucket_loss .eq. 1) then
            call get_1d_netcdf_real(ncid, "Loss",tmp_buck_loss, "read GWBUCKPARM", .true.)
+           print*, "Loss just read"
         endif
         call get_1d_netcdf_real(ncid, "Zmax" ,tmp_z_max      , "read GWBUCKPARM", .true.)
+        print*, "Z_max just read"
         call get_1d_netcdf_real(ncid, "Zinit",tmp_z_gwsubbas , "read GWBUCKPARM", .true.)
+        print*, "Z_init just read"
         call get_1d_netcdf_real(ncid, "Area_sqkm",tmp_basns_area , "read GWBUCKPARM", .true.)
+        print*, "Area_sqkm just read"
         iret = nf90_close(ncid)
      else
         !iret = nf90_close(ncid)

@@ -376,6 +376,7 @@ contains
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
             call get_area_g(basns_area,mask, rt_domain(did)%gnumbasns,ix,jx,dist_lsm)
+            ! call get_area_g(basns_area,mask, global_num_basins,ix,jx,dist_lsm)
         end if
         !call mpp_land_bcast_real(rt_domain(did)%numbasns,rt_domain(did)%basns_area)
 
@@ -386,6 +387,8 @@ contains
             class is (simple_groundwater_struct)
                call gw_decompose_real(rt_domain(did)%gnumbasns, rt_domain(did)%numbasns, &
                gwd%basin%basin_index, basns_area,gwd%basin%basin_area)
+               ! call gw_decompose_real(gwd%basin%global_num_basins, gwd%basin%num_basins, &
+               ! gwd%basin%basin_index, basns_area,gwd%basin%basin_area)
             class default
                 call HYDRO_stop("Unknown groundwater type passed to get_basn_area(). This groundwater type is not valid for this subroutine")
 
