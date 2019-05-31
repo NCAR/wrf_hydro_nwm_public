@@ -112,11 +112,12 @@ contains
 
     ! Checks and modifies for boundary conditions of negative outflow or exceeding min or max storage
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
-        lake_number, current_time, time_interval, outflow, water_elevation, lake_max_water_elevation)
-        real, intent(in)    :: inflow, previous_time_storage, min_storage, max_storage, lake_max_water_elevation
-        integer, intent(in) :: lake_number, current_time, time_interval
-        real, intent(inout) :: outflow, water_elevation
-        real                :: excess, projected_next_time_interval_storage
+        lake_number, current_time, time_interval, outflow, max_storage_reached)
+        real, intent(in)        :: inflow, previous_time_storage, min_storage, max_storage
+        integer, intent(in)     :: lake_number, current_time, time_interval
+        real, intent(inout)     :: outflow
+        logical, intent(inout)  :: max_storage_reached
+        real                    :: excess, projected_next_time_interval_storage
 
         if (outflow < 0.0) then
             write(log_warning,*) "Calculations return a negative outflow for reservoir ", lake_number
@@ -133,14 +134,9 @@ contains
 
             ! This releases only the excess water. If the new outflow is added to the existing outflow,
             ! then the reservoir maintains storage at the last value before exceeding maximum.
-            outflow = (projected_next_time_interval_storage - max_storage) / time_interval
+            outflow = inflow - (max_storage - previous_time_storage) / time_interval
 
-            ! Calculate and release excess water.
-            excess = inflow - (max_storage - previous_time_storage) / time_interval
-
-            outflow = excess
-
-            water_elevation = lake_max_water_elevation
+            max_storage_reached = .true.
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
@@ -153,7 +149,9 @@ contains
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage <= 0.0) then
+
             outflow = previous_time_storage / time_interval
+
             write(log_warning,*)  "Modified release to prevent storage deficit for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
