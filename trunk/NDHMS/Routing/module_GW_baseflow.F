@@ -140,10 +140,6 @@ contains
                    ii =  LUDRSL(k)%cell_i(m)
                    jj =  LUDRSL(k)%cell_j(m)
                    if(ii .gt. 0 .and. jj .gt. 0) then
-                      if(OVRTSWCRT.ne.1) then
-                           LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-                               *cellArea(ii,jj)
-                      endif
                            LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                *cellArea(ii,jj)
                    endif
