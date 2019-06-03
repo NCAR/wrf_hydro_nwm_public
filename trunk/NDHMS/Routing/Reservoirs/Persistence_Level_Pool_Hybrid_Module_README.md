@@ -3,13 +3,13 @@
 ### General Purpose and Functionality
 
 The purpose of this module is to persist observed reservoir discharges in order to improve the accuracy of discharge predictions. This
-module simultaneously runs the Level Pool Module to calculate a release at each timestep.
+module simultaneously runs the Level Pool module to calculate a release at each timestep.
 
 The observed discharge and the calculated
 level pool release are each multiplied by a fractional weight and then summed to give a final calculated release. The fractional weights
 are determined by the length of model time between the observed discharge and the current release calculation. For example, if a release
 is calculated 12 hours in model time after an observation is read, then a weight of 1.0 might be applied to this observed discharge, and
-a corresponding weight of 0.0 would be a applied to the level pool calculated release. The resulting summed release would be the same as
+a corresponding weight of 0.0 would be applied to the level pool calculated release. The resulting summed release would be the same as
 the observed discharge. If a release is calculated 5 days in model time after an observation is read, then a weight of 0.2 might be
 applied to the observed discharge, and a corresponding weight of 0.8 would be applied to the level pool calculated release. These weighted
 values would then be summed to give a final release. If observations are missing or are not good quality for a given time window, then
@@ -25,15 +25,20 @@ release is modified accordingly.
 
 ### Input Parameters
 
-This module requires five input parameters that are set in hydro.namelist. In order for this module to be activated, the
-'reservoir_persistence' boolean parameter will need to be set to 'True'. This will cause the model to read the Q_Type variable
+This module requires five input parameters that are set in hydro.namelist.
+
+* ```reservoir_persistence``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated. This will cause the model to read the Q_Type variable
 from LAKEPARM.nc, the lake parameter file. The Q_Type for a hybrid reservoir is currently set to '2' in the lake parameter file.
-The 'reservoir_persistence_parameter_file' will also need to be set. The reservoir_timeslice_path will be the path to all the
+
+* ```reservoir_persistence_parameter_file``` is the NetCDF parameter file that holds the weights and corresponding gage ID for each lake ID.
+
+* ```reservoir_timeslice_path``` is the path to all the
 timeslice files used by this module.
 
-The integer parameter, 'reservoir_observation_lookback_hours', specifies how many hours before the model start time the module will
-search for a corresponding timeslice file, and '18' would be a typical value and is the default. The
-'reservoir_observation_update_time_interval_seconds' parameter determines how often the reservoirs will look for a new timeslice
+* ```reservoir_observation_lookback_hours``` is an integer parameter that specifies how many hours before the model start time the module will
+search for a corresponding timeslice file, and '18' would be a typical value and is the default.
+
+* ```reservoir_observation_update_time_interval_seconds``` is an integer parameter that determines how often the reservoirs will look for a new timeslice
 observation, and '86400', the number of seconds in a day, would be a typical value and is the default. If the model is set to run any
 type of forecast, then the 'reservoir_observation_update_time_interval_seconds' parameter will automatically be set to 1,000,000,000
 seconds in order to prevent the module from reading any new timeslice observations after the first timestep.
@@ -91,5 +96,18 @@ for reading variables from the reservoir persistence parameter and timeslice Net
 
 ### Testing
 
-To compile and run the unit tests, go to the Reservoir directory in the terminal and type "make test". Then type
-"./reservoir_tests". The user should see "All Reservoir Tests Passed".
+To compile and run the unit tests, go to the Reservoir directory in the terminal and type
+
+```
+make test
+```
+
+and hit enter. Then type
+
+```
+./reservoir_tests
+```
+
+and hit enter.
+The user should see "All Reservoir Tests Passed".
+
