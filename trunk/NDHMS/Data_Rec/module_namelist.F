@@ -196,8 +196,8 @@ CONTAINS
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
            call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
-      if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1) &
-           call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1.")
+      if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2) &
+           call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1 or 2.")
    end if
 
    if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
