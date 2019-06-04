@@ -60,6 +60,7 @@ rst_bi_in = 0      !0: use netcdf input restart file
 rst_bi_out = 0     !0: use netcdf output restart file
                    !1: use parallel io for outputting multiple restart files (1 per core)
 
+/
 
 &WRF_HYDRO_OFFLINE
 
