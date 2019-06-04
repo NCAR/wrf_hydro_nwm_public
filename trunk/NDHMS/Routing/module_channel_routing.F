@@ -325,8 +325,11 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2.0000 - Km*X)/D
            C3 =  (Km*(1.00000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3))
-!           C4 =  (ql*dt)/D
-           C4 =  (ql*dt)/D - (ChannK * (WPk + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
+           if(ChannK .lt. 0.0) then ! Disable channel loss for zero ChannK
+             C4 =  (ql*dt)/D
+           else
+             C4 =  (ql*dt)/D - (ChannK * (WPk + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
+           endif
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
 ! Another sanity check, prevent channel loss from exceeding flow
@@ -401,8 +404,11 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2.000000 - Km*X)/D
            C3 =  (Km*(1.000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3)) !! eliminate influence of upstream current
-!           C4 =  (ql*dt)/D
-           C4 =  (ql*dt)/D  - (ChannK * dx * (WPk+WPC))  !-- (loss units: m/s * m * m)
+           if(ChannK .lt. 0.0) then ! Disable channel loss for zero ChannK
+             C4 =  (ql*dt)/D
+           else
+             C4 =  (ql*dt)/D  - (ChannK * dx * (WPk+WPC))  !-- (loss units: m/s * m * m)
+           endif
 
            if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
             C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
