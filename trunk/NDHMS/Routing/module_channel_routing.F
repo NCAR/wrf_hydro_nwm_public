@@ -164,7 +164,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(INOUT)    :: qdc        ! flow downstream current timestep
         REAL, intent(IN)       :: ql         ! lateral inflow through reach (m^3/sec)
         REAL, intent(IN)       :: Bw         ! bottom width (meters)
-        REAL, intent(IN)       :: ChannK     ! Channel conductivity (m/s)
         REAL, intent(IN)       :: Tw         ! top width before bankfull (meters)
         REAL, intent(IN)       :: TwCC       ! top width of Compund (meters)
         REAL, intent(IN)       :: nCC        ! mannings of compund
