@@ -234,9 +234,9 @@ CONTAINS
             !allocate(rt_domain(did)%qinflowbase  (IXRT,JXRT) )
             !rt_domain(did)%qinflowbase = 0.0
 
-            !allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
-            !rt_domain(did)%gw_strm_msk   = 0
-            !allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
+            allocate(rt_domain(did)%gw_strm_msk  (IXRT,JXRT) )
+            rt_domain(did)%gw_strm_msk   = 0
+            allocate(rt_domain(did)%gw_strm_msk_lind  (IXRT,JXRT) )
 
             ! allocate land surface grid variables
             allocate( rt_domain(did)%SMC  (IX,JX,NSOIL) )
@@ -1272,6 +1272,8 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                  print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
 
+                 rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
+                 RT_DOMAIN(did)%gnumbasns = rt_domain(did)%gNLINKSL
                  ! create the simple groundwater object
                  allocate( simple_groundwater_struct :: rt_domain(did)%groundwater)
                  
