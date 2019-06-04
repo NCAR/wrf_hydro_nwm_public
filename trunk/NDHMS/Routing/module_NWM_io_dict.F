@@ -17,7 +17,6 @@ use module_namelist, only: nlst_rt
 implicit none
 
 ! Declare parameter values for module.
-!character (len=512), parameter :: codeVersion = "WRF-Hydro v5.0.0-dev"
 integer, parameter :: numChVars = 11
 integer, parameter :: numLdasVars = 97
 integer, parameter :: numRtDomainVars = 5
