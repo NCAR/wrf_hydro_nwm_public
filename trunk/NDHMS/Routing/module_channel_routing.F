@@ -180,14 +180,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
 !--local variables
         REAL    :: C1, C2, C3, C4
-
-! ORIGINAL VARIABLES FROM NWM V1.2 THAT NO LONGER APPEAR, COMMENTED OUT
-
-!-- channel geometry and characteristics
-!        REAL    :: Tw         ! top width at peak flow
-!        REAL    :: error
-! END COMMENTED OUT VARIABLES
-
         REAL    :: Km             !K travel time in hrs in reach
         REAL    :: X              !weighting factors 0<=X<=0.5
         REAL    :: Ck             ! wave celerity (m/s)
@@ -270,19 +262,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
           !----- lower interval  --------------------
 
-! Old Code is commented out here, no way to deal with cases when h_0 is zero in new code
-!          Tw = Bw + 2*z*h_0                    !--top width of the channel inflow
-!          if(h_0 .le. 0.0) then
-!             AREA= 0.0
-!             R = 0.0
-!             WP = 0.0
-!           else
-!            AREA = (Bw * h_0 + z * (h_0*h_0) )
-!            WP = (Bw + 2 * h_0 * sqrt(1+z*z))
-!            R   = AREA/ WP
-!           endif
-!           WPk = WP*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
-! End of Old Code
            Twl = Bw + 2.0*z*h_0      !--top surface water width of the channel inflow
 
             if(h_0 .gt. bfd) then !water outside of defined channel
@@ -341,24 +320,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
               call hydro_stop("In MUSKINGCUNGE() - D is 0.")
            endif 
  
-! Another block of old code 
-!           C1 =  (Km*X + dt/2)/D
-!           C2 =  (dt/2 - Km*X)/D
-!           C3 =  (Km*(1-X)-dt/2)/D
-!           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
-!           C4 =  (ql*dt)/D - (ChannK * WPk  * dx)  !-- DY & LKR lat inflow + channel loss
-           !TML-- channel loss now uses modified WP (from KINEROS2)           
-
-!           if(R .le. 0.0) then 
-!              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-!           else 
-!              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then
-!               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
-!              endif
-!             Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/n) * AREA * (R**(2./3.)) * sqrt(So)) !f(x)
-!           endif
-! End of old block, the if statement preventing C4 from exceeding (C1*qup)+(C2*quc)+(C3*qdp)) needs to 
-! be added below. I attempted to insert it below.
 
            C1 =  (Km*X + dt/2.000000)/D
            C2 =  (dt/2.0000 - Km*X)/D
@@ -432,24 +393,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             if(D .eq. 0.0) then
               print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
               call hydro_stop("In MUSKINGCUNGE() - D is 0.")
-! More old code. I kept it here as a reference
-!           endif 
-  
-!           C1 =  (Km*X + dt/2)/D
-!           C2 =  (dt/2 - Km*X)/D
-!           C3 =  (Km*(1-X)-dt/2)/D
-!           C4 =  (ql*dt)/D                       !-- ql already multipled by the dx length
-!           C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
-           !TML-- channel loss now uses modified WP (from KINEROS2)
-
-!           if(R .le. 0.0) then 
-!             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4)
-!           else
-!              if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
-!               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
-!              endif
-!             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) -((1/n) * AREA * (R**(2./3.)) * sqrt(So))
-! End of old code, GitHub moved the endif statements around in a strange way, feel free to move.
            endif
 
            C1 =  (Km*X + dt/2.000000)/D
