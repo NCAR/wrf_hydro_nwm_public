@@ -1371,6 +1371,8 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                            allocate(gwd%properties%z_max(rt_domain(did)%numbasns))
                            deallocate(gwd%state%z_gwsubbas)
                            allocate(gwd%state%z_gwsubbas(rt_domain(did)%numbasns))
+                           deallocate(gwd%basin%basin_area)
+                           allocate(gwd%basin%basin_area(rt_domain(did)%numbasns))
                            ! Alessandro: This function takes the new gw_buck_loss argument
                            call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file), &
                                 rt_domain(did)%numbasns,   &
