@@ -68,44 +68,46 @@ contains
     
     ! allocate local properties
 
-    if ( .not. allocated(new_properties%cell_area) ) then
-       allocate( new_properties%cell_area(ix_rt,jx_rt) )
-       new_properties%cell_area = cell_area
-    else
-       allocation_error = .true.
-    end if
+    write(*,*) "initializing bucket properties",numbasins
+
+    ! if ( .not. allocated(new_properties%cell_area) ) then
+    allocate( new_properties%cell_area(ix_rt,jx_rt) )
+    new_properties%cell_area = cell_area
+    ! else
+    !    allocation_error = .true.
+    ! end if
 
     ! allocate distance_to_neighbor lsm, NOT on the routing grid
-    if ( .not. allocated(new_properties%cell_area_lsm) ) then
-       allocate(new_properties%cell_area_lsm(ix_lsm,jx_lsm))
-       new_properties%cell_area_lsm = cell_area_lsm
-    else
-       allocation_error = .true.
-    end if
+    ! if ( .not. allocated(new_properties%cell_area_lsm) ) then
+    allocate(new_properties%cell_area_lsm(ix_lsm,jx_lsm))
+    new_properties%cell_area_lsm = cell_area_lsm
+    ! else
+    !    allocation_error = .true.
+    ! end if
 
     ! allocate the groundwater bucket coefficents
-    if ( .not. allocated(new_properties%gw_buck_coeff) ) then
-       allocate(new_properties%gw_buck_coeff(numbasins))
-       new_properties%gw_buck_coeff = 0.04
-    else
-       allocation_error = .true.
-    end if
+    ! if ( .not. allocated(new_properties%gw_buck_coeff) ) then
+    allocate(new_properties%gw_buck_coeff(numbasins))
+    new_properties%gw_buck_coeff = 0.04
+    ! else
+    !    allocation_error = .true.
+    ! end if
 
     ! allocate the groundwater bucket exponents
-    if ( .not. allocated(new_properties%gw_buck_exp) ) then
-       allocate(new_properties%gw_buck_exp(numbasins))
-       new_properties%gw_buck_exp = 0.2
-    else
-       allocation_error = .true.
-    end if
+    ! if ( .not. allocated(new_properties%gw_buck_exp) ) then
+    allocate(new_properties%gw_buck_exp(numbasins))
+    new_properties%gw_buck_exp = 0.2
+    ! else
+    !    allocation_error = .true.
+    ! end if
 
     ! allocate the groundwater max water table parameter
-    if ( .not. allocated(new_properties%z_max) ) then
-       allocate(new_properties%z_max(numbasins))
-       new_properties%z_max = 0.1
-    else
-       allocation_error = .true.
-    end if
+    ! if ( .not. allocated(new_properties%z_max) ) then
+    allocate(new_properties%z_max(numbasins))
+    new_properties%z_max = 0.1
+    ! else
+    !    allocation_error = .true.
+    ! end if
 
     if(nlst(1)%bucket_loss .eq. 1) then
        allocate(new_properties%gw_buck_loss(numbasins))

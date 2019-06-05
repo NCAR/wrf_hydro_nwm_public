@@ -40,12 +40,13 @@ contains
     logical :: allocation_error = .false.
     
     ! allocate distance_to_neighbor lsm, NOT on the routing grid
-    if ( .not. allocated(new_state%z_gwsubbas) ) then
-       allocate(new_state%z_gwsubbas(numbasins))
-       new_state%z_gwsubbas = 0.0
-    else
-       allocation_error = .true.
-    end if
+! c$$$    if ( .not. allocated(new_state%z_gwsubbas) ) then
+    write(*,*) "bucket state allocate"
+    allocate(new_state%z_gwsubbas(numbasins))
+    new_state%z_gwsubbas = 0.0
+! c$$$    else
+! c$$$       allocation_error = .true.
+! c$$$    end if
     
     if ( allocation_error ) &
          write(0,*) "attempt to allocate data in members of nhd groundwater state structure&

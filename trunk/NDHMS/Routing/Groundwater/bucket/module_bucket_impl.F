@@ -68,7 +68,7 @@ contains
         real, dimension(:,:), intent(in) :: cell_area
         real, dimension(:,:), intent(in) :: cell_area_lsm
 
-        if (this%bucket_pointer_allocation_guard .eqv. .false. ) then
+        ! if (this%bucket_pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
             ! allocate ( this%input )
             ! if ( .not. associated(this%input) ) then
@@ -76,7 +76,7 @@ contains
             !     write(0,*) "Failure to allocate groundwater input structure"
             ! else
                 ! initialize the input structure
-           call this%input%init(ix,jx,numbasins)
+        call this%input%init(ix,jx,numbasins)
             !end if
 
             ! try to allocate output
@@ -86,7 +86,7 @@ contains
             !     write(0,*) "Failure to allocate groundwater output structure"
             ! else
                 ! initialize the output structure
-           call this%output%init(ixrt,jxrt,numbasins)!, qloss_gwsubbas)
+        call this%output%init(ixrt,jxrt,numbasins)!, qloss_gwsubbas)
             !end if
 
             !try to allocate aggregation
@@ -96,12 +96,12 @@ contains
             !     write(0,*) "Failure to allocate groundwater aggregation structure"
             ! else
                 ! initialize the output structure
-           call this%aggregation%init(ixrt,jxrt,agg_factor)
+        call this%aggregation%init(ixrt,jxrt,agg_factor)
            ! end if
 
             ! try to allocate state
             !allocate ( this%state )
-            this%state = bucket_state_interface(numbasins)
+        this%state = bucket_state_interface(numbasins)
             ! if ( .not. associated(this%state) ) then
             !     ! if the input structure could not be created write and error
             !     write(0,*) "Failure to allocate groundwater state structure"
@@ -112,7 +112,7 @@ contains
 
             ! try to allocate properties
             !allocate ( this%properties )
-            this%properties = bucket_properties_interface(ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)!, bucket_loss)
+        this%properties = bucket_properties_interface(ix, jx, ixrt, jxrt, numbasins, cell_area, cell_area_lsm)!, bucket_loss)
             ! if ( .not. associated(this%properties) ) then
             !     ! if the properties structure could not be created write and error
             !     write(0,*) "Failure to allocate groundwater properties structure"
@@ -122,7 +122,7 @@ contains
             ! end if
 
             ! try to allocate static data
-            this%static_data = groundwater_static_struct(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
+        this%static_data = groundwater_static_struct(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             ! if ( .not. associated(this%static_data) ) then
             !     ! if the static data structure could not be created write and error
             !     write(0,*) "Failure to allocate groundwater properties structure"
@@ -131,7 +131,7 @@ contains
             !     call this%static_data%init(ix, jx, ixrt, jxrt, dt, gwbaseswcrt, ovrtswcrt)
             ! end if
             ! this%bucket_pointer_allocation_guard = .true.
-        end if
+        ! end if
 
     end subroutine bucket_groundwater_struct_init
 
