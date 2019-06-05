@@ -1280,6 +1280,7 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                  ! initalize the object
                  select type (gwd => rt_domain(did)%groundwater)
                  type is (simple_groundwater_struct)
+                    write(*,*) "Passing numbasns to main init",rt_domain(did)%numbasns
                     call gwd%init(rt_domain(did)%ix, &
                          rt_domain(did)%jx, &
                          rt_domain(did)%ixrt, &
@@ -1296,7 +1297,12 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
 #ifdef HYDRO_D
                     write(6,*) "rt_domain(did)%gnumbasns, gwd%basin%num_basins, ", rt_domain(did)%gnumbasns, gwd%basin%num_basins
 #endif
-                    
+
+                    write(*,*) "rt_domain(did)%IXRT",rt_domain(did)%IXRT
+                    block
+
+                      integer, dimension(rt_domain(did)%IXRT,rt_domain(did)%JXRT) :: tmp_gw_stream_mask
+
 #ifdef MPP_LAND
                     call MPP_READ_SIMP_GW( &
 #else
@@ -1304,12 +1310,22 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
 #endif
                          rt_domain(did)%IX,rt_domain(did)%JX,rt_domain(did)%IXRT,&
                          rt_domain(did)%JXRT,rt_domain(did)%GWSUBBASMSK,nlst(did)%gwbasmskfil,&
-                         gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
+                         tmp_gw_stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
+                         ! gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
                          ! gwd%basin%stream_mask,gwd%basin%num_basins,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
+                    deallocate(gwd%basin%stream_mask)
+                    allocate(gwd%basin%stream_mask(rt_domain(did)%IXRT,rt_domain(did)%JXRT))
+                    gwd%basin%stream_mask = tmp_gw_stream_mask
+                  end block
+                    deallocate(gwd%basin%stream_mask_index)
+                    allocate(gwd%basin%stream_mask_index(rt_domain(did)%IXRT,rt_domain(did)%JXRT))
+
+                    write(*,*) "numbasns outside READ_SIMP_GW", rt_domain(did)%numbasns
                     
                     call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
                          rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
                          ! gwd%basin%num_basins,gwd%basin%global_num_basins,gwd%basin%basin_index)
+                    write(*,*) "numbasns outside SIMP_GW_IND", rt_domain(did)%numbasns
 #ifdef MPP_LAND
                     call collectSizeInd(rt_domain(did)%numbasns)
                     ! call collectSizeInd(gwd%basin%num_basins)
@@ -1320,7 +1336,6 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                     ! They must go eventually
                     ! rt_domain(did)%numbasns = gwd%basin%num_basins
                     ! rt_domain(did)%gnumbasns = gwd%basin%global_num_basins
-                    
                  class default
                  end select
                  
@@ -1348,6 +1363,14 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
 #ifdef MPP_LAND
                     select type (gwd => rt_domain(did)%groundwater)
                         type is (simple_groundwater_struct)
+                           deallocate(gwd%properties%gw_buck_coeff)
+                           allocate(gwd%properties%gw_buck_coeff(rt_domain(did)%numbasns))
+                           deallocate(gwd%properties%gw_buck_exp)
+                           allocate(gwd%properties%gw_buck_exp(rt_domain(did)%numbasns))
+                           deallocate(gwd%properties%z_max)
+                           allocate(gwd%properties%z_max(rt_domain(did)%numbasns))
+                           deallocate(gwd%state%z_gwsubbas)
+                           allocate(gwd%state%z_gwsubbas(rt_domain(did)%numbasns))
                            ! Alessandro: This function takes the new gw_buck_loss argument
                            call read_GWBUCKPARM(trim(nlst(did)%GWBUCKPARM_file), &
                                 rt_domain(did)%numbasns,   &
