@@ -1256,12 +1256,12 @@ end subroutine get_albedo12m_netcdf
           allocate(g_gw_strm_msk(global_rt_nx, global_rt_ny))
           allocate(g_ch_netrt(global_rt_nx, global_rt_ny))
           allocate(g_GWSUBBASMSK(global_nX,global_ny))
+          write(*,*) 'GWSUBBASMSK SIZE',size(g_GWSUBBASMSK)
      else
           allocate(g_gw_strm_msk(1,1))
           allocate(g_ch_netrt(1,1))
           allocate(g_GWSUBBASMSK(1,1))
      endif
-
 
      call write_IO_rt_int(ch_netrt,g_ch_netrt)
 
@@ -1298,7 +1298,7 @@ end subroutine get_albedo12m_netcdf
     integer, intent(out), dimension(IXRT,JXRT)  :: gw_strm_msk
     character(len=*)                      :: gwbasmskfil
     integer                                 :: i,j,aggfacxrt,aggfacyrt,ixxrt,jyyrt
-    integer :: iret, ncid, info
+    integer :: iret, ncid
     logical :: fexist
     integer, allocatable, dimension(:,:)  :: GWSUBBASMSK_tmp
 
@@ -1314,8 +1314,7 @@ end subroutine get_albedo12m_netcdf
     if( iret .eq. 0 ) then
        iret = nf90_close(ncid)
        print*, "read gwbasmskfil as nc format: ", trim(gwbasmskfil)
-         allocate(GWSUBBASMSK_tmp(ix,jx),stat=info)
-         print*, "GWSUBBASMSK allocated", info
+         allocate(GWSUBBASMSK_tmp(ix,jx))
          call get2d_int("BASIN",GWSUBBASMSK_tmp,ix,jx,trim(gwbasmskfil), .true.)
          do j = jx, 1, -1
               GWSUBBASMSK(:,j) = GWSUBBASMSK_tmp (:,jx-j+1)
@@ -6337,9 +6336,10 @@ end if  ! end if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
                     select type ( gwd => rt_domain(did)%groundwater )
                         type is (nhd_groundwater_struct)
                            read(iunit,ERR=101) gwd%state%z_gwsubbas
-                        class default
+                        type is (simple_groundwater_struct)
                         !TODO update when simple groundwater is complete
-                           ! read(iunit,ERR=101) gwd%state%z_gwsubbas
+                           read(iunit,ERR=101) gwd%state%z_gwsubbas
+                        class default
                     end select
                 end if
                 if(nlst(did)%SUBRTSWCRT.EQ.1.OR.nlst(did)%OVRTSWCRT.EQ.1) then
