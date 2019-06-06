@@ -145,7 +145,7 @@ contains
 
      do j = 1,jx
         do i = 1, ix
-           if(GWSUBBASMSK(i,j) .gt.0) then
+           if(GWSUBBASMSK(i,j) .gt. 0) then
                 tmpbuf(GWSUBBASMSK(i,j)) = GWSUBBASMSK(i,j)
            endif
         end do

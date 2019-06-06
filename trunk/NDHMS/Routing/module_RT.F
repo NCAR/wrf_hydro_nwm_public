@@ -1313,6 +1313,8 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                          tmp_gw_stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
                          ! gwd%basin%stream_mask,rt_domain(did)%numbasns,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
                          ! gwd%basin%stream_mask,gwd%basin%num_basins,rt_domain(did)%overland%streams_and_lakes%ch_netrt,nlst(did)%AGGFACTRT)
+                    gwd%basin%num_basins = rt_domain(did)%numbasns
+
                     deallocate(gwd%basin%stream_mask)
                     allocate(gwd%basin%stream_mask(rt_domain(did)%IXRT,rt_domain(did)%JXRT))
                     gwd%basin%stream_mask = tmp_gw_stream_mask
@@ -1320,10 +1322,23 @@ if(nlst(did)%channel_only       .eq. 0 .and. &
                     deallocate(gwd%basin%stream_mask_index)
                     allocate(gwd%basin%stream_mask_index(rt_domain(did)%IXRT,rt_domain(did)%JXRT))
 
-                    write(*,*) "numbasns outside READ_SIMP_GW", rt_domain(did)%numbasns
-                    
+                    deallocate(gwd%output%qout_gwsubbas)
+                    allocate(gwd%output%qout_gwsubbas(rt_domain(did)%numbasns))
+
+                    gwd%output%qout_gwsubbas = 0.0
+
+                    deallocate(gwd%input%qin_gwsubbas)
+                    allocate(gwd%input%qin_gwsubbas(rt_domain(did)%numbasns))
+
+                    ! deallocate(gwd%basin%basin_index)
+                    ! allocate(gwd%basin%basin_index(rt_domain(did)%numbasns))
+
+                    write(*,*) "numbasns outside READ_SIMP_GW", rt_domain(did)%numbasns, 'SIZE GWSUBBASMSK',size(rt_domain(did)%GWSUBBASMSK)
+
                     call SIMP_GW_IND(rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%GWSUBBASMSK,  &
                          rt_domain(did)%numbasns,rt_domain(did)%gnumbasns,gwd%basin%basin_index)
+
+                    gwd%basin%global_num_basins = rt_domain(did)%gnumbasns
                          ! gwd%basin%num_basins,gwd%basin%global_num_basins,gwd%basin%basin_index)
                     write(*,*) "numbasns outside SIMP_GW_IND", rt_domain(did)%numbasns
 #ifdef MPP_LAND
