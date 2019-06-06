@@ -138,46 +138,57 @@ contains
                 !    nlst(did)%GWBASESWCRT,nlst(did)%OVRTSWCRT)
 
 
-        call simp_gw_buck(ground_water_data%static_data%ix_lsm, &
-            ground_water_data%static_data%jx_lsm,&
-            ground_water_data%static_data%ix_rt, &
-            ground_water_data%static_data%jx_rt, &
-            ground_water_data%basin%num_basins, &
-            ground_water_data%basin%global_num_basins, &
-            ground_water_data%basin%basin_area, &
-            ground_water_data%basin%basin_index, &
-            ground_water_data%basin%stream_mask_index, & !not sure
-            ground_water_data%basin%sub_basin_mask, &
-            ground_water_data%input%infxsrt, &
-            ground_water_data%input%soldrain, &
-            ground_water_data%state%z_gwsubbas, &
-            ground_water_data%input%qin_gwsubbas, &
-            ground_water_data%output%qout_gwsubbas, &
-            ground_water_data%output%qinflowbase, &
-            ground_water_data%basin%stream_mask, &
-            ground_water_data%basin%basin_stream_pixels, &
-            rt_domain(1)%overland%properties%distance_to_neighbor, &
-            nlst(1)%dt, & !supposed to be nlst(did)
-            ground_water_data%properties%gw_buck_coeff, &
-            ground_water_data%properties%gw_buck_exp, &
-            ground_water_data%properties%z_max, &
-            ground_water_data%static_data%gwbaseswcrt, &
-            ground_water_data%static_data%ovrtswcrt)
+      call simp_gw_buck(rt_domain(1)%ix, &
+           rt_domain(1)%jx,&
+           rt_domain(1)%ixrt, &
+           rt_domain(1)%jxrt, &
+           rt_domain(1)%numbasns, &
+           rt_domain(1)%gnumbasns, &
+           ground_water_data%basin%basin_area, &
+           ground_water_data%basin%basin_index, &
+           ground_water_data%basin%stream_mask_index, & !not sure
+           ground_water_data%basin%sub_basin_mask, &
+           ground_water_data%input%infxsrt, &
+           ground_water_data%input%soldrain, &
+           ground_water_data%state%z_gwsubbas, &
+           ground_water_data%input%qin_gwsubbas, &
+           ground_water_data%output%qout_gwsubbas, &
+           ground_water_data%output%qinflowbase, &
+           ground_water_data%basin%stream_mask, &
+           rt_domain(1)%gwbas_pix_ct, &
+           rt_domain(1)%overland%properties%distance_to_neighbor, &
+           nlst(1)%dt, & !supposed to be nlst(did)
+           ground_water_data%properties%gw_buck_coeff, &
+           ground_water_data%properties%gw_buck_exp, &
+           ground_water_data%properties%z_max, &
+           nlst(1)%gwbaseswcrt, &
+           nlst(1)%ovrtswcrt)
 
-!             ground_water_data%aggregation%agg_factor, &
-!             ground_water_data%static_data%dt, &
-!             ground_water_data%aggregation%infxswgt, &
-!             ground_water_data%input%infxsrt, &
-!             ground_water_data%properties%cell_area, &
-!             ground_water_data%properties%cell_area_lsm, &
-! #ifdef MPP_LAND
-!             ground_water_data%basin%lnlinksl, &
-! #else
-!             ground_water_data%basin%num_basins, &
-! #endif
-!             ground_water_data%basin%basin_area, &
-!             ground_water_data%basin%nhd_bucket_mask, &
-!             ground_water_data%basin%channel_bucket_only)
+        ! call simp_gw_buck(ground_water_data%static_data%ix_lsm, &
+        !     ground_water_data%static_data%jx_lsm,&
+        !     ground_water_data%static_data%ix_rt, &
+        !     ground_water_data%static_data%jx_rt, &
+        !     ground_water_data%basin%num_basins, &
+        !     ground_water_data%basin%global_num_basins, &
+        !     ground_water_data%basin%basin_area, &
+        !     ground_water_data%basin%basin_index, &
+        !     ground_water_data%basin%stream_mask_index, & !not sure
+        !     ground_water_data%basin%sub_basin_mask, &
+        !     ground_water_data%input%infxsrt, &
+        !     ground_water_data%input%soldrain, &
+        !     ground_water_data%state%z_gwsubbas, &
+        !     ground_water_data%input%qin_gwsubbas, &
+        !     ground_water_data%output%qout_gwsubbas, &
+        !     ground_water_data%output%qinflowbase, &
+        !     ground_water_data%basin%stream_mask, &
+        !     ground_water_data%basin%basin_stream_pixels, &
+        !     rt_domain(1)%overland%properties%distance_to_neighbor, &
+        !     nlst(1)%dt, & !supposed to be nlst(did)
+        !     ground_water_data%properties%gw_buck_coeff, &
+        !     ground_water_data%properties%gw_buck_exp, &
+        !     ground_water_data%properties%z_max, &
+        !     ground_water_data%static_data%gwbaseswcrt, &
+        !     ground_water_data%static_data%ovrtswcrt)
       
     end subroutine run_simple_groundwater_timestep
 
@@ -227,6 +238,8 @@ contains
    qout_gwsubbas = 0.
    qin_gwsubbas = 0.
    z_gwsubbas = z_gwsubbas_tmp
+
+   write(*,*) "NUMBASINS",numbasns,"GNUMBASNS", gnumbasns
 
 !Assign local value of runoff2 (drainage) for flux caluclation to buckets...
    runoff2x = runoff2x_in
@@ -370,7 +383,11 @@ contains
         do j=1,jxrt
 !!!    -simple uniform disaggregation (8.31.06)
            if (gw_strm_msk_lind(i,j).gt.0) then
-
+              write(*,*) 'i,j',i,j
+              write(*,*) 'gw_str',gw_strm_msk_lind(i,j)
+              write(*,*) 'qout',qout_gwsubbas(gw_strm_msk_lind(i,j)),size(qout_gwsubbas)
+              write(*,*) 'DIST',dist(i,j,9)
+              write(*,*) 'gwbas',gwbas_pix_ct(gw_strm_msk_lind(i,j)), size(gwbas_pix_ct)
              qinflowbase(i,j) = qout_gwsubbas(gw_strm_msk_lind(i,j))*1000.*DT/ &
                 gwbas_pix_ct(gw_strm_msk_lind(i,j))/dist(i,j,9)     ! units (mm) that gets passed into chan routing as stream inflow
 
