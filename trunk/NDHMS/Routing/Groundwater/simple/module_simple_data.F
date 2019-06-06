@@ -147,7 +147,8 @@ contains
            ground_water_data%basin%basin_area, &
            ground_water_data%basin%basin_index, &
            ground_water_data%basin%stream_mask_index, & !not sure
-           ground_water_data%basin%sub_basin_mask, &
+           rt_domain(1)%gwsubbasmsk, &
+           !ground_water_data%basin%sub_basin_mask, &
            ground_water_data%input%infxsrt, &
            ground_water_data%input%soldrain, &
            ground_water_data%state%z_gwsubbas, &
@@ -290,15 +291,18 @@ contains
      qin_gwsubbas(bas) = net_perc(bas)/1000.* &
                          ct_bas(bas)*basns_area(bas)/DT    !units (m^3/s)
 
+     write(*,*) 'basns_area',basns_area(bas),'net_perc', net_perc(bas), "DT",DT,"ct_bas",ct_bas(bas)
+
 
 !Adjust level of GW depth...(conceptual GW bucket units (mm))
 !DJG...old change to cms inflow...     z_gwsubbas(bas) = z_gwsubbas(bas) + net_perc(bas) / 1000.0   ! (m)
 
 !DJG...debug    write (6,*) "DJG...before",C(bas),ex(bas),z_gwsubbas(bas),z_mx(bas),z_gwsubbas(bas)/z_mx(bas)
 
+     write(*,*) 'Before z_gwsubbas',z_gwsubbas(bas)
      z_gwsubbas(bas) = z_gwsubbas(bas) + qin_gwsubbas(bas)*DT/( &
                        ct_bas(bas)*basns_area(bas))*1000.   !  units (mm)
-
+     write(*,*) 'After z_gwsubbas',z_gwsubbas(bas)
 !Calculate baseflow as a function of GW bucket depth...
 
      if(GWBASESWCRT.eq.1) then  !active exponential bucket... if/then for bucket model discharge type...
@@ -384,7 +388,7 @@ contains
 !!!    -simple uniform disaggregation (8.31.06)
            if (gw_strm_msk_lind(i,j).gt.0) then
               write(*,*) 'i,j',i,j
-              write(*,*) 'gw_str',gw_strm_msk_lind(i,j)
+              write(*,*) 'gw_str_msk_lind',gw_strm_msk_lind(i,j)
               write(*,*) 'qout',qout_gwsubbas(gw_strm_msk_lind(i,j)),size(qout_gwsubbas)
               write(*,*) 'DIST',dist(i,j,9)
               write(*,*) 'gwbas',gwbas_pix_ct(gw_strm_msk_lind(i,j)), size(gwbas_pix_ct)

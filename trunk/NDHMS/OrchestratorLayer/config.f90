@@ -764,8 +764,8 @@ contains
      integer            :: surface_resistance_option
      integer            :: split_output_count = 1
      integer            :: khour
-     integer            :: kday
-     real               :: zlvl 
+     integer            :: kday = -999
+     real               :: zlvl
      character(len=256) :: hrldas_setup_file = " "
      character(len=256) :: mmf_runoff_file = " "
      character(len=256) :: external_veg_filename_template = " "
@@ -890,13 +890,13 @@ contains
     noah_lsm%kday = -999!kday
     noah_lsm%zlvl = zlvl
     noah_lsm%hrldas_setup_file = hrldas_setup_file
-    noah_lsm%mmf_runoff_file = mmf_runoff_file
-    noah_lsm%external_veg_filename_template = external_veg_filename_template
-    noah_lsm%external_lai_filename_template = external_lai_filename_template
-    noah_lsm%xstart = xstart
-    noah_lsm%ystart = ystart
-    noah_lsm%xend = xend
-    noah_lsm%yend = yend
+    noah_lsm%mmf_runoff_file = " "!mmf_runoff_file
+    noah_lsm%external_veg_filename_template = " "!external_veg_filename_template
+    noah_lsm%external_lai_filename_template = " "!external_lai_filename_template
+    noah_lsm%xstart = 1!xstart
+    noah_lsm%ystart = 1!ystart
+    noah_lsm%xend = 0!xend
+    noah_lsm%yend = 0!yend
     noah_lsm%soil_thick_input = soil_thick_input
     noah_lsm%rst_bi_out = rst_bi_out
     noah_lsm%rst_bi_in = rst_bi_in
