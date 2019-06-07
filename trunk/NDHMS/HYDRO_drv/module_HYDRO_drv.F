@@ -254,9 +254,11 @@ module module_HYDRO_drv
                 endif
             endif
         endif
+
         if(nlst(did)%SUBRTSWCRT         .gt. 0 .or. &
                 nlst(did)%OVRTSWCRT          .gt. 0 .or. &
                 nlst(did)%GWBASESWCRT        .gt. 0 .or. &
+                nlst(did)%CHANRTSWCRT        .gt. 0 .or. &
                 nlst(did)%channel_only       .gt. 0 .or. &
                 nlst(did)%channelBucket_only .gt. 0      ) then
 
@@ -295,21 +297,21 @@ module module_HYDRO_drv
             !! JLM disable GW output for NWM. Bring this line back when runtime output options avail.
             !! JLM This seems like a more logical place?
             if(nlst(did)%io_form_outputs .ne. 0) then
-                if(nlst(did)%GWBASESWCRT .ne. 0) then
-                    if(nlst(did)%channel_only .eq. 0) then
-                        if(nlst(did)%output_gw .ne. 0) then
-                            call output_gw_NWM(did,nlst(did)%igrid)
-                        endif
-                    endif
-                endif
-            else
-                if(nlst(did)%GWBASESWCRT .eq. 1) then
-                    if(nlst(did)%channel_only .eq. 0) then
-                        if(nlst(did)%output_gw  .eq. 1) call output_GW_Diag(did)
-                    endif
-                end if
+               if(nlst(did)%GWBASESWCRT .ne. 0) then
+                  if(nlst(did)%channel_only .eq. 0) then
+                     if(nlst(did)%output_gw .ne. 0) then
+                        call output_gw_NWM(did,nlst(did)%igrid)
+                     endif
+                  endif
+               endif
+                            ! else
+                            !     if(nlst(did)%GWBASESWCRT .eq. 1) then
+                            !         if(nlst(did)%channel_only .eq. 0) then
+                            !             if(nlst(did)%output_gw  .eq. 1) call output_GW_Diag(did)
+                            !         endif
+                            !     end if
             endif
-
+                         
             if(nlst(did)%GWBASESWCRT .eq. 3) then
 
                 if(nlst(did)%output_gw  .eq. 1)  &
@@ -651,9 +653,31 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst(did)%OVRTSWCRT .ne. 0) then
          call OverlandRouting_drv(did)
       else
-         rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
+         !ADCHANGE: Updating landRunoff instead of surface_water_head_routing. This now allows 
+         !          landRunoff to include both infxsrt from the LSM and exfiltration (if subsfc 
+         !          is active) and prevents surface_water_head_routing from inadvertently being 
+         !          passed back to the LSM.
+         if (nlst(did)%UDMP_OPT .eq. 1) then
+           ! If subsurface is on, we update landRunOff to include the updated term w/ exfiltration.
+           ! If subsurface is off, landRunOff does not change from original value so we leave as-is.
+           if (nlst(did)%SUBRTSWCRT .ne. 0) then
+             rt_domain(did)%landRunOff = rt_domain(did)%overland%control%infiltration_excess
+           endif
+         else
+           ! If overland is off and subsurface is on, we need to update INFXSRT (LSM grid)
+           ! since that is what gets fed through the buckets into the channels. So we aggregate
+           ! the high-res infiltration_excess back to coarse grid.
+           if (nlst(did)%SUBRTSWCRT .ne. 0) then
+             call RunoffAggregate(rt_domain(did)%overland%control%infiltration_excess, &
+                                  rt_domain(did)%groundwater%input%infxsrt, nlst(did)%AGGFACTRT, &
+                                  rt_domain(did)%ix, rt_domain(did)%jx)
+           endif
+         endif
+         ! In either case, if overland is off we need to zero-out surface_water_head since this
+         ! water is being scraped into channel and should NOT be passed back to the LSM.
          rt_domain(did)%overland%control%infiltration_excess = 0.
-      endif
+         rt_domain(did)%overland%control%surface_water_head_routing = 0.
+     endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
       timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -1306,6 +1330,36 @@ endif
 
       end subroutine RunOffDisag
 
+
+! This routine was extracted from the aggregateDomain routine above to do simple depth aggregation.
+! There might be a simpler way.
+subroutine RunoffAggregate(runoff_in, runoff_out, aggfactrt, ix, jx)
+  implicit none
+  ! Input variables
+  integer, intent(in) :: aggfactrt, ix, jx
+  real, intent(in), dimension(:,:) :: runoff_in
+  real, intent(inout), dimension(:,:) :: runoff_out
+  ! Local variables
+  integer :: i, j, aggfacyrt, aggfacxrt, ixxrt, jyyrt
+  real :: runoffagg
+  do j=1,jx
+    do i=1,ix
+    runoffagg = 0.
+    do aggfacyrt=aggfactrt-1,0,-1
+      do aggfacxrt=aggfactrt-1,0,-1
+        ixxrt = i * aggfactrt - aggfacxrt
+        jyyrt = j * aggfactrt - aggfacyrt
+#ifdef MPP_LAND
+        if(left_id.ge.0) ixxrt = ixxrt+1
+        if(down_id.ge.0) jyyrt = jyyrt+1
+#endif
+        runoffagg = runoffagg + runoff_in(ixxrt,jyyrt)
+      end do
+    end do
+   runoff_out(i,j) = runoffagg / (aggfactrt**2)
+  end do
+end do
+end subroutine RunoffAggregate
 
 subroutine HYDRO_ini(ntime, did,ix0,jx0, vegtyp,soltyp)
 implicit none
