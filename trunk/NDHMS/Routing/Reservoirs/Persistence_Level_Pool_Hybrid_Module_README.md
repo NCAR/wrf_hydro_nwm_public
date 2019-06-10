@@ -40,7 +40,7 @@ search for a corresponding timeslice file, and '18' would be a typical value and
 
 * ```reservoir_observation_update_time_interval_seconds``` is an integer parameter that determines how often the reservoirs will look for a new timeslice
 observation, and '86400', the number of seconds in a day, would be a typical value and is the default. If the model is set to run any
-type of forecast, then the 'reservoir_observation_update_time_interval_seconds' parameter will automatically be set to 1,000,000,000
+type of forecast, then this parameter will automatically be set to 1,000,000,000
 seconds in order to prevent the module from reading any new timeslice observations after the first timestep.
 
 
