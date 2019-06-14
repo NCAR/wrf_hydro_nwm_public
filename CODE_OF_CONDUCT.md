@@ -1,7 +1,7 @@
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge
-We as contributors and maintainers of WRF-Hydro pledge to make participation in our software project and community a welcoming and inclusive experience for everyone. This includes acceptance and respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, personal appearance, race, religion, or sexual identity and orientation, as well as any other characteristic protected under applicable US federal or state law.
+We as contributors and maintainers of WRF-Hydro® pledge to make participation in our software project and community a welcoming and inclusive experience for everyone. This includes acceptance and respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, personal appearance, race, religion, or sexual identity and orientation, as well as any other characteristic protected under applicable US federal or state law.
 
 ## Our Standards 
 Examples of behavior that contributes to creating a positive environment include:

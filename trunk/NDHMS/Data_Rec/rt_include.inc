@@ -4,6 +4,10 @@
    type (subsurface_static_interface) :: subsurface_static
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
+
+   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
+   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
+
    INTEGER :: IX, JX
    logical :: initialized
    logical :: restQSTRM
@@ -82,19 +86,23 @@
   REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
   REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
   REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
+  REAL,    allocatable, DIMENSION(:)     :: qloss_gwsubbas   !flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
   REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
 
-  REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params
-  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
-  INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
+  REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm     !GW bucket parameters
+  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask      !GW bucket mask for NHDPLUS
+  INTEGER, allocatable, DIMENSION(:)     :: ct2_bas          !ct of land pixels in basin
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
   INTEGER                                :: bas
   INTEGER, allocatable, DIMENSION(:)        :: bas_id
   CHARACTER(len=19)                      :: header
   CHARACTER(len=1)                       :: jnk
-  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff    !GW bucket model coefficient
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_exp      !GW bucket model exponent
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_loss     !GW bucket model loss fraction
+  REAL, allocatable, DIMENSION(:)        :: z_max            !Height of GW bucket
 !DJG Switch for Deep Sat GW Init:
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
 !BF Variables for gw2d
@@ -127,8 +135,13 @@
   REAL, allocatable, DIMENSION(:)      :: MUSK, MUSX !muskingum params
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
-  REAL, allocatable, DIMENSION(:)      :: So         !link slope
-  REAL, allocatable, DIMENSION(:)      :: ChSSlp, Bw !trapezoid link params
+  REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s)
+  REAL, allocatable, DIMENSION(:)      :: ChSSlp ! channel side slope
+  REAL, allocatable, DIMENSION(:)      :: Bw     ! Bottom width of channel
+  REAL, allocatable, DIMENSION(:)      :: Tw     ! top width of channel
+  REAL, allocatable, DIMENSION(:)      :: Tw_CC  ! top width of the (CC) compound channel
+  REAL, allocatable, DIMENSION(:)      :: n_CC   ! mannings N of (CC) compound channel
+
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
@@ -137,8 +150,10 @@
   REAL, allocatable, DIMENSION(:)      :: HLINK      !head in link
   REAL, allocatable, DIMENSION(:)      :: ZELEV      !elevation of nodes for channel
   INTEGER, allocatable, DIMENSION(:)   :: CHANXI,CHANYJ !map chan to fine grid
-  REAL,  DIMENSION(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+  REAL,  DIMENSION(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+  REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
+  ! VARIABLES FOR  RESERVOIRS
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file

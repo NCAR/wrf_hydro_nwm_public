@@ -104,6 +104,1081 @@ END SUBROUTINE RT_PARM
 !DJG ----------------------------------------------------------------
 
 
+
+!DJG ------------------------------------------------
+!DJG   SUBROUTINE SUBSFC_RTNG
+!DJG ------------------------------------------------
+
+	SUBROUTINE SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,    &
+          SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &    
+          NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
+          SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
+          SATLYRCHK)
+
+!       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
+!            my_id
+#ifdef MPP_LAND
+        use module_mpp_land, only: MPP_LAND_COM_REAL, sum_real1, &
+		my_id, io_id, numprocs
+#endif
+	IMPLICIT NONE
+
+!DJG -------- DECLARATIONS ------------------------
+
+	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
+
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT,junk4
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LATKSATRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOLDEPRT
+
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: CWATAVAIL
+        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: SATLYRCHK
+
+
+	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
+	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
+
+	REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+	REAL, INTENT(IN)                          :: DT
+	REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
+	REAL, INTENT(IN), DIMENSION(NSOIL) 	  :: SLDPTH
+	REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCMAXRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCREFRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT
+
+	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
+!DJG Local Variables
+
+	INTEGER	:: I,J,KK
+!djg        INTEGER, DIMENSION(IXRT,JXRT) :: SATLYRCHK
+
+	REAL 	:: GRDAREA
+	REAL	:: SUBFLO
+	REAL	:: WATAVAIL
+
+        INTEGER :: SO8RT_D(IXRT,JXRT,3)
+        REAL :: SO8RT(IXRT,JXRT,8)
+        INTEGER, INTENT(IN)  ::  rt_option
+        integer  ::  index
+
+        INTEGER :: DT_STEPS             !-- number of timestep in routing
+        REAL :: SUBDT                !-- subsurface routing timestep
+        INTEGER :: KRT                  !-- routing counter
+        REAL, DIMENSION(IXRT,JXRT,NSOIL) :: SMCTMP  !--temp store of SMC
+        REAL, DIMENSION(IXRT,JXRT) :: ZWATTABLRTTMP ! temp store of ZWAT
+        REAL, DIMENSION(IXRT,JXRT) :: INFXSUBRTTMP ! temp store of infilx
+!djg        REAL, DIMENSION(IXRT,JXRT) :: CWATAVAIL ! temp specif. of wat avial
+        
+        
+
+!DJG Debug Variables...
+        REAL :: qsubchk,qsubbdrytmp
+        REAL :: junk1,junk2,junk3,junk5,junk6,junk7
+        INTEGER, PARAMETER :: double=8
+        REAL (KIND=double) :: smctot1a,smctot2a
+	INTEGER :: kx,count
+
+#ifdef HYDRO_D
+! ADCHANGE: Water balance variables
+       real   :: smctot1,smctot2
+       real   :: suminfxsrt1,suminfxsrt2
+       real   :: qbdry1,qbdry2
+       real   :: sumqsubrt1, sumqsubrt2
+#endif
+        
+!DJG -----------------------------------------------------------------
+!DJG  SUBSURFACE ROUTING LOOP
+!DJG    - SUBSURFACE ROUTING RUN ON NOAH TIMESTEP
+!DJG    - SUBSURFACE ROUITNG ONLY PERFORMED ON SATURATED LAYERS
+!DJG -----------------------------------------------------------------
+
+#ifdef HYDRO_D
+! ADCHANGE: START Initial water balance variables 
+! ALL VARS in MM
+       suminfxsrt1 = 0.
+       qbdry1 = 0.
+       smctot1 = 0.
+       sumqsubrt1 = 0.
+       do i=1,IXRT
+         do j=1,JXRT
+           suminfxsrt1 = suminfxsrt1 + INFXSUBRT(I,J) / float(IXRT*JXRT)
+           qbdry1 = qbdry1 + QSUBBDRYRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+           sumqsubrt1 = sumqsubrt1 + QSUBRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+           do kk=1,NSOIL
+               smctot1 = smctot1 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+           end do
+         end do
+       end do
+
+#ifdef MPP_LAND
+! not tested
+       CALL sum_real1(suminfxsrt1)
+       CALL sum_real1(qbdry1)
+       CALL sum_real1(sumqsubrt1)
+       CALL sum_real1(smctot1)
+       suminfxsrt1 = suminfxsrt1/float(numprocs)
+       qbdry1 = qbdry1/float(numprocs)
+       sumqsubrt1 = sumqsubrt1/float(numprocs)
+       smctot1 = smctot1/float(numprocs)
+#endif
+! END Initial water balance variables
+#endif
+
+
+        !yw GRDAREA=DXRT*DXRT
+        ! GRDAREA=dist(i,j,9)
+
+
+!DJG debug subsfc...
+         subflo = 0.0
+
+!DJG Set up mass balance checks...
+!         CWATAVAIL = 0.            !-- initialize subsurface watavail
+         SUBDT = DT                !-- initialize the routing timestep to DT
+
+
+!!!! Find saturated layer depth...
+! Loop through domain to determine sat. layers and assign wat tbl depth...
+!    and water available for subsfc routing (CWATAVAIL)...
+!
+!         CALL FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
+!                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT, &
+!                             CWATAVAIL,SLDPTH)
+         
+
+
+
+!DJG debug variable...
+
+!DJG Courant check temp variable setup...
+         ZWATTABLRTTMP = ZWATTABLRT !-- temporary storage of water table level
+
+
+
+
+!!!! Call subsurface routing subroutine...
+#ifdef HYDRO_D
+     print *, "calling subsurface routing subroutine...Opt. ",rt_option
+#endif
+
+! ADCHANGE: IMPORTANT!
+! 2D subsurface option currently has bug so forcing to option 1 in this routine to
+! allow users to still have option to use 2d overland (both are controlled by same
+! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
+!     if(rt_option .eq. 1) then
+        CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &   
+               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &   
+               SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
+!     else 
+!        CALL ROUTE_SUBSURFACE2(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
+!               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
+!               CWATAVAIL,SUBDT)
+!     end if
+
+#ifdef HYDRO_D
+     write(6,*) "finish calling ROUTE_SUBSURFACE ", rt_option
+#endif
+
+
+!!!! Update soil moisture fields with subsurface flow...
+
+!!!! Loop through subsurface routing domain...
+	DO I=1,IXRT
+          DO J=1,JXRT
+
+!!DJG Check for courant condition violation...put limit on qsub
+!!DJG QSUB HAS units of m^3/s SUBFLO has units of m
+          
+! ADCHANGE: Moved this constraint to the ROUTE_SUBSURFACE routines
+           !IF (CWATAVAIL(i,j).le.ABS(qsubrt(i,j))/dist(i,j,9)*SUBDT) THEN
+           !  QSUBRT(i,j) = -1.0*CWATAVAIL(i,j)
+           !  SUBFLO = QSUBRT(i,j)  !Units of qsubrt converted via CWATAVAIL
+           !ELSE
+             SUBFLO=QSUBRT(I,J)/dist(i,j,9)*SUBDT !Convert qsubrt from m^3/s to m
+           !END IF
+
+           WATAVAIL=0.  !Initialize to 0. for every cell...
+
+
+!!DJG Begin loop through soil profile to adjust soil water content
+!!DJG based on subsfc flow (SUBFLO)...
+
+            IF (SUBFLO.GT.0) THEN ! Increase soil moist for +SUBFLO (Inflow)
+
+! Loop through soil layers from bottom to top
+              DO KK=NSOIL,1,-1
+
+
+! Check for saturated layers
+                IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK)) THEN
+                  IF (SMCRT(I,J,KK).GT.SMCMAXRT(I,J,KK)) THEN
+                   print *, "FATAL ERROR: Subsfc acct. SMCMAX exceeded...", &
+                       SMCRT(I,J,KK), SMCMAXRT(I,J,KK),KK,i,j
+                   call hydro_stop("In SUBSFC_RTNG() - SMCMAX exceeded")
+                  ELSE
+                  END IF
+                ELSE
+                  WATAVAIL = (SMCMAXRT(I,J,KK)-SMCRT(I,J,KK))*SLDPTH(KK)
+                  IF (WATAVAIL.GE.SUBFLO) THEN
+                    SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
+                    SUBFLO = 0.
+                  ELSE
+                    SUBFLO = SUBFLO - WATAVAIL
+                    SMCRT(I,J,KK) = SMCMAXRT(I,J,KK)
+                  END IF
+                END IF
+
+                 IF (SUBFLO.EQ.0.) EXIT
+!                IF (SUBFLO.EQ.0.) goto 669
+
+              END DO      ! END DO FOR SOIL LAYERS
+
+669           continue
+
+! If all layers sat. add remaining subflo to infilt. excess...                  
+              IF (KK.eq.0.AND.SUBFLO.gt.0.) then
+                 INFXSUBRT(I,J) = INFXSUBRT(I,J) + SUBFLO*1000.    !Units = mm
+                 SUBFLO=0.
+              END IF
+
+!DJG Error trap...
+	       if (subflo.ne.0.) then
+#ifdef HYDRO_D
+                  print *, "Subflo (+) not expired...:",subflo,i,j,kk,SMCRT(i,j,1), &
+                           SMCRT(i,j,2),SMCRT(i,j,3),SMCRT(i,j,4),SMCRT(i,j,5),  &
+                           SMCRT(i,j,6),SMCRT(i,j,7),SMCRT(i,j,8),"SMCMAX",SMCMAXRT(i,j,1)
+#endif
+               end if
+
+ 
+            ELSE IF (SUBFLO.LT.0) THEN    ! Decrease soil moist for -SUBFLO (Drainage)
+
+
+!DJG loop from satlyr back down and subtract out subflo as necess...
+!    now set to SMCREF, 8/24/07
+!DJG and then using unsat cond as opposed to Ksat...
+
+	      DO KK=SATLYRCHK(I,J),NSOIL
+                 WATAVAIL = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
+                 IF (WATAVAIL.GE.ABS(SUBFLO)) THEN
+!?yw mod                 IF (WATAVAIL.GE.(ABS(SUBFLO)+0.000001) ) THEN
+                   SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
+                   SUBFLO=0.
+                 ELSE     ! Since subflo is small on a time-step following is unlikely...
+                   SMCRT(I,J,KK)=SMCREFRT(I,J,KK)
+                   SUBFLO=SUBFLO+WATAVAIL
+                 END IF
+                 IF (SUBFLO.EQ.0.) EXIT
+!                IF (SUBFLO.EQ.0.) goto 668
+
+              END DO  ! END DO FOR SOIL LAYERS
+668        continue
+
+
+!DJG Error trap...
+              if(abs(subflo) .le. 1.E-7 )  subflo = 0.0  !truncate residual to 1E-7 prec.
+
+	       if (subflo.ne.0.) then
+#ifdef HYDRO_D
+                  print *, "Subflo (-) not expired:",i,j,subflo,CWATAVAIL(i,j)
+                  print *, "zwatabl = ", ZWATTABLRT(I,J)
+                  print *, "QSUBRT(I,J)=",QSUBRT(I,J)
+                  print *, "WATAVAIL = ",WATAVAIL, "kk=",kk
+                  print *
+#endif
+               end if
+
+
+
+            END IF  ! end if for +/- SUBFLO soil moisture accounting...
+
+
+
+
+          END DO        ! END DO X dim
+        END DO          ! END DO Y dim
+!!!! End loop through subsurface routing domain...
+
+#ifdef MPP_LAND
+     do i = 1, NSOIL
+        call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
+     end DO
+#endif
+
+#ifdef HYDRO_D
+! ADCHANGE: START Final water balance variables
+! ALL VARS in MM
+        suminfxsrt2 = 0.
+        qbdry2 = 0.
+        smctot2 = 0.
+        sumqsubrt2 = 0.
+        do i=1,IXRT
+         do j=1,JXRT
+            suminfxsrt2 = suminfxsrt2 + INFXSUBRT(I,J) / float(IXRT*JXRT)
+            qbdry2 = qbdry2 + QSUBBDRYRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+            sumqsubrt2 = sumqsubrt2 + QSUBRT(I,J)/dist(i,j,9)*SUBDT*1000. / float(IXRT*JXRT)
+            do kk=1,NSOIL
+                smctot2 = smctot2 + SMCRT(I,J,KK)*SLDPTH(KK)*1000. / float(IXRT*JXRT)
+            end do
+         end do
+        end do
+
+#ifdef MPP_LAND
+! not tested
+        CALL sum_real1(suminfxsrt2)
+        CALL sum_real1(qbdry2)
+        CALL sum_real1(sumqsubrt2)
+        CALL sum_real1(smctot2)
+        suminfxsrt2 = suminfxsrt2/float(numprocs)
+        qbdry2 = qbdry2/float(numprocs)
+        sumqsubrt2 = sumqsubrt2/float(numprocs)
+        smctot2 = smctot2/float(numprocs)
+#endif
+
+#ifdef MPP_LAND   
+       if (my_id .eq. IO_id) then
+#endif
+       print *, "SUBSFC Routing Mass Bal: "
+       print *, "WB_SUB!QsubDiff", sumqsubrt2-sumqsubrt1
+       print *, "WB_SUB!Qsub1", sumqsubrt1
+       print *, "WB_SUB!Qsub2", sumqsubrt2
+       print *, "WB_SUB!InfxsDiff", suminfxsrt2-suminfxsrt1
+       print *, "WB_SUB!Infxs1", suminfxsrt1
+       print *, "WB_SUB!Infxs2", suminfxsrt2
+       print *, "WB_SUB!QbdryDiff", qbdry2-qbdry1
+       print *, "WB_SUB!Qbdry1", qbdry1
+       print *, "WB_SUB!Qbdry2", qbdry2
+       print *, "WB_SUB!SMCDiff", smctot2-smctot1
+       print *, "WB_SUB!SMC1", smctot1
+       print *, "WB_SUB!SMC2", smctot2
+       print *, "WB_SUB!Residual", sumqsubrt1 - ( (suminfxsrt2-suminfxsrt1) &
+                       + (smctot2-smctot1) )
+#ifdef MPP_LAND
+       endif
+#endif
+! END Final water balance variables
+#endif
+
+
+!DJG ----------------------------------------------------------------
+  END SUBROUTINE SUBSFC_RTNG 
+!DJG ----------------------------------------------------------------
+
+
+!DJG ------------------------------------------------------------------------
+!DJG  SUBSURFACE FINDZWAT
+!DJG ------------------------------------------------------------------------
+         SUBROUTINE FINDZWAT(IXRT,JXRT,NSOIL,SMCRT,SMCMAXRT,SMCREFRT, &
+                             SMCWLTRT,ZSOIL,SATLYRCHK,ZWATTABLRT,CWATAVAIL,&
+                             SLDPTH)
+
+	IMPLICIT NONE
+
+!DJG -------- DECLARATIONS ------------------------
+
+	INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT,NSOIL) :: SMCMAXRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT,NSOIL) :: SMCREFRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT
+	REAL, INTENT(IN), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT
+	REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
+	REAL, INTENT(IN), DIMENSION(NSOIL)        :: SLDPTH
+	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
+	REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: CWATAVAIL
+        INTEGER, INTENT(OUT), DIMENSION(IXRT,JXRT) :: SATLYRCHK
+       
+!DJG Local Variables
+        INTEGER :: KK,i,j
+
+
+!!!! Find saturated layer depth...
+! Loop through domain to determine sat. layers and assign wat tbl depth...
+
+
+        SATLYRCHK = 0  !set flag for sat. layers
+        CWATAVAIL = 0.  !set wat avail for subsfc rtng = 0.
+
+        DO J=1,JXRT
+          DO I=1,IXRT
+
+! Loop through soil layers from bottom to top
+              DO KK=NSOIL,1,-1
+
+! Check for saturated layers
+! Add additional logical check to ensure water is 'available' for routing,
+!  (i.e. not 'frozen' or otherwise immobile)
+!                IF (SMCRT(I,J,KK).GE.SMCMAXRT(I,J,KK).AND.SMCMAXRT(I,J,KK) &
+!                  .GT.SMCWLTRT(I,J,KK)) THEN
+                IF ( (SMCRT(I,J,KK).GE.SMCREFRT(I,J,KK)).AND.(SMCREFRT(I,J,KK) &
+                  .GT.SMCWLTRT(I,J,KK)) ) THEN
+! Add additional check to ensure saturation from bottom up only...8/8/05
+                  IF((SATLYRCHK(I,J).EQ.KK+1) .OR. (KK.EQ.NSOIL) ) SATLYRCHK(I,J) = KK
+                END IF
+
+              END DO
+
+
+! Designate ZWATTABLRT based on highest sat. layer and
+! Define amount of water avail for subsfc routing on each gridcell (CWATAVAIL)
+!  note: using a 'field capacity' value of SMCREF as lower limit...
+
+              IF (SATLYRCHK(I,J).ne.0) then
+                IF (SATLYRCHK(I,J).ne.1) then  ! soil column is partially sat.
+                  ZWATTABLRT(I,J) = -ZSOIL(SATLYRCHK(I,J)-1)
+!DJG 2/16/2016 fix                  DO KK=SATLYRCHK(I,J),NSOIL
+!old                   CWATAVAIL(I,J) = (SMCRT(I,J,SATLYRCHK(I,J))-&
+!old                                    SMCREFRT(I,J,SATLYRCHK(I,J))) * &
+!old                                    (ZSOIL(SATLYRCHK(I,J)-1)-ZSOIL(NSOIL))
+!DJG 2/16/2016 fix                    CWATAVAIL(I,J) = CWATAVAIL(I,J)+(SMCRT(I,J,KK)- &
+!DJG 2/16/2016 fix                                     SMCREFRT(I,J,KK))*SLDPTH(KK)
+!DJG 2/16/2016 fix                  END DO
+
+
+                ELSE  ! soil column is fully saturated to sfc.
+                  ZWATTABLRT(I,J) = 0.
+!DJG 2/16/2016 fix                  DO KK=SATLYRCHK(I,J),NSOIL
+!DJG 2/16/2016 fix                    CWATAVAIL(I,J) = (SMCRT(I,J,KK)-SMCREFRT(I,J,KK))*SLDPTH(KK)
+!DJG 2/16/2016 fix                  END DO
+                END IF
+!DJG 2/16/2016 fix accumulation of CWATAVAIL...
+                  DO KK=SATLYRCHK(I,J),NSOIL
+                    CWATAVAIL(I,J) = CWATAVAIL(I,J)+(SMCRT(I,J,KK)- &
+                                     SMCREFRT(I,J,KK))*SLDPTH(KK)
+                  END DO
+              ELSE  ! no saturated layers...
+                ZWATTABLRT(I,J) = -ZSOIL(NSOIL)
+                SATLYRCHK(I,J) = NSOIL + 1
+              END IF
+
+
+	   END DO
+         END DO
+
+
+!DJG ----------------------------------------------------------------
+  END SUBROUTINE FINDZWAT 
+!DJG ----------------------------------------------------------------
+
+
+!DJG ----------------------------------------------------------------
+!DJG ----------------------------------------------------------------
+!DJG     SUBROUTINE ROUTE_SUBSURFACE2
+!DJG ----------------------------------------------------------------
+
+          SUBROUTINE ROUTE_SUBSURFACE2(                                 &
+                dist,z,qsub,sox,soy,                                   &
+                latksat,soldep,XX,YY,QSUBDRY,QSUBDRYT,CWATAVAIL,   &
+                SUBDT)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Subroutine to route subsurface flow through the watershed
+!DJG ----------------------------------------------------------------
+!
+!  Called from: main.f (Noah_router_driver)
+!
+!  Returns: qsub=DQSUB   which in turn becomes SUBFLO in head calc.
+!
+!  Created:    D. Gochis                           3/27/03
+!              Adaptded from Wigmosta, 1994
+!
+!  Modified:   D. Gochis                           1/05/04
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifdef MPP_LAND
+        use module_mpp_land, only: left_id,down_id,right_id,&
+               up_id,mpp_land_com_real,MPP_LAND_UB_COM, &
+               MPP_LAND_LR_COM,mpp_land_com_integer
+#endif
+
+        IMPLICIT NONE
+
+
+!! Declare Passed variables
+
+        INTEGER, INTENT(IN) :: XX,YY
+
+!! Declare passed arrays
+
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: z
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: sox
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: soy
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: latksat
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: CWATAVAIL
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: soldep
+        REAL, INTENT(OUT), DIMENSION(XX,YY) :: qsub
+        REAL, INTENT(INOUT), DIMENSION(XX,YY) :: QSUBDRY
+        REAL, INTENT(INOUT) :: QSUBDRYT
+        REAL, INTENT(IN) :: SUBDT
+        real, intent(in), dimension(xx,yy,9) :: dist 
+
+!!! Declare Local Variables
+
+        REAL :: dzdx,dzdy,beta,gamma
+        REAL :: qqsub,hh,ksat, gsize
+
+        INTEGER :: i,j
+!!! Initialize variables
+        REAL, PARAMETER :: nexp=1.0      ! local power law exponent
+        qsub = 0.                        ! initialize flux = 0. !DJG 5 May 2014
+
+!yw        soldep = 2.
+        
+
+! Begin Subsurface routing
+
+!!! Loop to route water in x-direction
+        do j=1,YY
+          do i=1,XX
+! check for boundary grid point?
+          if (i.eq.XX) GOTO 998
+          gsize = dist(i,j,3)
+
+          dzdx= (z(i,j) - z(i+1,j))/gsize
+          beta=sox(i,j) + dzdx + 1E-30
+          if (abs(beta) .lt. 1E-20) beta=1E-20
+          if (beta.lt.0) then
+!yw            hh=(1-(z(i+1,j)/soldep(i,j)))**nexp
+            hh=(1-(z(i+1,j)/soldep(i+1,j)))**nexp
+! Change later to use mean Ksat of two cells
+            ksat=latksat(i+1,j)
+          else
+            hh=(1-(z(i,j)/soldep(i,j)))**nexp
+            ksat=latksat(i,j)
+          end if
+
+          if (hh .lt. 0.) then
+            print *, "hsub<0 at gridcell...", i,j,hh,z(i+1,j),z(i,j), &
+                      soldep(i,j),nexp
+            call hydro_stop("In ROUTE_SUBSURFACE2() - hsub<0 at gridcell")
+          end if
+
+!Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
+!AD_CHANGE: beta is already a slope so no tan (consistent with ROUTE_SUBSURFACE1) 
+          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
+!DJG lacks tan(beta) of original Wigmosta version          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
+
+          qqsub = gamma * hh
+          qsub(i,j) = qsub(i,j) + qqsub
+          qsub(i+1,j) = qsub(i+1,j) - qqsub
+
+! Boundary adjustments
+#ifdef MPP_LAND
+          if ((i.eq.1).AND.(beta.lt.0.).and.(left_id.lt.0)) then
+#else
+          if ((i.eq.1).AND.(beta.lt.0.)) then
+#endif
+            qsub(i,j) = qsub(i,j) - qqsub
+            QSUBDRY(i,j) = QSUBDRY(i,j) - qqsub
+            QSUBDRYT = QSUBDRYT - qqsub
+#ifdef MPP_LAND
+          else if ((i.eq.(xx-1)).AND.(beta.gt.0.) &
+              .and.(right_id.lt.0) ) then
+#else
+          else if ((i.eq.(xx-1)).AND.(beta.gt.0.)) then
+#endif
+            qsub(i+1,j) = qsub(i+1,j) + qqsub
+            QSUBDRY(i+1,j) = QSUBDRY(i+1,j) + qqsub
+            QSUBDRYT = QSUBDRYT + qqsub
+          end if
+
+998       continue
+
+!! End loop to route sfc water in x-direction
+          end do
+        end do
+
+#ifdef MPP_LAND
+       call MPP_LAND_LR_COM(qsub,XX,YY,99)
+       call MPP_LAND_LR_COM(QSUBDRY,XX,YY,99)
+#endif
+
+
+!!! Loop to route water in y-direction
+        do j=1,YY
+          do i=1,XX
+! check for boundary grid point?
+          if (j.eq.YY) GOTO 999
+          gsize = dist(i,j,1)
+
+          dzdy= (z(i,j) - z(i,j+1))/gsize
+          beta=soy(i,j) + dzdy + 1E-30
+          if (abs(beta) .lt. 1E-20) beta=1E-20
+          if (beta.lt.0) then
+!yw            hh=(1-(z(i,j+1)/soldep(i,j)))**nexp
+            hh=(1-(z(i,j+1)/soldep(i,j+1)))**nexp
+            ksat=latksat(i,j+1)
+          else
+            hh=(1-(z(i,j)/soldep(i,j)))**nexp
+            ksat=latksat(i,j)
+          end if
+
+          if (hh .lt. 0.) GOTO 999
+
+!Err. tan slope          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*tan(beta)
+          gamma=-1.*((gsize*ksat*soldep(i,j))/nexp)*beta
+
+          qqsub = gamma * hh
+          qsub(i,j) = qsub(i,j) + qqsub
+          qsub(i,j+1) = qsub(i,j+1) - qqsub
+
+! Boundary adjustments
+
+#ifdef MPP_LAND
+          if ((j.eq.1).AND.(beta.lt.0.).and.(down_id.lt.0)) then
+#else
+          if ((j.eq.1).AND.(beta.lt.0.)) then
+#endif
+            qsub(i,j) = qsub(i,j) - qqsub
+            QSUBDRY(i,j) = QSUBDRY(i,j) - qqsub
+            QSUBDRYT = QSUBDRYT - qqsub
+#ifdef MPP_LAND
+          else if ((j.eq.(yy-1)).AND.(beta.gt.0.)  &
+                .and. (up_id.lt.0) ) then
+#else
+          else if ((j.eq.(yy-1)).AND.(beta.gt.0.)) then
+#endif
+            qsub(i,j+1) = qsub(i,j+1) + qqsub
+            QSUBDRY(i,j+1) = QSUBDRY(i,j+1) + qqsub
+            QSUBDRYT = QSUBDRYT + qqsub
+          end if
+
+999       continue
+
+!! End loop to route sfc water in y-direction
+          end do
+        end do
+
+#ifdef MPP_LAND
+       call MPP_LAND_UB_COM(qsub,XX,YY,99)
+       call MPP_LAND_UB_COM(QSUBDRY,XX,YY,99)
+#endif
+
+        return
+!DJG------------------------------------------------------------
+        end subroutine ROUTE_SUBSURFACE2
+!DJG------------------------------------------------------------
+
+
+
+!DJG ------------------------------------------------
+!DJG   SUBROUTINE OV_RTNG
+!DJG ------------------------------------------------
+
+	!SUBROUTINE OV_RTNG(DT,DTRT_TER,IXRT,JXRT,INFXSUBRT,      &
+        !  SFCHEADSUBRT,DHRT,CH_NETRT,RETDEPRT,OVROUGHRT,      &
+        !  QSTRMVOLRT,QBDRYRT,QSTRMVOLTRT,QBDRYTRT,SOXRT,     &
+        !  SOYRT,dist,LAKE_MSKRT,LAKE_INFLORT,LAKE_INFLOTRT,  &
+        !  SO8RT,SO8RT_D,rt_option,q_sfcflx_x,q_sfcflx_y)
+
+       subroutine ov_rtng( &
+           ovrt_data, &
+           DT, &
+           DTRT_TER, &
+           IXRT, &
+           JXRT, &
+           rt_option, &
+           q_sfcflx_x, &
+           q_sfcflx_y &
+       )
+
+!yyww 
+#ifdef MPP_LAND
+        use module_mpp_land, only: left_id,down_id,right_id, &
+              up_id,mpp_land_com_real, my_id, &
+             mpp_land_sync
+#endif
+        use overland_data
+	IMPLICIT NONE
+
+!DJG --------DECLARATIONS----------------------------
+
+        type (overland_struct), intent(inout) :: ovrt_data 
+        INTEGER, INTENT(IN)			:: IXRT,JXRT
+	REAL, INTENT(IN)			:: DT,DTRT_TER
+        integer, intent(in) :: rt_option
+
+        !INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
+        !INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: INFXSUBRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOXRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: SOYRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,9):: dist 
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT)	:: RETDEPRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT)	:: OVROUGHRT
+
+        !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: SFCHEADSUBRT
+        !REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)	:: DHRT
+
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QSTRMVOLRT
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_INFLORT
+        !REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: QBDRYRT
+	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: q_sfcflx_x,q_sfcflx_y
+        !REAL, INTENT(INOUT)     :: QSTRMVOLTRT,QBDRYTRT,LAKE_INFLOTRT
+        !REAL, INTENT(IN), DIMENSION(IXRT,JXRT,8)  :: SO8RT
+
+!DJG Local Variables
+
+	INTEGER :: KRT,I,J,ct
+
+	REAL, DIMENSION(IXRT,JXRT)	:: INFXS_FRAC
+	REAL	:: DT_FRAC,SUM_INFXS,sum_head
+        !INTEGER SO8RT_D(IXRT,JXRT,3), rt_option
+	
+	
+
+
+!DJG ----------------------------------------------------------------------
+! DJG BEGIN 1-D or 2-D OVERLAND FLOW ROUTING LOOP
+!DJG ---------------------------------------------------------------------
+!DJG  Loop over 'routing time step'
+!DJG  Compute the number of time steps based on NOAH DT and routing DTRT_TER
+
+       DT_FRAC=INT(DT/DTRT_TER)
+
+#ifdef HYDRO_D
+       write(6,*) "OV_RTNG  DT_FRAC, DT, DTRT_TER",DT_FRAC, DT, DTRT_TER
+       write(6,*) "IXRT, JXRT = ",ixrt,jxrt
+#endif
+
+!DJG NOTE: Applying all infiltration excess water at once then routing
+!DJG       Pre-existing SFHEAD gets combined with Precip. in the
+!DJG       calculation of INFXS1 during subroutine SRT.f.
+!DJG debug
+
+
+!DJG Assign all infiltration excess to surface head...
+            ovrt_data%control%surface_water_head_routing=ovrt_data%control%infiltration_excess
+
+!DJG Divide infiltration excess over all routing time-steps
+!	     INFXS_FRAC=INFXSUBRT/(DT/DTRT_TER)
+
+!DJG Set flux accumulation fields to 0. before each loop...
+      q_sfcflx_x = 0.
+      q_sfcflx_y = 0.
+      ct =0
+
+
+!DJG Execute routing time-step loop...
+
+
+      DO KRT=1,DT_FRAC
+
+        DO J=1,JXRT
+          DO I=1,IXRT
+
+!DJG Removed 4_29_05, sfhead now updated in route_overland subroutine...
+!           SFCHEADSUBRT(I,J)=SFCHEADSUBRT(I,J)+DHRT(I,J)
+!!           SFCHEADSUBRT(I,J)=SFCHEADSUBRT(I,J)+DHRT(I,J)+INFXS_FRAC(I,J)
+!           DHRT(I,J)=0.
+
+!DJG ERROR Check...
+
+	   IF (ovrt_data%control%surface_water_head_routing(I,J).lt.0.) THEN 
+#ifdef HYDRO_D
+		print *, "ywcheck 2 ERROR!!!: Neg. Surface Head Value at (i,j):",    &
+                    i,j,ovrt_data%control%surface_water_head_routing(I,J)
+                print *, "RETDEPRT(I,J) = ",ovrt_data%properties%retention_depth(I,J), "KRT=",KRT
+                print *, "INFXSUBRT(i,j)=",ovrt_data%control%infiltration_excess(i,j)
+                print *, "jxrt=",jxrt," ixrt=",ixrt
+#endif
+           END IF
+
+!DJG Remove surface water from channel cells
+!DJG Channel inflo cells specified as nonzeros from CH_NET
+!DJG 9/16/04  Channel Extractions Removed until stream model implemented...
+
+
+
+!yw            IF (CH_NETRT(I,J).ne.-9999) THEN
+           IF (ovrt_data%streams_and_lakes%CH_NETRT(I,J).ge.0) THEN
+             ct = ct +1
+
+!DJG Temporary test to up the retention depth of channel grid cells to 'soak' 
+!more water into valleys....set retdep = retdep*100 (=5 mm)
+
+!	     RETDEPRT(I,J) = RETDEPRT(I,J) * 100.0    !DJG TEMP HARDWIRE!!!!
+!	     RETDEPRT(I,J) = 10.0    !DJG TEMP HARDWIRE!!!!
+
+             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
+!!               QINFLO(CH_NET(I,J)=QINFLO(CH_NET(I,J)+SFCHEAD(I,J) - RETDEPRT(I,J)
+               ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel = ovrt_data%streams_and_lakes%accumulated_surface_water_to_channel + &
+                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
+               ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) = ovrt_data%streams_and_lakes%surface_water_to_channel(I,J) + &
+                  (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
+
+             ! if(QSTRMVOLRT(I,J) .gt. 0) then 
+             !     print *, "QSTRVOL GT 0", QSTRMVOLRT(I,J),I,J 
+             !  endif
+
+               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%retention_depth(I,J)
+             END IF
+           END IF
+
+!DJG Lake inflow withdrawl from surface head...(4/29/05)
+           
+
+           IF (ovrt_data%streams_and_lakes%lake_mask(I,J) .gt. 0) THEN
+             IF (ovrt_data%control%surface_water_head_routing(I,J) .GT. ovrt_data%properties%retention_depth(I,J)) THEN
+               ovrt_data%streams_and_lakes%accumulated_surface_water_to_lake = ovrt_data%streams_and_lakes%accumulated_surface_water_to_lake + &
+                   (ovrt_data%control%surface_water_head_routing(I,J) - ovrt_data%properties%retention_depth(I,J))
+               ovrt_data%streams_and_lakes%surface_water_to_lake(I,J) = ovrt_data%streams_and_lakes%surface_water_to_lake(I,J) + &
+                   (ovrt_data%control%surface_water_head_routing(I,J)- ovrt_data%properties%retention_depth(I,J))
+               ovrt_data%control%surface_water_head_routing(I,J) = ovrt_data%properties%retention_depth(I,J)
+             END IF
+           END IF
+
+
+
+         END DO
+        END DO
+
+!yw check         call MPP_LAND_COM_REAL(QSTRMVOLRT,IXRT,JXRT,99)
+!DJG----------------------------------------------------------------------
+!DJG CALL OVERLAND FLOW ROUTING SUBROUTINE
+!DJG----------------------------------------------------------------------
+
+!DJG Debug...
+
+
+           if(rt_option .eq. 1) then
+              CALL ROUTE_OVERLAND1(DTRT_TER, &
+                  ovrt_data%properties%distance_to_neighbor, &
+                  ovrt_data%control%surface_water_head_routing, &
+                  ovrt_data%control%DHRT, &
+                  ovrt_data%properties%surface_slope_x,   &
+		  ovrt_data%properties%surface_slope_y, &
+                  ovrt_data%properties%retention_depth, &
+                  ovrt_data%properties%roughness, &
+                  IXRT, JXRT, &
+                  ovrt_data%control%boundary_flux, &
+                  ovrt_data%control%boundary_flux_total,    & 
+                  ovrt_data%properties%water_surface_slope, &
+                  ovrt_data%properties%max_water_surface_slope_index, &
+                  q_sfcflx_x, q_sfcflx_y)
+            else
+              CALL ROUTE_OVERLAND2(DTRT_TER, &
+                  ovrt_data%properties%distance_to_neighbor, & 
+                  ovrt_data%control%surface_water_head_routing, & 
+                  ovrt_data%control%DHRT, &
+                  ovrt_data%properties%surface_slope_x, &
+                  ovrt_data%properties%surface_slope_y, &
+                  ovrt_data%properties%retention_depth, &
+                  ovrt_data%properties%roughness, &
+                  IXRT, JXRT, &
+                  ovrt_data%control%boundary_flux, & 
+                  ovrt_data%control%boundary_flux_total,  &
+                  q_sfcflx_x,q_sfcflx_y)    
+            end if
+             
+        END DO          ! END routing time steps
+
+#ifdef HYDRO_D
+ 	print *, "End of OV_routing call..."
+#endif
+
+!----------------------------------------------------------------------
+! END OVERLAND FLOW ROUTING LOOP
+!     CHANNEL ROUTING TO FOLLOW 
+!----------------------------------------------------------------------
+
+!DJG ----------------------------------------------------------------
+  END SUBROUTINE OV_RTNG 
+!DJG ----------------------------------------------------------------
+
+!DJG     SUBROUTINE ROUTE_OVERLAND1
+!DJG ----------------------------------------------------------------
+
+          SUBROUTINE ROUTE_OVERLAND1(dt,                                &
+     &          gsize,h,qsfc,sox,soy,                                   &
+     &     retent_dep,dist_rough,XX,YY,QBDRY,QBDRYT,SO8RT,SO8RT_D,      &
+     &     q_sfcflx_x,q_sfcflx_y)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Subroutine to route excess rainfall over the watershed
+!     using a 2d diffusion routing scheme.
+!
+!  Called from: main.f
+!
+!      Will try to formulate this to be called from NOAH
+!
+!  Returns: qsfc=DQOV   which in turn becomes DH in head calc.
+!
+!  Created:  Adaptded from CASC2D source code
+!  NOTE: dh from original code has been replaced by qsfc
+!        dhh replaced by qqsfc
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#ifdef MPP_LAND
+        use module_mpp_land, only: left_id,down_id,right_id, &
+              up_id,mpp_land_com_real, my_id, mpp_land_com_real8,&
+             mpp_land_sync
+#endif
+
+        IMPLICIT NONE
+
+
+!! Declare Passed variables
+
+        INTEGER, INTENT(IN) :: XX,YY
+        REAL, INTENT(IN) :: dt, gsize(xx,yy,9)
+
+!! Declare passed arrays
+
+        REAL, INTENT(INOUT), DIMENSION(XX,YY) :: h
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: qsfc
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: sox
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: soy
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: retent_dep
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: dist_rough
+        REAL, INTENT(INOUT), DIMENSION(XX,YY) :: QBDRY
+        REAL, INTENT(INOUT), DIMENSION(XX,YY) :: q_sfcflx_x, q_sfcflx_y
+        REAL, INTENT(INOUT) :: QBDRYT
+        REAL, INTENT(IN), DIMENSION(XX,YY,8) :: SO8RT
+        REAL*8, DIMENSION(XX,YY) :: QBDRY_tmp, DH
+        REAL*8, DIMENSION(XX,YY) :: DH_tmp
+
+!!! Declare Local Variables
+
+        REAL :: dhdx,dhdy,alfax,alfay
+        REAL :: hh53,qqsfc,hh,dt_new,hmax
+        REAL :: sfx,sfy
+        REAL :: tmp_adjust
+
+        INTEGER :: i,j
+        REAL IXX8,IYY8
+        INTEGER  IXX0,JYY0,index, SO8RT_D(XX,YY,3)
+        REAL  tmp_gsize,hsum
+
+!!! Initialize variables
+
+
+
+!!! Begin Routing of Excess Rainfall over the Watershed
+
+        DH=0.
+        DH_tmp=0.
+        QBDRY_tmp =0.
+
+!!! Loop to route water
+        do j=2,YY-1
+          do i=2,XX-1
+          if (h(I,J).GT.retent_dep(I,J)) then 
+             IXX0 = SO8RT_D(i,j,1)
+             JYY0 = SO8RT_D(i,j,2)
+             index = SO8RT_D(i,j,3)
+             tmp_gsize = 1.0/gsize(i,j,index)
+             sfx = so8RT(i,j,index)-(h(IXX0,JYY0)-h(i,j))*0.001*tmp_gsize
+             hmax = h(i,j)*0.001  !Specify max head for mass flux limit...
+             if(sfx .lt. 1E-20) then
+               call GETMAX8DIR(IXX0,JYY0,I,J,H,RETENT_DEP,so8rt,gsize(i,j,:),sfx,XX,YY)
+             end if
+             if(IXX0 > 0) then  ! do the rest if the lowest grid can be found.
+                 if(sfx .lt. 1E-20) then
+#ifdef HYDRO_D
+                      print*, "Message: sfx reset to 1E-20. sfx =",sfx
+                      print*, "i,j,index,IXX0,JYY0",i,j,index,IXX0,JYY0
+                      print*, "so8RT(i,j,index), h(IXX0,JYY0), h(i,j), gsize(i,j,index) ", &
+                         so8RT(i,j,index), h(IXX0,JYY0), h(i,j), gsize(i,j,index)
+#endif
+                      sfx = 1E-20
+                 end if
+                 alfax = sqrt(sfx) / dist_rough(i,j) 
+                 hh=(h(i,j)-retent_dep(i,j)) * 0.001
+                 hh53=hh**(5./3.)
+
+! Calculate q-flux...
+                 qqsfc = alfax*hh53*dt * tmp_gsize
+
+!Courant check (simple mass limit on overland flow)...
+                 if (qqsfc.ge.(hmax*dt*tmp_gsize)) qqsfc = hmax*dt*tmp_gsize
+
+! Accumulate directional fluxes on routing subgrid...
+                 if (IXX0.gt.i) then
+                   q_sfcflx_x(I,J) = q_sfcflx_x(I,J) + qqsfc * &
+                         (1.0 - 0.5 * (ABS(j-JYY0)))
+                 else if (IXX0.lt.i) then
+                   q_sfcflx_x(I,J) = q_sfcflx_x(I,J) - 1.0 * &
+                         qqsfc * (1.0 - 0.5 * (ABS(j-JYY0)))
+                 else
+                   q_sfcflx_x(I,J) = q_sfcflx_x(I,J) + 0.
+                 end if
+                 if (JYY0.gt.j) then
+                   q_sfcflx_y(I,J) = q_sfcflx_y(I,J) + qqsfc * &
+                          (1.0 - 0.5 * (ABS(i-IXX0)))
+                 elseif (JYY0.lt.j) then
+                   q_sfcflx_y(I,J) = q_sfcflx_y(I,J) - 1.0 * &
+                          qqsfc * (1.0 - 0.5 * (ABS(i-IXX0)))
+                 else
+                   q_sfcflx_y(I,J) = q_sfcflx_y(I,J) + 0.
+                 end if
+
+
+!DJG put adjustment in for (h) due to qqsfc
+
+!yw changed as following:
+                 tmp_adjust=qqsfc*1000
+                 if((h(i,j) - tmp_adjust) <0 )  then
+#ifdef HYDRO_D
+                   print*, "Error Warning: surface head is negative:  ",i,j,ixx0,jyy0, &
+                       h(i,j) - tmp_adjust
+#endif
+                     tmp_adjust = h(i,j)
+                 end if
+ 	         DH(i,j) = DH(i,j)-tmp_adjust
+                 DH_tmp(ixx0,jyy0) = DH_tmp(ixx0,jyy0) + tmp_adjust
+      !yw end change
+                  
+      !DG Boundary adjustments here
+            !DG Constant Flux Condition
+#ifdef MPP_LAND
+      if( ((ixx0.eq.XX).and.(right_id .lt. 0)) .or. &
+          ((ixx0.eq.1) .and.(left_id  .lt. 0)) .or. &
+          ((jyy0.eq.1) .and.(down_id  .lt. 0)) .or. &
+          ((JYY0.eq.YY).and.(up_id    .lt. 0)) ) then 
+!              QBDRY_tmp(IXX0,JYY0)=QBDRY_tmp(IXX0,JYY0) - qqsfc*1000.
+#else
+                if ((ixx0.eq.XX).or.(ixx0.eq.1).or.(jyy0.eq.1)   &
+                     .or.(JYY0.eq.YY )) then
+!                     QBDRY(IXX0,JYY0)=QBDRY(IXX0,JYY0) - qqsfc*1000.
+#endif
+                     QBDRY_tmp(IXX0,JYY0)=QBDRY_tmp(IXX0,JYY0) - qqsfc*1000.
+                     QBDRYT=QBDRYT - qqsfc
+                     DH_tmp(IXX0,JYY0)= DH_tmp(IXX0,JYY0)-tmp_adjust
+                end if
+             end if
+!! End loop to route sfc water 
+          end if
+          end do
+        end do
+
+#ifdef MPP_LAND
+! use double precision to solve the underflow problem.
+       call MPP_LAND_COM_REAL8(DH_tmp,XX,YY,1)
+       call MPP_LAND_COM_REAL8(QBDRY_tmp,XX,YY,1)
+#endif
+       QBDRY = QBDRY + QBDRY_tmp
+       DH = DH+DH_tmp 
+
+#ifdef MPP_LAND
+       call MPP_LAND_COM_REAL8(DH,XX,YY,99)
+       call MPP_LAND_COM_REAL(QBDRY,XX,YY,99)
+#endif
+
+        H = H + DH
+
+        return
+
+!DJG ----------------------------------------------------------------------
+        end subroutine ROUTE_OVERLAND1
+
+
 !DJG ----------------------------------------------------------------
 SUBROUTINE GETMAX8DIR(IXX0,JYY0,I,J,H,RETENT_DEP,sox,tmp_gsize,max,XX,YY)
     implicit none

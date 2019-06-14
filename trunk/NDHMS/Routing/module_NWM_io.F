@@ -9,6 +9,8 @@
 
 module module_NWM_io
 
+use module_version, only: get_code_version, get_nwm_version
+
 implicit none
 
 ! Module-wide variables
@@ -59,7 +61,7 @@ function GetModelConfigType (io_config_outputs) result(modelConfigType)
    else
    !   call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
-END
+end function GetModelConfigType
 
 subroutine output_chrt_NWM(domainId)
    use module_rt_data, only: rt_domain
@@ -662,8 +664,12 @@ subroutine output_chrt_NWM(domainId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -755,7 +761,9 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
+#ifndef NCEP_WCOSS
       ! Create channel lat/lon variables
+      ! NOTE: NWM current operations do not permit the output of latitude and longitude for streamflow.
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
       iret = nf90_put_att(ftn,latVarId,'long_name',trim(fileMeta%latLName))
@@ -790,6 +798,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into elevation variable')
+#endif
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -800,6 +809,7 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
+#ifndef NCEP_WCOSS
          iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
          iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
@@ -808,6 +818,7 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for order.')  
          iret = nf90_def_var_deflate(ftn,elevVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for elevation.')  
+#endif
       endif
 
       ! Allocate memory for the output variables, then place the real output
@@ -828,8 +839,8 @@ subroutine output_chrt_NWM(domainId)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -910,6 +921,7 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_var(ftn,varId,varMetaInt(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
       
+#ifndef NCEP_WCOSS
       iret = nf90_inq_varid(ftn,'latitude',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(1,:))
@@ -929,6 +941,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate elevation in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(3,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into elevation output variable.')
+#endif
 
       ! Place time values into time variables.
       iret = nf90_inq_varid(ftn,'time',varId)
@@ -1163,9 +1176,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
                              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0]
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
+                             0,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,&
+                             0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0]
    else if(nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
@@ -1246,8 +1259,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total_valid_times attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"code_version",trim(get_code_version()))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
          iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
          iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -1270,8 +1287,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
          iret = nf90_def_dim(ftnNoahMP,'reference_time',1,dimId(6))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+         ! Only create vis_nir if we are outputting the two snow albedo variables. 
+         ! Otherwise these are unecessary dimensions.
+         if ((fileMeta%outFlag(96) .eq. 1) .or. (fileMeta%outFlag(96) .eq. 1)) then
          iret = nf90_def_dim(ftnNoahMP,'vis_nir',fileMeta%numSpectrumBands,dimId(7))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define vis_nir dimension')
+         endif
 
          ! Create and populate reference_time and time variables.
          iret = nf90_def_var(ftnNoahMP,"time",nf90_int,dimId(1),timeId)
@@ -1375,8 +1396,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                ! Extract valid range into a 1D array for placement.
                varRange(1) = fileMeta%validMinComp(iTmp)
                varRange(2) = fileMeta%validMaxComp(iTmp)
-               varRangeReal(1) = fileMeta%validMinReal(iTmp)
-               varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+               varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+               varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
                ! Establish a compression level for the variables. For now we are using a
                ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -1704,7 +1725,7 @@ subroutine output_rt_NWM(domainId,iGrid)
    real*8, allocatable, dimension(:) :: yCoord,xCoord,yCoord2
    integer :: numLev ! This will be 4 for soil moisture, and 1 for all other variables.
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
-
+   real :: scaleFactorReciprocal
 ! Establish macro variables to hlep guide this subroutine. 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -1827,8 +1848,12 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -1847,8 +1872,12 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define y dimension')
       iret = nf90_def_dim(ftn,'reference_time',1,dimId(4))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension') 
+      ! Only create soil layers stag dimension if we are outputting to the soil moisture grid. 
+      ! Otherwise this creates unused dimensions. 
+      if (fileMeta%outFlag(5) .eq. 1) then
       iret = nf90_def_dim(ftn,'soil_layers_stag',fileMeta%numSoilLayers,dimId(5))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to define soil_layers_stag dimension')
+      endif
 
       ! Create and populate reference_time and time variables.
       iret = nf90_def_var(ftn,"time",nf90_int,dimId(1),timeId)
@@ -1946,8 +1975,8 @@ subroutine output_rt_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement.
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -2066,6 +2095,8 @@ subroutine output_rt_NWM(domainId,iGrid)
          numLev = 1
       endif
 
+      scaleFactorReciprocal = 1/fileMeta%scaleFactor(iTmp2)
+
       if(fileMeta%outFlag(iTmp2) .eq. 1) then   
          !Allocate memory necessary 
          if(myId .eq. 0) then
@@ -2113,10 +2144,10 @@ subroutine output_rt_NWM(domainId,iGrid)
 
                   ! Run a quick gross check on values to ensure they aren't outside our
                   ! defined limits.
-                  !if(varRealTmp .lt. fileMeta%validMinReal(iTmp2)) then
+                  !if(varRealTmp .lt. fileMeta%validMinDbl(iTmp2)) then
                   !   varRealTmp = fileMeta%fillReal(iTmp2)
                   !endif
-                  !if(varRealTmp .gt. fileMeta%validMaxReal(iTmp2)) then
+                  !if(varRealTmp .gt. fileMeta%validMaxDbl(iTmp2)) then
                   !   varRealTmp = fileMeta%fillReal(iTmp2)
                   !endif
                   if(varRealTmp .ne. varRealTmp) then
@@ -2132,7 +2163,7 @@ subroutine output_rt_NWM(domainId,iGrid)
                         localCompTmp(iTmp,jTmp) = INT(fileMeta%fillComp(iTmp2))
                         localRealTmp(iTmp,jTmp) = fileMeta%fillReal(iTmp2)
                      else
-                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))/fileMeta%scaleFactor(iTmp2))
+                        localCompTmp(iTmp,jTmp) = NINT((varRealTmp-fileMeta%addOffset(iTmp2))*scaleFactorReciprocal)
                         localRealTmp(iTmp,jTmp) = varRealTmp
                      endif
                   endif
@@ -2533,8 +2564,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -2673,8 +2708,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -3038,8 +3073,12 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid times attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -3170,8 +3209,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement.
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are
             ! using a
@@ -3486,8 +3525,8 @@ subroutine output_lsmOut_NWM(domainId)
       ! We are on the I/O node. Create output file.
       write(output_flnm,'(A12,".LSMOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
             nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
-            nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16)//  &
-            nlst_rt(domainId)%hgrid
+            nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16),&
+            nlst_rt(domainId)%igrid
   
       iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LSMOUT NetCDF file.')
@@ -3503,8 +3542,12 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid time attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -3606,8 +3649,8 @@ subroutine output_lsmOut_NWM(domainId)
             call nwmCheck(diagFlag,iret,"ERROR: Unable to create variable: "//trim(fileMeta%varNames(iTmp)))
 
             ! Extract valid range into a 1D array for placement.
-            varRange(1) = fileMeta%validMinReal(iTmp)
-            varRange(2) = fileMeta%validMaxReal(iTmp)
+            varRange(1) = fileMeta%validMinDbl(iTmp)
+            varRange(2) = fileMeta%validMaxDbl(iTmp)
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -4472,8 +4515,12 @@ subroutine output_chanObs_NWM(domainId)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -4646,8 +4693,8 @@ subroutine output_chanObs_NWM(domainId)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are
             ! using a
@@ -4865,7 +4912,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: ierr, myId ! MPI return status, process ID
    integer :: gnbasns
    ! Allocatable arrays to hold output variables. 
-   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_z_gwsubbas
+   real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_qloss_gwsubbas,g_z_gwsubbas
    integer, allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
@@ -4909,25 +4956,25 @@ subroutine output_gw_NWM(domainId,iGrid)
 
    if(nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1] 
+      fileMeta%outFlag(:) = [1,1,0,1] 
    else if(nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics 
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,0,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -4951,17 +4998,19 @@ subroutine output_gw_NWM(domainId,iGrid)
       if(myId .eq. 0) then
          allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+         allocate(g_qloss_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
       else
          allocate(g_qin_gwsubbas(1))
          allocate(g_qout_gwsubbas(1))
+         allocate(g_qloss_gwsubbas(1))
          allocate(g_z_gwsubbas(1))
          allocate(g_basnsInd(1))
       endif
 
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
-         ! This is ONLYL for NWM configuration with NHD channel routing. NCAR
+         ! This is ONLY for NWM configuration with NHD channel routing. NCAR
          ! reach-based routing has the GW physics initialized the same as with 
          ! gridded routing. 
          !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
@@ -4970,6 +5019,10 @@ subroutine output_gw_NWM(domainId,iGrid)
          !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
          call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
          call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+         if(nlst_rt(domainId)%bucket_loss .eq. 1) then
+            fileMeta%outFlag(3) = 1
+            call ReachLS_write_io(rt_domain(domainId)%qloss_gwsubbas,g_qloss_gwsubbas)
+         endif
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
@@ -4979,11 +5032,17 @@ subroutine output_gw_NWM(domainId,iGrid)
                                rt_domain(domainId)%basnsInd,g_z_gwsubbas)
          call gw_write_io_int(rt_domain(domainId)%numbasns,rt_domain(domainId)%basnsInd, &
                               rt_domain(domainId)%basnsInd,g_basnsInd)
+         if(nlst_rt(domainId)%bucket_loss .eq. 1) then
+             fileMeta%outFlag(3) = 1
+             call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qloss_gwsubbas, &
+                                   rt_domain(domainId)%basnsInd,g_qloss_gwsubbas)
+         endif
       endif
 
    else
       allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
+      allocate(g_qloss_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
       allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
 
@@ -4994,6 +5053,10 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
       g_basnsInd = rt_domain(domainId)%linkid
+      if(nlst_rt(domainId)%bucket_loss .eq. 1) then
+         fileMeta%outFlag(3) = 1
+         g_qloss_gwsubbas = rt_domain(domainId)%qloss_gwsubbas
+      endif
    endif   
 
    ! Sync all processes up.
@@ -5057,7 +5120,8 @@ subroutine output_gw_NWM(domainId,iGrid)
 
       varOutReal(1,:) = g_qin_gwsubbas
       varOutReal(2,:) = g_qout_gwsubbas
-      varOutReal(3,:) = g_z_gwsubbas
+      varOutReal(3,:) = g_qloss_gwsubbas
+      varOutReal(4,:) = g_z_gwsubbas
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -5082,8 +5146,12 @@ subroutine output_gw_NWM(domainId,iGrid)
       !call nwmCheck(diagFlag,iret,'ERROR: Unable to create ESRI attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"Conventions",trim(fileMeta%conventions))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
-      iret = nf90_put_att(ftn,NF90_GLOBAL,"model_version",trim(fileMeta%outVersion))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_version attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
+#ifdef NCEP_WCOSS
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
+#endif
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_output_type",trim(fileMeta%modelOutputType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create model_output_type attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"model_configuration",modelConfigType)
@@ -5161,8 +5229,8 @@ subroutine output_gw_NWM(domainId,iGrid)
             ! Extract valid range into a 1D array for placement. 
             varRange(1) = fileMeta%validMinComp(iTmp)
             varRange(2) = fileMeta%validMaxComp(iTmp)
-            varRangeReal(1) = fileMeta%validMinReal(iTmp)
-            varRangeReal(2) = fileMeta%validMaxReal(iTmp)
+            varRangeReal(1) = real(fileMeta%validMinDbl(iTmp))
+            varRangeReal(2) = real(fileMeta%validMaxDbl(iTmp))
 
             ! Establish a compression level for the variables. For now we are using a
             ! compression level of 2. In addition, we are choosing to turn the shuffle
@@ -5267,6 +5335,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    endif
    deallocate(g_qin_gwsubbas)
    deallocate(g_qout_gwsubbas)
+   deallocate(g_qloss_gwsubbas)
    deallocate(g_z_gwsubbas)
    deallocate(g_basnsInd)
 end subroutine output_gw_NWM

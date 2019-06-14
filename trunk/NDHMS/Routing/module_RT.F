@@ -36,6 +36,8 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
+   use module_levelpool
+
    IMPLICIT NONE
 
 #ifdef OUTPUT_CHAN_CONN
@@ -353,10 +355,17 @@ CONTAINS
      allocate( rt_domain(did)%So(nsizes) )
      allocate( rt_domain(did)%ChSSlp(nsizes) )
      allocate( rt_domain(did)%Bw(nsizes) )
+     allocate( rt_domain(did)%Tw(nsizes) )
+     allocate( rt_domain(did)%Tw_CC(nsizes) )
+     allocate( rt_domain(did)%n_CC(nsizes) )
      allocate( rt_domain(did)%LAKEIDA(nsizes) )
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
      if(NLAKES .gt. 0) then
+
+        allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
+        allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
+
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -462,6 +471,11 @@ CONTAINS
       rt_domain(did)%CHANLEN = 0.0
       rt_domain(did)%ChSSlp = 0.0
       rt_domain(did)%Bw = 0.0
+      rt_domain(did)%Tw = 0.0
+      rt_domain(did)%Tw_CC = 0.0
+      rt_domain(did)%n_CC = 0.0
+
+
       rt_domain(did)%ZELEV = 0.0
       rt_domain(did)%CVOL = 0.0
       rt_domain(did)%LAKEIDA = 0
@@ -478,7 +492,7 @@ CONTAINS
 #ifdef WRF_HYDRO_NUDGING
       rt_domain(did)%nudge = 0
 #endif
-      rt_domain(did)%HLINK = 0.0        !--used for diffusion only
+      rt_domain(did)%HLINK = -999.  !--default to -999 if not found in the restart.
       rt_domain(did)%MannN = 0.0
       rt_domain(did)%LINKID = 0.0
 
@@ -637,13 +651,20 @@ integer :: bas
 character(len=19)                      :: header
 character(len=1)                       :: jnk
 
-real,  dimension(50)     :: BOTWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+integer :: lake_index, NLAKES_total
+
+real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
+real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
+
 integer :: i,j,k, ll, count
 
      integer, allocatable, dimension(:) :: tmp_int
      real, allocatable, dimension(:) :: tmp_real
      integer, allocatable, dimension(:) :: buf
      real, allocatable, dimension(:) :: tmpRESHT
+     integer :: new_start_i, new_start_j, new_end_i, new_end_j
+     integer :: cache_block, cache_block_begin_i, cache_block_end_i
+     integer :: cache_idx, num_blocks, cache_idx_k, cache_block_begin_k, cache_block_end_k
 
 #ifdef OUTPUT_CHAN_CONN
 real :: connCalcTimeStart, connCalcTimeEnd
@@ -694,6 +715,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%NLAKES,       rt_domain(did)%CHANLEN, &
              rt_domain(did)%MannN,        rt_domain(did)%So, &
              rt_domain(did)%ChSSlp,       rt_domain(did)%Bw, &
+             rt_domain(did)%Tw,                              &
+             rt_domain(did)%Tw_CC,                           &
+             rt_domain(did)%n_CC,                            &
              rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
@@ -731,6 +755,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%QLINK,         rt_domain(did)%CHANLEN,    &
            rt_domain(did)%MannN,         rt_domain(did)%So,         &
            rt_domain(did)%ChSSlp,        rt_domain(did)%Bw,         &
+           rt_domain(did)%Tw,                                       &
+           rt_domain(did)%Tw_CC,                                    &
+           rt_domain(did)%n_CC,                                     &
            rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
@@ -745,6 +772,48 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
            rt_domain(did)%gageMiss                                   )
    end if
+
+   ! Set reservoir type array values to 1 as default for levelpool type.
+   rt_domain(did)%q_type = 1
+
+   NLAKES_total = rt_domain(did)%NLAKES
+
+   do lake_index = 1, NLAKES_total
+     nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
+
+   end do
+
+   ! For loop to cycle array of pointers to reservoirs
+   do lake_index = 1, NLAKES_total
+
+     ! If q_type equals 1, then go to Level Pool
+     if (rt_domain(did)%q_type(lake_index) == 1) then
+
+       ! Allocate a single level pool reservoir
+       allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       ! Dynamically inspects for level pool type reservoir
+       select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
+          type is (levelpool_struct)
+
+               ! Call to initialize a level pool type reservoir
+               call lp%init(                                &
+               rt_domain(did)%RESHT(lake_index),            &
+               rt_domain(did)%HRZAREA(lake_index),          &
+               rt_domain(did)%WEIRH(lake_index),            &
+               rt_domain(did)%WEIRC(lake_index),            &
+               rt_domain(did)%WEIRL(lake_index),            &
+               rt_domain(did)%ORIFICEE(lake_index),         &
+               rt_domain(did)%ORIFICEC(lake_index),         &
+               rt_domain(did)%ORIFICEA(lake_index),         &
+               rt_domain(did)%LAKEMAXH(lake_index),         &
+               rt_domain(did)%LAKEIDM(lake_index)           )
+
+       end select
+
+     end if
+
+   end do
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
@@ -800,7 +869,6 @@ endif
 
    end if ! end not channel_only
 
-
     if ( (nlst_rt(did)%CHANRTSWCRT .eq. 1) .and. &
          (nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) ) then
 #ifdef MPP_LAND
@@ -855,18 +923,36 @@ endif
 
       endif  ! end if block for UDMP_OPT
 
-           do k = 1, rt_domain(did)%LNLINKSL
-               do j = 1, rt_domain(did)%jxrt
-                  do i = 1, rt_domain(did)%ixrt
-                     if( .not. ( (i .eq. 1 .and. left_id .ge. 0) .or. (i .eq. rt_domain(did)%ixrt .and. right_id .ge. 0) .or.  &
-                            (j .eq. 1 .and. down_id .ge. 0) .or. (j .eq. rt_domain(did)%jxrt .and. up_id .ge. 0)    )   ) then
+      new_start_i = 0; new_start_j = 1
+      new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
+
+      if(left_id .ge. 0) new_start_i = 1
+      if(right_id .ge. 0) new_end_i = rt_domain(did)%ixrt - 1
+      if(down_id .ge. 0) new_start_j = 2
+      if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
+
+      cache_block = 256
+      num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
+!$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
+!$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
+      do j = new_start_j, new_end_j
+         do cache_idx = 0, num_blocks - 1
+            cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
+            cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
+            do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
+               cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
+               cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
+               do i = cache_block_begin_i, cache_block_end_i
+                  do k = cache_block_begin_k, cache_block_end_k
                             if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
                                rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
                             endif
-                     endif
                   end do
                end do
            end do
+         end do
+      end do
+!$omp end parallel do
 
             call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
@@ -1033,8 +1119,14 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
    rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
    rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
 
-   ! AD new limit for RETDEPRT at 1mm, assuming larger values of RETDEPRTFAC possible
-   rt_domain(did)%overland%properties%retention_depth = min(rt_domain(did)%overland%properties%retention_depth, 1.0)
+   !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
+   !of overland routine (frequently called) and time loop.
+   !Force channel retention depth to be 5mm.
+   ! JLM: for DWJ I'm leaving this next line for you to verify as
+   !      it's the one I translated to the following line,
+   !where (rt_domain(did)%CH_NETRT .ge. 0) rt_domain(did)%RETDEPRT = 5.0
+   where (rt_domain(did)%overland%streams_and_lakes%ch_netrt .ge. 0) &
+        rt_domain(did)%overland%properties%retention_depth = 5.0
 
    ! calculate the slope for boundary
 #ifdef MPP_LAND
@@ -1088,6 +1180,14 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%z_max (rt_domain(did)%numbasns))
       allocate (rt_domain(did)%basns_area (rt_domain(did)%numbasns))
 
+      if(nlst_rt(did)%bucket_loss .eq. 1) then
+         allocate(rt_domain(did)%qloss_gwsubbas(rt_domain(did)%numbasns))
+         allocate(rt_domain(did)%gw_buck_loss(rt_domain(did)%numbasns))
+
+         rt_domain(did)%qloss_gwsubbas = 0
+         rt_domain(did)%gw_buck_loss = 0
+      endif
+      
       rt_domain(did)%qin_gwsubbas = 0
       rt_domain(did)%z_gwsubbas = 0
       rt_domain(did)%gwbas_pix_ct = 0
@@ -1101,9 +1201,10 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL
 
       call readBucket_nhd(trim(nlst_rt(did)%GWBUCKPARM_file), rt_domain(did)%numbasns, &
-           rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, &
+           rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%gw_buck_loss, &
            rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%LINKID(1:rt_domain(did)%numbasns),  &
            rt_domain(did)%nhdBuckMask )
+
       !ADCHANGE: Added in read for z_init from GWBUCKPARM. Units coming in are mm but z_gwsubbas is in m
       !for UDMP=1 so we convert units.
       rt_domain(did)%z_gwsubbas = rt_domain(did)%z_gwsubbas/1000.
@@ -1170,8 +1271,9 @@ else
 
          call read_GWBUCKPARM(trim(nlst_rt(did)%GWBUCKPARM_file),rt_domain(did)%numbasns,   &
               rt_domain(did)%gnumbasns, rt_domain(did)%basnsInd, &
-              rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%z_max, &
-              rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id,rt_domain(did)%basns_area)
+              rt_domain(did)%gw_buck_coeff, rt_domain(did)%gw_buck_exp, rt_domain(did)%gw_buck_loss, &
+              rt_domain(did)%z_max, rt_domain(did)%z_gwsubbas, rt_domain(did)%bas_id, &
+              rt_domain(did)%basns_area)
 
 
 !!! Determine number of stream pixels per GW basin for distribution...
@@ -1228,12 +1330,16 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
    !---------------------------------------------------------------------
    !DJG,DNY  Initalize lake and channel heights, this may be overwritten by RESTART
    !--------------------------------------------------------------------
-
    if (nlst_rt(did)%channel_option .eq. 3) then
 #ifdef MPP_LAND
+      ! JLM: Currently compound channel does not work for diffusive wave/gridded channel.
+      ! This conflict of options is caught in Data_Rec/module_namelist.F
+      ! Some of the code for reading/using top-width-necessary params from CHANPARM.TBL are available
+      ! but commented out in the code, since they were a bridge to nowhere.
       call mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      !call mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)  !Read chan parms from table...
 #else
-      call CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+      call CHAN_PARM_INIT (BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann) !,TOPWIDCC,NCC)  !Read chan parms from table...
 #endif
    end if
 
@@ -1264,6 +1370,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
                endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+               endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
                endif
@@ -1274,6 +1389,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
              elseif (rt_domain(did)%ORDER(j) .eq. 2) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
                endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
@@ -1286,6 +1410,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
                endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+               endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
                endif
@@ -1296,6 +1429,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
              elseif (rt_domain(did)%ORDER(j) .eq. 4) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
                endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
@@ -1308,6 +1450,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
                endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+               endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
                endif
@@ -1319,6 +1470,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
                endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
+               endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
                endif
@@ -1329,6 +1489,15 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
              elseif (rt_domain(did)%ORDER(j) .ge. 7) then
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(rt_domain(did)%ORDER(j))
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(rt_domain(did)%ORDER(j))
                endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(rt_domain(did)%ORDER(j))
@@ -1342,6 +1511,16 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
 
                if(rt_domain(did)%Bw(j) .eq. 0.0) then
                 rt_domain(did)%Bw(j) = BOTWID(5)
+               endif
+
+               if(rt_domain(did)%Tw(j) .eq. 0.0) then
+                rt_domain(did)%Tw(j) = TOPWID(5)
+               endif
+               if(rt_domain(did)%Tw_CC(j) .eq. 0.0) then
+                rt_domain(did)%Tw_CC(j) = TOPWIDCC(5)
+               endif
+               if(rt_domain(did)%n_CC(j) .eq. 0.0) then
+                rt_domain(did)%n_CC(j) = NCC(5)
                endif
                if(rt_domain(did)%ChSSlp(j) .eq. 0.0) then  !if id didn't get set from the hi res file, use the  CHANPARAM
                 rt_domain(did)%ChSSlp(j) = CHAN_SS(5)
@@ -1404,6 +1583,16 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
 end if ! end of neither channel_only nor channelBucket_only
 
+   ! Deallocate existing arrays that contain reservoir parameters/properties
+   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
+   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
+   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
+   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
+   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
+   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
+   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+
 end subroutine LandRT_ini
 
 
@@ -1439,3 +1628,4 @@ end subroutine LandRT_ini
 
 
 END MODULE module_Routing
+
