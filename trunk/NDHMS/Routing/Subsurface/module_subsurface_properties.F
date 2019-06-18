@@ -24,10 +24,10 @@ module module_subsurface_properties
         real, pointer, dimension(:,:) :: surface_slope_x => null()
 
         ! terrian slope in the y direction (m/m)
-        real, pointer, dimension(:,:) :: surface_slope_y => null()   
+        real, pointer, dimension(:,:) :: surface_slope_y => null()
 
-        ! water surface slope in 8 ordinal directions (m/m)                                                                  !
-        ! TODO verify this correct, check with Wei? 
+        ! terrain surface slope in 8 ordinal directions (m/m)                                                                  !
+        ! TODO verify this correct, check with Wei?
         !                      1
         !                      |
         !                  8       2
@@ -35,14 +35,14 @@ module module_subsurface_properties
         !                 7__     __ 3
         !
         !                    /   \
-        !                   6     4 
-        !                      |  
+        !                   6     4
+        !                      |
         !                      5
         !
-        real, pointer, dimension(:,:,:) :: water_surface_slope => null()
+        real, pointer, dimension(:,:,:) :: surface_slope => null()
 
-        ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
-        integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null() 
+        ! index of neighboring cell in the direction of steepest terrain surface slope, used with surface_slope
+        integer, pointer, dimension(:,:,:) :: max_surface_slope_index => null()
 
         ! centerpoint distance to each neighbor (m)
         real, pointer, dimension(:,:,:) :: distance_to_neighbor => null()
@@ -113,14 +113,14 @@ contains
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%water_surface_slope) ) then
-            this%water_surface_slope => overland_data%properties%water_surface_slope
+        if ( associated(overland_data%properties%surface_slope) ) then
+            this%surface_slope => overland_data%properties%surface_slope
         else
             allocation_error = .true.
         end if
 
-        if ( associated(overland_data%properties%max_water_surface_slope_index) ) then
-            this%max_water_surface_slope_index => overland_data%properties%max_water_surface_slope_index
+        if ( associated(overland_data%properties%max_surface_slope_index) ) then
+            this%max_surface_slope_index => overland_data%properties%max_surface_slope_index
         else
             allocation_error = .true.
         end if
@@ -186,14 +186,14 @@ contains
             allocation_error = .true.
         end if
 
-        if ( associated(this%water_surface_slope) ) then
-            this%water_surface_slope => null()
+        if ( associated(this%surface_slope) ) then
+            this%surface_slope => null()
         else
             allocation_error = .true.
         end if
 
-        if ( associated(this%max_water_surface_slope_index) ) then
-            this%max_water_surface_slope_index => null()
+        if ( associated(this%max_surface_slope_index) ) then
+            this%max_surface_slope_index => null()
         else
             allocation_error = .true.
         end if
