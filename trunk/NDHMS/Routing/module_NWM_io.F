@@ -3525,8 +3525,8 @@ subroutine output_lsmOut_NWM(domainId)
       ! We are on the I/O node. Create output file.
       write(output_flnm,'(A12,".LSMOUT_DOMAIN",I1)') nlst_rt(domainId)%olddate(1:4)//&
             nlst_rt(domainId)%olddate(6:7)//nlst_rt(domainId)%olddate(9:10)//&
-            nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16)//  &
-            nlst_rt(domainId)%hgrid
+            nlst_rt(domainId)%olddate(12:13)//nlst_rt(domainId)%olddate(15:16),&
+            nlst_rt(domainId)%igrid
 
       iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LSMOUT NetCDF file.')
