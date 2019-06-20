@@ -113,7 +113,7 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
   INTEGER                                 ::  IOPT_SOIL ! soil configuration option
   INTEGER                                 ::  IOPT_PEDO ! soil pedotransfer function option
-  INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.; 2->Gecros)
+  INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -1319,7 +1319,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .true.,                                                   &
-                  .true.,runoff_option,                                                   &
+                  .true.,runoff_option,crop_option,                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
@@ -1417,7 +1417,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .false.,                                                   &
-                  .true.,runoff_option,                                                   &
+                  .true.,runoff_option,crop_option,                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile

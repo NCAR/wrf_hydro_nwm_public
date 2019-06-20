@@ -8971,7 +8971,7 @@ END SUBROUTINE PSN_CROP
   INTEGER,  INTENT(IN) :: iopt_rsf  !surface resistance (1->Sakaguchi/Zeng; 2->Seller; 3->mod Sellers; 4->1+snow)
   INTEGER,  INTENT(IN) :: iopt_soil !soil parameters set-up option
   INTEGER,  INTENT(IN) :: iopt_pedo !pedo-transfer function
-  INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.; 2->Gecros)
+  INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.)
 
 ! -------------------------------------------------------------------------------------------------
 
