@@ -18,7 +18,7 @@ Noah_hrldas_driver.o: Noah_hrldas_driver.F
 	$(RM) $(*).f
 	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
 	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG). \
-	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines $(NETCDFMOD) $(*).f
+	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines -I../../../MPP $(NETCDFMOD) $(*).f
 	$(RM) $(*).f
 	@echo ""
 
