@@ -9003,6 +9003,10 @@ MODULE NOAHMP_TABLES
     INTEGER :: ISICE_TABLE
     INTEGER :: ISCROP_TABLE
     INTEGER :: EBLFOREST_TABLE
+    INTEGER :: NATURAL_TABLE
+    INTEGER :: LOW_DENSITY_RESIDENTIAL_TABLE
+    INTEGER :: HIGH_DENSITY_RESIDENTIAL_TABLE
+    INTEGER :: HIGH_INTENSITY_INDUSTRIAL_TABLE
 
     REAL :: CH2OP_TABLE(MVT)       !maximum intercepted h2o per unit lai+sai (mm)
     REAL :: DLEAF_TABLE(MVT)       !characteristic leaf dimension (m)
@@ -9173,6 +9177,7 @@ CONTAINS
     character(len=*), intent(in) :: DATASET_IDENTIFIER
     integer :: ierr
     INTEGER :: IK,IM
+    logical :: file_named 
 
     integer :: NVEG
     character(len=256) :: VEG_DATASET_DESCRIPTION
@@ -9183,6 +9188,10 @@ CONTAINS
     INTEGER :: ISICE
     INTEGER :: ISCROP
     INTEGER :: EBLFOREST
+    INTEGER :: NATURAL
+    INTEGER :: LOW_DENSITY_RESIDENTIAL
+    INTEGER :: HIGH_DENSITY_RESIDENTIAL
+    INTEGER :: HIGH_INTENSITY_INDUSTRIAL
 
     REAL, DIMENSION(MVT) :: SAI_JAN,SAI_FEB,SAI_MAR,SAI_APR,SAI_MAY,SAI_JUN, &
                                      SAI_JUL,SAI_AUG,SAI_SEP,SAI_OCT,SAI_NOV,SAI_DEC
@@ -9196,7 +9205,8 @@ CONTAINS
 		     SLAREA, EPS1, EPS2, EPS3, EPS4, EPS5
 			     
     NAMELIST / noahmp_usgs_veg_categories / VEG_DATASET_DESCRIPTION, NVEG
-    NAMELIST / noahmp_usgs_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, &
+    NAMELIST / noahmp_usgs_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
+         LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
          LTOVRC,  DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
@@ -9205,7 +9215,8 @@ CONTAINS
          RHOL_VIS, RHOL_NIR, RHOS_VIS, RHOS_NIR, TAUL_VIS, TAUL_NIR, TAUS_VIS, TAUS_NIR, SLAREA, EPS1, EPS2, EPS3, EPS4, EPS5
 	 
     NAMELIST / noahmp_modis_veg_categories / VEG_DATASET_DESCRIPTION, NVEG
-    NAMELIST / noahmp_modis_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, &
+    NAMELIST / noahmp_modis_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
+         LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
          LTOVRC,  DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
@@ -9268,12 +9279,18 @@ CONTAINS
     ISICE_TABLE        = -99999
     ISCROP_TABLE       = -99999
     EBLFOREST_TABLE    = -99999
+    NATURAL_TABLE      = -99999
+    LOW_DENSITY_RESIDENTIAL_TABLE   = -99999
+    HIGH_DENSITY_RESIDENTIAL_TABLE  = -99999
+    HIGH_INTENSITY_INDUSTRIAL_TABLE = -99999
 
-#ifdef NCEP_WCOSS
-         open(15, status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#endif
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
+
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_veg_parameters")
@@ -9292,12 +9309,16 @@ CONTAINS
     endif
     close(15)
 
-      ISURBAN_TABLE       = ISURBAN
-      ISWATER_TABLE       = ISWATER
-     ISBARREN_TABLE       = ISBARREN
-        ISICE_TABLE       = ISICE
+                      ISURBAN_TABLE   = ISURBAN
+                      ISWATER_TABLE   = ISWATER
+                     ISBARREN_TABLE   = ISBARREN
+                        ISICE_TABLE   = ISICE
                        ISCROP_TABLE   = ISCROP
-    EBLFOREST_TABLE       = EBLFOREST
+                    EBLFOREST_TABLE   = EBLFOREST
+                      NATURAL_TABLE   = NATURAL
+      LOW_DENSITY_RESIDENTIAL_TABLE   = LOW_DENSITY_RESIDENTIAL
+     HIGH_DENSITY_RESIDENTIAL_TABLE   = HIGH_DENSITY_RESIDENTIAL
+    HIGH_INTENSITY_INDUSTRIAL_TABLE   = HIGH_INTENSITY_INDUSTRIAL
 
      CH2OP_TABLE(1:NVEG)  = CH2OP(1:NVEG)
      DLEAF_TABLE(1:NVEG)  = DLEAF(1:NVEG)
@@ -9387,6 +9408,7 @@ CONTAINS
     CHARACTER*4         :: SLTYPE
     INTEGER             :: ITMP, NUM_SLOPE, LC
     CHARACTER(len=256)  :: message
+    logical             :: file_named 
     
 
     ! Initialize our variables to bad values, so that if the namelist read fails, we come to a screeching halt as soon as we try to use anything.
@@ -9411,11 +9433,13 @@ CONTAINS
 !
 !-----READ IN SOIL PROPERTIES FROM SOILPARM.TBL
 !
-#ifndef NCEP_WCOSS
-    OPEN(21, FILE='SOILPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#else
-    OPEN(21, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#endif
+    inquire( file='SOILPARM.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(21, file='SOILPARM.TBL',form='formatted',status='old',iostat=ierr)
+    else
+      open(21, form='formatted',status='old',iostat=ierr)
+    end if
+
     IF(ierr .NE. 0 ) THEN
       WRITE(message,FMT='(A)') 'module_sf_noahmpdrv.F: read_mp_soil_parameters: failure opening SOILPARM.TBL'
       CALL wrf_error_fatal ( message )
@@ -9441,11 +9465,13 @@ CONTAINS
 !
 !-----READ IN GENERAL PARAMETERS FROM GENPARM.TBL
 !
-#ifndef NCEP_WCOSS
-    OPEN(22, FILE='GENPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#else
-    OPEN(22, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#endif
+    inquire( file='GENPARM.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(22, file='GENPARM.TBL',form='formatted',status='old',iostat=ierr)
+    else
+      open(22, form='formatted',status='old',iostat=ierr)
+    end if
+
     IF(ierr .NE. 0 ) THEN
       WRITE(message,FMT='(A)') 'module_sf_noahlsm.F: read_mp_soil_parameters: failure opening GENPARM.TBL'
       CALL wrf_error_fatal ( message )
@@ -9489,6 +9515,7 @@ CONTAINS
   subroutine read_mp_rad_parameters()
     implicit none
     integer :: ierr
+    logical :: file_named 
 
     REAL :: ALBICE(MBAND),ALBLAK(MBAND),OMEGAS(MBAND),BETADS,BETAIS,EG(2)
     REAL :: ALBSAT_VIS(MSC)
@@ -9509,12 +9536,13 @@ CONTAINS
     BETAIS_TABLE     = -1.E36
     EG_TABLE         = -1.E36
 
-#ifndef NCEP_WCOSS
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15, status='old', form='formatted', action='read', iostat=ierr)
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
 
-#endif
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_rad_parameters")
@@ -9539,6 +9567,7 @@ CONTAINS
   subroutine read_mp_global_parameters()
     implicit none
     integer :: ierr
+    logical :: file_named 
 
     REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
@@ -9573,11 +9602,13 @@ BATS_NIR_DIR_TABLE   = -1.E36
 RSURF_SNOW_TABLE     = -1.E36
  RSURF_EXP_TABLE     = -1.E36
 
-#ifndef NCEP_WCOSS
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15,status='old', form='formatted', action='read', iostat=ierr) 
-#endif
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
+
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_global_parameters")
