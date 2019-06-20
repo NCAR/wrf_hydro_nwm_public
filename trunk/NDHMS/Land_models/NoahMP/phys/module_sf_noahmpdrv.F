@@ -1341,7 +1341,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
        t2mvxy   ,t2mbxy   ,chstarxy,            &
 !jref:end       
        NSOIL, restart,                 &
-       allowed_to_read , iopt_run, iopt_crop,    &
+       allowed_to_read , iopt_run, iopt_crop, iopt_pedo,   &
        ids,ide, jds,jde, kds,kde,                &
        ims,ime, jms,jme, kms,kme,                &
        its,ite, jts,jte, kts,kte,                &
@@ -1359,7 +1359,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
          &                           ims,ime, jms,jme, kms,kme,  &
          &                           its,ite, jts,jte, kts,kte
 
-    INTEGER, INTENT(IN)       ::     NSOIL, iopt_run, iopt_crop
+    INTEGER, INTENT(IN)       ::     NSOIL, iopt_run, iopt_crop, iopt_pedo
 
     LOGICAL, INTENT(IN)       ::     restart,                    &
          &                           allowed_to_read
@@ -1468,7 +1468,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     call read_mp_rad_parameters()
     call read_mp_global_parameters()
     if(iopt_crop == 1) call read_mp_crop_parameters()
-    call read_mp_optional_parameters()
+    if(iopt_pedo == 1) call read_mp_optional_parameters()
 
     IF( .NOT. restart ) THEN
 

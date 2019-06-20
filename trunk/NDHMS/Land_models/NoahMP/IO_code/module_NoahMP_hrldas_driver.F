@@ -415,7 +415,7 @@ module module_NoahMP_hrldas_driver
   integer            :: surface_resistance_option
 
   integer            :: soil_data_option = 1
-  integer            :: pedotransfer_option = 1
+  integer            :: pedotransfer_option = 0
   integer            :: crop_option = 0
 
   integer            :: split_output_count = 1
@@ -1319,7 +1319,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .true.,                                                   &
-                  .true.,runoff_option,crop_option,                                   &
+                  .true.,runoff_option,crop_option,pedotransfer_option,               &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
@@ -1417,7 +1417,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .false.,                                                   &
-                  .true.,runoff_option,crop_option,                                   &
+                  .true.,runoff_option,crop_option,pedotransfer_option,               &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
