@@ -14,8 +14,8 @@ add_library(nwm_routing STATIC
 	module_reservoir_routing.F
 	module_RT.F
 	Noah_distr_routing.F
-	Noah_distr_routing_overland.F
-	Noah_distr_routing_subsurface.F        
+	#Noah_distr_routing_overland.F
+	#Noah_distr_routing_subsurface.F        
 )
 
 target_link_libraries(nwm_routing PUBLIC nwm_mpp)
