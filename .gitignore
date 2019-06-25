@@ -1,7 +1,4 @@
 *.o
-*.f
-*.f90
-*.F90
 *.mod
 *~
 Makefile.comm
@@ -24,3 +21,4 @@ README.md
 *pytest_cache*
 *.log
 compile_options.sh
+.DS_Store
