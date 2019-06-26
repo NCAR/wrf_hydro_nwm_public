@@ -23,6 +23,7 @@ MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
   use mpi
+  use, intrinsic :: iso_fortran_env, only: error_unit
   IMPLICIT NONE
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
   integer, public :: left_id,right_id,up_id,down_id,my_id
@@ -153,14 +154,15 @@ MODULE MODULE_MPP_LAND
     call mpi_initialized( mpi_inited, ierr )
     if ( .not. mpi_inited ) then
        call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
-       if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_INIT faile"
+       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
+
        call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
-       if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_COMM_DUP failed"
+       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
     endif
 
     call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
     call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-    if (ierr /= MPI_SUCCESS) error stop "MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed"
+    if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed")
 
     !     create 2d logical mapping of the CPU.
     call log_map2d()
@@ -2280,16 +2282,18 @@ MODULE MODULE_MPP_LAND
    
   end subroutine mpp_collect_1d_int_mem
 
-! stop the job due to the fatal error.
-      subroutine fatal_error_stop(msg)
-        character(len=*) :: msg
-        integer :: ierr
-      write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
-      call flush(6)
-      call mpp_land_abort()
-      call MPI_finalize(ierr)
-     return
-     end  subroutine fatal_error_stop
+     ! stop the job and log fatal error.
+     subroutine fatal_error_stop(msg)
+         character(len=*) :: msg
+         integer          :: ierr
+
+         write(error_unit,*) "Job stopped due to a fatal error: ", trim(msg)
+         call flush(error_unit)
+         call mpp_land_abort()
+         call MPI_finalize(ierr)
+
+         stop 1
+     end subroutine fatal_error_stop
 
      subroutine updateLake_seqInt(in,nsize,in0)
        implicit none
