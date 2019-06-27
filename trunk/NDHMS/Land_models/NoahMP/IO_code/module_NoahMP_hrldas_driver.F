@@ -111,6 +111,7 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_GLA  ! glacier option (1->phase change; 2->simple)
   INTEGER                                 ::  IOPT_RSF  ! surface resistance option (1->Zeng; 2->simple)
   INTEGER                                 ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
+  INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -411,6 +412,8 @@ module module_NoahMP_hrldas_driver
   integer            :: glacier_option
   integer            :: surface_resistance_option
 
+  integer            :: crop_option = 0
+
   integer            :: split_output_count = 1
   integer            :: khour
   integer            :: kday
@@ -551,6 +554,7 @@ module module_NoahMP_hrldas_driver
   IOPT_STC = temp_time_scheme_option
   IOPT_GLA = glacier_option
   IOPT_RSF = surface_resistance_option
+  IOPT_CROP = crop_option
 
 
   !!----------------------------------------------------------------------------
@@ -1309,7 +1313,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .true.,                                                   &
-                  .true.,runoff_option,                                                   &
+                  .true.,runoff_option,crop_option,                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
@@ -1407,7 +1411,7 @@ module module_NoahMP_hrldas_driver
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
                    NSOIL,  .false.,                                                   &
-                  .true.,runoff_option,                                                   &
+                  .true.,runoff_option,crop_option,                                   &
                   ids,ide+1, jds,jde+1, kds,kde,                &  ! domain
                   ims,ime, jms,jme, kms,kme,                &  ! memory
                   its,ite, jts,jte, kts,kte                 &  ! tile
@@ -1719,7 +1723,7 @@ end subroutine land_driver_ini
 		  XLAND,     XICE,     XICE_THRESHOLD,                        &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
-	       IOPT_GLA, IOPT_RSF, IZ0TLND,                                   &
+	       IOPT_GLA, IOPT_RSF,IOPT_CROP, IZ0TLND,                         &
 		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
