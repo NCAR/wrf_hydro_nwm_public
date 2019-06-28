@@ -30,6 +30,7 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
+            "reservoir_persistence": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
@@ -65,9 +66,7 @@
     },
 
     "nwm_ana": {
-        "hydro_nlist": {
-	    "reservoir_persistence": false
-	},
+        "hydro_nlist": {},
         "nudging_nlist": {}
     },
 
@@ -78,8 +77,7 @@
             "ovrtswcrt": 0,
             "rst_typ": 0,
             "rtout_domain": 0,
-            "subrtswcrt": 0,
-	    "reservoir_persistence": false
+            "subrtswcrt": 0
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
@@ -101,8 +99,7 @@
         "hydro_nlist": {
             "lsmout_domain": 0,
             "output_gw": 0,
-            "output_channelbucket_influx": 2,
-	    "reservoir_persistence": false
+            "output_channelbucket_influx": 2
         },
         "nudging_nlist": {}
     },
@@ -116,8 +113,7 @@
 	    "lsmout_domain": 0,
 	    "output_channelbucket_influx": 2,
 	    "output_gw": 0,
-	    "rst_dt": 60,
-	    "reservoir_persistence": false
+	    "rst_dt": 60
 	},
         "nudging_nlist": {}
     },
@@ -137,8 +133,7 @@
             "rst_dt": 60,
             "rst_typ": 0,
             "rtout_domain": 0,
-            "subrtswcrt": 0,
-	    "reservoir_persistence": false
+            "subrtswcrt": 0
         },
         "nudging_nlist": {
             "maxagepairsbiaspersist": 24,
