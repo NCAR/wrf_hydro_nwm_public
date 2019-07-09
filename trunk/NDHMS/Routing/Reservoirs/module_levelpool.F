@@ -45,7 +45,7 @@ contains
     !Level Pool Constructor
     subroutine levelpool_struct_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_struct), intent(inout) :: this ! object being initialized
@@ -54,6 +54,7 @@ contains
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
         real, intent(in)    :: weir_length               ! weir length (meters)
+        real, intent(in)    :: dam_length                ! dam length (meters)
         real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
@@ -89,7 +90,7 @@ contains
             else
                 ! initialize levelpool parameters
                 call this%parameters%init( lake_area,  &
-                    weir_elevation, weir_coeffecient, weir_length, &
+                    weir_elevation, weir_coeffecient, weir_length, dam_length, &
                     orifice_elevation, orifice_coefficient, &
                     orifice_area, max_depth, lake_number )
             end if
@@ -148,6 +149,7 @@ contains
         reservoir_data%parameters%max_depth,                    &
         reservoir_data%parameters%weir_coeffecient,             &
         reservoir_data%parameters%weir_length,                  &
+        reservoir_data%parameters%dam_length,                   &
         reservoir_data%parameters%orifice_elevation,            &
         reservoir_data%parameters%orifice_coefficient,          &
         reservoir_data%parameters%orifice_area                  &
@@ -168,7 +170,7 @@ contains
     !   SUBROUTINE LEVELPOOL
     ! ------------------------------------------------
 
-    subroutine LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
+    subroutine LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,dl,oe,oc,oa)
 
     !! ----------------------------  argument variables
     !! All elevations should be relative to a common base (often belev(k))
@@ -183,6 +185,7 @@ contains
     real, intent(IN)    :: we      ! bottom of weir elevation
     real, intent(IN)    :: wc      ! weir coeff.
     real, intent(IN)    :: wl      ! weir length (m)
+    real, intent(IN)    :: dl      ! dam length(m)
     real, intent(IN)    :: oe      ! orifice elevation
     real, intent(IN)    :: oc      ! orifice coeff.
     real, intent(IN)    :: oa      ! orifice area (m^2)
@@ -214,12 +217,12 @@ contains
 
     !!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
     !pool, .....
-    if (LAKE_OPT.eq.1) then     ! If-block for simple pass through scheme....
+    if (LAKE_OPT == 1) then     ! If-block for simple pass through scheme....
 
        qo1 = qi1                 ! Set outflow equal to inflow at current time
        H = Htmp                  ! Set new lake water elevation to incoming lake el.
 
-    else if (LAKE_OPT.eq.2) then   ! If-block for Chow et al level pool scheme
+    else if (LAKE_OPT == 2) then   ! If-block for Chow et al level pool scheme
 
        It = qi0
        Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
@@ -233,7 +236,7 @@ contains
        !-- determine Q(dh) from elevation-discharge relationship
        !-- and dh1
        dh = H - we
-       if (dh .gt. maxWeirDepth) then
+       if (dh > maxWeirDepth) then
           dh = maxWeirDepth
        endif
 
@@ -241,17 +244,17 @@ contains
        tmp2 = wc * wl * (dh ** (3./2.))  !weir flows at capacity
 
        !determine the discharge based on current height
-       if(H .gt. maxh) then
-         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
-       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
+       if(H > maxh) then
+         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+       else if (dh > 0.0 ) then              !! orifice and weir discharge
          discharge = tmp1 + tmp2
-       else if ( H .gt. oe ) then     !! only orifice flow
+       else if ( H > oe ) then     !! only orifice flow
          discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
        else
          discharge = 0.0   !in the dead pool
        endif
        
-       if (sap .gt. 0) then
+       if (sap > 0) then
           dh1 = ((It - discharge)/sap)*dt
        else
           dh1 = 0.0
@@ -260,7 +263,7 @@ contains
        !-- determine Q(H + dh1/3) from elevation-discharge relationship
        !-- dh2
        dh = (H+dh1/3) - we
-       if (dh .gt. maxWeirDepth) then
+       if (dh > maxWeirDepth) then
           dh = maxWeirDepth
        endif
 
@@ -268,18 +271,18 @@ contains
        tmp2 = wc * wl * (dh ** (3./2.))
 
        !determine the discharge based on current height
-       if(H .gt. maxh) then
-         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
-       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
+       if(H > maxh) then
+         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+       else if (dh > 0.0 ) then              !! orifice and weir discharge
          discharge = tmp1 + tmp2
-       else if ( (H+dh1/3) .gt. oe ) then     !! only orifice flow,not full
+       else if ( (H+dh1/3) > oe ) then     !! only orifice flow,not full
          discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
        else
          discharge = 0.0
         endif
 
 
-       if (sap .gt. 0.0) then
+       if (sap > 0.0) then
           dh2 = ((Itdt_3 - discharge)/sap)*dt
        else
           dh2 = 0.0
@@ -288,7 +291,7 @@ contains
        !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
        !-- dh3
        dh = (H + (0.667*dh2)) - we
-       if (dh .gt. maxWeirDepth) then
+       if (dh > maxWeirDepth) then
           dh = maxWeirDepth
        endif
 
@@ -296,17 +299,17 @@ contains
        tmp2 = wc * wl * (dh ** (3./2.))
 
        !determine the discharge based on current height
-       if(H .gt. maxh) then  ! overtop condition, not good!
-         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
-       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
+       if(H > maxh) then  ! overtop condition, not good!
+         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+       else if (dh > 0.0 ) then              !! orifice and weir discharge
           discharge = tmp1 + tmp2
-       else if ( (H+dh2*0.667) .gt. oe ) then     !! only orifice flow,not full
+       else if ( (H+dh2*0.667) > oe ) then     !! only orifice flow,not full
           discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
        else
           discharge = 0.0
        endif
 
-       if (sap .gt. 0.0) then
+       if (sap > 0.0) then
           dh3 = ((Itdt_2_3 - discharge)/sap)*dt
        else
           dh3 = 0.0
@@ -318,7 +321,7 @@ contains
 
        !-- compute final discharge
        dh = H - we
-       if (dh .gt. maxWeirDepth) then
+       if (dh > maxWeirDepth) then
           dh = maxWeirDepth
        endif
  
@@ -327,11 +330,11 @@ contains
 
 
        !determine the discharge based on current height
-       if(H .gt. maxh) then  ! overtop condition, not good!
-         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
-       else if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
+       if(H > maxh) then  ! overtop condition, not good!
+         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+       else if (dh > 0.0 ) then              !! orifice and overtop discharge
           discharge = tmp1 + tmp2
-       else if ( H .gt. oe ) then     !! only orifice flow,not full
+       else if ( H > oe ) then     !! only orifice flow,not full
           discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
        else
           discharge = 0.0
@@ -352,8 +355,8 @@ contains
     !#endif
     !#endif
 
-    23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
-    24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
+    !23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
+    !24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
 
 
     else   ! ELSE for LAKE_OPT....

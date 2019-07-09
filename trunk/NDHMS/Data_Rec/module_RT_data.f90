@@ -1,3 +1,30 @@
+!  Program Name:
+!  Author(s)/Contact(s):
+!  Abstract:
+!  History Log:
+!
+!  Usage:
+!  Parameters: <Specify typical arguments passed>
+!  Input Files:
+!        <list file names and briefly describe the data they include>
+!  Output Files:
+!        <list file names and briefly describe the information they include>
+!
+!  Condition codes:
+!        <list exit condition or error codes returned >
+!        If appropriate, descriptive troubleshooting instructions or
+!        likely causes for failures could be mentioned here with the
+!        appropriate error code
+!
+!  User controllable options: <if applicable>
+
+Module module_RT_data
+   use overland_data
+   use module_reservoir_base
+   IMPLICIT NONE
+   INTEGER, PARAMETER :: max_domain=5
+
+! define Routing data
    TYPE RT_FIELD
    type (overland_struct) :: overland
 
@@ -139,9 +166,6 @@
 
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
-#ifdef WRF_HYDRO_NUDGING
-  REAL, allocatable, DIMENSION(:)      :: nudge      !difference between modeled and DA adj link flow
-#endif
   REAL, allocatable, DIMENSION(:)      :: HLINK      !head in link
   REAL, allocatable, DIMENSION(:)      :: ZELEV      !elevation of nodes for channel
   INTEGER, allocatable, DIMENSION(:)   :: CHANXI,CHANYJ !map chan to fine grid
@@ -155,7 +179,7 @@
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
-  REAL, allocatable, DIMENSION(:)    :: DAML      !overtop weir length (m)
+  REAL, allocatable, DIMENSION(:)    :: DAML      !overtop dam length (m)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
@@ -170,12 +194,10 @@
   !REAL, allocatable, DIMENSION(:)    :: qqLndRunOff, qqStrmvolrt, qqBucket
   REAL, allocatable, DIMENSION(:)    :: QLateral, velocity
 
-#ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
   INTEGER, allocatable, DIMENSION(:,:)  :: Link_location
   INTEGER, allocatable, DIMENSION(:)  :: LLINKID
   integer mpp_nlinks, yw_mpp_nlinks, LNLINKSL
-#endif
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_LNKRT_SL !-- reach based links used for mapping
 
 
@@ -246,3 +268,7 @@
     REAL,    allocatable, DIMENSION(:,:,:) :: dist_lsm
 
    END TYPE RT_FIELD
+   TYPE ( RT_FIELD ), DIMENSION (max_domain) :: RT_DOMAIN
+   save RT_DOMAIN
+   integer :: cur_did
+end module module_RT_data
