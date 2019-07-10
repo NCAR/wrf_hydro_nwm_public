@@ -7,7 +7,7 @@ We, as contributors, creators, stewards, and maintainers of WRF-Hydro® pledge t
 Examples of behavior that contribute to creating a positive environment include:
 * All participants are treated with respect and consideration, valuing a diversity of views and opinions
 * Be considerate, respectful, and collaborative
-* Communicate openly with respect for others, critiquing ideas rather than individuals and gracefully accepting criticisim
+* Communicate openly with respect for others, critiquing ideas rather than individuals and gracefully accepting criticism
 * Acknowledging the contributions of others
 * Avoid personal attacks directed toward other participants
 * Be mindful of your surroundings and of your fellow participants
@@ -54,4 +54,4 @@ All UCAR-managed projects are required to adopt this Contributor Code of Conduct
 Projects that adopt this Code of Conduct need to stay up to date with UCAR's Contributor Code of Conduct, linked in the *Attribution* section below. Projects can make limited substantive changes to the Code of Conduct; however, the changes must be limited in scope and may not contradict the UCAR Contributor Code of Conduct.
 
 ## Attribution
-This Code of Conduct was originally adapted from the Contributor Covenant, version 1.4.1. We then aligned it with the UCAR Participant Code of Conduct, which also borrows from the American Geophysical Union (AGU) Code of Conduct. The UCAR Participant Code of Conduct applies to both UCAR employees, as well as participants in activities run by UCAR. We modified the Scope section with the django project description. The original version of this for all software projects that have strong management from UCAR or UCAR staff is available on the UCAR website at https://www.ucar.edu/who-we-are/ethics-integrity/codes-conduct/contributors (the date that it was adopted by this project was 10 July 2019). When responding to complaints UCAR HR and ODEI will do so based on the latest published version. Therefore, any project-specific changes should follow the Process for Changes section above.
+This Code of Conduct was originally adapted from the Contributor Covenant, version 1.4.1. We then aligned it with the UCAR Participant Code of Conduct, which also borrows from the American Geophysical Union (AGU) Code of Conduct. The UCAR Participant Code of Conduct applies to both UCAR employees, as well as participants in activities run by UCAR. We modified the Scope section with the Django Project description. The original version of this for all software projects that have strong management from UCAR or UCAR staff is available on the UCAR website at https://www.ucar.edu/who-we-are/ethics-integrity/codes-conduct/contributors (the date that it was adopted by this project was 10 July 2019). When responding to complaints, UCAR HR and ODEI will do so based on the latest published version. Therefore, any project-specific changes should follow the Process for Changes section above.
