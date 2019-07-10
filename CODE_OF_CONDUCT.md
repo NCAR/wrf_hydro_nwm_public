@@ -1,10 +1,10 @@
 # Contributor Code of Conduct
 
 ## Our Pledge
-We, as contributors, creators, stewards, and maintainers WRF-Hydro® pledge to make participation in our software, system or hardware project and community a safe, productive, welcoming and inclusive experience for everyone. All participants are required to abide by this Code of Conduct. This includes respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity or expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, physical appearance, race, religion, or sexual orientation, as well as any other characteristic protected under applicable US federal or state law.
+We, as contributors, creators, stewards, and maintainers of WRF-Hydro® pledge to make participation in our software, system or hardware project and community a safe, productive, welcoming and inclusive experience for everyone. All participants are required to abide by this Code of Conduct. This includes respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity or expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, physical appearance, race, religion, or sexual orientation, as well as any other characteristic protected under applicable US federal or state law.
 
 ## Our Standards 
-Examples of behavior that contributes to creating a positive environment include:
+Examples of behavior that contribute to creating a positive environment include:
 * All participants are treated with respect and consideration, valuing a diversity of views and opinions
 * Be considerate, respectful, and collaborative
 * Communicate openly with respect for others, critiquing ideas rather than individuals and gracefully accepting criticisim
@@ -37,7 +37,7 @@ Project administrators are responsible for clarifying the standards of acceptabl
 Project administrators are also expected to keep this *Code of Conduct* updated with the main one housed at UCAR as listed below in the *Attribution* section.
 
 ## Reporting
-Instances of unacceptable behavior can be brought to the attention of the [project administrator(s)](https://ral.ucar.edu/projects/wrf_hydro/team)  who may take any action as outlined in the *Consequences* section below. However, making a report to a project administrator is not considered an 'official report' to UCAR.
+Instances of unacceptable behavior can be brought to the attention of the [project administrator(s)](https://ral.ucar.edu/projects/wrf_hydro/team) who may take any action as outlined in the *Consequences* section below. However, making a report to a project administrator is not considered an 'official report' to UCAR.
 
 Instances of unacceptable behavior may also be reported directly to UCAR via [UCAR's Harassment Reporting and Complaint Procedure](https://operations.ucar.edu/procedures/hr/harassment-reporting-and-complaint-procedure) or anonymously through [UCAR's EthicsPoint Hotline](https://www.ucar.edu/who-we-are/ethics). 
 
