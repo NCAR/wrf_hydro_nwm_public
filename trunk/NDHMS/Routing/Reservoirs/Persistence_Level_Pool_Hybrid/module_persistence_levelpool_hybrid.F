@@ -19,12 +19,14 @@
 
 module module_persistence_levelpool_hybrid
 
-    use module_persistence_levelpool_hybrid_parameters
-    use module_persistence_levelpool_hybrid_state
-    use module_levelpool
-    use module_reservoir_utilities
+    use module_persistence_levelpool_hybrid_parameters, only: hybrid_parameters_interface
+    use module_persistence_levelpool_hybrid_state, only: hybrid_state_interface
+    use module_levelpool, only: levelpool_struct
+    use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
+                                          create_hybrid_diagnostic_log_file, &
+                                          log_hybrid_diagnostic_data
     use module_reservoir_base
-    use module_read_timeslice_data
+    use module_read_timeslice_data, only: timeslice_data
     implicit none
 
     ! Extend/derive hybrid struct from the abstract base
@@ -81,7 +83,7 @@ contains
         !call create_hybrid_diagnostic_log_file(lake_number)
 
         ! Call to initialize read timeslice data object
-        call read_timeslice_data%init(start_date, &
+        call timeslice_data%init(start_date, &
             timeslice_path, persistence_parameter_file, observation_lookback_hours)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
@@ -207,7 +209,7 @@ contains
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
-            call read_timeslice_data%setup_read_timeslice(reservoir_data%parameters%observation_update_time_interval_seconds, &
+            call timeslice_data%setup_read_timeslice(reservoir_data%parameters%observation_update_time_interval_seconds, &
             reservoir_data%state%current_time, reservoir_data%parameters%gage_id, gage_lookback_seconds, reservoir_data%state%gage_discharge)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned

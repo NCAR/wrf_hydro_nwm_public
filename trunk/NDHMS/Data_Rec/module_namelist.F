@@ -382,7 +382,6 @@ CONTAINS
     nlst%DTRT_TER   = DTRT_TER
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
-    !nlst%
 
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then

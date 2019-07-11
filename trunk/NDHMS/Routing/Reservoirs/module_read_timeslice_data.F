@@ -25,12 +25,16 @@
 #define gage_quality_threshold 0.9
 
 module module_read_timeslice_data
-
-    use module_reservoir_utilities
+    use module_reservoir_utilities, only: get_timeslice_array_dimension, &
+                                          read_timeslice_gage_ids, &
+                                          read_timeslice_netcdf_real_1D_variables, &
+                                          read_persistence_netcdf_gage_ids_all, &
+                                          geth_newdate, &
+                                          handle_err
     use netcdf
     implicit none
 
-    type :: read_timeslice_data_struct
+    type :: timeslice_data_type
 
         character(len=19)                             :: start_date
         character(len=19)                             :: current_date
@@ -41,7 +45,6 @@ module module_read_timeslice_data
         integer                                       :: last_update_time_seconds
         integer,            allocatable, dimension(:) :: gage_lookback_seconds
         integer,            allocatable, dimension(:) :: reservoir_gage_ids
-        !character(len=15),            allocatable, dimension(:) :: reservoir_gage_ids
         real,               allocatable, dimension(:) :: reservoir_gage_discharges
         character(len=256), allocatable, dimension(:) :: timeslice_file_names
         character(len=15),  allocatable, dimension(:) :: gage_id
@@ -51,22 +54,22 @@ module module_read_timeslice_data
 
     contains
 
-        procedure :: init => read_timeslice_data_struct_init
-        procedure :: destroy => read_timeslice_data_struct_destroy
+        procedure :: init => timeslice_data_type_init
+        procedure :: destroy => timeslice_data_type_destroy
         procedure :: setup_read_timeslice => setup_read_timeslice
         procedure :: read_timeslice_file => read_timeslice_file
 
-    end type read_timeslice_data_struct
+    end type timeslice_data_type
 
-    type (read_timeslice_data_struct) :: read_timeslice_data
+    type (timeslice_data_type) :: timeslice_data
 
 contains
 
-    ! Timeslice Data Struct Constructor
-    subroutine read_timeslice_data_struct_init(this, start_date, timeslice_path, &
+    ! Timeslice Data Type Constructor
+    subroutine timeslice_data_type_init(this, start_date, timeslice_path, &
         persistence_parameter_file, observation_lookback_hours)
         implicit none
-        class(read_timeslice_data_struct), intent(inout) :: this ! object being initialized
+        class(timeslice_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                   :: start_date
         character(len=256), intent(in)                   :: timeslice_path
         character(len=*),   intent(in)                   :: persistence_parameter_file
@@ -138,16 +141,16 @@ contains
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
 
-    end subroutine read_timeslice_data_struct_init
+    end subroutine timeslice_data_type_init
 
 
-    ! Timeslice Data Struct Destructor
-    subroutine read_timeslice_data_struct_destroy(this)
+    ! Timeslice Data Type Destructor
+    subroutine timeslice_data_type_destroy(this)
 
         implicit none
-        class(read_timeslice_data_struct), intent(inout) :: this ! object being destroyed
+        class(timeslice_data_type), intent(inout) :: this ! object being destroyed
 
-    end subroutine read_timeslice_data_struct_destroy
+    end subroutine timeslice_data_type_destroy
 
 
     ! Set up list of timeslice files to read
@@ -156,7 +159,7 @@ contains
         reservoir_gage_id, gage_lookback_seconds, reservoir_gage_discharge)
         implicit none
 
-        class(read_timeslice_data_struct), intent(inout) :: this
+        class(timeslice_data_type), intent(inout) :: this
         integer, intent(in)  :: update_interval_seconds
         integer, intent(in)  :: current_reservoir_time_seconds
         integer, intent(in)  :: reservoir_gage_id
@@ -263,7 +266,7 @@ contains
     ! Read given timeslice file to get gage discharges
     subroutine read_timeslice_file(this, timeslice_file)
         implicit none
-        class(read_timeslice_data_struct), intent(inout) :: this
+        class(timeslice_data_type), intent(inout) :: this
         character(len=256), intent(in) :: timeslice_file
         integer*8, allocatable, dimension(:) :: gage_ids_integer_array
         integer :: reservoir_gage_index, timeslice_gage_index, number_of_gages

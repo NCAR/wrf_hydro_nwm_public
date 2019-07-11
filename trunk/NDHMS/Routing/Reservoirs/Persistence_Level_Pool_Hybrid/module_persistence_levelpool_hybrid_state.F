@@ -9,7 +9,7 @@
 
 module module_persistence_levelpool_hybrid_state
 
-    use module_levelpool
+    use module_levelpool, only: levelpool_struct
     use module_reservoir_base
     implicit none
 

@@ -36,9 +36,8 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
-   use module_levelpool
-   use module_persistence_levelpool_hybrid
-   use module_read_timeslice_data
+   use module_levelpool, only: levelpool_struct
+   use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid_struct
 
    IMPLICIT NONE
 
@@ -790,15 +789,15 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
 
        if (rt_domain(did)%reservoir_type(lake_index) == 1) then
            allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
-          
+
        else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
           allocate(persistence_levelpool_hybrid_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        end if
-    
+
        ! Dynamically type reservoir to initalize.
        select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
-          
+
           type is (levelpool_struct)
                call reservoir%init(                              &
                      rt_domain(did)%RESHT(lake_index),            &

@@ -1,7 +1,6 @@
 module module_levelpool_tests
     use module_levelpool
 
-
 contains
 
     function levelpool_data_info(levelpool_data) result(data_info_result)

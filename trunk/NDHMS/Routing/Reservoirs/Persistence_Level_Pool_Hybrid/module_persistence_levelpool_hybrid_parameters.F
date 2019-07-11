@@ -8,9 +8,12 @@
 #define seconds_in_day 86400
 
 module module_persistence_levelpool_hybrid_parameters
-
-    use module_reservoir_utilities
+    use module_reservoir_utilities, only: read_netcdf_lake_id, &
+                                          read_persistence_netcdf_gage_id, &
+                                          read_persistence_netcdf_real_2D_parameters, &
+                                          handle_err
     use module_reservoir_base
+    use netcdf
     implicit none
 
     ! Extend/derive hybrid parameters from the abstract base
