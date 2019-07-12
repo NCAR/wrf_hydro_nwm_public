@@ -1,45 +1,57 @@
-# Contributor Covenant Code of Conduct
+# Contributor Code of Conduct
 
 ## Our Pledge
-We as contributors and maintainers of WRF-Hydro® pledge to make participation in our software project and community a welcoming and inclusive experience for everyone. This includes acceptance and respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, personal appearance, race, religion, or sexual identity and orientation, as well as any other characteristic protected under applicable US federal or state law.
+We, as contributors, creators, stewards, and maintainers of WRF-Hydro® pledge to make participation in our software, system or hardware project and community a safe, productive, welcoming and inclusive experience for everyone. All participants are required to abide by this Code of Conduct. This includes respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity or expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, physical appearance, race, religion, or sexual orientation, as well as any other characteristic protected under applicable US federal or state law.
 
 ## Our Standards 
-Examples of behavior that contributes to creating a positive environment include:
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Be respectful when offering constructive criticism
-* Gracefully accepting constructive criticism 
-* Acknowledging the contributions of others 
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+Examples of behavior that contribute to creating a positive environment include:
+* All participants are treated with respect and consideration, valuing a diversity of views and opinions
+* Be considerate, respectful, and collaborative
+* Communicate openly with respect for others, critiquing ideas rather than individuals and gracefully accepting criticism
+* Acknowledging the contributions of others
+* Avoid personal attacks directed toward other participants
+* Be mindful of your surroundings and of your fellow participants
+* Alert UCAR staff and suppliers/vendors if you notice a dangerous situation or someone in distress
+* Respect the rules and policies of the project and venue
 
 Examples of unacceptable behavior by participants include:
-* Using sexualized language or imagery and unwelcome sexual attention or advances
-* Trolling, insulting, derogatory comments, and personal or political attacks
-* Harassing others, publicly or privately
-* Publishing others' private information, such as a physical or electronic address, without explicit permission
-* Refusing to use the pronouns that someone requests
+* Harassment, intimidation, or discrimination in any form
+* Physical, verbal, or written abuse by anyone to anyone, including repeated use of pronouns other than those requested
+* Unwelcome sexual attention or advances
+* Personal attacks directed at other guests, members, participants, etc.
+* Publishing others' private information such as a physical or electronic address, without explicit permission
 * Alarming, intimidating, threatening, or hostile comments or conduct
-* Badgering someone about their choice of text editor or operating system
+* Inappropriate use of nudity and/or sexual images
+* Threatening or stalking anyone, including a participant
 * Other conduct which could reasonably be considered inappropriate in a professional setting
 
 ## Scope
-This Code of Conduct applies to participants whenever they are conducting any action on behalf of the software project and community whether it be online or face to face. Behavior that is not on behalf of the project may be covered by one of the other UCAR/NCAR Codes of Conduct. Examples of representing a project or community include using an official project e-mail address, posting via an official social media account, interacting on a public software repository, or acting as an appointed representative at an online or offline event. Representation of a project may be further defined and clarified by project maintainers.
+This Code of Conduct applies to all spaces managed by the project whether they be physical, online or face-to-face. This includes project code, code repository, associated web pages, documentation, mailing lists, project websites and wiki pages, issue tracker, meetings, telecon, events, project social media accounts, and any other forums created by the project team which the community uses for communication. In addition, violations of this Code of Conduct outside these spaces may affect a person's ability to participate within them. Representation of a project may be further defined and clarified by project maintainers.
 
 ## Community Responsibilities
-Everyone in the community is empowered to respond to people who are showing unacceptable behavior. They can talk to them privately or publicly. If this behavior continues they can contact project administrators or do one of the options listed in the “Enforcement & Reporting” section below.
+Everyone in the community is empowered to respond to people who are showing unacceptable behavior. They can talk to them privately or publicly. Anyone requested to stop unacceptable behavior is expected to comply immediately. If the behavior continues concerns may be brought to the project administrators or to any other party listed in the *Reporting* section below.
 
 ## Project Administrator Responsibilities
-Project administrators are responsible for clarifying the standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any instances of unacceptable behavior.
-Project administrators have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, email, issues, and other contributions that are not aligned to this Code of Conduct, or to ban temporarily or permanently any contributor for other behaviors that they deem inappropriate, threatening, offensive, or harmful.
- 
-Project Administrators who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership and subject to their own institution’s policies and procedures.
+Project administrators are responsible for clarifying the standards of acceptable behavior and are encouraged to model appropriate behavior and provide support when people in the community point out inappropriate behavior. Project administrator(s) are normally the ones that would be tasked to carry out the actions in the *Consequences* section below.
 
-## Enforcement & Reporting
-Instances of unacceptable behavior may be reported by contacting the project team at wrfhydro@ucar.edu. Alternatively, this behavior can be reported to individuals on the WRF-Hydro team, who will then have the responsibility to review and will respond in a way that it deems appropriate to the circumstances, including engaging the UCAR Human Resources and the UCAR Office of Diversity and Inclusion. Another alternative is to use the reporting methods of UCAR/NCAR for this behavior (these options include anonymous reporting methods). The project team will maintain confidentiality with regard to the reporter of an incident. Further details of specific enforcement policies may be posted separately. Retaliation against a person who initiates a complaint or an inquiry about such behaviors is prohibited.
+Project administrators are also expected to keep this *Code of Conduct* updated with the main one housed at UCAR as listed below in the *Attribution* section.
+
+## Reporting
+Instances of unacceptable behavior can be brought to the attention of the [project administrator(s)](https://ral.ucar.edu/projects/wrf_hydro/team) who may take any action as outlined in the *Consequences* section below. However, making a report to a project administrator is not considered an 'official report' to UCAR.
+
+Instances of unacceptable behavior may also be reported directly to UCAR via [UCAR's Harassment Reporting and Complaint Procedure](https://operations.ucar.edu/procedures/hr/harassment-reporting-and-complaint-procedure) or anonymously through [UCAR's EthicsPoint Hotline](https://www.ucar.edu/who-we-are/ethics). 
+
+Complaints received by UCAR will be handled pursuant to the procedures outlined in UCAR's Harassment Reporting and Complaint Procedure. Complaints to UCAR will be held as confidential as practicable under the circumstances, and retaliation against a person who initiates a complaint or an inquiry about inappropriate behavior will not be tolerated.
+
+Any contributor can use these reporting methods even if they are not directly affiliated with UCAR. For more information, view the [Frequently Asked Questions (FAQ)](https://operations.ucar.edu/procedures/hr/reporting-faqs) page for reporting.
+
+## Consequences
+Upon receipt of a complaint, the project administrator(s) may take any action deemed necessary and appropriate under the circumstances. Such action can include things such as: removing, editing, or rejecting comments, commits, code, wiki edits, email, issues, and other contributions that are not aligned to this Code of Conduct, or banning temporarily or permanently any contributor for other behaviors that are deemed inappropriate, threatening, offensive, or harmful. Project administrators also have the right to report violations to UCAR HR and/or UCAR's Office of Diversity, Equity, and Inclusion (ODEI) as well as a participant's home institution and/or law enforcement. In the event an incident is reported to UCAR, UCAR will follow its [Harassment Reporting and Complaint Procedure](https://operations.ucar.edu/procedures/hr/harassment-reporting-and-complaint-procedure).
+
+## Process for Changes
+All UCAR-managed projects are required to adopt this Contributor Code of Conduct. Adoption is assumed even if not expressly stated in the repository. Projects should fill in sections where prompted with project-specific information, including, project name, email addresses, adoption date, etc. There is one section below marked "optional", which may not apply to a given project.
+
+Projects that adopt this Code of Conduct need to stay up to date with UCAR's Contributor Code of Conduct, linked in the *Attribution* section below. Projects can make limited substantive changes to the Code of Conduct; however, the changes must be limited in scope and may not contradict the UCAR Contributor Code of Conduct.
 
 ## Attribution
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4, available at [http://contributor-covenant.org/version/1/4][version]
-
-[homepage]: http://contributor-covenant.org
-[version]: http://contributor-covenant.org/version/1/4/
+This Code of Conduct was originally adapted from the Contributor Covenant, version 1.4.1. We then aligned it with the UCAR Participant Code of Conduct, which also borrows from the American Geophysical Union (AGU) Code of Conduct. The UCAR Participant Code of Conduct applies to both UCAR employees, as well as participants in activities run by UCAR. We modified the Scope section with the Django Project description. The original version of this for all software projects that have strong management from UCAR or UCAR staff is available on the UCAR website at https://www.ucar.edu/who-we-are/ethics-integrity/codes-conduct/contributors (the date that it was adopted by this project was 10 July 2019). When responding to complaints, UCAR HR and ODEI will do so based on the latest published version. Therefore, any project-specific changes should follow the Process for Changes section above.
