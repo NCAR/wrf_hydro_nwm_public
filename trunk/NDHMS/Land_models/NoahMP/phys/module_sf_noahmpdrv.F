@@ -397,6 +397,9 @@ CONTAINS
     REAL                                :: RSSHA        ! shaded leaf stomatal resistance (s/m)
     REAL, DIMENSION(1:2)                :: ALBSND       ! snow albedo (direct)
     REAL, DIMENSION(1:2)                :: ALBSNI       ! snow albedo (diffuse)
+    REAL                                :: RB           ! leaf boundary layer resistance (s/m)
+    REAL                                :: LAISUN       ! sunlit leaf area index (m2/m2)
+    REAL                                :: LAISHA       ! shaded leaf area index (m2/m2)
     REAL                                :: BGAP         ! between gap fraction
     REAL                                :: WGAP         ! within gap fraction
     REAL                                :: TGV          ! under canopy ground temperature[K]
@@ -804,7 +807,7 @@ CONTAINS
             SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
 	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
 	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , & 
-            PAHG    , PAHB    , PAH                                     &
+            PAHG    , PAHB    , PAH     , LAISUN  , LAISHA  , RB        &
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
@@ -1015,7 +1018,8 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   parameters%EBLFOREST = EBLFOREST_TABLE
 
   parameters%URBAN_FLAG = .FALSE.
-  IF( VEGTYPE == ISURBAN_TABLE .or. VEGTYPE == 31 .or.VEGTYPE  == 32 .or. VEGTYPE == 33) THEN
+  IF( VEGTYPE == ISURBAN_TABLE                  .or. VEGTYPE == LOW_DENSITY_RESIDENTIAL_TABLE  .or. &
+      VEGTYPE == HIGH_DENSITY_RESIDENTIAL_TABLE .or. VEGTYPE == HIGH_INTENSITY_INDUSTRIAL_TABLE ) THEN
      parameters%URBAN_FLAG = .TRUE.
   ENDIF
 
