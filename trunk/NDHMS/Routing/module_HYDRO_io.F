@@ -7562,12 +7562,13 @@ if (channel_option .eq. 3) then
 #ifdef MPP_LAND
    endif
    
-   if(NLAKES .gt. 0) then
+   if (NLAKES > 0) then
       call mpp_land_bcast_real(NLAKES,HRZAREA)
       call mpp_land_bcast_real(NLAKES,LAKEMAXH)
       call mpp_land_bcast_real(NLAKES,WEIRH  )
       call mpp_land_bcast_real(NLAKES,WEIRC  )
       call mpp_land_bcast_real(NLAKES,WEIRL  )
+      call mpp_land_bcast_real(NLAKES,DAML)
       call mpp_land_bcast_real(NLAKES,ORIFICEC)
       call mpp_land_bcast_real(NLAKES,ORIFICEA)
       call mpp_land_bcast_real(NLAKES,ORIFICEE)
@@ -8292,7 +8293,7 @@ call nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAK
 #endif
    
 #ifdef MPP_LAND
-if(NLAKES .gt. 0) then
+if (NLAKES > 0) then
    !         call mpp_land_bcast_int(NLINKSL,LAKEIDA) 
    !         call mpp_land_bcast_int(NLINKSL,LAKEIDX)
    call mpp_land_bcast_real(NLAKES,HRZAREA)
@@ -8301,6 +8302,7 @@ if(NLAKES .gt. 0) then
    call mpp_land_bcast_real(NLAKES,WEIRH  )
    call mpp_land_bcast_real(NLAKES,WEIRC  )
    call mpp_land_bcast_real(NLAKES,WEIRL  )
+   call mpp_land_bcast_real(NLAKES,DAML)
    call mpp_land_bcast_real(NLAKES,ORIFICEC)
    call mpp_land_bcast_real(NLAKES,ORIFICEA)
    call mpp_land_bcast_real(NLAKES,ORIFICEE)
@@ -8471,12 +8473,13 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpGages,    gages)
         call mpp_land_bcast_int1(MAXORDER)
 
-        if(NLAKES .gt. 0) then
+        if (NLAKES > 0) then
            call mpp_land_bcast_real(NLAKES, HRZAREA)
            call mpp_land_bcast_real(NLAKES, LAKEMAXH)
            call mpp_land_bcast_real(NLAKES, WEIRH)  
            call mpp_land_bcast_real(NLAKES, WEIRC)  
            call mpp_land_bcast_real(NLAKES, WEIRL)  
+           call mpp_land_bcast_real(NLAKES, DAML)
            call mpp_land_bcast_real(NLAKES, ORIFICEC)
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
@@ -8717,12 +8720,13 @@ end do
 write(6,*) "nlinks=", nlinks, " yw_mpp_nlinks=", yw_mpp_nlinks," nlakes=", nlakes
 call flush(6)
 #endif
-if(NLAKES .gt. 0) then
+if (NLAKES > 0) then
    call mpp_land_bcast_real(NLAKES,HRZAREA)
    call mpp_land_bcast_real(NLAKES,LAKEMAXH)
    call mpp_land_bcast_real(NLAKES,WEIRC)
    call mpp_land_bcast_real(NLAKES,WEIRC)
    call mpp_land_bcast_real(NLAKES,WEIRL)
+   call mpp_land_bcast_real(NLAKES,DAML)
    call mpp_land_bcast_real(NLAKES,ORIFICEC)
    call mpp_land_bcast_real(NLAKES,ORIFICEA)
    call mpp_land_bcast_real(NLAKES,ORIFICEE)
