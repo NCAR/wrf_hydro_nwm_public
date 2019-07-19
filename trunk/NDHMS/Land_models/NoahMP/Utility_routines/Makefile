@@ -18,9 +18,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f90
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).f90
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).F
 	@echo ""
 
 #
@@ -32,5 +30,5 @@ all:	$(OBJS)
 #
 
 clean:
-	$(RM) *.o *.mod *.stb *~ *.f90
+	$(RM) *.o *.mod *.stb *~
 

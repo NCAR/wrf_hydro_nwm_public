@@ -20,27 +20,18 @@ all: $(CMD)
 #
 module_date_utilities.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) ../Utility_routines/$(*).F > $(*).f
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) -c $(*).f 
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c ../Utility_routines/$(*).F
 
 #
 # Compile the arguments_module from the HRLDAS_COLLECT_DATA/lib directory
 #
 arguments_module.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) ../HRLDAS_COLLECT_DATA/lib/$(*).F > $(*).f
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) -c $(*).f 
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c ../HRLDAS_COLLECT_DATA/lib/$(*).F
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(*).F > $(*).f
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $(*).f 
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $(*).F
 
 
 hrldas_extract_point: hrldas_extract_point.o
