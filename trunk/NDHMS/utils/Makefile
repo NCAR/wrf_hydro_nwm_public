@@ -20,8 +20,7 @@ all:	$(OBJS)
 ## The insertion of compile-time constants strangely requires the capital F in the extension.
 .F.o:
 	@echo "Utils Makefile:"
-	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).F90
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).F90
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).F
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
@@ -31,4 +30,4 @@ all:	$(OBJS)
 #
 
 clean:	
-	rm -f *.o *.mod *.stb *~ *.F90
+	rm -f *.o *.mod *.stb *~
