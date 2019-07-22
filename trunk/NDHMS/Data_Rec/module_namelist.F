@@ -197,8 +197,8 @@ CONTAINS
    if(output_channelBucket_influx .ne. 0) then
       if(nlst%dt .ne. out_dt*60) &
            call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
-      if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2) &
-           call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1 or 2.")
+      if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2 .and. GWBASESWCRT .ne. 3) &
+           call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1 or 2 or 3.")
    end if
 
    if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
@@ -680,10 +680,10 @@ subroutine rt_nlst_check(nlst)
    if( (nlst%bucket_loss .eq. 1 ) .and. (nlst%UDMP_OPT .ne. 1) ) then
       call hydro_stop('hydro.namelist ERROR: Bucket loss only available when UDMP=1')
    endif
-   if( (nlst%GWBASESWCRT .lt. 0 ) .or. (nlst%GWBASESWCRT .gt. 2) ) then
+   if( (nlst%GWBASESWCRT .lt. 0 ) .or. (nlst%GWBASESWCRT .gt. 3) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid GWBASESWCRT specified')
    endif
-   if(nlst%GWBASESWCRT .eq. 1) then
+   if(nlst%GWBASESWCRT .eq. 1 .or. nlst%GWBASESWCRT .eq. 3) then
       if(len(trim(nlst%GWBUCKPARM_file)) .eq. 0) then
          call hydro_stop("hydro.namelist ERROR: Please specify a GWBUCKPARM_file file.")
       else
