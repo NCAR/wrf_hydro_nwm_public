@@ -32,10 +32,7 @@ all:	$(CMD)
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(*).F > $(*).f
-	$(F90) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).f 
-	$(RM) $(*).f
+	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).F
 
 $(CMD):	$(OBJS)
 	$(F90) -o $(@) -I$(NETCDF)/include $(FFLAGS) $(OBJS) \
