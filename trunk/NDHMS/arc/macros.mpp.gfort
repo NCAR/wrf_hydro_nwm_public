@@ -58,8 +58,8 @@ COMPILER90=	mpif90
 F90FLAGS  =       -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 
 MODFLAG	=	-I"./" -I"../../MPP" -I"../MPP" -I"../mod"
 LDFLAGS	=	
-CPP	=       cpp
-CPPFLAGS	=        -P -xassembler-with-cpp -traditional -DMPP_LAND -I"../Data_Rec" $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT)  $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
+CPPINVOKE	=   -cpp
+CPPFLAGS	=   -DMPP_LAND -I"../Data_Rec" $(HYDRO_D) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT)  $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN) $(PRECIP_DOUBLE)
 
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)

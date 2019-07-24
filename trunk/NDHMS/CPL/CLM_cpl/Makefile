@@ -18,9 +18,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(CLM_MOD) $(*).f
-	$(RMD) $(*).f
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(CLM_MOD) $(*).F
 	@echo ""
 	ar -r ../../lib/libHYDRO.a $(@)
 
@@ -29,5 +27,5 @@ all:	$(OBJS)
 #
 
 clean:
-	rm -f *.o *.mod *.stb *~ *.f
+	rm -f *.o *.mod *.stb *~ 
 	cd ../..; make -f Makefile.comm clean
