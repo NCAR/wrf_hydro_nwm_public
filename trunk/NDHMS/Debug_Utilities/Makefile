@@ -12,9 +12,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I../mod $(*).f
-	#$(RMD) $(*).f
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I../mod $(*).F
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
@@ -23,4 +21,4 @@ all:	$(OBJS)
 #
 
 clean:
-	rm -f *.o *.mod *.stb *~ *.f
+	rm -f *.o *.mod *.stb *~

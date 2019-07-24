@@ -17,9 +17,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f90
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f90
-	$(COMPILERF90) -o $(@) -c -I../Utility_routines $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).f90
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c -I../Utility_routines $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).F
 	@echo ""
 
 #
@@ -33,5 +31,5 @@ module_sf_noahmp_groundwater.o: module_sf_noahmplsm.o
 #
 
 clean:
-	$(RM) *.o *.mod *.stb *~ *.f90
+	$(RM) *.o *.mod *.stb *~
 
