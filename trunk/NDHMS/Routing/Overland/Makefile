@@ -18,11 +18,11 @@ all: mod
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules	
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_control.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_streams_and_lakes.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_routing_properties.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_mass_balance.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland.F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_control.F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_streams_and_lakes.F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_routing_properties.F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland_mass_balance.F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAGS) -I$(NETCDFINC) module_overland.F
 	ar -r ../../lib/libHYDRO.a module_overland_control.o
 	ar -r ../../lib/libHYDRO.a module_overland_streams_and_lakes.o
 	ar -r ../../lib/libHYDRO.a module_overland_routing_properties.o

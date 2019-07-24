@@ -48,8 +48,8 @@ F90FLAGS	= -O2 -g -w -c -ftz -fno-alias -fp-model precise -FR
 # -ftz	: enable flush denormal results to zero
 MODFLAG		= -I./ -I../../MPP -I../MPP -I../mod
 LDFLAGS		= 
-CPP		= cpp
-CPPFLAGS	= -P -traditional -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
+CPPINVOKE	= -fpp
+CPPFLAGS	= -DMPP_LAND -I ../Data_Rec $(HYDRO_D) $(WRFIO_NCD_LARGE_FILE_SUPPORT)
 LIBS		=	
 NETCDFINC       = $(NETCDF)/include
 NETCDFLIB       = -L$(NETCDF)/lib -lnetcdff -lnetcdf
