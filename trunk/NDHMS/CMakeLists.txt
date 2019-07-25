@@ -178,6 +178,7 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
     message ( "Using ifort")
+    set (CMAKE_Fortran_FLAGS "O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
 else (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
     message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
