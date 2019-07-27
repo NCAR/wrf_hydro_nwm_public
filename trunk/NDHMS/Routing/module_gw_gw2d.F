@@ -1006,7 +1006,7 @@ subroutine gwSoilFlux(did)
 
 ! relative soil moisture content of lowest soil layer (1 = saturated)
   nsoil = nlst_rt(did)%nsoil
-  smcrel = RT_DOMAIN(did)%SMCRT(:,:,nsoil) / RT_DOMAIN(did)%SMCMAXRT(:,:,nsoil)
+  smcrel = rt_domain(did)%subsurface%grid_transform%smcrt(:,:,nsoil) / RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(:,:,nsoil)
 
 ! depth of transition zone from lowest soil layer to groundwater head (in cm)
 ! postivie ztrans -> head below LSM soil layer 
@@ -1042,30 +1042,30 @@ subroutine gwSoilFlux(did)
 	  zres = -ztrans(i,j)
 	  do k=nsoil,1,-1
 	     
-	     if(zres >= rt_domain(did)%sldpth(k)*100.) then
+	     if(zres >= rt_domain(did)%subsurface%properties%sldpth(k)*100.) then
 	     ! complete filling of a LSM soil layer if groundwater head > layer top
 	       
-! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
-! 	                               * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%subsurface%properties%sldpth(k) &
+! 	                               * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 				       + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
 				       
-	       RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k)
+	       rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k)
 	       
-	       zres = zres - rt_domain(did)%sldpth(k)*100.
+	       zres = zres - rt_domain(did)%subsurface%properties%sldpth(k)*100.
 	       
 	     else
 	     ! partial filling of a soil layer if not completely below groundwater head
 	     
-	       if(zres > (0.5 * rt_domain(did)%sldpth(k)*100.)) then
+	       if(zres > (0.5 * rt_domain(did)%subsurface%properties%sldpth(k)*100.)) then
 		 
-		 frac = zres / (rt_domain(did)%sldpth(k) * 100.)
+		 frac = zres / (rt_domain(did)%subsurface%properties%sldpth(k) * 100.)
 	       
 	       
-! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%sldpth(k) &
-! 	                                * (RT_DOMAIN(did)%SMCMAXRT(i,j,k) - RT_DOMAIN(did)%SMCRT(i,j,k)) &
+! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%subsurface%properties%sldpth(k) &
+! 	                                * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 					* frac + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
 	       
-	          RT_DOMAIN(did)%SMCRT(i,j,k) = RT_DOMAIN(did)%SMCMAXRT(i,j,k) * frac
+	          rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k) * frac
 	          
 	       end if
 	       
