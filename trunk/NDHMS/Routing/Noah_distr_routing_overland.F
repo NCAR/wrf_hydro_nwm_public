@@ -387,8 +387,8 @@ subroutine ov_rtng( &
                 IXRT, JXRT, &
                 ovrt_data%control%boundary_flux, &
                 ovrt_data%control%boundary_flux_total,    &
-                ovrt_data%properties%water_surface_slope, &
-                ovrt_data%properties%max_water_surface_slope_index, &
+                ovrt_data%properties%surface_slope, &
+                ovrt_data%properties%max_surface_slope_index, &
                 q_sfcflx_x, q_sfcflx_y)
         else
             CALL ROUTE_OVERLAND2(DTRT_TER, &
