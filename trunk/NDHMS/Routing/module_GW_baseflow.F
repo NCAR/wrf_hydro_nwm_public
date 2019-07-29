@@ -187,7 +187,7 @@ contains
          ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          !Calculate baseflow as a function of GW bucket depth...
          ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         if( (GWBASESWCRT.eq.1) .or. (GWBASESWCRT.eq.4) ) then  !active bucket model
+         if( (GWBASESWCRT.eq.1) .or. (GWBASESWCRT.eq.4) .or. (GWBASESWCRT.eq.5) ) then  !active bucket model
 
             !DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
             qout_spill = 0.
@@ -221,6 +221,9 @@ contains
 
                elseif(GWBASESWCRT.eq.4) then ! Updated exponential model normalized by area
                    qout_gwsubbas(bas) = C(bas)*basns_area(bas)*1.E-6*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/1000.))-1) ! q_out (m^3/s)
+
+               elseif(GWBASESWCRT.eq.5) then ! Power law formulation
+                   qout_gwsubbas(bas) = C(bas)*basns_area(bas)*1.E-6*(z_gwsubbas(bas)/(z_mx(bas)/1000.))**ex(bas) ! q_out (m^3/s)
        
                end if
 
