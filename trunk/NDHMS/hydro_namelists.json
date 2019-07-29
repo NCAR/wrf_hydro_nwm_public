@@ -15,7 +15,7 @@
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
             "gw_restart": 1,
-            "gwbaseswcrt": 1,
+            "gwbaseswcrt": 4,
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
@@ -143,6 +143,7 @@
     "gridded": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -168,6 +169,7 @@
     "gridded_no_lakes": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -193,6 +195,7 @@
     "reach": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
             "outlake": 0,
