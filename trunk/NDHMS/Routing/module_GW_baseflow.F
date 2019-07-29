@@ -187,7 +187,7 @@ contains
          ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          !Calculate baseflow as a function of GW bucket depth...
          ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         if(GWBASESWCRT.eq.1) then  !active exponential bucket for bucket model discharge type
+         if( (GWBASESWCRT.eq.1) .or. (GWBASESWCRT.eq.4) ) then  !active bucket model
 
             !DJG...Estimation of bucket 'overflow' (qout_spill) if/when bucket gets filled...
             qout_spill = 0.
@@ -216,8 +216,14 @@ contains
 
 ! Assume exponential relation between z/zmax and Q...
 !DJG force asymptote to zero to prevent 'overdraft'... 
-               qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/1000.))-1) !Exp.model. q_out (m^3/s)
+               if(GWBASESWCRT.eq.1) then ! Exponential model
+                   qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/1000.))-1) ! q_out (m^3/s)
+
+               elseif(GWBASESWCRT.eq.4) then ! Updated exponential model normalized by area
+                   qout_gwsubbas(bas) = C(bas)*basns_area(bas)*1.E-6*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/1000.))-1) ! q_out (m^3/s)
        
+               end if
+
 !DJG...Calculation of max bucket outlfow that is limited by total quantity in bucket...
                qout_gwsubbas(bas) = MIN(qout_max,qout_gwsubbas(bas))   ! Limit bucket discharge to max. bucket limit   (m^3/s)
                
