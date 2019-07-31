@@ -82,11 +82,12 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
+    out_dt = 1 if 'channel' in candidate_sim.model.model_config else 24
     job = wrfhydropy.Job(
         job_id='run_candidate',
         exe_cmd=exe_command,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
     candidate_sim_copy.add(job)
 
@@ -124,11 +125,12 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
+    out_dt = 1 if 'channel' in reference_sim.model.model_config else 24
     job = wrfhydropy.Job(
         job_id='run_reference',
         exe_cmd=exe_command,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
     reference_sim_copy.add(job)
 
@@ -175,11 +177,12 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
 
     # Make a new job based on the old job but with a new job ID
     old_job = candidate_sim.jobs[0]
+    out_dt = 1 if 'channel' in candidate_sim.model.model_config else 24    
     new_job = wrfhydropy.Job(
         job_id='ncores_candidate',
-        exe_cmd=old_job._exe_cmd,
+        exe_cmd=exe_cmd,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
     
     # Remove old job and add new job
@@ -188,7 +191,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
 
     # Edit the sim object number of cores
     if candidate_sim_ncores.scheduler is not None:
-        candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 1
+        candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 36
     else:
         candidate_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
 
