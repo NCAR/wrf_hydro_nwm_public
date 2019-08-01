@@ -20,7 +20,7 @@ module overland_routing_properties
       ! name might be something like these:
       !integer :: rows                                           ! number of cells in x direction on the routing grid
       !integer :: columns                                        ! number of cells in y direction on the routing grid
-      
+
       ! replaced with surface_slope_x
       !real, allocatable, dimension(:,:) :: soxrt
       ! terrian slope in the x direction (m/m)
@@ -29,22 +29,22 @@ module overland_routing_properties
       ! replaced with surface_slope_y
       !real, allocatable, dimension(:,:) :: soyrt
       ! terrian slope in the y direction (m/m)
-      real, pointer, dimension(:,:) :: surface_slope_y => null()      
+      real, pointer, dimension(:,:) :: surface_slope_y => null()
 
       ! reaplaced with roughness
       !real, allocatable, dimension(:,:) :: ovroughrt
-      ! surface roughness parameter for Manning's equation; dissagregated from the land surface model, with adjustment factor applied (none) 
+      ! surface roughness parameter for Manning's equation; dissagregated from the land surface model, with adjustment factor applied (none)
       real, allocatable, dimension(:,:) :: roughness
-      
+
       ! replaced with retention_depth
       !real, allocatable, dimension(:,:) :: retdeprt
       ! minimum amount of surface water required before water is routed as overland flow (mm)
-      real, allocatable, dimension(:,:) :: retention_depth     
-      
-      ! replaced with water_surface_slope
+      real, allocatable, dimension(:,:) :: retention_depth
+
+      ! replaced with surface_slope
       !real, allocatable, dimension(:,:,:) :: so8rt
-      ! water surface slope in 8 ordinal directions (m/m)                                                                  !
-      ! TODO verify this correct, check with Wei? 
+      ! terrain surface slope in 8 ordinal directions (m/m)                                                                  !
+      ! TODO verify this correct, check with Wei?
       !                      1
       !                      |
       !                  8       2
@@ -52,16 +52,16 @@ module overland_routing_properties
       !                 7__     __ 3
       !
       !                    /   \
-      !                   6     4 
-      !                      |  
+      !                   6     4
+      !                      |
       !                      5
       !
-      real, pointer, dimension(:,:,:) :: water_surface_slope => null()
-      
-      ! replaced with max_water_surface_slope_index
+      real, pointer, dimension(:,:,:) :: surface_slope => null()
+
+      ! replaced with max_surface_slope_index
       !integer, allocatable, dimension(:,:,:) :: so8rt_d
-      ! index of neighboring cell in the direction of steepest water surface slope, used with water_surface_slope
-      integer, pointer, dimension(:,:,:) :: max_water_surface_slope_index => null()                                  
+      ! index of neighboring cell in the direction of steepest terrain surface slope, used with surface_slope
+      integer, pointer, dimension(:,:,:) :: max_surface_slope_index => null()
 
       ! replaced with distance_to_neighbor
       !real, allocatable, dimension(:,:,:) :: dist
@@ -115,17 +115,17 @@ subroutine overland_properties_init(this,ix,jx)
     end if
 
     ! allocate 8 directional slope
-    if ( .not. associated(this%water_surface_slope) ) then
-        allocate( this%water_surface_slope(ix,jx,8) )
-        this%water_surface_slope = -999
+    if ( .not. associated(this%surface_slope) ) then
+        allocate( this%surface_slope(ix,jx,8) )
+        this%surface_slope = -999
     else
         allocation_error = .true.
     end if
 
     ! allocate slope index
-    if ( .not. associated(this%max_water_surface_slope_index) ) then
-        allocate( this%max_water_surface_slope_index(ix,jx,3) )
-        this%max_water_surface_slope_index = 0.0
+    if ( .not. associated(this%max_surface_slope_index) ) then
+        allocate( this%max_surface_slope_index(ix,jx,3) )
+        this%max_surface_slope_index = 0.0
     else
         allocation_error = .true.
     end if
@@ -156,7 +156,7 @@ subroutine overland_properties_init(this,ix,jx)
 
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland properties structure&
-        &that where allready allocated. The allocated members where not changed"      
+        &that where allready allocated. The allocated members where not changed"
 end subroutine overland_properties_init
 
 ! this procedure deallocates and overland_routing_properties structure that was initalized with
@@ -183,15 +183,15 @@ subroutine overland_properties_destory(this)
     end if
 
     ! allocate water surface slope
-    if ( associated(this%water_surface_slope) ) then
-        deallocate( this%water_surface_slope )
+    if ( associated(this%surface_slope) ) then
+        deallocate( this%surface_slope )
     else
         allocation_error = .true.
     end if
 
     ! allocate slope index
-    if ( associated(this%max_water_surface_slope_index) ) then
-        deallocate( this%max_water_surface_slope_index )
+    if ( associated(this%max_surface_slope_index) ) then
+        deallocate( this%max_surface_slope_index )
     else
         allocation_error = .true.
     end if
@@ -219,7 +219,7 @@ subroutine overland_properties_destory(this)
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland properties structure&
-        &that where not allocated. The unallocated members where not changed"      
+        &that where not allocated. The unallocated members where not changed"
 end subroutine overland_properties_destory
 
 
