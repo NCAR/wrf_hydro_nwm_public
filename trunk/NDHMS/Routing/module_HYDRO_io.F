@@ -5903,7 +5903,7 @@ end subroutine mpp_output_chrt
          
       end if ! CHANRTSWCRT .eq. 1
 
-      if(nlst_rt(did)%GWBASESWCRT.eq.1) then
+      if(nlst_rt(did)%GWBASESWCRT.eq.1 .or. nlst_rt(did)%GWBASESWCRT.ge.4) then
 
          if( nlst_rt(did)%channel_only .eq. 0) then
 
@@ -5923,7 +5923,7 @@ end subroutine mpp_output_chrt
 !             iret = nf90_def_var(ncid, "qin_gwsubbas", NF90_FLOAT, (/dimid_basns/), varid)
 !             iret = nf90_def_var(ncid, "qinflowbase", NF90_FLOAT, (/dimid_ixrt,dimid_jxrt/), varid)
 !             iret = nf90_def_var(ncid, "qout_gwsubbas", NF90_FLOAT, (/dimid_basns/), varid)
-      end if ! GWBASESWCRT .eq.1 
+      end if ! GWBASESWCRT .eq.1 .or. GWBASESWCRT .ge. 4
 
       !! What is this option??
       if(nlst_rt(did)%gwBaseSwCRT .eq. 3)then
@@ -6103,7 +6103,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
    end if  !    if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
 
-   if(nlst_rt(did)%GWBASESWCRT.eq.1) then
+   if(nlst_rt(did)%GWBASESWCRT.eq.1 .or. nlst_rt(did)%GWBASESWCRT.ge.4) then
       !call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
       if( nlst_rt(did)%channel_only .eq. 0) then
 
@@ -6129,7 +6129,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qin_gwsubbas,"qin_gwsubbas" )
 !             call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%qinflowbase,"qinflowbase")
 !             call w_rst_crt_nc1g(ncid,rt_domain(did)%numbasns,rt_domain(did)%qout_gwsubbas,"qout_gwsubbas" )
-   end if ! GWBASESWCRT .eq. 1
+   end if ! GWBASESWCRT .eq. 1 .or. GWBASESWCRT .ge. 4
 
    if(nlst_rt(did)%GWBASESWCRT.eq.3) then
       if( nlst_rt(did)%channel_only       .eq. 0 .and. &
@@ -6199,7 +6199,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%qlakei
                    write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
-                if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+                if(nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.GE.4) then
                      write(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
@@ -6293,7 +6293,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%qlakei
                    read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
-                if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+                if(nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.GE.4) then
                      read(iunit,ERR=101) rt_domain(did)%z_gwsubbas
                 end if
                 if(nlst_rt(did)%SUBRTSWCRT.EQ.1.OR.nlst_rt(did)%OVRTSWCRT.EQ.1) then
@@ -6811,7 +6811,8 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       
    end if  !  end if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
-   if(nlst_rt(did)%GWBASESWCRT .eq. 1 .and. &
+   if((nlst_rt(did)%GWBASESWCRT .eq. 1 .or.
+      nlst_rt(did)%GWBASESWCRT .ge. 4) .and. &
       nlst_rt(did)%GW_RESTART  .ne. 0 .and. &
       rt_domain(did)%gnumbasns .gt. 0        ) then
 
@@ -6826,7 +6827,7 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
 
       end if !       if( nlst_rt(did)%channel_only .eq. 0 ) then
 
-   end if  ! end    if(nlst_rt(did)%GWBASESWCRT .eq. 1 .and. &
+   end if  ! end    if((nlst_rt(did)%GWBASESWCRT .eq. 1 .or. nlst_rt(did)%GWBASESWCRT .ge. 4) .and. &
 !                      nlst_rt(did)%GW_RESTART  .ne. 0 .and. &
 !                      rt_domain(did)%gnumbasns .gt. 0        ) 
 
@@ -9923,7 +9924,7 @@ end subroutine output_chrt2
        real, allocatable, dimension(:) :: g_qin_gwsubbas, g_qout_gwsubbas, g_z_gwsubbas
        integer, allocatable, dimension(:) :: g_basnsInd
        if(my_id .eq. io_id) then
-          if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+          if(nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.GE.4) then
                allocate(g_qin_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_qout_gwsubbas(rt_domain(did)%gnumbasns))
                allocate(g_z_gwsubbas(rt_domain(did)%gnumbasns))
@@ -9996,7 +9997,7 @@ end subroutine output_chrt2
 !       close(51)
 !       close(52)
 !       close(53)
-        if(nlst_rt(did)%GWBASESWCRT.EQ.1) then
+        if(nlst_rt(did)%GWBASESWCRT.EQ.1.OR.nlst_rt(did)%GWBASESWCRT.GE.4) then
           call   output_gw_netcdf( nlst_rt(did)%igrid, nlst_rt(did)%split_output_count, RT_DOMAIN(did)%numbasns, &
                   trim(nlst_rt(did)%sincedate), trim(nlst_rt(did)%olddate), &
                   rt_domain(did)%basnsInd,rt_domain(did)%qin_gwsubbas, &
