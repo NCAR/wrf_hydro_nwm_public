@@ -191,7 +191,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
 
     # Edit the sim object number of cores
     if candidate_sim_ncores.scheduler is not None:
-        core_reduction = 36 if ncores >= 72 else 1
+        core_reduction = 36 if int(ncores) >= 72 else 1
         candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - core_reduction
     else:
         candidate_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
