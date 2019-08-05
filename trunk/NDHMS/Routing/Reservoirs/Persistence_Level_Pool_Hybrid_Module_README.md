@@ -3,9 +3,9 @@
 ### General Purpose and Functionality
 
 The purpose of this module is to persist observed reservoir discharges in order to improve the accuracy of discharge predictions. This
-module replaces the normal Level Pool object for a particular reservoir though it does instantiate a Level Pool object as a member. The
-Hybrid object simultaneously runs this Level Pool member to calculate a release and combines that release with an observed discharge
-to produce a final release at each timestep.
+module replaces the normal Level Pool object for a particular reservoir that is selected to run as Persistence type though it does
+instantiate a Level Pool object as a member. The Hybrid object simultaneously runs this Level Pool member to calculate a release
+and combines that release with an observed discharge to produce a final release at each timestep.
 
 The observed discharge and the calculated
 level pool release are each multiplied by a fractional weight and then summed to give a final calculated release. The fractional weights
