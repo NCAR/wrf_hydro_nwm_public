@@ -6811,12 +6811,12 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       
    end if  !  end if(nlst_rt(did)%CHANRTSWCRT.eq.1) 
 
-   if((nlst_rt(did)%GWBASESWCRT .eq. 1 .or.
+   if((nlst_rt(did)%GWBASESWCRT .eq. 1 .or.  & 
       nlst_rt(did)%GWBASESWCRT .ge. 4) .and. &
-      nlst_rt(did)%GW_RESTART  .ne. 0 .and. &
-      rt_domain(did)%gnumbasns .gt. 0        ) then
+      nlst_rt(did)%GW_RESTART  .ne. 0 .and.  &
+      rt_domain(did)%gnumbasns .gt. 0) then
 
-      if( nlst_rt(did)%channel_only .eq. 0 ) then
+      if(nlst_rt(did)%channel_only .eq. 0) then
 
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
