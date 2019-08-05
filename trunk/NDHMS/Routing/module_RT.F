@@ -36,8 +36,8 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
-   use module_levelpool, only: levelpool_struct
-   use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid_struct
+   use module_levelpool, only: levelpool_type
+   use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid_type
 
    IMPLICIT NONE
 
@@ -788,17 +788,17 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    do lake_index = 1, NLAKES_total
 
        if (rt_domain(did)%reservoir_type(lake_index) == 1) then
-           allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+           allocate( levelpool_type :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
-          allocate(persistence_levelpool_hybrid_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+          allocate(persistence_levelpool_hybrid_type :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        end if
 
        ! Dynamically type reservoir to initalize.
        select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
 
-          type is (levelpool_struct)
+          type is (levelpool_type)
                call reservoir%init(                              &
                      rt_domain(did)%RESHT(lake_index),            &
                      rt_domain(did)%HRZAREA(lake_index),          &
@@ -811,7 +811,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                      rt_domain(did)%LAKEMAXH(lake_index),         &
                      rt_domain(did)%LAKEIDM(lake_index)            )
 
-          type is (persistence_levelpool_hybrid_struct)
+          type is (persistence_levelpool_hybrid_type)
               call reservoir%init(                                     &
                     rt_domain(did)%RESHT(lake_index),                  &
                     rt_domain(did)%HRZAREA(lake_index),                &

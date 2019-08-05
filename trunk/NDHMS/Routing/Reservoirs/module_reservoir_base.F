@@ -12,7 +12,7 @@ module module_reservoir_base
     ! of reservoirs. State holds and tracks dynamic/changing variables
     ! that are only relevant to the given reservoir object and not other
     ! modules or areas of the system.
-    type, abstract :: reservoir_base_state_struct
+    type, abstract :: reservoir_base_state_type
 
     end type
 
@@ -22,7 +22,7 @@ module module_reservoir_base
     ! derived to sub-types of reservoirs. Properties holds
     ! static/unchanging variables that are set when the given reservoir
     ! object is initialized/instantiated.
-    type, abstract :: reservoir_base_properties_struct
+    type, abstract :: reservoir_base_properties_type
 
     end type
 
@@ -31,7 +31,7 @@ module module_reservoir_base
     ! reservoirs will hold the inputs defined below. These are
     ! dynamic/changing variables that will receive values passed into the
     ! object's methods/subroutines at runtime.
-    type :: reservoir_base_input_struct
+    type :: reservoir_base_input_type
 
         real :: inflow                      ! cubic meters per second (cms)
         real :: lateral_inflow              ! cubic meters per second (cms)
@@ -39,8 +39,8 @@ module module_reservoir_base
 
     contains
 
-        procedure :: init => reservoir_base_input_struct_init
-        procedure :: destroy => reservoir_base_input_struct_destroy
+        procedure :: init => reservoir_base_input_type_init
+        procedure :: destroy => reservoir_base_input_type_destroy
 
     end type
 
@@ -49,27 +49,27 @@ module module_reservoir_base
     ! reservoirs will hold the output(s) defined below. These are
     ! dynamic/changing variables that will receive values returned from the
     ! object's methods/subroutines at runtime.
-    type :: reservoir_base_output_struct
+    type :: reservoir_base_output_type
 
         real :: outflow                     ! cubic meters per second (cms)
 
     contains
 
-        procedure :: init => reservoir_base_output_struct_init
-        procedure :: destroy => reservoir_base_output_struct_destroy
+        procedure :: init => reservoir_base_output_type_init
+        procedure :: destroy => reservoir_base_output_type_destroy
 
     end type
 
     ! Defines the reservoir base stuct that sub-types of reservoirs
     ! will derive from. Since this is abstract, an instance of reservoir
     ! cannot be created but only derived to sub-types of reservoirs.
-    ! Derived sub-types of reservoirs of this base struct will create a
+    ! Derived sub-types of reservoirs of this base type will create a
     ! reservoir object that will hold state, properties/parameters,
     ! inputs, and outputs as sub-objects.
-    type, abstract :: reservoir_base_struct
+    type, abstract :: reservoir_base_type
 
-        type(reservoir_base_input_struct), pointer :: input
-        type(reservoir_base_output_struct), pointer :: output
+        type(reservoir_base_input_type), pointer :: input
+        type(reservoir_base_output_type), pointer :: output
 
     contains
 
@@ -82,9 +82,9 @@ module module_reservoir_base
 
     end type
 
-    ! Defines a pointer to a reservoir base struct
+    ! Defines a pointer to a reservoir base type
     type :: reservoir_base_container
-        class (reservoir_base_struct), pointer :: ptr
+        class (reservoir_base_type), pointer :: ptr
     end type
 
     ! Defines the abstract implementation of run_release that all
@@ -93,8 +93,8 @@ module module_reservoir_base
     abstract interface
         subroutine run_release_interface(reservoir_data, previous_timestep_inflow, inflow, &
             lateral_inflow, water_elevation, outflow, routing_period)
-            import reservoir_base_struct
-            class(reservoir_base_struct), intent(inout) :: reservoir_data
+            import reservoir_base_type
+            class(reservoir_base_type), intent(inout) :: reservoir_data
             real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
             real, intent(in)    :: inflow                   ! cubic meters per second (cms)
             real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
@@ -108,39 +108,39 @@ module module_reservoir_base
 
 contains
 
-    !Constructor for the reservoir input struct
-    subroutine reservoir_base_input_struct_init(this)
+    ! Constructor the reservoir input type
+    subroutine reservoir_base_input_type_init(this)
         implicit none
-    	class (reservoir_base_input_struct), intent(inout) :: this ! object being initialized
+    	class (reservoir_base_input_type), intent(inout) :: this ! object being initialized
         this%inflow = 0.0
         this%lateral_inflow = 0.0
         this%previous_timestep_inflow = 0.0
 
-    end subroutine reservoir_base_input_struct_init
+    end subroutine reservoir_base_input_type_init
 
 
-    ! Destructor for the reservoir input struct
-    subroutine reservoir_base_input_struct_destroy(this)
+    ! Destructor for the reservoir input type
+    subroutine reservoir_base_input_type_destroy(this)
         implicit none
-        class (reservoir_base_input_struct), intent(inout) :: this ! object being destroyed
+        class (reservoir_base_input_type), intent(inout) :: this ! object being destroyed
 
-    end subroutine reservoir_base_input_struct_destroy
+    end subroutine reservoir_base_input_type_destroy
 
 
-    ! Constructor for the reservoir output struct
-    subroutine reservoir_base_output_struct_init(this)
+    ! Constructor for the reservoir output type
+    subroutine reservoir_base_output_type_init(this)
         implicit none
-    	class (reservoir_base_output_struct), intent(inout) :: this ! object being initialized
+    	class (reservoir_base_output_type), intent(inout) :: this ! object being initialized
         this%outflow = 0.0
 
-    end subroutine reservoir_base_output_struct_init
+    end subroutine reservoir_base_output_type_init
 
 
-    ! Destructor for the reservoir output struct
-    subroutine reservoir_base_output_struct_destroy(this)
+    ! Destructor for the reservoir output type
+    subroutine reservoir_base_output_type_destroy(this)
         implicit none
-        class (reservoir_base_output_struct), intent(inout) :: this ! object being destroyed
+        class (reservoir_base_output_type), intent(inout) :: this ! object being destroyed
 
-    end subroutine reservoir_base_output_struct_destroy
+    end subroutine reservoir_base_output_type_destroy
 
 end module module_reservoir_base

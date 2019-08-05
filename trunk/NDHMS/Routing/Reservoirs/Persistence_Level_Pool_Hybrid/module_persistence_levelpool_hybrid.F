@@ -1,10 +1,10 @@
 ! This module defines and instantiates objects
 ! for a hybrid persistence levelpool type
-! reservoir. The hybrid reservoir struct
+! reservoir. The hybrid reservoir type
 ! inherits input and output stucts from the
 ! reservoir base module and calls instantiation
 ! of these into sub-objects. The hybrid
-! reservoir struct also points to structs for
+! reservoir type also points to types for
 ! hybrid parameters and state and calls
 ! instantiation of these into sub-objects.
 ! A pointer to a levelpool reservoir object
@@ -12,7 +12,7 @@
 ! instantiates that levelpool object. There
 ! is also a subroutine to run hybrid release
 ! that is derived from the reservoir base
-! struct interface to run release.
+! type interface to run release.
 
 ! FIXME: Change value for WCOS
 #define log_warning 6
@@ -21,7 +21,7 @@ module module_persistence_levelpool_hybrid
 
     use module_persistence_levelpool_hybrid_parameters, only: hybrid_parameters_interface
     use module_persistence_levelpool_hybrid_state, only: hybrid_state_interface
-    use module_levelpool, only: levelpool_struct
+    use module_levelpool, only: levelpool_type
     use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
@@ -29,11 +29,11 @@ module module_persistence_levelpool_hybrid
     use module_read_timeslice_data, only: timeslice_data
     implicit none
 
-    ! Extend/derive hybrid struct from the abstract base
-    ! struct for reservoirs.
-    type, extends(reservoir_base_struct) :: persistence_levelpool_hybrid_struct
+    ! Extend/derive hybrid type from the abstract base
+    ! type for reservoirs.
+    type, extends(reservoir_base_type) :: persistence_levelpool_hybrid_type
 
-        ! Define pointers to sub-structs / sub-objects to and
+        ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
         type (hybrid_parameters_interface), pointer :: parameters => null()
         type (hybrid_state_interface), pointer :: state => null()
@@ -42,16 +42,16 @@ module module_persistence_levelpool_hybrid
 
     contains
 
-        procedure :: init => hybrid_struct_init
-        procedure :: destroy => hybrid_struct_destroy
+        procedure :: init => hybrid_type_init
+        procedure :: destroy => hybrid_type_destroy
         procedure :: run_release => run_hybrid_release
 
-    end type persistence_levelpool_hybrid_struct
+    end type persistence_levelpool_hybrid_type
 
 contains
 
     ! Hybrid Constructor
-    subroutine hybrid_struct_init(this, water_elevation,  &
+    subroutine hybrid_type_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
@@ -59,7 +59,7 @@ contains
         timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
-        class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being initialized
+        class(persistence_levelpool_hybrid_type), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -145,7 +145,7 @@ contains
             end if
 
             ! Allocate a single level pool reservoir
-            allocate(levelpool_struct :: this%state%levelpool_ptr)
+            allocate(levelpool_type :: this%state%levelpool_ptr)
 
             ! Initialize level pool reservoir
             call this%state%levelpool_ptr%init(water_elevation, lake_area, &
@@ -154,21 +154,21 @@ contains
 
         end if
 
-    end subroutine hybrid_struct_init
+    end subroutine hybrid_type_init
 
 
     !Level Pool Destructor
-    subroutine hybrid_struct_destroy(this)
+    subroutine hybrid_type_destroy(this)
         implicit none
-        class(persistence_levelpool_hybrid_struct), intent(inout) :: this ! object being destroyed
-    end subroutine hybrid_struct_destroy
+        class(persistence_levelpool_hybrid_type), intent(inout) :: this ! object being destroyed
+    end subroutine hybrid_type_destroy
 
 
     ! Subroutine for running release for a hybrid reservoir
     subroutine run_hybrid_release(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(persistence_levelpool_hybrid_struct), intent(inout) :: reservoir_data
+        class(persistence_levelpool_hybrid_type), intent(inout) :: reservoir_data
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)

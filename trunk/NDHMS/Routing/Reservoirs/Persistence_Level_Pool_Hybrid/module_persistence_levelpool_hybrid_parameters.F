@@ -17,8 +17,8 @@ module module_persistence_levelpool_hybrid_parameters
     implicit none
 
     ! Extend/derive hybrid parameters from the abstract base
-    ! struct for reservoir properties.
-    type, extends(reservoir_base_properties_struct) :: hybrid_parameters_interface
+    ! type for reservoir properties.
+    type, extends(reservoir_base_properties_type) :: hybrid_parameters_interface
         real    :: min_storage                  ! minimum storage (cubic meters)
         real    :: max_storage                  ! maximum storage (cubic meters)
         real    :: lake_area                    ! area of reservoir (km^2)

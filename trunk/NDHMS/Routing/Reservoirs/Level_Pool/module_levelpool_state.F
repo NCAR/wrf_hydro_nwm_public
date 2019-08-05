@@ -10,8 +10,8 @@ module module_levelpool_state
     implicit none
 
     ! Extend/derive level pool state from the abstract base
-    ! struct for reservoir state.
-    type, extends(reservoir_base_state_struct) :: levelpool_state_interface
+    ! type for reservoir state.
+    type, extends(reservoir_base_state_type) :: levelpool_state_interface
         real :: water_elevation                 ! meters AMSL
 
     contains

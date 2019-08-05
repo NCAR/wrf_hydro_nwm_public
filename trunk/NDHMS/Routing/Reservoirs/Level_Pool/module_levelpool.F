@@ -1,14 +1,14 @@
 ! This module defines and instantiates objects
 ! for a level pool type reservoir. The level
-! pool reservoir struct inherits input and
+! pool reservoir type inherits input and
 ! output stucts from the reservoir base
 ! module and calls instantiation of these into
-! sub-objects. The level pool reservoir struct
+! sub-objects. The level pool reservoir type
 ! also points to stucts for level pool parameters
 ! and state and calls instantiation of these into
 ! sub-objects. This module also contains the
 ! subroutine to run level pool release that is
-! derived from the reservoir base struct interface
+! derived from the reservoir base type interface
 ! to run release. Running level pool release will
 ! then call the LEVELPOOL subroutine, which
 ! processes the given inputs, parameters, and
@@ -24,11 +24,11 @@ module module_levelpool
     use module_reservoir_base
     implicit none
 
-    ! Extend/derive level pool struct from the abstract base
-    ! struct for reservoirs.
-    type, extends(reservoir_base_struct) :: levelpool_struct
+    ! Extend/derive level pool type from the abstract base
+    ! type for reservoirs.
+    type, extends(reservoir_base_type) :: levelpool_type
 
-        ! Define pointers to sub-structs / sub-objects to and
+        ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
         type (levelpool_parameters_interface), pointer :: parameters => null()
         type (levelpool_state_interface), pointer :: state => null()
@@ -37,21 +37,21 @@ module module_levelpool
 
     contains
 
-        procedure :: init => levelpool_struct_init
-        procedure :: destroy => levelpool_struct_destroy
+        procedure :: init => levelpool_type_init
+        procedure :: destroy => levelpool_type_destroy
         procedure :: run_release => run_levelpool_release
 
-    end type levelpool_struct
+    end type levelpool_type
 
 contains
 
     !Level Pool Constructor
-    subroutine levelpool_struct_init(this, water_elevation,  &
+    subroutine levelpool_type_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
-        class(levelpool_struct), intent(inout) :: this ! object being initialized
+        class(levelpool_type), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area      		 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -114,14 +114,14 @@ contains
             this%pointer_allocation_guard = .true.
         end if
 
-    end subroutine levelpool_struct_init
+    end subroutine levelpool_type_init
 
 
     !Level Pool Destructor
-    subroutine levelpool_struct_destroy(this)
+    subroutine levelpool_type_destroy(this)
         implicit none
-        class(levelpool_struct), intent(inout) :: this ! object being destroyed
-    end subroutine levelpool_struct_destroy
+        class(levelpool_type), intent(inout) :: this ! object being destroyed
+    end subroutine levelpool_type_destroy
 
 
     ! Subroutine for running release for a level pool reservoir,
@@ -130,7 +130,7 @@ contains
     subroutine run_levelpool_release(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(levelpool_struct), intent(inout) :: reservoir_data
+        class(levelpool_type), intent(inout) :: reservoir_data
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)

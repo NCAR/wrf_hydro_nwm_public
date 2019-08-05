@@ -10,8 +10,8 @@ module module_levelpool_parameters
     implicit none
 
     ! Extend/derive level pool parameters from the abstract base
-    ! struct for reservoir properties.
-    type, extends(reservoir_base_properties_struct) :: levelpool_parameters_interface
+    ! type for reservoir properties.
+    type, extends(reservoir_base_properties_type) :: levelpool_parameters_interface
         real :: lake_area                ! area of lake (km^2)
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real :: weir_coeffecient         ! weir coefficient
