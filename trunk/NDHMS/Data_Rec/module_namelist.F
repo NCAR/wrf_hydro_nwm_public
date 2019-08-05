@@ -783,19 +783,6 @@ subroutine rt_nlst_check(nlst)
         inquire(file=trim(nlst%reservoir_persistence_parameter_file),exist=fileExists)
         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_persistence_parameter_file not found.')
       endif
-      ! Can leave both blocks below commented out because the reservoir module_read_timeslice_data.F will
-      ! look for timeslice files in the reservoir_timeslice_path but not cause errors nor call hydro_stop
-      ! if no timeslice files are found.
-      ! Below works with Intel Fortran (ifort)
-      !if(len(trim(nlst%reservoir_timeslice_path)) .ne. 0) then
-      !  inquire(directory=trim(nlst%reservoir_timeslice_path),exist=fileExists)
-      !  if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_timeslice_path not found.')
-      !endif
-      ! Below works with gfotran
-      !if(len(trim(nlst%reservoir_timeslice_path)) .ne. 0) then
-      !  inquire(file=trim(nlst%reservoir_timeslice_path),exist=fileExists)
-      !  if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_timeslice_path not found.')
-      !endif
     end if
 end subroutine rt_nlst_check
 
