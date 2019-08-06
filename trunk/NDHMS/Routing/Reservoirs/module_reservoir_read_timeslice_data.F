@@ -24,7 +24,7 @@
 #define observation_resolution_minutes 15
 #define gage_quality_threshold 0.9
 
-module module_read_timeslice_data
+module module_reservoir_read_timeslice_data
     use module_reservoir_utilities, only: get_timeslice_array_dimension, &
                                           read_timeslice_gage_ids, &
                                           read_timeslice_netcdf_real_1D_variables, &
@@ -354,4 +354,4 @@ contains
     end subroutine read_timeslice_file
 
 
-end module module_read_timeslice_data
+end module module_reservoir_read_timeslice_data

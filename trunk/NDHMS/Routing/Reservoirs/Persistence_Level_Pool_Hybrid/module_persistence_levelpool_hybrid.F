@@ -26,7 +26,7 @@ module module_persistence_levelpool_hybrid
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
     use module_reservoir_base
-    use module_read_timeslice_data, only: timeslice_data
+    use module_reservoir_read_timeslice_data, only: timeslice_data
     implicit none
 
     ! Extend/derive hybrid type from the abstract base

@@ -36,7 +36,7 @@ object and its sub-objects. The hybrid reservoir struct inherits input and outpu
 instantiation of these into sub-objects. The hybrid reservoir struct also points to structs for hybrid parameters and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
 instantiates that levelpool object. There is also a subroutine to run hybrid release that is derived from the reservoir base
-struct interface to run release. The release function will periodically call a function in **module_read_timeslice_data.F** that
+struct interface to run release. The release function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
 will read a timeslice file and return a corresponding observed discharge. The timeslice files will be read at a particular update
 time. The first hybrid reservoir on each processor to reach an update time will call the function to read the timeslice files, and
 the resulting observations will be used by each reservoir on that processor. The release function also peforms the functionality
@@ -54,7 +54,7 @@ modules or areas of the system.
 * **module_persistence_levelpool_hybrid_tests.F** holds unit tests that test for all components of a hybrid reservoir
 are properly initialized.
 
-* **module_read_timeslice_data.F**, within the **Reservoirs** directory, reads USGS timeslice files to get gage discharge
+* **module_reservoir_read_timeslice_data.F**, within the **Reservoirs** directory, reads USGS timeslice files to get gage discharge
 values that will be used by reservoirs. Future development will either expand this module or replicate its functionality to
 another module to read in other forms of observation and forecast data. An observation lookback period is passed in to
 determine how far back in time from the current model time the module will look for timeslice files. The observation
