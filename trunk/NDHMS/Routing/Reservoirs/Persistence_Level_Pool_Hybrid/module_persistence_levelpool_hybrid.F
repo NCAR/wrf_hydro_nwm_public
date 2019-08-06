@@ -157,7 +157,7 @@ contains
     end subroutine hybrid_type_init
 
 
-    !Level Pool Destructor
+    ! Hybrid Destructor
     subroutine hybrid_type_destroy(this)
         implicit none
         class(persistence_levelpool_hybrid_type), intent(inout) :: this ! object being destroyed
