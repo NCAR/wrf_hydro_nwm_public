@@ -3,7 +3,7 @@
 ! reservoir properties. It also defines types for the inputs
 ! and outputs common to all sub-types of reservoirs. Finally,
 ! it defines a pointer to a reservoir object and an interface
-! for running release on a reservoir.
+! for running a reservoir.
 module module_reservoir_base
 
     ! Defines the reservoir base state stuct that sub-types of
@@ -73,12 +73,12 @@ module module_reservoir_base
 
     contains
 
-        ! Defines procedure to call release for a type of reservoir,
+        ! Defines procedure to call run reservoir for a type of reservoir,
         ! which will then call methods/subroutines for processing the
         ! inputs and returning the outputs. Since this is deferred,
         ! it cannot be implemented for a base reservoir but only for
         ! a sub-type of reservoir.
-        procedure (run_release_interface), deferred :: run_release
+        procedure (run_reservoir_interface), deferred :: run
 
     end type
 
@@ -87,11 +87,11 @@ module module_reservoir_base
         class (reservoir_base_type), pointer :: ptr
     end type
 
-    ! Defines the abstract implementation of run_release that all
+    ! Defines the abstract implementation of run_reservoir that all
     ! reservoir sub-types will derive from with the same given
     ! inputs and outputs.
     abstract interface
-        subroutine run_release_interface(reservoir_data, previous_timestep_inflow, inflow, &
+        subroutine run_reservoir_interface(reservoir_data, previous_timestep_inflow, inflow, &
             lateral_inflow, water_elevation, outflow, routing_period)
             import reservoir_base_type
             class(reservoir_base_type), intent(inout) :: reservoir_data
@@ -102,7 +102,7 @@ module module_reservoir_base
             real, intent(out)   :: outflow                  ! cubic meters per second (cms)
             real, intent(in)    :: routing_period           ! seconds
 
-        end subroutine run_release_interface
+        end subroutine run_reservoir_interface
 
     end interface
 

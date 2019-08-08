@@ -357,7 +357,7 @@ contains
     end subroutine handle_err
 
 
-    ! Create Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    ! Create Persistence Levelpool Hybrid Reservoir Function Diagnostic Log CSV File
     subroutine create_hybrid_diagnostic_log_file(lake_number)
         integer, intent(in) :: lake_number
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
@@ -379,7 +379,7 @@ contains
     end subroutine create_hybrid_diagnostic_log_file
 
 
-    ! Log data to Persistence Levelpool Hybrid Release Function Diagnostic Log CSV File
+    ! Log data to Persistence Levelpool Hybrid Reservoir Function Diagnostic Log CSV File
     subroutine log_hybrid_diagnostic_data(lake_number, current_time, timeslice_update_time, &
         weight_update_time, gage_lookback_seconds, gage_id, persistence_weight_index, &
         persistence_current_weight, inflow, current_storage, water_elevation, gage_discharge, &
@@ -411,7 +411,7 @@ contains
 
     end subroutine log_hybrid_diagnostic_data
 
-    ! Create Levelpool Release Function Diagnostic Log CSV File
+    ! Create Levelpool Reservoir Function Diagnostic Log CSV File
     subroutine create_levelpool_diagnostic_log_file(lake_number)
         integer, intent(in) :: lake_number
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
@@ -431,7 +431,7 @@ contains
     end subroutine create_levelpool_diagnostic_log_file
 
 
-    ! Log data to Levelpool Release Function Diagnostic Log CSV File
+    ! Log data to Levelpool Reservoir Function Diagnostic Log CSV File
     subroutine log_levelpool_diagnostic_data(lake_number, inflow, water_elevation, outflow)
         integer, intent(in) :: lake_number
         real,    intent(in) :: inflow

@@ -68,7 +68,7 @@ program reservoir_unit_tests
     end function test_levelpool
 
 
-    ! This tests the release function of the level pool module under the specific condition
+    ! This tests the reservoir function of the level pool module under the specific condition
     ! where the water elevation reaches the max height.
     function test_levelpool_overflow_max_height() result(rv)
 
@@ -122,7 +122,7 @@ program reservoir_unit_tests
 
         do timestep_count = 1, 108
             inflow = inflow_array(timestep_count)
-            call levelpool_reservoir_data%run_release(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
+            call levelpool_reservoir_data%run_reservoir(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
 
             prev_time_inflow = inflow
             print *, outflow
@@ -143,7 +143,7 @@ program reservoir_unit_tests
     end function test_levelpool_overflow_max_height
 
 
-    ! This tests the Persistence Levelpool Hybrid Module release function. It also reads the persistence
+    ! This tests the Persistence Levelpool Hybrid Module run reservoir function. It also reads the persistence
     ! parameters from the provided persistence parameter file and a gage discharge from the provided
     ! Timeslice file.
     function test_persistence_levelpool_hybrid() result(rv)
@@ -205,14 +205,14 @@ program reservoir_unit_tests
         print *, "testing data in persistence_levelpool_hybrid_type"
         rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
 
-        print *, "calling release for persistence_levelpool_hybrid_type"
+        print *, "calling reservoir run for persistence_levelpool_hybrid_type"
 
         water_elevation = 1331.18005
 
         do timestep_count = 1, 120
 
             inflow = inflow_array(timestep_count)
-            call persistence_levelpool_hybrid_reservoir_data%run_release(inflow, &
+            call persistence_levelpool_hybrid_reservoir_data%run_reservoir(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0)
 
             prev_time_inflow = inflow
@@ -224,11 +224,11 @@ program reservoir_unit_tests
         if (outflow == 1.81549609) then
             rv2 = .true.
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Release Test Passed'
+            print *, 'Persistence Levelpool Hybrid Run Reservoir Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Release Test Failed'
+            print *, 'Persistence Levelpool Hybrid Run reservoir Test Failed'
             print *, 'Outflow should be 1.81549609'
             print *, "========================================================================"
         end if

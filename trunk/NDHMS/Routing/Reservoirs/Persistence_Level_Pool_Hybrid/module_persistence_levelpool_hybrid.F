@@ -10,9 +10,9 @@
 ! A pointer to a levelpool reservoir object
 ! is also held in state, and this module
 ! instantiates that levelpool object. There
-! is also a subroutine to run hybrid release
+! is also a subroutine to run hybrid reservoir
 ! that is derived from the reservoir base
-! type interface to run release.
+! type interface to run reservoir.
 
 ! FIXME: Change value for WCOS
 #define log_warning 6
@@ -44,7 +44,7 @@ module module_persistence_levelpool_hybrid
 
         procedure :: init => hybrid_type_init
         procedure :: destroy => hybrid_type_destroy
-        procedure :: run_release => run_hybrid_release
+        procedure :: run => run_hybrid_reservoir
 
     end type persistence_levelpool_hybrid_type
 
@@ -166,8 +166,8 @@ contains
     end subroutine hybrid_type_destroy
 
 
-    ! Subroutine for running release for a hybrid reservoir
-    subroutine run_hybrid_release(reservoir_data, previous_timestep_inflow, inflow, &
+    ! Subroutine for running reservoir for a hybrid reservoir
+    subroutine run_hybrid_reservoir(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
         class(persistence_levelpool_hybrid_type), intent(inout) :: reservoir_data
@@ -289,8 +289,8 @@ contains
 
         end if
 
-        ! Run levelpool release
-        call reservoir_data%state%levelpool_ptr%run_release(previous_timestep_inflow, inflow, &
+        ! Run levelpool reservoir
+        call reservoir_data%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
 
         ! Calculate outflow weighted between persistence and levelpool
@@ -353,6 +353,6 @@ contains
         !reservoir_data%state%water_elevation, reservoir_data%state%gage_discharge, reservoir_data%state%persisted_outflow, &
         !levelpool_outflow, reservoir_data%output%outflow)
 
-    end subroutine run_hybrid_release
+    end subroutine run_hybrid_reservoir
 
 end module module_persistence_levelpool_hybrid

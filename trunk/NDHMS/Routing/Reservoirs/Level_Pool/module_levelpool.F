@@ -7,9 +7,9 @@
 ! also points to stucts for level pool parameters
 ! and state and calls instantiation of these into
 ! sub-objects. This module also contains the
-! subroutine to run level pool release that is
+! subroutine to run level pool reservoir that is
 ! derived from the reservoir base type interface
-! to run release. Running level pool release will
+! to run reservoir. Running level pool will
 ! then call the LEVELPOOL subroutine, which
 ! processes the given inputs, parameters, and
 ! state for a particular level pool reservoir and
@@ -39,7 +39,7 @@ module module_levelpool
 
         procedure :: init => levelpool_type_init
         procedure :: destroy => levelpool_type_destroy
-        procedure :: run_release => run_levelpool_release
+        procedure :: run => run_levelpool_reservoir
 
     end type levelpool_type
 
@@ -124,10 +124,10 @@ contains
     end subroutine levelpool_type_destroy
 
 
-    ! Subroutine for running release for a level pool reservoir,
+    ! Subroutine for running a level pool reservoir,
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
-    subroutine run_levelpool_release(reservoir_data, previous_timestep_inflow, inflow, &
+    subroutine run_levelpool_reservoir(reservoir_data, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
         class(levelpool_type), intent(inout) :: reservoir_data
@@ -175,7 +175,7 @@ contains
         ! Uncomment this call only for development/debugging purposes
         !call log_levelpool_diagnostic_data(reservoir_data%parameters%lake_number, inflow, water_elevation, outflow)
 
-    end subroutine run_levelpool_release
+    end subroutine run_levelpool_reservoir
 
     ! ------------------------------------------------
     !   SUBROUTINE LEVELPOOL

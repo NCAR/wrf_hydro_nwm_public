@@ -35,12 +35,12 @@ reservoir. **module_RT.F** will call and pass parameters to the constructor in t
 object and its sub-objects. The hybrid reservoir struct inherits input and output stucts from the reservoir base module and calls
 instantiation of these into sub-objects. The hybrid reservoir struct also points to structs for hybrid parameters and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
-instantiates that levelpool object. There is also a subroutine to run hybrid release that is derived from the reservoir base
-struct interface to run release. The release function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
+instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
+struct interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
 will read a timeslice file and return a corresponding observed discharge. The timeslice files will be read at a particular update
 time. The first hybrid reservoir on each processor to reach an update time will call the function to read the timeslice files, and
-the resulting observations will be used by each reservoir on that processor. The release function also peforms the functionality
-described above including calling level pool release along with weighting and combining that release with the weighted observed
+the resulting observations will be used by each reservoir on that processor. The run reservoir function also peforms the functionality
+described above including calling level pool run reservoir along with weighting and combining that release with the weighted observed
 discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
 
 * **module_persistence_levelpool_hybrid_parameters.F** defines and instantiates objects for a hybrid type reservoir's
@@ -69,7 +69,7 @@ from current model time that the discharge is read will also be returned.
 
 * **module_reservoir_utilities.F**, also within the **Reservoirs** directory,
 contains multiple functions used by the Hybrid module. The modify_for_projected_storage function is called from the
-hybrid release function and modifies the outflow if a projected storage falls below the minimum or exceeds the
+hybrid run reservoir function and modifies the outflow if a projected storage falls below the minimum or exceeds the
 maximum for the reservoir. There are also multiple functions used for reading variables from the reservoir
 persistence parameter and timeslice NetCDF files.
 
