@@ -34,6 +34,9 @@ module module_reservoir_read_timeslice_data
     use netcdf
     implicit none
 
+    ! The timeslice_data_type is a singleton in that the object is instantiated only once per
+    ! processor by the first reservoir on that processor that needs it. The object is then used
+    ! by every other reservoir on that processor that needs it.
     type :: timeslice_data_type
 
         character(len=19)                             :: start_date

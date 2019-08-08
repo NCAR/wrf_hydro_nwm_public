@@ -82,7 +82,9 @@ contains
         ! Uncomment this call only for development/debugging purposes
         !call create_hybrid_diagnostic_log_file(lake_number)
 
-        ! Call to initialize read timeslice data object
+        ! Call to initialize read timeslice data object. This object is a singleton,
+        ! so if another reservoir has already initialized the object, it will return
+        ! immediately.
         call timeslice_data%init(start_date, &
             timeslice_path, persistence_parameter_file, observation_lookback_hours)
 
@@ -205,7 +207,11 @@ contains
 
         local_water_elevation = reservoir_data%state%water_elevation
 
-        ! If update time to read new timeslice gage discharges. This condition is only met in retrospective runs.
+        ! If update time to read new timeslice gage discharges. In forecast modes, the update time automatically is set to 1,000,000
+        ! to ensure that gage discharges are only read at the first timestep. For analysis runs, a timeslice update time is set as a
+        ! namelist parameter. A typical update time for an analysis run would be 3600 seconds (1 hour), at which time new observations would
+        ! be retrieved. The first reservoir for each processor to reach an update time will call the function to read a new timeslice file,
+        ! and these timeslice discharges will be held in memory for the subsequent reservoirs to use at that timestep.
         if (reservoir_data%state%current_time >= reservoir_data%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
