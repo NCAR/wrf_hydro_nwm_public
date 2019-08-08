@@ -127,10 +127,10 @@ contains
     ! Subroutine for running a level pool reservoir,
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
-    subroutine run_levelpool_reservoir(reservoir_data, previous_timestep_inflow, inflow, &
+    subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(levelpool_type), intent(inout) :: reservoir_data
+        class(levelpool_type), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
@@ -139,41 +139,41 @@ contains
         real, intent(in)    :: routing_period           ! seconds
 
         ! Update input variables
-        reservoir_data%input%inflow = inflow
-        reservoir_data%input%lateral_inflow = lateral_inflow
+        this%input%inflow = inflow
+        this%input%lateral_inflow = lateral_inflow
 
         ! Update state variables
-        reservoir_data%state%water_elevation = water_elevation
+        this%state%water_elevation = water_elevation
 
-        call LEVELPOOL(reservoir_data%parameters%lake_number,   &
+        call LEVELPOOL(this%parameters%lake_number,   &
         previous_timestep_inflow,                               &
-        reservoir_data%input%inflow,                            &
-        reservoir_data%output%outflow,                          &
-        reservoir_data%input%lateral_inflow,                    &
+        this%input%inflow,                            &
+        this%output%outflow,                          &
+        this%input%lateral_inflow,                    &
         routing_period,                                         &
-        reservoir_data%state%water_elevation,                   &
-        reservoir_data%parameters%lake_area,          		    &
-        reservoir_data%parameters%weir_elevation,               &
-        reservoir_data%parameters%max_depth,                    &
-        reservoir_data%parameters%weir_coeffecient,             &
-        reservoir_data%parameters%weir_length,                  &
-        reservoir_data%parameters%orifice_elevation,            &
-        reservoir_data%parameters%orifice_coefficient,          &
-        reservoir_data%parameters%orifice_area                  &
+        this%state%water_elevation,                   &
+        this%parameters%lake_area,          		    &
+        this%parameters%weir_elevation,               &
+        this%parameters%max_depth,                    &
+        this%parameters%weir_coeffecient,             &
+        this%parameters%weir_length,                  &
+        this%parameters%orifice_elevation,            &
+        this%parameters%orifice_coefficient,          &
+        this%parameters%orifice_area                  &
         )
 
         ! Update output variable returned from this subroutine
-        outflow = reservoir_data%output%outflow
+        outflow = this%output%outflow
 
         ! Set current inflow to previous_timestep_inflow
-        reservoir_data%input%previous_timestep_inflow = inflow
+        this%input%previous_timestep_inflow = inflow
 
         ! Update water_elevation variable returned from this subroutine
-        water_elevation = reservoir_data%state%water_elevation
+        water_elevation = this%state%water_elevation
 
         ! Log diagnostic data
         ! Uncomment this call only for development/debugging purposes
-        !call log_levelpool_diagnostic_data(reservoir_data%parameters%lake_number, inflow, water_elevation, outflow)
+        !call log_levelpool_diagnostic_data(this%parameters%lake_number, inflow, water_elevation, outflow)
 
     end subroutine run_levelpool_reservoir
 
