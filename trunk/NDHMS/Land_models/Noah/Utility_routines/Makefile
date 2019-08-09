@@ -19,10 +19,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS)  -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).F
 	@echo ""
 
 #

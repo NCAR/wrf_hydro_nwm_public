@@ -49,15 +49,13 @@ decode_jpeg2000.o:	decode_jpeg2000.c
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f90
-	$(CPP) $(CPPFLAGS) $(GRIBCODE_OPT) $(BZIP_CPP) $(*).F > $(*).f90
-	$(COMPILERF90) -c $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) $(NETCDFMOD) $(*).f90
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(GRIBCODE_OPT) $(BZIP_CPP) -c $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) $(NETCDFMOD) $(*).F
 
 .c.o:
 	$(CC) -c $(BZIP_CPP) $(<)
 
 clean:
-	$(RM) $(OBJS) $(CMD) *.mod *.f90 *~
+	$(RM) $(OBJS) $(CMD) *.mod *~
 #
 module_grib2.o:	module_grib2.F module_grib2_tables.o module_grib1.o module_mapinfo.o kwm_date_utilities.o module_grib_common.o
 module_grib1.o: module_grib1.F module_mapinfo.o kwm_date_utilities.o module_grib_common.o

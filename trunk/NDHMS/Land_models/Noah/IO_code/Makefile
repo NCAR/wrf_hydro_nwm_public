@@ -15,27 +15,18 @@ all:	$(OBJS)
 
 Noah_hrldas_driver.o: Noah_hrldas_driver.F
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG). \
-	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines -I../../../MPP $(NETCDFMOD) $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG). \
+	$(MODFLAG)../Noah $(MODFLAG)../Utility_routines -I../../../MPP $(NETCDFMOD) $(*).F
 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(NETCDFMOD) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG)../Utility_routines $(NETCDFMOD)  $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS)  -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG)../Utility_routines $(NETCDFMOD)  $(*).F
 	@echo ""
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(CPPHRLDAS) $(*).F > $(*).f
-	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).f
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).F
 	@echo ""
 
 
