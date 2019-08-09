@@ -93,7 +93,7 @@ contains
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created write an error
-                write(0,*) "Failure to allocate level pool input structure"
+                write(0,*) "Failure to allocate hybrid input structure"
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -103,7 +103,7 @@ contains
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
                 ! if the output structure could not be created write an error
-                write(0,*) "Failure to allocate level pool output structure"
+                write(0,*) "Failure to allocate hybrid output structure"
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -125,7 +125,7 @@ contains
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate state parameters structure"
+                write(0,*) "Failure to allocate hybrid state structure"
             else
                 ! initialize hybrid state
                 call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
@@ -137,12 +137,16 @@ contains
 
             ! Call hydro stop if the initial storage is greater than max storage or less than zero.
             if (this%state%current_storage > this%parameters%max_storage) then
+                this%state%current_storage = this%parameters%max_storage
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Initial storage exceeds max storage for reservoir " // lake_number_string)
+                write(log_warning,*) "Warning, initial storage exceeds max storage for reservoir ", lake_number_string, &
+                ". Setting initial storage to max storage."
 
             else if (this%state%current_storage < this%parameters%min_storage) then
+                this%state%current_storage = this%parameters%min_storage
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Initial storage is less than zero for reservoir " // lake_number_string)
+                write(log_warning,*) "Warning, initial storage is less than zero for reservoir ", lake_number_string, &
+                ". Setting initial storage to zero."
 
             end if
 
