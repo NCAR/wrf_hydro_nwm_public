@@ -5,8 +5,6 @@
 ! set when the given reservoir object is
 ! initialized/instantiated.
 
-#define seconds_in_day 86400
-
 module module_persistence_levelpool_hybrid_parameters
     use module_reservoir_utilities, only: read_netcdf_lake_id, &
                                           read_persistence_netcdf_gage_id, &
@@ -36,6 +34,8 @@ module module_persistence_levelpool_hybrid_parameters
         procedure :: destroy => hybrid_parameters_destroy
 
     end type hybrid_parameters_interface
+
+    integer, parameter :: seconds_in_day = 86400
 
 contains
 

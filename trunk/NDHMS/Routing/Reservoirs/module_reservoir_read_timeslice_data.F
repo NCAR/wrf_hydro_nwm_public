@@ -19,11 +19,6 @@
 ! from current model time that the discharge is read will also
 ! be returned.
 
-#define days_in_year 365
-#define days_in_leap_year 366
-#define observation_resolution_minutes 15
-#define gage_quality_threshold 0.9
-
 module module_reservoir_read_timeslice_data
     use module_reservoir_utilities, only: get_timeslice_array_dimension, &
                                           read_timeslice_gage_ids, &
@@ -65,6 +60,9 @@ module module_reservoir_read_timeslice_data
     end type timeslice_data_type
 
     type (timeslice_data_type) :: timeslice_data
+
+    integer, parameter :: observation_resolution_minutes = 15
+    real,    parameter :: gage_quality_threshold = 0.9
 
 contains
 

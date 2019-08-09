@@ -5,8 +5,6 @@
 ! reservoir object and not other modules or areas
 ! of the system.
 
-#define seconds_in_day 86400
-
 module module_persistence_levelpool_hybrid_state
 
     use module_levelpool, only: levelpool_type
@@ -35,6 +33,8 @@ module module_persistence_levelpool_hybrid_state
         procedure :: destroy => hybrid_state_destroy
 
     end type hybrid_state_interface
+
+    integer, parameter :: seconds_in_day = 86400
 
 contains
 
