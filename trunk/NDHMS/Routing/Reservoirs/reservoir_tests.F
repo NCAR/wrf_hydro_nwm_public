@@ -122,7 +122,7 @@ program reservoir_unit_tests
 
         do timestep_count = 1, 108
             inflow = inflow_array(timestep_count)
-            call levelpool_reservoir_data%run_reservoir(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
+            call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
 
             prev_time_inflow = inflow
             print *, outflow
@@ -212,7 +212,7 @@ program reservoir_unit_tests
         do timestep_count = 1, 120
 
             inflow = inflow_array(timestep_count)
-            call persistence_levelpool_hybrid_reservoir_data%run_reservoir(inflow, &
+            call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0)
 
             prev_time_inflow = inflow

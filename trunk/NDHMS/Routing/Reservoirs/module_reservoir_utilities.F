@@ -1,13 +1,16 @@
 ! This module contains a variety of subroutines/functions
 ! used by reservoir objects.
 
-! FIXME: Change value for WCOS
-#define log_warning 6
-
 module module_reservoir_utilities
     use netcdf
 
     implicit none
+
+#ifndef NCEP_WCOSS
+    integer, parameter :: log_warning = 6
+#else
+    integer, parameter :: log_warning = 78
+#endif
 
 contains
 

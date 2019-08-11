@@ -14,9 +14,6 @@
 ! that is derived from the reservoir base
 ! type interface to run reservoir.
 
-! FIXME: Change value for WCOS
-#define log_warning 6
-
 module module_persistence_levelpool_hybrid
 
     use module_persistence_levelpool_hybrid_parameters, only: hybrid_parameters_interface
@@ -47,6 +44,12 @@ module module_persistence_levelpool_hybrid
         procedure :: run => run_hybrid_reservoir
 
     end type persistence_levelpool_hybrid_type
+
+#ifndef NCEP_WCOSS
+    integer, parameter :: log_warning = 6
+#else
+    integer, parameter :: log_warning = 78
+#endif
 
 contains
 
