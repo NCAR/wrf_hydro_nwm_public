@@ -81,9 +81,10 @@ contains
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
 
-        ! Create diagnostic log file
-        ! Uncomment this call only for development/debugging purposes
-        !call create_hybrid_diagnostic_log_file(lake_number)
+#ifndef RESERVOIR_D
+        ! Create diagnostic log file only for development/debugging purposes
+        call create_hybrid_diagnostic_log_file(lake_number)
+#endif
 
         ! Call to initialize read timeslice data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
@@ -351,14 +352,15 @@ contains
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
 
-        ! Log diagnostic data
-        ! Uncomment this call only for development/debugging purposes
-        !call log_hybrid_diagnostic_data(this%parameters%lake_number, this%state%current_time, &
-        !this%state%timeslice_update_time, this%state%weight_update_time, gage_lookback_seconds, &
-        !this%parameters%gage_id, this%state%persistence_weight_index, &
-        !this%state%persistence_current_weight, this%input%inflow, this%state%current_storage, &
-        !this%state%water_elevation, this%state%gage_discharge, this%state%persisted_outflow, &
-        !levelpool_outflow, this%output%outflow)
+#ifndef RESERVOIR_D
+        ! Log diagnostic data only for development/debugging purposes
+        call log_hybrid_diagnostic_data(this%parameters%lake_number, this%state%current_time, &
+        this%state%timeslice_update_time, this%state%weight_update_time, gage_lookback_seconds, &
+        this%parameters%gage_id, this%state%persistence_weight_index, &
+        this%state%persistence_current_weight, this%input%inflow, this%state%current_storage, &
+        this%state%water_elevation, this%state%gage_discharge, this%state%persisted_outflow, &
+        levelpool_outflow, this%output%outflow)
+#endif
 
     end subroutine run_hybrid_reservoir
 

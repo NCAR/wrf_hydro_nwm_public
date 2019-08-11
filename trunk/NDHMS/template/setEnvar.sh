@@ -8,6 +8,9 @@ export WRF_HYDRO=1
 # Enhanced diagnostic output for debugging: 0=Off, 1=On.
 export HYDRO_D=0
 
+# Enhanced diagnostic output for debugging and evaluating reservoirs: 0=Off, 1=On.
+export RESERVOIR_D=0
+
 # Spatially distributed parameters for NoahMP: 0=Off, 1=On.
 export SPATIAL_SOIL=0
 
@@ -17,7 +20,7 @@ export WRF_HYDRO_RAPID=0
 # Large netcdf file support: 0=Off, 1=On.
 export WRFIO_NCD_LARGE_FILE_SUPPORT=1
 
-# WCOSS file units: 0=Off, 1=On. 
+# WCOSS file units: 0=Off, 1=On.
 export NCEP_WCOSS=0
 
 # Streamflow nudging: 0=Off, 1=On.

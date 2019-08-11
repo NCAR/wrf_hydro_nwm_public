@@ -63,9 +63,10 @@ contains
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
 
-        ! Create diagnostic log file
-        ! Uncomment this call only for development/debugging purposes
-        !call create_levelpool_diagnostic_log_file(lake_number)
+#ifdef RESERVOIR_D
+        ! Create diagnostic log file only for development/debugging purposes
+        call create_levelpool_diagnostic_log_file(lake_number)
+#endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -171,9 +172,10 @@ contains
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
 
-        ! Log diagnostic data
-        ! Uncomment this call only for development/debugging purposes
-        !call log_levelpool_diagnostic_data(this%parameters%lake_number, inflow, water_elevation, outflow)
+#ifdef RESERVOIR_D
+        ! Log diagnostic data only for development/debugging purposes
+        call log_levelpool_diagnostic_data(this%parameters%lake_number, inflow, water_elevation, outflow)
+#endif
 
     end subroutine run_levelpool_reservoir
 
