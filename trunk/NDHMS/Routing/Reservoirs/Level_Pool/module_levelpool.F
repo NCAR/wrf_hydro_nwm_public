@@ -19,9 +19,13 @@ module module_levelpool
 
     use module_levelpool_parameters, only: levelpool_parameters_interface
     use module_levelpool_state, only: levelpool_state_interface
+    use module_reservoir_base
+
+#ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
                                           log_levelpool_diagnostic_data
-    use module_reservoir_base
+#endif
+
     implicit none
 
     ! Extend/derive level pool type from the abstract base
