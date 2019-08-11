@@ -38,8 +38,8 @@ instantiation of these into sub-objects. A pointer to a levelpool reservoir obje
 instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
 struct interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
 will read a timeslice file and return a corresponding observed discharge. The timeslice files will be read at a particular update
-time. The first hybrid reservoir on each processor to reach an update time will call the function to read the timeslice files, and
-the resulting observations will be used by each reservoir on that processor. The run reservoir function also peforms the functionality
+time. The first hybrid reservoir for each process to reach an update time will call the function to read the timeslice files, and
+the resulting observations will be used by each reservoir for that process. The run reservoir function also peforms the functionality
 described above including calling level pool run reservoir along with weighting and combining that release with the weighted observed
 discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
 
