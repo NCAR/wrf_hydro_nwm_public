@@ -128,7 +128,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow == 189.612549) then
+        if (outflow == 17.0451450) then
             rv = .true.
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Passed'
@@ -136,7 +136,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Failed'
-            print *, 'Final outflow should be 189.612549'
+            print *, 'Final outflow should be 17.0451450'
             print *, "========================================================================"
         end if
 
@@ -160,6 +160,8 @@ program reservoir_unit_tests
         integer :: lake_number
         real, dimension(120) :: inflow_array
         integer :: timestep_count
+        character*256 :: cwd, cwd_full
+        integer :: istat
 
         prev_time_inflow = 0.0
         timestep_count = 0
@@ -198,9 +200,12 @@ program reservoir_unit_tests
 
         print *, "calling init for persistence_levelpool_hybrid_type"
 
+        istat=getcwd(cwd)
+        cwd_full = trim(cwd) // "/Testing_Files/"
+
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
-        "2010-10-01_07:00:00", "./Testing_Files/", 12, 1000000000)
+        "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid_type"
         rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
@@ -221,7 +226,7 @@ program reservoir_unit_tests
         end do
 
 
-        if (outflow == 1.81549609) then
+        if (outflow == 7.14947987) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run Reservoir Test Passed'
@@ -229,7 +234,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run reservoir Test Failed'
-            print *, 'Outflow should be 1.81549609'
+            print *, 'Outflow should be 7.14947987'
             print *, "========================================================================"
         end if
 
