@@ -256,14 +256,18 @@ contains
           dh = maxWeirDepth
        endif
 
-       if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-          tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-          tmp2 = wc * wl * (dh ** (3./2.))
-          discharge = tmp1 + tmp2
-       else if ( H .gt. oe ) then     !! only orifice flow,not full
-          discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+       tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe )) !orifice at capacity
+       tmp2 = wc * wl * (dh ** (3./2.))  !weir flows at capacity
+
+       !determine the discharge based on current height
+       if(H .gt. maxh) then
+         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
+       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
+         discharge = tmp1 + tmp2
+       else if ( H .gt. oe ) then     !! only orifice flow
+         discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
        else
-          discharge = 0.0
+         discharge = 0.0   !in the dead pool
        endif
 
        if (sap .gt. 0) then
@@ -279,15 +283,20 @@ contains
           dh = maxWeirDepth
        endif
 
-       if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-          tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
-          tmp2 = wc * wl * (dh ** (3./2.))
-          discharge = tmp1 + tmp2
+       tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
+       tmp2 = wc * wl * (dh ** (3./2.))
+
+       !determine the discharge based on current height
+       if(H .gt. maxh) then
+         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
+       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
+         discharge = tmp1 + tmp2
        else if ( (H+dh1/3) .gt. oe ) then     !! only orifice flow,not full
-          discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
+         discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
        else
-          discharge = 0.0
-       endif
+         discharge = 0.0
+        endif
+
 
        if (sap .gt. 0.0) then
           dh2 = ((Itdt_3 - discharge)/sap)*dt
@@ -302,9 +311,13 @@ contains
           dh = maxWeirDepth
        endif
 
-       if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-          tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
-          tmp2 = wc * wl * (dh ** (3./2.))
+       tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
+       tmp2 = wc * wl * (dh ** (3./2.))
+
+       !determine the discharge based on current height
+       if(H .gt. maxh) then  ! overtop condition, not good!
+         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
+       else if (dh .gt. 0.0 ) then              !! orifice and weir discharge
           discharge = tmp1 + tmp2
        else if ( (H+dh2*0.667) .gt. oe ) then     !! only orifice flow,not full
           discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
@@ -327,19 +340,20 @@ contains
        if (dh .gt. maxWeirDepth) then
           dh = maxWeirDepth
        endif
-       if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
-          tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-          tmp2 = wc * wl * (dh ** (3./2.))
+
+       tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+       tmp2 = wc * wl * (dh ** (3./2.))
+
+
+       !determine the discharge based on current height
+       if(H .gt. maxh) then  ! overtop condition, not good!
+         discharge =  tmp1 + tmp2 + (wc* (wl*10) * (H-maxh)**(3./2.)) !overtop
+       else if (dh .gt. 0.0 ) then              !! orifice and overtop discharge
           discharge = tmp1 + tmp2
        else if ( H .gt. oe ) then     !! only orifice flow,not full
           discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
        else
           discharge = 0.0
-       endif
-
-       if(H .ge. maxh) then  ! overtop condition
-          discharge = qi1 - (((maxh - Htmp) * sap) / dt)
-          H = maxh
        endif
 
        qo1  = discharge  ! return the flow rate from reservoir
