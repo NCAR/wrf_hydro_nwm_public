@@ -297,6 +297,10 @@ contains
 
         end if
 
+        ! Referencing issue https://github.com/NCAR/wrf_hydro_nwm_public/issues/326 for the uncertainty about
+        ! previous_timestep_inflow. Further understanding of the exact timing of inflow and previous timestep
+        ! inflow might affect which values are passed to this calling of levelpool and subsequent mass/balance
+        ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
