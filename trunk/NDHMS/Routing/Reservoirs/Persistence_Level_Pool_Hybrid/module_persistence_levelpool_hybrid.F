@@ -81,7 +81,7 @@ contains
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
 
-#ifndef RESERVOIR_D
+#ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
         call create_hybrid_diagnostic_log_file(lake_number)
 #endif
@@ -352,7 +352,7 @@ contains
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
 
-#ifndef RESERVOIR_D
+#ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
         call log_hybrid_diagnostic_data(this%parameters%lake_number, this%state%current_time, &
         this%state%timeslice_update_time, this%state%weight_update_time, gage_lookback_seconds, &

@@ -101,6 +101,12 @@ seconds in order to prevent the module from reading any new timeslice observatio
 To compile and run the unit tests, go to the Reservoir directory in the terminal and type
 
 ```
+make
+```
+
+and hit enter. Then type
+
+```
 make test
 ```
 
@@ -112,4 +118,3 @@ and hit enter. Then type
 
 and hit enter.
 The user should see "All Reservoir Tests Passed".
-
