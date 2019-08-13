@@ -32,16 +32,17 @@ module is instantiated into an object at model initialization. The **Persistence
 
 * **module_persistence_levelpool_hybrid.F** defines and instantiates objects for a hybrid persistence levelpool type
 reservoir. **module_RT.F** will call and pass parameters to the constructor in this module to instantiate the hybrid reservoir
-object and its sub-objects. The hybrid reservoir struct inherits input and output stucts from the reservoir base module and calls
-instantiation of these into sub-objects. The hybrid reservoir struct also points to structs for hybrid parameters and state and calls
+object and its sub-objects. The hybrid reservoir type inherits input and output types from the reservoir base module and calls
+instantiation of these into sub-objects. The hybrid reservoir type also points to types for hybrid parameters and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
 instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
-struct interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
+type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
 will read a timeslice file and return a corresponding observed discharge. The timeslice files will be read at a particular update
-time. The first hybrid reservoir for each process to reach an update time will call the function to read the timeslice files, and
-the resulting observations will be used by each reservoir for that process. The run reservoir function also peforms the functionality
-described above including calling level pool run reservoir along with weighting and combining that release with the weighted observed
-discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
+time. For a particular timestep, the first hybrid reservoir on each processor to reach an update time at that timestep will call the
+function to read the timeslice files, which will read the observations for every reservoir and store those values in an array. Each subsequent
+reservoir held by the same processor at that timestep that reaches its update time will read its corresponding observation from the array. The
+run reservoir function also performs the functionality described above including calling level pool run reservoir along with weighting and combining
+that release with the weighted observed discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
 
 * **module_persistence_levelpool_hybrid_parameters.F** defines and instantiates objects for a hybrid type reservoir's
 parameters/properties. Parameters holds static/unchanging variables that are set when the given reservoir object is

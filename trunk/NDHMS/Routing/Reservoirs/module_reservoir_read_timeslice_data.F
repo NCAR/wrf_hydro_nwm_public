@@ -173,7 +173,7 @@ contains
         integer :: observation_minute, observation_resolution_seconds
         logical :: file_exists
 
-        ! This check ensures that the timeslice is read only once for each process at each timeslice update time
+        ! This check ensures that the timeslice is read only once for each processor at each timeslice update time
         if (current_reservoir_time_seconds .ne. this%last_update_time_seconds) then
 
             ! Checks if not the first timestep, then update date.
