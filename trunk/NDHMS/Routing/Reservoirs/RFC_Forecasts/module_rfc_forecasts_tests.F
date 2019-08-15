@@ -65,6 +65,7 @@ contains
 
         !if ( ptr_state(2) ) then
         !    data_state(2) = test_rfc_forecasts_properties(rfc_forecasts_reservoir_data%properties)
+
         !end if
 
         !if ( ptr_state(3) ) then
