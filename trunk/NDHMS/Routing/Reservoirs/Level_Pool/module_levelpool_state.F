@@ -6,7 +6,7 @@
 ! of the system.
 module module_levelpool_state
 
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_state_type
     implicit none
 
     ! Extend/derive level pool state from the abstract base

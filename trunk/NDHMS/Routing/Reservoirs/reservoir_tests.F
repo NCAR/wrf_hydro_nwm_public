@@ -201,7 +201,9 @@ program reservoir_unit_tests
         print *, "calling init for persistence_levelpool_hybrid_type"
 
         istat=getcwd(cwd)
-        cwd_full = trim(cwd) // "/Testing_Files/"
+        !cwd_full = trim(cwd) // "/Testing_Files/"
+
+        cwd_full = "./Testing_Files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &

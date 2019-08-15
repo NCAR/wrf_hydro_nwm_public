@@ -8,7 +8,7 @@
 module module_persistence_levelpool_hybrid_state
 
     use module_levelpool, only: levelpool_type
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_state_type
     implicit none
 
     ! Extend/derive hybrid state from the abstract base

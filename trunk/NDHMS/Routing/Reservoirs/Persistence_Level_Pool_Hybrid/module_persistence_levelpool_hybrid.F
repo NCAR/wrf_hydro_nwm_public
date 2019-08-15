@@ -22,7 +22,8 @@ module module_persistence_levelpool_hybrid
     use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_type, reservoir_base_input_type, &
+                                     reservoir_base_output_type
     use module_reservoir_read_timeslice_data, only: timeslice_data
     implicit none
 
@@ -80,7 +81,7 @@ contains
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
-
+print *, timeslice_path
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
         call create_hybrid_diagnostic_log_file(lake_number)

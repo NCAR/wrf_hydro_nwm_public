@@ -19,7 +19,8 @@ module module_levelpool
 
     use module_levelpool_parameters, only: levelpool_parameters_interface
     use module_levelpool_state, only: levelpool_state_interface
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_type, reservoir_base_input_type, &
+                                     reservoir_base_output_type
 
 #ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &

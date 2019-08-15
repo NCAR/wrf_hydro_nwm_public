@@ -10,7 +10,7 @@ module module_persistence_levelpool_hybrid_parameters
                                           read_persistence_netcdf_gage_id, &
                                           read_persistence_netcdf_real_2D_parameters, &
                                           handle_err
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_properties_type
     use netcdf
     implicit none
 

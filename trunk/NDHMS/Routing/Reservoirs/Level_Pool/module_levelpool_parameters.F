@@ -6,7 +6,7 @@
 ! initialized/instantiated.
 module module_levelpool_parameters
 
-    use module_reservoir_base
+    use module_reservoir_base, only: reservoir_base_properties_type
     implicit none
 
     ! Extend/derive level pool parameters from the abstract base
