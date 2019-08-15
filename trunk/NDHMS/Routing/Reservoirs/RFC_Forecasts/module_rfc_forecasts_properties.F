@@ -6,6 +6,7 @@
 ! initialized/instantiated.
 
 module module_rfc_forecasts_properties
+
     use module_reservoir, only: reservoir_properties
     implicit none
 

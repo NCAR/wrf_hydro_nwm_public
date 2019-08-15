@@ -6,6 +6,7 @@
 ! of the system.
 
 module module_rfc_forecasts_state
+
     use module_reservoir, only: reservoir_state
     implicit none
 

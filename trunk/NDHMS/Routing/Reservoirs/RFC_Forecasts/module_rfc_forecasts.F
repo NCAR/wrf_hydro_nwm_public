@@ -16,6 +16,7 @@ module module_rfc_forecasts
     use module_rfc_forecasts_properties, only: rfc_forecasts_properties_interface
     use module_rfc_forecasts_state, only: rfc_forecasts_state_interface
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
+
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base

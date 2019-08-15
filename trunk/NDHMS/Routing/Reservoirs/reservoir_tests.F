@@ -253,6 +253,7 @@ program reservoir_unit_tests
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 20)
 
         print *, "testing data in rfc_forecasts"
+
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
         if (call_status) then
