@@ -160,8 +160,7 @@ program reservoir_unit_tests
         integer :: lake_number
         real, dimension(120) :: inflow_array
         integer :: timestep_count
-        character*256 :: cwd, cwd_full
-        integer :: istat
+        character*256 :: cwd_full
 
         prev_time_inflow = 0.0
         timestep_count = 0
@@ -186,7 +185,6 @@ program reservoir_unit_tests
         159.99452, 159.13156, 158.26382, 157.39188, 156.51611, 155.63715, 154.75531, 153.8712, 152.98517, &
         152.09779, 151.2094, 150.32057, 149.43166, 148.54315, 147.6554, 146.76892, 145.88405, 145.00128, 144.12091/)
 
-
         lake_area = 2.096320037841796875e+02
         weir_elevation = 1.332074047851562455e+03
         weir_coeffecient = 4.000000000000000222e-01
@@ -199,9 +197,6 @@ program reservoir_unit_tests
         lake_number = 166758723
 
         print *, "calling init for persistence_levelpool_hybrid_type"
-
-        istat=getcwd(cwd)
-        !cwd_full = trim(cwd) // "/Testing_Files/"
 
         cwd_full = "./Testing_Files/"
 
