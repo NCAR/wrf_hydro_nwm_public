@@ -22,8 +22,7 @@ module module_persistence_levelpool_hybrid
     use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
-    use module_reservoir, only: reservoir, reservoir_input, &
-                                     reservoir_output
+    use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_timeslice_data, only: timeslice_data
     implicit none
 
@@ -202,8 +201,13 @@ contains
         this%input%lateral_inflow = lateral_inflow
 
         ! The initialization and management of water elevation might diverge between the global state of the model
-        ! and the internal state. If water elevation is refactored to no longer be a global state, then this check
-        ! is not necessary. This currently allows restarts to work without the reservoir managing its own restart.
+        ! and the internal state. The global state water elevation is passed to/from this subroutine at every
+        ! timestep. This check is to help guard against an external piece of code adjusting the global state water
+        ! elevation, which would cause it to no longer be synchronized with internal state water elevation. This
+        ! check also allows this module to borrow from the existing restart capability by initializing reservoirs
+        ! to some default water elevation and storage and then waiting for the first timestep to receive the
+        ! initial condition, so that the reservoir would not need to manage its own restart. If water elevation
+        ! is refactored to no longer be a global state, then this check is not necessary.
         if (this%state%water_elevation .ne. water_elevation) then
 
             ! Update state variables
