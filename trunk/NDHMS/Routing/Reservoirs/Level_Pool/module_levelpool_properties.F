@@ -6,12 +6,12 @@
 ! initialized/instantiated.
 module module_levelpool_properties
 
-    use module_reservoir_base, only: reservoir_base_properties_type
+    use module_reservoir, only: reservoir_properties
     implicit none
 
     ! Extend/derive level pool properties from the abstract base
     ! type for reservoir properties.
-    type, extends(reservoir_base_properties_type) :: levelpool_properties_interface
+    type, extends(reservoir_properties) :: levelpool_properties_interface
         real :: lake_area                ! area of lake (km^2)
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real :: weir_coeffecient         ! weir coefficient

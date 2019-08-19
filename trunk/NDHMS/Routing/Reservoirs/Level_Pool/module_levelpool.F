@@ -10,7 +10,7 @@
 ! subroutine to run level pool reservoir that is
 ! derived from the reservoir base type interface
 ! to run reservoir. Running level pool will
-! then call the LEVELPOOL subroutine, which
+! then call the LEVELPOOL_PHYSICS subroutine, which
 ! processes the given inputs, properties, and
 ! state for a particular level pool reservoir and
 ! returns the output/outflow.
@@ -19,8 +19,8 @@ module module_levelpool
 
     use module_levelpool_properties, only: levelpool_properties_interface
     use module_levelpool_state, only: levelpool_state_interface
-    use module_reservoir_base, only: reservoir_base_type, reservoir_base_input_type, &
-                                     reservoir_base_output_type
+    use module_reservoir, only: reservoir, reservoir_input, &
+                                     reservoir_output
 
 #ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
@@ -31,7 +31,7 @@ module module_levelpool
 
     ! Extend/derive level pool type from the abstract base
     ! type for reservoirs.
-    type, extends(reservoir_base_type) :: levelpool_type
+    type, extends(reservoir) :: levelpool
 
         ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
@@ -42,21 +42,21 @@ module module_levelpool
 
     contains
 
-        procedure :: init => levelpool_type_init
-        procedure :: destroy => levelpool_type_destroy
+        procedure :: init => levelpool_init
+        procedure :: destroy => levelpool_destroy
         procedure :: run => run_levelpool_reservoir
 
-    end type levelpool_type
+    end type levelpool
 
 contains
 
     !Level Pool Constructor
-    subroutine levelpool_type_init(this, water_elevation,  &
+    subroutine levelpool_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
-        class(levelpool_type), intent(inout) :: this ! object being initialized
+        class(levelpool), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area      		 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -120,14 +120,14 @@ contains
             this%pointer_allocation_guard = .true.
         end if
 
-    end subroutine levelpool_type_init
+    end subroutine levelpool_init
 
 
     !Level Pool Destructor
-    subroutine levelpool_type_destroy(this)
+    subroutine levelpool_destroy(this)
         implicit none
-        class(levelpool_type), intent(inout) :: this ! object being destroyed
-    end subroutine levelpool_type_destroy
+        class(levelpool), intent(inout) :: this ! object being destroyed
+    end subroutine levelpool_destroy
 
 
     ! Subroutine for running a level pool reservoir,
@@ -136,7 +136,7 @@ contains
     subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(levelpool_type), intent(inout) :: this
+        class(levelpool), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
@@ -151,7 +151,7 @@ contains
         ! Update state variables
         this%state%water_elevation = water_elevation
 
-        call LEVELPOOL(this%properties%lake_number,   &
+        call LEVELPOOL_PHYSICS(this%properties%lake_number,   &
         previous_timestep_inflow,                               &
         this%input%inflow,                            &
         this%output%outflow,                          &
@@ -188,7 +188,7 @@ contains
     !   SUBROUTINE LEVELPOOL
     ! ------------------------------------------------
 
-    subroutine LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
+    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
     !! ----------------------------  argument variables
     !! All elevations should be relative to a common base (often belev(k))
@@ -368,7 +368,7 @@ contains
     return
 
     ! ----------------------------------------------------------------
-    end subroutine LEVELPOOL
+    end subroutine LEVELPOOL_PHYSICS
     ! ----------------------------------------------------------------
 
 end module module_levelpool

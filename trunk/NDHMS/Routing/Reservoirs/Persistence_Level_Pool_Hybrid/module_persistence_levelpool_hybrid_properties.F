@@ -10,13 +10,13 @@ module module_persistence_levelpool_hybrid_properties
                                           read_persistence_netcdf_gage_id, &
                                           read_persistence_netcdf_real_2D_parameters, &
                                           handle_err
-    use module_reservoir_base, only: reservoir_base_properties_type
+    use module_reservoir, only: reservoir_properties
     use netcdf
     implicit none
 
     ! Extend/derive hybrid properties from the abstract base
     ! type for reservoir properties.
-    type, extends(reservoir_base_properties_type) :: hybrid_properties_interface
+    type, extends(reservoir_properties) :: hybrid_properties_interface
         real    :: min_storage                  ! minimum storage (cubic meters)
         real    :: max_storage                  ! maximum storage (cubic meters)
         real    :: lake_area                    ! area of reservoir (km^2)

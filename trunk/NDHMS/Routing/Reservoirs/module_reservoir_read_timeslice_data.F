@@ -29,7 +29,7 @@ module module_reservoir_read_timeslice_data
     use netcdf
     implicit none
 
-    ! The timeslice_data_type is a singleton in that the object is instantiated only once per
+    ! The timeslice_data is a singleton in that the object is instantiated only once per
     ! processor by the first reservoir on that processor that needs it. The object is then used
     ! by every other reservoir on that processor that needs it.
     type :: timeslice_data_type
@@ -52,8 +52,8 @@ module module_reservoir_read_timeslice_data
 
     contains
 
-        procedure :: init => timeslice_data_type_init
-        procedure :: destroy => timeslice_data_type_destroy
+        procedure :: init => timeslice_data_init
+        procedure :: destroy => timeslice_data_destroy
         procedure :: setup_read_timeslice => setup_read_timeslice
         procedure :: read_timeslice_file => read_timeslice_file
 
@@ -67,7 +67,7 @@ module module_reservoir_read_timeslice_data
 contains
 
     ! Timeslice Data Type Constructor
-    subroutine timeslice_data_type_init(this, start_date, timeslice_path, &
+    subroutine timeslice_data_init(this, start_date, timeslice_path, &
         persistence_parameter_file, observation_lookback_hours)
         implicit none
         class(timeslice_data_type), intent(inout) :: this ! object being initialized
@@ -142,16 +142,16 @@ contains
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
 
-    end subroutine timeslice_data_type_init
+    end subroutine timeslice_data_init
 
 
     ! Timeslice Data Type Destructor
-    subroutine timeslice_data_type_destroy(this)
+    subroutine timeslice_data_destroy(this)
 
         implicit none
         class(timeslice_data_type), intent(inout) :: this ! object being destroyed
 
-    end subroutine timeslice_data_type_destroy
+    end subroutine timeslice_data_destroy
 
 
     ! Set up list of timeslice files to read

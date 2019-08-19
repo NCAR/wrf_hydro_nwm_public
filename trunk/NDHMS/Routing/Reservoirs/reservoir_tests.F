@@ -2,7 +2,7 @@
 ! It is important to run these unit tests whenever making any changes to code in this
 ! module to ensure nothing is broken. If nothing is broken, the user will see
 ! "All Reservoir Tests Passed". To compile and run these tests, go to the Reservoir
-! directory in the terminal and type "make test". Then type "./reservoir_tests".
+! directory in the terminal and type "make" and then "make test". Then type "./reservoir_tests".
 
 program reservoir_unit_tests
     use module_levelpool_tests
@@ -50,15 +50,15 @@ program reservoir_unit_tests
         logical rv                        ! test result
         logical :: call_status
 
-        type (levelpool_type) :: levelpool_reservoir_data
+        type (levelpool) :: levelpool_reservoir_data
         real :: water_elevation = 2.
 
         call_status = .false.
 
-        print *, "calling init for levelpool_type"
+        print *, "calling init for levelpool"
         call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 20)
 
-        print *, "testing data in levelpool_type"
+        print *, "testing data in levelpool"
         call_status = levelpool_data_info(levelpool_reservoir_data)
 
         if (call_status) then
@@ -74,7 +74,7 @@ program reservoir_unit_tests
 
         implicit none
         logical rv                       ! test result
-        type (levelpool_type) :: levelpool_reservoir_data
+        type (levelpool) :: levelpool_reservoir_data
         real :: lake_area, weir_elevation, weir_coeffecient
         real :: weir_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth
@@ -150,7 +150,7 @@ program reservoir_unit_tests
 
         implicit none
         logical rv, rv1, rv2                        ! test result
-        type (persistence_levelpool_hybrid_type) :: persistence_levelpool_hybrid_reservoir_data
+        type (persistence_levelpool_hybrid) :: persistence_levelpool_hybrid_reservoir_data
         real :: outflow, inflow
         real :: water_elevation
         real :: prev_time_inflow
@@ -196,7 +196,7 @@ program reservoir_unit_tests
         initial_fractional_depth = 8.999999761581420898e-01
         lake_number = 166758723
 
-        print *, "calling init for persistence_levelpool_hybrid_type"
+        print *, "calling init for persistence_levelpool_hybrid"
 
         cwd_full = "./Testing_Files/"
 
@@ -204,10 +204,10 @@ program reservoir_unit_tests
         weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
         "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
-        print *, "testing data in persistence_levelpool_hybrid_type"
+        print *, "testing data in persistence_levelpool_hybrid"
         rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
 
-        print *, "calling reservoir run for persistence_levelpool_hybrid_type"
+        print *, "calling reservoir run for persistence_levelpool_hybrid"
 
         water_elevation = 1331.18005
 

@@ -7,13 +7,13 @@
 
 module module_persistence_levelpool_hybrid_state
 
-    use module_levelpool, only: levelpool_type
-    use module_reservoir_base, only: reservoir_base_state_type
+    use module_levelpool, only: levelpool
+    use module_reservoir, only: reservoir_state
     implicit none
 
     ! Extend/derive hybrid state from the abstract base
     ! type for reservoir state.
-    type, extends(reservoir_base_state_type) :: hybrid_state_interface
+    type, extends(reservoir_state) :: hybrid_state_interface
         real    :: water_elevation              ! meters AMSL
         real*4  :: current_storage              ! cubic meters
         real    :: gage_discharge               ! cubic meters per second (cms)
@@ -25,7 +25,7 @@ module module_persistence_levelpool_hybrid_state
         real    :: levelpool_current_weight
         real    :: persistence_current_weight
 
-        type (levelpool_type), pointer :: levelpool_ptr   ! pointer to levelpool object
+        type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
     contains
 

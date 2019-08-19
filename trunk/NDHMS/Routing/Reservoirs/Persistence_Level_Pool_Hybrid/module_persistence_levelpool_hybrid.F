@@ -18,18 +18,18 @@ module module_persistence_levelpool_hybrid
 
     use module_persistence_levelpool_hybrid_properties, only: hybrid_properties_interface
     use module_persistence_levelpool_hybrid_state, only: hybrid_state_interface
-    use module_levelpool, only: levelpool_type
+    use module_levelpool, only: levelpool
     use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
-    use module_reservoir_base, only: reservoir_base_type, reservoir_base_input_type, &
-                                     reservoir_base_output_type
+    use module_reservoir, only: reservoir, reservoir_input, &
+                                     reservoir_output
     use module_reservoir_read_timeslice_data, only: timeslice_data
     implicit none
 
     ! Extend/derive hybrid type from the abstract base
     ! type for reservoirs.
-    type, extends(reservoir_base_type) :: persistence_levelpool_hybrid_type
+    type, extends(reservoir) :: persistence_levelpool_hybrid
 
         ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
@@ -40,11 +40,11 @@ module module_persistence_levelpool_hybrid
 
     contains
 
-        procedure :: init => hybrid_type_init
-        procedure :: destroy => hybrid_type_destroy
+        procedure :: init => hybrid_init
+        procedure :: destroy => hybrid_destroy
         procedure :: run => run_hybrid_reservoir
 
-    end type persistence_levelpool_hybrid_type
+    end type persistence_levelpool_hybrid
 
 #ifndef NCEP_WCOSS
     integer, parameter :: log_warning = 6
@@ -55,7 +55,7 @@ module module_persistence_levelpool_hybrid
 contains
 
     ! Hybrid Constructor
-    subroutine hybrid_type_init(this, water_elevation,  &
+    subroutine hybrid_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
@@ -63,7 +63,7 @@ contains
         timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
-        class(persistence_levelpool_hybrid_type), intent(inout) :: this ! object being initialized
+        class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -81,7 +81,7 @@ contains
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
-print *, timeslice_path
+
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
         call create_hybrid_diagnostic_log_file(lake_number)
@@ -156,7 +156,7 @@ print *, timeslice_path
             end if
 
             ! Allocate a single level pool reservoir
-            allocate(levelpool_type :: this%state%levelpool_ptr)
+            allocate(levelpool :: this%state%levelpool_ptr)
 
             ! Initialize level pool reservoir
             call this%state%levelpool_ptr%init(water_elevation, lake_area, &
@@ -165,21 +165,21 @@ print *, timeslice_path
 
         end if
 
-    end subroutine hybrid_type_init
+    end subroutine hybrid_init
 
 
     ! Hybrid Destructor
-    subroutine hybrid_type_destroy(this)
+    subroutine hybrid_destroy(this)
         implicit none
-        class(persistence_levelpool_hybrid_type), intent(inout) :: this ! object being destroyed
-    end subroutine hybrid_type_destroy
+        class(persistence_levelpool_hybrid), intent(inout) :: this ! object being destroyed
+    end subroutine hybrid_destroy
 
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(persistence_levelpool_hybrid_type), intent(inout) :: this
+        class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)

@@ -5,8 +5,8 @@
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
 
-   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
-   integer, allocatable, dimension(:) :: reservoir_type ! specifying type of reservoir
+   class (reservoir_container), allocatable, dimension(:) :: reservoirs
+   integer, allocatable, dimension(:) :: reservoir ! specifying type of reservoir
 
    INTEGER :: IX, JX
    logical :: initialized

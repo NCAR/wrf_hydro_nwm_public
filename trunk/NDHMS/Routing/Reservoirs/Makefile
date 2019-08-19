@@ -13,11 +13,11 @@ all: mod
 mod:
 	#Build each sub module then build the module that depends on all sub modules
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_timeslice_data.F
 
 	ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
-	ar -r ../../lib/libHYDRO.a module_reservoir_base.o
+	ar -r ../../lib/libHYDRO.a module_reservoir.o
 	ar -r ../../lib/libHYDRO.a module_reservoir_read_timeslice_data.o
 
 	cp *.mod ../../mod
@@ -30,7 +30,7 @@ mod:
 test:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) hydro_stop.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_base.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_timeslice_data.F
 
 	make -C Level_Pool
@@ -42,7 +42,7 @@ test:
 	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
 		hydro_stop.o \
 		module_reservoir_utilities.o \
-		module_reservoir_base.o \
+		module_reservoir.o \
 		module_reservoir_read_timeslice_data.o \
 		Level_Pool/module_levelpool_properties.o \
 		Level_Pool/module_levelpool_state.o \

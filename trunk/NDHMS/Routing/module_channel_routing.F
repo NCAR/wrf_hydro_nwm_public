@@ -26,7 +26,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
                                gbcastreal2,      linkls_s
 
 
-use module_reservoir_base
+use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 
 #endif

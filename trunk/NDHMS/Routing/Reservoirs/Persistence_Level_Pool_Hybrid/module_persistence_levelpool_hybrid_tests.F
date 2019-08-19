@@ -6,7 +6,7 @@ contains
     !Testing
     function persistence_levelpool_hybrid_data_info(hybrid_data) result(rv)
         implicit none
-        type (persistence_levelpool_hybrid_type) :: hybrid_data
+        type (persistence_levelpool_hybrid) :: hybrid_data
         logical :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
@@ -95,7 +95,7 @@ contains
 
     ! test to see that each member of the input structure is correctly allocated and readable
     function test_input_persistence_levelpool_hybrid(o) result(rv)
-        type (reservoir_base_input_type), intent(in) :: o
+        type (reservoir_input), intent(in) :: o
         logical rv
 
         rv = .true.
@@ -120,7 +120,7 @@ contains
 
     ! test to see that each member of the output structure is correctly allocated and readable
     function test_output_persistence_levelpool_hybrid(o) result(rv)
-        type (reservoir_base_output_type), intent(in) :: o
+        type (reservoir_output), intent(in) :: o
         logical rv
 
         rv = .true.
