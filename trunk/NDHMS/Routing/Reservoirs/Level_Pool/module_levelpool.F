@@ -1,23 +1,23 @@
 ! This module defines and instantiates objects
 ! for a level pool type reservoir. The level
 ! pool reservoir type inherits input and
-! output stucts from the reservoir base
+! output types from the reservoir base
 ! module and calls instantiation of these into
 ! sub-objects. The level pool reservoir type
-! also points to stucts for level pool parameters
+! also points to types for level pool properties
 ! and state and calls instantiation of these into
 ! sub-objects. This module also contains the
 ! subroutine to run level pool reservoir that is
 ! derived from the reservoir base type interface
 ! to run reservoir. Running level pool will
 ! then call the LEVELPOOL subroutine, which
-! processes the given inputs, parameters, and
+! processes the given inputs, properties, and
 ! state for a particular level pool reservoir and
 ! returns the output/outflow.
 
 module module_levelpool
 
-    use module_levelpool_parameters, only: levelpool_parameters_interface
+    use module_levelpool_properties, only: levelpool_properties_interface
     use module_levelpool_state, only: levelpool_state_interface
     use module_reservoir_base, only: reservoir_base_type, reservoir_base_input_type, &
                                      reservoir_base_output_type
@@ -35,7 +35,7 @@ module module_levelpool
 
         ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
-        type (levelpool_parameters_interface), pointer :: parameters => null()
+        type (levelpool_properties_interface), pointer :: properties => null()
         type (levelpool_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
@@ -94,14 +94,14 @@ contains
                 call this%output%init()
             end if
 
-            ! try to allocate parameters
-            allocate ( this%parameters )
-            if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate levelpool parameters structure"
+            ! try to allocate properties
+            allocate ( this%properties )
+            if ( .not. associated(this%properties) ) then
+                ! if the properties structure could not be created write an error
+                write(0,*) "Failure to allocate levelpool properties structure"
             else
-                ! initialize levelpool parameters
-                call this%parameters%init( lake_area,  &
+                ! initialize levelpool properties
+                call this%properties%init( lake_area,  &
                     weir_elevation, weir_coeffecient, weir_length, &
                     orifice_elevation, orifice_coefficient, &
                     orifice_area, max_depth, lake_number )
@@ -112,7 +112,7 @@ contains
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate state parameters structure"
+                write(0,*) "Failure to allocate state properties structure"
             else
                 ! initialize levelpool state
                 call this%state%init( water_elevation )
@@ -151,21 +151,21 @@ contains
         ! Update state variables
         this%state%water_elevation = water_elevation
 
-        call LEVELPOOL(this%parameters%lake_number,   &
+        call LEVELPOOL(this%properties%lake_number,   &
         previous_timestep_inflow,                               &
         this%input%inflow,                            &
         this%output%outflow,                          &
         this%input%lateral_inflow,                    &
         routing_period,                                         &
         this%state%water_elevation,                   &
-        this%parameters%lake_area,          		    &
-        this%parameters%weir_elevation,               &
-        this%parameters%max_depth,                    &
-        this%parameters%weir_coeffecient,             &
-        this%parameters%weir_length,                  &
-        this%parameters%orifice_elevation,            &
-        this%parameters%orifice_coefficient,          &
-        this%parameters%orifice_area                  &
+        this%properties%lake_area,          		    &
+        this%properties%weir_elevation,               &
+        this%properties%max_depth,                    &
+        this%properties%weir_coeffecient,             &
+        this%properties%weir_length,                  &
+        this%properties%orifice_elevation,            &
+        this%properties%orifice_coefficient,          &
+        this%properties%orifice_area                  &
         )
 
         ! Update output variable returned from this subroutine
@@ -179,7 +179,7 @@ contains
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
-        call log_levelpool_diagnostic_data(this%parameters%lake_number, inflow, water_elevation, outflow)
+        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, water_elevation, outflow)
 #endif
 
     end subroutine run_levelpool_reservoir

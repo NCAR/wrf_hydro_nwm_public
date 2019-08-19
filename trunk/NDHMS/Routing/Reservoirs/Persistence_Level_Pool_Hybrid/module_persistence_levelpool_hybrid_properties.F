@@ -1,11 +1,11 @@
 ! This module defines and instantiates objects
 ! for a hybrid type reservoir's
-! parameters/properties. Parameters holds
+! parameters/properties. Properties holds
 ! static/unchanging variables that are
 ! set when the given reservoir object is
 ! initialized/instantiated.
 
-module module_persistence_levelpool_hybrid_parameters
+module module_persistence_levelpool_hybrid_properties
     use module_reservoir_utilities, only: read_netcdf_lake_id, &
                                           read_persistence_netcdf_gage_id, &
                                           read_persistence_netcdf_real_2D_parameters, &
@@ -14,9 +14,9 @@ module module_persistence_levelpool_hybrid_parameters
     use netcdf
     implicit none
 
-    ! Extend/derive hybrid parameters from the abstract base
+    ! Extend/derive hybrid properties from the abstract base
     ! type for reservoir properties.
-    type, extends(reservoir_base_properties_type) :: hybrid_parameters_interface
+    type, extends(reservoir_base_properties_type) :: hybrid_properties_interface
         real    :: min_storage                  ! minimum storage (cubic meters)
         real    :: max_storage                  ! maximum storage (cubic meters)
         real    :: lake_area                    ! area of reservoir (km^2)
@@ -30,20 +30,20 @@ module module_persistence_levelpool_hybrid_parameters
 
     contains
 
-        procedure :: init => hybrid_parameters_init
-        procedure :: destroy => hybrid_parameters_destroy
+        procedure :: init => hybrid_properties_init
+        procedure :: destroy => hybrid_properties_destroy
 
-    end type hybrid_parameters_interface
+    end type hybrid_properties_interface
 
     integer, parameter :: seconds_in_day = 86400
 
 contains
 
-    ! Hybrid Parameters Constructor
-    subroutine hybrid_parameters_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
+    ! Hybrid Properties Constructor
+    subroutine hybrid_properties_init(this, lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
         observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
         implicit none
-        class(hybrid_parameters_interface), intent(inout) :: this ! the type object being initialized
+        class(hybrid_properties_interface), intent(inout) :: this ! the type object being initialized
         real,    intent(in)          :: lake_area                    ! area of lake (km^2)
         real,    intent(in)          :: lake_max_water_elevation     ! max water elevation (meters)
         real,    intent(in)          :: orifice_elevation            ! orifice elevation (meters AMSL)
@@ -76,7 +76,7 @@ contains
         status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
 
-        ! Read relevant parameters from Persistence Parameter NetCDF
+        ! Read relevant properties from Persistence Parameter NetCDF
         call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
 
         call read_persistence_netcdf_gage_id(ncid, lake_id_index, "gage_id", this%gage_id)
@@ -97,12 +97,12 @@ contains
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
 
-    end subroutine hybrid_parameters_init
+    end subroutine hybrid_properties_init
 
-    ! Hybrid Parameters Destructor
-    subroutine hybrid_parameters_destroy(this)
+    ! Hybrid Properties Destructor
+    subroutine hybrid_properties_destroy(this)
         implicit none
-        class(hybrid_parameters_interface), intent(inout) :: this ! the type object being destroyed
-    end subroutine hybrid_parameters_destroy
+        class(hybrid_properties_interface), intent(inout) :: this ! the type object being destroyed
+    end subroutine hybrid_properties_destroy
 
-end module module_persistence_levelpool_hybrid_parameters
+end module module_persistence_levelpool_hybrid_properties

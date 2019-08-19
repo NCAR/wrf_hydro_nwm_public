@@ -31,9 +31,9 @@ This module builds off of the same class structure and architecture of the Level
 module is instantiated into an object at model initialization. The **Persistence_Level_Pool_Hybrid** directory contains the following files:
 
 * **module_persistence_levelpool_hybrid.F** defines and instantiates objects for a hybrid persistence levelpool type
-reservoir. **module_RT.F** will call and pass parameters to the constructor in this module to instantiate the hybrid reservoir
+reservoir. **module_RT.F** will call and pass properties to the constructor in this module to instantiate the hybrid reservoir
 object and its sub-objects. The hybrid reservoir type inherits input and output types from the reservoir base module and calls
-instantiation of these into sub-objects. The hybrid reservoir type also points to types for hybrid parameters and state and calls
+instantiation of these into sub-objects. The hybrid reservoir type also points to types for hybrid properties and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
 instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
 type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
@@ -44,8 +44,8 @@ reservoir held by the same processor at that timestep that reaches its update ti
 run reservoir function also performs the functionality described above including calling level pool run reservoir along with weighting and combining
 that release with the weighted observed discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
 
-* **module_persistence_levelpool_hybrid_parameters.F** defines and instantiates objects for a hybrid type reservoir's
-parameters/properties. Parameters holds static/unchanging variables that are set when the given reservoir object is
+* **module_persistence_levelpool_hybrid_properties.F** defines and instantiates objects for a hybrid type reservoir's
+parameters/properties. Properties holds static/unchanging variables that are set when the given reservoir object is
 initialized/instantiated.
 
 * **module_persistence_levelpool_hybrid_state.F** defines and instantiates objects for a hybrid type reservoir's state.

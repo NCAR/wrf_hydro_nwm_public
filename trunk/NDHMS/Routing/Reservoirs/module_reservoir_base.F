@@ -6,7 +6,7 @@
 ! for running a reservoir.
 module module_reservoir_base
 
-    ! Defines the reservoir base state stuct that sub-types of
+    ! Defines the reservoir base state type that sub-types of
     ! reservoirs will derive from. Since this is abstract, an instance
     ! of reservoir state cannot be created but only derived to sub-types
     ! of reservoirs. State holds and tracks dynamic/changing variables
@@ -16,7 +16,7 @@ module module_reservoir_base
 
     end type
 
-    ! Defines the reservoir base properties/parameters stuct that
+    ! Defines the reservoir base properties/parameters type that
     ! sub-types of reservoirs will derive from. Since this is abstract,
     ! an instance of reservoir properties cannot be created but only
     ! derived to sub-types of reservoirs. Properties holds
@@ -26,7 +26,7 @@ module module_reservoir_base
 
     end type
 
-    ! Defines the input base stuct which holds the same inputs that all
+    ! Defines the input base type which holds the same inputs that all
     ! sub-types of reservoirs will derive from. Therefore, all types of
     ! reservoirs will hold the inputs defined below. These are
     ! dynamic/changing variables that will receive values passed into the
@@ -44,7 +44,7 @@ module module_reservoir_base
 
     end type
 
-    ! Defines the output base stuct which holds the same output(s) that all
+    ! Defines the output base type which holds the same output(s) that all
     ! sub-types of reservoirs will derive from. Therefore, all types of
     ! reservoirs will hold the output(s) defined below. These are
     ! dynamic/changing variables that will receive values returned from the
@@ -60,7 +60,7 @@ module module_reservoir_base
 
     end type
 
-    ! Defines the reservoir base stuct that sub-types of reservoirs
+    ! Defines the reservoir base type that sub-types of reservoirs
     ! will derive from. Since this is abstract, an instance of reservoir
     ! cannot be created but only derived to sub-types of reservoirs.
     ! Derived sub-types of reservoirs of this base type will create a

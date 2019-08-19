@@ -22,9 +22,9 @@ contains
         ptr_state(1) = .false.
     end if
 
-    ! Check to see if the levelpool_parameters data structure exists
-    print *, "Checking pointer association on data%parameters "
-    if ( associated(levelpool_data%parameters) ) then
+    ! Check to see if the levelpool_properties data structure exists
+    print *, "Checking pointer association on data%properties "
+    if ( associated(levelpool_data%properties) ) then
         print *, "PASSED"
         ptr_state(2) = .true.
     else
@@ -58,7 +58,7 @@ contains
     end if
 
     if ( ptr_state(2) ) then
-        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
+        data_state(2) = test_levelpool_properties(levelpool_data%properties)
     end if
 
     if ( ptr_state(3) ) then
@@ -146,15 +146,15 @@ contains
     end function test_levelpool_state
 
 
-    ! test to see that each member of the parameters structure is correctly allocated and readable
-    function test_levelpool_parameters(o) result(rv)
-        type (levelpool_parameters_interface), intent(in) :: o
+    ! test to see that each member of the properties structure is correctly allocated and readable
+    function test_levelpool_properties(o) result(rv)
+        type (levelpool_properties_interface), intent(in) :: o
         logical rv
 
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the level pool parameters data structure"
+        print *, "Checking the values of the level pool properties data structure"
         print *, " "
 
         print *, "Checking read on lake_area"
@@ -193,6 +193,6 @@ contains
         print *, o%lake_number
         print *, " "
 
-    end function test_levelpool_parameters
+    end function test_levelpool_properties
 
 end module

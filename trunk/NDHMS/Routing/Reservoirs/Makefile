@@ -44,11 +44,11 @@ test:
 		module_reservoir_utilities.o \
 		module_reservoir_base.o \
 		module_reservoir_read_timeslice_data.o \
-		Level_Pool/module_levelpool_parameters.o \
+		Level_Pool/module_levelpool_properties.o \
 		Level_Pool/module_levelpool_state.o \
 		Level_Pool/module_levelpool_tests.o \
 		Level_Pool/module_levelpool.o \
-		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_parameters.o \
+		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_properties.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_state.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_tests.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid.o \

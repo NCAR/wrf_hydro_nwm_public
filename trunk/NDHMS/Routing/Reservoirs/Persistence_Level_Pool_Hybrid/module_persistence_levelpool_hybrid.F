@@ -1,11 +1,11 @@
 ! This module defines and instantiates objects
 ! for a hybrid persistence levelpool type
 ! reservoir. The hybrid reservoir type
-! inherits input and output stucts from the
+! inherits input and output types from the
 ! reservoir base module and calls instantiation
 ! of these into sub-objects. The hybrid
 ! reservoir type also points to types for
-! hybrid parameters and state and calls
+! hybrid properties and state and calls
 ! instantiation of these into sub-objects.
 ! A pointer to a levelpool reservoir object
 ! is also held in state, and this module
@@ -16,7 +16,7 @@
 
 module module_persistence_levelpool_hybrid
 
-    use module_persistence_levelpool_hybrid_parameters, only: hybrid_parameters_interface
+    use module_persistence_levelpool_hybrid_properties, only: hybrid_properties_interface
     use module_persistence_levelpool_hybrid_state, only: hybrid_state_interface
     use module_levelpool, only: levelpool_type
     use module_reservoir_utilities, only: modify_for_projected_storage, warn_negative_inflow, &
@@ -33,7 +33,7 @@ module module_persistence_levelpool_hybrid
 
         ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
-        type (hybrid_parameters_interface), pointer :: parameters => null()
+        type (hybrid_properties_interface), pointer :: properties => null()
         type (hybrid_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
@@ -114,14 +114,14 @@ print *, timeslice_path
                 call this%output%init()
             end if
 
-            ! try to allocate parameters
-            allocate ( this%parameters )
-            if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid parameters structure"
+            ! try to allocate properties
+            allocate ( this%properties )
+            if ( .not. associated(this%properties) ) then
+                ! if the properties structure could not be created write an error
+                write(0,*) "Failure to allocate hybrid properties structure"
             else
-                ! initialize hybrid parameters
-                call this%parameters%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
+                ! initialize hybrid properties
+                call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
                 observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
@@ -138,17 +138,17 @@ print *, timeslice_path
             this%pointer_allocation_guard = .true.
 
             ! Initialize persistence weight index to be out of bounds of the persistence weights array
-            this%state%persistence_weight_index = SIZE(this%parameters%persistence_weighted_coefficients) + 1
+            this%state%persistence_weight_index = SIZE(this%properties%persistence_weighted_coefficients) + 1
 
             ! Call hydro stop if the initial storage is greater than max storage or less than zero.
-            if (this%state%current_storage > this%parameters%max_storage) then
-                this%state%current_storage = this%parameters%max_storage
+            if (this%state%current_storage > this%properties%max_storage) then
+                this%state%current_storage = this%properties%max_storage
                 write(lake_number_string, "(I15)") lake_number
                 write(log_warning,*) "Warning, initial storage exceeds max storage for reservoir ", lake_number_string, &
                 ". Setting initial storage to max storage."
 
-            else if (this%state%current_storage < this%parameters%min_storage) then
-                this%state%current_storage = this%parameters%min_storage
+            else if (this%state%current_storage < this%properties%min_storage) then
+                this%state%current_storage = this%properties%min_storage
                 write(lake_number_string, "(I15)") lake_number
                 write(log_warning,*) "Warning, initial storage is less than zero for reservoir ", lake_number_string, &
                 ". Setting initial storage to zero."
@@ -209,8 +209,8 @@ print *, timeslice_path
             ! Update state variables
             this%state%water_elevation = water_elevation
 
-            this%state%current_storage = (this%state%water_elevation - this%parameters%orifice_elevation) * &
-            this%parameters%lake_area
+            this%state%current_storage = (this%state%water_elevation - this%properties%orifice_elevation) * &
+            this%properties%lake_area
 
         end if
 
@@ -224,8 +224,8 @@ print *, timeslice_path
         if (this%state%current_time >= this%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
-            call timeslice_data%setup_read_timeslice(this%parameters%observation_update_time_interval_seconds, &
-            this%state%current_time, this%parameters%gage_id, gage_lookback_seconds, this%state%gage_discharge)
+            call timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
+            this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
@@ -238,15 +238,15 @@ print *, timeslice_path
                     this%state%persistence_weight_index = this%state%persistence_weight_index + 1
 
                     ! Set next weight update time
-                    this%state%weight_update_time = this%state%weight_update_time + this%parameters%weight_update_time_interval
+                    this%state%weight_update_time = this%state%weight_update_time + this%properties%weight_update_time_interval
                 end if
 
                 ! If out of bounds of array, then set persistence weight to 0.0. Otherwise, set persistence weight from array's indexed value.
-                if (this%state%persistence_weight_index > SIZE(this%parameters%persistence_weighted_coefficients)) then
+                if (this%state%persistence_weight_index > SIZE(this%properties%persistence_weighted_coefficients)) then
                     this%state%persistence_current_weight = 0.0
 
                 else
-                    this%state%persistence_current_weight = this%parameters%persistence_weighted_coefficients(this%state%persistence_weight_index)
+                    this%state%persistence_current_weight = this%properties%persistence_weighted_coefficients(this%state%persistence_weight_index)
                 end if
 
             else
@@ -258,11 +258,11 @@ print *, timeslice_path
                 this%state%persistence_weight_index = 1
 
                 ! Grab first persistence weight at index 1 from array
-                this%state%persistence_current_weight = this%parameters%persistence_weighted_coefficients(this%state%persistence_weight_index)
+                this%state%persistence_current_weight = this%properties%persistence_weighted_coefficients(this%state%persistence_weight_index)
 
                 ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
                 ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
-                this%state%weight_update_time = this%state%current_time + this%parameters%weight_update_time_interval - gage_lookback_seconds
+                this%state%weight_update_time = this%state%current_time + this%properties%weight_update_time_interval - gage_lookback_seconds
 
             end if
 
@@ -270,7 +270,7 @@ print *, timeslice_path
             this%state%levelpool_current_weight = 1.0 - this%state%persistence_current_weight
 
             ! Set timeslice update time
-            this%state%timeslice_update_time = this%state%timeslice_update_time + this%parameters%observation_update_time_interval_seconds
+            this%state%timeslice_update_time = this%state%timeslice_update_time + this%properties%observation_update_time_interval_seconds
 
         ! If update time to change persistence weights
         else if (this%state%current_time >= this%state%weight_update_time) then
@@ -279,10 +279,10 @@ print *, timeslice_path
             this%state%persistence_weight_index = this%state%persistence_weight_index + 1
 
             ! Boundary check to not exceed the size of the persistence weights array
-            if (this%state%persistence_weight_index <= SIZE(this%parameters%persistence_weighted_coefficients)) then
+            if (this%state%persistence_weight_index <= SIZE(this%properties%persistence_weighted_coefficients)) then
 
                 ! Grab indexed persistence weight from array
-                this%state%persistence_current_weight = this%parameters%persistence_weighted_coefficients(this%state%persistence_weight_index)
+                this%state%persistence_current_weight = this%properties%persistence_weighted_coefficients(this%state%persistence_weight_index)
 
             else
                 ! If boundary of persistence weights array has been exceeded, then set all persistence weights to 0.0
@@ -294,7 +294,7 @@ print *, timeslice_path
             this%state%levelpool_current_weight = 1.0 - this%state%persistence_current_weight
 
             ! Set next weight update time
-            this%state%weight_update_time = this%state%weight_update_time + this%parameters%weight_update_time_interval
+            this%state%weight_update_time = this%state%weight_update_time + this%properties%weight_update_time_interval
 
         end if
 
@@ -312,19 +312,19 @@ print *, timeslice_path
         * levelpool_outflow
 
         ! Warn if there is a negative inflow
-        call warn_negative_inflow(this%input%inflow, this%parameters%lake_number, this%state%current_time)
+        call warn_negative_inflow(this%input%inflow, this%properties%lake_number, this%state%current_time)
 
         ! Modify if exceeding storage boundary conditions
         call modify_for_projected_storage(this%input%inflow, &
-        this%state%current_storage, this%parameters%min_storage, &
-        this%parameters%max_storage, this%parameters%lake_number, &
+        this%state%current_storage, this%properties%min_storage, &
+        this%properties%max_storage, this%properties%lake_number, &
         this%state%current_time, int(routing_period), this%output%outflow, max_storage_reached)
 
         ! If max storage has been reached, then set storage and water elevation to max
         if (max_storage_reached) then
-            this%state%current_storage = this%parameters%max_storage
+            this%state%current_storage = this%properties%max_storage
 
-            this%state%water_elevation = this%state%levelpool_ptr%parameters%max_depth
+            this%state%water_elevation = this%state%levelpool_ptr%properties%max_depth
 
         else
             ! Calculate change in storage
@@ -335,12 +335,12 @@ print *, timeslice_path
 
             ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
             ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
-            this%state%water_elevation = this%state%water_elevation + delta_storage / this%parameters%lake_area
+            this%state%water_elevation = this%state%water_elevation + delta_storage / this%properties%lake_area
 
             ! In theory this shouldn't happen, but due to floating point arithmetic, this is double checked to prevent
             ! propagation of error.
-            if (this%state%water_elevation > this%state%levelpool_ptr%parameters%max_depth) then
-                this%state%water_elevation = this%state%levelpool_ptr%parameters%max_depth
+            if (this%state%water_elevation > this%state%levelpool_ptr%properties%max_depth) then
+                this%state%water_elevation = this%state%levelpool_ptr%properties%max_depth
             end if
 
         end if
@@ -359,9 +359,10 @@ print *, timeslice_path
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
-        call log_hybrid_diagnostic_data(this%parameters%lake_number, this%state%current_time, &
+        call log_hybrid_diagnostic_data(this%properties%lake_number, this%state%current_time, &
         this%state%timeslice_update_time, this%state%weight_update_time, gage_lookback_seconds, &
-        this%parameters%gage_id, this%state%persistence_weight_index, &
+        this%properties%gage_id, this%state%persistence_weight_index, &
+        this%properties%gage_id, this%state%persistence_weight_index, &
         this%state%persistence_current_weight, this%input%inflow, this%state%current_storage, &
         this%state%water_elevation, this%state%gage_discharge, this%state%persisted_outflow, &
         levelpool_outflow, this%output%outflow)

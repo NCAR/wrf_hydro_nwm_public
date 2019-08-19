@@ -24,9 +24,9 @@ contains
         end if
         print *, " "
 
-        ! Check to see if the hybrid_parameters data structure exists
-        print *, "Checking pointer association on data%parameters "
-        if ( associated(hybrid_data%parameters) ) then
+        ! Check to see if the hybrid_properties data structure exists
+        print *, "Checking pointer association on data%properties "
+        if ( associated(hybrid_data%properties) ) then
             print *, "PASSED"
             ptr_state(2) = .true.
         else
@@ -64,7 +64,7 @@ contains
         end if
 
         if ( ptr_state(2) ) then
-            data_state(2) = test_persistence_levelpool_hybrid_parameters(hybrid_data%parameters)
+            data_state(2) = test_persistence_levelpool_hybrid_properties(hybrid_data%properties)
         end if
 
         if ( ptr_state(3) ) then
@@ -194,15 +194,15 @@ contains
 
 
 
-    ! test to see that each member of the parameters structure is correctly allocated and readable
-    function test_persistence_levelpool_hybrid_parameters(o) result(rv)
-        type (hybrid_parameters_interface), intent(in) :: o
+    ! test to see that each member of the properties structure is correctly allocated and readable
+    function test_persistence_levelpool_hybrid_properties(o) result(rv)
+        type (hybrid_properties_interface), intent(in) :: o
         logical rv
 
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the hybrid parameters data structure"
+        print *, "Checking the values of the hybrid properties data structure"
         print *, " "
 
         print *, "Checking read on min_storage"
@@ -245,7 +245,7 @@ contains
         print *, o%persistence_weighted_coefficients
         print *, " "
 
-    end function test_persistence_levelpool_hybrid_parameters
+    end function test_persistence_levelpool_hybrid_properties
 
 
 end module
