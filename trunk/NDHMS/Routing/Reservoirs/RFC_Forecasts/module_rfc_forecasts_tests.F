@@ -1,6 +1,5 @@
 module module_rfc_forecasts_tests
     use module_rfc_forecasts
-    !use module_levelpool_tests
 
 contains
 
@@ -141,6 +140,7 @@ contains
 
         !if ( all(ptr_state) .and. all(data_state) ) then
         if ( all(ptr_state) ) then
+
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Object Tests Passed"
             print *, "========================================================================"
@@ -155,7 +155,6 @@ contains
 
         flush(6)
     end function rfc_forecasts_data_info
-
 
     ! test to see that each member of the input structure is correctly allocated and readable
     function test_input_rfc_forecasts(o) result(rv)
