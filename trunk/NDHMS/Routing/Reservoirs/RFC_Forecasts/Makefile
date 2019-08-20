@@ -12,11 +12,11 @@ all: mod
 
 mod:
 	#Build each sub module then build the module that depends on all sub modules
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_rfc_forecasts_parameters.F
+	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_rfc_forecasts_properties.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_rfc_forecasts_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_rfc_forecasts.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_rfc_forecasts_tests.F
-	ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_parameters.o
+	ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_properties.o
 	ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_state.o
 	ar -r ../../../lib/libHYDRO.a module_rfc_forecasts.o
 	ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_tests.o

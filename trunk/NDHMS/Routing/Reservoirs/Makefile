@@ -53,7 +53,7 @@ test:
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_state.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_tests.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid.o \
-		RFC_Forecasts/module_rfc_forecasts_parameters.o \
+		RFC_Forecasts/module_rfc_forecasts_properties.o \
 		RFC_Forecasts/module_rfc_forecasts_state.o \
 		RFC_Forecasts/module_rfc_forecasts_tests.o \
 		RFC_Forecasts/module_rfc_forecasts.o \

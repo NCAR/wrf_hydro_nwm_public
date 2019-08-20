@@ -6,12 +6,12 @@
 ! of the system.
 
 module module_rfc_forecasts_state
-    use module_reservoir_base
+    use module_reservoir, only: reservoir_state
     implicit none
 
     ! Extend/derive rfc forecasts state from the abstract base
     ! type for reservoir state.
-    type, extends(reservoir_base_state_type) :: rfc_forecasts_state_interface
+    type, extends(reservoir_state) :: rfc_forecasts_state_interface
 
     contains
 
