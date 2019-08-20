@@ -831,7 +831,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     nlst_rt(did)%reservoir_observation_lookback_hours, &
                     nlst_rt(did)%reservoir_observation_update_time_interval_seconds)
 
-          type is (rfc_forecasts_type)
+          type is (rfc_forecasts)
               call reservoir%init(                              &
                     rt_domain(did)%RESHT(lake_index),           &
                     rt_domain(did)%HRZAREA(lake_index),         &

@@ -6,7 +6,7 @@ contains
     !Testing
     function rfc_forecasts_data_info(rfc_forecasts_reservoir_data) result(rv)
         implicit none
-        type (rfc_forecasts_type) :: rfc_forecasts_reservoir_data
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         logical :: rv
         logical, dimension(1) :: ptr_state
         logical, dimension(1) :: data_state
@@ -24,9 +24,9 @@ contains
         end if
         print *, " "
 
-        ! Check to see if the rfc_forecasts_parameters data structure exists
-        print *, "Checking pointer association on data%parameters for rfc forecasts reservoirs"
-        if ( associated(rfc_forecasts_reservoir_data%parameters) ) then
+        ! Check to see if the rfc_forecasts_properties data structure exists
+        print *, "Checking pointer association on data%properties for rfc forecasts reservoirs"
+        if ( associated(rfc_forecasts_reservoir_data%properties) ) then
             print *, "PASSED"
             ptr_state(2) = .true.
         else
@@ -64,7 +64,7 @@ contains
         !end if
 
         !if ( ptr_state(2) ) then
-        !    data_state(2) = test_rfc_forecasts_parameters(rfc_forecasts_reservoir_data%parameters)
+        !    data_state(2) = test_rfc_forecasts_properties(rfc_forecasts_reservoir_data%properties)
         !end if
 
         !if ( ptr_state(3) ) then

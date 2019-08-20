@@ -244,15 +244,15 @@ program reservoir_unit_tests
         logical rv                        ! test result
         logical :: call_status
 
-        type (rfc_forecasts_type) :: rfc_forecasts_reservoir_data
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         real :: water_elevation = 2.
 
         call_status = .false.
 
-        print *, "calling init for rfc_forecasts_type"
+        print *, "calling init for rfc_forecasts"
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 20)
 
-        print *, "testing data in rfc_forecasts_type"
+        print *, "testing data in rfc_forecasts"
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
         if (call_status) then
