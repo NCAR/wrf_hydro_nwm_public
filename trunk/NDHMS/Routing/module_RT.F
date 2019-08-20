@@ -38,6 +38,7 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool, only: levelpool
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
+   use module_rfc_forecasts, only: rfc_forecasts
 
    IMPLICIT NONE
 
@@ -829,6 +830,20 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     nlst_rt(did)%reservoir_timeslice_path,             &
                     nlst_rt(did)%reservoir_observation_lookback_hours, &
                     nlst_rt(did)%reservoir_observation_update_time_interval_seconds)
+
+          type is (rfc_forecasts_type)
+              call reservoir%init(                              &
+                    rt_domain(did)%RESHT(lake_index),           &
+                    rt_domain(did)%HRZAREA(lake_index),         &
+                    rt_domain(did)%WEIRH(lake_index),           &
+                    rt_domain(did)%WEIRC(lake_index),           &
+                    rt_domain(did)%WEIRL(lake_index),           &
+                    rt_domain(did)%ORIFICEE(lake_index),        &
+                    rt_domain(did)%ORIFICEC(lake_index),        &
+                    rt_domain(did)%ORIFICEA(lake_index),        &
+                    rt_domain(did)%LAKEMAXH(lake_index),        &
+                    rt_domain(did)%ELEVLAKE(lake_index),        &
+                    rt_domain(did)%LAKEIDM(lake_index)          )
 
            end select
 
