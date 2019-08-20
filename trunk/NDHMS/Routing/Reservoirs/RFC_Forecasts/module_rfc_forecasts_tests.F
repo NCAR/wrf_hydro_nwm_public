@@ -76,7 +76,8 @@ contains
         !end if
 
 
-        if ( all(ptr_state) .and. all(data_state) ) then
+        !if ( all(ptr_state) .and. all(data_state) ) then
+        if ( all(ptr_state) ) then
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Object Tests Passed"
             print *, "========================================================================"
