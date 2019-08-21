@@ -7,12 +7,16 @@
 
 module module_rfc_forecasts_state
 
+    use module_levelpool, only: levelpool
     use module_reservoir, only: reservoir_state
     implicit none
 
     ! Extend/derive rfc forecasts state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: rfc_forecasts_state_interface
+        real    :: water_elevation              ! meters AMSL
+
+        type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
     contains
 
@@ -24,9 +28,17 @@ module module_rfc_forecasts_state
 contains
 
     ! RFC Forecasts State Constructor
-    subroutine rfc_forecasts_state_init(this)
+    subroutine rfc_forecasts_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
         implicit none
         class(rfc_forecasts_state_interface), intent(inout) :: this ! the type object being initialized
+        real, intent(in) :: water_elevation           ! meters AMSL
+        real, intent(in) :: lake_area                 ! area of lake (km^2)
+        real, intent(in) :: lake_max_water_elevation  ! max water elevation (meters)
+        real, intent(in) :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real, intent(in) :: initial_fractional_depth  ! initial fraction water depth
+
+        ! Initialize the state water elevation in same manner as in module_RT.F
+        this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
 
     end subroutine rfc_forecasts_state_init
 

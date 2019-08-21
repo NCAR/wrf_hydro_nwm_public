@@ -24,7 +24,6 @@ program reservoir_unit_tests
 
     rv4 = test_rfc_forecasts_object()
 
-
     if (rv1 .and. rv2 .and. rv3 .and. rv4) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
@@ -260,10 +259,6 @@ program reservoir_unit_tests
         print *, "testing data in rfc_forecasts"
 
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
-
-        print *, "testing init and data for levelpool object held by rfc forecasts object"
-
-        !rv1 = test_rfc_levelpool()
 
         if (call_status) then
             rv = .true.
