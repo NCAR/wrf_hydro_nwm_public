@@ -4,14 +4,14 @@ module module_rfc_forecasts_tests
 contains
 
     !Testing
-    function rfc_forecasts_data_info(rfc_forecasts_reservoir_data) result(rv)
+    function rfc_forecasts_data_info(rfc_forecasts_reservoir_data) result(data_info_result)
         implicit none
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
-        logical :: rv
-        logical, dimension(1) :: ptr_state
-        logical, dimension(1) :: data_state
+        logical :: data_info_result
+        logical, dimension(8) :: ptr_state
+        logical, dimension(8) :: data_state
 
-        rv = .false.
+        data_info_result = .false.
 
         ! Check to see if the rfc_forecasts_state data structure exists
         print *, "Checking pointer association on data%state for rfc forecasts reservoirs"
@@ -122,11 +122,11 @@ contains
 
         ! Test Levelpool Substructures
         if ( ptr_state(5) ) then
-            data_state(5) = test_rfc_forecasts_levelpool_state(rfc_forecasts_reservoir_data%state%levelpool_ptr%state)
+            data_state(5) = test_rfc_forecasts_levelpool_state(rfc_forecasts_reservoir_data%state)
         end if
 
         if ( ptr_state(6) ) then
-            data_state(6) = test_rfc_forecasts_levelpool_properties(rfc_forecasts_reservoir_data%state%levelpool_ptr%properties)
+            data_state(6) = test_rfc_forecasts_levelpool_properties(rfc_forecasts_reservoir_data%state)
         end if
 
         if ( ptr_state(7) ) then
@@ -140,12 +140,17 @@ contains
         !if ( all(ptr_state) .and. all(data_state) ) then
         if ( all(ptr_state) ) then
 
+<<<<<<< HEAD
+=======
+        if ( all(ptr_state) .and. all(data_state) ) then
+            data_info_result = .true.
+>>>>>>> added rfc forecasts level pool object with unit tests passing
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Object Tests Passed"
             print *, "========================================================================"
-            rv = .true.
 
         else
+            data_info_result = .false.
             print *, "========================================================================"
             print *, "Not All RFC Forecast Reservoir Object Tests Passed"
             print *, "========================================================================"
@@ -157,7 +162,7 @@ contains
 
     ! test to see that each member of the input structure is correctly allocated and readable
     function test_input_rfc_forecasts(o) result(rv)
-        type (reservoir_base_input_type), intent(in) :: o
+        type (reservoir_input), intent(in) :: o
         logical rv
 
         rv = .true.
@@ -170,7 +175,7 @@ contains
         print *, o%inflow
         if ( o%inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -178,7 +183,7 @@ contains
         print *, o%lateral_inflow
         if ( o%lateral_inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -186,7 +191,7 @@ contains
         print *, o%previous_timestep_inflow
         if ( o%previous_timestep_inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -194,7 +199,7 @@ contains
 
     ! test to see that each member of the output structure is correctly allocated and readable
     function test_output_rfc_forecasts(o) result(rv)
-        type (reservoir_base_output_type), intent(in) :: o
+        type (reservoir_output), intent(in) :: o
         logical rv
 
         rv = .true.
@@ -207,7 +212,7 @@ contains
         print *, o%outflow
         if ( o%outflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -226,15 +231,11 @@ contains
 
         print *, "Checking read on water_elevation"
         print *, o%water_elevation
-        if ( o%water_elevation .ne. 2.0) then
+        if ( o%water_elevation .ne. 17.3999996) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
-
-        !print *, "Checking read on levelpool_ptr"
-        !print *, o%levelpool_ptr
-        !print *, " "
 
     end function test_rfc_forecasts_state
 
@@ -254,7 +255,7 @@ contains
         print *, o%lake_number
         if ( o%lake_number .ne. 20) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -262,7 +263,7 @@ contains
         !print *, o%gage_id
         !if ( o%gage_id .ne. 0) then
         !    rv = .false.
-        !    print "Failed"
+        !    print *, "FAILED"
         !end if
         !print *, " "
 
@@ -270,7 +271,7 @@ contains
         !print *, o%observation_lookback_hours
         !if ( o%observation_lookback_hours .ne. 0) then
         !    rv = .false.
-        !    print "Failed"
+        !    print *, "FAILED"
         !end if
         !print *, " "
 
@@ -278,7 +279,7 @@ contains
         !print *, o%observation_update_time_interval_seconds
         !if ( o%observation_update_time_interval_seconds .ne. 0) then
         !    rv = .false.
-        !    print "Failed"
+        !    print *, "FAILED"
         !end if
         !print *, " "
 
@@ -294,14 +295,14 @@ contains
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the input structure"
+        print *, "Checking the values of the rfc forecasts levelpool input structure"
         print *, " "
 
         print *, "Checking read on inflow"
         print *, o%inflow
         if ( o%inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -309,7 +310,7 @@ contains
         print *, o%lateral_inflow
         if ( o%lateral_inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -317,7 +318,7 @@ contains
         print *, o%previous_timestep_inflow
         if ( o%previous_timestep_inflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -330,14 +331,14 @@ contains
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the output structure"
+        print *, "Checking the values of the rfc forecasts levelpool output structure"
         print *, " "
 
         print *, "Checking read on outflow"
         print *, o%outflow
         if ( o%outflow .ne. 0.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -345,20 +346,20 @@ contains
 
     ! test to see that each member of the levelpool state structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_state(o) result(rv)
-        type (levelpool_state_interface), intent(in) :: o
+        type (rfc_forecasts_state_interface), intent(in) :: o
         logical rv
 
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the level pool state data structure"
+        print *, "Checking the values of the rfc forecasts levelpool state data structure"
         print *, " "
 
         print *, "Checking read on water_elevation"
-        print *, o%water_elevation
-        if ( o%water_elevation .ne. 2.0) then
+        print *, o%levelpool_ptr%state%water_elevation
+        if ( o%levelpool_ptr%state%water_elevation .ne. 2.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
@@ -367,84 +368,84 @@ contains
 
     ! test to see that each member of the levelpool properties structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_properties(o) result(rv)
-        type (levelpool_properties_interface), intent(in) :: o
+        type (rfc_forecasts_state_interface), intent(in) :: o
         logical rv
 
         rv = .true.
 
         print *, "========================================================================"
-        print *, "Checking the values of the level pool properties data structure"
+        print *, "Checking the values of the rfc forecasts levelpool properties data structure"
         print *, " "
 
         print *, "Checking read on lake_area"
-        print *, o%lake_area
-        if ( o%lake_area .ne. 4.0) then
+        print *, o%levelpool_ptr%properties%lake_area
+        if ( o%levelpool_ptr%properties%lake_area .ne. 4.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on weir_elevation"
-        print *, o%weir_elevation
-        if ( o%weir_elevation .ne. 6.0) then
+        print *, o%levelpool_ptr%properties%weir_elevation
+        if ( o%levelpool_ptr%properties%weir_elevation .ne. 6.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on weir_coeffecient"
-        print *, o%weir_coeffecient
-        if ( o%weir_coeffecient .ne. 8.0) then
+        print *, o%levelpool_ptr%properties%weir_coeffecient
+        if ( o%levelpool_ptr%properties%weir_coeffecient .ne. 8.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on weir_length"
-        print *, o%weir_length
-        if ( o%weir_length .ne. 10.0) then
+        print *, o%levelpool_ptr%properties%weir_length
+        if ( o%levelpool_ptr%properties%weir_length .ne. 10.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on orifice_elevation"
-        print *, o%orifice_elevation
-        if ( o%orifice_elevation .ne. 12.0) then
+        print *, o%levelpool_ptr%properties%orifice_elevation
+        if ( o%levelpool_ptr%properties%orifice_elevation .ne. 12.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on orifice_coefficient"
-        print *, o%orifice_coefficient
-        if ( o%orifice_coefficient .ne. 14.0) then
+        print *, o%levelpool_ptr%properties%orifice_coefficient
+        if ( o%levelpool_ptr%properties%orifice_coefficient .ne. 14.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on orifice_area"
-        print *, o%orifice_area
-        if ( o%orifice_area .ne. 16.0) then
+        print *, o%levelpool_ptr%properties%orifice_area
+        if ( o%levelpool_ptr%properties%orifice_area .ne. 16.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on max_depth"
-        print *, o%max_depth
-        if ( o%max_depth .ne. 18.0) then
+        print *, o%levelpool_ptr%properties%max_depth
+        if ( o%levelpool_ptr%properties%max_depth .ne. 18.0) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 
         print *, "Checking read on lake_number"
-        print *, o%lake_number
-        if ( o%lake_number .ne. 20) then
+        print *, o%levelpool_ptr%properties%lake_number
+        if ( o%levelpool_ptr%properties%lake_number .ne. 20) then
             rv = .false.
-            print "Failed"
+            print *, "FAILED"
         end if
         print *, " "
 

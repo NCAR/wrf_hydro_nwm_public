@@ -13,6 +13,7 @@ module module_rfc_forecasts_properties
     ! Extend/derive rfc forecasts properties from the abstract base
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
+        integer :: lake_number                  ! lake number
 
     contains
 
@@ -24,9 +25,12 @@ module module_rfc_forecasts_properties
 contains
 
     ! RFC Forecasts Properties Constructor
-    subroutine rfc_forecasts_properties_init(this)
+    subroutine rfc_forecasts_properties_init(this, lake_number)
         implicit none
         class(rfc_forecasts_properties_interface), intent(inout) :: this ! the type object being initialized
+        integer, intent(in)          :: lake_number                  ! lake number
+
+        this%lake_number = lake_number
 
     end subroutine rfc_forecasts_properties_init
 
