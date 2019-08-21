@@ -723,7 +723,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
              rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
-             nlst_rt(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
+             nlst_rt(did)%reservoir_not_levelpool, rt_domain(did)%reservoir_type, &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -765,7 +765,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst_rt(did)%reservoir_persistence,                      &
+           nlst_rt(did)%reservoir_not_levelpool,                      &
            rt_domain(did)%reservoir_type,                                   &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
