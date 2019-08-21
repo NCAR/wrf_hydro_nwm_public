@@ -137,7 +137,6 @@ contains
             data_state(8) = test_rfc_forecasts_levelpool_output(rfc_forecasts_reservoir_data%state%levelpool_ptr%output)
         end if
 
-
         !if ( all(ptr_state) .and. all(data_state) ) then
         if ( all(ptr_state) ) then
 
@@ -328,7 +327,6 @@ contains
     function test_rfc_forecasts_levelpool_output(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
-
         rv = .true.
 
         print *, "========================================================================"

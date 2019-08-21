@@ -241,13 +241,12 @@ program reservoir_unit_tests
     function test_rfc_forecasts_object() result(rv)
         implicit none
 
-        logical rv, rv1                        ! test result
+        logical rv                        ! test result
         logical :: call_status
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         real :: water_elevation = 2.
 
-        rv1 = .false.
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
@@ -290,5 +289,6 @@ program reservoir_unit_tests
         end if
 
     end function test_rfc_forecasts_object
+
 
 end program
