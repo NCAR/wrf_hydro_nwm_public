@@ -47,6 +47,7 @@
           integer            :: reservoir_observation_lookback_hours
           integer            :: reservoir_observation_update_time_interval_seconds
           logical            :: reservoir_rfc_forecasts
+          logical            :: reservoir_not_levelpool
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""
