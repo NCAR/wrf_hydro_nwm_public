@@ -288,6 +288,7 @@ MODULE MODULE_SF_NOAHMPLSM
      REAL :: FSATMX       !maximum surface saturated fraction (global mean)
      REAL :: Z0SNO        !snow surface roughness length (m) (0.002)
      REAL :: SSI          !liquid water holding capacity for snowpack (m3/m3)
+     REAL :: SNOW_RET_FAC !snowpack water release timescale factor (1/s)
      REAL :: SWEMX        !new snow mass to fully cover old snow (mm)
      REAL :: TAU0         !tau0 from Yang97 eqn. 10a
      REAL :: GRAIN_GROWTH !growth from vapor diffusion Yang97 eqn. 10b
@@ -6796,6 +6797,9 @@ ENDIF   ! CROPTYPE == 0
      SNLIQ(J) = SNLIQ(J) + QIN
      VOL_LIQ(J) = SNLIQ(J)/(DZSNSO(J)*DENH2O)
      QOUT = MAX(0.,(VOL_LIQ(J)-parameters%SSI*EPORE(J))*DZSNSO(J))
+     IF(J == 0) THEN
+       QOUT = MAX((VOL_LIQ(J)- EPORE(J))*DZSNSO(J) , parameters%SNOW_RET_FAC*DT*QOUT)
+     END IF
      QOUT = QOUT*DENH2O
      SNLIQ(J) = SNLIQ(J) - QOUT
      QIN = QOUT
@@ -9140,6 +9144,7 @@ MODULE NOAHMP_TABLES
     REAL :: FSATMX_TABLE   !maximum surface saturated fraction (global mean)
     REAL :: Z0SNO_TABLE    !snow surface roughness length (m) (0.002)
     REAL :: SSI_TABLE      !liquid water holding capacity for snowpack (m3/m3) (0.03)
+    REAL :: SNOW_RET_FAC_TABLE !snowpack water release timescale factor (1/s)
     REAL :: SWEMX_TABLE    !new snow mass to fully cover old snow (mm)
     REAL :: TAU0_TABLE          !tau0 from Yang97 eqn. 10a
     REAL :: GRAIN_GROWTH_TABLE  !growth from vapor diffusion Yang97 eqn. 10b
@@ -9653,12 +9658,12 @@ CONTAINS
     integer :: ierr
     logical :: file_named 
 
-    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI, &
+    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
 	    RSURF_SNOW,RSURF_EXP
 
-    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI, &
+    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
 	    RSURF_SNOW,RSURF_EXP
@@ -9671,6 +9676,7 @@ CONTAINS
     FSATMX_TABLE     = -1.E36
      Z0SNO_TABLE     = -1.E36
        SSI_TABLE     = -1.E36
+SNOW_RET_FAC_TABLE   = -1.E36
      SWEMX_TABLE     = -1.E36
         TAU0_TABLE   = -1.E36
 GRAIN_GROWTH_TABLE   = -1.E36
@@ -9707,6 +9713,7 @@ RSURF_SNOW_TABLE     = -1.E36
     FSATMX_TABLE     = FSATMX
      Z0SNO_TABLE     = Z0SNO
        SSI_TABLE     = SSI
+SNOW_RET_FAC_TABLE   = SNOW_RET_FAC
      SWEMX_TABLE     = SWEMX
         TAU0_TABLE   = TAU0
 GRAIN_GROWTH_TABLE   = GRAIN_GROWTH
