@@ -46,6 +46,7 @@
           character(len=256) :: reservoir_timeslice_path=""
           integer            :: reservoir_observation_lookback_hours
           integer            :: reservoir_observation_update_time_interval_seconds
+          logical            :: reservoir_rfc_forecasts
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""
