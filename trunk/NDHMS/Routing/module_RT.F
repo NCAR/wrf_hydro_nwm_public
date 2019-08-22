@@ -789,10 +789,16 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    do lake_index = 1, NLAKES_total
 
        if (rt_domain(did)%reservoir_type(lake_index) == 1) then
-           allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
+          allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst_rt(did)%reservoir_persistence) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst_rt(did)%reservoir_rfc_forecasts) then
+          allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else
+          allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        end if
 
