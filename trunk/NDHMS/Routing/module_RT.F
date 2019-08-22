@@ -849,7 +849,8 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     rt_domain(did)%ORIFICEA(lake_index),        &
                     rt_domain(did)%LAKEMAXH(lake_index),        &
                     rt_domain(did)%ELEVLAKE(lake_index),        &
-                    rt_domain(did)%LAKEIDM(lake_index)          )
+                    rt_domain(did)%LAKEIDM(lake_index),         &
+                    "Temp_name_for_param_file"                  )
 
            end select
 

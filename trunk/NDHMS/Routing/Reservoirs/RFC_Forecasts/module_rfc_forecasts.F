@@ -1,13 +1,13 @@
 ! This module defines and instantiates objects
-! for a rfc forecasts persistence levelpool type
-! reservoir. The rfc forecasts reservoir type
-! inherits input and output types from the
-! reservoir base module and calls instantiation
-! of these into sub-objects. The rfc forecasts
-! reservoir type also points to types for
-! rfc forecasts properties and state and calls
-! instantiation of these into sub-objects.
-! There is also a subroutine to run rfc forecasts reservoir
+! for a rfc forecasts type reservoir. The rfc
+! forecasts reservoir type inherits input and
+! output types from the reservoir base module
+! and calls instantiation of these into
+! sub-objects. The rfc forecasts reservoir
+! type also points to types for rfc forecasts
+! properties and state and calls instantiation
+! of these into sub-objects. There is also a
+! subroutine to run rfc forecasts reservoir
 ! that is derived from the reservoir base
 ! type interface to run reservoir.
 
@@ -45,7 +45,7 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number)
+        lake_number, rfc_forecasts_parameter_file)
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
@@ -59,6 +59,7 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
+        character(len=*),   intent(in) :: rfc_forecasts_parameter_file
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -88,7 +89,7 @@ contains
                 write(0,*) "Failure to allocate rfc forecasts properties structure"
             else
                 ! initialize rfc forecasts properties
-                call this%properties%init(lake_number)
+                call this%properties%init(lake_number, rfc_forecasts_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 

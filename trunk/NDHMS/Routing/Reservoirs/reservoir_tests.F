@@ -249,12 +249,13 @@ program reservoir_unit_tests
         logical :: call_status
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+
         real :: water_elevation = 2.
 
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3588682)
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3588682, "Testing_Files/rfc_reservoir_parameter_file.nc")
 
         print *, "testing data in rfc_forecasts"
 
