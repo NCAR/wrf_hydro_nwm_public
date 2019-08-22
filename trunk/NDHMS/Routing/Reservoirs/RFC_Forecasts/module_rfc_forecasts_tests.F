@@ -249,19 +249,19 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%lake_number
-        if ( o%lake_number .ne. 20) then
+        if ( o%lake_number .ne. 3588682) then
             rv = .false.
             print *, "FAILED"
         end if
         print *, " "
 
-        !print *, "Checking read on gage_id"
-        !print *, o%gage_id
-        !if ( o%gage_id .ne. 0) then
-        !    rv = .false.
-        !    print *, "FAILED"
-        !end if
-        !print *, " "
+        print *, "Checking read on rfc_reservoir_id"
+        print *, o%rfc_reservoir_id
+        if ( o%gage_id .ne. "SMCT2") then
+            rv = .false.
+            print *, "FAILED"
+        end if
+        print *, " "
 
         !print *, "Checking read on observation_lookback_hours"
         !print *, o%observation_lookback_hours
@@ -440,7 +440,7 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%levelpool_ptr%properties%lake_number
-        if ( o%levelpool_ptr%properties%lake_number .ne. 20) then
+        if ( o%levelpool_ptr%properties%lake_number .ne. 3588682) then
             rv = .false.
             print *, "FAILED"
         end if
