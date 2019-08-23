@@ -7,8 +7,8 @@ contains
     implicit none
     type (levelpool) :: levelpool_data
     logical  :: data_info_result
-    logical, dimension(1) :: ptr_state
-    logical, dimension(1) :: data_state
+    logical, dimension(4) :: ptr_state
+    logical, dimension(4) :: data_state
 
     data_info_result = .false.
 
@@ -99,7 +99,7 @@ contains
 
         print *, "Checking read on inflow"
         print *, o%inflow
-        if ( o%inflow .ne. 0.0) then
+        if ( o%inflow .lt. 0.0 - epsilon(0.0) .or. o%inflow .gt. 0.0 + epsilon(0.0) )then
             rv = .false.
             print *, "FAILED"
         end if
@@ -107,7 +107,7 @@ contains
 
         print *, "Checking read on lateral_inflow"
         print *, o%lateral_inflow
-        if ( o%lateral_inflow .ne. 0.0) then
+        if ( o%lateral_inflow .lt. 0.0 - epsilon(0.0) .or. o%lateral_inflow .gt. 0.0 + epsilon(0.0) )then
             rv = .false.
             print *, "FAILED"
         end if
@@ -115,7 +115,7 @@ contains
 
         print *, "Checking read on previous_timestep_inflow"
         print *, o%previous_timestep_inflow
-        if ( o%previous_timestep_inflow .ne. 0.0) then
+        if ( o%previous_timestep_inflow .lt. 0.0 - epsilon(0.0) .or. o%previous_timestep_inflow .gt. 0.0 + epsilon(0.0) )then
             rv = .false.
             print *, "FAILED"
         end if
@@ -136,7 +136,7 @@ contains
 
         print *, "Checking read on outflow"
         print *, o%outflow
-        if ( o%outflow .ne. 0.0) then
+        if ( o%outflow .lt. 0.0 - epsilon(0.0) .or. o%outflow .gt. 0.0 + epsilon(0.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -157,7 +157,7 @@ contains
 
         print *, "Checking read on water_elevation"
         print *, o%water_elevation
-        if ( o%water_elevation .ne. 2.0) then
+        if ( o%water_elevation .lt. 2.0 - epsilon(2.0) .or. o%water_elevation .gt. 2.0 + epsilon(2.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -179,7 +179,7 @@ contains
 
         print *, "Checking read on lake_area"
         print *, o%lake_area
-        if ( o%lake_area .ne. 4.0) then
+        if ( o%lake_area .lt. 4.0 - epsilon(4.0) .or. o%lake_area .gt. 4.0 + epsilon(4.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -187,7 +187,7 @@ contains
 
         print *, "Checking read on weir_elevation"
         print *, o%weir_elevation
-        if ( o%weir_elevation .ne. 6.0) then
+        if ( o%weir_elevation .lt. 6.0 - epsilon(6.0) .or. o%weir_elevation .gt. 6.0 + epsilon(6.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -195,7 +195,7 @@ contains
 
         print *, "Checking read on weir_coeffecient"
         print *, o%weir_coeffecient
-        if ( o%weir_coeffecient .ne. 8.0) then
+        if ( o%weir_coeffecient .lt. 8.0 - epsilon(8.0) .or. o%weir_coeffecient .gt. 8.0 + epsilon(8.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -203,7 +203,7 @@ contains
 
         print *, "Checking read on weir_length"
         print *, o%weir_length
-        if ( o%weir_length .ne. 10.0) then
+        if ( o%weir_length .lt. 10.0 - epsilon(10.0) .or. o%weir_length .gt. 10.0 + epsilon(10.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -211,7 +211,7 @@ contains
 
         print *, "Checking read on orifice_elevation"
         print *, o%orifice_elevation
-        if ( o%orifice_elevation .ne. 12.0) then
+        if ( o%orifice_elevation .lt. 12.0 - epsilon(12.0) .or. o%orifice_elevation .gt. 12.0 + epsilon(12.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -219,7 +219,7 @@ contains
 
         print *, "Checking read on orifice_coefficient"
         print *, o%orifice_coefficient
-        if ( o%orifice_coefficient .ne. 14.0) then
+        if ( o%orifice_coefficient .lt. 14.0 - epsilon(14.0) .or. o%orifice_coefficient .gt. 14.0 + epsilon(14.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -227,7 +227,7 @@ contains
 
         print *, "Checking read on orifice_area"
         print *, o%orifice_area
-        if ( o%orifice_area .ne. 16.0) then
+        if ( o%orifice_area .lt. 16.0 - epsilon(16.0) .or. o%orifice_area .gt. 16.0 + epsilon(16.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -235,7 +235,7 @@ contains
 
         print *, "Checking read on max_depth"
         print *, o%max_depth
-        if ( o%max_depth .ne. 18.0) then
+        if ( o%max_depth .lt. 18.0 - epsilon(18.0) .or. o%max_depth .gt. 18.0 + epsilon(18.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
