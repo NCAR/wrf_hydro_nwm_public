@@ -323,6 +323,43 @@ contains
     end subroutine read_persistence_netcdf_gage_id
 
 
+    ! Read rfc gage id array from the reservoir parameters NetCDF
+    subroutine read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, netcdf_array_name, rfc_gage_id)
+        integer, intent(in) :: ncid, lake_id_index
+        character(len=*), intent(in) :: netcdf_array_name
+        character(len=5), intent(out) :: rfc_gage_id
+        character(len=5) :: gage_id_string, gage_id_string_trimmed
+        character(len=5), allocatable, dimension(:) :: temp_gage_id_array
+        integer :: var_id, status, number_of_lakes
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+        integer        :: char_index, number_counter
+        character(len=1)   :: temp_char
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        allocate(temp_gage_id_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_gage_id_array)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        gage_id_string = temp_gage_id_array(lake_id_index)
+
+        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
+
+        rfc_gage_id = gage_id_string_trimmed
+
+        if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
+
+    end subroutine read_reservoir_parameters_netcdf_rfc_gage_id
+
+
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF
     subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, &
         netcdf_array_name, var_id, number_of_weights, number_of_lakes)

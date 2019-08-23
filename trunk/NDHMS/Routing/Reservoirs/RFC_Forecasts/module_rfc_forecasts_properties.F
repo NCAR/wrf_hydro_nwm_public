@@ -7,8 +7,7 @@
 
 module module_rfc_forecasts_properties
     use module_reservoir_utilities, only: read_netcdf_lake_id, &
-                                          read_persistence_netcdf_gage_id, &
-                                          read_persistence_netcdf_real_2D_parameters, &
+                                          read_reservoir_parameters_netcdf_rfc_gage_id, &
                                           handle_err
     use module_reservoir, only: reservoir_properties
     use netcdf
@@ -18,7 +17,7 @@ module module_rfc_forecasts_properties
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
         integer           :: lake_number                  ! lake number
-        character(len=12) :: rfc_gage_id
+        character(len=5) :: rfc_gage_id
 
     contains
 
@@ -45,10 +44,9 @@ contains
         if (status /= nf90_noerr) call handle_err(status, "Could not open rfc forecasts parameter file")
 
         ! Read relevant properties from Persistence Parameter NetCDF
-        call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
+        call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", lake_id_index)
 
-        print *, 'lake_id_index'
-        print *, lake_id_index
+        call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", this%rfc_gage_id)
 
     end subroutine rfc_forecasts_properties_init
 
