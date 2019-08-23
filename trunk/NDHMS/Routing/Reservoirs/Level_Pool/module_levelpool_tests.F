@@ -99,14 +99,26 @@ contains
 
         print *, "Checking read on inflow"
         print *, o%inflow
+        if ( o%inflow .ne. 0.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on lateral_inflow"
         print *, o%lateral_inflow
+        if ( o%lateral_inflow .ne. 0.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on previous_timestep_inflow"
         print *, o%previous_timestep_inflow
+        if ( o%previous_timestep_inflow .ne. 0.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
     end function test_input
@@ -124,6 +136,10 @@ contains
 
         print *, "Checking read on outflow"
         print *, o%outflow
+        if ( o%outflow .ne. 0.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
     end function test_output
@@ -141,6 +157,10 @@ contains
 
         print *, "Checking read on water_elevation"
         print *, o%water_elevation
+        if ( o%water_elevation .ne. 2.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
     end function test_levelpool_state
@@ -159,38 +179,74 @@ contains
 
         print *, "Checking read on lake_area"
         print *, o%lake_area
+        if ( o%lake_area .ne. 4.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on weir_elevation"
         print *, o%weir_elevation
+        if ( o%weir_elevation .ne. 6.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on weir_coeffecient"
         print *, o%weir_coeffecient
+        if ( o%weir_coeffecient .ne. 8.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on weir_length"
         print *, o%weir_length
+        if ( o%weir_length .ne. 10.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on orifice_elevation"
         print *, o%orifice_elevation
+        if ( o%orifice_elevation .ne. 12.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on orifice_coefficient"
         print *, o%orifice_coefficient
+        if ( o%orifice_coefficient .ne. 14.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on orifice_area"
         print *, o%orifice_area
+        if ( o%orifice_area .ne. 16.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on max_depth"
         print *, o%max_depth
+        if ( o%max_depth .ne. 18.0) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
         print *, "Checking read on lake_number"
         print *, o%lake_number
+        if ( o%lake_number .ne. 20) then
+            rv = .false.
+            print *, "FAILED"
+        end if
         print *, " "
 
     end function test_levelpool_properties
