@@ -15,7 +15,7 @@
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
             "gw_restart": 1,
-            "gwbaseswcrt": 4,
+            "gwbaseswcrt": 1,
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
