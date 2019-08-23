@@ -11,12 +11,14 @@ module module_rfc_forecasts_properties
                                           read_persistence_netcdf_real_2D_parameters, &
                                           handle_err
     use module_reservoir, only: reservoir_properties
+    use netcdf
     implicit none
 
     ! Extend/derive rfc forecasts properties from the abstract base
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
-        integer :: lake_number                  ! lake number
+        integer           :: lake_number                  ! lake number
+        character(len=12) :: rfc_gage_id
 
     contains
 
@@ -44,6 +46,9 @@ contains
 
         ! Read relevant properties from Persistence Parameter NetCDF
         call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
+
+        print *, 'lake_id_index'
+        print *, lake_id_index
 
     end subroutine rfc_forecasts_properties_init
 

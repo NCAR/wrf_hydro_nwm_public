@@ -255,9 +255,9 @@ contains
         end if
         print *, " "
 
-        print *, "Checking read on rfc_reservoir_id"
-        print *, o%rfc_reservoir_id
-        if ( o%gage_id .ne. "SMCT2") then
+        print *, "Checking read on rfc_gage_id"
+        print *, o%rfc_gage_id
+        if ( o%rfc_gage_id .ne. "SMCT2") then
             rv = .false.
             print *, "FAILED"
         end if
