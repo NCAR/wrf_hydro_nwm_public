@@ -174,9 +174,9 @@ END SUBROUTINE GET8DIR
 
 
 SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
-                   maxneighI, maxneighJ, maxneighSlp)
+                   maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    implicit none
-   integer, intent(in)   :: I, J ! i, j indices for cell of interest
+   integer, intent(in)    :: I, J ! i, j indices for cell of interest
    integer, intent(in)    :: XX, YY ! rt domain dimensions
    real, intent(in)       :: wattbl(XX, YY) ! water table depth domain array (m)
    real, intent(in)       :: terrslpNeighbors(XX, YY, 8)
@@ -184,6 +184,8 @@ SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
    real, intent(in)       :: distNeighbors(9)
                              ! lateral distance array for all 8 neighbors of I,J cell (m)
    integer, intent(inout) :: maxneighI, maxneighJ ! i, j for max terrain+head slope neighbor
+   integer, intent(inout) :: maxneighIndx
+                             ! neighbor cell direction index for max terrain+head slope neighbor
    real, intent(inout)    :: maxneighSlp ! terrain+head slope for max slope neighbor (m/m)
 
    ! Local variables
@@ -199,42 +201,52 @@ SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
 
    ! Loop through all neighbors to update max elev+head slope neighbor
    do neighIndx = 1, 8
-      call GETSUB8DIR(I, J, XX, YY, neighI(neighIndx), neighJ(neighIndx), neighIndx, &
-                      wattbl, terrslpNeighbors(:,:,neighIndx), distNeighbors(neighIndx), &
-                      maxneighI, maxneighJ, maxneighSlp)
+      call GETSUB8DIR(I, J, wattbl(I, J), &
+                      neighI(neighIndx), neighJ(neighIndx), neighIndx, &
+                      wattbl(neighI(neighIndx), neighJ(neighIndx)), &
+                      terrslpNeighbors(I,J,neighIndx), distNeighbors(neighIndx), &
+                      maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    enddo
    RETURN
 END SUBROUTINE GETSUB8
 
-SUBROUTINE GETSUB8DIR(I, J, XX, YY, neighI, neighJ, neighIndx, &
-                      wattbl, terrslp, neighDist, &
-                      maxneighI, maxneighJ, maxneighSlp)
+SUBROUTINE GETSUB8DIR(I, J, selfWattbl, &
+                      neighI, neighJ, neighIndx, neighWattbl, &
+                      neighTerrslp, neighDist, &
+                      maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    implicit none
    integer, intent(in)    :: I, J ! i, j indices for cell of interest
-   integer, intent(in)    :: XX, YY ! rt domain dimensions
+   real, intent(in)       :: selfWattbl ! water table depth for cell of interest (m)
    integer, intent(in)    :: neighI, neighJ ! neighbor cell i, j indices
    integer, intent(in)    :: neighIndx ! neighbor cell direction index (1-8)
-   real, intent(in)       :: wattbl(XX, YY) ! water table depth (m)
-   real, intent(in)       :: terrslp(XX, YY)
+   real, intent(in)       :: neighWattbl ! water table depth for specified neighbor index (m)
+   real, intent(in)       :: neighTerrslp
                              ! terrain slope for specified neighbor index (m/m)
    real, intent(in)       :: neighDist
                              ! lateral distance for specified neighbor index (m)
    integer, intent(inout) :: maxneighI, maxneighJ ! i, j for max terrain+head slope neighbor
+   integer, intent(inout) :: maxneighIndx
+                             ! neighbor cell direction index for max terrain+head slope neighbor
    real, intent(inout)    :: maxneighSlp
                              ! terrain+head slope for max terrain+head slope neighbor (m/m)
 
    ! Local variables
    real                   :: dzdx ! subsurface head slope (m/m)
-   real                   :: beta ! total elevation+head slope (m/m)
+   real                   :: beta ! total terrain+head slope (m/m)
 
    ! Calculate total head slope
-   dzdx = ( wattbl(I,J) -  wattbl(maxneighI,maxneighJ) ) / neighDist !!THIS IS WRONG - will be fixed next bugfix
-   beta = terrslp(I,J) + dzdx !!THIS IS WRONG - will be fixed next bugfix
+   ! NOTE: wattbl is depth of water table from surface (e.g., 0m if saturated column,
+   ! 2m if no water table present). So total head slope should be:
+   !    beta = ( (elev - wattbl) - (elev_neigh - wattbl_neigh) ) / distance
+   !         = neighTerrslp - dzdx
+   dzdx = ( selfWattbl - neighWattbl ) / neighDist
+   beta = neighTerrslp - dzdx
    ! Check if this is max and update tracking variables
    if ( maxneighSlp < beta ) then
       maxneighI = neighI
       maxneighJ = neighJ
       maxneighSlp = beta
+      maxneighIndx = neighIndx
    end if
 END SUBROUTINE GETSUB8DIR
 
