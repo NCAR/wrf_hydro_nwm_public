@@ -43,6 +43,11 @@ override ESMF_F90COMPILECPPFLAGS += -DDEBUG
 override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
 endif
 
+ifdef DBGBUILD
+ESMF_F90COMPILEOPTS += -g -traceback
+ESMF_CXXCOMPILEOPTS += -g -traceback
+endif
+
 # ###########################
 # Determine Installation Path
 # ###########################

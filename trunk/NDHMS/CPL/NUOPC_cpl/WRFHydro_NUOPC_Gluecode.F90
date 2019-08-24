@@ -94,6 +94,7 @@ module wrfhydro_nuopc_gluecode
   type WRFHYDRO_Field
     character(len=64)   :: stdname        = ' '
     character(len=10)   :: units          = ' '
+    character(len=16)   :: stateName      = ' '
     character(len=64)   :: transferOffer  = 'will provide'
     logical             :: adImport       = .FALSE.
     logical             :: realizedImport = .FALSE.
@@ -106,142 +107,142 @@ module wrfhydro_nuopc_gluecode
   type(WRFHYDRO_Field),dimension(46) :: WRFHYDRO_FieldList = (/ &
     WRFHYDRO_Field( & !(01)
       stdname='aerodynamic_roughness_length', units='m', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='z0',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(02)
       stdname='canopy_moisture_storage', units='kg m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='cmc',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(03)
       stdname='carbon_dioxide', units='mol?', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='co2',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(04)
       stdname='cosine_zenith_angle', units='?', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='cosz',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(05)
       stdname='exchange_coefficient_heat', units='?', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='ch',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(06)
       stdname='exchange_coefficient_heat_height2m', units='?', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='ch2',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(07)
       stdname='exchange_coefficient_moisture_height2m', units='?', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='ch2',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(08)
       stdname='ice_mask', units='1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='xice',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(09)
       stdname='inst_down_lw_flx', units='W m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='lwdown',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(10)
       stdname='inst_down_sw_flx', units='W m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='swdown',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(11)
       stdname='inst_height_lowest', units='m', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='hgt',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(12)
       stdname='inst_merid_wind_height_lowest', units='m s-1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='vwind',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(13)
       stdname='inst_pres_height_lowest', units='Pa', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='psurf',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(14)
       stdname='inst_pres_height_surface', units='Pa', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='psurf',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(15)
       stdname='inst_spec_humid_height_lowest', units='kg kg-1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='q2',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(16)
       stdname='inst_temp_height_lowest', units='K', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='sfctmp',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(17)
       stdname='inst_temp_height_surface', units='K', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='sfctmp',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(18)
       stdname='inst_wind_speed_height_lowest', units='m s-1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='sfcspd',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(19)
       stdname='inst_zonal_wind_height_lowest', units='m s-1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='uwind',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(20)
       stdname='liquid_fraction_of_soil_moisture_layer_1', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='sh2ox1',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(21)
       stdname='liquid_fraction_of_soil_moisture_layer_2', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='sh2ox2',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(22)
       stdname='liquid_fraction_of_soil_moisture_layer_3', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='sh2ox3',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(23)
       stdname='liquid_fraction_of_soil_moisture_layer_4', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='sh2ox4',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(24)
       stdname='mean_cprec_rate', units='kg s-1 m-2', &
-      adImport=.FALSE.,adExport=.TRUE.), &
+      stateName='prcpconv',adImport=.FALSE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(25)
       stdname='mean_down_lw_flx', units='W m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='lwdown',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(26)
       stdname='mean_down_sw_flx', units='W m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='swdown',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(27)
       stdname='mean_fprec_rate', units='kg s-1 m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='prcp_frozen',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(28)
       stdname='mean_prec_rate', units='kg s-1 m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='prcprain',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(29)
       stdname='mean_surface_albedo', units='lm lm-1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='albedo',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(30)
       stdname='soil_moisture_fraction_layer_1', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='smc1',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(31)
       stdname='soil_moisture_fraction_layer_2', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='smc2',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(32)
       stdname='soil_moisture_fraction_layer_3', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='smc3',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(33)
       stdname='soil_moisture_fraction_layer_4', units='m3 m-3', &
-      adImport=.TRUE.,adExport=.TRUE.), &
+      stateName='smc4',adImport=.TRUE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(34)
       stdname='soil_porosity', units='1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='smcmax1',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(35)
       stdname='subsurface_runoff_amount', units='kg m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='soldrain',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(36)
       stdname='surface_runoff_amount', units='kg m-2', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='infxsrt',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(37)
       stdname='surface_snow_thickness', units='m', &
-      adImport=.FALSE.,adExport=.TRUE.), & 
+      stateName='snowdepth',adImport=.FALSE.,adExport=.TRUE.), & 
     WRFHYDRO_Field( & !(38)
       stdname='soil_temperature_layer_1', units='K', &
-      adImport=.TRUE.,adExport=.FALSE.), &
+      stateName='stc1',adImport=.TRUE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(39)
       stdname='soil_temperature_layer_2', units='K', &
-      adImport=.TRUE.,adExport=.FALSE.), &
+      stateName='stc2',adImport=.TRUE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(40)
       stdname='soil_temperature_layer_3', units='K', &
-      adImport=.TRUE.,adExport=.FALSE.), &
+      stateName='stc3',adImport=.TRUE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(41)
       stdname='soil_temperature_layer_4', units='K', &
-      adImport=.TRUE.,adExport=.FALSE.), &
+      stateName='stc4',adImport=.TRUE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(42)
       stdname='vegetation_type', units='1', &
-      adImport=.FALSE.,adExport=.FALSE.), &
+      stateName='vegtyp',adImport=.FALSE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(43)
       stdname='volume_fraction_of_total_water_in_soil', units='m3 m-3', &
-      adImport=.FALSE.,adExport=.TRUE.), & 
+      stateName='snliqv',adImport=.FALSE.,adExport=.TRUE.), & 
     WRFHYDRO_Field( & !(44)
       stdname='surface_water_depth', units='mm', &
-      adImport=.FALSE.,adExport=.TRUE.), &
+      stateName='sfchead',adImport=.FALSE.,adExport=.TRUE.), &
     WRFHYDRO_Field( & !(45)
       stdname='time_step_infiltration_excess', units='mm', &
-      adImport=.TRUE.,adExport=.FALSE.), &
+      stateName='infxsrt',adImport=.TRUE.,adExport=.FALSE.), &
     WRFHYDRO_Field( & !(46)
       stdname='soil_column_drainage', units='mm', &
-      adImport=.TRUE.,adExport=.FALSE.)/)
+      stateName='soldrain',adImport=.TRUE.,adExport=.FALSE.)/)
 
   ! PARAMETERS
   character(len=ESMF_MAXSTR) :: indir = 'WRFHYDRO_FORCING'
@@ -686,11 +687,11 @@ contains
 #undef METHOD
 #define METHOD "WRFHYDRO_FieldCreate"
 
-  function WRFHYDRO_FieldCreate(stdName,grid,did,rc)
+  function WRFHYDRO_FieldCreate(stateName,grid,did,rc)
     ! RETURN VALUE
     type(ESMF_Field) :: WRFHYDRO_FieldCreate
     ! ARGUMENTS
-    character(*), intent(in)                :: stdName
+    character(*), intent(in)                :: stateName
     type(ESMF_Grid), intent(in)             :: grid
     integer, intent(in)                     :: did
     integer,          intent(out)           :: rc
@@ -702,105 +703,95 @@ contains
 
     rc = ESMF_SUCCESS
 
-    SELECT CASE (trim(stdName))
-      CASE ('liquid_fraction_of_soil_moisture_layer_1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+    SELECT CASE (trim(stateName))
+      CASE ('sh2ox1')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%sh2ox(:,:,1), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('liquid_fraction_of_soil_moisture_layer_2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('sh2ox2')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%sh2ox(:,:,2), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('liquid_fraction_of_soil_moisture_layer_3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('sh2ox3')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%sh2ox(:,:,3), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('liquid_fraction_of_soil_moisture_layer_4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('sh2ox4')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%sh2ox(:,:,4), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_moisture_fraction_layer_1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('smc1')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%smc(:,:,1), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_moisture_fraction_layer_2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('smc2')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%smc(:,:,2), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_moisture_fraction_layer_3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('smc3')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%smc(:,:,3), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_moisture_fraction_layer_4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('smc4')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%smc(:,:,4), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_porosity')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('smcmax1')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%smcmax1, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('subsurface_runoff_amount')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%soldrain, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-      CASE ('surface_runoff_amount')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%infxsrt, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-      CASE ('soil_temperature_layer_1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('stc1')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%stc(:,:,1), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_temperature_layer_2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('stc2')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%stc(:,:,2), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_temperature_layer_3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('stc3')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%stc(:,:,3), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('soil_temperature_layer_4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('stc4')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%stc(:,:,4), &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('vegetation_type')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('vegtyp')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%vegtyp, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('surface_water_depth')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('sfchead')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%overland%control%surface_water_head_lsm, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('time_step_infiltration_excess')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('infxsrt')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%infxsrt, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-      CASE ('soil_column_drainage')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
+      CASE ('soldrain')
+        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
           farray=rt_domain(did)%soldrain, &
           indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
       CASE DEFAULT
         call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-          msg=METHOD//": Field hookup missing: "//trim(stdName), &
+          msg=METHOD//": Field hookup missing: "//trim(stateName), &
           file=FILENAME,rcToReturn=rc)
         return  ! bail out
     END SELECT
@@ -1274,13 +1265,13 @@ contains
         forcingCount = forcingCount + 1
         ! Check itemType to see if field exists in state
         call ESMF_StateGet(importState, &
-          itemName=trim(WRFHYDRO_FieldList(fieldIndex)%stdname), &
+          itemName=trim(WRFHYDRO_FieldList(fieldIndex)%stateName), &
           itemType=itemType, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
 
         if (itemType == ESMF_STATEITEM_FIELD) then
           if (NUOPC_IsConnected(importState, &
-          fieldName=trim(WRFHYDRO_FieldList(fieldIndex)%stdname))) then
+          fieldName=trim(WRFHYDRO_FieldList(fieldIndex)%stateName))) then
             connectedCount = connectedCount + 1
           endif
         endif
