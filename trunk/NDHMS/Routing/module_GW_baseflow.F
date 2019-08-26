@@ -91,8 +91,8 @@ contains
    real*8,  dimension(LNLINKSL) :: LQLateral
 
 
-   real, parameter :: m2mm     = 1000.
-   real, parameter :: sqkm2sqm = 1000000.
+   real, parameter :: m_to_mm     = 1000.
+   real, parameter :: sqkm_to_sqm = 1000000.
 
 
 !!!Initialize variables...
@@ -151,7 +151,7 @@ contains
                    ii =  LUDRSL(k)%cell_i(m)
                    jj =  LUDRSL(k)%cell_j(m)
                    if(ii .gt. 0 .and. jj .gt. 0) then
-                           LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/m2mm &
+                           LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/m_to_mm &
                                *cellArea(ii,jj)
                    endif
                end do
@@ -199,13 +199,13 @@ contains
             !!DJG...convert z_mx to millimeters...for v2 and later...
             !yw  added by Wei Yu...If block is to accomodate old parameter file...
             !                    if(z_mx(bas) .gt. 5) then
-            !                         z_mx(bas) = z_mx(bas) / m2mm    ! change from mm to meters
+            !                         z_mx(bas) = z_mx(bas) / m_to_mm    ! change from mm to meters
             !                    endif
  
-               if (z_gwsubbas(bas).gt.z_mx(bas)/m2mm) then  !If/then for bucket overflow case...
+               if (z_gwsubbas(bas).gt.z_mx(bas)/m_to_mm) then  !If/then for bucket overflow case...
 
-                    z_gw_spill = z_gwsubbas(bas) - z_mx(bas)/m2mm    ! meters
-                    z_gwsubbas(bas) = z_mx(bas)/m2mm    ! meters
+                    z_gw_spill = z_gwsubbas(bas) - z_mx(bas)/m_to_mm    ! meters
+                    z_gwsubbas(bas) = z_mx(bas)/m_to_mm    ! meters
  
                else
                       z_gw_spill = 0.
@@ -220,10 +220,10 @@ contains
 ! Assume exponential relation between z/zmax and Q...
 !DJG force asymptote to zero to prevent 'overdraft'... 
                if(GWBASESWCRT.eq.1) then ! Exponential model
-                   qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/m2mm))-1) ! q_out (m^3/s)
+                   qout_gwsubbas(bas) = C(bas)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/m_to_mm))-1) ! q_out (m^3/s)
 
                elseif(GWBASESWCRT.eq.4) then ! Updated exponential model normalized by area
-                   qout_gwsubbas(bas) = C(bas)*(basns_area(bas)/sqkm2sqm)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/m2mm))-1) ! q_out (m^3/s)
+                   qout_gwsubbas(bas) = C(bas)*(basns_area(bas)/sqkm_to_sqm)*(EXP(ex(bas)*z_gwsubbas(bas)/(z_mx(bas)/m_to_mm))-1) ! q_out (m^3/s)
        
                end if
 
