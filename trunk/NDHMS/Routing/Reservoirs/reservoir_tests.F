@@ -168,13 +168,15 @@ program reservoir_unit_tests
         implicit none
 
         logical rv                        ! test result
-        logical :: call_status
+        logical :: call_status, call_status2
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+        type (time_series_data_type) :: time_series_data
 
         real :: water_elevation = 2.
 
         call_status = .false.
+        call_status2 = .false.
 
         print *, "calling init for rfc_forecasts"
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc")
@@ -183,7 +185,9 @@ program reservoir_unit_tests
 
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
-        if (call_status) then
+        call_status2 = time_series_data_info(time_series_data)
+
+        if (call_status .and. call_status2) then
             rv = .true.
         end if
 

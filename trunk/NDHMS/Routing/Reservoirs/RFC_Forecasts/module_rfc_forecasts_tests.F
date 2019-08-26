@@ -448,4 +448,46 @@ contains
 
     end function test_rfc_forecasts_levelpool_properties
 
+    ! Test time series data object
+    function time_series_data_info(time_series_data) result(data_info_result)
+        implicit none
+        type (time_series_data_type) :: time_series_data
+        logical :: data_info_result
+        logical, dimension(1) :: ptr_state
+
+        data_info_result = .false.
+
+        ! Check to see if the time_series_data structure exists
+        print *, "Checking pointer association on data for time series data object"
+        if ( associated(time_series_data) ) then
+            print *, "PASSED"
+            ptr_state(1) = .true.
+       else
+            print *, "FAILED"
+            ptr_state(1) = .false.
+        end if
+        print *, " "
+
+        if ( all(ptr_state) ) then
+            data_info_result = .true.
+            print *, "========================================================================"
+            print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
+            print *, "========================================================================"
+
+        else
+            data_info_result = .false.
+            print *, "========================================================================"
+            print *, "Not All RFC Forecast Reservoir Time Series Object Tests Passed"
+            print *, "========================================================================"
+
+        end if
+
+        flush(6)
+
+
+    end function time_series_data_info
+
+
+
+
 end module
