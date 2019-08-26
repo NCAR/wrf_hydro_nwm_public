@@ -1,5 +1,6 @@
 module module_rfc_forecasts_tests
     use module_rfc_forecasts
+    use module_reservoir_read_rfc_time_series_data
 
 contains
 
@@ -453,22 +454,22 @@ contains
         implicit none
         type (time_series_data_type) :: time_series_data
         logical :: data_info_result
-        logical, dimension(1) :: ptr_state
+        logical, dimension(1) :: data_state
 
         data_info_result = .false.
 
         ! Check to see if the time_series_data structure exists
-        print *, "Checking pointer association on data for time series data object"
-        if ( associated(time_series_data) ) then
+        print *, "Checking initialization of time series data object"
+        if ( time_series_data%initialized ) then
             print *, "PASSED"
-            ptr_state(1) = .true.
+            data_state(1) = .true.
        else
             print *, "FAILED"
-            ptr_state(1) = .false.
+            data_state(1) = .false.
         end if
         print *, " "
 
-        if ( all(ptr_state) ) then
+        if ( all(data_state) ) then
             data_info_result = .true.
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
@@ -484,10 +485,7 @@ contains
 
         flush(6)
 
-
     end function time_series_data_info
-
-
 
 
 end module

@@ -17,6 +17,7 @@ module module_rfc_forecasts
     use module_rfc_forecasts_state, only: rfc_forecasts_state_interface
     use module_levelpool, only: levelpool
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
+    use module_reservoir_read_rfc_time_series_data, only: time_series_data
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base
