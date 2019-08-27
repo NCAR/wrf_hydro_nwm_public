@@ -165,8 +165,7 @@ module list
 #-------------------------------------------------------
 # Python Env
 deactivate > /dev/null 2>&1
-source /glade/work/jamesmcc/python_envs/wrf_hydro_nwm_test/bin/activate || exit 9
-
+source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate || exit 9
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
 cd $candidate_dir
@@ -201,7 +200,7 @@ printf "\e[7;49;94mStarting tests in $output_dir\e[0m\n"
 echo
 
 run_test_path=$(dirname $script_dir)
-python $run_test_path/run_tests.py \
+python3 $run_test_path/run_tests.py \
        --config $config \
        --compiler $compiler \
        --exe_cmd="'$exe_cmd'" \
