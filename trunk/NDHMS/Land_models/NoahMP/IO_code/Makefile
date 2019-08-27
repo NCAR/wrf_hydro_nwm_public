@@ -26,7 +26,7 @@ module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/
 main_hrldas_driver.o: main_hrldas_driver.F
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
-	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP $(NETCDFMOD) $(*).F
+	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $(*).F
 #	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
 #	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""

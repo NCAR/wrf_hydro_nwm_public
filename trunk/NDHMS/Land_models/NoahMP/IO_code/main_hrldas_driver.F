@@ -28,19 +28,24 @@ program Noah_hrldas_driver
 ! this is used to drive NoahMP
    use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
-
+! NEW MODULE WITH DT INCLUDING STATE, PARAMETER,FORCING AND GEOMETRY. Different modules
+   use state
+   use parameters
+   use forcing
+   use geometry
 
    implicit none
    integer :: ITIME, NTIME
 
-
-   call land_driver_ini(NTIME)
+   ! DTs must be passed to the ini.
+   call land_driver_ini(NTIME) 
 #ifdef WRF_HYDRO   
    do ITIME = 1, NTIME
 #else
    do ITIME = 0, NTIME
 #endif
-       call land_driver_exe(ITIME)
+   ! DTs must be passed to the exe.
+      call land_driver_exe(ITIME)
    end do
 #ifdef WRF_HYDRO
    call hydro_finish() 
