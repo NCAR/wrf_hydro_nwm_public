@@ -115,6 +115,11 @@ contains
         weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
+        ! Call to initialize time series data object. This object is a singleton,
+        ! so if another reservoir has already initialized the object, it will return
+        ! immediately.
+        call time_series_data%init()
+
     end subroutine rfc_forecasts_init
 
     ! RFC Forecasts Destructor

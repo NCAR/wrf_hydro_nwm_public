@@ -28,3 +28,6 @@ modules or areas of the system.
 
 * **module_rfc_forecasts_tests.F** holds unit tests that test for all components of an rfc forecasts reservoir
 are properly initialized.
+
+* **module_reservoir_read_rfc_time_series_data.F**, within the **Reservoirs** directory, reads RFC time series forecast files for an
+array of time series forecast values.

@@ -14,6 +14,7 @@ program reservoir_unit_tests
     logical :: rv1 = .false.
     logical :: rv3 = .false.
     logical :: rv4 = .false.
+    logical :: rv5 = .false.
 
     rv1 = test_levelpool()
 
@@ -21,7 +22,9 @@ program reservoir_unit_tests
 
     rv4 = test_rfc_forecasts_object()
 
-    if (rv1 .and. rv3 .and. rv4) then
+    rv5 = test_rfc_forecasts_time_series_object()
+
+    if (rv1 .and. rv3 .and. rv4 .and. rv5) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -168,7 +171,7 @@ program reservoir_unit_tests
         implicit none
 
         logical rv                        ! test result
-        logical :: call_status, call_status2
+        logical :: call_status
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         type (time_series_data_type) :: time_series_data
@@ -176,7 +179,6 @@ program reservoir_unit_tests
         real :: water_elevation = 2.
 
         call_status = .false.
-        call_status2 = .false.
 
         print *, "calling init for rfc_forecasts"
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc")
@@ -185,13 +187,30 @@ program reservoir_unit_tests
 
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
-        call_status2 = time_series_data_info(time_series_data)
-
-        if (call_status .and. call_status2) then
+        if (call_status) then
             rv = .true.
         end if
 
     end function test_rfc_forecasts_object
 
+
+    function test_rfc_forecasts_time_series_object() result(rv)
+        implicit none
+
+        logical rv                        ! test result
+        logical :: call_status
+        type (time_series_data_type) :: time_series_data, time_series_data_second
+
+        call_status = .false.
+
+        call time_series_data%init()
+
+        call_status = time_series_data_info(time_series_data)
+
+        if (call_status) then
+            rv = .true.
+        end if
+
+    end function test_rfc_forecasts_time_series_object
 
 end program
