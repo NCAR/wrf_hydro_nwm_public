@@ -7,7 +7,8 @@ module module_reservoir_read_rfc_time_series_data
     ! by every other reservoir on that processor that needs it.
     type :: time_series_data_type
 
-        logical :: initialized = .FALSE.
+        real, allocatable, dimension(:) :: forecast_discharges
+        logical                         :: initialized = .FALSE.
 
     contains
 
