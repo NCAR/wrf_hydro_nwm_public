@@ -141,9 +141,9 @@ exe_cmd=`eval "echo $exe_cmd"`
 # Modules.
 # Default intel and gnu compiler versions if the generics are passed
 if [ "$compiler" == ifort ]; then
-    compiler_module=intel/17.0.1
+    compiler_module=intel/18.0.5
 elif [ "$compiler" == gfort ]; then
-    compiler_module=gnu/7.0.1
+    compiler_module=gnu/8.3.0
 else
     compiler_module=$compiler
     if [[ "$compiler" == *intel* ]]; then
@@ -159,13 +159,13 @@ echo
 printf "\e[7;49;94mModule information\e[0m\n"
 module purge
 # Is this strict enough in the sense that things might be changing?
-module load  $compiler_module  $mpi  ncarcompilers  netcdf  ncarenv || exit 4
+module load  $compiler_module  $mpi  ncarcompilers  netcdf  ncarenv nccmp || exit 4
 module list
 
 #-------------------------------------------------------
 # Python Env
 deactivate > /dev/null 2>&1
-source /glade/u/home/katelynw/python/envs/testing/bin/activate || exit 9
+source /glade/work/jamesmcc/python_envs/wrf_hydro_nwm_test/bin/activate || exit 9
 
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
