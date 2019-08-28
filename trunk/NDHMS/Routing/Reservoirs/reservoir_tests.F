@@ -175,13 +175,17 @@ program reservoir_unit_tests
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         type (time_series_data_type) :: time_series_data
+        character*256 :: cwd_full
 
         real :: water_elevation = 2.
+
+        cwd_full = "./Testing_Files/"
 
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc")
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, &
+        "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-05-18_22:00:00", cwd_full, 24)
 
         print *, "testing data in rfc_forecasts"
 
@@ -200,10 +204,13 @@ program reservoir_unit_tests
         logical rv                        ! test result
         logical :: call_status
         type (time_series_data_type) :: time_series_data, time_series_data_second
+        character*256 :: cwd_full
 
         call_status = .false.
 
-        call time_series_data%init()
+        cwd_full = "./Testing_Files/"
+
+        call time_series_data%init("2019-05-18_22:00:00", cwd_full, 24, "DIEA4")
 
         call_status = time_series_data_info(time_series_data)
 

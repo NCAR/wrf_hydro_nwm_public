@@ -46,7 +46,8 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, rfc_forecasts_parameter_file)
+        lake_number, rfc_forecasts_parameter_file, start_date, &
+        time_series_path, forecast_lookback_hours)
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
@@ -61,6 +62,9 @@ contains
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
         character(len=*),   intent(in) :: rfc_forecasts_parameter_file
+        character(len=19),  intent(in) :: start_date
+        character(len=256), intent(in) :: time_series_path
+        integer,            intent(in) :: forecast_lookback_hours
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -118,7 +122,7 @@ contains
         ! Call to initialize time series data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
-        call time_series_data%init()
+        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id)
 
     end subroutine rfc_forecasts_init
 

@@ -850,7 +850,11 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     rt_domain(did)%LAKEMAXH(lake_index),        &
                     rt_domain(did)%ELEVLAKE(lake_index),        &
                     rt_domain(did)%LAKEIDM(lake_index),         &
-                    "Temp_name_for_param_file"                  )
+                    "Temp_name_for_param_file",                 &
+                    nlst_rt(did)%startdate(1:19),               &
+                    "Temp_time_series_path",                    &
+                    24                                          &  !Temp value for forecast lookback hours
+
 
            end select
 
