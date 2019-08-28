@@ -14,7 +14,8 @@ module module_rfc_forecasts_state
     ! Extend/derive rfc forecasts state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: rfc_forecasts_state_interface
-        real    :: water_elevation              ! meters AMSL
+        real                            :: water_elevation              ! meters AMSL
+        real, allocatable, dimension(:) :: forecast_discharges
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 

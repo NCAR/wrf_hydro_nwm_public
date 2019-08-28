@@ -384,6 +384,22 @@ contains
     end subroutine read_persistence_netcdf_real_2D_parameters
 
 
+    ! Read integer parameters from the RFC Time Series NetCDF
+    subroutine read_time_series_netcdf_integer_variables(ncid, netcdf_variable_name, integer_variable)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_variable_name
+        integer, intent(out) :: integer_variable
+        integer :: var_id, status
+
+        status = nf90_inq_varid(ncid, netcdf_variable_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name)
+
+        status = nf90_get_var(ncid, var_id, integer_variable)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name)
+
+    end subroutine read_time_series_netcdf_integer_variables
+
+
     ! Handle NetCDF error
     subroutine handle_err(status, variable_error)
         implicit none

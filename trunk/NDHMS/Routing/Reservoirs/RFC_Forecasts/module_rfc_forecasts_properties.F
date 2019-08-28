@@ -18,6 +18,10 @@ module module_rfc_forecasts_properties
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
         integer           :: lake_number                  ! lake number
         character(len=5)  :: rfc_gage_id
+        integer           :: lookback_seconds
+        integer           :: offset_time_seconds
+        integer           :: forecast_counts
+        integer           :: time_step_seconds
 
     contains
 

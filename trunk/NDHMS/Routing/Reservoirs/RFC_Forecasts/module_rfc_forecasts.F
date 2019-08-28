@@ -122,7 +122,15 @@ contains
         ! Call to initialize time series data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
-        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id)
+        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id, &
+        this%properties%lookback_seconds, this%properties%offset_time_seconds, this%properties%forecast_counts, &
+        this%properties%time_step_seconds, this%state%forecast_discharges)
+
+        print *, 'this%state%forecast_discharges'
+        print *, this%state%forecast_discharges
+
+        flush(6)
+
 
     end subroutine rfc_forecasts_init
 

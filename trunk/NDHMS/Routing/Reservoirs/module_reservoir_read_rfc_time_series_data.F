@@ -1,5 +1,7 @@
 module module_reservoir_read_rfc_time_series_data
-    use module_reservoir_utilities, only: geth_newdate, &
+    use module_reservoir_utilities, only: read_time_series_netcdf_integer_variables, &
+                                          read_timeslice_netcdf_real_1D_variables, &
+                                          geth_newdate, &
                                           handle_err
     use netcdf
     implicit none
@@ -15,6 +17,9 @@ module module_reservoir_read_rfc_time_series_data
         integer                         :: forecast_lookback_hours
         integer                         :: current_lookback_seconds
         character(len=5)                :: rfc_gage_id
+        integer                         :: offset_time_seconds
+        integer                         :: forecast_counts
+        integer                         :: time_step_seconds
         real, allocatable, dimension(:) :: forecast_discharges
         logical                         :: initialized = .FALSE.
 
@@ -22,6 +27,8 @@ module module_reservoir_read_rfc_time_series_data
 
         procedure :: init => time_series_data_init
         procedure :: destroy => time_series_data_destroy
+        procedure :: setup_read_time_series => setup_read_time_series
+        procedure :: read_time_series_file => read_time_series_file
 
     end type time_series_data_type
 
@@ -32,13 +39,20 @@ module module_reservoir_read_rfc_time_series_data
 contains
 
    ! Time Series Data Type Constructor
-    subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id)
+    subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id, &
+        lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
-        character(len=19),  intent(in)              :: start_date
-        character(len=256), intent(in)              :: time_series_path
-        integer,            intent(in)              :: forecast_lookback_hours
-        character(len=5),   intent(in)              :: rfc_gage_id
+        character(len=19),  intent(in)                  :: start_date
+        character(len=256), intent(in)                  :: time_series_path
+        integer,            intent(in)                  :: forecast_lookback_hours
+        character(len=5),   intent(in)                  :: rfc_gage_id
+        integer,            intent(out)                 :: lookback_seconds
+        integer,            intent(out)                 :: offset_time_seconds
+        integer,            intent(out)                 :: forecast_counts
+        integer,            intent(out)                 :: time_step_seconds
+        real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
+
 
         ! Return from subroutine if this singleton is already initialized
         if (this%initialized) return
@@ -49,6 +63,21 @@ contains
         this%time_series_path = time_series_path
         this%forecast_lookback_hours = forecast_lookback_hours
         this%rfc_gage_id = rfc_gage_id
+
+        call this%setup_read_time_series()
+
+        lookback_seconds = this%current_lookback_seconds
+        offset_time_seconds = this%offset_time_seconds
+        forecast_counts = this%forecast_counts
+        time_step_seconds = this%time_step_seconds
+
+        allocate(forecast_discharges(forecast_counts))
+
+        forecast_discharges = this%forecast_discharges
+
+        ! Deallocate forecast arrays
+        !if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
+
 
     end subroutine time_series_data_init
 
@@ -110,11 +139,13 @@ contains
             time_series_file_name = trim(this%time_series_path) // old_date // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
 
+
+print *, time_series_file_name
             ! Check if file exists
             inquire(FILE = time_series_file_name, EXIST = file_exists)
             if (file_exists) then
                 ! Call subroutine to read a particular time series file
-                !call this%read_time_series_file(time_series_file_name)
+                call this%read_time_series_file(time_series_file_name)
                 exit
             end if
 
@@ -127,14 +158,42 @@ contains
 
         end do
 
-
     end subroutine setup_read_time_series
 
 
+    ! Read given time series file to get gage discharges
+    subroutine read_time_series_file(this, time_series_file)
+        implicit none
+        class(time_series_data_type), intent(inout) :: this
+        character(len=256), intent(in) :: time_series_file
+        integer*8, allocatable, dimension(:) :: gage_ids_integer_array
+        integer :: reservoir_rfc_gage_index, time_series_rfc_gage_index
+        integer :: ncid, status
+
+        ! Open Time Series NetCDF file
+        status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
+
+        call read_time_series_netcdf_integer_variables(ncid, 'offsetTime', this%offset_time_seconds)
+
+        call read_time_series_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
+
+        call read_time_series_netcdf_integer_variables(ncid, 'timeStep', this%time_step_seconds)
+
+        print *, this%offset_time_seconds
+
+        print *, this%forecast_counts
+
+        print *, this%time_step_seconds
+
+        allocate (this%forecast_discharges(this%forecast_counts))
+
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', this%forecast_discharges)
+
+        print *, this%forecast_discharges
 
 
-
-
+    end subroutine read_time_series_file
 
 
 end module module_reservoir_read_rfc_time_series_data
