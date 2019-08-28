@@ -853,7 +853,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     "Temp_name_for_param_file",                 &
                     nlst_rt(did)%startdate(1:19),               &
                     "Temp_time_series_path",                    &
-                    24                                          &  !Temp value for forecast lookback hours
+                    24                                          )  !Temp value for forecast lookback hours
 
 
            end select
