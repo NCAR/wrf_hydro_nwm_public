@@ -33,6 +33,11 @@ module config_base
      integer            :: temp_time_scheme_option
      integer            :: glacier_option
      integer            :: surface_resistance_option
+
+     integer            :: soil_data_option = 1
+     integer            :: pedotransfer_option = 0
+     integer            :: crop_option = 0
+     
      integer            :: split_output_count = 1
      integer            :: khour
      integer            :: kday = -999
@@ -548,8 +553,8 @@ contains
     if(output_channelBucket_influx .ne. 0) then
        if(nlst(did)%dt .ne. out_dt*60) &
             call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
-       if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1) &
-            call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1.")
+       if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2) &
+            call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1 or 2.")
     end if
 
     if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
@@ -762,6 +767,9 @@ contains
      integer            :: temp_time_scheme_option
      integer            :: glacier_option
      integer            :: surface_resistance_option
+     integer            :: soil_data_option = 1
+     integer            :: pedotransfer_option = 0
+     integer            :: crop_option = 0
      integer            :: split_output_count = 1
      integer            :: khour
      integer            :: kday = -999
@@ -783,16 +791,18 @@ contains
     integer  :: forc_typ, snow_assim
 
     namelist / NOAHLSM_OFFLINE /    &
-         indir, nsoil, soil_thick_input, forcing_timestep, &
-         noah_timestep, start_year, start_month, start_day, &
-         start_hour, start_min, outdir, restart_filename_requested, &
-         restart_frequency_hours, output_timestep, dynamic_veg_option, &
-         canopy_stomatal_resistance_option, btr_option, runoff_option, &
-         surface_drag_option, supercooled_water_option, &
+         indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
+         start_year, start_month, start_day, start_hour, start_min, &
+         outdir, &
+         restart_filename_requested, restart_frequency_hours, output_timestep, &
+         
+         dynamic_veg_option, canopy_stomatal_resistance_option, &
+         btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
-         split_output_count, & 
+         
+         split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
          spatial_filename, &
          external_veg_filename_template, external_lai_filename_template, &
@@ -816,6 +826,8 @@ contains
     noah_lsm%noah_timestep           = -999
     noah_lsm%output_timestep         = -999
     noah_lsm%restart_frequency_hours = -999
+
+    write(*,*) 'Calling config noahlsm_offline'
 
 #ifndef NCEP_WCOSS
     open(30, file="namelist.hrldas", form="FORMATTED")
@@ -885,6 +897,11 @@ contains
     noah_lsm%temp_time_scheme_option = temp_time_scheme_option
     noah_lsm%glacier_option = glacier_option
     noah_lsm%surface_resistance_option = surface_resistance_option
+
+    noah_lsm%soil_data_option = soil_data_option
+    noah_lsm%pedotransfer_option = pedotransfer_option
+    noah_lsm%crop_option = crop_option
+    
     noah_lsm%split_output_count = split_output_count
     noah_lsm%khour = khour
     noah_lsm%kday = -999!kday
@@ -901,8 +918,6 @@ contains
     noah_lsm%rst_bi_out = rst_bi_out
     noah_lsm%rst_bi_in = rst_bi_in
     noah_lsm%spatial_filename = spatial_filename
-
-      !dtbl = real(noah_timestep)
 
   end subroutine init_noah_lsm_and_wrf_hydro
   
