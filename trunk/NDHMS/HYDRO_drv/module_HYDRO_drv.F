@@ -305,7 +305,7 @@ module module_HYDRO_drv
                     endif
                 endif
             else
-                if(nlst(did)%GWBASESWCRT .eq. 1) then
+                if((nlst(did)%GWBASESWCRT .eq. 1) .or. (nlst(did)%GWBASESWCRT .ge. 4)) then
                     if(nlst(did)%channel_only .eq. 0) then
                         if(nlst(did)%output_gw  .eq. 1) call output_GW_Diag(did)
                     endif
@@ -787,7 +787,7 @@ subroutine driveGwBaseflow(did)
 
         !  IF (nlst(did)%GWBASESWCRT.GE.1000) THEN     ! Switch to activate/specify GW/Baseflow
 
-        if (nlst(did)%GWBASESWCRT.eq.1.or.nlst(did)%GWBASESWCRT.eq.2) then   ! Call simple bucket baseflow scheme
+        if (nlst(did)%GWBASESWCRT.eq.1 .or. nlst(did)%GWBASESWCRT.eq.2 .or. nlst(did)%GWBASESWCRT.ge.4) then   ! Call simple bucket baseflow scheme
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
