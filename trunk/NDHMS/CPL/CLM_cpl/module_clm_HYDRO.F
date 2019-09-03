@@ -87,7 +87,7 @@ CONTAINS
 
             call HYDRO_ini(ntime,did,1,1)
 
-            if(nlst_rt(did)%sys_cpl .ne. 4) then
+            if(nlst(did)%sys_cpl .ne. 4) then
                write(6,*) "FATAL ERROR: sys_cpl should be 4."
                call hydro_stop("In module_clm_HYDRO.F clm_cpl_HYDRO() - "// &
                                "sys_cpl should be 4.  Check hydro.namelist file")
@@ -99,7 +99,7 @@ CONTAINS
             nlst(did)%olddate(1:19) = cpl_outdate(1:19)
         endif
 
-        if(nlst_rt(did)%rtFlag .eq. 0) return
+        if(nlst(did)%rtFlag .eq. 0) return
 
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
