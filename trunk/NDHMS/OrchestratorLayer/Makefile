@@ -23,7 +23,7 @@ all:	$(OBJS)
 .f90.o:
 	@echo "Orchestrator Makefile:"
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
-	$(COMPILER90) $(CPPINVOKE) -o $(@) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
+	$(COMPILER90) $(CPPINVOKE) -o $(@) $(CPPFLAGS) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
 #	$(RMD) $(*).f
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
