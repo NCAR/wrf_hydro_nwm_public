@@ -20,11 +20,12 @@
 
 module module_stream_nudging
 
-use module_namelist,      only: nlst_rt
-use module_nudging_io,    only: lastObsStructure
+  !use module_namelist,      only: nlst_rt
+  use config_base, only: nlst
+  use module_nudging_io,    only: lastObsStructure
 #ifdef MPP_LAND
-     use module_mpp_land
-     use module_mpp_reachls,  only: ReachLS_write_io
+  use module_mpp_land
+  use module_mpp_reachls,  only: ReachLS_write_io
 #endif
 
 implicit none
@@ -303,18 +304,18 @@ logical :: lastObsFileFound
 
 !! this ifdef is bizarre problem with pgf compiler
 !#ifdef WRF_HYDRO_NUDGING !JLM
-nudgingParamFile       = nlst_rt(did)%nudgingParamFile
-netwkReExFile          = nlst_rt(did)%netwkReExFile
-readTimesliceParallel  = nlst_rt(did)%readTimesliceParallel
-temporalPersistence    = nlst_rt(did)%temporalPersistence
-persistBias            = nlst_rt(did)%persistBias
-biasWindowBeforeT0     = nlst_rt(did)%biasWindowBeforeT0
-nudgingLastObsFile     = nlst_rt(did)%nudgingLastObsFile
-nTimesLastObs          = nlst_rt(did)%nLastObs
-minNumPairsBiasPersist = nlst_rt(did)%minNumPairsBiasPersist
-maxAgePairsBiasPersist = nlst_rt(did)%maxAgePairsBiasPersist
-invDistTimeWeightBias  = nlst_rt(did)%invDistTimeWeightBias
-noConstInterfBias      = nlst_rt(did)%noConstInterfBias
+nudgingParamFile       = nlst(did)%nudgingParamFile
+netwkReExFile          = nlst(did)%netwkReExFile
+readTimesliceParallel  = nlst(did)%readTimesliceParallel
+temporalPersistence    = nlst(did)%temporalPersistence
+persistBias            = nlst(did)%persistBias
+biasWindowBeforeT0     = nlst(did)%biasWindowBeforeT0
+nudgingLastObsFile     = nlst(did)%nudgingLastObsFile
+nTimesLastObs          = nlst(did)%nLastObs
+minNumPairsBiasPersist = nlst(did)%minNumPairsBiasPersist
+maxAgePairsBiasPersist = nlst(did)%maxAgePairsBiasPersist
+invDistTimeWeightBias  = nlst(did)%invDistTimeWeightBias
+noConstInterfBias      = nlst(did)%noConstInterfBias
 !#endif 
 
 nLinks       = RT_DOMAIN(did)%NLINKS   ! For gridded channel routing
@@ -376,8 +377,8 @@ gotT0Discharge = .false.
 
 !========================
 ! Muskingum routines are channel_options 1 and 2
-if (nlst_rt(did)%channel_option .eq. 1 .or. &
-    nlst_rt(did)%channel_option .eq. 2) then
+if (nlst(did)%channel_option .eq. 1 .or. &
+    nlst(did)%channel_option .eq. 2) then
 
    ! For reach-based/muskingum routing methods, we are currently requiring 
    ! the netcdf file for input of gages.
@@ -600,10 +601,10 @@ obsStaticStr(:)%G      = nudgingParamsStr%G
 obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
 do ll=1,size(nudgingParamsStr%usgsId)
-   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsTime(          nlst(did)%nLastObs))
+   allocate(obsStaticStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
 end do
 
 !=================================================
@@ -625,7 +626,7 @@ if(my_id .eq. io_id) then
 
       !! if blank, look for file at the current/init time
       if(trim(nudgingLastObsFile) .eq. '') then
-         nudgingLastObsFileTry = 'nudgingLastObs.' // nlst_rt(did)%olddate // '.nc'
+         nudgingLastObsFileTry = 'nudgingLastObs.' // nlst(did)%olddate // '.nc'
       else
          nudgingLastObsFileTry = nudgingLastObsFile
       end if
@@ -636,10 +637,10 @@ if(my_id .eq. io_id) then
             print*,'Reading in nudgingLastObsFileTry: ', trim(nudgingLastObsFileTry)
             allocate(lastObsStr(nStnLastObs))
             do ll=1,nStnLastObs
-               allocate(lastObsStr(ll)%lastObsDischarge(     nlst_rt(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsModelDischarge(nlst_rt(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsTime(          nlst_rt(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsQuality(       nlst_rt(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsTime(          nlst(did)%nLastObs))
+               allocate(lastObsStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
             end do
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
@@ -674,11 +675,11 @@ if(my_id .NE. io_id) deallocate(g_nudge)
 #ifdef MPP_LAND
 ! MPP need to broadcast the initial time and setup the dt
 if(my_id .eq. io_id) then
-   lsmDt = nlst_rt(did)%dt
+   lsmDt = nlst(did)%dt
 endif 
 call mpp_land_bcast_int1(lsmDt)
 #else 
-lsmDt = nlst_rt(did)%dt
+lsmDt = nlst(did)%dt
 #endif
 
 !S      - -+- -       !
@@ -856,18 +857,18 @@ if(flushAll) flush(flushUnit)
 ! The hydro model time as a string.
 #ifdef MPP_LAND
 !update and broadcast the lsm time
-if(my_id .eq. io_id) lsmTime  = nlst_rt(did)%olddate
-if(my_id .eq. io_id) initTime = nlst_rt(did)%startdate
+if(my_id .eq. io_id) lsmTime  = nlst(did)%olddate
+if(my_id .eq. io_id) initTime = nlst(did)%startdate
 call mpp_land_bcast_char(19, lsmTime )
 call mpp_land_bcast_char(19, initTime)
 # else
-lsmTime = nlst_rt(did)%olddate
-initTime = nlst_rt(did)%startdate
+lsmTime = nlst(did)%olddate
+initTime = nlst(did)%startdate
 #endif
 
 ! This is apparently fixed so that olddate is lsmTime and not
 ! behind by 1 lsm timestep when the hydro model is run.
-!call geth_newdate(hydroTime, nlst_rt(1)%olddate, hydroDT+nint(nlst_rt(1)%dt))
+!call geth_newdate(hydroTime, nlst(1)%olddate, hydroDT+nint(nlst(1)%dt))
 !call geth_newdate(hydroTime, lsmTimeMinusDt, hydroDT+lsmDt)
 call geth_newdate(hydroTime, lsmTime, hydroDT)
 
@@ -1805,7 +1806,7 @@ if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      !! write out the last obs to file
      call write_nudging_last_obs(obsStaticStr%lastObsStructure, &
-                                 nlst_rt(did)%olddate,          &
+                                 nlst(did)%olddate,          &
                                  g_nudge                         )
 
 deallocate(g_nudge)
@@ -1972,9 +1973,9 @@ integer, allocatable, dimension(:) :: affectedInds, nGageAffect
 integer :: nlinks, ii, oo, cc, nLinkAff, indAff, staticInd
 integer, parameter :: did=1
 
-if (nlst_rt(did)%channel_option .eq. 3) nLinks = RT_DOMAIN(did)%NLINKS ! For gridded channel routing
-if (nlst_rt(did)%channel_option .eq. 1 .or.   &
-    nlst_rt(did)%channel_option .eq. 2      ) &
+if (nlst(did)%channel_option .eq. 3) nLinks = RT_DOMAIN(did)%NLINKS ! For gridded channel routing
+if (nlst(did)%channel_option .eq. 1 .or.   &
+    nlst(did)%channel_option .eq. 2      ) &
     nLinks = &
 #ifdef MPP_LAND
              RT_DOMAIN(did)%gNLINKSL  ! For reach-based routing in parallel
@@ -2517,7 +2518,7 @@ else if (temporalPersistence) then
             endif
             if(persistBias_local .and. invDistTimeWeightBias) &
                  !JLM OLD
-                 biasWeights(tt) = real(obsDtInt + nlst_rt(did)%dtrt_ch)
+                 biasWeights(tt) = real(obsDtInt + nlst(did)%dtrt_ch)
                  !JLM NEW
                  !biasWeights(tt) = real(obsDtInt + obsResolutionInt)
             
