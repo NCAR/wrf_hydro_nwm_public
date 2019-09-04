@@ -2,12 +2,14 @@
 all: user_build_options
 	(cd Utility_routines;		make)
 	(cd phys;			make)
+	(cd data_structures;		make)
 	(cd IO_code;			make)
 	(cd run;			make)
 
 clean:
 	(cd Utility_routines;		make clean)
 	(cd phys;			make clean)
+	(cd data_structures;		make clean)
 	(cd IO_code;			make clean)
 	(cd run;			make clean)
 
@@ -15,5 +17,6 @@ clean:
 NoahMP: user_build_options
 	(cd Utility_routines;		make)
 	(cd phys;			make)
+	(cd data_structures;		make)
 	(cd IO_code;			make NoahMP MOD_OPT="-DNoahMP")
 	(cd run;			make -f Makefile NoahMP)

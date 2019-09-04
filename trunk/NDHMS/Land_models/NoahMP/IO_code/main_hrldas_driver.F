@@ -30,7 +30,7 @@ program noah_hrldas_driver
 #endif
 
   ! NEW MODULE WITH DT INCLUDING STATE, PARAMETER,FORCING AND GEOMETRY. Different modules
-  use state
+  use state_module, only: state_type
   use parameters
   use forcing
   use geometry
@@ -38,10 +38,11 @@ program noah_hrldas_driver
   
   implicit none
   integer :: ITIME, NTIME
+  type(state_type) :: state
   
   call orchestrator%init()
   
-  call land_driver_ini(NTIME)
+  call land_driver_ini(NTIME, state)
   
 #ifdef WRF_HYDRO   
   do ITIME = 1, NTIME
@@ -49,10 +50,11 @@ program noah_hrldas_driver
   do ITIME = 0, NTIME
 #endif
      ! DTs must be passed to the exe.
-     call land_driver_exe(ITIME)
+     call land_driver_exe(ITIME, state)
   end do
 #ifdef WRF_HYDRO
-  call hydro_finish() 
+  !Pass state for destruction
+  call hydro_finish()
 #endif
      
 end program noah_hrldas_driver

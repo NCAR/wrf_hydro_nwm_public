@@ -24,7 +24,7 @@ all:	$(OBJS)
 .f90.o:
 	@echo "Data structures Makefile:"
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
-	$(COMPILER90) $(PREPROC) -o $(@) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
+	$(COMPILER90) $(PREPROC) -o $(@) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../../../OrchestratorLayer $(*).f90
 #	$(RMD) $(*).f
 	@echo ""
 	ar -r ../../../lib/libHYDRO.a $(@)
