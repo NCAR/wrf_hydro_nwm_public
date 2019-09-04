@@ -30,7 +30,6 @@ module module_lis_HYDRO
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       !use module_namelist, only: nlst_rt
        use config_base, only : nlst
        use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 

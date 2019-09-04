@@ -20,7 +20,6 @@
 
 module module_HYDRO_utils
   use module_RT_data, only: rt_domain
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
 #ifdef MPP_LAND
   use module_mpp_land, only: global_nx, global_ny, my_id, IO_id, &

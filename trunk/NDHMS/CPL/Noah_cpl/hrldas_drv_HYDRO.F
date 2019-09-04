@@ -52,7 +52,6 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt,FORCING_TIMESTEP,prcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
-         !use module_namelist, only:nlst_rt
          use config_base, only: nlst
 
          implicit none

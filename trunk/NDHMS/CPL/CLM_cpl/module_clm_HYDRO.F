@@ -25,7 +25,7 @@ module module_CLM_HYDRO
     use clm_varpar   , only : nlevgrnd
     use decompMod    , only : get_proc_bounds, get_proc_global
     use clm_varcon  , only : zsoi
-    ; use subgridAveMod, only: l2g_1d
+    use subgridAveMod, only: l2g_1d
     use subgridAveMod, only: c2g_1d, c2g_2d
 
 ! NDHMS  module   
@@ -54,7 +54,6 @@ CONTAINS
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       !use module_namelist, only: nlst_rt 
        use config_base, only: nlst
 
         implicit none

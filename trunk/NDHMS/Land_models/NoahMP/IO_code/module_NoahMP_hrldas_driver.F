@@ -397,7 +397,6 @@ module module_NoahMP_hrldas_driver
 
   subroutine land_driver_ini(NTIME_out,wrfits,wrfite,wrfjts,wrfjte)
      use module_HYDRO_drv, only: HYDRO_ini
-     !use module_namelist, only: nlst_rt
      use config_base, only: nlst
      use module_rt_data, only: rt_domain
      use module_hrldas_HYDRO, only: open_print_mpp

@@ -1279,7 +1279,6 @@ end subroutine disaggregateDomain
 subroutine SubsurfaceRouting_drv(did)
 
     use module_RT_data, only: rt_domain
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
 
     implicit none
@@ -1298,7 +1297,6 @@ end subroutine SubsurfaceRouting_drv
 
 subroutine OverlandRouting_drv(did)
     use module_RT_data, only: rt_domain
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
 
     implicit none

@@ -12,7 +12,6 @@
 module module_NWM_io_dict
 
   use module_version, only: get_model_version
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
 
 implicit none
@@ -624,7 +623,6 @@ end type gwMeta
 contains
 
 subroutine initChrtDict(chrtOutDict,diagFlag,procId)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -775,7 +773,6 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
 end subroutine initChrtDict
 
 subroutine initLdasDict(ldasOutDict,procId,diagFlag)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -1257,7 +1254,6 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
 end subroutine initLdasDict
 
 subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -1589,7 +1585,6 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 end subroutine initRtDomainDict
 
 subroutine initLakeDict(lakeOutDict,procId,diagFlag)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -1708,7 +1703,6 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
 end subroutine initLakeDict
 
 subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -2033,7 +2027,6 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
 end subroutine initChrtGrdDict
 
 subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none
@@ -2338,7 +2331,6 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
 end subroutine initLsmOutDict
 
 subroutine initChanObsDict(chObsDict,diagFlag,procId)
-  !use module_namelist, only : nlst_rt
   use config_base, only: nlst
   use netcdf
   implicit none

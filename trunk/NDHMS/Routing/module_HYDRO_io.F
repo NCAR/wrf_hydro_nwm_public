@@ -28,7 +28,6 @@ module module_HYDRO_io
 #endif
    use Module_Date_utilities_rt, only: geth_newdate
    use module_HYDRO_utils, only: get_dist_ll
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d   
@@ -10999,7 +10998,6 @@ subroutine read_channel_only (olddateIn, hgrid, indir, dtbl)
 use module_RT_data, only: rt_domain
 use module_mpp_land,only: mpp_land_bcast_int1, my_id, io_id
 use Module_Date_utilities_rt, only: geth_newdate
-!use module_namelist, only: nlst_rt
 use config_base, only: nlst
 implicit none
 integer :: iret, did, len, ncid

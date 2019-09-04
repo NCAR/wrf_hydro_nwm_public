@@ -77,7 +77,6 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
-         !use module_namelist, only:nlst_rt
          use config_base, only: nlst
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -100,7 +99,6 @@
        end subroutine HYDRO_frocing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate,SHDMAX)
-         !use module_namelist, only:nlst_rt
          use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
@@ -393,7 +391,6 @@
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif
       subroutine get_iocflag(did, iocflag) 
-        !use module_namelist, only:nlst_rt
         use config_base, only: nlst
          implicit none
          integer :: did, iocflag
@@ -401,7 +398,6 @@
       end subroutine get_iocflag
 
       subroutine get_t0OutputFlag(did, t0OutputFlag) 
-        !use module_namelist, only:nlst_rt
         use config_base, only: nlst
          implicit none
          integer :: did, t0OutputFlag
@@ -410,7 +406,6 @@
 
 
       subroutine getNameList(varName,pVar)
-        !use module_namelist, only:nlst_rt
         use config_base, only: nlst
           implicit none
           integer :: pVar
@@ -435,7 +430,6 @@
      end subroutine getNameList
 
       subroutine updateNameList(varName,pVarIn)
-        !use module_namelist, only:nlst_rt
         use config_base, only: nlst
 #ifdef MPP_LAND
           use module_mpp_land, only: mpp_land_bcast_int1

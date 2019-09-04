@@ -21,7 +21,6 @@
 module module_nudging_io
 
 use netcdf
-!use module_namelist, only: nlst_rt
 use config_base, only: nlst
 use module_RT_data,  only: rt_domain
 
@@ -235,7 +234,6 @@ end subroutine read_timeslice_file
 ! Notes: Currently no csv support, but basic code is in place though commented out.
 
 subroutine read_reach_gage_collocation(gageIds)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
 implicit none
 character(len=15), dimension(:), intent(out) :: gageIds

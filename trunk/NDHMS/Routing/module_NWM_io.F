@@ -66,7 +66,6 @@ end function GetModelConfigType
 
 subroutine output_chrt_NWM(domainId)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -1028,7 +1027,6 @@ end subroutine output_chrt_NWM
 
 subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -1680,7 +1678,6 @@ end subroutine output_NoahMP_NWM
 
 subroutine output_rt_NWM(domainId,iGrid)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -2247,7 +2244,6 @@ end subroutine output_rt_NWM
 
 subroutine output_lakes_NWM(domainId,iGrid)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -2875,7 +2871,6 @@ end subroutine output_lakes_NWM
 
 subroutine output_chrtout_grd_NWM(domainId,iGrid)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -3386,7 +3381,6 @@ end subroutine output_chrtout_grd_NWM
 
 subroutine output_lsmOut_NWM(domainId)
   use module_rt_data, only: rt_domain
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
   use Module_Date_utilities_rt, only: geth_newdate, geth_idts
   use module_NWM_io_dict
@@ -3895,7 +3889,6 @@ end subroutine output_lsmOut_NWM
 ! User controllable options: None.
 subroutine output_frxstPts(domainId)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -4170,7 +4163,6 @@ end subroutine output_frxstPts
 ! User controllable options: None.
 subroutine output_chanObs_NWM(domainId)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -4880,7 +4872,6 @@ end subroutine output_chanObs_NWM
 ! User controllable options: None.
 subroutine output_gw_NWM(domainId,iGrid)
    use module_rt_data, only: rt_domain
-   !use module_namelist, only: nlst_rt
    use config_base, only: nlst
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
@@ -5381,7 +5372,6 @@ subroutine nwmCheck(diagFlag,iret,msg)
 end subroutine nwmCheck
 
 subroutine checkRouteGages(diagFlag,nElements,indexArray)
-  !use module_namelist, only : nlst_rt
   use config_base, only: nlst
   use netcdf
   use module_HYDRO_io, only : get_1d_netcdf_text

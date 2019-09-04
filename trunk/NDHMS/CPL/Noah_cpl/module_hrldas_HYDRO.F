@@ -30,7 +30,6 @@ module module_HRLDAS_HYDRO
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
     use module_gw_gw2d_data, only: gw2d
 

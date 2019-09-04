@@ -45,9 +45,6 @@ module wrfhydro_nuopc_gluecode
   use module_rt_data, only: &
        rt_domain
   use config_base, only: nlst
-  ! use module_namelist, only: &
-  !   nlst_rt, &
-  !   read_rt_nlst
   use module_lsm_forcing, only: &
     read_ldasout
 !  use module_gw_gw2d_data, only: &

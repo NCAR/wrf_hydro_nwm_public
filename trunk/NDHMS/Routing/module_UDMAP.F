@@ -21,7 +21,6 @@
 ! This subrouting includs the data structure and tools used for NHDPlus network mapping.
 module module_UDMAP
 
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
 #ifdef MPP_LAND
   use module_mpp_land, only: my_id, local_startx_rt, local_starty_rt,  &

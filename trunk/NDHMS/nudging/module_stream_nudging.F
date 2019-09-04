@@ -20,7 +20,6 @@
 
 module module_stream_nudging
 
-  !use module_namelist,      only: nlst_rt
   use config_base, only: nlst
   use module_nudging_io,    only: lastObsStructure
 #ifdef MPP_LAND

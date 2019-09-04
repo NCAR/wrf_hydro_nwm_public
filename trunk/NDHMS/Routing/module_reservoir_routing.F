@@ -17,7 +17,6 @@ implicit none
 contains
 
 subroutine read_reservoir_obs(domainId)
-  !use module_namelist, only: nlst_rt
   use config_base, only: nlst
    use netcdf
 #ifdef MPP_LAND
