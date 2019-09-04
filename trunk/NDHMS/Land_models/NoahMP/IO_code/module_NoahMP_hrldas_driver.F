@@ -416,12 +416,6 @@ module module_NoahMP_hrldas_driver
     forc_typ = wrf_hydro%forc_typ
 #endif
 
-#ifndef NCEP_WCOSS
-  close(30)
-#else
-  close(11)
-#endif
-
   dtbl = real(noah_lsm%noah_timestep)
   num_soil_layers = noah_lsm%nsoil      ! because surface driver uses the long form
   IDVEG = noah_lsm%dynamic_veg_option ! transfer from namelist to driver format
