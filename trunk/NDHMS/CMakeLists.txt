@@ -178,7 +178,7 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
     message ( "Using ifort")
-    set (CMAKE_Fortran_FLAGS "-O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+    set (CMAKE_Fortran_FLAGS "-O2 -g -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
 else (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
     message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
@@ -264,7 +264,9 @@ if (NWM_LSM MATCHES "NoahMP")
 		Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.F
 		Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.F
 	)
-	
+
+	target_include_directories(wrfhydro.exe BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
+
 	target_link_libraries(wrfhydro.exe nwm_utils)
 	target_link_libraries(wrfhydro.exe nwm_mpp)
 	target_link_libraries(wrfhydro.exe nwm_debug_utils)
