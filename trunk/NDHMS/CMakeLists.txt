@@ -308,7 +308,60 @@ if (NWM_LSM MATCHES "NoahMP")
 		
 elseif(NWM_LSM MATCHES "Noah")
 	message ("-- Building Noah LSM")
+	add_subdirectory("Land_models/Noah")
+	add_subdirectory("CPL/Noah_cpl")
+
+        add_dependencies(nwm_noah_cpl nwm_routing)
+        add_dependencies(nwm_noah_cpl nwm_mpp )
+        add_dependencies(nwm_noah_cpl nwm_driver )
+
+        add_executable(wrfhydro.exe
+                Land_models/Noah/IO_code/module_hrldas_netcdf_io.F
+                Land_models/Noah/IO_code/Noah_hrldas_driver.F
+        )
+
+        target_include_directories(wrfhydro.exe BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
+
+        target_link_libraries(wrfhydro.exe nwm_utils)
+        target_link_libraries(wrfhydro.exe nwm_mpp)
+        target_link_libraries(wrfhydro.exe nwm_debug_utils)
+        target_link_libraries(wrfhydro.exe nwm_routing_overland)
+        target_link_libraries(wrfhydro.exe nwm_routing_subsurface)
+        #target_link_libraries(wrfhydro.exe nwm_routing_groundwater)
+        #target_link_libraries(wrfhydro.exe nwm_routing_groundwater_bucket)
+        #target_link_libraries(wrfhydro.exe nwm_routing_groundwater_nhd)
+        #target_link_libraries(wrfhydro.exe nwm_routing_groundwater_simple)
+        target_link_libraries(wrfhydro.exe nwm_routing_reservoirs)
+        target_link_libraries(wrfhydro.exe nwm_data_rec)
+        target_link_libraries(wrfhydro.exe nwm_routing)
+        target_link_libraries(wrfhydro.exe nwm_driver)
+        target_link_libraries(wrfhydro.exe noah_util)
+        target_link_libraries(wrfhydro.exe noah)
+        target_link_libraries(wrfhydro.exe nwm_noah_cpl)
+        target_link_libraries(wrfhydro.exe ${NETCDF_LIBRARIES})
+
+        add_dependencies(wrfhydro.exe nwm_utils)
+        add_dependencies(wrfhydro.exe nwm_mpp)
+        add_dependencies(wrfhydro.exe nwm_debug_utils)
+        add_dependencies(wrfhydro.exe nwm_routing_overland)
+        add_dependencies(wrfhydro.exe nwm_routing_subsurface)
+        #add_dependencies(wrfhydro.exe nwm_routing_groundwater)
+        #add_dependencies(wrfhydro.exe nwm_routing_groundwater_bucket)
+        #add_dependencies(wrfhydro.exe nwm_routing_groundwater_nhd)
+        #add_dependencies(wrfhydro.exe nwm_routing_groundwater_simple)
+        add_dependencies(wrfhydro.exe nwm_data_rec)
+        add_dependencies(wrfhydro.exe nwm_routing)
+        add_dependencies(wrfhydro.exe nwm_driver)
+        add_dependencies(wrfhydro.exe noah_util)
+        add_dependencies(wrfhydro.exe noah)
+        add_dependencies(wrfhydro.exe nwm_noah_cpl)
+
+        if (WRF_HYDRO_NUDGING STREQUAL "1")
+                target_link_libraries(wrfhydro.exe nwm_nudging)
+                add_dependencies(wrfhydro.exe nwm_nudging)
+        endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
 else()
-	message ("Unknown Land Surface Model:" ${NWM_LSM} )
+	mesgage ("Unknown Land Surface Model:" ${NWM_LSM} )
 endif (NWM_LSM MATCHES "NoahMP")
 

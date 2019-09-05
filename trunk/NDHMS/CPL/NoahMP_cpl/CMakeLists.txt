@@ -8,7 +8,7 @@ add_library(nwm_noahmp_cpl STATIC
 target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_mpp)
 target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_utils)
 target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_overland)
-#target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_subsurface)
+target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_subsurface)
 #target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_groundwater)
 #target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_groundwater_bucket)
 #target_link_libraries(nwm_noahmp_cpl PUBLIC nwm_routing_groundwater_nhd)
