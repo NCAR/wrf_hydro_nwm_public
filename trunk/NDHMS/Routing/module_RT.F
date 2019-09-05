@@ -1221,7 +1221,7 @@ else
    !DJG  If GW/Baseflow activated...Read in req'd fields...
    !----------------------------------------------------------------------
    if (nlst_rt(did)%GWBASESWCRT.ge.1) then
-      if (nlst_rt(did)%GWBASESWCRT.eq.1.or.nlst_rt(did)%GWBASESWCRT.eq.2) then
+      if (nlst_rt(did)%GWBASESWCRT.eq.1 .or. nlst_rt(did)%GWBASESWCRT.eq.2 .or. nlst_rt(did)%GWBASESWCRT.ge.4) then
 #ifdef HYDRO_D
          print *, "new Simple GW-Bucket Scheme selected, retrieving files..."
 #endif
@@ -1301,7 +1301,7 @@ else
 #endif
 
          ! BF gw2d model
-      elseif (nlst_rt(did)%GWBASESWCRT.ge.3) then
+      elseif (nlst_rt(did)%GWBASESWCRT.eq.3) then
 
          call readGW2d(gw2d(did)%ix, gw2d(did)%jx,     &
               gw2d(did)%hycond, gw2d(did)%ho, &
