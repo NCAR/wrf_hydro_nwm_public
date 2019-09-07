@@ -42,6 +42,8 @@ def test_compile_candidate(candidate_sim, output_dir):
     print('\n')
 
     compile_dir = output_dir / 'compile_candidate'
+    if compile_dir.exists():
+        pytest.skip('Candidate compile dir exists, skipping candidate compile test')
 
     # Compile the model, catch warnings related to non-existant compile directory
     with warnings.catch_warnings():
@@ -58,6 +60,8 @@ def test_compile_reference(reference_sim, output_dir):
     print('\n')
 
     compile_dir = output_dir / 'compile_reference'
+    if compile_dir.exists():
+        pytest.skip('Reference compile dir exists, skipping reference compile')
 
     # Compile the model, catch warnings related to non-existant compile directory
     with warnings.catch_warnings():
@@ -77,6 +81,9 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
+    if run_dir.exists():
+        pytest.skip('Candidate run dir exists, skipping candidate run test')
+
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
@@ -119,6 +126,8 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
+    if run_dir.exists():
+        pytest.skip('Reference run dir exists, skipping reference run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
@@ -170,6 +179,8 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
 
     # Set run directory
     run_dir = output_dir.joinpath('ncores_candidate')
+    if run_dir.exists():
+        pytest.skip('Candidate n_cores run dir exists, skipping n_cores candidate run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
@@ -181,7 +192,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
         restart_freq_hr=24,
         output_freq_hr=24
     )
-    
+
     # Remove old job and add new job
     candidate_sim_ncores.jobs.pop(0)
     candidate_sim_ncores.add(new_job)
@@ -247,6 +258,8 @@ def test_perfrestart_candidate(output_dir):
 
     # Set run directory
     run_dir = output_dir.joinpath('restart_candidate')
+    if run_dir.exists():
+        pytest.skip('Candidate restart run dir exists, skipping restart candidate run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 

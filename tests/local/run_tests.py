@@ -16,16 +16,16 @@ def run_tests(
     candidate_dir: str,
     reference_dir: str,
     output_dir: str,
-    scheduler: bool=False,
-    exe_cmd: str=None,
-    ncores: int=216,
-    nnodes: int=6,
-    account: str='NRAL0017',
-    walltime: str='02:00:00',
-    queue: str='regular',
-    print_log: bool=False,
-    pdb: bool=False,
-    pdb_x: bool=False
+    scheduler: bool = False,
+    exe_cmd: str = None,
+    ncores: int = 216,
+    nnodes: int = 6,
+    account: str = 'NRAL0017',
+    walltime: str = '02:00:00',
+    queue: str = 'regular',
+    print_log: bool = False,
+    pdb: bool = False,
+    pdb_x: bool = False
 ):
 
     """Function to run wrf_hydro_nwm pytests
@@ -178,7 +178,7 @@ def main():
         'The first/zeroth variable is set to the total number of cores (ncores). The '
         'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
     )
-    
+
     parser.add_argument(
         '--ncores',
         default='2',
@@ -246,6 +246,13 @@ def main():
         help='Exit pdb on first failure.'
     )
 
+    parser.add_argument(
+        '--use_existing_test_dir',
+        required=False,
+        action='store_true',
+        help='Use existing compiles and runs, only perform output comparisons.'
+    )
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -272,12 +279,14 @@ def main():
     print_log = args.print
     pdb = args.pdb
     pdb_x = args.x
+    use_existing_test_dir = args.use_existing_test_dir
 
     # Make output dir if does not exist
-    if output_dir.is_dir():
-        raise(IsADirectoryError('Output directory ' + str(output_dir) + ' already exists'))
-    else:
-        output_dir.mkdir(parents=True)
+    if not use_existing_test_dir:
+        if output_dir.is_dir():
+            raise(IsADirectoryError('Output directory ' + str(output_dir) + ' already exists'))
+        else:
+            output_dir.mkdir(parents=True)
 
     # Get the domain if asked for
     if domain_tag is not None:

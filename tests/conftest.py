@@ -75,7 +75,7 @@ def pytest_addoption(parser):
         action='store_true',
         help='Use PBS scheduler on cheyenne'
     )
-    
+
     parser.addoption(
         '--nnodes',
         default='2',
@@ -116,6 +116,13 @@ def pytest_addoption(parser):
         help='The MPI-dependent model execution command. Default is best guess. '
         'The first/zeroth variable is set to the total number of cores. The '
         'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
+    )
+
+    parser.addoption(
+        '--use_existing_test_dir',
+        required=False,
+        action='store_true',
+        help='Use existing compiles and runs, only perform output comparisons.'
     )
 
 
@@ -352,14 +359,16 @@ def reference_nwm_output_sim(request):
 def output_dir(request):
     configuration = request.config.getoption("--config")
     output_dir = request.config.getoption("--output_dir")
+    use_existing_test_dir = request.config.getoption("--use_existing_test_dir")
 
     output_dir = pathlib.Path(output_dir)
     output_dir = output_dir / configuration
 
-    if output_dir.is_dir() is True:
-        shutil.rmtree(str(output_dir))
+    if not use_existing_test_dir:
+        if output_dir.is_dir() is True:
+            shutil.rmtree(str(output_dir))
+        output_dir.mkdir(parents=True)
 
-    output_dir.mkdir(parents=True)
     return output_dir
 
 

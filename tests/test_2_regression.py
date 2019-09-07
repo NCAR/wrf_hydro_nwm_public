@@ -34,8 +34,8 @@ def test_regression_data(output_dir):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
-            candidate_run_expected.output,
-            reference_run_expected.output,
+            candidate_output=candidate_run_expected.output,
+            reference_output=reference_run_expected.output,
             exclude_vars=EXCLUDE_VARS
         )
 
@@ -68,9 +68,11 @@ def test_regression_metadata(output_dir):
     # Check regression
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(candidate_run_expected.output,
-                                                                     reference_run_expected.output,
-                                                                     exclude_vars=EXCLUDE_VARS)
+        meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(
+            candidate_run_expected.output,
+            reference_run_expected.output,
+            exclude_vars=EXCLUDE_VARS
+        )
 
     # Assert all diff values are 0 and print diff stats if not
     has_metadata_diffs = any(value != 0 for value in meta_data_diffs.diff_counts.values())
