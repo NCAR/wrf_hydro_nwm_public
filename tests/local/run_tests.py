@@ -25,7 +25,9 @@ def run_tests(
     queue: str = 'regular',
     print_log: bool = False,
     pdb: bool = False,
-    pdb_x: bool = False
+    pdb_x: bool = False,
+    use_existing_test_dir: bool = False,
+    xrcmp_n_cores: int = 0
 ):
 
     """Function to run wrf_hydro_nwm pytests
@@ -47,6 +49,7 @@ def run_tests(
             print_log: Optional, print text logs instead of HTML logs
             pdb: Drop down to python debugger in pytest?
             pdb_x: Exit the debugger on success?
+            use_existing_test_dir: Run just output comparisions on existing test dir?
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
@@ -94,6 +97,7 @@ def run_tests(
     pytest_cmd += " --output_dir " + output_dir
     pytest_cmd += " --exe_cmd " + exe_cmd
     pytest_cmd += " --ncores " + str(ncores)
+    pytest_cmd += " --xrcmp_n_cores " + str(xrcmp_n_cores)
 
     if scheduler:
         pytest_cmd += " --scheduler "
@@ -101,6 +105,9 @@ def run_tests(
         pytest_cmd += " --account " + account
         pytest_cmd += " --walltime " + walltime
         pytest_cmd += " --queue " + queue
+
+    if use_existing_test_dir:
+        pytest_cmd += " --use_existing_test_dir"
 
     subprocess_cmd = module_cmd + pytest_cmd
     print(subprocess_cmd)
@@ -248,9 +255,17 @@ def main():
 
     parser.add_argument(
         '--use_existing_test_dir',
+        default=False,
         required=False,
         action='store_true',
         help='Use existing compiles and runs, only perform output comparisons.'
+    )
+
+    parser.add_argument(
+        '--xrcmp_n_cores',
+        default=0,
+        required=False,
+        help='Use xrcmp if > 0, and how many cores if so?'
     )
 
     args = parser.parse_args()
@@ -280,6 +295,7 @@ def main():
     pdb = args.pdb
     pdb_x = args.x
     use_existing_test_dir = args.use_existing_test_dir
+    xrcmp_n_cores = args.xrcmp_n_cores
 
     # Make output dir if does not exist
     if not use_existing_test_dir:
@@ -355,7 +371,9 @@ def main():
             queue=queue,
             print_log=print_log,
             pdb=pdb,
-            pdb_x=pdb_x
+            pdb_x=pdb_x,
+            use_existing_test_dir=use_existing_test_dir,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
         if test_result.returncode != 0:

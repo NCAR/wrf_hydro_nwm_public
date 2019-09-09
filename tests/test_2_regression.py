@@ -13,7 +13,7 @@ from utilities import print_diffs
 EXCLUDE_VARS = ['reference_time']
 
 # regression question
-def test_regression_data(output_dir):
+def test_regression_data(output_dir, xrcmp_n_cores):
     print("\nQuestion: The candidate run data values match the reference run?\n", end="")
     print('\n')
 
@@ -36,7 +36,8 @@ def test_regression_data(output_dir):
         data_diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_output=candidate_run_expected.output,
             reference_output=reference_run_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -48,7 +49,7 @@ def test_regression_data(output_dir):
 
 
 # regression question
-def test_regression_metadata(output_dir):
+def test_regression_metadata(output_dir, xrcmp_n_cores):
     print("\nQuestion: The candidate run output metadata match the reference run?\n", end="")
     print('\n')
 
@@ -71,7 +72,8 @@ def test_regression_metadata(output_dir):
         meta_data_diffs = wrfhydropy.outputdiffs.OutputMetaDataDiffs(
             candidate_run_expected.output,
             reference_run_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not

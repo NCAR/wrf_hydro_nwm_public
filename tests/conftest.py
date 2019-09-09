@@ -120,9 +120,17 @@ def pytest_addoption(parser):
 
     parser.addoption(
         '--use_existing_test_dir',
+        default=False,
         required=False,
         action='store_true',
         help='Use existing compiles and runs, only perform output comparisons.'
+    )
+
+    parser.addoption(
+        '--xrcmp_n_cores',
+        default=0,
+        required=False,
+        help='Use xrcmp if > 0, and how many cores if so?'
     )
 
 
@@ -374,6 +382,9 @@ def output_dir(request):
 
 @pytest.fixture(scope="session")
 def ncores(request):
-    ncores = request.config.getoption("--ncores")
+    return int(request.config.getoption("--ncores"))
 
-    return ncores
+
+@pytest.fixture(scope="session")
+def xrcmp_n_cores(request):
+    return int(request.config.getoption("--xrcmp_n_cores"))
