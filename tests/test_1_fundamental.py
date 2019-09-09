@@ -42,6 +42,8 @@ def test_compile_candidate(candidate_sim, output_dir):
     print('\n')
 
     compile_dir = output_dir / 'compile_candidate'
+    if compile_dir.exists():
+        pytest.skip('Candidate compile dir exists, skipping candidate compile test')
 
     # Compile the model, catch warnings related to non-existant compile directory
     with warnings.catch_warnings():
@@ -58,6 +60,8 @@ def test_compile_reference(reference_sim, output_dir):
     print('\n')
 
     compile_dir = output_dir / 'compile_reference'
+    if compile_dir.exists():
+        pytest.skip('Reference compile dir exists, skipping reference compile')
 
     # Compile the model, catch warnings related to non-existant compile directory
     with warnings.catch_warnings():
@@ -77,16 +81,20 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
+    if run_dir.exists():
+        pytest.skip('Candidate run dir exists, skipping candidate run test')
+
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
+    out_dt = 1 if 'channel' in candidate_sim.model.model_config else 24
     job = wrfhydropy.Job(
         job_id='run_candidate',
         exe_cmd=exe_command,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
     candidate_sim_copy.add(job)
 
@@ -119,16 +127,19 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
+    if run_dir.exists():
+        pytest.skip('Reference run dir exists, skipping reference run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
+    out_dt = 1 if 'channel' in reference_sim.model.model_config else 24
     job = wrfhydropy.Job(
         job_id='run_reference',
         exe_cmd=exe_command,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
     reference_sim_copy.add(job)
 
@@ -170,25 +181,29 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
 
     # Set run directory
     run_dir = output_dir.joinpath('ncores_candidate')
+    if run_dir.exists():
+        pytest.skip('Candidate n_cores run dir exists, skipping n_cores candidate run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
     # Make a new job based on the old job but with a new job ID
     old_job = candidate_sim.jobs[0]
+    out_dt = 1 if 'channel' in candidate_sim.model.model_config else 24    
     new_job = wrfhydropy.Job(
         job_id='ncores_candidate',
-        exe_cmd=old_job._exe_cmd,
+        exe_cmd=exe_cmd,
         restart_freq_hr=24,
-        output_freq_hr=24
+        output_freq_hr=out_dt
     )
-    
+
     # Remove old job and add new job
     candidate_sim_ncores.jobs.pop(0)
     candidate_sim_ncores.add(new_job)
 
     # Edit the sim object number of cores
     if candidate_sim_ncores.scheduler is not None:
-        candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - 1
+        core_reduction = 36 if int(ncores) >= 72 else 1
+        candidate_sim_ncores.scheduler.nproc = candidate_sim_ncores.scheduler.nproc - core_reduction
     else:
         candidate_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
 
@@ -247,6 +262,8 @@ def test_perfrestart_candidate(output_dir):
 
     # Set run directory
     run_dir = output_dir.joinpath('restart_candidate')
+    if run_dir.exists():
+        pytest.skip('Candidate restart run dir exists, skipping restart candidate run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
 
