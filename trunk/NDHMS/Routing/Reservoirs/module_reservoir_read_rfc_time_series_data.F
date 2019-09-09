@@ -6,9 +6,6 @@ module module_reservoir_read_rfc_time_series_data
     use netcdf
     implicit none
 
-    ! The time_series_data is a singleton in that the object is instantiated only once per
-    ! processor by the first reservoir on that processor that needs it. The object is then used
-    ! by every other reservoir on that processor that needs it.
     type :: time_series_data_type
 
         character(len=19)               :: start_date
@@ -76,8 +73,7 @@ contains
         forecast_discharges = this%forecast_discharges
 
         ! Deallocate forecast arrays
-        !if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
-
+        if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
 
     end subroutine time_series_data_init
 
@@ -139,8 +135,6 @@ contains
             time_series_file_name = trim(this%time_series_path) // old_date // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
 
-
-print *, time_series_file_name
             ! Check if file exists
             inquire(FILE = time_series_file_name, EXIST = file_exists)
             if (file_exists) then
@@ -180,18 +174,9 @@ print *, time_series_file_name
 
         call read_time_series_netcdf_integer_variables(ncid, 'timeStep', this%time_step_seconds)
 
-        print *, this%offset_time_seconds
-
-        print *, this%forecast_counts
-
-        print *, this%time_step_seconds
-
         allocate (this%forecast_discharges(this%forecast_counts))
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', this%forecast_discharges)
-
-        print *, this%forecast_discharges
-
 
     end subroutine read_time_series_file
 

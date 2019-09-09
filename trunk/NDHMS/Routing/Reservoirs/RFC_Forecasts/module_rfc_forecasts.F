@@ -126,12 +126,6 @@ contains
         this%properties%lookback_seconds, this%properties%offset_time_seconds, this%properties%forecast_counts, &
         this%properties%time_step_seconds, this%state%forecast_discharges)
 
-        print *, 'this%state%forecast_discharges'
-        print *, this%state%forecast_discharges
-
-        flush(6)
-
-
     end subroutine rfc_forecasts_init
 
     ! RFC Forecasts Destructor
