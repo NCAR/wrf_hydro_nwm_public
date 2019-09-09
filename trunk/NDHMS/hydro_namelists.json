@@ -144,6 +144,7 @@
     "gridded": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -169,6 +170,7 @@
     "gridded_no_lakes": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -194,6 +196,7 @@
     "reach": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
             "outlake": 0,
