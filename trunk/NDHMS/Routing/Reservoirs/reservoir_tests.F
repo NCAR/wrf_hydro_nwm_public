@@ -55,7 +55,7 @@ program reservoir_unit_tests
         implicit none
         logical rv                       ! test result
         type (levelpool_struct) :: levelpool_reservoir_data
-        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: lake_area, weir_elevation, weir_coefficient
         real :: weir_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth
         integer :: lake_number
@@ -70,7 +70,7 @@ program reservoir_unit_tests
 
         lake_area = 1.509490013122558594e+01
         weir_elevation = 9.626000022888183238e+00
-        weir_coeffecient = 4.000000000000000222e-01
+        weir_coefficient = 0.4
         weir_length = 1.000000000000000000e+01
         orifice_elevation = 7.733333269755045869e+00
         orifice_coefficient = 1.000000000000000056e-01
@@ -94,7 +94,7 @@ program reservoir_unit_tests
         209.53554, 205.97734, 202.51857, 199.1559, 195.88605, 192.70595, 189.61255 /)
 
         call levelpool_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, lake_number)
+        weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, lake_number)
 
         water_elevation = 9.73733330
 
@@ -108,7 +108,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow == 17.0451450) then
+        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450)) then
             rv = .true.
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Passed'
