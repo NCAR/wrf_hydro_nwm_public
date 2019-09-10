@@ -280,7 +280,6 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
     run_dir = output_dir / 'channel_only_candidate_ncores'
 
     if not run_dir.exists():
-
         run_dir.mkdir(parents=True)
         os.chdir(str(run_dir))
 
@@ -326,6 +325,8 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
         candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
 
     else:
+        print('Candidate channel-only n_cores run dir exists, '
+              'skipping n_cores candidate channel-only run...')
         candidate_channel_only_sim_ncores = pickle.load(
             open(run_dir.joinpath('WrfHydroSim_collected.pkl'), 'rb'))
 
