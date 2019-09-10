@@ -164,7 +164,7 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
             "Reference code run exited with non-zero status"
 
 
-def test_ncores_candidate(output_dir, exe_cmd, ncores):
+def test_ncores_candidate(output_dir, exe_cmd, ncores, xrcmp_n_cores):
     print("\nQuestion: The candidate outputs from a ncores run match outputs from"
           " ncores-1 run?\n", end='')
     print('\n')
@@ -234,7 +234,8 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_sim_ncores.output,
             candidate_sim_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -245,7 +246,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores):
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
 
-def test_perfrestart_candidate(output_dir):
+def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
     print("\nQuestion: The candidate outputs from a restart run match the outputs from standard "
           "run?\n", end='')
     print('\n')
@@ -347,7 +348,8 @@ def test_perfrestart_candidate(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_sim_restart.output,
             candidate_sim_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not
