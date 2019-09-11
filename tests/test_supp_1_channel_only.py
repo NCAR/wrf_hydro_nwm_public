@@ -110,17 +110,18 @@ def test_run_candidate_channel_only(
     print("\nQuestion: The candidate channel-only mode runs successfully?\n", end='')
     print('\n')
 
-    candidate_sim_copy = copy.deepcopy(candidate_sim)
-    candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
-    candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
-
-    ##################
     # re-run candidate at shorter duration since requires hourly outputs
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'channel_only_candidate_full_model_run'
+    if run_dir.exists():
+        pytest.skip('Candidate channel-only run dir exists, skipping candidate channel-only run')
     run_dir.mkdir(parents=True)
     os.chdir(str(run_dir))
+
+    candidate_sim_copy = copy.deepcopy(candidate_sim)
+    candidate_sim_copy.base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
+    candidate_channel_only_sim_copy = copy.deepcopy(candidate_channel_only_sim)
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
@@ -273,51 +274,61 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
           "from an ncores-1 run?\n", end='')
     print('\n')
 
-    candidate_channel_only_sim = \
-        pickle.load(candidate_channel_only_sim_file.open("rb"))
-    candidate_channel_only_sim_expected = \
-        pickle.load(candidate_channel_only_collected_file.open("rb"))
-    candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
-    candidate_channel_only_sim_ncores. \
-        base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
+    candidate_channel_only_sim_expected = pickle.load(
+        candidate_channel_only_collected_file.open("rb"))
+
     run_dir = output_dir / 'channel_only_candidate_ncores'
-    run_dir.mkdir(parents=True)
-    os.chdir(str(run_dir))
 
-    old_job = candidate_channel_only_sim.jobs[0]
-    new_job = wrfhydropy.Job(
-        job_id='ncores_candidate',
-        model_start_time=old_job._model_start_time,
-        model_end_time=old_job._model_end_time,
-        exe_cmd=old_job._exe_cmd,
-        restart_freq_hr=6,
-        output_freq_hr=1
-    )
+    if not run_dir.exists():
+        run_dir.mkdir(parents=True)
+        os.chdir(str(run_dir))
 
-    # Remove old job and add new job
-    candidate_channel_only_sim_ncores.jobs.pop(0)
-    candidate_channel_only_sim_ncores.add(new_job)
+        candidate_channel_only_sim = \
+            pickle.load(candidate_channel_only_sim_file.open("rb"))
+        candidate_channel_only_sim_ncores = copy.deepcopy(candidate_channel_only_sim)
+        candidate_channel_only_sim_ncores. \
+            base_hydro_namelist['hydro_nlist']['output_channelbucket_influx'] = 2
 
-    # Edit the sim object number of cores
-    if candidate_channel_only_sim_ncores.scheduler is not None:
-        candidate_channel_only_sim_ncores.scheduler.nproc = \
-            candidate_channel_only_sim_ncores.scheduler.nproc - 1
+        old_job = candidate_channel_only_sim.jobs[0]
+        new_job = wrfhydropy.Job(
+            job_id='ncores_candidate',
+            model_start_time=old_job._model_start_time,
+            model_end_time=old_job._model_end_time,
+            exe_cmd=old_job._exe_cmd,
+            restart_freq_hr=6,
+            output_freq_hr=1
+        )
+
+        # Remove old job and add new job
+        candidate_channel_only_sim_ncores.jobs.pop(0)
+        candidate_channel_only_sim_ncores.add(new_job)
+
+        # Edit the sim object number of cores
+        if candidate_channel_only_sim_ncores.scheduler is not None:
+            candidate_channel_only_sim_ncores.scheduler.nproc = \
+                candidate_channel_only_sim_ncores.scheduler.nproc - 1
+        else:
+            candidate_channel_only_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
+
+        # Recompose into new directory and run
+        # catch warnings related to missing start and end job times
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            candidate_channel_only_sim_ncores.compose(force=True)
+
+        print('\nwaiting for job to complete...', end='')
+        candidate_channel_only_sim_ncores.run()
+
+        wait_job(candidate_channel_only_sim_ncores)
+
+        candidate_channel_only_sim_ncores.collect()
+        candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
     else:
-        candidate_channel_only_sim_ncores.jobs[0]._exe_cmd = exe_cmd.format(str(int(ncores)-1))
-
-    # Recompose into new directory and run
-    # catch warnings related to missing start and end job times
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        candidate_channel_only_sim_ncores.compose(force=True)
-
-    print('\nwaiting for job to complete...', end='')
-    candidate_channel_only_sim_ncores.run()
-
-    wait_job(candidate_channel_only_sim_ncores)
-
-    candidate_channel_only_sim_ncores.collect()
-    candidate_channel_only_sim_ncores.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+        print('Candidate channel-only n_cores run dir exists, '
+              'skipping n_cores candidate channel-only run...')
+        candidate_channel_only_sim_ncores = pickle.load(
+            open(run_dir.joinpath('WrfHydroSim_collected.pkl'), 'rb'))
 
     for job in candidate_channel_only_sim_ncores.jobs:
         assert job.exit_status == 0, \
@@ -354,71 +365,77 @@ def test_perfrestart_candidate_channel_only(output_dir):
           "from standard run?\n", end='')
     print('\n')
 
-    # Load initial run model object and copy
-    candidate_channel_only_sim = \
-        pickle.load(candidate_channel_only_sim_file.open(mode="rb"))
     candidate_channel_only_sim_expected = \
         pickle.load(candidate_channel_only_collected_file.open(mode="rb"))
-    candidate_channel_only_sim_restart = copy.deepcopy(candidate_channel_only_sim)
 
-    # Set run directory
     run_dir = output_dir / 'channel_only_candidate_restart'
-    run_dir.mkdir(parents=True)
-    os.chdir(str(run_dir))
 
-    # Get a new start time halfway along the run, make sure the restart frequency accomodates
-    restart_job = candidate_channel_only_sim_restart.jobs[0]
-    duration = restart_job.model_end_time - restart_job.model_start_time
-    delay_restart_hr = int((duration.total_seconds() / 3600)/2)
+    if not run_dir.exists():
 
-    # Want matching restart frequencies for this test...
-    assert \
-        candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == \
-        candidate_channel_only_sim.jobs[0].restart_freq_hr_hrldas, \
-        "Hydro and HRLDAS components do not have the same restart frequencies."
+        run_dir.mkdir(parents=True)
+        os.chdir(str(run_dir))
 
-    assert delay_restart_hr % candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == 0, \
-        "The restart delay is not a multiple of the restart frequency."
-    restart_job.model_start_time = \
-        restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
+        candidate_channel_only_sim = \
+            pickle.load(candidate_channel_only_sim_file.open(mode="rb"))
+        candidate_channel_only_sim_restart = copy.deepcopy(candidate_channel_only_sim)
 
-    # Get restart files from previous run and symlink into restart sim dir
-    # Hydro: Use actual time listed in meta data not filename or positional list index
-    for restart_file in candidate_channel_only_sim_expected.output.restart_hydro:
-        restart_time = restart_file.open().Restart_Time
-        restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
-        if restart_time == restart_job.model_start_time:
-            candidate_hydro_restart_file = pathlib.Path(restart_file.name)
-            candidate_hydro_restart_file.symlink_to(restart_file)
-            key1 = 'hydro_nlist'
-            key2 = 'restart_file'
-            restart_job._hydro_namelist[key1][key2] = candidate_hydro_restart_file
+        # Get a new start time halfway along the run, make sure the restart frequency accomodates
+        restart_job = candidate_channel_only_sim_restart.jobs[0]
+        duration = restart_job.model_end_time - restart_job.model_start_time
+        delay_restart_hr = int((duration.total_seconds() / 3600)/2)
 
-    # Nudging: Use actual time listed in meta data not filename or positional list index
-    if candidate_channel_only_sim_expected.output.restart_nudging is not None:
-        for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
-            restart_time = restart_file.open().modelTimeAtOutput
+        # Want matching restart frequencies for this test...
+        assert \
+            candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == \
+            candidate_channel_only_sim.jobs[0].restart_freq_hr_hrldas, \
+            "Hydro and HRLDAS components do not have the same restart frequencies."
+
+        assert delay_restart_hr % candidate_channel_only_sim.jobs[0].restart_freq_hr_hydro == 0, \
+            "The restart delay is not a multiple of the restart frequency."
+        restart_job.model_start_time = \
+            restart_job.model_start_time + dt.timedelta(hours=delay_restart_hr)
+
+        # Get restart files from previous run and symlink into restart sim dir
+        # Hydro: Use actual time listed in meta data not filename or positional list index
+        for restart_file in candidate_channel_only_sim_expected.output.restart_hydro:
+            restart_time = restart_file.open().Restart_Time
             restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
             if restart_time == restart_job.model_start_time:
-                candidate_nudging_restart_file = pathlib.Path(restart_file.name)
-                candidate_nudging_restart_file.symlink_to(restart_file)
-                key1 = 'nudging_nlist'
-                key2 = 'nudginglastobsfile'
-                restart_job._hydro_namelist[key1][key2] = candidate_nudging_restart_file
+                candidate_hydro_restart_file = pathlib.Path(restart_file.name)
+                candidate_hydro_restart_file.symlink_to(restart_file)
+                key1 = 'hydro_nlist'
+                key2 = 'restart_file'
+                restart_job._hydro_namelist[key1][key2] = candidate_hydro_restart_file
 
-    # Compose and run
-    # Catch warnings related to missing start and end job times
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        candidate_channel_only_sim_restart.compose(force=True)
+        # Nudging: Use actual time listed in meta data not filename or positional list index
+        if candidate_channel_only_sim_expected.output.restart_nudging is not None:
+            for restart_file in candidate_channel_only_sim_expected.output.restart_nudging:
+                restart_time = restart_file.open().modelTimeAtOutput
+                restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
+                if restart_time == restart_job.model_start_time:
+                    candidate_nudging_restart_file = pathlib.Path(restart_file.name)
+                    candidate_nudging_restart_file.symlink_to(restart_file)
+                    key1 = 'nudging_nlist'
+                    key2 = 'nudginglastobsfile'
+                    restart_job._hydro_namelist[key1][key2] = candidate_nudging_restart_file
 
-    print('\nwaiting for job to complete...', end='')
-    candidate_channel_only_sim_restart.run()
+        # Compose and run
+        # Catch warnings related to missing start and end job times
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            candidate_channel_only_sim_restart.compose(force=True)
 
-    wait_job(candidate_channel_only_sim_restart)
+        print('\nwaiting for job to complete...', end='')
+        candidate_channel_only_sim_restart.run()
 
-    candidate_channel_only_sim_restart.collect()
-    candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+        wait_job(candidate_channel_only_sim_restart)
+
+        candidate_channel_only_sim_restart.collect()
+        candidate_channel_only_sim_restart.pickle(run_dir.joinpath('WrfHydroSim_collected.pkl'))
+
+    else:
+        candidate_channel_only_sim_restart = pickle.load(
+            open(run_dir.joinpath('WrfHydroSim_collected.pkl'), 'rb'))
 
     for job in candidate_channel_only_sim_restart.jobs:
         assert job.exit_status == 0, \
