@@ -206,7 +206,11 @@ def test_run_candidate_channel_only(
 
 
 # Channel-only matches full-model?
-def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
+def test_channel_only_matches_full(
+    candidate_channel_only_sim,
+    output_dir,
+    xrcmp_n_cores
+):
 
     if candidate_channel_only_sim.model.model_config.lower().find('nwm') < 0:
         pytest.skip('Channel-only test only applicable to nwm_ana config')
@@ -249,7 +253,8 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
             candidate_run_expected.output,
             candidate_channel_only_run_expected.output,
             nccmp_options=nccmp_options,
-            exclude_vars=EXCLUDE_VARS_CHAN_ONLY
+            exclude_vars=EXCLUDE_VARS_CHAN_ONLY,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
@@ -260,7 +265,12 @@ def test_channel_only_matches_full(candidate_channel_only_sim, output_dir):
 
 
 # Channel-only ncores question
-def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
+def test_ncores_candidate_channel_only(
+    output_dir,
+    ncores,
+    exe_cmd,
+    xrcmp_n_cores
+):
 
     candidate_channel_only_sim_file = \
         output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
@@ -340,7 +350,8 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_ncores.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not
@@ -351,7 +362,7 @@ def test_ncores_candidate_channel_only(output_dir, ncores, exe_cmd):
         'Outputs for candidate_channel_only run with ncores do not match outputs with ncores-1'
 
 
-def test_perfrestart_candidate_channel_only(output_dir):
+def test_perfrestart_candidate_channel_only(output_dir, xrcmp_n_cores):
 
     candidate_channel_only_sim_file = \
         output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
@@ -447,7 +458,8 @@ def test_perfrestart_candidate_channel_only(output_dir):
         diffs = wrfhydropy.outputdiffs.OutputDataDiffs(
             candidate_channel_only_sim_restart.output,
             candidate_channel_only_sim_expected.output,
-            exclude_vars=EXCLUDE_VARS
+            exclude_vars=EXCLUDE_VARS,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
     # Assert all diff values are 0 and print diff stats if not
