@@ -1,36 +1,40 @@
-# Testing wrf\_hydro\_nwm\_public & wrf\_hydro\_nwm
+# Testing wrf\_hydro\_nwm\_public
 
-## Status
-For the community 5.0 release: testing is in something of a crude
-state, but it is funcitonal. Improvements are on their way. 
+## Overview
+Please use testing, please help improve testing (including documentation). 
+You are responsible for your code passing these tests on multiple domains, 
+you should use it on machines  where you run, not just via Travis CI.  
 
 
 ## Purposes: 
 * Protect production code
-* Distribute responsibility
+* Distribute responsibility (smokey the bear style)
 * Reproducibility and communication: log files
 * Support your development: boost confidence, find bugs faster
 
-The mantra is: *Test with every compile on small domains.*
+The mantra is: *Test with every compile on small domains (then test CONUS on PR).*
 
 
-## Overview
-Conceptually a *candidate* takes a *test*. The names of the `take\_test.sh` 
-and and `take_test.py` scripts emphasize that there are two parts: the taker 
-and the test. The candidate which takes the test is the state of this (or 
-potentially some other) repository. The tests are encoded in the `tests/` 
-directory. The tests referr to another repository state called the 
-"reference", this is a blessed state of the repository for the candidate's 
-results.
+## Conceptual
+Conceptually a *candidate* takes a *test*. The candidate which takes the test 
+is the state of this (or potentially some other) repository. The tests are 
+encoded in the `tests/` directory. The tests referr to another repository 
+state called the *reference*, this is a blessed state of the repository for 
+the candidate's results, typically thats known as 'upstream master' in git
+parlance. In most cases the candidate will not change the results/output of the
+reference. In some cases candidate will change the output of the reference, 
+then evidence, justification, and discussion are required to accept such changes 
+to the output.
 
-By default: 
-* Candidate is the current (potentially uncommitted) state of the repo from which 
-`take_test` is invoked. 
-* Reference is upstream/master (either NCAR/wrf_hydro_nwm_public or 
-NCAR/wrf_hydro_nwm).
-* The tests are defined by the `tests/test_*` files. 
 
 ## Usage
+
+Testing uses `pytest` which carries out operations with the model using 
+
+
+
+
+
 Currently there are 2 ways to invoke the testing. The fundamental way:
 `python take_test.py <options>`. This works fine on linux. But if you want to 
 test on a non-linux machine using docker, the following script is meant to be 
