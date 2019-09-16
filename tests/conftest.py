@@ -75,7 +75,7 @@ def pytest_addoption(parser):
         action='store_true',
         help='Use PBS scheduler on cheyenne'
     )
-    
+
     parser.addoption(
         '--nnodes',
         default='2',
@@ -116,6 +116,21 @@ def pytest_addoption(parser):
         help='The MPI-dependent model execution command. Default is best guess. '
         'The first/zeroth variable is set to the total number of cores. The '
         'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
+    )
+
+    parser.addoption(
+        '--use_existing_test_dir',
+        default=False,
+        required=False,
+        action='store_true',
+        help='Use existing compiles and runs, only perform output comparisons.'
+    )
+
+    parser.addoption(
+        '--xrcmp_n_cores',
+        default=0,
+        required=False,
+        help='Use xrcmp if > 0, and how many cores if so?'
     )
 
 
@@ -352,19 +367,21 @@ def reference_nwm_output_sim(request):
 def output_dir(request):
     configuration = request.config.getoption("--config")
     output_dir = request.config.getoption("--output_dir")
+    use_existing_test_dir = request.config.getoption("--use_existing_test_dir")
 
     output_dir = pathlib.Path(output_dir)
     output_dir = output_dir / configuration
+    if not use_existing_test_dir:
+        output_dir.mkdir(parents=True)
 
-    if output_dir.is_dir() is True:
-        shutil.rmtree(str(output_dir))
-
-    output_dir.mkdir(parents=True)
     return output_dir
 
 
 @pytest.fixture(scope="session")
 def ncores(request):
-    ncores = request.config.getoption("--ncores")
+    return int(request.config.getoption("--ncores"))
 
-    return ncores
+
+@pytest.fixture(scope="session")
+def xrcmp_n_cores(request):
+    return int(request.config.getoption("--xrcmp_n_cores"))

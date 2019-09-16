@@ -35,7 +35,7 @@ CONTAINS
 		 XLAND,     XICE,XICE_THRES,                                & ! IN : Vegetation/Soil characteristics
                  IDVEG, IOPT_CRS,  IOPT_BTR, IOPT_RUN, IOPT_SFC, IOPT_FRZ,  & ! IN : User options
               IOPT_INF, IOPT_RAD,  IOPT_ALB, IOPT_SNF,IOPT_TBOT, IOPT_STC,  & ! IN : User options
-              IOPT_GLA, IOPT_RSF,   IZ0TLND,                                & ! IN : User options
+              IOPT_GLA, IOPT_RSF, IOPT_SOIL,IOPT_PEDO,IOPT_CROP,  IZ0TLND,  & ! IN : User options
                    T3D,     QV3D,     U_PHY,    V_PHY,   SWDOWN,      GLW,  & ! IN : Forcing
 		 P8W3D,PRECIP_IN,        SR,                                & ! IN : Forcing
                    TSK,      HFX,      QFX,        LH,   GRDFLX,    SMSTAV, & ! IN/OUT LSM eqv
@@ -118,6 +118,9 @@ CONTAINS
     INTEGER,                                         INTENT(IN   ) ::  IOPT_STC  ! snow/soil temperature time scheme
     INTEGER,                                         INTENT(IN   ) ::  IOPT_GLA  ! glacier option (1->phase change; 2->simple)
     INTEGER,                                         INTENT(IN   ) ::  IOPT_RSF  ! surface resistance (1->Sakaguchi/Zeng; 2->Seller; 3->mod Sellers; 4->1+snow)
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_SOIL ! soil configuration option
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_PEDO ! soil pedotransfer function option
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
     INTEGER,                                         INTENT(IN   ) ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  QV3D      ! 3D water vapor mixing ratio [kg/kg_dry]
@@ -295,6 +298,7 @@ CONTAINS
     REAL                                :: Z_ML         ! model height [m]
     INTEGER                             :: VEGTYP       ! vegetation type
     INTEGER                             :: SOILTYP      ! soil type
+    INTEGER                             :: CROPTYPE     ! crop type
     REAL                                :: FVEG         ! vegetation fraction [-]
     REAL                                :: FVGMAX       ! annual max vegetation fraction []
     REAL                                :: TBOT         ! deep soil temperature [K]
@@ -359,6 +363,9 @@ CONTAINS
     REAL                                :: RTMASS       ! mass of fine roots [g/m2]
     REAL                                :: STMASS       ! stem mass [g/m2]
     REAL                                :: WOOD         ! mass of wood (incl. woody roots) [g/m2]
+    REAL                                :: GRAIN        ! mass of grain XING [g/m2]
+    REAL                                :: GDD          ! mass of grain XING[g/m2]
+    INTEGER                             :: PGS          !stem respiration [g/m2/s]
     REAL                                :: STBLCP       ! stable carbon in deep soil [g/m2]
     REAL                                :: FASTCP       ! short-lived carbon, shallow soil [g/m2]
     REAL                                :: PLAI         ! leaf area index
@@ -392,6 +399,9 @@ CONTAINS
     REAL                                :: RSSHA        ! shaded leaf stomatal resistance (s/m)
     REAL, DIMENSION(1:2)                :: ALBSND       ! snow albedo (direct)
     REAL, DIMENSION(1:2)                :: ALBSNI       ! snow albedo (diffuse)
+    REAL                                :: RB           ! leaf boundary layer resistance (s/m)
+    REAL                                :: LAISUN       ! sunlit leaf area index (m2/m2)
+    REAL                                :: LAISHA       ! shaded leaf area index (m2/m2)
     REAL                                :: BGAP         ! between gap fraction
     REAL                                :: WGAP         ! within gap fraction
     REAL                                :: TGV          ! under canopy ground temperature[K]
@@ -464,7 +474,7 @@ CONTAINS
 
     CALL NOAHMP_OPTIONS(IDVEG  ,IOPT_CRS  ,IOPT_BTR  ,IOPT_RUN  ,IOPT_SFC  ,IOPT_FRZ , &
                      IOPT_INF  ,IOPT_RAD  ,IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC , &
-		     IOPT_RSF )
+		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP )
 
     IPRINT    =  .false.                     ! debug printout
 
@@ -546,6 +556,8 @@ CONTAINS
 	                                              !    consistent with temperature, mixing ratio
        PSFC   = P8W3D(I,1,J)                          ! surface pressure defined a full levels [Pa]
        PRCP   = PRECIP_IN (I,J) / DT                  ! timestep total precip rate (glacier) [mm/s]! MB: v3.7
+
+       CROPTYPE = 0
 
        IF (PRESENT(MP_RAINC) .AND. PRESENT(MP_RAINNC) .AND. PRESENT(MP_SHCV) .AND. &
            PRESENT(MP_SNOW)  .AND. PRESENT(MP_GRAUP)  .AND. PRESENT(MP_HAIL)   ) THEN
@@ -646,8 +658,12 @@ CONTAINS
        parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
        parameters%rsurf_exp = RSURFEXP_2D(I,J)    ! exponent in the shape parameter for soil resistance option 1
 #endif
-       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters)
+       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
        
+       GRAIN = 0.0                ! mass of grain [g/m2]
+       GDD   = 0.0                ! growing degree days
+       PGS   = 0                  ! crop growth stage
+
        if (HVT_TABLE(VEGTYP) > 0.0) then
          parameters%hvb = parameters%hvt * HVB_TABLE(VEGTYP) / HVT_TABLE(VEGTYP)
        else
@@ -766,7 +782,7 @@ CONTAINS
          CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
-            FVEG    , FVGMAX  , VEGTYP  , ICE     , IST     ,           & ! IN : Vegetation/Soil characteristics
+            FVEG    , FVGMAX  , VEGTYP  , ICE     , IST     , CROPTYPE, & ! IN : Vegetation/Soil characteristics
             SMCEQ   ,                                                   & ! IN : Vegetation/Soil characteristics
             T_ML    , P_ML    , PSFC    , U_ML    , V_ML    , Q_ML    , & ! IN : Forcing
             QC      , SWDN    , LWDN    ,                               & ! IN : Forcing
@@ -779,6 +795,7 @@ CONTAINS
             ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
             STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT : 
             CM      , CH      , TAUSS   ,                               & ! IN/OUT : 
+            GRAIN   , GDD     , PGS     ,                               & ! IN/OUT 
             SMCWTD  ,DEEPRECH , RECH    ,                               & ! IN/OUT :
             Z0WRF   ,                                                   &
             FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT : 
@@ -792,7 +809,7 @@ CONTAINS
             SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
 	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
 	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , & 
-            PAHG    , PAHB    , PAH                                     &
+            PAHG    , PAHB    , PAH     , LAISUN  , LAISHA  , RB        &
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
@@ -976,7 +993,7 @@ CONTAINS
   END SUBROUTINE noahmplsm
 !------------------------------------------------------
 
-SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameters)
+SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,parameters)
 
   USE NOAHMP_TABLES
   USE MODULE_SF_NOAHMPLSM
@@ -987,6 +1004,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   INTEGER, INTENT(IN)    :: SOILTYPE
   INTEGER, INTENT(IN)    :: SLOPETYPE
   INTEGER, INTENT(IN)    :: SOILCOLOR
+  INTEGER, INTENT(IN)    :: CROPTYPE
     
   type (noahmp_parameters), intent(inout) :: parameters
     
@@ -998,10 +1016,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
   parameters%ISWATER   =   ISWATER_TABLE
   parameters%ISBARREN  =  ISBARREN_TABLE
   parameters%ISICE     =     ISICE_TABLE
+  parameters%ISCROP    =    ISCROP_TABLE
   parameters%EBLFOREST = EBLFOREST_TABLE
 
   parameters%URBAN_FLAG = .FALSE.
-  IF( VEGTYPE == ISURBAN_TABLE .or. VEGTYPE == 31 .or.VEGTYPE  == 32 .or. VEGTYPE == 33) THEN
+  IF( VEGTYPE == ISURBAN_TABLE                  .or. VEGTYPE == LOW_DENSITY_RESIDENTIAL_TABLE  .or. &
+      VEGTYPE == HIGH_DENSITY_RESIDENTIAL_TABLE .or. VEGTYPE == HIGH_INTENSITY_INDUSTRIAL_TABLE ) THEN
      parameters%URBAN_FLAG = .TRUE.
   ENDIF
 
@@ -1077,6 +1097,51 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
    parameters%EG        = EG_TABLE
 
 !------------------------------------------------------------------------------------------!
+! Transfer crop parameters
+!------------------------------------------------------------------------------------------!
+
+  IF(CROPTYPE > 0) THEN
+   parameters%PLTDAY    =    PLTDAY_TABLE(CROPTYPE)    ! Planting date
+   parameters%HSDAY     =     HSDAY_TABLE(CROPTYPE)    ! Harvest date
+   parameters%PLANTPOP  =  PLANTPOP_TABLE(CROPTYPE)    ! Plant density [per ha] - used?
+   parameters%IRRI      =      IRRI_TABLE(CROPTYPE)    ! Irrigation strategy 0= non-irrigation 1=irrigation (no water-stress)
+   parameters%GDDTBASE  =  GDDTBASE_TABLE(CROPTYPE)    ! Base temperature for GDD accumulation [C]
+   parameters%GDDTCUT   =   GDDTCUT_TABLE(CROPTYPE)    ! Upper temperature for GDD accumulation [C]
+   parameters%GDDS1     =     GDDS1_TABLE(CROPTYPE)    ! GDD from seeding to emergence
+   parameters%GDDS2     =     GDDS2_TABLE(CROPTYPE)    ! GDD from seeding to initial vegetative 
+   parameters%GDDS3     =     GDDS3_TABLE(CROPTYPE)    ! GDD from seeding to post vegetative 
+   parameters%GDDS4     =     GDDS4_TABLE(CROPTYPE)    ! GDD from seeding to intial reproductive
+   parameters%GDDS5     =     GDDS5_TABLE(CROPTYPE)    ! GDD from seeding to pysical maturity 
+   parameters%C3C4      =      C3C4_TABLE(CROPTYPE)    ! photosynthetic pathway:  1. = c3 2. = c4
+   parameters%AREF      =      AREF_TABLE(CROPTYPE)    ! reference maximum CO2 assimulation rate 
+   parameters%PSNRF     =     PSNRF_TABLE(CROPTYPE)    ! CO2 assimulation reduction factor(0-1) (caused by non-modeling part,e.g.pest,weeds)
+   parameters%I2PAR     =     I2PAR_TABLE(CROPTYPE)    ! Fraction of incoming solar radiation to photosynthetically active radiation
+   parameters%TASSIM0   =   TASSIM0_TABLE(CROPTYPE)    ! Minimum temperature for CO2 assimulation [C]
+   parameters%TASSIM1   =   TASSIM1_TABLE(CROPTYPE)    ! CO2 assimulation linearly increasing until temperature reaches T1 [C]
+   parameters%TASSIM2   =   TASSIM2_TABLE(CROPTYPE)    ! CO2 assmilation rate remain at Aref until temperature reaches T2 [C]
+   parameters%K         =         K_TABLE(CROPTYPE)    ! light extinction coefficient
+   parameters%EPSI      =      EPSI_TABLE(CROPTYPE)    ! initial light use efficiency
+   parameters%Q10MR     =     Q10MR_TABLE(CROPTYPE)    ! q10 for maintainance respiration
+   parameters%FOLN_MX   =   FOLN_MX_TABLE(CROPTYPE)    ! foliage nitrogen concentration when f(n)=1 (%)
+   parameters%LEFREEZ   =   LEFREEZ_TABLE(CROPTYPE)    ! characteristic T for leaf freezing [K]
+   parameters%DILE_FC   =   DILE_FC_TABLE(CROPTYPE,:)  ! coeficient for temperature leaf stress death [1/s]
+   parameters%DILE_FW   =   DILE_FW_TABLE(CROPTYPE,:)  ! coeficient for water leaf stress death [1/s]
+   parameters%FRA_GR    =    FRA_GR_TABLE(CROPTYPE)    ! fraction of growth respiration
+   parameters%LF_OVRC   =   LF_OVRC_TABLE(CROPTYPE,:)  ! fraction of leaf turnover  [1/s]
+   parameters%ST_OVRC   =   ST_OVRC_TABLE(CROPTYPE,:)  ! fraction of stem turnover  [1/s]
+   parameters%RT_OVRC   =   RT_OVRC_TABLE(CROPTYPE,:)  ! fraction of root tunrover  [1/s]
+   parameters%LFMR25    =    LFMR25_TABLE(CROPTYPE)    ! leaf maintenance respiration at 25C [umol CO2/m**2  /s]
+   parameters%STMR25    =    STMR25_TABLE(CROPTYPE)    ! stem maintenance respiration at 25C [umol CO2/kg bio/s]
+   parameters%RTMR25    =    RTMR25_TABLE(CROPTYPE)    ! root maintenance respiration at 25C [umol CO2/kg bio/s]
+   parameters%GRAINMR25 = GRAINMR25_TABLE(CROPTYPE)    ! grain maintenance respiration at 25C [umol CO2/kg bio/s]
+   parameters%LFPT      =      LFPT_TABLE(CROPTYPE,:)  ! fraction of carbohydrate flux to leaf
+   parameters%STPT      =      STPT_TABLE(CROPTYPE,:)  ! fraction of carbohydrate flux to stem
+   parameters%RTPT      =      RTPT_TABLE(CROPTYPE,:)  ! fraction of carbohydrate flux to root
+   parameters%GRAINPT   =   GRAINPT_TABLE(CROPTYPE,:)  ! fraction of carbohydrate flux to grain
+   parameters%BIO2LAI   =   BIO2LAI_TABLE(CROPTYPE)    ! leaf are per living leaf biomass [m^2/kg]
+  END IF
+
+!------------------------------------------------------------------------------------------!
 ! Transfer global parameters
 !------------------------------------------------------------------------------------------!
 
@@ -1086,6 +1151,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
    parameters%FSATMX     =      FSATMX_TABLE
    parameters%Z0SNO      =       Z0SNO_TABLE
    parameters%SSI        =         SSI_TABLE
+   parameters%SNOW_RET_FAC =  SNOW_RET_FAC_TABLE    
    parameters%SWEMX      =       SWEMX_TABLE
    parameters%TAU0         =      TAU0_TABLE
    parameters%GRAIN_GROWTH = GRAIN_GROWTH_TABLE
@@ -1153,6 +1219,122 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
 
  END SUBROUTINE TRANSFER_MP_PARAMETERS
 
+SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
+
+  use module_sf_noahmplsm
+  use noahmp_tables
+        
+  implicit none
+        
+  integer,                    intent(in   ) :: nsoil     ! number of soil layers
+  real, dimension( 1:nsoil ), intent(inout) :: sand
+  real, dimension( 1:nsoil ), intent(inout) :: clay
+  real, dimension( 1:nsoil ), intent(inout) :: orgm
+    
+  real, dimension( 1:nsoil ) :: theta_1500t
+  real, dimension( 1:nsoil ) :: theta_1500
+  real, dimension( 1:nsoil ) :: theta_33t
+  real, dimension( 1:nsoil ) :: theta_33
+  real, dimension( 1:nsoil ) :: theta_s33t
+  real, dimension( 1:nsoil ) :: theta_s33
+  real, dimension( 1:nsoil ) :: psi_et
+  real, dimension( 1:nsoil ) :: psi_e
+    
+  type(noahmp_parameters), intent(inout) :: parameters
+  integer :: k
+
+  do k = 1,4
+    if(sand(k) <= 0 .or. clay(k) <= 0) then
+      sand(k) = 0.41
+      clay(k) = 0.18
+    end if
+    if(orgm(k) <= 0 ) orgm(k) = 0.0
+  end do
+        
+  theta_1500t =   sr2006_theta_1500t_a*sand       &
+                + sr2006_theta_1500t_b*clay       &
+                + sr2006_theta_1500t_c*orgm       &
+                + sr2006_theta_1500t_d*sand*orgm  &
+                + sr2006_theta_1500t_e*clay*orgm  &
+                + sr2006_theta_1500t_f*sand*clay  &
+                + sr2006_theta_1500t_g
+
+  theta_1500  =   theta_1500t                      &
+                + sr2006_theta_1500_a*theta_1500t  &
+                + sr2006_theta_1500_b
+
+  theta_33t   =   sr2006_theta_33t_a*sand       &
+                + sr2006_theta_33t_b*clay       &
+                + sr2006_theta_33t_c*orgm       &
+                + sr2006_theta_33t_d*sand*orgm  &
+                + sr2006_theta_33t_e*clay*orgm  &
+                + sr2006_theta_33t_f*sand*clay  &
+                + sr2006_theta_33t_g
+
+  theta_33    =   theta_33t                              &
+                + sr2006_theta_33_a*theta_33t*theta_33t  &
+                + sr2006_theta_33_b*theta_33t            &
+                + sr2006_theta_33_c
+
+  theta_s33t  =   sr2006_theta_s33t_a*sand      &
+                + sr2006_theta_s33t_b*clay      &
+                + sr2006_theta_s33t_c*orgm      &
+                + sr2006_theta_s33t_d*sand*orgm &
+                + sr2006_theta_s33t_e*clay*orgm &
+                + sr2006_theta_s33t_f*sand*clay &
+                + sr2006_theta_s33t_g
+
+  theta_s33   = theta_s33t                       &
+                + sr2006_theta_s33_a*theta_s33t  &
+                + sr2006_theta_s33_b
+
+  psi_et      =   sr2006_psi_et_a*sand           &
+                + sr2006_psi_et_b*clay           &
+                + sr2006_psi_et_c*theta_s33      &
+                + sr2006_psi_et_d*sand*theta_s33 &
+                + sr2006_psi_et_e*clay*theta_s33 &
+                + sr2006_psi_et_f*sand*clay      &
+                + sr2006_psi_et_g
+ 
+  psi_e       =   psi_et                        &
+                + sr2006_psi_e_a*psi_et*psi_et  &
+                + sr2006_psi_e_b*psi_et         &
+                + sr2006_psi_e_c
+    
+  parameters%smcwlt = theta_1500
+  parameters%smcref = theta_33
+  parameters%smcmax =   theta_33    &
+                      + theta_s33            &
+                      + sr2006_smcmax_a*sand &
+                      + sr2006_smcmax_b
+
+  parameters%bexp   = 3.816712826 / (log(theta_33) - log(theta_1500) )
+  parameters%psisat = psi_e
+  parameters%dksat  = 1930.0 * (parameters%smcmax - theta_33) ** (3.0 - 1.0/parameters%bexp)
+  parameters%quartz = sand
+    
+! Units conversion
+    
+  parameters%psisat = max(0.1,parameters%psisat)     ! arbitrarily impose a limit of 0.1kpa
+  parameters%psisat = 0.101997 * parameters%psisat   ! convert kpa to m
+  parameters%dksat  = parameters%dksat / 3600000.0   ! convert mm/h to m/s
+  parameters%dwsat  = parameters%dksat * parameters%psisat *parameters%bexp / parameters%smcmax  ! units should be m*m/s
+  parameters%smcdry = parameters%smcwlt
+  
+! Introducing somewhat arbitrary limits (based on SOILPARM) to prevent bad things
+  
+  parameters%smcmax = max(0.32 ,min(parameters%smcmax,             0.50 ))
+  parameters%smcref = max(0.17 ,min(parameters%smcref,parameters%smcmax ))
+  parameters%smcwlt = max(0.01 ,min(parameters%smcwlt,parameters%smcref ))
+  parameters%smcdry = max(0.01 ,min(parameters%smcdry,parameters%smcref ))
+  parameters%bexp   = max(2.50 ,min(parameters%bexp,               12.0 ))
+  parameters%psisat = max(0.03 ,min(parameters%psisat,             1.00 ))
+  parameters%dksat  = max(5.e-7,min(parameters%dksat,              1.e-5))
+  parameters%dwsat  = max(1.e-6,min(parameters%dwsat,              3.e-5))
+  parameters%quartz = max(0.05 ,min(parameters%quartz,             0.95 ))
+    
+ END SUBROUTINE PEDOTRANSFER_SR2006
+
   SUBROUTINE NOAHMP_INIT ( MMINLU, SNOW , SNOWH , CANWAT , ISLTYP ,   IVGTYP, &
        TSLB , SMOIS , SH2O , DZS , FNDSOILW , FNDSNOWH ,             &
        TSK, isnowxy , tvxy     ,tgxy     ,canicexy ,         TMN,     XICE,   &
@@ -1164,7 +1346,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
        t2mvxy   ,t2mbxy   ,chstarxy,            &
 !jref:end       
        NSOIL, restart,                 &
-       allowed_to_read , iopt_run,                         &
+       allowed_to_read , iopt_run, iopt_crop, iopt_pedo,   &
        ids,ide, jds,jde, kds,kde,                &
        ims,ime, jms,jme, kms,kme,                &
        its,ite, jts,jte, kts,kte,                &
@@ -1182,7 +1364,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
          &                           ims,ime, jms,jme, kms,kme,  &
          &                           its,ite, jts,jte, kts,kte
 
-    INTEGER, INTENT(IN)       ::     NSOIL, iopt_run
+    INTEGER, INTENT(IN)       ::     NSOIL, iopt_run, iopt_crop, iopt_pedo
 
     LOGICAL, INTENT(IN)       ::     restart,                    &
          &                           allowed_to_read
@@ -1290,6 +1472,8 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,parameter
     call read_mp_soil_parameters()
     call read_mp_rad_parameters()
     call read_mp_global_parameters()
+    if(iopt_crop == 1) call read_mp_crop_parameters()
+    if(iopt_pedo == 1) call read_mp_optional_parameters()
 
     IF( .NOT. restart ) THEN
 

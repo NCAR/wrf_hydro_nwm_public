@@ -1,5 +1,9 @@
    TYPE RT_FIELD
    type (overland_struct) :: overland
+   type (subsurface_struct) :: subsurface
+   type (subsurface_static_interface) :: subsurface_static
+   type (subsurface_input_interface) :: subsurface_input
+   type (subsurface_output_interface) :: subsurface_output
 
    class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
@@ -46,18 +50,19 @@
   INTEGER, allocatable, DIMENSION(:,:)      :: LAK_1K
   INTEGER, allocatable, DIMENSION(:,:)      :: g_LAK_1K
   ! REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT, QSUBBDRYTRT
-  REAL :: QSUBBDRYTRT
+  !REAL :: QSUBBDRYTRT    ! QSUBBDRYTRT moved to subsurface io module
   !REAL,    allocatable, DIMENSION(:,:)      :: ELRT,SOXRT,SOYRT,OVROUGHRT,RETDEPRT
   REAL,    allocatable, DIMENSION(:,:)      :: ELRT
   !REAL,    allocatable, DIMENSION(:,:,:)    :: SO8RT
   INTEGER,    allocatable, DIMENSION(:,:,:) ::  SO8LD_D ! SO8RT_D moved to overland properties module
   REAL,    allocatable, DIMENSION(:,:)      :: SO8LD_Vmax
   REAL   Vmax
-  !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT,LKSATRT  ! SFCHEAD moved to overland control module
+  !REAL,    allocatable, DIMENSION(:,:)      :: LKSATRT !  LKSATRT moved to subsurface properties module
+  !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADRT,INFXSRT,LKSAT  ! SFCHEAD moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT,LKSAT,LKSATRT
   !REAL,    allocatable, DIMENSION(:,:)      :: SFCHEADSUBRT,INFXSUBRT,LKSATFAC  ! SFCHEADSUBRT, INFXSUBRT moved to overland control module
   REAL,    allocatable, DIMENSION(:,:)      :: LKSATFAC
-  REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT,ZWATTABLRT,QSUBBDRYRT,SOLDEPRT
+  !REAL,    allocatable, DIMENSION(:,:)      :: SOLDEPRT ! QSUBRT, QSUBBDRYRT moved to subsurface io module, SOLDEPRT, ZWATTABLRT move to susurface properties
   REAL,    allocatable, DIMENSION(:,:)      :: SUB_RESID
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x,q_sfcflx_y
   INTEGER,    allocatable, DIMENSION(:)      :: map_l2g, map_g2l
@@ -67,7 +72,7 @@
   INTEGER,    allocatable, DIMENSION(:,:)      :: gtoNode
 
 ! temp arrary cwatavail
-  real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT
+  !real, allocatable, DIMENSION(:,:,:)      :: SMCREFRT  ! SMCREFRT moved to subsurface grid_transform module
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR GW/Baseflow
   INTEGER :: numbasns
@@ -81,19 +86,23 @@
   REAL,    allocatable, DIMENSION(:)     :: z_gwsubbas   !depth in GW bucket
   REAL,    allocatable, DIMENSION(:)     :: qin_gwsubbas !flow to GW bucket
   REAL,    allocatable, DIMENSION(:)     :: qout_gwsubbas!flow from GW bucket
+  REAL,    allocatable, DIMENSION(:)     :: qloss_gwsubbas   !flow from GW bucket
   REAL,    allocatable, DIMENSION(:)     :: gwbas_pix_ct !ct of strm pixels in
   REAL,    allocatable, DIMENSION(:)     :: basns_area   !basin area
   REAL,    allocatable, DIMENSION(:)     :: node_area   !nodes area
 
-  REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm !GW bucket disch params
-  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask   ! bucket mask for NHDPLUS
-  INTEGER, allocatable, DIMENSION(:)     :: ct2_bas       !ct of lnd pixels in basn
+  REAL,    allocatable, DIMENSION(:)     :: z_q_bas_parm     !GW bucket parameters
+  INTEGER, allocatable, DIMENSION(:)     :: nhdBuckMask      !GW bucket mask for NHDPLUS
+  INTEGER, allocatable, DIMENSION(:)     :: ct2_bas          !ct of land pixels in basin
   REAL,    allocatable, DIMENSION(:)     :: bas_pcp      !sub-basin avg'd pcp
   INTEGER                                :: bas
   INTEGER, allocatable, DIMENSION(:)        :: bas_id
   CHARACTER(len=19)                      :: header
   CHARACTER(len=1)                       :: jnk
-  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff,gw_buck_exp,z_max  !GW bucket parameters
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_coeff    !GW bucket model coefficient
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_exp      !GW bucket model exponent
+  REAL, allocatable, DIMENSION(:)        :: gw_buck_loss     !GW bucket model loss fraction
+  REAL, allocatable, DIMENSION(:)        :: z_max            !Height of GW bucket
 !DJG Switch for Deep Sat GW Init:
   INTEGER                                :: DEEPGWSPIN  !Switch to setup deep GW spinp
 !BF Variables for gw2d
@@ -179,7 +188,7 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR AGGREGATION/DISAGGREGATION
-  REAL,    allocatable, DIMENSION(:,:,:)   :: SMCRT,SMCMAXRT,SMCWLTRT,SH2OWGT,SICE
+  REAL,    allocatable, DIMENSION(:,:,:)   :: SH2OWGT,SICE ! SMCRT, SMCMAXRT, SMCWLTRT moved to subsurface grid transform module
   REAL,    allocatable, DIMENSION(:,:)     :: INFXSAGGRT
   !REAL,    allocatable, DIMENSION(:,:)     :: DHRT,QSTRMVOLRT,QBDRYRT,LAKE_INFLORT ! dhrt and qbdryrt moved to overland control qstrmvolrt and lake_inflrt moved to overland stream and lakes
   REAL,    allocatable, DIMENSION(:,:)     :: QSTRMVOLRT_TS,LAKE_INFLORT_TS
@@ -228,10 +237,10 @@
       REAL,    allocatable, DIMENSION(:,:)   :: SMCMAX1,SMCWLT1,SMCREF1
       INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP
       REAL, allocatable, DIMENSION(:,:)      :: OV_ROUGH2d
-      REAL,    allocatable, DIMENSION(:)   :: SLDPTH
+      !REAL,    allocatable, DIMENSION(:)   :: SLDPTH
 
 !!! define constant/parameter
-    real ::   ov_rough(50), ZSOIL(100)
+    real ::   ov_rough(50)!, ZSOIL(100) ! ZSOIL moved to subsurface properties module
 !  out_counts: couput counts for current run.
 !  his_out_counts: used for channel routing output and  special for restart.
 !  his_out_counts = previous run + out_counts
