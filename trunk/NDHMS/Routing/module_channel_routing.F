@@ -268,7 +268,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
              AREAC = (TwCC * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2.0 * bfd * sqrt(1.0 + z*z))
              WPC = TwCC + (2.0 * (h_0-bfd)) !WPC is 2 times the Tw
-             WPk = WP*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
+             WPk = WP + WPC*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
              R   = (AREA + AREAC)/(WP +WPC)  ! hydraulic radius
             else
               AREA = (Bw + h_0 * z ) * h_0
@@ -324,10 +324,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2.0000 - Km*X)/D
            C3 =  (Km*(1.00000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3))
-           if(ChannK .lt. 0.0) then ! Disable channel loss for zero ChannK
+           if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
              C4 =  (ql*dt)/D
            else
-             C4 =  (ql*dt)/D - (ChannK * (WPk + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
+             C4 =  (ql*dt)/D - (ChannK * dx * WPk)  !-- DY & LKR lat inflow + channel loss
            endif
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
@@ -349,7 +349,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
              AREAC = (TwCC * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2.0 * bfd * sqrt(1.0 + z*z))
              WPC = TwCC + (2.0*(h-bfd)) !the additional wetted perimeter
-             WPk = WP*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
+             WPk = WP + WPC*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
              R   = (AREA + AREAC)/(WP +WPC)
             ! RC  = AREAC/WPC
            else
@@ -403,10 +403,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2.000000 - Km*X)/D
            C3 =  (Km*(1.000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3)) !! eliminate influence of upstream current
-           if(ChannK .lt. 0.0) then ! Disable channel loss for zero ChannK
+           if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
              C4 =  (ql*dt)/D
            else
-             C4 =  (ql*dt)/D  - (ChannK * dx * (WPk+WPC))  !-- (loss units: m/s * m * m)
+             C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
            endif
 
            if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
