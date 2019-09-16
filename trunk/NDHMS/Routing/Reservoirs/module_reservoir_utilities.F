@@ -135,10 +135,6 @@ contains
 
         if (projected_next_time_interval_storage > max_storage) then
 
-            ! This releases only the excess water. If the new outflow is added to the existing outflow,
-            ! then the reservoir maintains storage at the last value before exceeding maximum.
-            outflow = inflow - (max_storage - previous_time_storage) / time_interval
-
             max_storage_reached = .true.
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
@@ -153,7 +149,7 @@ contains
 
         else if (projected_next_time_interval_storage <= 0.0) then
 
-            outflow = previous_time_storage / time_interval
+            outflow = inflow
 
             write(log_warning,*)  "Modified release to prevent storage deficit for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."

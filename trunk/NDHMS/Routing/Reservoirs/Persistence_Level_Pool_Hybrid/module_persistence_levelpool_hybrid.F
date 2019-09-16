@@ -324,30 +324,20 @@ contains
         this%properties%max_storage, this%properties%lake_number, &
         this%state%current_time, int(routing_period), this%output%outflow, max_storage_reached)
 
-        ! If max storage has been reached, then set storage and water elevation to max
-        if (max_storage_reached) then
-            this%state%current_storage = this%properties%max_storage
-
-            this%state%water_elevation = this%state%levelpool_ptr%properties%max_depth
-
-        else
-            ! Calculate change in storage
-            delta_storage = (this%input%inflow - this%output%outflow) * routing_period
-
-            ! Update storage from the most recent model states
-            this%state%current_storage = this%state%current_storage + delta_storage
-
-            ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
-            ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
-            this%state%water_elevation = this%state%water_elevation + delta_storage / this%properties%lake_area
-
-            ! In theory this shouldn't happen, but due to floating point arithmetic, this is double checked to prevent
-            ! propagation of error.
-            if (this%state%water_elevation > this%state%levelpool_ptr%properties%max_depth) then
-                this%state%water_elevation = this%state%levelpool_ptr%properties%max_depth
-            end if
-
+        ! If max storage has been reached, release greater of persistence or levelpool
+        if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then
+            this%output%outflow = levelpool_outflow
         end if
+
+        ! Calculate change in storage
+        delta_storage = (this%input%inflow - this%output%outflow) * routing_period
+
+        ! Update storage from the most recent model states
+        this%state%current_storage = this%state%current_storage + delta_storage
+
+        ! Calculate new water elevation. Delta storage is used as opposed to calculating from current storage in
+        ! order to minimize floating point error because current storage is a much larger magnitude than water elevation.
+        this%state%water_elevation = this%state%water_elevation + delta_storage / this%properties%lake_area
 
         ! Update output variable returned from this subroutine
         outflow = this%output%outflow
