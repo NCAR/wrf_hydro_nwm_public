@@ -156,6 +156,15 @@ MODULE MODULE_SF_NOAHMPLSM
                       !   3 -> adjusted Sellers to decrease RSURF for wet soil
 		      !   4 -> option 1 for non-snow; rsurf = rsurf_snow for snow (set in MPTABLE); AD v3.8
 
+  INTEGER :: OPT_SOIL ! options for defining soil properties
+                      ! **1 -> use input dominant soil texture
+		      !   2 -> use input soil texture that varies with depth
+                      !   3 -> use soil composition (sand, clay, orgm) and pedotransfer functions (OPT_PEDO)
+		      !   4 -> use input soil properties (BEXP_3D, SMCMAX_3D, etc.)
+
+  INTEGER :: OPT_PEDO ! options for pedotransfer functions (used when OPT_SOIL = 3)
+                      ! **1 -> Saxton and Rawls (2006)
+
   INTEGER :: OPT_CROP ! options for crop model
                       ! **0 -> No crop model, will run default dynamic vegetation
                       !   1 -> Liu, et al. 2016
@@ -279,6 +288,7 @@ MODULE MODULE_SF_NOAHMPLSM
      REAL :: FSATMX       !maximum surface saturated fraction (global mean)
      REAL :: Z0SNO        !snow surface roughness length (m) (0.002)
      REAL :: SSI          !liquid water holding capacity for snowpack (m3/m3)
+     REAL :: SNOW_RET_FAC !snowpack water release timescale factor (1/s)
      REAL :: SWEMX        !new snow mass to fully cover old snow (mm)
      REAL :: TAU0         !tau0 from Yang97 eqn. 10a
      REAL :: GRAIN_GROWTH !growth from vapor diffusion Yang97 eqn. 10b
@@ -400,7 +410,7 @@ contains
 		   SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
 		   GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
 		   CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , &
-                   PAHG    , PAHB    , PAH                                     &
+                   PAHG    , PAHB    , PAH     , LAISUN  , LAISHA  , RB        & ! OUT
 #ifdef WRF_HYDRO
                    ,SFCHEADRT                                                  & ! IN/OUT :
 #endif
@@ -409,6 +419,7 @@ contains
 ! --------------------------------------------------------------------------------------------------
 ! Initial code: Guo-Yue Niu, Oct. 2007
 ! --------------------------------------------------------------------------------------------------
+
   implicit none
 ! --------------------------------------------------------------------------------------------------
 ! input
@@ -523,6 +534,9 @@ contains
   REAL                           , INTENT(OUT)   :: PONDING!surface ponding [mm]
   REAL                           , INTENT(OUT)   :: PONDING1!surface ponding [mm]
   REAL                           , INTENT(OUT)   :: PONDING2!surface ponding [mm]
+  REAL                           , INTENT(OUT)   :: RB        ! leaf boundary layer resistance (s/m)
+  REAL                           , INTENT(OUT)   :: LAISUN    ! sunlit leaf area index (m2/m2)
+  REAL                           , INTENT(OUT)   :: LAISHA    ! shaded leaf area index (m2/m2)
 
 !jref:start; output
   REAL                           , INTENT(OUT)     :: T2MV   !2-m air temperature over vegetated part [k]
@@ -753,7 +767,7 @@ contains
                  TV     ,TG     ,STC    ,SNOWH  ,EAH    ,TAH    , & !inout
                  SNEQVO ,SNEQV  ,SH2O   ,SMC    ,SNICE  ,SNLIQ  , & !inout
                  ALBOLD ,CM     ,CH     ,DX     ,DZ8W   ,Q2     , & !inout
-                 TAUSS  ,                                         & !inout
+                 TAUSS  ,LAISUN ,LAISHA ,RB ,                     & !inout
 !jref:start
                  QC     ,QSFC   ,PSFC   , & !in 
                  T2MV   ,T2MB  ,FSRV   , &
@@ -803,7 +817,7 @@ contains
    ENDIF
 
    IF (dveg_active) THEN
-    CALL CARBON (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  , & !in
+     CALL CARBON (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  , & !in
                  DZSNSO ,STC    ,SMC    ,TV     ,TG     ,PSN    , & !in
                  FOLN   ,BTRAN  ,APAR   ,FVEG   ,IGS    , & !in
                  TROOT  ,IST    ,LAT    ,iloc   ,jloc   , & !in
@@ -1504,7 +1518,7 @@ ENDIF   ! CROPTYPE == 0
                      TV     ,TG     ,STC    ,SNOWH  ,EAH    ,TAH    , & !inout
                      SNEQVO ,SNEQV  ,SH2O   ,SMC    ,SNICE  ,SNLIQ  , & !inout
                      ALBOLD ,CM     ,CH     ,DX     ,DZ8W   ,Q2     , &   !inout
-                     TAUSS  ,                                         & !inout
+                     TAUSS  ,LAISUN ,LAISHA ,RB ,                     & !inout
 !jref:start
                      QC     ,QSFC   ,PSFC   , & !in 
                      T2MV   ,T2MB   ,FSRV   , &
@@ -1670,6 +1684,9 @@ ENDIF   ! CROPTYPE == 0
   REAL                              , INTENT(INOUT) :: CM     !momentum drag coefficient
   REAL                              , INTENT(INOUT) :: CH     !sensible heat exchange coefficient
   REAL                              , INTENT(INOUT) :: Q1
+  REAL                              , INTENT(INOUT) :: RB     !leaf boundary layer resistance (s/m)
+  REAL                              , INTENT(INOUT) :: LAISUN !sunlit leaf area index (m2/m2)
+  REAL                              , INTENT(INOUT) :: LAISHA !shaded leaf area index (m2/m2)
 !  REAL                                              :: Q2E
   REAL,                               INTENT(OUT)   :: EMISSI
   REAL,                               INTENT(OUT)   :: PAH    !precipitation advected heat - total (W/m2)
@@ -1680,7 +1697,7 @@ ENDIF   ! CROPTYPE == 0
   REAL                                              :: UR     !wind speed at height ZLVL (m/s)
   REAL                                              :: ZLVL   !reference height (m)
   REAL                                              :: FSUN   !sunlit fraction of canopy [-]
-  REAL                                              :: RB     !leaf boundary layer resistance (s/m)
+ ! REAL                                              :: RB     !leaf boundary layer resistance (s/m)
   REAL                                              :: RSURF  !ground surface resistance (s/m)
   REAL                                              :: L_RSURF!Dry-layer thickness for computing RSURF (Sakaguchi and Zeng, 2009)
   REAL                                              :: D_RSURF!Reduced vapor diffusivity in soil for computing RSURF (SZ09)
@@ -1696,8 +1713,6 @@ ENDIF   ! CROPTYPE == 0
   REAL                                              :: EMG    !ground emissivity
   REAL                                              :: FIRE   !emitted IR (w/m2)
 
-  REAL                                              :: LAISUN !sunlit leaf area index (m2/m2)
-  REAL                                              :: LAISHA !shaded leaf area index (m2/m2)
   REAL                                              :: PSNSUN !sunlit photosynthesis (umolco2/m2/s)
   REAL                                              :: PSNSHA !shaded photosynthesis (umolco2/m2/s)
 !jref:start - for debug  
@@ -1763,7 +1778,7 @@ ENDIF   ! CROPTYPE == 0
 
   REAL, PARAMETER                   :: MPE    = 1.E-6
   REAL, PARAMETER                   :: PSIWLT = -150.  !metric potential for wilting point (m)
-  REAL, PARAMETER                   :: Z0     = 0.002   ! Bare-soil roughness length (m) (i.e., under the canopy)
+  REAL, PARAMETER                   :: Z0     = 0.002  ! Bare-soil roughness length (m) (i.e., under the canopy)
 
 ! ---------------------------------------------------------------------------------------------------
 ! initialize fluxes from veg. fraction
@@ -1786,6 +1801,7 @@ ENDIF   ! CROPTYPE == 0
     CHLEAF    = 0.
     CHUC      = 0.
     CHV2      = 0.
+    RB        = 0.
 
 ! wind speed at reference height: ur >= 1
 
@@ -3544,11 +3560,8 @@ ENDIF   ! CROPTYPE == 0
         H      = 0.
         QFX    = 0.
 
-! convert grid-cell LAI to the fractional vegetated area (FVEG)
+! limit LAI
 
-!        VAIE    = MIN(6.,VAI    / FVEG)
-!        LAISUNE = MIN(6.,LAISUN / FVEG)
-!        LAISHAE = MIN(6.,LAISHA / FVEG)
         VAIE    = MIN(6.,VAI   )
         LAISUNE = MIN(6.,LAISUN)
         LAISHAE = MIN(6.,LAISHA)
@@ -6767,6 +6780,9 @@ ENDIF   ! CROPTYPE == 0
      SNLIQ(J) = SNLIQ(J) + QIN
      VOL_LIQ(J) = SNLIQ(J)/(DZSNSO(J)*DENH2O)
      QOUT = MAX(0.,(VOL_LIQ(J)-parameters%SSI*EPORE(J))*DZSNSO(J))
+     IF(J == 0) THEN
+       QOUT = MAX((VOL_LIQ(J)- EPORE(J))*DZSNSO(J) , parameters%SNOW_RET_FAC*DT*QOUT)
+     END IF
      QOUT = QOUT*DENH2O
      SNLIQ(J) = SNLIQ(J) - QOUT
      QIN = QOUT
@@ -8941,7 +8957,7 @@ END SUBROUTINE PSN_CROP
 
   subroutine noahmp_options(idveg     ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz , & 
                              iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc, &
-			     iopt_rsf, iopt_crop )
+			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop )
 
   implicit none
 
@@ -8960,6 +8976,8 @@ END SUBROUTINE PSN_CROP
   INTEGER,  INTENT(IN) :: iopt_stc  !snow/soil temperature time scheme (only layer 1)
                                     ! 1 -> semi-implicit; 2 -> full implicit (original Noah)
   INTEGER,  INTENT(IN) :: iopt_rsf  !surface resistance (1->Sakaguchi/Zeng; 2->Seller; 3->mod Sellers; 4->1+snow)
+  INTEGER,  INTENT(IN) :: iopt_soil !soil parameters set-up option
+  INTEGER,  INTENT(IN) :: iopt_pedo !pedo-transfer function (1->Saxton and Rawls)
   INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.)
 
 ! -------------------------------------------------------------------------------------------------
@@ -8978,6 +8996,8 @@ END SUBROUTINE PSN_CROP
   opt_tbot = iopt_tbot 
   opt_stc  = iopt_stc
   opt_rsf  = iopt_rsf
+  opt_soil = iopt_soil
+  opt_pedo = iopt_pedo
   opt_crop = iopt_crop
   
   end subroutine noahmp_options
@@ -9003,6 +9023,10 @@ MODULE NOAHMP_TABLES
     INTEGER :: ISICE_TABLE
     INTEGER :: ISCROP_TABLE
     INTEGER :: EBLFOREST_TABLE
+    INTEGER :: NATURAL_TABLE
+    INTEGER :: LOW_DENSITY_RESIDENTIAL_TABLE
+    INTEGER :: HIGH_DENSITY_RESIDENTIAL_TABLE
+    INTEGER :: HIGH_INTENSITY_INDUSTRIAL_TABLE
 
     REAL :: CH2OP_TABLE(MVT)       !maximum intercepted h2o per unit lai+sai (mm)
     REAL :: DLEAF_TABLE(MVT)       !characteristic leaf dimension (m)
@@ -9103,6 +9127,7 @@ MODULE NOAHMP_TABLES
     REAL :: FSATMX_TABLE   !maximum surface saturated fraction (global mean)
     REAL :: Z0SNO_TABLE    !snow surface roughness length (m) (0.002)
     REAL :: SSI_TABLE      !liquid water holding capacity for snowpack (m3/m3) (0.03)
+    REAL :: SNOW_RET_FAC_TABLE !snowpack water release timescale factor (1/s)
     REAL :: SWEMX_TABLE    !new snow mass to fully cover old snow (mm)
     REAL :: TAU0_TABLE          !tau0 from Yang97 eqn. 10a
     REAL :: GRAIN_GROWTH_TABLE  !growth from vapor diffusion Yang97 eqn. 10b
@@ -9166,6 +9191,57 @@ MODULE NOAHMP_TABLES
     REAL :: GRAINPT_TABLE(NCROP,NSTAGE) ! fraction of carbohydrate flux to grain
     REAL :: BIO2LAI_TABLE(NCROP)        ! leaf are per living leaf biomass [m^2/kg]
 
+! MPTABLE.TBL optional parameters
+
+    REAL :: sr2006_theta_1500t_a        ! sand coefficient
+    REAL :: sr2006_theta_1500t_b        ! clay coefficient
+    REAL :: sr2006_theta_1500t_c        ! orgm coefficient
+    REAL :: sr2006_theta_1500t_d        ! sand*orgm coefficient
+    REAL :: sr2006_theta_1500t_e        ! clay*orgm coefficient
+    REAL :: sr2006_theta_1500t_f        ! sand*clay coefficient
+    REAL :: sr2006_theta_1500t_g        ! constant adjustment
+
+    REAL :: sr2006_theta_1500_a         ! theta_1500t coefficient
+    REAL :: sr2006_theta_1500_b         ! constant adjustment
+
+    REAL :: sr2006_theta_33t_a          ! sand coefficient
+    REAL :: sr2006_theta_33t_b          ! clay coefficient
+    REAL :: sr2006_theta_33t_c          ! orgm coefficient
+    REAL :: sr2006_theta_33t_d          ! sand*orgm coefficient
+    REAL :: sr2006_theta_33t_e          ! clay*orgm coefficient
+    REAL :: sr2006_theta_33t_f          ! sand*clay coefficient
+    REAL :: sr2006_theta_33t_g          ! constant adjustment
+
+    REAL :: sr2006_theta_33_a           ! theta_33t*theta_33t coefficient
+    REAL :: sr2006_theta_33_b           ! theta_33t coefficient
+    REAL :: sr2006_theta_33_c           ! constant adjustment
+
+    REAL :: sr2006_theta_s33t_a         ! sand coefficient
+    REAL :: sr2006_theta_s33t_b         ! clay coefficient
+    REAL :: sr2006_theta_s33t_c         ! orgm coefficient
+    REAL :: sr2006_theta_s33t_d         ! sand*orgm coefficient
+    REAL :: sr2006_theta_s33t_e         ! clay*orgm coefficient
+    REAL :: sr2006_theta_s33t_f         ! sand*clay coefficient
+    REAL :: sr2006_theta_s33t_g         ! constant adjustment
+
+    REAL :: sr2006_theta_s33_a          ! theta_s33t coefficient
+    REAL :: sr2006_theta_s33_b          ! constant adjustment
+
+    REAL :: sr2006_psi_et_a             ! sand coefficient
+    REAL :: sr2006_psi_et_b             ! clay coefficient
+    REAL :: sr2006_psi_et_c             ! theta_s33 coefficient
+    REAL :: sr2006_psi_et_d             ! sand*theta_s33 coefficient
+    REAL :: sr2006_psi_et_e             ! clay*theta_s33 coefficient
+    REAL :: sr2006_psi_et_f             ! sand*clay coefficient
+    REAL :: sr2006_psi_et_g             ! constant adjustment
+
+    REAL :: sr2006_psi_e_a              ! psi_et*psi_et coefficient
+    REAL :: sr2006_psi_e_b              ! psi_et coefficient
+    REAL :: sr2006_psi_e_c              ! constant adjustment
+
+    REAL :: sr2006_smcmax_a             ! sand adjustment
+    REAL :: sr2006_smcmax_b             ! constant adjustment
+
 CONTAINS
 
   subroutine read_mp_veg_parameters(DATASET_IDENTIFIER)
@@ -9173,6 +9249,7 @@ CONTAINS
     character(len=*), intent(in) :: DATASET_IDENTIFIER
     integer :: ierr
     INTEGER :: IK,IM
+    logical :: file_named 
 
     integer :: NVEG
     character(len=256) :: VEG_DATASET_DESCRIPTION
@@ -9183,6 +9260,10 @@ CONTAINS
     INTEGER :: ISICE
     INTEGER :: ISCROP
     INTEGER :: EBLFOREST
+    INTEGER :: NATURAL
+    INTEGER :: LOW_DENSITY_RESIDENTIAL
+    INTEGER :: HIGH_DENSITY_RESIDENTIAL
+    INTEGER :: HIGH_INTENSITY_INDUSTRIAL
 
     REAL, DIMENSION(MVT) :: SAI_JAN,SAI_FEB,SAI_MAR,SAI_APR,SAI_MAY,SAI_JUN, &
                                      SAI_JUL,SAI_AUG,SAI_SEP,SAI_OCT,SAI_NOV,SAI_DEC
@@ -9196,7 +9277,8 @@ CONTAINS
 		     SLAREA, EPS1, EPS2, EPS3, EPS4, EPS5
 			     
     NAMELIST / noahmp_usgs_veg_categories / VEG_DATASET_DESCRIPTION, NVEG
-    NAMELIST / noahmp_usgs_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, &
+    NAMELIST / noahmp_usgs_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
+         LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
          LTOVRC,  DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
@@ -9205,7 +9287,8 @@ CONTAINS
          RHOL_VIS, RHOL_NIR, RHOS_VIS, RHOS_NIR, TAUL_VIS, TAUL_NIR, TAUS_VIS, TAUS_NIR, SLAREA, EPS1, EPS2, EPS3, EPS4, EPS5
 	 
     NAMELIST / noahmp_modis_veg_categories / VEG_DATASET_DESCRIPTION, NVEG
-    NAMELIST / noahmp_modis_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, &
+    NAMELIST / noahmp_modis_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
+         LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
          LTOVRC,  DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
@@ -9268,12 +9351,18 @@ CONTAINS
     ISICE_TABLE        = -99999
     ISCROP_TABLE       = -99999
     EBLFOREST_TABLE    = -99999
+    NATURAL_TABLE      = -99999
+    LOW_DENSITY_RESIDENTIAL_TABLE   = -99999
+    HIGH_DENSITY_RESIDENTIAL_TABLE  = -99999
+    HIGH_INTENSITY_INDUSTRIAL_TABLE = -99999
 
-#ifdef NCEP_WCOSS
-         open(15, status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#endif
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
+
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_veg_parameters")
@@ -9292,12 +9381,16 @@ CONTAINS
     endif
     close(15)
 
-      ISURBAN_TABLE       = ISURBAN
-      ISWATER_TABLE       = ISWATER
-     ISBARREN_TABLE       = ISBARREN
-        ISICE_TABLE       = ISICE
+                      ISURBAN_TABLE   = ISURBAN
+                      ISWATER_TABLE   = ISWATER
+                     ISBARREN_TABLE   = ISBARREN
+                        ISICE_TABLE   = ISICE
                        ISCROP_TABLE   = ISCROP
-    EBLFOREST_TABLE       = EBLFOREST
+                    EBLFOREST_TABLE   = EBLFOREST
+                      NATURAL_TABLE   = NATURAL
+      LOW_DENSITY_RESIDENTIAL_TABLE   = LOW_DENSITY_RESIDENTIAL
+     HIGH_DENSITY_RESIDENTIAL_TABLE   = HIGH_DENSITY_RESIDENTIAL
+    HIGH_INTENSITY_INDUSTRIAL_TABLE   = HIGH_INTENSITY_INDUSTRIAL
 
      CH2OP_TABLE(1:NVEG)  = CH2OP(1:NVEG)
      DLEAF_TABLE(1:NVEG)  = DLEAF(1:NVEG)
@@ -9387,6 +9480,7 @@ CONTAINS
     CHARACTER*4         :: SLTYPE
     INTEGER             :: ITMP, NUM_SLOPE, LC
     CHARACTER(len=256)  :: message
+    logical             :: file_named 
     
 
     ! Initialize our variables to bad values, so that if the namelist read fails, we come to a screeching halt as soon as we try to use anything.
@@ -9411,11 +9505,13 @@ CONTAINS
 !
 !-----READ IN SOIL PROPERTIES FROM SOILPARM.TBL
 !
-#ifndef NCEP_WCOSS
-    OPEN(21, FILE='SOILPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#else
-    OPEN(21, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#endif
+    inquire( file='SOILPARM.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(21, file='SOILPARM.TBL',form='formatted',status='old',iostat=ierr)
+    else
+      open(21, form='formatted',status='old',iostat=ierr)
+    end if
+
     IF(ierr .NE. 0 ) THEN
       WRITE(message,FMT='(A)') 'module_sf_noahmpdrv.F: read_mp_soil_parameters: failure opening SOILPARM.TBL'
       CALL wrf_error_fatal ( message )
@@ -9441,11 +9537,13 @@ CONTAINS
 !
 !-----READ IN GENERAL PARAMETERS FROM GENPARM.TBL
 !
-#ifndef NCEP_WCOSS
-    OPEN(22, FILE='GENPARM.TBL',FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#else
-    OPEN(22, FORM='FORMATTED',STATUS='OLD',IOSTAT=ierr)
-#endif
+    inquire( file='GENPARM.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(22, file='GENPARM.TBL',form='formatted',status='old',iostat=ierr)
+    else
+      open(22, form='formatted',status='old',iostat=ierr)
+    end if
+
     IF(ierr .NE. 0 ) THEN
       WRITE(message,FMT='(A)') 'module_sf_noahlsm.F: read_mp_soil_parameters: failure opening GENPARM.TBL'
       CALL wrf_error_fatal ( message )
@@ -9489,6 +9587,7 @@ CONTAINS
   subroutine read_mp_rad_parameters()
     implicit none
     integer :: ierr
+    logical :: file_named 
 
     REAL :: ALBICE(MBAND),ALBLAK(MBAND),OMEGAS(MBAND),BETADS,BETAIS,EG(2)
     REAL :: ALBSAT_VIS(MSC)
@@ -9509,12 +9608,13 @@ CONTAINS
     BETAIS_TABLE     = -1.E36
     EG_TABLE         = -1.E36
 
-#ifndef NCEP_WCOSS
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15, status='old', form='formatted', action='read', iostat=ierr)
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
 
-#endif
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_rad_parameters")
@@ -9539,13 +9639,14 @@ CONTAINS
   subroutine read_mp_global_parameters()
     implicit none
     integer :: ierr
+    logical :: file_named 
 
-    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI, &
+    REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
 	    RSURF_SNOW,RSURF_EXP
 
-    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI, &
+    NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
 	    RSURF_SNOW,RSURF_EXP
@@ -9558,6 +9659,7 @@ CONTAINS
     FSATMX_TABLE     = -1.E36
      Z0SNO_TABLE     = -1.E36
        SSI_TABLE     = -1.E36
+SNOW_RET_FAC_TABLE   = -1.E36
      SWEMX_TABLE     = -1.E36
         TAU0_TABLE   = -1.E36
 GRAIN_GROWTH_TABLE   = -1.E36
@@ -9573,11 +9675,13 @@ BATS_NIR_DIR_TABLE   = -1.E36
 RSURF_SNOW_TABLE     = -1.E36
  RSURF_EXP_TABLE     = -1.E36
 
-#ifndef NCEP_WCOSS
-    open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
-#else
-    open(15,status='old', form='formatted', action='read', iostat=ierr) 
-#endif
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
+
     if (ierr /= 0) then
        write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
        call wrf_error_fatal("STOP in Noah-MP read_mp_global_parameters")
@@ -9592,6 +9696,7 @@ RSURF_SNOW_TABLE     = -1.E36
     FSATMX_TABLE     = FSATMX
      Z0SNO_TABLE     = Z0SNO
        SSI_TABLE     = SSI
+SNOW_RET_FAC_TABLE   = SNOW_RET_FAC
      SWEMX_TABLE     = SWEMX
         TAU0_TABLE   = TAU0
 GRAIN_GROWTH_TABLE   = GRAIN_GROWTH
@@ -9833,6 +9938,48 @@ RSURF_SNOW_TABLE     = RSURF_SNOW
       BIO2LAI_TABLE      = BIO2LAI
 
   end subroutine read_mp_crop_parameters
+
+  subroutine read_mp_optional_parameters()
+    implicit none
+    integer :: ierr
+    logical :: file_named 
+
+    NAMELIST / noahmp_optional_parameters /                                &
+         sr2006_theta_1500t_a, sr2006_theta_1500t_b, sr2006_theta_1500t_c, &
+         sr2006_theta_1500t_d, sr2006_theta_1500t_e, sr2006_theta_1500t_f, &
+         sr2006_theta_1500t_g                                            , &
+         sr2006_theta_1500_a , sr2006_theta_1500_b                       , &
+         sr2006_theta_33t_a  , sr2006_theta_33t_b  , sr2006_theta_33t_c  , &
+         sr2006_theta_33t_d  , sr2006_theta_33t_e  , sr2006_theta_33t_f  , &
+         sr2006_theta_33t_g                                              , &
+         sr2006_theta_33_a   , sr2006_theta_33_b   , sr2006_theta_33_c   , &
+         sr2006_theta_s33t_a , sr2006_theta_s33t_b , sr2006_theta_s33t_c , &
+         sr2006_theta_s33t_d , sr2006_theta_s33t_e , sr2006_theta_s33t_f , &
+         sr2006_theta_s33t_g                                             , &
+         sr2006_theta_s33_a  , sr2006_theta_s33_b                        , &
+         sr2006_psi_et_a     , sr2006_psi_et_b     , sr2006_psi_et_c     , &
+         sr2006_psi_et_d     , sr2006_psi_et_e     , sr2006_psi_et_f     , &
+         sr2006_psi_et_g                                                 , &
+         sr2006_psi_e_a      , sr2006_psi_e_b      , sr2006_psi_e_c      , &
+         sr2006_smcmax_a     , sr2006_smcmax_b
+
+    inquire( file='MPTABLE.TBL', exist=file_named ) 
+    if ( file_named ) then
+      open(15, file="MPTABLE.TBL", status='old', form='formatted', action='read', iostat=ierr)
+    else
+      open(15, status='old', form='formatted', action='read', iostat=ierr)
+    end if
+
+    if (ierr /= 0) then
+       write(*,'("WARNING: Cannot find file MPTABLE.TBL")')
+       call wrf_error_fatal("STOP in Noah-MP read_mp_optional_parameters")
+    endif
+
+    read(15,noahmp_optional_parameters)
+    close(15)
+
+
+  end subroutine read_mp_optional_parameters
 
 END MODULE NOAHMP_TABLES
 

@@ -37,10 +37,7 @@ module_date_utilities.o:	../../Utility_routines/module_date_utilities.F
 	$(COMPILERF90) -c $(F90FLAGS) $(FREESOURCE) $(<)
 
 .F.o:
-	$(RM) $(*).f
-	$(CPP) $(CPPFLAGS) $(*).F > $(*).f
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) -c $(*).f 
-	$(RM) $(*).f
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(*).F 
 
 
 neat:
