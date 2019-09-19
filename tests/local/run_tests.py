@@ -89,22 +89,22 @@ def run_tests(
         pytest_cmd += " --ignore=tests/test_supp_2_nwm_output.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
-    pytest_cmd += " --config " + config.lower()
-    pytest_cmd += " --compiler " + compiler.lower()
-    pytest_cmd += " --domain_dir " + domain_dir
-    pytest_cmd += " --candidate_dir " + candidate_source_dir
-    pytest_cmd += " --reference_dir " + reference_source_dir
-    pytest_cmd += " --output_dir " + output_dir
-    pytest_cmd += " --exe_cmd " + exe_cmd
-    pytest_cmd += " --ncores " + str(ncores)
-    pytest_cmd += " --xrcmp_n_cores " + str(xrcmp_n_cores)
+    pytest_cmd += " --config=" + config.lower()
+    pytest_cmd += " --compiler=" + compiler.lower()
+    pytest_cmd += " --domain_dir=" + domain_dir
+    pytest_cmd += " --candidate_dir=" + candidate_source_dir
+    pytest_cmd += " --reference_dir=" + reference_source_dir
+    pytest_cmd += " --output_dir=" + output_dir
+    pytest_cmd += " --exe_cmd=" + exe_cmd
+    pytest_cmd += " --ncores=" + str(ncores)
+    pytest_cmd += " --xrcmp_n_cores=" + str(xrcmp_n_cores)
 
     if scheduler:
         pytest_cmd += " --scheduler "
-        pytest_cmd += " --nnodes " + str(nnodes)
-        pytest_cmd += " --account " + account
-        pytest_cmd += " --walltime " + walltime
-        pytest_cmd += " --queue " + queue
+        pytest_cmd += " --nnodes=" + str(nnodes)
+        pytest_cmd += " --account=" + account
+        pytest_cmd += " --walltime=" + walltime
+        pytest_cmd += " --queue=" + queue
 
     if use_existing_test_dir:
         pytest_cmd += " --use_existing_test_dir"
@@ -333,16 +333,11 @@ def main():
     # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
     reference_copy = output_dir.joinpath(reference_dir.name + '_ref_pytest')
-
-    # Remove if exist and make if not
-    if candidate_copy.is_dir():
-        shutil.rmtree(str(candidate_copy))
-    if reference_copy.is_dir():
-        shutil.rmtree(str(reference_copy))
-
     # copy directories to avoid polluting user source code directories
-    shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
-    shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
+    if not candidate_copy.exists() or not use_existing_test_dir:
+        shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
+    if not reference_copy.exists() or not use_existing_test_dir:
+        shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
 
     # run pytest for each supplied config
     has_failure = False

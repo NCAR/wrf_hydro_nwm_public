@@ -300,7 +300,7 @@ contains
 
        !determine the discharge based on current height
        if(H > maxh) then  ! overtop condition, not good!
-         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+          discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
        else if (dh > 0.0 ) then              !! orifice and weir discharge
           discharge = tmp1 + tmp2
        else if ( (H+dh2*0.667) > oe ) then     !! only orifice flow,not full
@@ -324,14 +324,13 @@ contains
        if (dh > maxWeirDepth) then
           dh = maxWeirDepth
        endif
- 
+
        tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
        tmp2 = wc * wl * (dh ** (3./2.))
 
-
        !determine the discharge based on current height
        if(H > maxh) then  ! overtop condition, not good!
-         discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
+          discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
        else if (dh > 0.0 ) then              !! orifice and overtop discharge
           discharge = tmp1 + tmp2
        else if ( H > oe ) then     !! only orifice flow,not full
