@@ -304,7 +304,18 @@ if (NWM_LSM MATCHES "NoahMP")
 	if (WRF_HYDRO_NUDGING STREQUAL "1")
 		target_link_libraries(wrfhydro.exe nwm_nudging)
  		add_dependencies(wrfhydro.exe nwm_nudging)
-	endif (WRF_HYDRO_NUDGING STREQUAL "1")	
+	endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
+	add_custom_command(TARGET wrfhydro.exe POST_BUILD 
+		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
+		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
+		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
+	)	
 		
 elseif(NWM_LSM MATCHES "Noah")
 	message ("-- Building Noah LSM")
@@ -360,6 +371,18 @@ elseif(NWM_LSM MATCHES "Noah")
                 target_link_libraries(wrfhydro.exe nwm_nudging)
                 add_dependencies(wrfhydro.exe nwm_nudging)
         endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
+        add_custom_command(TARGET wrfhydro.exe POST_BUILD 
+		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
+		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
+                COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+                COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
+                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
+        )
+
 
 else()
 	mesgage ("Unknown Land Surface Model:" ${NWM_LSM} )
