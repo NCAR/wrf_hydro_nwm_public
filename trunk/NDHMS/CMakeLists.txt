@@ -315,6 +315,7 @@ if (NWM_LSM MATCHES "NoahMP")
 		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND ln -s ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
 	)	
 		
 elseif(NWM_LSM MATCHES "Noah")
@@ -375,12 +376,13 @@ elseif(NWM_LSM MATCHES "Noah")
         add_custom_command(TARGET wrfhydro.exe POST_BUILD 
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-                COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+                COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
                 COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND ln -s ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
         )
 
 
