@@ -27,7 +27,7 @@ program reservoir_unit_tests
 
     rv6 = test_rfc_forecasts_levelpool_fallback()
 
-    if (rv1 .and. rv3 .and. rv4 .and. rv5) then
+    if (rv1 .and. rv3 .and. rv4 .and. rv5 .and. rv6) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -82,7 +82,7 @@ program reservoir_unit_tests
         real :: outflow, inflow
         real :: water_elevation
         real :: prev_time_inflow
-        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: lake_area, weir_elevation, weir_coefficient
         real :: weir_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
@@ -115,7 +115,7 @@ program reservoir_unit_tests
 
         lake_area = 2.096320037841796875e+02
         weir_elevation = 1.332074047851562455e+03
-        weir_coeffecient = 4.000000000000000222e-01
+        weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
@@ -129,7 +129,7 @@ program reservoir_unit_tests
         cwd_full = "./Testing_Files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
+        weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
         "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
@@ -210,13 +210,15 @@ program reservoir_unit_tests
         character*256 :: cwd_full
         integer :: lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds
         real, allocatable, dimension(:) :: forecast_discharges
-
+        logical :: forecast_found
 
         call_status = .false.
 
         cwd_full = "./Testing_Files/"
 
-        call time_series_data%init("2019-05-18_22:00:00", cwd_full, 24, "DIEA4", lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges)
+        forecast_found = .false.
+
+        call time_series_data%init("2019-05-18_22:00:00", cwd_full, 24, "DIEA4", lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
 
         call_status = time_series_data_info(time_series_data)
 
@@ -230,12 +232,11 @@ program reservoir_unit_tests
     function test_rfc_forecasts_levelpool_fallback() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
-        !type (levelpool) :: levelpool_reservoir_data
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         real :: outflow, inflow
         real :: water_elevation
         real :: prev_time_inflow
-        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: lake_area, weir_elevation, weir_coefficient
         real :: weir_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
@@ -266,7 +267,7 @@ program reservoir_unit_tests
 
         lake_area = 2.096320037841796875e+02
         weir_elevation = 1.332074047851562455e+03
-        weir_coeffecient = 4.000000000000000222e-01
+        weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
@@ -275,28 +276,10 @@ program reservoir_unit_tests
         initial_fractional_depth = 8.999999761581420898e-01
         lake_number = 3745478
 
-        print *, "calling init for test_rfc_forecasts_levelpool_fallback"
-
         cwd_full = "./Testing_Files/"
 
-
-        !call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, lake_number)
-
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_coefficient, max_depth, 0.9, 3745478, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 3745478, &
         "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-05-01_22:00:00", cwd_full, 24)
-
-
-        !call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        !weir_coeffecient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
-        !"2010-10-01_07:00:00", cwd_full, 12, 1000000000)
-
-        !print *, "testing data in persistence_levelpool_hybrid"
-        !rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
-
-        !print *, "calling reservoir run for persistence_levelpool_hybrid"
-
-        !if ( time_series_data%forecast_discharges(3) .gt. 0.1697545 - epsilon(0.1697545) .and. time_series_data%forecast_discharges(3) .lt. 0.1697545 + epsilon(0.1697545) ) then
-
 
         water_elevation = 1331.18005
 
@@ -324,9 +307,7 @@ program reservoir_unit_tests
 
         end if
 
-
     end function test_rfc_forecasts_levelpool_fallback
-
 
 
 end program

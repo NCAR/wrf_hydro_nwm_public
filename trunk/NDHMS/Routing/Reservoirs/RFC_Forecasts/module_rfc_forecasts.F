@@ -124,7 +124,7 @@ contains
         ! immediately.
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id, &
         this%properties%lookback_seconds, this%properties%offset_time_seconds, this%properties%forecast_counts, &
-        this%properties%time_step_seconds, this%state%forecast_discharges)
+        this%properties%time_step_seconds, this%state%forecast_discharges, this%state%forecast_found)
 
     end subroutine rfc_forecasts_init
 
@@ -145,6 +145,37 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        real                :: levelpool_outflow        ! cubic meters per second (cms)
+
+        ! Update input variables
+        this%input%inflow = inflow
+        this%input%lateral_inflow = lateral_inflow
+
+        ! Update state water elevation
+        this%state%water_elevation = water_elevation
+
+        ! Run levelpool reservoir
+        call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
+
+        if (this%state%forecast_found) then
+            ! USE FORECAST VALUE
+            this%output%outflow = -999.0 ! Temporarily setting to -999.0
+        else
+            this%output%outflow = levelpool_outflow
+        end if
+
+        ! Update output variable returned from this subroutine
+        outflow = this%output%outflow
+
+        ! Set current inflow to previous_timestep_inflow
+        this%input%previous_timestep_inflow = inflow
+
+        ! Update water_elevation variable returned from this subroutine
+        water_elevation = this%state%water_elevation
+
+        ! Update the current time
+        this%state%current_time = this%state%current_time + int(routing_period)
 
     end subroutine run_rfc_forecasts_reservoir
 

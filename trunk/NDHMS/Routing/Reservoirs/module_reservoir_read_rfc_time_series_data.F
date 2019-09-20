@@ -37,7 +37,7 @@ contains
 
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id, &
-        lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges)
+        lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -49,7 +49,7 @@ contains
         integer,            intent(out)                 :: forecast_counts
         integer,            intent(out)                 :: time_step_seconds
         real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
-
+        logical,            intent(inout)               :: forecast_found
 
         ! Return from subroutine if this singleton is already initialized
         if (this%initialized) return
