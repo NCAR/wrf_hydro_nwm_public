@@ -1,54 +1,62 @@
 ! This module defines and instantiates objects
 ! for a level pool type reservoir. The level
-! pool reservoir struct inherits input and
-! output stucts from the reservoir base
+! pool reservoir type inherits input and
+! output types from the reservoir base
 ! module and calls instantiation of these into
-! sub-objects. The level pool reservoir struct
-! also points to stucts for level pool parameters
+! sub-objects. The level pool reservoir type
+! also points to types for level pool properties
 ! and state and calls instantiation of these into
 ! sub-objects. This module also contains the
-! subroutine to run level pool release that is
-! derived from the reservoir base struct interface
-! to run release. Running level pool release will
-! then call the LEVELPOOL subroutine, which
-! processes the given inputs, parameters, and
+! subroutine to run level pool reservoir that is
+! derived from the reservoir base type interface
+! to run reservoir. Running level pool will
+! then call the LEVELPOOL_PHYSICS subroutine, which
+! processes the given inputs, properties, and
 ! state for a particular level pool reservoir and
 ! returns the output/outflow.
+
 module module_levelpool
 
-    use module_levelpool_parameters
-    use module_levelpool_state
-    use module_reservoir_base
-    use module_levelpool_tests
+    use module_levelpool_properties, only: levelpool_properties_interface
+    use module_levelpool_state, only: levelpool_state_interface
+    use module_reservoir, only: reservoir, reservoir_input, &
+                                     reservoir_output
+
+#ifdef RESERVOIR_D
+    use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
+                                          log_levelpool_diagnostic_data
+#endif
+
     implicit none
 
-    ! Extend/derive level pool struct from the abstract base
-    ! struct for reservoirs.
-    type, extends(reservoir_base_struct) :: levelpool_struct
+    ! Extend/derive level pool type from the abstract base
+    ! type for reservoirs.
+    type, extends(reservoir) :: levelpool
 
-        ! Define pointers to sub-structs / sub-objects to and
+        ! Define pointers to sub-types / sub-objects to and
         ! held by a level pool reservoir object.
-        type (levelpool_parameters_interface), pointer :: parameters => null()
+        type (levelpool_properties_interface), pointer :: properties => null()
         type (levelpool_state_interface), pointer :: state => null()
 
         logical :: pointer_allocation_guard = .false.
 
     contains
 
-        procedure :: init => levelpool_struct_init
-        procedure :: destroy => levelpool_struct_destroy
-        procedure :: run_release => run_levelpool_release
-    end type levelpool_struct
+        procedure :: init => levelpool_init
+        procedure :: destroy => levelpool_destroy
+        procedure :: run => run_levelpool_reservoir
+
+    end type levelpool
 
 contains
 
     !Level Pool Constructor
-    subroutine levelpool_struct_init(this, water_elevation,  &
+    subroutine levelpool_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
-        class(levelpool_struct), intent(inout) :: this ! object being initialized
+        class(levelpool), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area      		 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
@@ -59,6 +67,11 @@ contains
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
+
+#ifdef RESERVOIR_D
+        ! Create diagnostic log file only for development/debugging purposes
+        call create_levelpool_diagnostic_log_file(lake_number)
+#endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -81,14 +94,14 @@ contains
                 call this%output%init()
             end if
 
-            ! try to allocate parameters
-            allocate ( this%parameters )
-            if ( .not. associated(this%parameters) ) then
-                ! if the parameters structure could not be created write an error
-                write(0,*) "Failure to allocate levelpool parameters structure"
+            ! try to allocate properties
+            allocate ( this%properties )
+            if ( .not. associated(this%properties) ) then
+                ! if the properties structure could not be created write an error
+                write(0,*) "Failure to allocate levelpool properties structure"
             else
-                ! initialize levelpool parameters
-                call this%parameters%init( lake_area,  &
+                ! initialize levelpool properties
+                call this%properties%init( lake_area,  &
                     weir_elevation, weir_coeffecient, weir_length, &
                     orifice_elevation, orifice_coefficient, &
                     orifice_area, max_depth, lake_number )
@@ -99,7 +112,7 @@ contains
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate state parameters structure"
+                write(0,*) "Failure to allocate state properties structure"
             else
                 ! initialize levelpool state
                 call this%state%init( water_elevation )
@@ -107,21 +120,23 @@ contains
             this%pointer_allocation_guard = .true.
         end if
 
-    end subroutine levelpool_struct_init
+    end subroutine levelpool_init
+
 
     !Level Pool Destructor
-    subroutine levelpool_struct_destroy(this)
+    subroutine levelpool_destroy(this)
         implicit none
-        class(levelpool_struct), intent(inout) :: this ! object being destroyed
-    end subroutine levelpool_struct_destroy
+        class(levelpool), intent(inout) :: this ! object being destroyed
+    end subroutine levelpool_destroy
 
-    ! Subroutine for running release for a level pool reservoir,
+
+    ! Subroutine for running a level pool reservoir,
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
-    subroutine run_levelpool_release(reservoir_data, previous_timestep_inflow, inflow, &
+    subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period)
         implicit none
-        class(levelpool_struct), intent(inout) :: reservoir_data
+        class(levelpool), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
@@ -130,45 +145,50 @@ contains
         real, intent(in)    :: routing_period           ! seconds
 
         ! Update input variables
-        reservoir_data%input%inflow = inflow
-        reservoir_data%input%lateral_inflow = lateral_inflow
+        this%input%inflow = inflow
+        this%input%lateral_inflow = lateral_inflow
 
         ! Update state variables
-        reservoir_data%state%water_elevation = water_elevation
+        this%state%water_elevation = water_elevation
 
-        call LEVELPOOL(reservoir_data%parameters%lake_number,   &
+        call LEVELPOOL_PHYSICS(this%properties%lake_number,   &
         previous_timestep_inflow,                               &
-        reservoir_data%input%inflow,                            &
-        reservoir_data%output%outflow,                          &
-        reservoir_data%input%lateral_inflow,                    &
+        this%input%inflow,                            &
+        this%output%outflow,                          &
+        this%input%lateral_inflow,                    &
         routing_period,                                         &
-        reservoir_data%state%water_elevation,                   &
-        reservoir_data%parameters%lake_area,          		&
-        reservoir_data%parameters%weir_elevation,               &
-        reservoir_data%parameters%max_depth,                    &
-        reservoir_data%parameters%weir_coeffecient,             &
-        reservoir_data%parameters%weir_length,                  &
-        reservoir_data%parameters%orifice_elevation,            &
-        reservoir_data%parameters%orifice_coefficient,          &
-        reservoir_data%parameters%orifice_area                  &
+        this%state%water_elevation,                   &
+        this%properties%lake_area,          		    &
+        this%properties%weir_elevation,               &
+        this%properties%max_depth,                    &
+        this%properties%weir_coeffecient,             &
+        this%properties%weir_length,                  &
+        this%properties%orifice_elevation,            &
+        this%properties%orifice_coefficient,          &
+        this%properties%orifice_area                  &
         )
 
         ! Update output variable returned from this subroutine
-        outflow = reservoir_data%output%outflow
+        outflow = this%output%outflow
 
         ! Set current inflow to previous_timestep_inflow
-        reservoir_data%input%previous_timestep_inflow = inflow
+        this%input%previous_timestep_inflow = inflow
 
         ! Update water_elevation variable returned from this subroutine
-        water_elevation = reservoir_data%state%water_elevation
+        water_elevation = this%state%water_elevation
 
-    end subroutine run_levelpool_release
+#ifdef RESERVOIR_D
+        ! Log diagnostic data only for development/debugging purposes
+        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, water_elevation, outflow)
+#endif
+
+    end subroutine run_levelpool_reservoir
 
     ! ------------------------------------------------
     !   SUBROUTINE LEVELPOOL
     ! ------------------------------------------------
 
-    subroutine LEVELPOOL(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
+    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,oe,oc,oa)
 
     !! ----------------------------  argument variables
     !! All elevations should be relative to a common base (often belev(k))
@@ -362,89 +382,7 @@ contains
     return
 
     ! ----------------------------------------------------------------
-    end subroutine LEVELPOOL
+    end subroutine LEVELPOOL_PHYSICS
     ! ----------------------------------------------------------------
-
-
-    function levelpool_data_info(levelpool_data) result(rv)
-    implicit none
-    type (levelpool_struct) :: levelpool_data
-    integer :: rv
-    logical, dimension(1) :: ptr_state
-    logical, dimension(1) :: data_state
-
-    rv = 0
-
-    ! Check to see if the levelpool_state data structure exists
-    print *, "Checking pointer association on data%state "
-    if ( associated(levelpool_data%state) ) then
-        print *, "PASSED"
-        ptr_state(1) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(1) = .false.
-    end if
-    print *, " "
-
-    ! Check to see if the levelpool_parameters data structure exists
-    print *, "Checking pointer association on data%parameters "
-    if ( associated(levelpool_data%parameters) ) then
-        print *, "PASSED"
-        ptr_state(2) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(2) = .false.
-    end if
-    print *, " "
-
-    ! Check to see if the levelpool_input data structure exists
-    print *, "Checking pointer association on data%input "
-    if ( associated(levelpool_data%input) ) then
-        print *, "PASSED"
-        ptr_state(3) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(3) = .false.
-    end if
-    print *, " "
-
-    ! Check to see if the levelpool_output data structure exists
-    print *, "Checking pointer association on data%output "
-    if ( associated(levelpool_data%output) ) then
-        print *, "PASSED"
-        ptr_state(4) = .true.
-    else
-        print *, "FAILED"
-        ptr_state(4) = .false.
-    end if
-    print *, " "
-
-
-    ! Now check the data members of each substructure
-    if ( ptr_state(1) ) then
-        data_state(1) = test_levelpool_state(levelpool_data%state)
-    end if
-
-    if ( ptr_state(2) ) then
-        data_state(2) = test_levelpool_parameters(levelpool_data%parameters)
-    end if
-
-    if ( ptr_state(3) ) then
-        data_state(3) = test_input(levelpool_data%input)
-    end if
-
-    if ( ptr_state(4) ) then
-        data_state(4) = test_output(levelpool_data%output)
-    end if
-
-
-    if ( all(ptr_state) .and. all(data_state) ) then
-        print *, "========================================================================"
-        print *, "All Tests Passed"
-        print *, "========================================================================"
-    end if
-    rv = 1
-
-    end function levelpool_data_info
 
 end module module_levelpool
