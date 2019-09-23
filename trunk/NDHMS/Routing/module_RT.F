@@ -36,7 +36,8 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
-   use module_levelpool
+   use module_levelpool, only: levelpool
+   use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
 
    IMPLICIT NONE
 
@@ -364,8 +365,7 @@ CONTAINS
      if(NLAKES .gt. 0) then
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
-        allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-
+        allocate ( rt_domain(did)%reservoir_type(NLAKES) )        ! allocate array to specify type of reservoir
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -388,7 +388,7 @@ CONTAINS
          rt_domain(did)%ORIFICEC = 0.0
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
-
+         rt_domain(did)%reservoir_type = 1
      endif
 
 
@@ -725,6 +725,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
+             nlst_rt(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -766,7 +767,10 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
-           rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
+           rt_domain(did)%ORIFICEE,                                 &
+           nlst_rt(did)%reservoir_persistence,                      &
+           rt_domain(did)%reservoir_type,                                   &
+           rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
            nlst_rt(did)%route_link_f,    nlst_rt(did)%route_lake_f, &
@@ -776,9 +780,6 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
            rt_domain(did)%gageMiss                                   )
    end if
-
-   ! Set reservoir type array values to 1 as default for levelpool type.
-   rt_domain(did)%q_type = 1
 
    NLAKES_total = rt_domain(did)%NLAKES
 
@@ -790,33 +791,52 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-     ! If q_type equals 1, then go to Level Pool
-     if (rt_domain(did)%q_type(lake_index) == 1) then
+       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
+           allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       ! Allocate a single level pool reservoir
-       allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
+          allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       ! Dynamically inspects for level pool type reservoir
-       select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-          type is (levelpool_struct)
+       end if
 
-               ! Call to initialize a level pool type reservoir
-               call lp%init(                                &
-               rt_domain(did)%RESHT(lake_index),            &
-               rt_domain(did)%HRZAREA(lake_index),          &
-               rt_domain(did)%WEIRH(lake_index),            &
-               rt_domain(did)%WEIRC(lake_index),            &
-               rt_domain(did)%WEIRL(lake_index),            &
-               rt_domain(did)%DAML(lake_index),              &
-               rt_domain(did)%ORIFICEE(lake_index),         &
-               rt_domain(did)%ORIFICEC(lake_index),         &
-               rt_domain(did)%ORIFICEA(lake_index),         &
-               rt_domain(did)%LAKEMAXH(lake_index),         &
-               rt_domain(did)%LAKEIDM(lake_index)           )
+       ! Dynamically type reservoir to initialize.
+       select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       end select
+          type is (levelpool)
+               call reservoir%init(                               &
+                     rt_domain(did)%RESHT(lake_index),            &
+                     rt_domain(did)%HRZAREA(lake_index),          &
+                     rt_domain(did)%WEIRH(lake_index),            &
+                     rt_domain(did)%WEIRC(lake_index),            &
+                     rt_domain(did)%WEIRL(lake_index),            &
+                     rt_domain(did)%DAML(lake_index),             &
+                     rt_domain(did)%ORIFICEE(lake_index),         &
+                     rt_domain(did)%ORIFICEC(lake_index),         &
+                     rt_domain(did)%ORIFICEA(lake_index),         &
+                     rt_domain(did)%LAKEMAXH(lake_index),         &
+                     rt_domain(did)%LAKEIDM(lake_index)            )
 
-     end if
+          type is (persistence_levelpool_hybrid)
+              call reservoir%init(                                     &
+                    rt_domain(did)%RESHT(lake_index),                  &
+                    rt_domain(did)%HRZAREA(lake_index),                &
+                    rt_domain(did)%WEIRH(lake_index),                  &
+                    rt_domain(did)%WEIRC(lake_index),                  &
+                    rt_domain(did)%WEIRL(lake_index),                  &
+                    rt_domain(did)%DAML(lake_index),                   &
+                    rt_domain(did)%ORIFICEE(lake_index),               &
+                    rt_domain(did)%ORIFICEC(lake_index),               &
+                    rt_domain(did)%ORIFICEA(lake_index),               &
+                    rt_domain(did)%LAKEMAXH(lake_index),               &
+                    rt_domain(did)%ELEVLAKE(lake_index),               &
+                    rt_domain(did)%LAKEIDM(lake_index),                &
+                    nlst_rt(did)%reservoir_persistence_parameter_file, &
+                    nlst_rt(did)%startdate(1:19),                      &
+                    nlst_rt(did)%reservoir_timeslice_path,             &
+                    nlst_rt(did)%reservoir_observation_lookback_hours, &
+                    nlst_rt(did)%reservoir_observation_update_time_interval_seconds)
+
+           end select
 
    end do
 
