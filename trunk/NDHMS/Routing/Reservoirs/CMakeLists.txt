@@ -1,11 +1,12 @@
 cmake_minimum_required (VERSION 2.8)
 
 add_library(nwm_routing_reservoirs STATIC
-	module_reservoir_base.F
-	module_levelpool_parameters.F       
-	module_levelpool_state.F
-	module_levelpool_tests.F
-	module_levelpool.F          
+	module_reservoir.F
+	module_reservoir_read_timeslice_data.F       
+	module_reservoir_utilities.F
 )
+
+add_subdirectory("Level_Pool")
+add_subdirectory("Persistence_Level_Pool_Hybrid")
 
 

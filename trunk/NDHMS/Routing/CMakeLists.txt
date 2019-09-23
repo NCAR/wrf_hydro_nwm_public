@@ -28,4 +28,7 @@ target_link_libraries(nwm_routing PUBLIC nwm_routing_subsurface)
 #target_link_libraries(nwm_routing PUBLIC nwm_routing_groundwater_nhd)
 #target_link_libraries(nwm_routing PUBLIC nwm_routing_groundwater_simple)
 target_link_libraries(nwm_routing PUBLIC nwm_routing_reservoirs)
+target_link_libraries(nwm_routing PUBLIC nwm_routing_reservoirs_levelpool)
+target_link_libraries(nwm_routing PUBLIC nwm_routing_reservoirs_hybrid)
 target_link_libraries(nwm_routing PUBLIC nwm_data_rec)
+
