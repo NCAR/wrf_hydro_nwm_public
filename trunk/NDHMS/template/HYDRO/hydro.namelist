@@ -151,6 +151,22 @@ compound_channel = .FALSE.
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
+! If using Persistence Reservoirs, set to True. (Default=.FALSE.)
+reservoir_persistence = .FALSE.
+
+! Specify the Persistence Reservoir parameter file
+reservoir_persistence_parameter_file = "./DOMAIN/persistence_parm.nc"
+
+! Specify the path to the Timeslice files to be used by Reservoirs
+reservoir_timeslice_path = "./Timeslices/"
+
+! Specify lookback hours to read reservoir observation data
+reservoir_observation_lookback_hours = 18
+
+! Specify update time interval in seconds to read new reservoir observation data
+! The default is 86400 (seconds per day) in retrospective mode and 1000000000 in all forecast modes
+reservoir_observation_update_time_interval_seconds = 86400
+
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
 

@@ -30,6 +30,7 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
+            "reservoir_persistence": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
