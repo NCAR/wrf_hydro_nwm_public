@@ -241,13 +241,12 @@ program reservoir_unit_tests
     function test_rfc_forecasts_object() result(rv)
         implicit none
 
-        logical rv, rv1                        ! test result
+        logical rv                        ! test result
         logical :: call_status
 
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
         real :: water_elevation = 2.
 
-        rv1 = .false.
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
@@ -258,31 +257,8 @@ program reservoir_unit_tests
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
         print *, "testing init and data for levelpool object held by rfc forecasts object"
-        rv1 = test_levelpool()
 
-        if (call_status .and. rv1) then
-            rv = .true.
-        end if
-
-    end function test_rfc_forecasts_object
-
-
-    function test_rfc_forecasts_object() result(rv)
-        implicit none
-
-        logical rv                        ! test result
-        logical :: call_status
-
-        type (rfc_forecasts_type) :: rfc_forecasts_reservoir_data
-        real :: water_elevation = 2.
-
-        call_status = .false.
-
-        print *, "calling init for rfc_forecasts_type"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 20)
-
-        print *, "testing data in rfc_forecasts_type"
-        call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
+        !rv1 = test_rfc_levelpool()
 
         if (call_status) then
             rv = .true.
