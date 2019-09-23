@@ -14,7 +14,9 @@ set (National_Water_model_VERSION_MINOR 2)
 enable_language (Fortran)
 
 #try to find the installed MPI library
+#enable if compiler wrappers dont find MPI libraries
 #find_package(MPI REQUIRED)
+
 #message ("-- MPI Include directories: " ${MPI_INCLUDE_PATH} )
 #message ("-- MPI C COMPILER : " ${MPI_C_COMPILER} )
 #message ("-- MPI CXX COMPILER : " ${MPI_CXX_COMPILER} )
