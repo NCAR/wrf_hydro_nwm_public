@@ -60,6 +60,7 @@ contains
         this%orifice_area = orifice_area
         this%max_depth = max_depth
         this%lake_number = lake_number
+        this%dam_length = dam_length
 
     end subroutine levelpool_parameters_init
 
