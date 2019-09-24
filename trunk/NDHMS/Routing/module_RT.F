@@ -373,6 +373,7 @@ CONTAINS
         allocate( rt_domain(did)%WEIRH(NLAKES) )
         allocate( rt_domain(did)%WEIRC(NLAKES) )
         allocate( rt_domain(did)%WEIRL(NLAKES) )
+        allocate( rt_domain(did)%DAML(NLAKES) )
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
@@ -381,6 +382,7 @@ CONTAINS
          rt_domain(did)%WEIRH = 0.0
          rt_domain(did)%WEIRC = 0.0
          rt_domain(did)%WEIRL = 0.0
+         rt_domain(did)%DAML  = 0.0
          rt_domain(did)%LAKEMAXH = 0.0
          rt_domain(did)%ELEVLAKE= 0.0
          rt_domain(did)%ORIFICEC = 0.0
@@ -720,8 +722,9 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
              rt_domain(did)%n_CC,                            &
              rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
-             rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
-             rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
+             rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
+             rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
+             rt_domain(did)%ORIFICEE,                           &
              nlst_rt(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -762,6 +765,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
            rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
+           rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
            nlst_rt(did)%reservoir_persistence,                      &
@@ -799,12 +803,13 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
 
           type is (levelpool)
-               call reservoir%init(                              &
+               call reservoir%init(                               &
                      rt_domain(did)%RESHT(lake_index),            &
                      rt_domain(did)%HRZAREA(lake_index),          &
                      rt_domain(did)%WEIRH(lake_index),            &
                      rt_domain(did)%WEIRC(lake_index),            &
                      rt_domain(did)%WEIRL(lake_index),            &
+                     rt_domain(did)%DAML(lake_index),             &
                      rt_domain(did)%ORIFICEE(lake_index),         &
                      rt_domain(did)%ORIFICEC(lake_index),         &
                      rt_domain(did)%ORIFICEA(lake_index),         &
@@ -818,6 +823,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     rt_domain(did)%WEIRH(lake_index),                  &
                     rt_domain(did)%WEIRC(lake_index),                  &
                     rt_domain(did)%WEIRL(lake_index),                  &
+                    rt_domain(did)%DAML(lake_index),                   &
                     rt_domain(did)%ORIFICEE(lake_index),               &
                     rt_domain(did)%ORIFICEC(lake_index),               &
                     rt_domain(did)%ORIFICEA(lake_index),               &
@@ -1607,6 +1613,7 @@ end if ! end of neither channel_only nor channelBucket_only
    if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
    if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
    if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%DAML)) deallocate(rt_domain(did)%DAML)
    if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
