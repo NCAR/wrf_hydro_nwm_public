@@ -360,6 +360,36 @@ contains
     end subroutine read_reservoir_parameters_netcdf_rfc_gage_id
 
 
+    ! Read the number of days to persist an RFC forecast from the reservoir parameters NetCDF
+    subroutine read_reservoir_parameters_netcdf_rfc_persist_days(ncid, lake_id_index, netcdf_array_name, rfc_forecast_persist_days)
+        integer, intent(in) :: ncid, lake_id_index
+        character(len=*), intent(in) :: netcdf_array_name
+        integer, intent(out) :: rfc_forecast_persist_days
+        integer, allocatable, dimension(:) :: temp_persist_days_array
+        integer :: var_id, status, number_of_lakes
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
+
+        allocate(temp_persist_days_array(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, temp_persist_days_array)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        rfc_forecast_persist_days = temp_persist_days_array(lake_id_index)
+
+        if(allocated(temp_persist_days_array)) deallocate(temp_persist_days_array)
+
+    end subroutine read_reservoir_parameters_netcdf_rfc_persist_days
+
+
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF
     subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, &
         netcdf_array_name, var_id, number_of_weights, number_of_lakes)

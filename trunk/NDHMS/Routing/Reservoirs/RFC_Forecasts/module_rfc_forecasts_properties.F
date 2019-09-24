@@ -8,6 +8,7 @@
 module module_rfc_forecasts_properties
     use module_reservoir_utilities, only: read_netcdf_lake_id, &
                                           read_reservoir_parameters_netcdf_rfc_gage_id, &
+                                          read_reservoir_parameters_netcdf_rfc_persist_days, &
                                           handle_err
     use module_reservoir, only: reservoir_properties
     use netcdf
@@ -21,6 +22,7 @@ module module_rfc_forecasts_properties
         integer           :: lookback_seconds
         integer           :: forecast_counts
         integer           :: time_step_seconds
+        integer           :: rfc_forecast_persist_days
 
     contains
 
@@ -50,6 +52,8 @@ contains
         call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", lake_id_index)
 
         call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", this%rfc_gage_id)
+
+        call read_reservoir_parameters_netcdf_rfc_persist_days(ncid, lake_id_index, "rfc_forecast_persist", this%rfc_forecast_persist_days)
 
     end subroutine rfc_forecasts_properties_init
 

@@ -188,7 +188,7 @@ program reservoir_unit_tests
 
         print *, "calling init for rfc_forecasts"
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, &
-        "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-08-18_07:00:00", cwd_full, 24)
+        "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-08-18_07:00:00", cwd_full, 24)
 
         print *, "testing data in rfc_forecasts"
 
@@ -285,7 +285,7 @@ program reservoir_unit_tests
         cwd_full = "./Testing_Files/"
 
         call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 3745478, &
-        "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-05-01_22:00:00", cwd_full, 24)
+        "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-05-01_22:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
 
