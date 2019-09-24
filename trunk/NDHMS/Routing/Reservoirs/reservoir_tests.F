@@ -19,7 +19,6 @@ program reservoir_unit_tests
     rv1 = test_levelpool()
     rv2 = test_levelpool_overflow_max_height()
     rv3 = test_persistence_levelpool_hybrid()
-
     rv4 = test_rfc_forecasts_object()
 
 
@@ -163,13 +162,15 @@ program reservoir_unit_tests
         end if
 
     end function test_persistence_levelpool_hybrid
+
+
     ! This tests the reservoir function of the level pool module under the specific condition
     ! where the water elevation reaches the max height.
     function test_levelpool_overflow_max_height() result(rv)
 
         implicit none
         logical rv                       ! test result
-        type (levelpool_struct) :: levelpool_reservoir_data
+        type (levelpool) :: levelpool_reservoir_data
         real :: lake_area, weir_elevation, weir_coefficient
         real :: weir_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth
@@ -217,7 +218,7 @@ program reservoir_unit_tests
 
         do timestep_count = 1, 108
             inflow = inflow_array(timestep_count)
-            call levelpool_reservoir_data%run_release(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
+            call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
 
             prev_time_inflow = inflow
             print *, outflow
@@ -237,7 +238,7 @@ program reservoir_unit_tests
 
     end function test_levelpool_overflow_max_height
 
-
+    ! This tests the basic object creation for an RFC Forecasts type reservoir
     function test_rfc_forecasts_object() result(rv)
         implicit none
 
