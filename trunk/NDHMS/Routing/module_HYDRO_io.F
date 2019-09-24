@@ -8988,9 +8988,9 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     logical :: fatal_if_error
     fatal_if_error = .TRUE.  !! was thinking this would be a global variable...could become an input.
 
-    #ifdef HYDRO_D
+#ifdef HYDRO_D
     print*,"start read_route_lake_netcdf"
-    #endif
+#endif
 
     iRet = nf90_open(trim(route_lake_file), nf90_nowrite, ncid)
     if (iRet /= nf90_noErr) then
@@ -9024,14 +9024,14 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
        if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem closing file.")
     end if
 
-    #ifdef HYDRO_D
+#ifdef HYDRO_D
     ii = size(LAKEIDM)
     print*,'last index=',ii
     print*,'HRZAREA', HRZAREA(ii)
     print*,'LAKEMAXH', LAKEMAXH(ii), 'WEIRC', WEIRC(ii), 'WEIRL', WEIRL(ii), 'DAML', DAML(ii)
     print*,'ORIFICEC', ORIFICEC(ii), 'ORIFICEA', ORIFICEA(ii), 'ORIFICEE', ORIFICEE(ii)
     print*,"finish read_route_lake_netcdf"
-    #endif
+#endif
 
 end subroutine read_route_lake_netcdf
 
