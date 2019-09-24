@@ -23,7 +23,7 @@ program reservoir_unit_tests
 
     rv4 = test_rfc_forecasts_object()
 
-    !rv5 = test_rfc_forecasts_time_series_object()
+    rv5 = test_rfc_forecasts_time_series_object()
 
     rv6 = test_rfc_forecasts_levelpool_fallback()
 
@@ -188,7 +188,7 @@ program reservoir_unit_tests
 
         print *, "calling init for rfc_forecasts"
         call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, &
-        "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-05-18_22:00:00", cwd_full, 24)
+        "Testing_Files/hybrid_persistence_levelpool_reservoir_index_usgs_rfc.nc", "2019-08-18_07:00:00", cwd_full, 24)
 
         print *, "testing data in rfc_forecasts"
 
@@ -208,7 +208,7 @@ program reservoir_unit_tests
         logical :: call_status
         type (time_series_data_type) :: time_series_data, time_series_data_second
         character*256 :: cwd_full
-        integer :: lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds
+        integer :: lookback_seconds, forecast_counts, time_step_seconds
         real, allocatable, dimension(:) :: forecast_discharges
         logical :: forecast_found
 
@@ -218,12 +218,18 @@ program reservoir_unit_tests
 
         forecast_found = .false.
 
-        call time_series_data%init("2019-05-18_22:00:00", cwd_full, 24, "DIEA4", lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
+        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, "CCHC1", lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
 
-        call_status = time_series_data_info(time_series_data)
-
-        if (call_status) then
+        print *, "Checking reading of time series file"
+        if ( forecast_discharges(51) .gt. 0.368119 - epsilon(0.368119) .and. forecast_discharges(51) .lt. 0.368119 + epsilon(0.368119) ) then
+            print *, "========================================================================"
+            print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
+            print *, "========================================================================"
             rv = .true.
+        else
+            print *, "========================================================================"
+            print *, "Not All RFC Forecast Reservoir Time Series Object Tests Passed"
+            print *, "========================================================================"
         end if
 
     end function test_rfc_forecasts_time_series_object

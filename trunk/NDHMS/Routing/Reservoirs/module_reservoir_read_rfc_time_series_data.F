@@ -14,11 +14,10 @@ module module_reservoir_read_rfc_time_series_data
         integer                         :: forecast_lookback_hours
         integer                         :: current_lookback_seconds
         character(len=5)                :: rfc_gage_id
-        integer                         :: offset_time_seconds
         integer                         :: forecast_counts
         integer                         :: time_step_seconds
         real, allocatable, dimension(:) :: forecast_discharges
-        logical                         :: initialized = .FALSE.
+        logical                         :: forecast_found
 
     contains
 
@@ -37,7 +36,7 @@ contains
 
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id, &
-        lookback_seconds, offset_time_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
+        lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -45,35 +44,38 @@ contains
         integer,            intent(in)                  :: forecast_lookback_hours
         character(len=5),   intent(in)                  :: rfc_gage_id
         integer,            intent(out)                 :: lookback_seconds
-        integer,            intent(out)                 :: offset_time_seconds
         integer,            intent(out)                 :: forecast_counts
         integer,            intent(out)                 :: time_step_seconds
         real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
         logical,            intent(inout)               :: forecast_found
 
-        ! Return from subroutine if this singleton is already initialized
-        if (this%initialized) return
-        this%initialized = .true.
-
+        this%forecast_found = .false.
         this%start_date = start_date
         this%current_date = start_date
         this%time_series_path = time_series_path
         this%forecast_lookback_hours = forecast_lookback_hours
         this%rfc_gage_id = rfc_gage_id
 
+        this%current_lookback_seconds = 0
+        this%forecast_counts = 0
+        this%time_step_seconds = 0
+
         call this%setup_read_time_series()
 
         lookback_seconds = this%current_lookback_seconds
-        offset_time_seconds = this%offset_time_seconds
         forecast_counts = this%forecast_counts
         time_step_seconds = this%time_step_seconds
 
-        allocate(forecast_discharges(forecast_counts))
+        if (this%forecast_found) then
+            allocate(forecast_discharges(forecast_counts))
 
-        forecast_discharges = this%forecast_discharges
+            forecast_discharges = this%forecast_discharges
 
-        ! Deallocate forecast arrays
-        if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
+            ! Deallocate forecast arrays
+            if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
+        end if
+
+        forecast_found = this%forecast_found
 
     end subroutine time_series_data_init
 
@@ -94,6 +96,7 @@ contains
         class(time_series_data_type), intent(inout) :: this
         character(len=256)   :: time_series_file_name
         character(len=19)    :: old_date, new_date
+        character(len=13)    :: old_date_trimmed
         character(len=2)     :: forecast_file_resolution_string
         integer :: total_time_series_file_periods, time_series_file_index
         integer :: forecast_file_minute, forecast_file_resolution_seconds
@@ -105,21 +108,6 @@ contains
 
         old_date = this%current_date
 
-        read (old_date(15:16), *) forecast_file_minute
-
-        ! Match minutes to proper forecast file resolution interval
-        forecast_file_minute = forecast_file_minute / forecast_file_resolution_minutes * forecast_file_resolution_minutes
-
-        ! Formatting for writing minutes
-        if (forecast_file_minute < 10) then
-            old_date(15:16) = "00"
-        else
-            write(old_date(15:16), "(I2)") forecast_file_minute
-        end if
-
-        ! Zero out seconds
-        old_date(18:19) = "00"
-
         write(forecast_file_resolution_string, "(I2)") forecast_file_resolution_minutes
 
         ! Negative for going back in time
@@ -128,11 +116,9 @@ contains
         ! Loop through the total time series periods to look for and read time series files
         do time_series_file_index = 1, total_time_series_file_periods
 
-            ! Use below for time series files with colons in the time
-            old_date = old_date(:13) // ':' // old_date(15:16) // ':' // old_date(18:)
+            old_date_trimmed = trim(old_date(:13))
 
-            ! Construct time series filename with path
-            time_series_file_name = trim(this%time_series_path) // old_date // "." // &
+            time_series_file_name = trim(this%time_series_path) // old_date_trimmed // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
 
             ! Check if file exists
@@ -168,15 +154,15 @@ contains
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
 
-        call read_time_series_netcdf_integer_variables(ncid, 'offsetTime', this%offset_time_seconds)
-
         call read_time_series_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
-        call read_time_series_netcdf_integer_variables(ncid, 'timeStep', this%time_step_seconds)
+        call read_time_series_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
         allocate (this%forecast_discharges(this%forecast_counts))
 
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', this%forecast_discharges)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)
+
+        this%forecast_found = .true.
 
     end subroutine read_time_series_file
 

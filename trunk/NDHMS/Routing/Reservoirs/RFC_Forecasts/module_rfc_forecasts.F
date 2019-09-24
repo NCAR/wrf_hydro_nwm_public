@@ -123,8 +123,8 @@ contains
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id, &
-        this%properties%lookback_seconds, this%properties%offset_time_seconds, this%properties%forecast_counts, &
-        this%properties%time_step_seconds, this%state%forecast_discharges, this%state%forecast_found)
+        this%properties%lookback_seconds, this%properties%forecast_counts, this%properties%time_step_seconds, &
+        this%state%forecast_discharges, this%state%forecast_found)
 
     end subroutine rfc_forecasts_init
 

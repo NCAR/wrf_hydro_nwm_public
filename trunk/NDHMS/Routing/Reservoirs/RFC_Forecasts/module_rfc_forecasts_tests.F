@@ -264,22 +264,6 @@ contains
         end if
         print *, " "
 
-        !print *, "Checking read on observation_lookback_hours"
-        !print *, o%observation_lookback_hours
-        !if ( o%observation_lookback_hours .ne. 0) then
-        !    rv = .false.
-        !    print *, "FAILED"
-        !end if
-        !print *, " "
-
-        !print *, "Checking read on observation_update_time_interval_seconds"
-        !print *, o%observation_update_time_interval_seconds
-        !if ( o%observation_update_time_interval_seconds .ne. 0) then
-        !    rv = .false.
-        !    print *, "FAILED"
-        !end if
-        !print *, " "
-
     end function test_rfc_forecasts_properties
 
 
@@ -448,56 +432,5 @@ contains
         print *, " "
 
     end function test_rfc_forecasts_levelpool_properties
-
-    ! Test time series data object
-    function time_series_data_info(time_series_data) result(data_info_result)
-        implicit none
-        type (time_series_data_type) :: time_series_data
-        logical :: data_info_result
-        logical, dimension(2) :: data_state
-
-        data_info_result = .false.
-
-        ! Check to see if the time_series_data structure exists
-        print *, "Checking initialization of time series data object"
-        if ( time_series_data%initialized ) then
-            print *, "PASSED"
-            data_state(1) = .true.
-        else
-            print *, "FAILED"
-            data_state(1) = .false.
-        end if
-        print *, " "
-
-        ! Check to see if the time series file is properly read
-        print *, "Checking reading of time series file"
-        if ( time_series_data%forecast_discharges(3) .gt. 0.1697545 - epsilon(0.1697545) .and. time_series_data%forecast_discharges(3) .lt. 0.1697545 + epsilon(0.1697545) ) then
-            print *, "PASSED"
-            data_state(2) = .true.
-        else
-            print *, "FAILED"
-            data_state(2) = .false.
-        end if
-        print *, " "
-
-
-        if ( all(data_state) ) then
-            data_info_result = .true.
-            print *, "========================================================================"
-            print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
-            print *, "========================================================================"
-
-        else
-            data_info_result = .false.
-            print *, "========================================================================"
-            print *, "Not All RFC Forecast Reservoir Time Series Object Tests Passed"
-            print *, "========================================================================"
-
-        end if
-
-        flush(6)
-
-    end function time_series_data_info
-
 
 end module
