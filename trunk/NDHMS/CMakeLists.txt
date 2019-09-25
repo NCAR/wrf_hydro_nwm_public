@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 2.8)
 
-set(CMAKE_C_COMPILER "mpicc")
-set(CMAKE_CXX_COMPILER "mpicxx")
-set(CMAKE_Fortran_COMPILER "mpif90")
+set (CMAKE_C_COMPILER "mpicc")
+set (CMAKE_CXX_COMPILER "mpicxx")
+set (CMAKE_Fortran_COMPILER "mpif90")
 
 project (WRF_Hydro)
 
@@ -34,7 +34,7 @@ enable_language (Fortran)
 
 # netcdf does not have a built in package locator so add custom module directory
 # that contains FindNetCDF.cmake
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules )
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 
 #try to find the installed NETCDF library
 set (NETCDF_F90 "YES")
@@ -49,15 +49,14 @@ set (HYDRO_LSM $ENV{HYDRO_LSM} CACHE STRING "Name of the Land Surface Model to U
 if ("${HYDRO_LSM}" STREQUAL "")
 	set (HYDRO_LSM "NoahMP")
 	message ("-- Setting LSM to: NoahMP")
-endif("${HYDRO_LSM}" STREQUAL "")
+endif ("${HYDRO_LSM}" STREQUAL "")
 
 #get the variables defined by setEnvar.sh
-set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE STRING "WRF Enviorment vairable allways set to 1 for WRF-Hydro")
-set (HYDRO_D $ENV{HYDRO_D} CACHE STRING "Print additonal debug information in WRF-Hydro")
-set (HYDRO_REALTIME $ENV{HYDRO_REALTIME} CACHE STRING "WRF Enviorment vairable for real time coupling 0=off 1=on")
-set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF Enviorment vairable for rapid routing 0=off 1=on")
-set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE STRING "Spatial Soil Parameters for Noah MP 0=off 1=on")
-set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE STRING "Large netcdf file support 0=off, 1=on")
+set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE STRING "WRF environment variable. Always set to 1 for WRF-Hydro")
+set (HYDRO_D $ENV{HYDRO_D} CACHE STRING "Print additional debug information in WRF-Hydro")
+set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF-Hydro coupling to RAPID routing model 0=off 1=on")
+set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE STRING "Spatially distributed soil parameters for NoahMP 0=off 1=on")
+set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE STRING "Large netCDF file support 0=off, 1=on")
 set (NCEP_WCOSS $ENV{NCEP_WCOSS} CACHE STRING "WCOSS file units 0=off 1=on")
 set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
 set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
@@ -65,27 +64,23 @@ set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")
-	set (WRF_HYDRO "1" CACHE STRING "WRF Enviorment vairable allways set to 1 for WRF-Hydro" FORCE)
+	set (WRF_HYDRO "1" CACHE STRING "WRF environment variable. Always set to 1 for WRF-Hydro" FORCE)
 endif (WRF_HYDRO STREQUAL "")
 
 if (HYDRO_D STREQUAL "")
 	set (HYDRO_D "0" CACHE STRING "Print additonal debug information in WRF-Hydro" FORCE)
 endif (HYDRO_D STREQUAL "")
 
-if (HYDRO_REALTIME STREQUAL "")
-	set (HYDRO_REALTIME "0" CACHE STRING "WRF Enviorment vairable for real time coupling 0=off 1=on" FORCE)
-endif (HYDRO_REALTIME STREQUAL "")
-
 if (WRF_HYDRO_RAPID STREQUAL "")
-	set (WRF_HYDRO_RAPID "0" CACHE STRING "WRF Enviorment vairable for rapid routing 0=off 1=on" FORCE)
+	set (WRF_HYDRO_RAPID "0" CACHE STRING "WRF-Hydro coupling to RAPID routing model 0=off 1=on" FORCE)
 endif (WRF_HYDRO_RAPID STREQUAL "")
 
 if (SPATIAL_SOIL STREQUAL "")
-	set (SPATIAL_SOIL "0" CACHE STRING "Spatial Soil Parameters for Noah MP 0=off 1=on" FORCE)
+	set (SPATIAL_SOIL "0" CACHE STRING "Spatially distributed soil parameters for NoahMP 0=off 1=on" FORCE)
 endif (SPATIAL_SOIL STREQUAL "")
 
 if (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
-	set (WRFIO_NCD_LARGE_FILE_SUPPORT "0" CACHE STRING "Large netcdf file support 0=off, 1=on" FORCE)
+	set (WRFIO_NCD_LARGE_FILE_SUPPORT "0" CACHE STRING "Large netCDF file support 0=off, 1=on" FORCE)
 endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
 
 if (NCEP_WCOSS STREQUAL "")
@@ -124,12 +119,6 @@ message ("HYDRO_D = " ${HYDRO_D} )
 if (HYDRO_D STREQUAL "1" )
 	add_definitions(-DHYDRO_D)
 endif (HYDRO_D STREQUAL "1") 
-
-# set -DHYDRO_REALTIME from env
-message ("HYDRO_REALTIME = " ${HYDRO_REALTIME} )
-if (HYDRO_REALTIME STREQUAL "1" )
-	add_definitions(-DHYDRO_REALTIME)
-endif (HYDRO_REALTIME STREQUAL "1") 
 
 # set -DWRF_HYDRO_RAPID from env
 message ("WRF_HYDRO_RAPID = " ${WRF_HYDRO_RAPID} )
@@ -371,6 +360,6 @@ elseif(HYDRO_LSM MATCHES "Noah")
 
 
 else()
-	mesgage ("Unknown Land Surface Model:" ${HYDRO_LSM} )
+	message ("Unknown land surface model:" ${HYDRO_LSM} )
 endif (HYDRO_LSM MATCHES "NoahMP")
 
