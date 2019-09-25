@@ -6728,6 +6728,7 @@ ENDIF   ! CROPTYPE == 0
    REAL, DIMENSION(-NSNOW+1:0) :: EPORE     !effective porosity = porosity - VOL_ICE
    REAL :: PROPOR, TEMP
    REAL :: PONDING1, PONDING2
+   REAL, PARAMETER :: max_liq_mass_fraction = 0.4
 ! ----------------------------------------------------------------------
 
 !for the case when SNEQV becomes '0' after 'COMBINE'
@@ -6807,6 +6808,10 @@ ENDIF   ! CROPTYPE == 0
      END IF
      QOUT = QOUT*DENH2O
      SNLIQ(J) = SNLIQ(J) - QOUT
+     IF((SNLIQ(J)/(SNICE(J)+SNLIQ(J))) > max_liq_mass_fraction) THEN
+       QOUT = QOUT + (SNLIQ(J) - max_liq_mass_fraction/(1.0 - max_liq_mass_fraction)*SNICE(J))
+       SNLIQ(J) = max_liq_mass_fraction/(1.0 - max_liq_mass_fraction)*SNICE(J)
+     ENDIF
      QIN = QOUT
    END DO
 
