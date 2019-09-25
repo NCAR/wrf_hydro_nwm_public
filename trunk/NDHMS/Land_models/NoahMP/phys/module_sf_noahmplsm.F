@@ -6252,10 +6252,12 @@ ENDIF   ! CROPTYPE == 0
              IF(J /= 0) THEN
                 SNLIQ(J+1) = SNLIQ(J+1) + SNLIQ(J)
                 SNICE(J+1) = SNICE(J+1) + SNICE(J)
+                DZSNSO(J+1) = DZSNSO(J+1) + DZSNSO(J)
              ELSE
                IF (ISNOW_OLD < -1) THEN    ! MB/KM: change to ISNOW
                 SNLIQ(J-1) = SNLIQ(J-1) + SNLIQ(J)
                 SNICE(J-1) = SNICE(J-1) + SNICE(J)
+                DZSNSO(J-1) = DZSNSO(J-1) + DZSNSO(J)
                ELSE
 	         IF(SNICE(J) >= 0.) THEN
                   PONDING1 = SNLIQ(J)    ! ISNOW WILL GET SET TO ZERO BELOW; PONDING1 WILL GET 
