@@ -48,56 +48,56 @@ if ("${NWM_LSM}" STREQUAL "")
 endif("${NWM_LSM}" STREQUAL "")
 
 #get the variables defined by setEnvar.sh
-set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE String "WRF Enviorment vairable allways set to 1 for WRF-Hydro")
-set (HYDRO_D $ENV{HYDRO_D} CACHE String "Print additonal debug information in WRF-Hydro")
-set (HYDRO_REALTIME $ENV{HYDRO_REALTIME} CACHE String "WRF Enviorment vairable for real time coupling 0=off 1=on")
-set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE String "WRF Enviorment vairable for rapid routing 0=off 1=on")
-set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE String "Spatial Soil Parameters for Noah MP 0=off 1=on")
-set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE String "Large netcdf file support 0=off, 1=on")
-set (NCEP_WCOSS $ENV{NCEP_WCOSS} CACHE String "WCOSS file units 0=off 1=on")
-set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE String "Streamflow nudging 0=off 1=on")
-set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE String "Output channel connections")
-set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE String "Precipitation as double")
+set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE STRING "WRF Enviorment vairable allways set to 1 for WRF-Hydro")
+set (HYDRO_D $ENV{HYDRO_D} CACHE STRING "Print additonal debug information in WRF-Hydro")
+set (HYDRO_REALTIME $ENV{HYDRO_REALTIME} CACHE STRING "WRF Enviorment vairable for real time coupling 0=off 1=on")
+set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF Enviorment vairable for rapid routing 0=off 1=on")
+set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE STRING "Spatial Soil Parameters for Noah MP 0=off 1=on")
+set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE STRING "Large netcdf file support 0=off, 1=on")
+set (NCEP_WCOSS $ENV{NCEP_WCOSS} CACHE STRING "WCOSS file units 0=off 1=on")
+set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
+set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
+set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")
-	set (WRF_HYDRO "1" CACHE String "WRF Enviorment vairable allways set to 1 for WRF-Hydro" FORCE)
+	set (WRF_HYDRO "1" CACHE STRING "WRF Enviorment vairable allways set to 1 for WRF-Hydro" FORCE)
 endif (WRF_HYDRO STREQUAL "")
 
 if (HYDRO_D STREQUAL "")
-	set (HYDRO_D "0" CACHE String "Print additonal debug information in WRF-Hydro" FORCE)
+	set (HYDRO_D "0" CACHE STRING "Print additonal debug information in WRF-Hydro" FORCE)
 endif (HYDRO_D STREQUAL "")
 
 if (HYDRO_REALTIME STREQUAL "")
-	set (HYDRO_REALTIME "0" CACHE String "WRF Enviorment vairable for real time coupling 0=off 1=on" FORCE)
+	set (HYDRO_REALTIME "0" CACHE STRING "WRF Enviorment vairable for real time coupling 0=off 1=on" FORCE)
 endif (HYDRO_REALTIME STREQUAL "")
 
 if (WRF_HYDRO_RAPID STREQUAL "")
-	set (WRF_HYDRO_RAPID "0" CACHE String "WRF Enviorment vairable for rapid routing 0=off 1=on" FORCE)
+	set (WRF_HYDRO_RAPID "0" CACHE STRING "WRF Enviorment vairable for rapid routing 0=off 1=on" FORCE)
 endif (WRF_HYDRO_RAPID STREQUAL "")
 
 if (SPATIAL_SOIL STREQUAL "")
-	set (SPATIAL_SOIL "0" CACHE String "Spatial Soil Parameters for Noah MP 0=off 1=on" FORCE)
+	set (SPATIAL_SOIL "0" CACHE STRING "Spatial Soil Parameters for Noah MP 0=off 1=on" FORCE)
 endif (SPATIAL_SOIL STREQUAL "")
 
 if (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
-	set (WRFIO_NCD_LARGE_FILE_SUPPORT "0" CACHE String "Large netcdf file support 0=off, 1=on" FORCE)
+	set (WRFIO_NCD_LARGE_FILE_SUPPORT "0" CACHE STRING "Large netcdf file support 0=off, 1=on" FORCE)
 endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
 
 if (NCEP_WCOSS STREQUAL "")
-	set (NCEP_WCOSS "0" CACHE String "WCOSS file units 0=off, 1=on" FORCE)
+	set (NCEP_WCOSS "0" CACHE STRING "WCOSS file units 0=off, 1=on" FORCE)
 endif (NCEP_WCOSS STREQUAL "")
 
 if (WRF_HYDRO_NUDGING STREQUAL "")
-	set (WRF_HYDRO_NUDGING "0" CACHE String "Streamflow nudging 0=off, 1=on" FORCE)
+	set (WRF_HYDRO_NUDGING "0" CACHE STRING "Streamflow nudging 0=off, 1=on" FORCE)
 endif (WRF_HYDRO_NUDGING STREQUAL "")
 
 if (OUTPUT_CHAN_CONN STREQUAL "")
-	set (OUTPUT_CHAN_CONN "0" CACHE String "Output channel connections" FORCE)
+	set (OUTPUT_CHAN_CONN "0" CACHE STRING "Output channel connections" FORCE)
 endif (OUTPUT_CHAN_CONN STREQUAL "")
 
 if (PRECIP_DOUBLE STREQUAL "")
-	set (PRECIP_DOUBLE "0" CACHE String "Precipitation as double" FORCE)
+	set (PRECIP_DOUBLE "0" CACHE STRING "Precipitation as double" FORCE)
 endif (PRECIP_DOUBLE STREQUAL "")
 
 
@@ -227,6 +227,7 @@ add_dependencies(nwm_routing nwm_routing_subsurface)
 add_dependencies(nwm_routing nwm_routing_reservoirs)
 add_dependencies(nwm_routing nwm_routing_reservoirs_levelpool)
 add_dependencies(nwm_routing nwm_routing_reservoirs_hybrid)
+add_dependencies(nwm_routing_reservoirs_hybrid nwm_routing_reservoirs_levelpool)
 #add_dependencies(nwm_routing nwm_routing_groundwater)
 #add_dependencies(nwm_routing nwm_routing_groundwater_bucket)
 #add_dependencies(nwm_routing nwm_routing_groundwater_nhd)
@@ -306,7 +307,8 @@ if (NWM_LSM MATCHES "NoahMP")
 		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND ln -s ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+		COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
 	)	
 		
 elseif(NWM_LSM MATCHES "Noah")
@@ -353,13 +355,14 @@ elseif(NWM_LSM MATCHES "Noah")
         add_custom_command(TARGET wrfhydro.exe POST_BUILD 
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-                COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
-                COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND ln -s ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+		COMMAND ln -s wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
         )
 
 
