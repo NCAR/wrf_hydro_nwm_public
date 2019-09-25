@@ -4,11 +4,15 @@ set(CMAKE_C_COMPILER "mpicc")
 set(CMAKE_CXX_COMPILER "mpicxx")
 set(CMAKE_Fortran_COMPILER "mpif90")
 
-project (National_Water_Model)
+project (WRF_Hydro)
 
-#set versions number
+#set version numbers
+set (WRF_Hydro_VERSION_MAJOR 5)
+set (WRF_Hydro_VERSION_MINOR 2)
+set (WRF_Hydro_VERSION_PATCH dev)
 set (National_Water_Model_VERSION_MAJOR 2)
-set (National_Water_model_VERSION_MINOR 2)
+set (National_Water_Model_VERSION_MINOR 1)
+set (National_Water_Model_VERSION_PATCH dev)
 
 # set cmake to work with fortran
 enable_language (Fortran)
@@ -39,13 +43,13 @@ find_package(NetCDF REQUIRED)
 message("-- NetCDF Include Dir: ${NETCDF_INCLUDES}")
 
 #set user controled enviorment variables
-set (NWM_LSM $ENV{NWM_LSM} CACHE STRING "Name of the Land Surface Model to Use")
+set (HYDRO_LSM $ENV{HYDRO_LSM} CACHE STRING "Name of the Land Surface Model to Use")
 
 # set enviorment variables if they have not been set
-if ("${NWM_LSM}" STREQUAL "")
-	set (NWM_LSM "NoahMP")
+if ("${HYDRO_LSM}" STREQUAL "")
+	set (HYDRO_LSM "NoahMP")
 	message ("-- Setting LSM to: NoahMP")
-endif("${NWM_LSM}" STREQUAL "")
+endif("${HYDRO_LSM}" STREQUAL "")
 
 #get the variables defined by setEnvar.sh
 set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE STRING "WRF Enviorment vairable allways set to 1 for WRF-Hydro")
@@ -255,7 +259,7 @@ add_dependencies(hydro_data_rec hydro_routing_subsurface)
 add_dependencies(hydro_data_rec hydro_routing_reservoirs)
 
 
-if (NWM_LSM MATCHES "NoahMP")
+if (HYDRO_LSM MATCHES "NoahMP")
 	message ("-- Building NoahMP LSM")
 	add_subdirectory("Land_models/NoahMP")
 	
@@ -311,7 +315,7 @@ if (NWM_LSM MATCHES "NoahMP")
 		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
 	)	
 		
-elseif(NWM_LSM MATCHES "Noah")
+elseif(HYDRO_LSM MATCHES "Noah")
 	message ("-- Building Noah LSM")
 	add_subdirectory("Land_models/Noah")
 	add_subdirectory("CPL/Noah_cpl")
@@ -367,6 +371,6 @@ elseif(NWM_LSM MATCHES "Noah")
 
 
 else()
-	mesgage ("Unknown Land Surface Model:" ${NWM_LSM} )
-endif (NWM_LSM MATCHES "NoahMP")
+	mesgage ("Unknown Land Surface Model:" ${HYDRO_LSM} )
+endif (HYDRO_LSM MATCHES "NoahMP")
 
