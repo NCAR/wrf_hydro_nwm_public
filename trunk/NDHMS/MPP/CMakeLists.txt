@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-add_library(nwm_mpp STATIC
+add_library(hydro_mpp STATIC
 	CPL_WRF.F
 	module_mpp_GWBUCKET.F
 	module_mpp_ReachLS.F
