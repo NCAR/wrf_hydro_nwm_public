@@ -47,7 +47,7 @@ contains
 
         this%time_series_update_time = 0
         this%current_time = 0
-        this%time_series_index = 0
+        this%time_series_index = 1
         this%forecast_found = .FALSE.
 
     end subroutine rfc_forecasts_state_init

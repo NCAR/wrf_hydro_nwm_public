@@ -126,6 +126,11 @@ contains
         this%properties%lookback_seconds, this%properties%forecast_counts, this%properties%time_step_seconds, &
         this%state%forecast_discharges, this%state%forecast_found)
 
+        if (this%state%forecast_found) then
+            this%state%time_series_update_time = this%properties%time_step_seconds
+        end if
+
+
     end subroutine rfc_forecasts_init
 
     ! RFC Forecasts Destructor
@@ -157,10 +162,25 @@ contains
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
-!TRY W/ 1 DAY
+
         if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then
             ! USE FORECAST VALUE
-            this%output%outflow = -999.0 ! Temporarily setting to -999.0
+            !this%output%outflow = -999.0 ! Temporarily setting to -999.0
+
+            ! DO THIS BEFORE OR AFTER OUTPUTTING THE DISCHARGE????
+            if (this%state%current_time .ge. this%state%time_series_update_time .and. this%state%time_series_index &
+            .lt. this%properties%forecast_counts) then
+                this%state%time_series_index = this%state%time_series_index + 1
+
+                this%state%time_series_update_time = this%state%time_series_update_time + this%properties%time_step_seconds
+
+
+            end if
+
+
+this%output%outflow
+
+
         else
             this%output%outflow = levelpool_outflow
         end if
