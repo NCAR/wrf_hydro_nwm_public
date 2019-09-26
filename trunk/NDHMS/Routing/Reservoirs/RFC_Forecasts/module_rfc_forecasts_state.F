@@ -16,7 +16,9 @@ module module_rfc_forecasts_state
     type, extends(reservoir_state) :: rfc_forecasts_state_interface
         real                            :: water_elevation              ! meters AMSL
         real, allocatable, dimension(:) :: forecast_discharges
+        integer                         :: time_series_update_time      ! seconds
         integer                         :: current_time                 ! seconds
+        integer                         :: time_series_index
         logical                         :: forecast_found
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
@@ -43,8 +45,9 @@ contains
         ! Initialize the state water elevation in same manner as in module_RT.F
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
 
+        this%time_series_update_time = 0
         this%current_time = 0
-
+        this%time_series_index = 0
         this%forecast_found = .FALSE.
 
     end subroutine rfc_forecasts_state_init

@@ -23,6 +23,7 @@ module module_rfc_forecasts_properties
         integer           :: forecast_counts
         integer           :: time_step_seconds
         integer           :: rfc_forecast_persist_days
+        integer           :: rfc_forecast_persist_seconds
 
     contains
 
@@ -31,13 +32,15 @@ module module_rfc_forecasts_properties
 
     end type rfc_forecasts_properties_interface
 
+    integer, parameter :: seconds_in_day = 86400
+
 contains
 
     ! RFC Forecasts Properties Constructor
     subroutine rfc_forecasts_properties_init(this, lake_number, rfc_forecasts_parameter_file)
         implicit none
         class(rfc_forecasts_properties_interface), intent(inout) :: this ! the type object being initialized
-        integer, intent(in)          :: lake_number                  ! lake number
+        integer, intent(in)          :: lake_number                   ! lake number
         character(len=*), intent(in) :: rfc_forecasts_parameter_file
         integer                      :: ncid, var_id, lake_id_index
         integer                      :: status                        ! status of reading NetCDF
@@ -54,6 +57,8 @@ contains
         call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", this%rfc_gage_id)
 
         call read_reservoir_parameters_netcdf_rfc_persist_days(ncid, lake_id_index, "rfc_forecast_persist", this%rfc_forecast_persist_days)
+
+        this%rfc_forecast_persist_seconds = this%rfc_forecast_persist_days * seconds_in_day
 
     end subroutine rfc_forecasts_properties_init
 
