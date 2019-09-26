@@ -1024,6 +1024,7 @@ contains
         NITERB = 5
         MPE    = 1E-6
         DTG    = 0.
+        MOZ    = 0.
         MOZSGN = 0
         MOZOLD = 0.
         H      = 0.
@@ -1107,6 +1108,10 @@ contains
      IF(OPT_STC == 1 .OR. OPT_STC ==3) THEN
      IF ((MAXVAL(SICE) > 0.0 .OR. SNOWH > 0.0) .AND. TGB > TFRZ .AND. OPT_GLA == 1) THEN
           TGB = TFRZ
+          T = TDC(TGB)                              ! MB: recalculate ESTG
+          CALL ESAT(T, ESATW, ESATI, DSATW, DSATI)
+          ESTG  = ESATI
+          QSFC = 0.622*(ESTG*RHSUR)/(SFCPRS-0.378*(ESTG*RHSUR))
           IRB = CIR * TGB**4 - EMG*LWDN
           SHB = CSH * (TGB        - SFCTMP)
           EVB = CEV * (ESTG*RHSUR - EAIR )          !ESTG reevaluate ?

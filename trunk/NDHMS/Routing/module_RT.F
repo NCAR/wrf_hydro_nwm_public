@@ -36,7 +36,8 @@ MODULE module_Routing
    use module_HYDRO_utils
 
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
-   use module_levelpool
+   use module_levelpool, only: levelpool
+   use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
 
    IMPLICIT NONE
 
@@ -365,8 +366,7 @@ CONTAINS
      if(NLAKES .gt. 0) then
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
-        allocate ( rt_domain(did)%q_type(NLAKES) )        ! allocate array to specify type of reservoir
-
+        allocate ( rt_domain(did)%reservoir_type(NLAKES) )        ! allocate array to specify type of reservoir
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -374,6 +374,7 @@ CONTAINS
         allocate( rt_domain(did)%WEIRH(NLAKES) )
         allocate( rt_domain(did)%WEIRC(NLAKES) )
         allocate( rt_domain(did)%WEIRL(NLAKES) )
+        allocate( rt_domain(did)%DAML(NLAKES) )
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
@@ -382,12 +383,13 @@ CONTAINS
          rt_domain(did)%WEIRH = 0.0
          rt_domain(did)%WEIRC = 0.0
          rt_domain(did)%WEIRL = 0.0
+         rt_domain(did)%DAML  = 0.0
          rt_domain(did)%LAKEMAXH = 0.0
          rt_domain(did)%ELEVLAKE= 0.0
          rt_domain(did)%ORIFICEC = 0.0
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
-
+         rt_domain(did)%reservoir_type = 1
      endif
 
 
@@ -707,31 +709,33 @@ subroutine LandRT_ini(did)
 #else
                 call READ_CHROUTING1( &  !! NOT TESTED
 #endif
-                rt_domain(did)%IXRT,         rt_domain(did)%JXRT,       &
-                rt_domain(did)%ELRT,         rt_domain(did)%overland%streams_and_lakes%ch_netrt,        &
-                rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mask, &
-                rt_domain(did)%FROM_NODE,    rt_domain(did)%TO_NODE, &
-                rt_domain(did)%TYPEL,        rt_domain(did)%ORDER, &
-                rt_domain(did)%MAXORDER,     rt_domain(did)%NLINKS, &
-                rt_domain(did)%NLAKES,       rt_domain(did)%CHANLEN, &
-                rt_domain(did)%MannN,        rt_domain(did)%So, &
-                rt_domain(did)%ChSSlp,       rt_domain(did)%Bw, &
-                rt_domain(did)%Tw,                              &
-                rt_domain(did)%Tw_CC,                           &
-                rt_domain(did)%n_CC,                            &
-                rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
-                rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
-                rt_domain(did)%WEIRL,        rt_domain(did)%ORIFICEC, &
-                rt_domain(did)%ORIFICEA,     rt_domain(did)%ORIFICEE, &
-                rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
-                rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
-                rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
-                rt_domain(did)%CH_NETLNK,    rt_domain(did)%CHANXI,          &
-                rt_domain(did)%CHANYJ,       rt_domain(did)%CHLAT,           &
-                rt_domain(did)%CHLON,        nlst(did)%channel_option,    &
-                rt_domain(did)%latval,       rt_domain(did)%lonval,          &
-                rt_domain(did)%STRMFRXSTPTS, nlst(did)%geo_finegrid_flnm, &
-                nlst(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst(did)%UDMP_OPT   & !! no comma
+             rt_domain(did)%IXRT,         rt_domain(did)%JXRT,       &
+             rt_domain(did)%ELRT,         rt_domain(did)%overland%streams_and_lakes%ch_netrt,        &
+             rt_domain(did)%CH_LNKRT,     rt_domain(did)%overland%streams_and_lakes%lake_mask, &
+             rt_domain(did)%FROM_NODE,    rt_domain(did)%TO_NODE, &
+             rt_domain(did)%TYPEL,        rt_domain(did)%ORDER, &
+             rt_domain(did)%MAXORDER,     rt_domain(did)%NLINKS, &
+             rt_domain(did)%NLAKES,       rt_domain(did)%CHANLEN, &
+             rt_domain(did)%MannN,        rt_domain(did)%So, &
+             rt_domain(did)%ChSSlp,       rt_domain(did)%Bw, &
+             rt_domain(did)%Tw,                              &
+             rt_domain(did)%Tw_CC,                           &
+             rt_domain(did)%n_CC,                            &
+             rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
+             rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
+             rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
+             rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
+             rt_domain(did)%ORIFICEE,                           &
+             nlst(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
+             rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
+             rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
+             rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
+             rt_domain(did)%CH_NETLNK,    rt_domain(did)%CHANXI,          &
+             rt_domain(did)%CHANYJ,       rt_domain(did)%CHLAT,           &
+             rt_domain(did)%CHLON,        nlst(did)%channel_option,    &
+             rt_domain(did)%latval,       rt_domain(did)%lonval,          &
+             rt_domain(did)%STRMFRXSTPTS, nlst(did)%geo_finegrid_flnm, &
+             nlst(did)%route_lake_f, rt_domain(did)%LAKEIDM,nlst(did)%UDMP_OPT   & !! no comma
 #ifdef MPP_LAND
                 ,rt_domain(did)%g_IXRT,      rt_domain(did)%g_JXRT      &
                 ,rt_domain(did)%gnlinks,     rt_domain(did)%GCH_NETLNK  &
@@ -739,84 +743,105 @@ subroutine LandRT_ini(did)
                 rt_domain(did)%yw_mpp_nlinks,rt_domain(did)%lake_index, &
                 rt_domain(did)%nlinks_index &
 #endif
-                )
-           
-        end if  !! CHANRTSWCRT 1 or 2
-        
-     end if  !! neither channel_only nor channelBucket_only
-     
-     
-     if((nlst(did)%CHANRTSWCRT    .eq. 1 .or. nlst(did)%CHANRTSWCRT    .eq. 2) .and. &
-          (nlst(did)%channel_option .eq. 1 .or. nlst(did)%channel_option .eq. 2)        ) then
-        call read_routelink( &
-             rt_domain(did)%TO_NODE,       rt_domain(did)%TYPEL,      &
-             rt_domain(did)%ORDER,         rt_domain(did)%MAXORDER,   &
-             rt_domain(did)%NLAKES,        rt_domain(did)%MUSK,       &
-             rt_domain(did)%MUSX,                                     &
-             rt_domain(did)%QLINK,         rt_domain(did)%CHANLEN,    &
-             rt_domain(did)%MannN,         rt_domain(did)%So,         &
-             rt_domain(did)%ChSSlp,        rt_domain(did)%Bw,         &
-             rt_domain(did)%Tw,                                       &
-             rt_domain(did)%Tw_CC,                                    &
-             rt_domain(did)%n_CC,                                     &
-             rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
-             rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
-             rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
-             rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
-             rt_domain(did)%ORIFICEE,      rt_domain(did)%LATLAKE,    &
-             rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
-             rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
-             nlst(did)%route_link_f,    nlst(did)%route_lake_f, &
-             rt_domain(did)%ZELEV,         rt_domain(did)%CHLAT,      &
-             rt_domain(did)%CHLON,         rt_domain(did)%NLINKSL,    &
-             rt_domain(did)%LINKID,        rt_domain(did)%GNLINKSL,   &
-             rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
-             rt_domain(did)%gageMiss                                   )
-     end if
-     
-     ! Set reservoir type array values to 1 as default for levelpool type.
-     rt_domain(did)%q_type = 1
-     
-     NLAKES_total = rt_domain(did)%NLAKES
-     
-     do lake_index = 1, NLAKES_total
-        nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
-        
-     end do
-     
-     ! For loop to cycle array of pointers to reservoirs
-     do lake_index = 1, NLAKES_total
-        
-        ! If q_type equals 1, then go to Level Pool
-        if (rt_domain(did)%q_type(lake_index) == 1) then
-           
-           ! Allocate a single level pool reservoir
-           allocate( levelpool_struct :: rt_domain(did)%reservoirs(lake_index)%ptr)
-           
-           ! Dynamically inspects for level pool type reservoir
-           select type (lp => rt_domain(did)%reservoirs(lake_index)%ptr)
-           type is (levelpool_struct)
-              
-              ! Call to initialize a level pool type reservoir
-              call lp%init(                                &
-                   rt_domain(did)%RESHT(lake_index),            &
-                   rt_domain(did)%HRZAREA(lake_index),          &
-                   rt_domain(did)%WEIRH(lake_index),            &
-                   rt_domain(did)%WEIRC(lake_index),            &
-                   rt_domain(did)%WEIRL(lake_index),            &
-                   rt_domain(did)%ORIFICEE(lake_index),         &
-                   rt_domain(did)%ORIFICEC(lake_index),         &
-                   rt_domain(did)%ORIFICEA(lake_index),         &
-                   rt_domain(did)%LAKEMAXH(lake_index),         &
-                   rt_domain(did)%LAKEIDM(lake_index)           )
-              
+             )
+
+      end if  !! CHANRTSWCRT 1 or 2
+
+   end if  !! neither channel_only nor channelBucket_only
+
+
+   if((nlst(did)%CHANRTSWCRT    .eq. 1 .or. nlst(did)%CHANRTSWCRT    .eq. 2) .and. &
+      (nlst(did)%channel_option .eq. 1 .or. nlst(did)%channel_option .eq. 2)        ) then
+      call read_routelink( &
+           rt_domain(did)%TO_NODE,       rt_domain(did)%TYPEL,      &
+           rt_domain(did)%ORDER,         rt_domain(did)%MAXORDER,   &
+           rt_domain(did)%NLAKES,        rt_domain(did)%MUSK,       &
+           rt_domain(did)%MUSX,                                     &
+           rt_domain(did)%QLINK,         rt_domain(did)%CHANLEN,    &
+           rt_domain(did)%MannN,         rt_domain(did)%So,         &
+           rt_domain(did)%ChSSlp,        rt_domain(did)%Bw,         &
+           rt_domain(did)%Tw,                                       &
+           rt_domain(did)%Tw_CC,                                    &
+           rt_domain(did)%n_CC,                                     &
+           rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
+           rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
+           rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
+           rt_domain(did)%DAML,                                     &
+           rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
+           rt_domain(did)%ORIFICEE,                                 &
+           nlst(did)%reservoir_persistence,                      &
+           rt_domain(did)%reservoir_type,                                   &
+           rt_domain(did)%LATLAKE,                                  &
+           rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
+           rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
+           nlst(did)%route_link_f,       nlst(did)%route_lake_f, &
+           rt_domain(did)%ZELEV,         rt_domain(did)%CHLAT,      &
+           rt_domain(did)%CHLON,         rt_domain(did)%NLINKSL,    &
+           rt_domain(did)%LINKID,        rt_domain(did)%GNLINKSL,   &
+           rt_domain(did)%NLINKS,        rt_domain(did)%gages,      &
+           rt_domain(did)%gageMiss                                   )
+   end if
+
+   NLAKES_total = rt_domain(did)%NLAKES
+
+   do lake_index = 1, NLAKES_total
+     nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
+
+   end do
+
+   ! For loop to cycle array of pointers to reservoirs
+   do lake_index = 1, NLAKES_total
+
+       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
+           allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
+          allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       end if
+
+       ! Dynamically type reservoir to initialize.
+       select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
+
+          type is (levelpool)
+               call reservoir%init(                               &
+                     rt_domain(did)%RESHT(lake_index),            &
+                     rt_domain(did)%HRZAREA(lake_index),          &
+                     rt_domain(did)%WEIRH(lake_index),            &
+                     rt_domain(did)%WEIRC(lake_index),            &
+                     rt_domain(did)%WEIRL(lake_index),            &
+                     rt_domain(did)%DAML(lake_index),             &
+                     rt_domain(did)%ORIFICEE(lake_index),         &
+                     rt_domain(did)%ORIFICEC(lake_index),         &
+                     rt_domain(did)%ORIFICEA(lake_index),         &
+                     rt_domain(did)%LAKEMAXH(lake_index),         &
+                     rt_domain(did)%LAKEIDM(lake_index)            )
+
+          type is (persistence_levelpool_hybrid)
+              call reservoir%init(                                     &
+                    rt_domain(did)%RESHT(lake_index),                  &
+                    rt_domain(did)%HRZAREA(lake_index),                &
+                    rt_domain(did)%WEIRH(lake_index),                  &
+                    rt_domain(did)%WEIRC(lake_index),                  &
+                    rt_domain(did)%WEIRL(lake_index),                  &
+                    rt_domain(did)%DAML(lake_index),                   &
+                    rt_domain(did)%ORIFICEE(lake_index),               &
+                    rt_domain(did)%ORIFICEC(lake_index),               &
+                    rt_domain(did)%ORIFICEA(lake_index),               &
+                    rt_domain(did)%LAKEMAXH(lake_index),               &
+                    rt_domain(did)%ELEVLAKE(lake_index),               &
+                    rt_domain(did)%LAKEIDM(lake_index),                &
+                    nlst(did)%reservoir_persistence_parameter_file, &
+                    nlst(did)%startdate(1:19),                      &
+                    nlst(did)%reservoir_timeslice_path,             &
+                    nlst(did)%reservoir_observation_lookback_hours, &
+                    nlst(did)%reservoir_observation_update_time_interval_seconds)
+
            end select
-           
-        end if
-        
-     end do
-     
-     !ADCHANGE: Add lake reach output
+
+   end do
+
+   !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
      if(nlst(did)%UDMP_OPT .eq. 1) then
         call output_lake_types( rt_domain(did)%GNLINKSL, rt_domain(did)%LINKID, rt_domain(did)%TYPEL )
@@ -1581,14 +1606,15 @@ subroutine LandRT_ini(did)
   end if ! end of neither channel_only nor channelBucket_only
 
    ! Deallocate existing arrays that contain reservoir parameters/properties
-  if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
-  if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
-  if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
-  if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
-  if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
-  if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
-  if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
-  if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+   if(allocated(rt_domain(did)%HRZAREA)) deallocate(rt_domain(did)%HRZAREA)
+   if(allocated(rt_domain(did)%WEIRH)) deallocate(rt_domain(did)%WEIRH)
+   if(allocated(rt_domain(did)%WEIRC)) deallocate(rt_domain(did)%WEIRC)
+   if(allocated(rt_domain(did)%WEIRL)) deallocate(rt_domain(did)%WEIRL)
+   if(allocated(rt_domain(did)%DAML)) deallocate(rt_domain(did)%DAML)
+   if(allocated(rt_domain(did)%ORIFICEE)) deallocate(rt_domain(did)%ORIFICEE)
+   if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
+   if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
+   if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
 
 end subroutine LandRT_ini
 

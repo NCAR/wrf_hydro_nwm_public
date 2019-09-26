@@ -9,6 +9,7 @@ trunk/NDHMS/HRLDAS/user_build_options
 /.project
 trunk/NDHMS/Run
 trunk/NDHMS/Run/
+trunk/NDHMS/setEnvar.sh
 trunk/NDHMS/Makefile.comm
 trunk/NDHMS/Land_models/NoahMP/user_build_options
 trunk/NDHMS/Land_models/Noah/user_build_options
@@ -22,3 +23,4 @@ README.md
 *.log
 compile_options.sh
 .DS_Store
+

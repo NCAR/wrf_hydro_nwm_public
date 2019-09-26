@@ -105,6 +105,11 @@ module config_base
      character(len=256) :: route_chan_f=""
      character(len=256) :: route_link_f=""
      character(len=256) :: route_lake_f=""
+     logical            :: reservoir_persistence
+     character(len=256) :: reservoir_persistence_parameter_file=""
+     character(len=256) :: reservoir_timeslice_path=""
+     integer            :: reservoir_observation_lookback_hours
+     integer            :: reservoir_observation_update_time_interval_seconds
      character(len=256) :: route_direction_f=""
      character(len=256) :: route_order_f=""
      character(len=256) :: gwbasmskfil =""
@@ -409,6 +414,11 @@ contains
     character(len=256) :: route_link_f=""
     logical            :: compound_channel
     character(len=256) :: route_lake_f=""
+    logical            :: reservoir_persistence
+    character(len=256) :: reservoir_persistence_parameter_file=""
+    character(len=256) :: reservoir_timeslice_path=""
+    integer            :: reservoir_observation_lookback_hours
+    integer            :: reservoir_observation_update_time_interval_seconds
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
     character(len=256) :: gwbasmskfil =""
@@ -472,6 +482,8 @@ contains
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
+         reservoir_persistence, reservoir_persistence_parameter_file, reservoir_timeslice_path, &
+         reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
          route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
          gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
@@ -506,6 +518,9 @@ contains
     reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
     compound_channel = .FALSE.
     bucket_loss = 0
+    reservoir_persistence = .FALSE.
+    reservoir_observation_lookback_hours = 18
+    reservoir_observation_update_time_interval_seconds = 86400
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -580,6 +595,22 @@ contains
     nlst(did)%SOLVEG_INITSWC = SOLVEG_INITSWC
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
+    nlst(did)%reservoir_persistence = reservoir_persistence
+    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
+    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
+    nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
+
+  ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
+    if ( io_config_outputs .eq. 1 .or. io_config_outputs .eq. 5 ) then
+       nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+    else
+       nlst(did)%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
+       
+       if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst(did)%reservoir_persistence) then
+          print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
+       end if
+    end if
+    
     write(nlst(did)%hgrid,'(I1)') igrid
 
     if(RESTART_FILE .eq. "") rst_typ = 0
@@ -662,10 +693,17 @@ contains
     nlst(did)%compound_channel = compound_channel
 
     ! files
-    nlst(did)%route_topo_f   =  route_topo_f
+    nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f
     nlst(did)%route_link_f = route_link_f
-    nlst(did)%route_lake_f =route_lake_f
+    nlst(did)%route_lake_f = route_lake_f
+
+    nlst(did)%reservoir_persistence = reservoir_persistence
+    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
+    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
+    nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
+    nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+
     nlst(did)%route_direction_f =  route_direction_f
     nlst(did)%route_order_f =  route_order_f
     nlst(did)%gwbasmskfil =  gwbasmskfil
