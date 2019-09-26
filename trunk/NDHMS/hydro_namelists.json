@@ -113,7 +113,7 @@
             "lsmout_domain": 0,
             "output_gw": 0,
             "output_channelbucket_influx": 2,
-            "reservoir_persistence": true,
+            "reservoir_persistence": false
         },
         "nudging_nlist": {}
     },
