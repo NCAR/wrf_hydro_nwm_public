@@ -128,8 +128,9 @@ contains
 
         if (this%state%forecast_found) then
             this%state%time_series_update_time = this%properties%time_step_seconds
-        end if
 
+            this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1
+        end if
 
     end subroutine rfc_forecasts_init
 
@@ -164,22 +165,15 @@ contains
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
 
         if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then
-            ! USE FORECAST VALUE
-            !this%output%outflow = -999.0 ! Temporarily setting to -999.0
-
-            ! DO THIS BEFORE OR AFTER OUTPUTTING THE DISCHARGE????
             if (this%state%current_time .ge. this%state%time_series_update_time .and. this%state%time_series_index &
             .lt. this%properties%forecast_counts) then
                 this%state%time_series_index = this%state%time_series_index + 1
 
                 this%state%time_series_update_time = this%state%time_series_update_time + this%properties%time_step_seconds
 
-
             end if
 
-
             this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
-
 
         else
             this%output%outflow = levelpool_outflow
