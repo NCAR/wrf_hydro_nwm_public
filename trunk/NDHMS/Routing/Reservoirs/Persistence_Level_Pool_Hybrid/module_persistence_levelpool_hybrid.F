@@ -56,7 +56,7 @@ contains
     ! Hybrid Constructor
     subroutine hybrid_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, persistence_parameter_file, start_date, &
         timeslice_path, observation_lookback_hours, &
@@ -68,6 +68,7 @@ contains
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
+        real,    intent(in)    :: dam_length                ! dam length (meters)
         real,    intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real,    intent(in)    :: orifice_coefficient       ! orifice coefficient
         real,    intent(in)    :: orifice_area              ! orifice area (meters^2)
@@ -159,7 +160,7 @@ contains
 
             ! Initialize level pool reservoir
             call this%state%levelpool_ptr%init(water_elevation, lake_area, &
-            weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
+            weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
             orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         end if

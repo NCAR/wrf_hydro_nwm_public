@@ -160,6 +160,7 @@
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
+  REAL, allocatable, DIMENSION(:)    :: DAML      !overtop weir length (m)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
