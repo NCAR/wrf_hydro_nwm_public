@@ -327,7 +327,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
              C4 =  (ql*dt)/D
            else
-             C4 =  (ql*dt)/D - (ChannK * dx * WPk)  !-- DY & LKR lat inflow + channel loss
+             !C4 =  (ql*dt)/D - (ChannK * dx * WPk)  !-- DY & LKR lat inflow + channel loss
+             C4 =  ((ql - (ChannK * dx * WPk))*dt)/D  !-- TML: Loss adjusted by dt/D, closes water balance
            endif
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
@@ -406,7 +407,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
              C4 =  (ql*dt)/D
            else
-             C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
+             !C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
+             C4 =  ((ql - (ChannK * dx * WPk))*dt)/D  !-- TML: Loss adjusted by dt/D, closes water balance
            endif
 
            if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
@@ -516,8 +518,8 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
       qloss = (ChannK * dx * WPk) ! TML -- Compute qloss to pass
 
-      if(qloss > ((ql*dt)/D - C4)) then
-           qloss = (ql*dt)/D - C4
+      if((qloss*dt)/D > ((ql*dt)/D - C4)) then
+           qloss = ql - C4*(D/dt)
            if (qloss < 0) then
               print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
            endif
