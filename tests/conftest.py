@@ -372,7 +372,7 @@ def output_dir(request):
     output_dir = pathlib.Path(output_dir)
     output_dir = output_dir / configuration
     if not use_existing_test_dir:
-        output_dir.mkdir(parents=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     return output_dir
 
