@@ -178,7 +178,7 @@ contains
             end if
 
 
-this%output%outflow
+            this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
 
 
         else
