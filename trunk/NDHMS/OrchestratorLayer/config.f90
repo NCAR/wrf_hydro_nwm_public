@@ -431,8 +431,8 @@ contains
     logical            :: reservoir_persistence
     character(len=256) :: reservoir_persistence_parameter_file=""
     character(len=256) :: reservoir_timeslice_path=""
-    integer            :: reservoir_observation_lookback_hours
-    integer            :: reservoir_observation_update_time_interval_seconds
+    integer            :: reservoir_observation_lookback_hours = 18
+    integer            :: reservoir_observation_update_time_interval_seconds = 86400
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
     character(len=256) :: gwbasmskfil =""
@@ -582,7 +582,7 @@ contains
     if(output_channelBucket_influx .ne. 0) then
        if(nlst(did)%dt .ne. out_dt*60) &
             call hydro_stop("read_rt_nlst:: output_channelBucket_influx =! 0 inconsistent with out_dt and NOAH_TIMESTEP choices.")
-       if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2) &
+       if(output_channelBucket_influx .eq. 2 .and. GWBASESWCRT .ne. 1 .and. GWBASESWCRT .ne. 2 .and. GWBASESWCRT .ne. 4) &
             call hydro_stop("read_rt_nlst:: output_channelBucket_influx = 2 but GWBASESWCRT != 1 or 2.")
     end if
 
@@ -610,8 +610,8 @@ contains
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
     nlst(did)%reservoir_persistence = reservoir_persistence
-    nlst(did)%reservoir_persistence_parameter_file = ""!reservoir_persistence_parameter_file
-    nlst(did)%reservoir_timeslice_path = ""!reservoir_timeslice_path
+    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
+    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
 
   ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
@@ -713,10 +713,10 @@ contains
     nlst(did)%route_lake_f = route_lake_f
 
     nlst(did)%reservoir_persistence = reservoir_persistence
-    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
-    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
-    nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
-    nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+    nlst(did)%reservoir_persistence_parameter_file = ""!reservoir_persistence_parameter_file
+    nlst(did)%reservoir_timeslice_path = ""!reservoir_timeslice_path
+    nlst(did)%reservoir_observation_lookback_hours = 18!reservoir_observation_lookback_hours
+    nlst(did)%reservoir_observation_update_time_interval_seconds = 86400!reservoir_observation_update_time_interval_seconds
 
     nlst(did)%route_direction_f =  route_direction_f
     nlst(did)%route_order_f =  route_order_f
