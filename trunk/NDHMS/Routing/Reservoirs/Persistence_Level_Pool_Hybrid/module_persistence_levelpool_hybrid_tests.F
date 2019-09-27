@@ -393,7 +393,7 @@ contains
 
         print *, "Checking read on persistence_weighted_coefficients"
         print *, o%persistence_weighted_coefficients
-        if ( o%persistence_weighted_coefficients(1) .lt. 0.867803931 - epsilon(0.867803931) .or. o%persistence_weighted_coefficients(1) .gt. 0.867803931 + epsilon(0.867803931) )then
+        if ( o%persistence_weighted_coefficients(1) .lt. 1.0 - epsilon(1.0) .or. o%persistence_weighted_coefficients(1) .gt. 1.0 + epsilon(1.0) )then
             rv = .false.
             print *, "FAILED"
         end if
