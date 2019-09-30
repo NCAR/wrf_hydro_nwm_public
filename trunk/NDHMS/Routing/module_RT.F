@@ -806,7 +806,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
        select type (reservoir => rt_domain(did)%reservoirs(lake_index)%ptr)
 
           type is (levelpool)
-               call reservoir%init(                              &
+               call reservoir%init(                               &
                      rt_domain(did)%RESHT(lake_index),            &
                      rt_domain(did)%HRZAREA(lake_index),          &
                      rt_domain(did)%WEIRH(lake_index),            &
@@ -831,7 +831,7 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     rt_domain(did)%LAKEMAXH(lake_index),               &
                     rt_domain(did)%ELEVLAKE(lake_index),               &
                     rt_domain(did)%LAKEIDM(lake_index),                &
-                    nlst_rt(did)%reservoir_persistence_parameter_file, &
+                    nlst_rt(did)%reservoir_parameter_file,             &
                     nlst_rt(did)%startdate(1:19),                      &
                     nlst_rt(did)%reservoir_timeslice_path,             &
                     nlst_rt(did)%reservoir_observation_lookback_hours, &
@@ -850,11 +850,10 @@ if (nlst_rt(did)%SUBRTSWCRT  .eq.1 .or. &
                     rt_domain(did)%LAKEMAXH(lake_index),        &
                     rt_domain(did)%ELEVLAKE(lake_index),        &
                     rt_domain(did)%LAKEIDM(lake_index),         &
-                    "Temp_name_for_param_file",                 &
+                    nlst_rt(did)%reservoir_parameter_file,      &
                     nlst_rt(did)%startdate(1:19),               &
-                    "Temp_time_series_path",                    &
-                    24                                          )  !Temp value for forecast lookback hours
-
+                    nlst_rt(did)%reservoir_rfc_forecasts_time_series_path, &
+                    nlst_rt(did)%reservoir_rfc_forecasts_lookback_hours)
 
            end select
 
