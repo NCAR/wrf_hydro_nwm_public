@@ -154,7 +154,7 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 ! If using Persistence Reservoirs, set to True. (Default=.FALSE.)
 reservoir_persistence = .FALSE.
 
-! Specify the Persistence Reservoir parameter file
+! Specify the Reservoir parameter file
 reservoir_parameter_file = "./DOMAIN/persistence_parm.nc"
 
 ! Specify the path to the Timeslice files to be used by Reservoirs
@@ -166,6 +166,15 @@ reservoir_observation_lookback_hours = 18
 ! Specify update time interval in seconds to read new reservoir observation data
 ! The default is 86400 (seconds per day) in retrospective mode and 1000000000 in all forecast modes
 reservoir_observation_update_time_interval_seconds = 86400
+
+! If using RFC Forecast Reservoirs, set to True. (Default=.FALSE.)
+reservoir_rfc_forecasts = .FALSE.
+
+! Specify the path to the RFC Time Series files to be used by Reservoirs
+reservoir_timeslice_path = "./RFC_Time_Series/"
+
+! Specify lookback hours to read Reservoir RFC Forecasts 
+reservoir_observation_lookback_hours = 24
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
 GWBASESWCRT = 1
