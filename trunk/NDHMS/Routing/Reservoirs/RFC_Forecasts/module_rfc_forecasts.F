@@ -16,6 +16,8 @@ module module_rfc_forecasts
     use module_rfc_forecasts_properties, only: rfc_forecasts_properties_interface
     use module_rfc_forecasts_state, only: rfc_forecasts_state_interface
     use module_levelpool, only: levelpool
+    use module_reservoir_utilities, only: create_rfc_forecasts_diagnostic_log_file, &
+                                          log_rfc_forecasts_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_rfc_time_series_data, only: time_series_data
     implicit none
@@ -65,6 +67,11 @@ contains
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: time_series_path
         integer,            intent(in) :: forecast_lookback_hours
+
+!#ifdef RESERVOIR_D
+        ! Create diagnostic log file only for development/debugging purposes
+        call create_rfc_forecasts_diagnostic_log_file(lake_number)
+!#endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -190,6 +197,14 @@ contains
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
+
+!#ifdef RESERVOIR_D
+        ! Log diagnostic data only for development/debugging purposes
+        call log_rfc_forecasts_diagnostic_data(this%properties%lake_number, this%state%current_time, &
+        this%properties%time_step_seconds, this%state%time_series_update_time, this%properties%lookback_seconds, &
+        this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, this%state%water_elevation, &
+        levelpool_outflow, this%output%outflow)
+!#endif
 
     end subroutine run_rfc_forecasts_reservoir
 
