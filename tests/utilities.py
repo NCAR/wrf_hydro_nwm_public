@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from wrfhydropy import *
 
-TEN_MINUTES = 10 * 60
-ONE_HOUR = 60 * 2
+COMPILE_TIME = 60 * 2       # 2 minutes
+MODEL_RUN_TIME = 60 * 5    # 45 minutes
 DEFAULT_LOOP_WAIT = 0.5
 
 
@@ -108,3 +108,15 @@ def wait_on_file(file: Path, timeout_s: int, timeout_msg: str, error_on_timeout:
             else:
                 pytest.skip(timeout_msg)
     time.sleep(0.1)  # let filesystem settle
+
+
+def wait_for_output_files(output_dir: Path, count: int):
+    output_files_expected = 4  # TODO: verify this?
+    sim_files = []
+    start_wait = datetime.datetime.now()
+    while len(sim_files) < output_files_expected:
+        time.sleep(DEFAULT_LOOP_WAIT)
+        if (datetime.datetime.now() - start_wait).seconds > MODEL_RUN_TIME:
+            pytest.skip("test_output_has_nans timed out waiting for runs to complete")
+
+        sim_files = list(output_dir.rglob('WrfHydroSim_collected.pkl'))

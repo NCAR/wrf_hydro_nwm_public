@@ -6,7 +6,7 @@ import warnings
 import pytest
 import wrfhydropy
 
-from tests.utilities import wait_on_file, ONE_HOUR
+from tests.utilities import wait_on_file, MODEL_RUN_TIME
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs
@@ -28,8 +28,8 @@ def test_regression_data(output_dir, xrcmp_n_cores):
     # if reference_run_file.is_file() is False:
     #     pytest.skip('Reference run object not found, skipping test')
 
-    wait_on_file(candidate_run_file, ONE_HOUR, "Candidate run object not found, skipping test")
-    wait_on_file(reference_run_file, ONE_HOUR, "Reference run object not found, skipping test")
+    wait_on_file(candidate_run_file, MODEL_RUN_TIME, "Candidate run object not found, skipping test")
+    wait_on_file(reference_run_file, MODEL_RUN_TIME, "Reference run object not found, skipping test")
 
     # Load run objects
     candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))
@@ -67,8 +67,8 @@ def test_regression_metadata(output_dir, xrcmp_n_cores):
     # if reference_run_file.is_file() is False:
     #     pytest.skip('Reference run object not found, skipping test')
 
-    wait_on_file(candidate_run_file, ONE_HOUR, "Candidate run object not found, skipping test")
-    wait_on_file(reference_run_file, ONE_HOUR, "Reference run object not found, skipping test")
+    wait_on_file(candidate_run_file, MODEL_RUN_TIME, "Candidate run object not found, skipping test")
+    wait_on_file(reference_run_file, MODEL_RUN_TIME, "Reference run object not found, skipping test")
 
     # Load run objects
     candidate_run_expected = pickle.load(candidate_run_file.open(mode="rb"))

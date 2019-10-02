@@ -98,8 +98,13 @@ def run_tests(
     pytest_cmd += " --exe_cmd=" + exe_cmd
     pytest_cmd += " --ncores=" + str(ncores)
     pytest_cmd += " --xrcmp_n_cores=" + str(xrcmp_n_cores)
-    
-    pytest_cmd += " --workers auto"
+
+    # check for pytest-parallel
+    try:
+        import pytest_parallel
+        pytest_cmd += " --workers auto"
+    except (ModuleNotFoundError, ImportError):
+        pass
 
     if scheduler:
         pytest_cmd += " --scheduler "

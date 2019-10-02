@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import wrfhydropy
 
-from tests.utilities import wait_on_file, TEN_MINUTES, ONE_HOUR
+from tests.utilities import wait_on_file, COMPILE_TIME, MODEL_RUN_TIME
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import wait_job, print_diffs
@@ -85,7 +85,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
 
     # wait for compile to finish, if it hasn't
     candidate_exe = output_dir / 'compile_candidate' / 'wrf_hydro.exe'
-    wait_on_file(candidate_exe, TEN_MINUTES, "test_run_candidate() timed out waiting for candidate compile", True)
+    wait_on_file(candidate_exe, COMPILE_TIME, "test_run_candidate() timed out waiting for candidate compile", True)
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_candidate'
@@ -135,7 +135,7 @@ def test_run_reference(reference_sim, output_dir, ncores, exe_cmd):
 
     # wait for compile to finish, if it hasn't
     reference_exe = output_dir / 'compile_reference' / 'wrf_hydro.exe'
-    wait_on_file(reference_exe, TEN_MINUTES, "test_run_reference() timed out waiting for reference compile", True)
+    wait_on_file(reference_exe, COMPILE_TIME, "test_run_reference() timed out waiting for reference compile", True)
 
     # Set run directory and change working directory to run dir for simulation
     run_dir = output_dir / 'run_reference'
@@ -187,7 +187,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores, xrcmp_n_cores):
     #     pytest.skip('Candidate run object not found, skipping test.')
 
     # Load initial sim object, collect sim_object and copy for making new sims
-    wait_on_file(candidate_sim_file, ONE_HOUR, "Candidate sim object not found, skipping test.")
+    wait_on_file(candidate_sim_file, MODEL_RUN_TIME, "Candidate sim object not found, skipping test.")
     candidate_sim = pickle.load(candidate_sim_file.open(mode="rb"))
     candidate_sim_ncores = copy.deepcopy(candidate_sim)
 
@@ -246,7 +246,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores, xrcmp_n_cores):
 
     # wait for the candidate to finish running so we can compare
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
-    wait_on_file(candidate_collected_file, ONE_HOUR, "Candidate run object not found, skipping test.")
+    wait_on_file(candidate_collected_file, MODEL_RUN_TIME, "Candidate run object not found, skipping test.")
     candidate_sim_expected = pickle.load(candidate_collected_file.open(mode="rb"))
 
     # Check outputs
@@ -276,7 +276,7 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
 
     # wait for the candidate to finish running
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
-    wait_on_file(candidate_collected_file, ONE_HOUR, "Candidate run object not found, skipping test.")
+    wait_on_file(candidate_collected_file, MODEL_RUN_TIME, "Candidate run object not found, skipping test.")
 
     # if candidate_collected_file.is_file() is False:
     #     pytest.skip('Candidate run object not found, skipping test.')
@@ -373,7 +373,7 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
             open(run_dir.joinpath('WrfHydroSim_collected.pkl'), 'rb'))
 
     candidate_collected_file = output_dir / 'run_candidate' / 'WrfHydroSim_collected.pkl'
-    wait_on_file(candidate_collected_file, ONE_HOUR, "Candidate run object not found, skipping test.")
+    wait_on_file(candidate_collected_file, MODEL_RUN_TIME, "Candidate run object not found, skipping test.")
 
     candidate_sim_expected = pickle.load(candidate_collected_file.open(mode="rb"))
 
