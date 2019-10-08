@@ -47,7 +47,7 @@ program reservoir_unit_tests
 
     rv6 = test_rfc_forecasts_levelpool_fallback()
 
-    rv7 = test_rfc_forecasts_time_series_output()
+    rv7 = test_rfc_forecasts_time_series_output_with_lookback_and_offset()
 
     if (rv1 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7) then
         print *, "========================================================================"
@@ -226,7 +226,7 @@ program reservoir_unit_tests
         call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, "CCHC1", lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
 
         print *, "Checking reading of time series file"
-        if ( forecast_discharges(51) .gt. 0.368119 - epsilon(0.368119) .and. forecast_discharges(51) .lt. 0.368119 + epsilon(0.368119) ) then
+        if ( forecast_discharges(51) .ge. 0.368119 - epsilon(0.368119) .and. forecast_discharges(51) .le. 0.368119 + epsilon(0.368119) ) then
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
             print *, "========================================================================"
@@ -288,7 +288,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .gt. 1.81549609 - epsilon(1.81549609) .and. outflow .lt. 1.81549609 + epsilon(1.81549609) ) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) ) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Levelpool Fallback Test Passed'
@@ -304,7 +304,7 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_levelpool_fallback
 
 
-    function test_rfc_forecasts_time_series_output() result(rv)
+    function test_rfc_forecasts_time_series_output_with_lookback_and_offset() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
@@ -352,7 +352,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .gt. 0.368119 - epsilon(0.368119) .and. outflow .lt. 0.368119 + epsilon(0.368119) ) then
+        if (outflow .ge. 6.368119 - epsilon(6.368119) .and. outflow .le. 6.368119 + epsilon(6.368119) ) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Passed'
@@ -360,12 +360,12 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Failed'
-            print *, 'Outflow should be 0.368119'
+            print *, 'Outflow should be 6.368119'
             print *, "========================================================================"
 
         end if
 
-    end function test_rfc_forecasts_time_series_output
+    end function test_rfc_forecasts_time_series_output_with_lookback_and_offset
 
 
 end program

@@ -67,6 +67,7 @@ contains
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: time_series_path
         integer,            intent(in) :: forecast_lookback_hours
+        integer                        :: update_offset_seconds
 
 !#ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -134,7 +135,10 @@ contains
         this%state%forecast_discharges, this%state%forecast_found)
 
         if (this%state%forecast_found) then
-            this%state%time_series_update_time = this%properties%time_step_seconds
+
+            update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
+
+            this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1
         end if
