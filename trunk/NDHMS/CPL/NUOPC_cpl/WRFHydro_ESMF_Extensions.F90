@@ -58,6 +58,7 @@ module WRFHydro_ESMF_Extensions
   public :: WRFHYDRO_ESMF_LogArrayLclVal
   public :: WRFHYDRO_ESMF_LogFarrayLclVal
   public :: WRFHYDRO_ESMF_LogCplList
+  public :: WRFHYDRO_ESMF_ChDir
 
 
 !==============================================================================
@@ -136,6 +137,13 @@ module WRFHydro_ESMF_Extensions
     module procedure WRFHYDRO_ESMF_LogFarrayLclVal_R81D
     module procedure WRFHYDRO_ESMF_LogFarrayLclVal_R82D
     module procedure WRFHYDRO_ESMF_LogFarrayLclVal_R83D
+  end interface
+
+  interface
+    integer function local_chdir(path) bind(C, name="chdir")
+      use iso_c_binding
+      character(c_char) :: path(*)
+    end function
   end interface
 
 !==============================================================================
@@ -5000,5 +5008,44 @@ type(ESMF_KeywordEnforcer), optional:: keywordEnforcer ! must use keywords below
     endif
 
   end subroutine
+
+  !-----------------------------------------------------------------------------
+
+#define METHOD "WRFHYDRO_ESMF_ChDir"
+!BOP
+! !IROUTINE: WRFHYDRO_ESMF_ChDir - Change working directory
+! !INTERFACE:
+  ! call using: WRFHYDRO_ESMF_ChDir
+  subroutine WRFHYDRO_ESMF_ChDir(path,rc)
+! ! USES
+    use iso_c_binding
+! ! ARGUMENTS
+    character(*), intent(in)       :: path
+    integer, intent(out), optional :: rc
+! !DESCRIPTION:
+!   Change working directory
+!
+!   The arguments are:
+!   \begin{description}
+!   \end{description}
+!
+!EOP
+  !-----------------------------------------------------------------------------
+    ! local variables
+    integer :: stat
+
+    stat = local_chdir(path//c_null_char)
+    if (stat /= 0) then
+      call ESMF_LogSetError(rcToCheck=ESMF_RC_ARG_BAD,   &
+        msg="WRFHYDRO_ESMF_ChDir failed changing to "//trim(path), &
+        CONTEXT, rcToReturn=stat)
+    else
+      stat = ESMF_SUCCESS
+    endif
+    if (present(rc)) rc = stat
+
+  end subroutine
+
+  !-----------------------------------------------------------------------------
 
 end module WRFHydro_ESMF_Extensions
