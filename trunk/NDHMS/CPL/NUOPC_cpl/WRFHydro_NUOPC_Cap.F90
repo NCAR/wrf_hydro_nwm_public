@@ -127,6 +127,7 @@
 !! nest_to_nest       | false            | Turn on nest to nest coupling. Each nest will be identified with an integer.
 !! import_dependency  | false            | Data initialization will loop until all import field dependencies are satisfied.
 !! output_directory   | [CNAME]_OUTPUT   | Configure the WRF-Hydro Cap output directory.
+!! multi_instance_hyd | false            | Run multiple instances of WRF-Hydro, each in a different directory.
 !!
 !!
 !! @section ModelFields Model Fields
@@ -258,6 +259,7 @@ module WRFHydro_NUOPC
     logical                  :: nestToNest       = .FALSE.
     logical                  :: importDependency = .FALSE.
     character(len=128)       :: dirOutput        = "."
+    logical                  :: multiInstance    = .FALSE.
     character                :: hgrid            = '0'
     integer                  :: nnests           = 1
     integer                  :: nfields          = size(WRFHYDRO_FieldList)
@@ -384,6 +386,16 @@ module WRFHydro_NUOPC
     call WRFHydro_AttributeGet(rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
+    ! change directory for multiple instances
+    if (is%wrap%multiInstance) then
+      if (btest(verbosity,16)) then
+        call ESMF_LogWrite(trim(cname)//": Change working directory", &
+          ESMF_LOGMSG_INFO)
+      endif
+      call WRFHYDRO_ESMF_ChDir(trim(cname),rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    endif
+
     ! prepare diagnostics folder
     if (btest(diagnostic,16)) then
       call ESMF_UtilIOMkDir(pathName=trim(is%wrap%dirOutput), &
@@ -488,6 +500,13 @@ module WRFHydro_NUOPC
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       is%wrap%dirOutput = trim(value)
 
+      ! Determine Import Dependency
+      call ESMF_AttributeGet(gcomp, name="multi_instance_hyd", &
+        value=value, defaultValue="false", &
+        convention="NUOPC", purpose="Instance", rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      is%wrap%multiInstance = (trim(value)=="true")
+
       if (btest(verbosity,16)) then
         call ESMF_LogWrite(trim(cname)//": Settings",ESMF_LOGMSG_INFO)
         write (logMsg, "(A,(A,I0))") trim(cname)//": ", &
@@ -518,10 +537,13 @@ module WRFHydro_NUOPC
           "Nest To Nest           = ",is%wrap%nestToNest
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
         write (logMsg, "(A,(A,L1))") trim(cname)//': ', &
-          'Import Dependency      = ',is%wrap%importDependency
+          "Import Dependency      = ",is%wrap%importDependency
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
         write (logMsg, "(A,(A,A))") trim(cname)//": ", &
           "Output Directory       = ",trim(is%wrap%dirOutput)
+        call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
+        write (logMsg, "(A,(A,L1))") trim(cname)//': ', &
+          "Multiple Instances     = ",is%wrap%multiInstance
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
       endif
 
