@@ -186,22 +186,22 @@ contains
 
             this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
 
-            !if (this%output%outflow < 0) then
-            !    while (this%output%outflow < 0 .and. this%state%time_series_index > 1) do
-            !        this%state%time_series_index = this%state%time_series_index - 1
+            if (this%output%outflow < 0) then
+                do while (this%output%outflow < 0 .and. this%state%time_series_index > 1)
+                    this%state%time_series_index = this%state%time_series_index - 1
 
-            !        this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
+                    this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
 
-           !     end do
+                end do
 
-           !     if (this%output%outflow < 0) then
-           !         this%output%outflow = levelpool_outflow
-           !     end if
+                if (this%output%outflow < 0) then
+                    this%output%outflow = levelpool_outflow
+                end if
 
-         !   end if
+            end if
 
- !       else
-  !          this%output%outflow = levelpool_outflow
+        else
+            this%output%outflow = levelpool_outflow
         end if
 
         ! Update output variable returned from this subroutine
