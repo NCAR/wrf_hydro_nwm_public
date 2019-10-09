@@ -9004,7 +9004,7 @@ call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .
 call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
 if (reservoir_not_levelpool) then
-   call get_1d_netcdf_int(ncid, 'RESERVOIR_TYPE', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
+   call get_1d_netcdf_int(ncid, 'Reservoir_Type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
 end if
 call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)

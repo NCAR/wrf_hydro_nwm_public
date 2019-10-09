@@ -186,6 +186,11 @@ contains
 
             this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
 
+!            if (this%output%outflow < 0) then
+
+ !           .and. this%state%time_series_index)
+
+
         else
             this%output%outflow = levelpool_outflow
         end if
