@@ -17,6 +17,9 @@ program reservoir_unit_tests
     logical :: rv5 = .false.
     logical :: rv6 = .false.
     logical :: rv7 = .false.
+    logical :: rv8 = .false.
+    logical :: rv9 = .false.
+
 
     real, dimension(120) :: inflow_array
 
@@ -48,6 +51,11 @@ program reservoir_unit_tests
     rv6 = test_rfc_forecasts_levelpool_fallback()
 
     rv7 = test_rfc_forecasts_time_series_output_with_lookback_and_offset()
+
+    rv8 = test_rfc_forecasts_time_series_output_with_missing_data()
+
+    rv9 = test_rfc_forecasts_time_series_output_all_missing_data()
+
 
     if (rv1 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7) then
         print *, "========================================================================"
@@ -366,6 +374,136 @@ program reservoir_unit_tests
         end if
 
     end function test_rfc_forecasts_time_series_output_with_lookback_and_offset
+
+
+
+    function test_rfc_forecasts_time_series_output_with_missing_data() result(rv)
+        implicit none
+        logical rv, rv1, rv2                        ! test result
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+        real :: outflow, inflow
+        real :: water_elevation
+        real :: prev_time_inflow
+        real :: lake_area, weir_elevation, weir_coefficient
+        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: orifice_area, max_depth, initial_fractional_depth
+        integer :: lake_number
+        integer :: timestep_count
+        character*256 :: cwd_full
+
+        prev_time_inflow = 0.0
+        timestep_count = 0
+        water_elevation = 0.0
+        rv = .false.
+
+        lake_area = 2.096320037841796875e+02
+        weir_elevation = 1.332074047851562455e+03
+        weir_coefficient = 4.000000000000000222e-01
+        weir_length = 1.000000000000000000e+01
+        orifice_elevation = 1.314473347981770758e+03
+        orifice_coefficient = 1.000000000000000056e-01
+        orifice_area = 1.0
+        max_depth = 1.335180053710937500e+03
+        initial_fractional_depth = 8.999999761581420898e-01
+        lake_number = 3745478
+
+        cwd_full = "./Testing_Files/"
+
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 17609317, &
+        "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-09-18_09:00:00", cwd_full, 24)
+
+        water_elevation = 1331.18005
+
+        do timestep_count = 1, 120
+
+            inflow = inflow_array(timestep_count)
+            call rfc_forecasts_reservoir_data%run(inflow, &
+            inflow, 0.0, water_elevation, outflow, 900.0)
+
+            prev_time_inflow = inflow
+
+            print *, outflow
+        end do
+
+        if (outflow .ge. 1.368119 - epsilon(1.368119) .and. outflow .le. 1.368119 + epsilon(1.368119) ) then
+            rv = .true.
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output Missing Data Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output Missing Data Test Failed'
+            print *, 'Outflow should be 6.368119'
+            print *, "========================================================================"
+
+        end if
+
+    end function test_rfc_forecasts_time_series_output_with_missing_data
+
+
+
+    function test_rfc_forecasts_time_series_output_all_missing_data() result(rv)
+        implicit none
+        logical rv, rv1, rv2                        ! test result
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+        real :: outflow, inflow
+        real :: water_elevation
+        real :: prev_time_inflow
+        real :: lake_area, weir_elevation, weir_coefficient
+        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: orifice_area, max_depth, initial_fractional_depth
+        integer :: lake_number
+        integer :: timestep_count
+        character*256 :: cwd_full
+
+        prev_time_inflow = 0.0
+        timestep_count = 0
+        water_elevation = 0.0
+        rv = .false.
+
+        lake_area = 2.096320037841796875e+02
+        weir_elevation = 1.332074047851562455e+03
+        weir_coefficient = 4.000000000000000222e-01
+        weir_length = 1.000000000000000000e+01
+        orifice_elevation = 1.314473347981770758e+03
+        orifice_coefficient = 1.000000000000000056e-01
+        orifice_area = 1.0
+        max_depth = 1.335180053710937500e+03
+        initial_fractional_depth = 8.999999761581420898e-01
+        lake_number = 3745478
+
+        cwd_full = "./Testing_Files/"
+
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 17609317, &
+        "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-10-18_09:00:00", cwd_full, 24)
+
+        water_elevation = 1331.18005
+
+        do timestep_count = 1, 120
+
+            inflow = inflow_array(timestep_count)
+            call rfc_forecasts_reservoir_data%run(inflow, &
+            inflow, 0.0, water_elevation, outflow, 900.0)
+
+            prev_time_inflow = inflow
+
+            print *, outflow
+        end do
+
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) ) then
+            rv = .true.
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output All Missing Data Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output All Missing Data Test Failed'
+            print *, 'Outflow should be 1.81549609'
+            print *, "========================================================================"
+
+        end if
+
+    end function test_rfc_forecasts_time_series_output_all_missing_data
 
 
 end program
