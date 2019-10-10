@@ -9011,7 +9011,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
     if (persistence) then
-       call get_1d_netcdf_int(ncid, 'Reservoir_Type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
+       call get_1d_netcdf_int(ncid, 'reservoir_type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
     end if
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
