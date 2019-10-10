@@ -28,11 +28,13 @@ program Noah_hrldas_driver
 ! this is used to drive NoahMP
    use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
-
+   
+   use orchestrator_base
 
    implicit none
    integer :: ITIME, NTIME
 
+   call orchestrator%init()
 
    call land_driver_ini(NTIME)
 #ifdef WRF_HYDRO   
@@ -40,7 +42,7 @@ program Noah_hrldas_driver
 #else
    do ITIME = 0, NTIME
 #endif
-       call land_driver_exe(ITIME)
+      call land_driver_exe(ITIME)
    end do
 #ifdef WRF_HYDRO
    call hydro_finish() 
