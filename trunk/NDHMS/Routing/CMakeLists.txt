@@ -31,4 +31,5 @@ target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_levelpool)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_hybrid)
 target_link_libraries(hydro_routing PUBLIC hydro_data_rec)
+target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_rfc)
 
