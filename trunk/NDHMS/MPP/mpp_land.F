@@ -22,9 +22,9 @@
 MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
-
+  use mpi
+  
   IMPLICIT NONE
-  include "mpif.h"
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
   integer, public :: left_id,right_id,up_id,down_id,my_id
   integer, public :: left_right_np,up_down_np ! define total process in two dimensions.
@@ -154,12 +154,16 @@ MODULE MODULE_MPP_LAND
     call mpi_initialized( mpi_inited, ierr )
     if ( .not. mpi_inited ) then
        call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
+       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
     endif
-
-    call MPI_COMM_DUP( MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr )
+    if (HYDRO_COMM_WORLD == MPI_COMM_NULL) then
+       call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
+    endif
 
     call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
     call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+    if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed")
 
     !     create 2d logical mapping of the CPU.
     call log_map2d()
@@ -2040,7 +2044,6 @@ MODULE MODULE_MPP_LAND
 !  subroutine get_globalDim(ix,g_ix)
 !     implicit none
 !     integer ix,g_ix, ierr
-!     include "mpif.h"
 !
 !     if ( my_id .eq. IO_id ) then
 !           g_ix = ix
@@ -2278,17 +2281,6 @@ MODULE MODULE_MPP_LAND
        call mpp_land_bcast_int1d(vinout)
    
   end subroutine mpp_collect_1d_int_mem
-
-! stop the job due to the fatal error.
-      subroutine fatal_error_stop(msg)
-        character(len=*) :: msg
-        integer :: ierr
-      write(6,*) "The job is stoped due to the fatal error. ", trim(msg)
-      call flush(6)
-      call mpp_land_abort()
-      call MPI_finalize(ierr)
-     return
-     end  subroutine fatal_error_stop
 
      subroutine updateLake_seqInt(in,nsize,in0)
        implicit none
