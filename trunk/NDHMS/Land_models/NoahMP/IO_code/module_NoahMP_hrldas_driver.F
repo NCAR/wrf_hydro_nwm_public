@@ -28,9 +28,9 @@ module module_NoahMP_hrldas_driver
   USE config_base, only: wrf_hydro, noah_lsm
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
-  use module_mpp_land, only: check_land, node_info, fatal_error_stop, numprocs
-  use module_cpl_land, only: cpl_land_init
-  use mpi
+  use module_mpp_land, only: check_land, node_info, numprocs
+  use module_cpl_land, only: cpl_land_init, fatal_error_stop
+  !use mpi
 #endif
 #ifdef WRF_HYDRO
   use module_NWM_io, only: output_NoahMP_NWM
