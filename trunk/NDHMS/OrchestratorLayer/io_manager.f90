@@ -19,11 +19,15 @@ contains
 
     logical, optional, intent(in) :: parallel
 
-    if(.not.present(parallel) .or. (present(parallel) .and. parallel .eqv. .false.)) then
+    if(.not.present(parallel)) then
        IOManager_init%parallel = .false.
+    else
+       IOManager_init%parallel = parallel
+    end if
+
+    if( IOManager_init%parallel .eqv. .false.) then
        allocate(NetCDF_serial_ :: IOManager_init%netcdf_layer)
     else
-       IOManager_init%parallel = .true.
        allocate(NetCDF_parallel_ :: IOManager_init%netcdf_layer)
     end if
     
