@@ -7556,7 +7556,7 @@ if (channel_option .eq. 3) then
 
 #ifdef MPP_LAND
    endif
-   
+
    if (NLAKES > 0) then
       call mpp_land_bcast_real(NLAKES,HRZAREA)
       call mpp_land_bcast_real(NLAKES,LAKEMAXH)
@@ -8293,7 +8293,7 @@ call nhdLakeMap(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAK
 
 #ifdef MPP_LAND
 if (NLAKES > 0) then
-   !         call mpp_land_bcast_int(NLINKSL,LAKEIDA) 
+   !         call mpp_land_bcast_int(NLINKSL,LAKEIDA)
    !         call mpp_land_bcast_int(NLINKSL,LAKEIDX)
    call mpp_land_bcast_real(NLAKES,HRZAREA)
    call mpp_land_bcast_int(NLAKES,LAKEIDM)
@@ -8477,9 +8477,9 @@ end subroutine read_routelink
         if (NLAKES > 0) then
            call mpp_land_bcast_real(NLAKES, HRZAREA)
            call mpp_land_bcast_real(NLAKES, LAKEMAXH)
-           call mpp_land_bcast_real(NLAKES, WEIRH)  
-           call mpp_land_bcast_real(NLAKES, WEIRC)  
-           call mpp_land_bcast_real(NLAKES, WEIRL)  
+           call mpp_land_bcast_real(NLAKES, WEIRH)
+           call mpp_land_bcast_real(NLAKES, WEIRC)
+           call mpp_land_bcast_real(NLAKES, WEIRL)
            call mpp_land_bcast_real(NLAKES, DAML)
            call mpp_land_bcast_real(NLAKES, ORIFICEC)
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
@@ -9002,7 +9002,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
     if (persistence) then
-       call get_1d_netcdf_int(ncid, 'RESERVOIR_TYPE', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
+       call get_1d_netcdf_int(ncid, 'reservoir_type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
     end if
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
