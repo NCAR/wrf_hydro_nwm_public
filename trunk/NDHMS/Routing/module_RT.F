@@ -38,6 +38,7 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool, only: levelpool
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
+   use module_reservoir_utilities, only: read_reservoir_type
 
    IMPLICIT NONE
 
@@ -785,6 +786,14 @@ subroutine LandRT_ini(did)
      nullify(rt_domain(did)%reservoirs(lake_index)%ptr)
 
    end do
+
+   ! If reservoir_persistence is set to true, then call function to read reservoir_type
+   ! from the reservoir parameter file
+   if (nlst(did)%reservoir_persistence) then
+       call read_reservoir_type(nlst(did)%reservoir_persistence_parameter_file, &
+                           rt_domain(did)%LAKEIDM, NLAKES_total, &
+                           rt_domain(did)%reservoir_type)
+   end if
 
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
