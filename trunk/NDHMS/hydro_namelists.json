@@ -104,6 +104,16 @@
         "nudging_nlist": {}
     },
 
+    "nwm_channel-only_forecasts": {
+        "hydro_nlist": {
+            "lsmout_domain": 0,
+            "output_gw": 0,
+            "output_channelbucket_influx": 2,
+            "reservoir_persistence": false
+        },
+        "nudging_nlist": {}
+    },
+
     "nwm_output_ana": {
         "hydro_nlist": {
             "chanobs_domain": 0,

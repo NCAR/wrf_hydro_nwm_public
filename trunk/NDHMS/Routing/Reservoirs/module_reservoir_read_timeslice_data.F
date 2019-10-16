@@ -91,13 +91,13 @@ contains
         status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
 
-        call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, this%number_of_reservoir_gages)
+        call read_persistence_netcdf_gage_ids_all(ncid, "usgs_gage_id", var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, "gage_id")
+        if (status /= nf90_noerr) call handle_err(status, "usgs_gage_id")
 
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
