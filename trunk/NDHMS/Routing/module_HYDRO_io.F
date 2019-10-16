@@ -4167,7 +4167,7 @@ end subroutine output_chrt
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
-         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")         
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
          iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
@@ -5172,8 +5172,8 @@ end subroutine mpp_output_chrt
 
      output_count = output_count + 1
 
-    iret = nf90_redef(ncid) 
-    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))    
+    iret = nf90_redef(ncid)
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
     iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate))
     iret = nf90_enddef(ncid)
 
@@ -5339,7 +5339,7 @@ end subroutine mpp_output_chrt
       iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
       iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
-      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate)) 
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate))
       iret = nf90_enddef(ncid)
 
       iret = nf90_inq_varid(ncid,"time", varid)
@@ -5681,7 +5681,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
          write(6,*) "output file ", outFile
 #endif
-! define dimension for variables 
+! define dimension for variables
           iret = nf90_def_dim(ncid, "depth", nlst(did)%nsoil, dimid_soil)  !-- 3-d soils
 #ifdef MPP_LAND
           iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -5717,7 +5717,7 @@ end subroutine mpp_output_chrt
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%stc,"stc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%smc,"smc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
-        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
+        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  )
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  )
@@ -5791,7 +5791,7 @@ end subroutine mpp_output_chrt
    if( nlst(did)%channel_only       .eq. 0 .and. &
        nlst(did)%channelBucket_only .eq. 0         ) then
 
-! define dimension for variables 
+! define dimension for variables
           iret = nf90_def_dim(ncid, "depth", nlst(did)%nsoil, dimid_soil)  !-- 3-d soils
 #ifdef MPP_LAND
           iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -5925,7 +5925,7 @@ end subroutine mpp_output_chrt
 
    end if  !  end if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                    nlst(did)%OVRTSWCRT   .eq. 1 .or. &
-!                    nlst(did)%GWBASESWCRT .ne. 0       ) 
+!                    nlst(did)%GWBASESWCRT .ne. 0       )
 
    !         put global attribute
    iret = nf90_put_att(ncid, NF90_GLOBAL, "his_out_counts", rt_domain(did)%his_out_counts)
@@ -6125,7 +6125,7 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 
    if(nlst(did)%GWBASESWCRT.eq.3) then
       if( nlst(did)%channel_only       .eq. 0 .and. &
-          nlst(did)%channelBucket_only .eq. 0         ) &           
+          nlst(did)%channelBucket_only .eq. 0         ) &
           call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho, "HEAD" )
    end if
 
@@ -6169,7 +6169,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           write(iunit,ERR=101) rt_domain(did)%his_out_counts
 !         write(iunit,ERR=101) nlst(did)%olddate(1:19)
           write(iunit,ERR=101) nlst(did)%sincedate(1:19)
-!         write(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         write(iunit,ERR=101) nlst_rt(did)%DTCT
           write(iunit,ERR=101) rt_domain(did)%stc
           write(iunit,ERR=101) rt_domain(did)%smc
           write(iunit,ERR=101) rt_domain(did)%sh2ox
@@ -6263,7 +6263,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           read(iunit,ERR=101) rt_domain(did)%his_out_counts
 !         read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           read(iunit,ERR=101) nlst(did)%sincedate(1:19)
-!         read(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         read(iunit,ERR=101) nlst_rt(did)%DTCT
           read(iunit,ERR=101) rt_domain(did)%stc
           read(iunit,ERR=101) rt_domain(did)%smc
           read(iunit,ERR=101) rt_domain(did)%sh2ox
@@ -6688,12 +6688,12 @@ if(IO_id .eq. my_id) then
          write(logUnit,*) 'channel_only run:', nlst(did)%channel_only
          write(logUnit,*) 'channelBucket_only restart present:', channelBucket_only_in
          write(logUnit,*) 'channelBucket_only run:', nlst(did)%channelBucket_only
-         call flush(logUnit)         
+         call flush(logUnit)
          call hydro_stop('Channel Only: Restart file in consistent with forcing type.')
       end if
    end if
 
-   iret = nf90_get_att(ncid, NF90_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts)
    iret = nf90_get_att(ncid, NF90_GLOBAL, 'DTCT', nlst(did)%DTCT)
    iret = nf90_get_att(ncid,NF90_GLOBAL,"Since_Date",nlst(did)%sincedate(1:19))
 !   if( nlst(did)%channel_only       .eq. 1 .or. &
@@ -6727,7 +6727,7 @@ write(6,*) "nlst(did)%nsoil=",nlst(did)%nsoil
 if( nlst(did)%channel_only       .eq. 0 .and. &
     nlst(did)%channelBucket_only .eq. 0         ) then
 
-   if(nlst(did)%rst_typ .eq. 1 ) then 
+   if(nlst(did)%rst_typ .eq. 1 ) then
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%stc,"stc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%smc,"smc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
@@ -6747,8 +6747,8 @@ endif ! neither channel_only nor channelBucket_only
 if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
    nlst(did)%OVRTSWCRT   .eq. 1 .or. &
    nlst(did)%GWBASESWCRT .ne. 0       ) then
-   !! JLM ?? restarting channel depends on these options? 
-      
+   !! JLM ?? restarting channel depends on these options?
+
    if( nlst(did)%channel_only       .eq. 0 .and. &
        nlst(did)%channelBucket_only .eq. 0         ) then
 
@@ -6794,8 +6794,8 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
       endif
 
       if( nlst(did)%channel_only       .eq. 0 .and. &
-           nlst(did)%channelBucket_only .eq. 0         ) then 
-           
+           nlst(did)%channelBucket_only .eq. 0         ) then
+
          if(nlst(did)%SUBRTSWCRT.eq.1.or.nlst(did)%OVRTSWCRT.eq.1) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
          endif
@@ -6803,7 +6803,7 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 
    end if  !  end if(nlst_rt(did)%CHANRTSWCRT.eq.1)
 
-   if((nlst(did)%GWBASESWCRT .eq. 1 .or.  & 
+   if((nlst(did)%GWBASESWCRT .eq. 1 .or.  &
       nlst(did)%GWBASESWCRT .ge. 4) .and. &
       nlst(did)%GW_RESTART  .ne. 0 .and.  &
       rt_domain(did)%gnumbasns .gt. 0) then
@@ -7345,7 +7345,7 @@ subroutine READ_CHROUTING1( &
      Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        DAML,     &
      ORIFICEC,     ORIFICEA,          ORIFICEE,               &
-     persistence,  reservoir_type,    LATLAKE,      LONLAKE,  &
+     LATLAKE,      LONLAKE,                                   &
      ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
      CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    &
      CHLON,        channel_option,    LATVAL,       LONVAL,   &
@@ -7403,7 +7403,6 @@ integer, intent(INOUT), dimension(NLINKS)   :: CHANXI, CHANYJ
 integer , dimension(:) ::  LAKEIDM
 
 !--reservoir/lake attributes
-logical, intent(IN)			            :: persistence
 real, intent(INOUT),  dimension(:)      :: HRZAREA
 
 real, intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH
@@ -7413,7 +7412,6 @@ real, intent(INOUT),  dimension(:)      :: DAML
 real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
-integer, intent(INOUT), dimension(:)    :: reservoir_type
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
 real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
@@ -7530,8 +7528,7 @@ if (channel_option .eq. 3) then
           call flush(6)
           call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, DAML, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, persistence, reservoir_type, &
-                LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
         else
           open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
           write(6,*) "Before read LAKEPARM from text ", trim(route_lake_f)
@@ -7541,7 +7538,7 @@ if (channel_option .eq. 3) then
           do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
             WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
-            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), reservoir_type(i)
+            LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i)
           enddo
 5101      continue
           close(79)
@@ -7570,7 +7567,6 @@ if (channel_option .eq. 3) then
       call mpp_land_bcast_real(NLAKES,LATLAKE )
       call mpp_land_bcast_real(NLAKES,LONLAKE )
       call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-      call mpp_land_bcast_int(NLAKES, reservoir_type)
    endif
 #endif
 end if  !! channel_option .eq. 3
@@ -8235,8 +8231,7 @@ subroutine read_routelink(&
      ChSSlp,       Bw,           Tw,       Tw_CC,      &
      n_CC,         LAKEIDA,      HRZAREA,              &
      LAKEMAXH,     WEIRH,        WEIRC,   WEIRL, DAML, &
-     ORIFICEC,     ORIFICEA,     ORIFICEE,             &
-     persistence,  reservoir_type,         LATLAKE,    &
+     ORIFICEC,     ORIFICEA,     ORIFICEE, LATLAKE,    &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
      route_link_f, route_lake_f, ZELEV,    CHLAT,      &
      CHLON,        NLINKSL,      LINKID,   GNLINKSL,   &
@@ -8254,8 +8249,6 @@ integer, intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on f
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML
 real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
-logical, intent(IN)                        :: persistence
-integer, intent(INOUT),  dimension(:)      :: reservoir_type
 real,    intent(INOUT),  dimension(:)      :: LATLAKE, LONLAKE, ELEVLAKE
 integer, intent(INOUT), dimension(:)       :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
@@ -8279,7 +8272,7 @@ call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
      MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML, ORIFICEC, &
-     ORIFICEA, ORIFICEE, persistence, reservoir_type, gages, gageMiss, &
+     ORIFICEA, ORIFICEE, gages, gageMiss, &
      LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
 
 !--- get the lake configuration here.
@@ -8308,7 +8301,6 @@ if (NLAKES > 0) then
    call mpp_land_bcast_real(NLAKES,LATLAKE )
    call mpp_land_bcast_real(NLAKES,LONLAKE )
    call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-   call mpp_land_bcast_int(NLAKES, reservoir_type)
 endif
 #endif
 
@@ -8321,7 +8313,7 @@ end subroutine read_routelink
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, DAML, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, persistence, reservoir_type, gages, gageMiss,&
+                   ORIFICEA, ORIFICEE, gages, gageMiss,&
                    LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
@@ -8339,8 +8331,7 @@ end subroutine read_routelink
         character(len=15), intent(in) :: gageMiss
 
 !NLAKES
-        INTEGER, intent(out), dimension(:)  ::  LAKEIDM, reservoir_type
-        logical, intent(in)		            ::  persistence
+        INTEGER, intent(out), dimension(:)  ::  LAKEIDM
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, DAML, ORIFICEC, WEIRH, &
                    ORIFICEA, ORIFICEE, ELEVLAKE
 !end NLAKES
@@ -8427,7 +8418,7 @@ end subroutine read_routelink
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, persistence, reservoir_type, LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, LAKEIDM, latlake, lonlake, ELEVLAKE)
           endif
 
 !!- initialize channel  if missing in input
@@ -8486,7 +8477,6 @@ end subroutine read_routelink
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
            call mpp_land_bcast_int(NLAKES, LAKEIDM)
            call mpp_land_bcast_real(NLAKES, ELEVLAKE)
-           call mpp_land_bcast_int(NLAKES, reservoir_type)
         endif
 
 
@@ -8585,7 +8575,7 @@ subroutine MPP_READ_CHROUTING_new(&
      n_CC,         HRZAREA,           LAKEMAXH,                  &
      WEIRH,        WEIRC,             WEIRL,          DAML,      &
      ORIFICEC,     ORIFICEA,          ORIFICEE,                  &
-     persistence,  reservoir_type,    LATLAKE,        LONLAKE,   &
+     LATLAKE,      LONLAKE,                                      &
      ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
      CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
      CHLON,        channel_option,    LATVAL,         LONVAL,    &
@@ -8619,7 +8609,6 @@ integer, intent(INOUT),  dimension(NLINKS)   :: map_l2g
 !-- store the location x,y location of the channel element
 integer, intent(INOUT), dimension(NLINKS)   :: CHANXI, CHANYJ
 
-logical, intent(IN)                          :: persistence
 real, intent(INOUT),  dimension(NLAKES)      :: HRZAREA
 real, intent(INOUT),  dimension(NLAKES)      :: LAKEMAXH, WEIRH
 real, intent(INOUT),  dimension(NLAKES)      :: WEIRC
@@ -8628,7 +8617,6 @@ real, intent(INOUT),  dimension(NLAKES)      :: DAML
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
-integer, intent(INOUT), dimension(NLAKES)    :: reservoir_type
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
 real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
@@ -8659,7 +8647,7 @@ call READ_CHROUTING1( &
      n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     DAML,    &
      ORIFICEC,     ORIFICEA,          ORIFICEE,           &
-     persistence,  reservoir_type,    LATLAKE,   LONLAKE, &
+     LATLAKE,      LONLAKE,                               &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,   &
      CHLON,        channel_option,    LATVAL,    LONVAL,  &
@@ -8737,7 +8725,6 @@ if (NLAKES > 0) then
    call mpp_land_bcast_real(NLAKES,LATLAKE)
    call mpp_land_bcast_real(NLAKES,LONLAKE)
    call mpp_land_bcast_real(NLAKES,ELEVLAKE)
-   call mpp_land_bcast_int(NLAKES, reservoir_type)
 endif
 
 link_location = CH_NETLNK
@@ -8792,7 +8779,7 @@ end subroutine MPP_READ_CHROUTING_new
            do i = 1, rt_domain(did)%gnlinks
               if(STRMFRXSTPTS(i) .gt. 0) then
                    write(75,114) nlst(did)%olddate(1:4),nlst(did)%olddate(6:7),nlst(did)%olddate(9:10), nlst(did)%olddate(12:13), &
-                         cnt,chlon(i),chlat(i),g_dayMean(i) 
+                         cnt,chlon(i),chlat(i),g_dayMean(i)
                    cnt = cnt + 1
               endif
            end do
@@ -8962,18 +8949,15 @@ end subroutine read_route_link_netcdf
 !
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL, DAML,   &
-                                   ORIFICEC, ORIFICEA,  ORIFICEE,  persistence, &
-                                   reservoir_type, LAKEIDM, lakelat, lakelon, ELEVLAKE)
+                                   ORIFICEC, ORIFICEA,  ORIFICEE, LAKEIDM, &
+                                   lakelat, lakelon, ELEVLAKE)
 
     implicit none
     character(len=*),        intent(in)  :: route_lake_file
-    logical,                 intent(in)  :: persistence
     integer, dimension(:),   intent(out) :: LAKEIDM
     real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH, DAML
     real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
     real,    dimension(:),   intent(out) :: ELEVLAKE
-    integer, dimension(:),   intent(out) :: reservoir_type
-
 
     integer :: iRet, ncid, ii, varid
     logical :: fatal_if_error
@@ -9001,9 +8985,6 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
-    if (persistence) then
-       call get_1d_netcdf_int(ncid, 'reservoir_type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
-    end if
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
     !remove the alt var. and add initial fractional depth var. LKR/DY
@@ -9956,7 +9937,7 @@ end subroutine output_chrt2
                allocate(g_basnsInd(rt_domain(did)%gnlinksl))
                gnbasns = rt_domain(did)%gnlinksl
           endif
-       endif 
+       endif
 
        if(nlst(did)%channel_option .ne. 3) then
           call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
@@ -10071,7 +10052,7 @@ end subroutine output_chrt2
                   //startdate(12:13)//':'//startdate(15:16)//':00'
 
      seconds_since = int(nlst(1)%out_dt*60*(rt_domain(1)%out_counts-1))
-     
+
      sec_valid_date = 'seconds since '//nlst(1)%startdate(1:4)//'-'//nlst(1)%startdate(6:7)//'-'//nlst(1)%startdate(9:10) &
                       //' '//nlst(1)%startdate(12:13)//':'//nlst(1)%startdate(15:16)//' UTC'
 
@@ -11086,7 +11067,7 @@ if(my_id .eq. io_id) then
    !if( (nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) .and. &
    !    (channel_only_in .eq. 1 .or.  channelBucket_only_in .eq. 1)        ) &
    !    call hydro_stop('Channel Only: Forcing files in consistent with forcing type.')
-   !! Second row: 
+   !! Second row:
    if(nlst(did)%channel_only .eq. 1 .and. channelBucket_only_in .eq. 1) &
         write(6,*) "Warning: channelBucket_only output forcing channel_only run"
 
@@ -11143,7 +11124,7 @@ if(.FALSE.) then
 
    !! Calculate the current
    if(len .gt. 0) then  !! would the length be zero on some images?
-      rt_domain(did)%qout_gwsubbas = & 
+      rt_domain(did)%qout_gwsubbas = &
            real( (accBucket_in - rt_domain(did)%accBucket)/nlst(did)%DT )
       rt_domain(did)%QLateral      = &
            real( rt_domain(did)%qout_gwsubbas +     &
