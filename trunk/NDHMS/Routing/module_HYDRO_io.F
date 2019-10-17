@@ -32,6 +32,7 @@ module module_HYDRO_io
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
    use netcdf
+   use module_hydro_stop, only:HYDRO_stop
 
    implicit none
 
@@ -4167,7 +4168,7 @@ end subroutine output_chrt
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_max", "90.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lat_min", "-90.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_max", "180.0")
-         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")         
+         iret = nf90_put_att(ncid, NF90_GLOBAL, "geospatial_lon_min", "-180.0")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
          iret = nf90_put_att(ncid, NF90_GLOBAL, "station_dimension", "station")
          iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
@@ -5172,8 +5173,8 @@ end subroutine mpp_output_chrt
 
      output_count = output_count + 1
 
-    iret = nf90_redef(ncid) 
-    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))    
+    iret = nf90_redef(ncid)
+    iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
     iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate))
     iret = nf90_enddef(ncid)
 
@@ -5339,7 +5340,7 @@ end subroutine mpp_output_chrt
       iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -9E15)
       iret = nf90_put_att(ncid, NF90_GLOBAL, "Conventions", convention)
       iret = nf90_put_att(ncid, NF90_GLOBAL, "model_initialization_time", trim(nlst(1)%startdate))
-      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate)) 
+      iret = nf90_put_att(ncid, NF90_GLOBAL, "model_output_valid_time", trim(nlst(1)%olddate))
       iret = nf90_enddef(ncid)
 
       iret = nf90_inq_varid(ncid,"time", varid)
@@ -5681,7 +5682,7 @@ end subroutine mpp_output_chrt
 #ifdef HYDRO_D
          write(6,*) "output file ", outFile
 #endif
-! define dimension for variables 
+! define dimension for variables
           iret = nf90_def_dim(ncid, "depth", nlst(did)%nsoil, dimid_soil)  !-- 3-d soils
 #ifdef MPP_LAND
           iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -5717,7 +5718,7 @@ end subroutine mpp_output_chrt
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%stc,"stc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%smc,"smc")
         call w_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
-        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1") 
+        !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCMAX1,"smcmax1")
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCREF1,"smcref1" )
         !call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%SMCWLT1,"smcwlt1"  )
         call w_rst_nc2(ncid,rt_domain(did)%ix,rt_domain(did)%jx,rt_domain(did)%INFXSRT,"infxsrt"  )
@@ -5791,7 +5792,7 @@ end subroutine mpp_output_chrt
    if( nlst(did)%channel_only       .eq. 0 .and. &
        nlst(did)%channelBucket_only .eq. 0         ) then
 
-! define dimension for variables 
+! define dimension for variables
           iret = nf90_def_dim(ncid, "depth", nlst(did)%nsoil, dimid_soil)  !-- 3-d soils
 #ifdef MPP_LAND
           iret = nf90_def_dim(ncid, "ix", global_nx, dimid_ix)  !-- make a decimated grid
@@ -5925,7 +5926,7 @@ end subroutine mpp_output_chrt
 
    end if  !  end if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 !                    nlst(did)%OVRTSWCRT   .eq. 1 .or. &
-!                    nlst(did)%GWBASESWCRT .ne. 0       ) 
+!                    nlst(did)%GWBASESWCRT .ne. 0       )
 
    !         put global attribute
    iret = nf90_put_att(ncid, NF90_GLOBAL, "his_out_counts", rt_domain(did)%his_out_counts)
@@ -6125,7 +6126,7 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 
    if(nlst(did)%GWBASESWCRT.eq.3) then
       if( nlst(did)%channel_only       .eq. 0 .and. &
-          nlst(did)%channelBucket_only .eq. 0         ) &           
+          nlst(did)%channelBucket_only .eq. 0         ) &
           call w_rst_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,gw2d(did)%ho, "HEAD" )
    end if
 
@@ -6169,7 +6170,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           write(iunit,ERR=101) rt_domain(did)%his_out_counts
 !         write(iunit,ERR=101) nlst(did)%olddate(1:19)
           write(iunit,ERR=101) nlst(did)%sincedate(1:19)
-!         write(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         write(iunit,ERR=101) nlst_rt(did)%DTCT
           write(iunit,ERR=101) rt_domain(did)%stc
           write(iunit,ERR=101) rt_domain(did)%smc
           write(iunit,ERR=101) rt_domain(did)%sh2ox
@@ -6263,7 +6264,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
           read(iunit,ERR=101) rt_domain(did)%his_out_counts
 !         read(iunit,ERR=101) nlst_rt(did)%olddate(1:19)
           read(iunit,ERR=101) nlst(did)%sincedate(1:19)
-!         read(iunit,ERR=101) nlst_rt(did)%DTCT 
+!         read(iunit,ERR=101) nlst_rt(did)%DTCT
           read(iunit,ERR=101) rt_domain(did)%stc
           read(iunit,ERR=101) rt_domain(did)%smc
           read(iunit,ERR=101) rt_domain(did)%sh2ox
@@ -6688,12 +6689,12 @@ if(IO_id .eq. my_id) then
          write(logUnit,*) 'channel_only run:', nlst(did)%channel_only
          write(logUnit,*) 'channelBucket_only restart present:', channelBucket_only_in
          write(logUnit,*) 'channelBucket_only run:', nlst(did)%channelBucket_only
-         call flush(logUnit)         
+         call flush(logUnit)
          call hydro_stop('Channel Only: Restart file in consistent with forcing type.')
       end if
    end if
 
-   iret = nf90_get_att(ncid, NF90_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts) 
+   iret = nf90_get_att(ncid, NF90_GLOBAL, 'his_out_counts', rt_domain(did)%his_out_counts)
    iret = nf90_get_att(ncid, NF90_GLOBAL, 'DTCT', nlst(did)%DTCT)
    iret = nf90_get_att(ncid,NF90_GLOBAL,"Since_Date",nlst(did)%sincedate(1:19))
 !   if( nlst(did)%channel_only       .eq. 1 .or. &
@@ -6727,7 +6728,7 @@ write(6,*) "nlst(did)%nsoil=",nlst(did)%nsoil
 if( nlst(did)%channel_only       .eq. 0 .and. &
     nlst(did)%channelBucket_only .eq. 0         ) then
 
-   if(nlst(did)%rst_typ .eq. 1 ) then 
+   if(nlst(did)%rst_typ .eq. 1 ) then
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%stc,"stc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%smc,"smc")
       call read_rst_nc3(ncid,rt_domain(did)%ix,rt_domain(did)%jx,nlst(did)%nsoil,rt_domain(did)%sh2ox,"sh2ox")
@@ -6747,8 +6748,8 @@ endif ! neither channel_only nor channelBucket_only
 if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
    nlst(did)%OVRTSWCRT   .eq. 1 .or. &
    nlst(did)%GWBASESWCRT .ne. 0       ) then
-   !! JLM ?? restarting channel depends on these options? 
-      
+   !! JLM ?? restarting channel depends on these options?
+
    if( nlst(did)%channel_only       .eq. 0 .and. &
        nlst(did)%channelBucket_only .eq. 0         ) then
 
@@ -6794,8 +6795,8 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
       endif
 
       if( nlst(did)%channel_only       .eq. 0 .and. &
-           nlst(did)%channelBucket_only .eq. 0         ) then 
-           
+           nlst(did)%channelBucket_only .eq. 0         ) then
+
          if(nlst(did)%SUBRTSWCRT.eq.1.or.nlst(did)%OVRTSWCRT.eq.1) then
             call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake,"lake_inflort")
          endif
@@ -6803,7 +6804,7 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 
    end if  !  end if(nlst_rt(did)%CHANRTSWCRT.eq.1)
 
-   if((nlst(did)%GWBASESWCRT .eq. 1 .or.  & 
+   if((nlst(did)%GWBASESWCRT .eq. 1 .or.  &
       nlst(did)%GWBASESWCRT .ge. 4) .and. &
       nlst(did)%GW_RESTART  .ne. 0 .and.  &
       rt_domain(did)%gnumbasns .gt. 0) then
@@ -8792,7 +8793,7 @@ end subroutine MPP_READ_CHROUTING_new
            do i = 1, rt_domain(did)%gnlinks
               if(STRMFRXSTPTS(i) .gt. 0) then
                    write(75,114) nlst(did)%olddate(1:4),nlst(did)%olddate(6:7),nlst(did)%olddate(9:10), nlst(did)%olddate(12:13), &
-                         cnt,chlon(i),chlat(i),g_dayMean(i) 
+                         cnt,chlon(i),chlat(i),g_dayMean(i)
                    cnt = cnt + 1
               endif
            end do
@@ -9956,7 +9957,7 @@ end subroutine output_chrt2
                allocate(g_basnsInd(rt_domain(did)%gnlinksl))
                gnbasns = rt_domain(did)%gnlinksl
           endif
-       endif 
+       endif
 
        if(nlst(did)%channel_option .ne. 3) then
           call ReachLS_write_io(rt_domain(did)%qin_gwsubbas,g_qin_gwsubbas)
@@ -10071,7 +10072,7 @@ end subroutine output_chrt2
                   //startdate(12:13)//':'//startdate(15:16)//':00'
 
      seconds_since = int(nlst(1)%out_dt*60*(rt_domain(1)%out_counts-1))
-     
+
      sec_valid_date = 'seconds since '//nlst(1)%startdate(1:4)//'-'//nlst(1)%startdate(6:7)//'-'//nlst(1)%startdate(9:10) &
                       //' '//nlst(1)%startdate(12:13)//':'//nlst(1)%startdate(15:16)//' UTC'
 
@@ -11086,7 +11087,7 @@ if(my_id .eq. io_id) then
    !if( (nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) .and. &
    !    (channel_only_in .eq. 1 .or.  channelBucket_only_in .eq. 1)        ) &
    !    call hydro_stop('Channel Only: Forcing files in consistent with forcing type.')
-   !! Second row: 
+   !! Second row:
    if(nlst(did)%channel_only .eq. 1 .and. channelBucket_only_in .eq. 1) &
         write(6,*) "Warning: channelBucket_only output forcing channel_only run"
 
@@ -11143,7 +11144,7 @@ if(.FALSE.) then
 
    !! Calculate the current
    if(len .gt. 0) then  !! would the length be zero on some images?
-      rt_domain(did)%qout_gwsubbas = & 
+      rt_domain(did)%qout_gwsubbas = &
            real( (accBucket_in - rt_domain(did)%accBucket)/nlst(did)%DT )
       rt_domain(did)%QLateral      = &
            real( rt_domain(did)%qout_gwsubbas +     &

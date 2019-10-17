@@ -3,7 +3,7 @@
 
 module module_reservoir_utilities
     use netcdf
-
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
 #ifndef NCEP_WCOSS

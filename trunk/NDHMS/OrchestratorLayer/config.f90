@@ -1,5 +1,8 @@
 module config_base
   !use netcdf_layer_base
+
+  use module_hydro_stop, only:HYDRO_stop
+
   implicit none
 
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
@@ -37,11 +40,11 @@ module config_base
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
-     
+
      integer            :: split_output_count = 1
      integer            :: khour
      integer            :: kday = -999
-     real               :: zlvl 
+     real               :: zlvl
      character(len=256) :: hrldas_setup_file = " "
      character(len=256) :: mmf_runoff_file = " "
      character(len=256) :: external_veg_filename_template = " "
@@ -90,7 +93,7 @@ module config_base
 
      integer :: io_config_outputs  ! used for NCEP REALTIME OUTPUT
      integer :: io_form_outputs ! Flag to turn specify level of internal compression
-     integer :: t0OutputFlag  
+     integer :: t0OutputFlag
      integer :: channel_only, channelBucket_only
      integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
 
@@ -117,7 +120,7 @@ module config_base
      character(len=256) :: geo_finegrid_flnm =""
      character(len=256) :: udmap_file =""
      character(len=256) :: GWBUCKPARM_file = ""
-     integer :: reservoir_data_ingest ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
+     integer :: reservoir_data_ingest ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
      character(len=1024) :: reservoir_obs_dir = ""
 
      logical :: compound_channel
@@ -142,7 +145,7 @@ module config_base
      integer            :: minNumPairsBiasPersist
      integer            :: maxAgePairsBiasPersist
      logical            :: invDistTimeWeightBias
-     logical            :: noConstInterfBias  
+     logical            :: noConstInterfBias
      character(len=256) :: timeSlicePath
      integer            :: nLastObs
      integer            :: bucket_loss
@@ -150,7 +153,7 @@ module config_base
    contains
 
      procedure, pass(self) :: check => rt_nlst_check
-     
+
   END TYPE namelist_rt_
 
   type, public :: Configuration_
@@ -188,7 +191,7 @@ contains
 
     !  ! Go through and make some logical checks for each hydro.namelist option.
     !  ! Some of these checks will depend on specific options chosen by the user.
-    
+
     if( (self%sys_cpl .lt. 1) .or. (self%sys_cpl .gt. 4) ) then
        call hydro_stop("hydro.namelist ERROR: Invalid sys_cpl value specified.")
     endif
@@ -619,12 +622,12 @@ contains
        nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
     else
        nlst(did)%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
-       
+
        if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst(did)%reservoir_persistence) then
           print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
        end if
     end if
-    
+
     write(nlst(did)%hgrid,'(I1)') igrid
 
     if(RESTART_FILE .eq. "") rst_typ = 0
@@ -847,13 +850,13 @@ contains
          start_year, start_month, start_day, start_hour, start_min, &
          outdir, &
          restart_filename_requested, restart_frequency_hours, output_timestep, &
-         
+
          dynamic_veg_option, canopy_stomatal_resistance_option, &
          btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
-         
+
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
          spatial_filename, &
@@ -922,7 +925,7 @@ contains
     wrf_hydro%forc_typ = forc_typ
     wrf_hydro%snow_assim = 0!snow_assim
 
-    noah_lsm%indir = indir 
+    noah_lsm%indir = indir
     noah_lsm%nsoil = nsoil ! number of soil layers
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
@@ -953,7 +956,7 @@ contains
     noah_lsm%soil_data_option = soil_data_option
     noah_lsm%pedotransfer_option = pedotransfer_option
     noah_lsm%crop_option = crop_option
-    
+
     noah_lsm%split_output_count = split_output_count
     noah_lsm%khour = khour
     noah_lsm%kday = -999!kday
@@ -972,5 +975,5 @@ contains
     noah_lsm%spatial_filename = spatial_filename
 
   end subroutine init_noah_lsm_and_wrf_hydro
-  
+
 end module config_base

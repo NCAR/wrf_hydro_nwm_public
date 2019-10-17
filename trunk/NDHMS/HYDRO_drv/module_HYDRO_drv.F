@@ -653,9 +653,9 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
       if(nlst(did)%OVRTSWCRT .ne. 0) then
          call OverlandRouting_drv(did)
       else
-         !ADCHANGE: Updating landRunoff instead of surface_water_head_routing. This now allows 
-         !          landRunoff to include both infxsrt from the LSM and exfiltration (if subsfc 
-         !          is active) and prevents surface_water_head_routing from inadvertently being 
+         !ADCHANGE: Updating landRunoff instead of surface_water_head_routing. This now allows
+         !          landRunoff to include both infxsrt from the LSM and exfiltration (if subsfc
+         !          is active) and prevents surface_water_head_routing from inadvertently being
          !          passed back to the LSM.
          if (nlst(did)%UDMP_OPT .eq. 1) then
            ! If subsurface is on, we update landRunOff to include the updated term w/ exfiltration.
@@ -1816,82 +1816,42 @@ end subroutine HYDRO_ini
 end module module_HYDRO_drv
 
 ! stop the job due to the fatal error.
-      subroutine HYDRO_stop(msg)
+subroutine HYDRO_finish()
 #ifdef MPP_LAND
-        use module_mpp_land
-#endif
-        character(len=*) :: msg
-        integer :: ierr
-        ierr = 1
-#ifndef NCEP_WCOSS
-!#ifdef HYDRO_D  !! PLEASE NEVER UNCOMMENT THIS IFDEF, it's just one incredibly useful string.
-      write(6,*) "The job is stopped due to the fatal error. ", trim(msg)
-      call flush(6)
-!#endif
-#else
-     write(*,*) "FATAL ERROR: ", trim(msg)
-     write(78,*) "FATAL ERROR: ", trim(msg)
-      call flush(78)
-      close(78)
-#endif
-#ifdef MPP_LAND
-#ifndef HYDRO_D
-      print*, "---"
-      print*, "FATAL ERROR! Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
-      print*, ""
-#endif
-
-!        call mpp_land_sync()
-!        write(my_id+90,*) msg
-!        call flush(my_id+90)
-
-         call mpp_land_abort()
-         call MPI_finalize(ierr)
-#else
-         stop "FATAL ERROR: Program stopped. Recompile with environment variable HYDRO_D set to 1 for enhanced debug information."
-#endif
-
-     return
-     end  subroutine HYDRO_stop
-
-
-! stop the job due to the fatal error.
-      subroutine HYDRO_finish()
-#ifdef MPP_LAND
-        USE module_mpp_land
+    USE module_mpp_land
 #endif
 #ifdef WRF_HYDRO_NUDGING
-        use module_stream_nudging,  only: finish_stream_nudging
+    use module_stream_nudging,  only: finish_stream_nudging
 #endif
 
-        integer :: ierr
+    integer :: ierr
 
 #ifdef WRF_HYDRO_NUDGING
-        call finish_stream_nudging()
+    call finish_stream_nudging()
 #endif
 #ifndef NCEP_WCOSS
-        print*, "The model finished successfully......."
+    print*, "The model finished successfully......."
 #else
-        write(78,*) "The model finished successfully......."
+    write(78,*) "The model finished successfully......."
 #endif
 #ifdef MPP_LAND
 !         call mpp_land_abort()
 #ifndef NCEP_WCOSS
-         call flush(6)
+    call flush(6)
 #else
-         call flush(78)
-         close(78)
+    call flush(78)
+    close(78)
 #endif
-         call mpp_land_sync()
-         call MPI_finalize(ierr)
-         stop
+    call mpp_land_sync()
+    call MPI_finalize(ierr)
+    stop
 #else
 
 #ifndef WRF_HYDRO_NUDGING
-         stop  !!JLM want to time at the top NoahMP level.
+    stop  !!JLM want to time at the top NoahMP level.
 #endif
 
 #endif
 
-        return
-      end  subroutine HYDRO_finish
+    return
+end  subroutine HYDRO_finish
