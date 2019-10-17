@@ -21,6 +21,7 @@ add_library(hydro_routing STATIC
 
 target_link_libraries(hydro_routing PUBLIC hydro_mpp)
 target_link_libraries(hydro_routing PUBLIC hydro_utils)
+target_link_libraries(hydro_routing PUBLIC hydro_orchestrator)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_overland)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_subsurface)
 #target_link_libraries(hydro_routing PUBLIC hydro_routing_groundwater)
