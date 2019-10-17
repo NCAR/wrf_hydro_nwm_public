@@ -31,10 +31,10 @@
        integer :: output_channelBucket_influx ! used for FORCE_TYPE 9 and 10
 
           integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
-                  SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
-                  GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
+                  SUBRTSWCRT, OVRTSWCRT, AGGFACTRT, &
+                  GWBASESWCRT, GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                   sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
-                  gwsoilcpl, UDMP_OPT
+                  gwsoilcpl, UDMP_OPT, bucket_loss
           logical:: GwPreDiag, GwSpinUp
           real:: DTRT_TER,DTRT_CH, DTCT, dxrt0,  gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
@@ -48,7 +48,10 @@
           character(len=256) :: geo_finegrid_flnm =""
           character(len=256) :: udmap_file =""
           character(len=256) :: GWBUCKPARM_file = ""
+          integer :: reservoir_data_ingest ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE. 
+          character(len=1024) :: reservoir_obs_dir = ""
 
+          logical :: compound_channel
           integer ::frxst_pts_out            ! ASCII point timeseries output at user specified points
           integer ::CHRTOUT_DOMAIN           ! Netcdf point timeseries output at all channel points
           integer ::CHRTOUT_GRID                ! Netcdf grid of channel streamflow values
@@ -58,6 +61,7 @@
           integer ::output_gw                   ! Netcdf grid of GW
           integer ::outlake                   ! Netcdf grid of lake
           integer :: rtFlag
+          integer ::khour
 
 !#ifdef WRF_HYDRO_NUDGING
        character(len=256) :: nudgingParamFile

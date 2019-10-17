@@ -1,0 +1,41 @@
+{
+    "nwm": {
+        "WRF_HYDRO": 1,
+        "HYDRO_D": 0,
+        "SPATIAL_SOIL": 1,
+        "WRF_HYDRO_RAPID": 0,
+        "WRFIO_NCD_LARGE_FILE_SUPPORT": 1,
+        "NCEP_WCOSS": 0,
+        "WRF_HYDRO_NUDGING": 1
+    },
+
+    "gridded": {
+        "WRF_HYDRO": 1,
+        "HYDRO_D": 0,
+        "SPATIAL_SOIL": 1,
+        "WRF_HYDRO_RAPID": 0,
+        "WRFIO_NCD_LARGE_FILE_SUPPORT": 1,
+        "NCEP_WCOSS": 0,
+        "WRF_HYDRO_NUDGING": 0
+    },
+
+    "gridded_no_lakes": {
+        "WRF_HYDRO": 1,
+        "HYDRO_D": 0,
+        "SPATIAL_SOIL": 1,
+        "WRF_HYDRO_RAPID": 0,
+        "WRFIO_NCD_LARGE_FILE_SUPPORT": 1,
+        "NCEP_WCOSS": 0,
+        "WRF_HYDRO_NUDGING": 0
+    },
+
+    "reach": {
+        "WRF_HYDRO": 1,
+        "HYDRO_D": 0,
+        "SPATIAL_SOIL": 1,
+        "WRF_HYDRO_RAPID": 0,
+        "WRFIO_NCD_LARGE_FILE_SUPPORT": 1,
+        "NCEP_WCOSS": 0,
+        "WRF_HYDRO_NUDGING": 0
+    }
+}

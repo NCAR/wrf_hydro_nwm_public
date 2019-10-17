@@ -24,7 +24,7 @@ module module_WRF_HYDRO
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
-                mpp_land_bcast_real, mpp_land_bcast_int1
+                mpp_land_bcast_real, mpp_land_bcast_int1, mpp_land_init
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
@@ -230,7 +230,7 @@ CONTAINS
             end do 
 
 ! update WRF variable after running routing model.
-            grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%sfcheadrt
+            grid%sfcheadrt(its:ite,jts:jte) = rt_domain(did)%overland%control%surface_water_head_lsm
 
 ! provide groundwater soil flux to WRF for fully coupled simulations (FERSCH 09/2014)            
             if(nlst_rt(did)%GWBASESWCRT .eq. 3 ) then

@@ -1,0 +1,20 @@
+sudo: required
+language: bash
+services:
+  - docker
+
+before_install:
+  #Setup test directory on travis
+  - TEST_DIR_TRAVIS=$HOME/test_dir
+  - sudo mkdir $TEST_DIR_TRAVIS
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
+  - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
+  - git clone https://github.com/NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
+  - cd $TEST_DIR_TRAVIS/reference
+  - git checkout $TRAVIS_BRANCH
+  - sudo chmod -R 777 $TEST_DIR_TRAVIS
+  #Get docker images
+  - docker pull wrfhydro/dev:modeltesting
+
+script:
+  - docker run -e TRAVIS=1 -t -v $TEST_DIR_TRAVIS/candidate:/home/docker/candidate -v $TEST_DIR_TRAVIS/reference:/home/docker/reference wrfhydro/dev:modeltesting --config nwm_ana nwm_long_range gridded reach --domain_tag dev

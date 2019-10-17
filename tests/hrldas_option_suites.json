@@ -1,0 +1,6 @@
+{
+  "compound_channel_off":{
+    "noahlsm_offline": {},
+    "wrf_hydro_offline": {}
+  }
+}

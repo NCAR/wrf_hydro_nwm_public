@@ -40,15 +40,12 @@
 
  IZ0TLND = 0
  SFCDIF_OPTION = 0
- UPDATE_SNOW_FROM_FORCING = .TRUE.
+ UPDATE_SNOW_FROM_FORCING = .FALSE.
 
  ! Specification of forcing data:  1=HRLDAS-hr format, 2=HRLDAS-min format,
  !                                 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip.,
  !                                 6=HRLDAS-hr format w/ Spec. Precip,
  !                                 7=WRF w/Spec. Precip
  FORC_TYP = 3
-
- ! Switch for snow data assimilation: 0=no, 1=yes
- SNOW_ASSIM = 0
 
 /

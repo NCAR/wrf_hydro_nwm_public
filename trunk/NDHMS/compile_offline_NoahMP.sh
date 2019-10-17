@@ -64,11 +64,20 @@ fi
 
 cd Run
 mv  wrf_hydro.exe wrf_hydro_NoahMP.exe; ln -sf wrf_hydro_NoahMP.exe wrf_hydro.exe
-cp ../Land_models/NoahMP/run/*TBL .
+
 cp ../template/NoahMP/namelist.hrldas .
-cp ../template/HYDRO/HYDRO.TBL .
-cp ../template/HYDRO/CHANPARM.TBL .
 cp ../template/HYDRO/hydro.namelist .
+
+if [ "$(cat ../.nwm_version)" == "none" ]; then
+    # if it is not an nwm version, use the stock ones.
+    cp ../Land_models/NoahMP/run/*TBL .
+    cp ../template/HYDRO/HYDRO.TBL .
+    cp ../template/HYDRO/CHANPARM.TBL .
+else
+    # If it's an nwm version (nwm release branch), then use these
+    cp ../template/WCOSS/TBLS/* .
+fi
+    
 
 echo
 echo '*****************************************************************'

@@ -1,0 +1,98 @@
+{
+    "base": {
+        "noahlsm_offline": {
+            "btr_option": 1,
+            "canopy_stomatal_resistance_option": 1,
+            "dynamic_veg_option": 4,
+            "forcing_timestep": "NULL_specified_in_domain.json",
+            "frozen_soil_option": 1,
+            "glacier_option": 2,
+            "hrldas_setup_file": "NULL_specified_in_domain.json",
+            "indir": "NULL_specified_in_domain.json",
+            "khour": 144,
+            "noah_timestep": 3600,
+            "nsoil": 4,
+            "outdir": "./",
+            "output_timestep": 3600,
+            "pcp_partition_option": 1,
+            "radiative_transfer_option": 3,
+            "restart_filename_requested": "NULL_specified_in_domain.json",
+            "restart_frequency_hours": 24,
+            "rst_bi_in": 0,
+            "rst_bi_out": 0,
+            "runoff_option": 3,
+            "snow_albedo_option": 1,
+            "soil_thick_input": [0.1, 0.3, 0.6, 1.0],
+            "spatial_filename": "NULL_specified_in_domain.json",
+            "split_output_count": 1,
+            "start_day": "NULL_specified_in_domain.json",
+            "start_hour": "NULL_specified_in_domain.json",
+            "start_min": "NULL_specified_in_domain.json",
+            "start_month": "NULL_specified_in_domain.json",
+            "start_year": "NULL_specified_in_domain.json",
+            "supercooled_water_option": 1,
+            "surface_drag_option": 1,
+            "surface_resistance_option": 4,
+            "tbot_option": 2,
+            "temp_time_scheme_option": 3,
+            "zlvl": 10.0
+        },
+        "wrf_hydro_offline": {
+            "forc_typ": "NULL_specified_in_domain.json"
+        }
+    },
+
+    "nwm_ana": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "nwm_long_range" : {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "nwm_hi_ana" : {
+        "noahlsm_offline": {
+            "snow_albedo_option": 2
+        },
+        "wrf_hydro_offline": {}
+    },
+
+    "nwm_channel-only" : {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "nwm_output_ana" : {
+        "noahlsm_offline": {
+            "khour": 1,
+            "restart_frequency_hours": 1
+	},
+        "wrf_hydro_offline": {}
+    },
+
+    "nwm_output_long_range" : {
+        "noahlsm_offline": {
+            "khour": 1,
+            "restart_frequency_hours": 1
+	},
+        "wrf_hydro_offline": {}
+    },
+
+    "gridded": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "gridded_no_lakes": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    },
+
+    "reach": {
+        "noahlsm_offline": {},
+        "wrf_hydro_offline": {}
+    }
+}
+
