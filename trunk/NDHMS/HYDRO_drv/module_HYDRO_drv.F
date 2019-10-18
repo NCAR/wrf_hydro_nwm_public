@@ -47,7 +47,7 @@ module module_HYDRO_drv
 #ifdef WRF_HYDRO_NUDGING
    use module_stream_nudging,  only: init_stream_nudging
 #endif
-
+   use module_hydro_stop, only: HYDRO_stop
    use module_UDMAP, only: get_basn_area_nhd
    use netcdf
 

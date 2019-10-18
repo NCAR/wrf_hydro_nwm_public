@@ -24,6 +24,8 @@ Module module_namelist
           USE module_mpp_land
 #endif
 
+    use module_hydro_stop, only: HYDRO_stop
+
     IMPLICIT NONE
     INTEGER, PARAMETER :: max_domain=5
 
