@@ -203,6 +203,7 @@ contains
             ! Check to ensure that each lake id in the lake_id array in the reservoir parameter file matches
             ! each lake id in the lake_id array in the lake parameter file
             do lake_index = 1, number_of_lakes
+
                 if (lake_parameter_lake_ids(lake_index) .ne. reservoir_parameter_lake_ids(lake_index)) then
                     call hydro_stop("Lake ID array in the reservoir parameter file does not match the Lake ID array &
                     in the lake parameter file.")
