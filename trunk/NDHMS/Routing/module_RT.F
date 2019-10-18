@@ -794,7 +794,7 @@ subroutine LandRT_ini(did)
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
+       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3 .or. rt_domain(did)%reservoir_type(lake_index) == 4) then
            allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
