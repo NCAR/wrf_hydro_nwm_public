@@ -163,7 +163,7 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         real                :: levelpool_outflow        ! cubic meters per second (cms)
-	integer		    :: missing_outflow_index
+        integer		        :: missing_outflow_index
 
         ! Update input variables
         this%input%inflow = inflow
@@ -188,7 +188,7 @@ contains
             this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
 
             if (this%output%outflow < 0) then
-		missing_outflow_index = this%state%time_series_index
+                missing_outflow_index = this%state%time_series_index
 
                 do while (this%output%outflow < 0 .and. missing_outflow_index > 1)
                     missing_outflow_index = missing_outflow_index - 1
