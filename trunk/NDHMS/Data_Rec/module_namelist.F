@@ -261,17 +261,7 @@ CONTAINS
   nlst%reservoir_parameter_file = reservoir_parameter_file
   nlst%reservoir_timeslice_path = reservoir_timeslice_path
   nlst%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
-
-  ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
-  if ( io_config_outputs .eq. 1 .or. io_config_outputs .eq. 5 ) then
-    nlst%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
-  else
-    nlst%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
-
-    if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst%reservoir_persistence) then
-        print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
-    end if
-  end if
+  nlst%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
