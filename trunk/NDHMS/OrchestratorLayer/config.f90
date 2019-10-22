@@ -106,7 +106,7 @@ module config_base
      character(len=256) :: route_link_f=""
      character(len=256) :: route_lake_f=""
      logical            :: reservoir_persistence
-     character(len=256) :: reservoir_persistence_parameter_file=""
+     character(len=256) :: reservoir_parameter_file=""
      character(len=256) :: reservoir_timeslice_path=""
      integer            :: reservoir_observation_lookback_hours = 18
      integer            :: reservoir_observation_update_time_interval_seconds = 86400
@@ -395,17 +395,17 @@ contains
    end if
 
    if(self%reservoir_persistence) then
-      if(len(trim(self%reservoir_persistence_parameter_file)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_persistence_parameter_file for &
+      if(len(trim(self%reservoir_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_parameter_file for &
          inputs to persistence type reservoirs.')
       endif
       if(len(trim(self%reservoir_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
          reservoir persistence capability.')
       endif
-      if(len(trim(self%reservoir_persistence_parameter_file)) .ne. 0) then
-        inquire(file=trim(self%reservoir_persistence_parameter_file),exist=fileExists)
-        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_persistence_parameter_file not found.')
+      if(len(trim(self%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(self%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
     end if
   end subroutine rt_nlst_check
@@ -429,7 +429,7 @@ contains
     logical            :: compound_channel
     character(len=256) :: route_lake_f=""
     logical            :: reservoir_persistence
-    character(len=256) :: reservoir_persistence_parameter_file=""
+    character(len=256) :: reservoir_parameter_file=""
     character(len=256) :: reservoir_timeslice_path=""
     integer            :: reservoir_observation_lookback_hours = 18
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
@@ -496,7 +496,7 @@ contains
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-         reservoir_persistence, reservoir_persistence_parameter_file, reservoir_timeslice_path, &
+         reservoir_persistence, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
          route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
          gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -610,7 +610,7 @@ contains
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
     nlst(did)%reservoir_persistence = reservoir_persistence
-    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
+    nlst(did)%reservoir_parameter_file = reservoir_parameter_file
     nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
 
@@ -713,7 +713,7 @@ contains
     nlst(did)%route_lake_f = route_lake_f
 
     nlst(did)%reservoir_persistence = reservoir_persistence
-    nlst(did)%reservoir_persistence_parameter_file = reservoir_persistence_parameter_file
+    nlst(did)%reservoir_parameter_file = reservoir_parameter_file
     nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
     nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
