@@ -1,138 +1,196 @@
-# Testing wrf\_hydro\_nwm\_public & wrf\_hydro\_nwm
+tests/
+===============================
 
-## Status
-For the community 5.0 release: testing is in something of a crude
-state, but it is funcitonal. Improvements are on their way. 
+# Testing: Just do it.
+Please use and help to improve the testing, including this documentation.
+
+You are responsible for your code passing these tests on multiple domains, 
+you should use it on machines where you run, not just via Travis CI.  
 
 
-## Purposes: 
+# Why testing?
 * Protect production code
 * Distribute responsibility
-* Reproducibility and communication: log files
+* Reproducibility and communication: log files, common tests
 * Support your development: boost confidence, find bugs faster
 
-The mantra is: *Test with every compile on small domains.*
+The mantra is: *Test with every compile on small domains (... and then
+test CONUS with PRs).*
 
 
-## Overview
-Conceptually a *candidate* takes a *test*. The names of the `take\_test.sh` 
-and and `take_test.py` scripts emphasize that there are two parts: the taker 
-and the test. The candidate which takes the test is the state of this (or 
-potentially some other) repository. The tests are encoded in the `tests/` 
-directory. The tests referr to another repository state called the 
-"reference", this is a blessed state of the repository for the candidate's 
-results.
+# Conceptual overview
+* Candidate: The repository state to be merged with the reference.
+* Reference: The accepted target for merging the candidate.
 
-By default: 
-* Candidate is the current (potentially uncommitted) state of the repo from which 
-`take_test` is invoked. 
-* Reference is upstream/master (either NCAR/wrf_hydro_nwm_public or 
-NCAR/wrf_hydro_nwm).
-* The tests are defined by the `tests/test_*` files. 
+A *candidate* takes a *test*. When a candidate "passes" all its tests,
+it generally becomes the new reference for the next candidate.
 
-## Usage
-Currently there are 2 ways to invoke the testing. The fundamental way:
-`python take_test.py <options>`. This works fine on linux. But if you want to 
-test on a non-linux machine using docker, the following script is meant to be 
-a machine independent interface: `take_test.sh <options>`. This later script is 
-still under development.
+The *reference* is commonly known as 'upstream master' in git parlance, at
+least when testing is applied for merging code to upstream master. But the
+tests can compare any two repo states, including uncommitted states.
 
-Both of the "take_test" scripts may be preceeded with a path or
-invoked in the `tests/` directory, as shown. 
+In most cases the candidate will not change the output of model relative to the
+reference. In some cases the candidate will change the output of the model
+relative to the reference, that is the candidate does not pass regression
+testing. When this happens, evidence, justification, discussion, and sound
+judgement are required to accept such changes as the new reference.
 
-The options are described below.
+Regression is optional, the other tests are not.
 
-Currently supported machines: cheyenne and docker. There are sections below 
-about both of these. More machines can be added. 
-
-Options (all optional) are described by:
-`python take_test.py --help` and `./take_test.sh --help`:
-
+## Summary of Basic tests:
+* Compile: does the candidate compile?
+* Run: does the candidate run?
+* N-cores test: are the results independent of the number of proceses used by
+MPI?
+* Perfect restart: Can candidate model state written to and retrieved from disk
+without affecting the model state at a later time? Illustration:
 ```
-Retrieving the help from take_test.py...
+state1   ->   state2     ->  state3
+                 \                  =?
+	              (restart)->  state3'
+```     
+* Regression: Does the candidate output match that of the reference?
+* Metadata Regression: Does the candidate metadata match that of the reference?
+* NaN Check: Check for NaNs in output.
 
-usage: take_test.py [-h] [--domain /path/to/domain/directory]
-                    [--candidate_spec_file path/to/candidate_spec_file]
-                    [--config [key [key ...]]] [--test_spec [key [key ...]]]
 
-A WRF-Hydro candidate takes a test.
+# Technical overview
+Core: `pytest` & `wrfhydropy`  
+User Interface: `tests/local/run_tests.py`
+
+## `pytest`
+`pytest` is the engine which carries out testing. You can call pytest directly
+in `tests/` but it is not the easiest thing to interact with directly, at least
+not for the testing in this repo which is not directly on python code. Calls
+to `pytest` is generated and printed prior to calling it by the standard user
+interface explained below `tests/local/run_tests.py`, this provides hints for
+when tweaking direct calls to pytest are necessary (not normal).
+
+
+## `wrfhydropy`
+The python API for wrf-hydro, facilitates building objects/classes like
+"simulations", "jobs", and "schedulers" which can be reused. Classes also
+provide methods for evaluation and comparing outputs. The model-side and
+domain-side JSON namelist files used by `wrfhydropy` are key to establishing
+model "configurations" which can be applied to any domain. These are key
+capabilities for flexible testing.  
+
+TODO: Explain the JSON namelists.
+
+## `tests/local/run_tests.py`
+This is the main user interface to the testing, to be called directly by users.
+Examples are provided in `tests/local/examples`.
+
+At this time:
+```
+james@vpn35[609]:~/WRF_Hydro/wrf_hydro_nwm_public/tests/local> python run_tests.py --help
+usage: run_tests.py [-h] --config CONFIG [CONFIG ...] --compiler COMPILER
+                    --output_dir OUTPUT_DIR --candidate_dir CANDIDATE_DIR
+                    --reference_dir REFERENCE_DIR [--domain_dir DOMAIN_DIR]
+                    [--domain_tag DOMAIN_TAG] [--exe_cmd EXE_CMD]
+                    [--ncores NCORES] [--scheduler] [--nnodes NNODES]
+                    [--account ACCOUNT] [--walltime WALLTIME] [--queue QUEUE]
+                    [--print] [--pdb] [-x] [--use_existing_test_dir]
+                    [--xrcmp_n_cores XRCMP_N_CORES]
+
+Run WRF-Hydro test suite locally
 
 optional arguments:
   -h, --help            show this help message and exit
-  --domain /path/to/domain/directory
-                        Path to the domain directory.
-  --candidate_spec_file path/to/candidate_spec_file
-                        The YAML candidate specification file.
-  --config [key [key ...]]
-                        Zero or more keys separated by whitespace for model
-                        configuration selection (no keys runs all
-                        configurations).
-  --test_spec [key [key ...]]
-                        Zero or more keys separated by whitespace for
-                        specifying the desired tests. These keys are grepped
-                        against the test_*py files in the tests/ directory.
-
-take_test.sh notes: 
-  When using docker, the domain argument becomes the key which is the basename of the path.
+  --config CONFIG [CONFIG ...]
+                        <Required> The configuration(s) to test, must be one
+                        listed in trunk/NDHMS/hydro_namelist.json keys.
+  --compiler COMPILER   <Required> compiler, options are intel or gfort
+  --output_dir OUTPUT_DIR
+                        <Required> test output directory
+  --candidate_dir CANDIDATE_DIR
+                        <Required> candidate model directory
+  --reference_dir REFERENCE_DIR
+                        <Required> reference model directory
+  --domain_dir DOMAIN_DIR
+                        optional domain directory
+  --domain_tag DOMAIN_TAG
+                        The release tag of the domain to retrieve, e.g.
+                        v5.0.1. or dev. If specified, a small test domain will
+                        be retrieved and placed in the specified output_dir
+                        and used for the testing domain
+  --exe_cmd EXE_CMD     The MPI-dependent model execution command. Default is
+                        best guess. The first/zeroth variable is set to the
+                        total number of cores (ncores). The wrf_hydro_py
+                        convention is that the exe is always named
+                        wrf_hydro.exe.
+  --ncores NCORES       Number of cores to use for testing
+  --scheduler           Scheduler to use for testing, options are PBSCheyenne
+                        or do not specify for no scheduler
+  --nnodes NNODES       Number of nodes to use for testing if running on
+                        scheduler
+  --account ACCOUNT     Account number to use if using a scheduler.
+  --walltime WALLTIME   Account number to use if using a scheduler.
+  --queue QUEUE         Queue to use if running on NCAR Cheyenne, options are
+                        regular, premium, or shared
+  --print               Print log to stdout instead of html
+  --pdb                 pdb (debug) in pytest
+  -x                    Exit pdb on first failure.
+  --use_existing_test_dir
+                        Use existing compiles and runs, only perform output
+                        comparisons.
+  --xrcmp_n_cores XRCMP_N_CORES
+                        Use xrcmp if > 0, and how many cores if so?
 ```
 
+## Croton example
+Many docker-related details aside, this is essentially how the Croton Continuous-Inegration domain is run inside a docker container:
+```
+cd ~/wrf_hydro_nwm_public/tests/local
+python run_tests.py \
+    --config nwm_ana nwm_long_range reach gridded
+    --compiler gfort \
+    --output_dir /home/docker/test_out \
+    --candidate_dir /home/docker/wrf_hydro_nwm_public \
+    --reference_dir /home/docker/wrf_hydro_nwm_public_upstream \
+    --domain_dir /croton_NY
+```
+This can be adapted to other platorms.... 
 
 
-## Configuration files
-### User spec file 
-The user specification file is set by the following environment variable, for
-example in bash:
+# Requirements / Software Stack
+In addition to needing to compile and run the model, python3 is needed with
+specific libraries which are encapsulated in `tests/local/requirements.txt`. One
+notable piece of software used specifically for comparing output files is
+[`nccmp`](https://gitlab.com/remikz/nccmp). For large domains, we rolled a
+version of this tool using [`xarray`](https://github.com/pydata/xarray), another
+notable piece in the testing stack.
 
-`export WRF_HYDRO_TESTS_USER_SPEC=~/wrf_hydro_tests_user_spec.yaml`
-
-The `wrf_hydro_nwm_public/tests/tests/template_user_spec.yaml` should
-be copied a new location and edited to meet your needs (do not put
-your edits under version control).
-
-### Candidate spec file
-The `wrf_hydro_nwm_public/tests/template_candidate_spec.yaml` should
-be copied and modified for specific tests (do not put your edits under
-version control). This file allows for the maximum testing flexibility. 
-
-### Machine spec file
-This file is to be updated for new machines (your cluster or your desktop) to
-run the tests. These changes should come back via version control so
-that each machine only needs specified just once. 
+The following two envionments come "ready to go":
 
 
-## Requirements:
-Broadly:  
-python3.6.4 with [wrfhydropy](https://github.com/NCAR/wrf_hydro_py)
-installed. Generally, the latest which installs from pip should work.
-
-Specifically:  
-Requirements are documented in this docker file
-[wrfhydro/dev:conda](https://github.com/NCAR/wrf_hydro_docker/blob/master/dev/conda/Dockerfile)
+## Docker
+The two containers [`wrfhydro/dev:conda`](https://github.com/NCAR/wrf_hydro_docker/blob/master/dev/conda/Dockerfile) and  [`wrfhydro/dev:modeltesting`](https://github.com/NCAR/wrf_hydro_docker/blob/master/dev/modeltesting/Dockerfile) contain the full software stack required to run testing.
 
 
-## CI Domain
-The testing is mean to work with arbitrary domains as long as they
-adopt the correct conventions. The Croton, NY, domain is used for
-testing: wrfhydro/domains:croton_NY. We will shortly provide a better
-way to pull this domain and other domains outside the docker context.
+## Cheyenne
+To activate a common python virtual envionment for model testing on cheyenne:
+```
+(368) jamesmcc@cheyenne3[999]:~> deactivate 
+jamesmcc@cheyenne3[1000]:~> source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate
+(wrf_hydro_nwm_test) jamesmcc@cheyenne3[1001]:~>
+```
+Because Whole new levels of testing complexity open up on cheyenne, there is a
+special script to handle this with minimal pain:
+`test/local/cheyenne/model_test.sh`. This script provides flexibility to
+switch compilers, MPI distributions, and domains. With MPI distributions,
+different model execution commands may be required. Furthermore, output
+comparison on large domains is better handled by `xrcmp` in `wrfhydropy`.
 
 
-## Cheyenne Setup
-1. Setup the python 3.6.4 virutal env per cisl instructions.
-   Python 3.6.4+ is required.
-   Both sections   
-      [https://www2.cisl.ucar.edu/resources/computational-systems/cheyenne/software/python#modules]  
-      [https://www2.cisl.ucar.edu/resources/computational-systems/cheyenne/software/python#library]  
-   including "Creating your own clone of the NCAR package library".
-
-3. Install the wrfhydropy prequisites.  
-   These are currently summarized here:  
-      [https://github.com/NCAR/wrf_hydro_docker/blob/160da2458e9be7313636910051fa8887776fb7be/dev/conda/Dockerfile#L40-L43]  
-   Currently (may be out of date) this is, for example:  
-      `pip install jupyter cartopy rasterio netcdf4 dask f90nml deepdiff xarray plotnine boltons pytest pytest-datadir-ng wrfhydropy`
-   If a development version of wrfhydropy is needed, you'll need to clone that repository to cheyenne, then do the following:  
-      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py install`
-
-## Docker Example
-The docker setup is given in `take_test.sh`. Comments are provided for
-the docker commands.
+# The Croton domain
+A lovely watershed with some very lovely lakes, I am sure as I hope to visit
+it some day. As a test domain, it has served us marvelously. To pull the domain
+from the cloud:
+```
+cd /your/path/to/wrf_hydro_nwm_public/tests/local/utils
+python gdrive_download.py --file_id 1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe --dest_file ~/croton_NY.tar.gz
+cd ~
+tar xzf croton_NY.tar.gz
+mv example_case croton_NY  ## we thought the generic name would be useful.
+```

@@ -5,8 +5,8 @@
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
 
-   class (reservoir_base_container), allocatable, dimension(:) :: reservoirs
-   integer, allocatable, dimension(:) :: q_type ! specifying type of reservoir
+   class (reservoir_container), allocatable, dimension(:) :: reservoirs
+   integer, allocatable, dimension(:) :: reservoir_type ! specifying type of reservoir
 
    INTEGER :: IX, JX
    logical :: initialized
@@ -160,6 +160,7 @@
   INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
+  REAL, allocatable, DIMENSION(:)    :: DAML      !overtop weir length (m)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
