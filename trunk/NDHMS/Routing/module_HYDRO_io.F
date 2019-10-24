@@ -31,6 +31,7 @@ module module_HYDRO_io
    use config_base, only: nlst
    use module_RT_data, only: rt_domain
    use module_gw_gw2d_data, only: gw2d
+   use module_reservoir_utilities, only: read_reservoir_type
    use netcdf
    use module_hydro_stop, only:HYDRO_stop
 
@@ -7346,7 +7347,8 @@ subroutine READ_CHROUTING1( &
      Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        DAML,     &
      ORIFICEC,     ORIFICEA,          ORIFICEE,               &
-     persistence,  reservoir_type,    LATLAKE,      LONLAKE,  &
+     persistence,  reservoir_type,                            &
+     reservoir_parameter_file,        LATLAKE,      LONLAKE,  &
      ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
      CH_NETLNK,    CHANXI,            CHANYJ,       CHLAT,    &
      CHLON,        channel_option,    LATVAL,       LONVAL,   &
@@ -7415,6 +7417,7 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 integer, intent(INOUT), dimension(:)    :: reservoir_type
+character(len=*), intent(in)            :: reservoir_parameter_file
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
 real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
@@ -7532,7 +7535,7 @@ if (channel_option .eq. 3) then
           call read_route_lake_netcdf(trim(route_lake_f),HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC,WEIRL, DAML, ORIFICEC,       &
                 ORIFICEA,  ORIFICEE, persistence, reservoir_type, &
-                LAKEIDM, latlake, lonlake, ELEVLAKE)
+                reservoir_parameter_file, LAKEIDM, latlake, lonlake, ELEVLAKE, NLAKES)
         else
           open(unit=79,file=trim(route_lake_f), form='formatted',status='old')
           write(6,*) "Before read LAKEPARM from text ", trim(route_lake_f)
@@ -8237,7 +8240,8 @@ subroutine read_routelink(&
      n_CC,         LAKEIDA,      HRZAREA,              &
      LAKEMAXH,     WEIRH,        WEIRC,   WEIRL, DAML, &
      ORIFICEC,     ORIFICEA,     ORIFICEE,             &
-     persistence,  reservoir_type,         LATLAKE,    &
+     persistence,  reservoir_type,                     &
+     reservoir_parameter_file,   LATLAKE,              &
      LONLAKE,      ELEVLAKE,     LAKEIDM,  LAKEIDX,    &
      route_link_f, route_lake_f, ZELEV,    CHLAT,      &
      CHLON,        NLINKSL,      LINKID,   GNLINKSL,   &
@@ -8257,6 +8261,7 @@ real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL, DAM
 real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
 logical, intent(IN)                        :: persistence
 integer, intent(INOUT),  dimension(:)      :: reservoir_type
+character(len=*), intent(in)               :: reservoir_parameter_file
 real,    intent(INOUT),  dimension(:)      :: LATLAKE, LONLAKE, ELEVLAKE
 integer, intent(INOUT), dimension(:)       :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
@@ -8280,8 +8285,8 @@ call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
      MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML, ORIFICEC, &
-     ORIFICEA, ORIFICEE, persistence, reservoir_type, gages, gageMiss, &
-     LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
+     ORIFICEA, ORIFICEE, persistence, reservoir_type, reservoir_parameter_file, &
+     gages, gageMiss, LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
 
 !--- get the lake configuration here.
 #ifdef MPP_LAND
@@ -8322,8 +8327,8 @@ end subroutine read_routelink
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
                    MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, DAML, ORIFICEC, &
-                   ORIFICEA, ORIFICEE, persistence, reservoir_type, gages, gageMiss,&
-                   LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
+                   ORIFICEA, ORIFICEE, persistence, reservoir_type, reservoir_parameter_file, &
+                   gages, gageMiss, LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
 
         implicit none
         character(len=*) :: route_link_f,route_lake_f
@@ -8342,6 +8347,7 @@ end subroutine read_routelink
 !NLAKES
         INTEGER, intent(out), dimension(:)  ::  LAKEIDM, reservoir_type
         logical, intent(in)		            ::  persistence
+        character(len=*), intent(in)        ::  reservoir_parameter_file
         REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, DAML, ORIFICEC, WEIRH, &
                    ORIFICEA, ORIFICEE, ELEVLAKE
 !end NLAKES
@@ -8428,7 +8434,8 @@ end subroutine read_routelink
           if(routeLakeNetcdf) then
              call read_route_lake_netcdf(route_lake_f,HRZAREA, &
                 LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML, ORIFICEC,       &
-                ORIFICEA,  ORIFICEE, persistence, reservoir_type, LAKEIDM, latlake, lonlake, ELEVLAKE)
+                ORIFICEA,  ORIFICEE, persistence, reservoir_type, reservoir_parameter_file, &
+                LAKEIDM, latlake, lonlake, ELEVLAKE, NLAKES)
           endif
 
 !!- initialize channel  if missing in input
@@ -8586,7 +8593,8 @@ subroutine MPP_READ_CHROUTING_new(&
      n_CC,         HRZAREA,           LAKEMAXH,                  &
      WEIRH,        WEIRC,             WEIRL,          DAML,      &
      ORIFICEC,     ORIFICEA,          ORIFICEE,                  &
-     persistence,  reservoir_type,    LATLAKE,        LONLAKE,   &
+     persistence,  reservoir_type,    reservoir_parameter_file,  &
+     LATLAKE,        LONLAKE,                                    &
      ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
      CH_NETLNK,    CHANXI,            CHANYJ,         CHLAT,     &
      CHLON,        channel_option,    LATVAL,         LONVAL,    &
@@ -8630,6 +8638,7 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 integer, intent(INOUT), dimension(NLAKES)    :: reservoir_type
+character(len=*), intent(in)                 :: reservoir_parameter_file
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
 real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
@@ -8660,7 +8669,8 @@ call READ_CHROUTING1( &
      n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     DAML,    &
      ORIFICEC,     ORIFICEA,          ORIFICEE,           &
-     persistence,  reservoir_type,    LATLAKE,   LONLAKE, &
+     persistence,  reservoir_type,                        &
+     reservoir_parameter_file,        LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
      CH_NETLNK,    CHANXI,            CHANYJ,    CHLAT,   &
      CHLON,        channel_option,    LATVAL,    LONVAL,  &
@@ -8964,11 +8974,14 @@ end subroutine read_route_link_netcdf
 subroutine read_route_lake_netcdf(route_lake_file,                         &
                                    HRZAREA,  LAKEMAXH, WEIRH,  WEIRC,    WEIRL, DAML,   &
                                    ORIFICEC, ORIFICEA,  ORIFICEE,  persistence, &
-                                   reservoir_type, LAKEIDM, lakelat, lakelon, ELEVLAKE)
+                                   reservoir_type, reservoir_parameter_file, &
+                                   LAKEIDM, lakelat, lakelon, ELEVLAKE, NLAKES)
 
     implicit none
     character(len=*),        intent(in)  :: route_lake_file
+    integer,                 intent(in)  :: NLAKES
     logical,                 intent(in)  :: persistence
+    character(len=*),        intent(in)  :: reservoir_parameter_file
     integer, dimension(:),   intent(out) :: LAKEIDM
     real,    dimension(:),   intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH, DAML
     real,    dimension(:),   intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
@@ -9002,9 +9015,6 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
-    if (persistence) then
-       call get_1d_netcdf_int(ncid, 'reservoir_type', reservoir_type, 'read_route_lake_netcdf', .TRUE.)
-    end if
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
     !remove the alt var. and add initial fractional depth var. LKR/DY
@@ -9015,6 +9025,12 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
        write(*,'("read_route_lake_netcdf: Problem closing: ''", A, "''")') trim(route_lake_file)
        if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem closing file.")
     end if
+
+   ! If reservoir_persistence is set to true, then call function to read reservoir_type
+   ! from the reservoir parameter file
+   if (persistence) then
+       call read_reservoir_type(reservoir_parameter_file, LAKEIDM, NLAKES, reservoir_type)
+   end if
 
 #ifdef HYDRO_D
     ii = size(LAKEIDM)
