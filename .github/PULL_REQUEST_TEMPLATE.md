@@ -1,5 +1,4 @@
 Use this template to give a detailed message describing the change you want to make to the code.
-If you are unclear on what should be written here, see  https://github.com/wrf-model/WRF/wiki/Making-a-good-pull-request-message for some general guidance
 
 The title of this pull request should be a brief "purpose" for this change.
 
