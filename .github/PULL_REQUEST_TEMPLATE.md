@@ -13,7 +13,7 @@ SOURCE: Developer's name and affiliation
 
 DESCRIPTION OF CHANGES: One or more paragraphs describing problem, solution, and required changes.
 
-ISSUE: For use when this PR closes an issue. For issue number 123
+ISSUE: The GitHub Issue that this PR addresses. For issue number 123, it would be:
 ```
 Fixes #123
 ```
