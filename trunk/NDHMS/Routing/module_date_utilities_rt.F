@@ -19,7 +19,6 @@
 !  User controllable options: <if applicable>
 
 module Module_Date_utilities_rt
-    use module_hydro_stop, only:HYDRO_stop
     use module_hydro_stop, only: HYDRO_stop
 contains
   subroutine geth_newdate (ndate, odate, idt)
