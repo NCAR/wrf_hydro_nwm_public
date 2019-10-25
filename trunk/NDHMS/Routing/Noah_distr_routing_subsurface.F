@@ -78,6 +78,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, CWAT
     use module_subsurface_static_data
     use module_subsurface_input
     use module_subsurface_output
+    use module_hydro_stop, only:HYDRO_stop
 #endif
     IMPLICIT NONE
 
@@ -566,6 +567,7 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
    use module_mpp_land, only: left_id, down_id, right_id, up_id, &
                               mpp_land_com_real8, my_id, mpp_land_com_real
 #endif
+   use module_hydro_stop, only:HYDRO_stop
 
    implicit none
 
@@ -762,6 +764,7 @@ SUBROUTINE ROUTE_SUBSURFACE2(                                 &
         up_id,mpp_land_com_real,MPP_LAND_UB_COM, &
         MPP_LAND_LR_COM,mpp_land_com_integer
 #endif
+    use module_hydro_stop, only:HYDRO_stop
 
     IMPLICIT NONE
 

@@ -38,6 +38,7 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool, only: levelpool
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
+   use module_hydro_stop, only: HYDRO_stop
 
    IMPLICIT NONE
 

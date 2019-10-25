@@ -27,6 +27,7 @@ module module_lis_HYDRO
 !    use LIS_historyMod, only: LIS_gather_gridded_output, lis_gather_tiled_vector_output
 
 ! use HYDRO module
+       use module_hydro_stop, only: HYDRO_stop
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
