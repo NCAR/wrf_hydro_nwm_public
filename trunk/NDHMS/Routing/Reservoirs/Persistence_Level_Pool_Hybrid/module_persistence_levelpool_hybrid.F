@@ -58,7 +58,7 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, persistence_parameter_file, start_date, &
+        lake_number, reservoir_type, persistence_parameter_file, start_date, &
         timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
@@ -75,6 +75,7 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
+        integer, intent(in)    :: reservoir_type            ! reservoir type
         character(len=*),   intent(in) :: persistence_parameter_file
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: timeslice_path

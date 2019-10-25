@@ -79,7 +79,7 @@ program reservoir_unit_tests
         real :: lake_area, weir_elevation, weir_coeffecient
         real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
-        integer :: lake_number
+        integer :: lake_number, reservoir_type
         real, dimension(120) :: inflow_array
         integer :: timestep_count
         character*256 :: cwd_full
@@ -118,13 +118,14 @@ program reservoir_unit_tests
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
         lake_number = 402142
+        reservoir_type = 2
 
         print *, "calling init for persistence_levelpool_hybrid"
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
