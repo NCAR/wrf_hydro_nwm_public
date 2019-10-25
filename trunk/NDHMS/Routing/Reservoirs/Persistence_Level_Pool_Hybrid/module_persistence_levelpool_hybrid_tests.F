@@ -353,7 +353,7 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%lake_number
-        if ( o%lake_number .ne. 166758723) then
+        if ( o%lake_number .ne. 402142) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -361,7 +361,7 @@ contains
 
         print *, "Checking read on gage_id"
         print *, o%gage_id
-        if ( o%gage_id .ne. 23432415) then
+        if ( o%gage_id .ne. 7198000) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -560,7 +560,7 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%levelpool_ptr%properties%lake_number
-        if ( o%levelpool_ptr%properties%lake_number .ne. 166758723) then
+        if ( o%levelpool_ptr%properties%lake_number .ne. 402142) then
             rv = .false.
             print *, "FAILED"
         end if

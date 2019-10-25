@@ -117,14 +117,14 @@ program reservoir_unit_tests
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 166758723
+        lake_number = 402142
 
         print *, "calling init for persistence_levelpool_hybrid"
 
-        cwd_full = "./Testing_Files/"
+        cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/reservoir_index_usgs_rfc_usace.nc", &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
@@ -145,7 +145,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .ge. 13.7336712 - epsilon(13.7336712) .and. outflow .le. 13.7336712 + epsilon(13.7336712) ) then
+        if (outflow .ge. 13.73367 - epsilon(13.73367) .and. outflow .le. 13.73367 + epsilon(13.73367) ) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run Reservoir Test Passed'
