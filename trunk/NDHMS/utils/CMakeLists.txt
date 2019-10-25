@@ -12,5 +12,6 @@ add_definitions (-DWRF_HYDRO_VERSION="${WRF_HYDRO_VERSION}")
 
 # build the version static library
 add_library(hydro_utils STATIC
-	module_version.F	
+	module_version.F
+	module_hydro_stop.F	
 )

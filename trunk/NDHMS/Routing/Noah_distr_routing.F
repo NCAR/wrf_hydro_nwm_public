@@ -933,6 +933,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               up_id,mpp_land_com_real, my_id, io_id, numprocs, &
                               mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
                               sum_real1
+   use module_hydro_stop, only:HYDRO_stop
 #endif
 
    implicit none

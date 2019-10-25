@@ -10,3 +10,4 @@ add_library(hydro_nudging STATIC
 
 target_link_libraries(hydro_nudging PUBLIC hydro_mpp)
 target_link_libraries(hydro_nudging PUBLIC hydro_data_rec)
+target_link_libraries(hydro_nudging PUBLIC hydro_orchestrator)

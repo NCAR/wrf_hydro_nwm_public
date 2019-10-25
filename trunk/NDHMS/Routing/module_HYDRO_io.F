@@ -33,6 +33,7 @@ module module_HYDRO_io
    use module_gw_gw2d_data, only: gw2d
    use module_reservoir_utilities, only: read_reservoir_type
    use netcdf
+   use module_hydro_stop, only:HYDRO_stop
 
    implicit none
 

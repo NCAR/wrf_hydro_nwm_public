@@ -195,8 +195,8 @@ include_directories(AFTER ${NETCDF_INCLUDES})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/Data_Rec)
 
 # build the various sup-projects
-add_subdirectory("utils")
 add_subdirectory("MPP")
+add_subdirectory("utils")
 add_subdirectory("IO")
 add_subdirectory("OrchestratorLayer")
 add_subdirectory("Debug_Utilities")
@@ -215,6 +215,7 @@ endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
 # add module dependencies
 add_dependencies(hydro_debug_utils hydro_mpp)
+add_dependencies(hydro_utils hydro_mpp)
 
 add_dependencies(hydro_orchestrator hydro_netcdf_layer)
 
