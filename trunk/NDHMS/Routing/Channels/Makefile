@@ -33,7 +33,7 @@ mod:
 	#Build the modules
 	make -C waterbody
 	make -C hydrologic
-	#make -C hydrualic
+	make -C hydrualic
 test:
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  channel_tests.F
 	$(COMPILER90) $(F90FLAGS) $(MODFLAG)  hydro_stop.F
@@ -57,5 +57,5 @@ clean:
 
 	make -C waterbody clean
 	make -C hydrologic clean
-	#make -C hydrualic clean
+	make -C hydrualic clean
 
