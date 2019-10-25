@@ -22,7 +22,7 @@ all: mod
 
 mod:
 	#Build the base files for all modules
-	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_hydrualic_base.F
+	$(COMPILER90) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_hydraulic_base.F
 	#Copy the object files into libHydro.a
 	ar -r ../../../lib/libHYDRO.a module_hydrualic_base.o
 
