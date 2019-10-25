@@ -33,7 +33,7 @@ main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o main_hrldas_driv
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I ../../../mod -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).F
 	@echo ""
 
 .F.o:

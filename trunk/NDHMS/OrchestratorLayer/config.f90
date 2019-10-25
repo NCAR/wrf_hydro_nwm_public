@@ -1,5 +1,8 @@
 module config_base
   !use netcdf_layer_base
+
+  use module_hydro_stop, only:HYDRO_stop
+
   implicit none
 
   integer, PARAMETER    :: MAX_SOIL_LEVELS = 10   ! maximum soil levels in namelist
