@@ -39,6 +39,7 @@ MODULE module_Routing
    use module_levelpool, only: levelpool
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
    use module_rfc_forecasts, only: rfc_forecasts
+   use module_hydro_stop, only: HYDRO_stop
 
    IMPLICIT NONE
 
@@ -728,6 +729,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
              nlst(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
+             nlst(did)%reservoir_parameter_file,    &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
              rt_domain(did)%ZELEV,        rt_domain(did)%LAKENODE,        &
@@ -770,8 +772,9 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst(did)%reservoir_persistence,                      &
-           rt_domain(did)%reservoir_type,                                   &
+           nlst(did)%reservoir_persistence,                         &
+           rt_domain(did)%reservoir_type,                           &
+           nlst(did)%reservoir_parameter_file,          &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
@@ -793,7 +796,7 @@ subroutine LandRT_ini(did)
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
+       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3 .or. rt_domain(did)%reservoir_type(lake_index) == 4) then
            allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
@@ -832,7 +835,7 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%LAKEMAXH(lake_index),               &
                     rt_domain(did)%ELEVLAKE(lake_index),               &
                     rt_domain(did)%LAKEIDM(lake_index),                &
-                    nlst(did)%reservoir_persistence_parameter_file, &
+                    nlst(did)%reservoir_parameter_file, &
                     nlst(did)%startdate(1:19),                      &
                     nlst(did)%reservoir_timeslice_path,             &
                     nlst(did)%reservoir_observation_lookback_hours, &

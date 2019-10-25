@@ -26,6 +26,7 @@ module module_WRF_HYDRO
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
                 mpp_land_bcast_real, mpp_land_bcast_int1, mpp_land_init
     use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
+    use module_hydro_stop, only: HYDRO_stop
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 

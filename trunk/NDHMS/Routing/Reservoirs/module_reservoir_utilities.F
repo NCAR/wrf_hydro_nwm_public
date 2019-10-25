@@ -3,7 +3,7 @@
 
 module module_reservoir_utilities
     use netcdf
-
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
 #ifndef NCEP_WCOSS
@@ -159,6 +159,79 @@ contains
         if (outflow < 0.0) outflow = 0.0
 
     end subroutine modify_for_projected_storage
+
+    ! Reads the reservoir_type form the reservoir parameter file. This subroutine first checks to ensure that
+    ! the lake_id array in the reservoir parameter file matches the lake_id array in the lake parameter file and
+    ! calls hydro_stop if they do not match.
+    subroutine read_reservoir_type(reservoir_parameter_file, lake_parameter_lake_ids, number_of_lake_parameter_lakes, &
+        reservoir_types)
+        character(len=*), intent(in) :: reservoir_parameter_file
+        integer, dimension(:), intent(in) :: lake_parameter_lake_ids
+        integer, intent(in) :: number_of_lake_parameter_lakes
+        integer, dimension(:), intent(inout) :: reservoir_types
+        integer, allocatable, dimension(:) :: reservoir_parameter_lake_ids
+
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+        integer :: ncid, var_id, lake_index, number_of_lakes, number_of_reservoir_types
+        integer :: status                        ! status of reading NetCDF
+
+        ! Open Reservoir Parameter NetCDF file
+        status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
+
+        status = nf90_inq_varid(ncid, "lake_id", var_id)
+        if (status /= nf90_noerr) call handle_err(status, "lake_id")
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id")
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id")
+
+        allocate(reservoir_parameter_lake_ids(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, reservoir_parameter_lake_ids)
+        if (status /= nf90_noerr) call handle_err(status, "lake_id")
+
+        ! Check to ensure that the lake_id array size in the reservoir parameter file matches the lake_id array
+        ! size in the lake parameter file
+        if (number_of_lake_parameter_lakes .ne. number_of_lakes) then
+            call hydro_stop("Lake ID array in the reservoir parameter file does not match the Lake ID array &
+            in the lake parameter file.")
+
+        else
+            ! Check to ensure that each lake id in the lake_id array in the reservoir parameter file matches
+            ! each lake id in the lake_id array in the lake parameter file
+            do lake_index = 1, number_of_lakes
+
+                if (lake_parameter_lake_ids(lake_index) .ne. reservoir_parameter_lake_ids(lake_index)) then
+                    call hydro_stop("Lake ID array in the reservoir parameter file does not match the Lake ID array &
+                    in the lake parameter file.")
+                end if
+            end do
+        end if
+
+        status = nf90_inq_varid(ncid, "reservoir_type", var_id)
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type")
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type")
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_reservoir_types)
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type")
+
+        ! Check to ensure that the reservoir_type array size matches the lake_id array size.
+        if (number_of_reservoir_types .ne. number_of_lakes) then
+            call hydro_stop("Reservoir Type array size in the reservoir parameter file does not match the Lake ID array size &
+            in the lake parameter file.")
+        end if
+
+        status = nf90_get_var(ncid, var_id, reservoir_types)
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type")
+
+        if(allocated(reservoir_parameter_lake_ids)) deallocate(reservoir_parameter_lake_ids)
+
+    end subroutine read_reservoir_type
 
 
     ! Gets the dimensions of the gage arrays from the timeslice file

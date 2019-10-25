@@ -32,6 +32,7 @@ module module_UDMAP
   
   use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io, com_write1dInt, &
        com_decomp1dInt, pack_decomp_int, pack_decomp_real8
+  use module_hydro_stop, only:HYDRO_stop
 
 #endif
 
