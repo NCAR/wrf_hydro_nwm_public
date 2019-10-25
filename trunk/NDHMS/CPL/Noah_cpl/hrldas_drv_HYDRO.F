@@ -53,6 +53,7 @@
 
          use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
          use config_base, only: nlst
+         use module_hydro_stop, only: HYDRO_stop
 
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -167,7 +168,8 @@
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
             snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX,FNDSNOWH)
-      ! read the field from wrfinput or output file
+          use module_hydro_stop, only: HYDRO_stop
+          ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
           character(len=*) fileName
@@ -176,7 +178,7 @@
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
-          logical :: FNDSNOWH
+          logical :: FNDSNOWH 
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &

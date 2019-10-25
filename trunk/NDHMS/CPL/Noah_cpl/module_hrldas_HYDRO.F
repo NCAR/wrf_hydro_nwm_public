@@ -27,6 +27,7 @@ module module_HRLDAS_HYDRO
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
                  mpp_land_bcast_int1, mpp_land_sync, MPP_LAND_INIT
     use MODULE_CPL_LAND, only: HYDRO_COMM_WORLD
+    use module_hydro_stop, only: HYDRO_stop
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
