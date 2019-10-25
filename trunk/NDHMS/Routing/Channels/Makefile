@@ -31,7 +31,7 @@ mod:
 	cp *.mod  ../../mod
 
 	#Build the modules
-	#make -C waterbody
+	make -C waterbody
 	make -C hydrologic
 	#make -C hydrualic
 test:
@@ -55,7 +55,7 @@ clean:
 	rm -f *.o
 	rm -f *.mod
 
-	#make -C waterbody clean
+	make -C waterbody clean
 	make -C hydrologic clean
 	#make -C hydrualic clean
 
