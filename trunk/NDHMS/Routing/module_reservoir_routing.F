@@ -19,6 +19,7 @@ contains
 subroutine read_reservoir_obs(domainId)
   use config_base, only: nlst
    use netcdf
+   use module_hydro_stop, only: HYDRO_stop
 #ifdef MPP_LAND
    use module_mpp_land
 #endif
