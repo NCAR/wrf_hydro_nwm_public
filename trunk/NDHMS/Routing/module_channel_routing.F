@@ -481,6 +481,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So))
          endif
 
+
 #ifdef HYDRO_D
       !! Getting information on c3.
       !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
@@ -518,6 +519,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
       qloss = (ChannK * dx * WPk) ! TML -- Compute qloss to pass
 
+      !TML:Added print statement to test qlos function; 
+      !comment out to prevent excessive file sizes when running model
+      !print*, "qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D", qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D
       if((qloss*dt)/D > ((ql*dt)/D - C4)) then
            qloss = ql - C4*(D/dt)
            if (qloss < 0) then
