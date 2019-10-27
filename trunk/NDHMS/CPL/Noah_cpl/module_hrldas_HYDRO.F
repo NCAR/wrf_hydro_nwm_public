@@ -27,10 +27,11 @@ module module_HRLDAS_HYDRO
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
                  mpp_land_bcast_int1, mpp_land_sync, MPP_LAND_INIT
     use MODULE_CPL_LAND, only: HYDRO_COMM_WORLD
+    use module_hydro_stop, only: HYDRO_stop
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
-    use module_namelist, only: nlst_rt
+    use config_base, only: nlst
     use module_gw_gw2d_data, only: gw2d
 
     implicit none
@@ -74,14 +75,14 @@ CONTAINS
 
         did = 1
 
-        if (nlst_rt(did)%rtFlag .eq. 0) return
+        if (nlst(did)%rtFlag .eq. 0) return
 
 !        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
 !                 nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
 
-        IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
-               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+        IF (nlst(did)%GWBASESWCRT .eq. 0 &
+               .and. nlst(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst(did)%OVRTSWCRT .eq. 0 ) return
 
 
 
@@ -95,7 +96,7 @@ CONTAINS
         call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
         call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
 	
-	if(nlst_rt(did)%GWBASESWCRT == 3)&
+	if(nlst(did)%GWBASESWCRT == 3)&
         call decompose_data_real(qsgw,gw2d(did)%qsgw)
 #else
         RT_DOMAIN(did)%STC = STC
@@ -103,7 +104,7 @@ CONTAINS
         RT_DOMAIN(did)%SH2OX = SH2OX
         RT_DOMAIN(did)%infxsrt = infxsrt
         RT_DOMAIN(did)%soldrain = soldrain
-        if(nlst_rt(did)%GWBASESWCRT == 3) &
+        if(nlst(did)%GWBASESWCRT == 3) &
 	  gw2d(did)%qsgw = qsgw
 #endif
   
@@ -138,14 +139,14 @@ CONTAINS
            call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
         end do
          call write_io_real(rt_domain(did)%overland%control%surface_water_head_lsm,sfcheadrt)
-	if(nlst_rt(did)%GWBASESWCRT == 3)&
+	if(nlst(did)%GWBASESWCRT == 3)&
          call write_io_real(gw2d(did)%qsgw,qsgw)
 #else
         STC = rt_domain(did)%STC
         SMC = rt_domain(did)%SMC
         SH2OX = rt_domain(did)%SH2OX
         sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
-	if(nlst_rt(did)%GWBASESWCRT == 3)&
+	if(nlst(did)%GWBASESWCRT == 3)&
         qsgw = gw2d(did)%qsgw
 #endif
 
@@ -182,23 +183,23 @@ CONTAINS
 
         if(.not. RT_DOMAIN(did)%initialized) then  
            call MPP_LAND_INIT()
-           nlst_rt(did)%dt = dt
-           nlst_rt(did)%olddate(1:19) = olddate(1:19)
-           nlst_rt(did)%startdate(1:19) = olddate(1:19)
+           nlst(did)%dt = dt
+           nlst(did)%olddate(1:19) = olddate(1:19)
+           nlst(did)%startdate(1:19) = olddate(1:19)
 
-           nlst_rt(did)%nsoil = kk
+           nlst(did)%nsoil = kk
 #ifdef MPP_LAND
-           call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+           call mpp_land_bcast_int1(nlst(did)%nsoil)
 #endif
-           allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
-           nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
+           allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
+           nlst(did)%zsoil8(1:nlst(did)%nsoil) = zsoil(1:nlst(did)%nsoil)
            
            
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
-           if(nlst_rt(did)%rtFlag .eq. 0) return
+           if(nlst(did)%rtFlag .eq. 0) return
 
-            if(nlst_rt(did)%sys_cpl .ne. 1) then
+            if(nlst(did)%sys_cpl .ne. 1) then
                write(6,*) "FATAL ERROR: sys_cpl should be 1."
                 call hydro_stop("In module_hrldas_HYDRO.F hrldas_cpl_HYDRO_ini()"// &
                                            " - sys_cpl should be 1. Check hydro.namelist file.")
@@ -206,23 +207,23 @@ CONTAINS
 
            RT_DOMAIN(did)%initialized = .true.
    
-           IF (nlst_rt(did)%GWBASESWCRT .eq. 0 &
-               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+           IF (nlst(did)%GWBASESWCRT .eq. 0 &
+               .and. nlst(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst(did)%OVRTSWCRT .eq. 0 ) return
 
 #ifdef MPP_LAND
-           call mpp_land_bcast_real1(nlst_rt(did)%dt)
+           call mpp_land_bcast_real1(nlst(did)%dt)
            call write_io_real(rt_domain(did)%overland%control%surface_water_head_lsm,sfcheadrt)
            call write_io_real(rt_domain(did)%infxsrt, infxsrt)
 !          call write_io_real(rt_domain(did)%soldrain,soldrain)
-           if(nlst_rt(did)%rst_typ .eq. 1) then
+           if(nlst(did)%rst_typ .eq. 1) then
               do k = 1, kk
                  call write_io_real(rt_domain(did)%STC(:,:,k),STC(:,:,k))
                  call write_io_real(rt_domain(did)%SMC(:,:,k),SMC(:,:,k))
                  call write_io_real(rt_domain(did)%SH2OX(:,:,k),SH2OX(:,:,k))
               end do
            else
-              if(nlst_rt(did)%sys_cpl .eq. 1) then
+              if(nlst(did)%sys_cpl .eq. 1) then
                  where( abs(STC) .gt. 500) stc = 282
                  where( abs(SMC) .gt. 500) SMC = 0.25
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
@@ -236,12 +237,12 @@ CONTAINS
 #else
            sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
            infxsrt = rt_domain(did)%infxsrt
-           if(nlst_rt(did)%rst_typ .eq. 1) then
+           if(nlst(did)%rst_typ .eq. 1) then
               STC = rt_domain(did)%STC
               SMC = rt_domain(did)%SMC
               SH2OX = rt_domain(did)%SH2OX
            else
-              if(nlst_rt(did)%sys_cpl .eq. 1) then
+              if(nlst(did)%sys_cpl .eq. 1) then
                  where( abs(STC) .gt. 500) stc = 282
                  where( abs(SMC) .gt. 500) SMC = 0.25
                  where( abs(SH2OX) .gt. 500) SH2OX = 0.25
@@ -309,11 +310,11 @@ CONTAINS
           character(len=*) :: varName
           did = 1
           if(varName .eq. "GWSPINCYCLES") then
-               pVar = nlst_rt(did)%gwSpinCycles
+               pVar = nlst(did)%gwSpinCycles
           elseif(varName .eq. "GWBASESWCRT") then
-               pVar = nlst_rt(did)%GWBASESWCRT
+               pVar = nlst(did)%GWBASESWCRT
           elseif(varName .eq. "GWSOILCPL") then
-               pVar = nlst_rt(did)%gwsoilcpl
+               pVar = nlst(did)%gwsoilcpl
           else
                pVar = 0
           endif

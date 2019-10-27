@@ -1,18 +1,19 @@
 ! Module for handling all associated scale_factor, add_offset, and
-! attributes for individual files across various possible 
+! attributes for individual files across various possible
 ! National Water Model output files. In the future, this will move to a
 ! table that the user will be able to switch on/off variables for
-! outputting. For now, attributes, etc will be stored here. 
+! outputting. For now, attributes, etc will be stored here.
 
 ! Logan Karsten
 ! National Center for Atmospheric Research
 ! Research Applications Laboratory
-! karsten at ucar dot edu     
+! karsten at ucar dot edu
 
 module module_NWM_io_dict
 
-use module_version, only: get_model_version
-use module_namelist, only: nlst_rt
+  use module_version, only: get_model_version
+  use config_base, only: nlst
+  use module_hydro_stop, only: HYDRO_stop
 
 implicit none
 
@@ -26,13 +27,13 @@ integer, parameter :: numLsmVars = 14
 integer, parameter :: numChObsVars = 1
 integer, parameter :: numGwVars = 4
 integer :: i
-!integer :: nsoil = nlst_rt(1)%nsoil 
+!integer :: nsoil = nlst_rt(1)%nsoil
 integer :: nsoil
 
 ! Declare public types that will hold metadata
 public :: chrtMeta ! Public CHRTOUT metadata for NWM output.
 public :: ldasMeta ! Public LDASOUT metadata for NWM output.
-public :: rtDomainMeta ! Public RT_DOMAIN metadata for NWM output. 
+public :: rtDomainMeta ! Public RT_DOMAIN metadata for NWM output.
 public :: lakeMeta ! Public lake metadata for NWM output
 public :: chrtGrdMeta ! Public CHRTOUT_GRID metadata for NWM output.
 public :: lsmMeta ! Public metadata for LSMOUT output.
@@ -55,7 +56,7 @@ type chrtMeta
    real, dimension(numChVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numChVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChVars) :: units ! Units for each variable.
-   character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable. 
+   character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -64,10 +65,10 @@ type chrtMeta
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numChVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
-                                                 ! the actual data. This was done because time 0 
-                                                 ! output does not all contain valid data. 
+   integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numChVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
+                                                 ! the actual data. This was done because time 0
+                                                 ! output does not all contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -140,10 +141,10 @@ type ldasMeta
    real, dimension(numLdasVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numLdasVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
-                                                   ! the actual data. This was done because time 0 
-                                                   ! output does not all contain valid data. 
+   integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numLdasVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
+                                                   ! the actual data. This was done because time 0
+                                                   ! output does not all contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    real :: modelNdv2 ! Alternative NDV value in NoahMP
    real :: modelNdv3 ! Alternative NDV value in NoahMP
@@ -161,7 +162,7 @@ type ldasMeta
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
    ! Establish a proj4 string
    character (len=1024) :: proj4
-   ! Establish crs-related variables. 
+   ! Establish crs-related variables.
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
@@ -204,7 +205,7 @@ type rtDomainMeta
    real, dimension(numRtDomainVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numRtDomainVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numRtDomainVars) :: units ! Units for each variable.
-   character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable. 
+   character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numRtDomainVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -213,10 +214,10 @@ type rtDomainMeta
    real, dimension(numRtDomainVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numRtDomainVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
-                                                       ! the actual data. This was done because time 0 
-                                                       ! output does not all contain valid data. 
+   integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numRtDomainVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
+                                                       ! the actual data. This was done because time 0
+                                                       ! output does not all contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -232,7 +233,7 @@ type rtDomainMeta
 
    ! Establish a proj4 string
    character (len=1024) :: proj4
-   ! Establish crs-related variables. 
+   ! Establish crs-related variables.
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
@@ -274,7 +275,7 @@ type lakeMeta
    real, dimension(numLakeVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numLakeVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLakeVars) :: units ! Units for each variable.
-   character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable. 
+   character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLakeVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -283,10 +284,10 @@ type lakeMeta
    real, dimension(numLakeVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numLakeVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
-                                                   ! the actual data. This was done because time 0 
-                                                   ! output does not all contain valid data. 
+   integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numLakeVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
+                                                   ! the actual data. This was done because time 0
+                                                   ! output does not all contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -339,12 +340,12 @@ type chrtGrdMeta
 
    ! Output variable attributes
    real, dimension(numChGrdVars) :: scaleFactor ! scale_factor values for each
-                                                ! variable to convert from 
+                                                ! variable to convert from
                                                 ! real to integer
    real, dimension(numChGrdVars) :: addOffset ! add_offset values for each variable.
    character (len=64), dimension(numChGrdVars) :: longName ! longname for each variable
    character (len=64), dimension(numChGrdVars) :: units ! Units for each variable.
-   character (len=64), dimension(numChGrdVars) :: coordNames ! Coordinate names for each variable. 
+   character (len=64), dimension(numChGrdVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChGrdVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -353,12 +354,12 @@ type chrtGrdMeta
    real, dimension(numChGrdVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChGrdVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numChGrdVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numChGrdVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numChGrdVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+   integer, dimension(numChGrdVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numChGrdVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                        ! the actual data. This
-                                                       ! was done because time 0 
+                                                       ! was done because time 0
                                                        ! output does not all
-                                                       ! contain valid data. 
+                                                       ! contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -374,7 +375,7 @@ type chrtGrdMeta
 
    ! Establish a proj4 string
    character (len=1024) :: proj4
-   ! Establish crs-related variables. 
+   ! Establish crs-related variables.
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
@@ -427,12 +428,12 @@ type lsmMeta
    real, dimension(numLsmVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLsmVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numLsmVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numLsmVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numLsmVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+   integer, dimension(numLsmVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numLsmVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
-                                                   ! done because time 0 
+                                                   ! done because time 0
                                                    ! output does not all contain
-                                                   ! valid data. 
+                                                   ! valid data.
    real :: modelNdv ! NDV value represented within the model code
    integer :: modelNdvInt ! NDV value represented in model as integer
    ! Time variable attribues
@@ -445,10 +446,10 @@ type lsmMeta
    character (len=64) :: rTimeLName ! long_name - usually model initialization time
    character (len=64) :: rTimeStName ! standard_name - usually forecast_reference_time
    character (len=64) :: rTimeUnits ! Usually seconds since 1/1/1970
-  
+
    ! Establish a proj4 string
    character (len=1024) :: proj4
-   ! Establish crs-related variables. 
+   ! Establish crs-related variables.
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
@@ -464,7 +465,7 @@ type lsmMeta
    character(len=1024), dimension(20) :: yCharAttVals
    real, dimension(20,20) :: yRealAttVals
    integer, dimension(20) :: yRealAttLen
-   integer :: nyRealAtts, nyCharAtts 
+   integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
    character (len=128) :: title ! File TITLE
@@ -484,12 +485,12 @@ type chObsMeta
 
    ! Output variable attributes
    real, dimension(numChObsVars) :: scaleFactor ! scale_factor values used for
-                                                 ! each variable to convert 
+                                                 ! each variable to convert
                                                  ! from real to integer
    real, dimension(numChObsVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numChObsVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChObsVars) :: units ! Units for each variable.
-   character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable. 
+   character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChObsVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -498,11 +499,11 @@ type chObsMeta
    real, dimension(numChObsVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChObsVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numChObsVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numChObsVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+   integer, dimension(numChObsVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numChObsVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                  ! the actual data. This was
-                                                 ! done because time 0 
-                                                 ! output does not all contain valid data. 
+                                                 ! done because time 0
+                                                 ! output does not all contain valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -562,7 +563,7 @@ type gwMeta
    real, dimension(numGwVars)             :: addOffset   ! add_offset values for each variable.
    character (len=64), dimension(numGwVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numGwVars) :: units ! Units for each variable.
-   !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable. 
+   !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable.
    integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
    integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numGwVars) :: validMinDbl ! Valid minimum (before conversion to integer)
@@ -571,12 +572,12 @@ type gwMeta
    real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
    integer*8, dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
-   integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on 
-   integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output 
+   integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on
+   integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
-                                                   ! done because time 0 
+                                                   ! done because time 0
                                                    ! output does not all contain
-                                                   ! valid data. 
+                                                   ! valid data.
    real :: modelNdv ! NDV value represented within the model code
    ! Time variable attribues
    character (len=64) :: timeLName ! long_name - usually valid output time
@@ -623,25 +624,25 @@ end type gwMeta
 contains
 
 subroutine initChrtDict(chrtOutDict,diagFlag,procId)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(chrtMeta), intent(inout) :: chrtOutDict
    integer, intent(inout) :: diagFlag
    integer, intent(inout) :: procId
-  
+
    ! Local variables
    integer :: ftnMeta,iret
    integer :: projVarId
- 
+
    chrtOutDict%modelNdv = -9.E15
    ! CHRTOUT FILES
 
    ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   ! spatial metadata file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
@@ -661,7 +662,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                chrtOutDict%esri = ''
             endif
             iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',chrtOutDict%proj4)
-            ! We are going to put a relaxed constraint on the proj4 string. 
+            ! We are going to put a relaxed constraint on the proj4 string.
             if(iret .ne. 0) then
                call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
                chrtOutDict%proj4 = ''
@@ -674,9 +675,9 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    endif
 
    ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
-   !            which means meta-data standards have yet to be determined 
+   !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
-   ! First establish global attributes for the channel output files 
+   ! First establish global attributes for the channel output files
    chrtOutDict%fType = 'timeSeries'
    chrtOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -684,7 +685,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    chrtOutDict%stOrder = 1
    chrtOutDict%cdm = 'Station'
    chrtOutDict%conventions = 'CF-1.6'
-   
+
    ! Next establish time attribues
    chrtOutDict%timeLName = 'valid output time'
    chrtOutDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
@@ -700,7 +701,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    chrtOutDict%lonLName = "Feature longitude"
    chrtOutDict%lonUnits = "degrees_east"
    chrtOutDict%lonStName = "longitude"
-  
+
    ! Establish streamflw order attributes
    chrtOutDict%orderLName = "Streamflow Order"
    chrtOutDict%orderStName = "order"
@@ -709,11 +710,11 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    chrtOutDict%elevLName = "Feature Elevation"
    chrtOutDict%elevUnits = "meters"
    chrtOutDict%elevStName = "Elevation"
- 
+
    ! Next establish feature_id attributes. Given this is merged community, we
    chrtOutDict%featureIdLName = 'Reach ID'
    chrtOutDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
-   chrtOutDict%cfRole = 'timeseries_id'   
+   chrtOutDict%cfRole = 'timeseries_id'
 
    ! Now establish attributes for output variables.
    !chrtOutDict%varNames(:) = (/"streamflow","nudge","q_lateral","velocity",&
@@ -776,9 +777,9 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
 end subroutine initChrtDict
 
 subroutine initLdasDict(ldasOutDict,procId,diagFlag)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(ldasMeta), intent(inout) :: ldasOutDict
    integer, intent(inout) :: procId
@@ -789,15 +790,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    integer :: crsCharAttCnt,xCharAttCnt,yCharAttCnt
    integer :: i, nCrsAtts,nxAtts,nyAtts
    integer :: charFlag
-   integer :: floatFlag 
+   integer :: floatFlag
    character(len=512) :: tmpAttName
    integer :: xtypeTmp
    integer :: tmpLen
 
    ! LDASOUT FILES
 
-   ldasOutDict%numSoilLayers = nlst_rt(1)%nsoil
-   
+   ldasOutDict%numSoilLayers = nlst(1)%nsoil
+
    ldasOutDict%modelNdv = 9.9692099683868690E36
    ldasOutDict%modelNdv2 = -1.E33
    ldasOutDict%modelNdv3 = -1.E36
@@ -825,12 +826,12 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    yCharAttCnt = 0
 
    ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   ! spatial metadata file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
-         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')        
+         call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')
          ldasOutDict%nCrsCharAtts = 0
          ldasOutDict%nCrsRealAtts = 0
          ldasOutDict%nxCharAtts = 0
@@ -847,11 +848,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
          charFlag = 0
          floatFlag = 0
          ! Find the crs variable and pull out the attributes, their names, and
-         ! their values. This will be translated to output files. 
+         ! their values. This will be translated to output files.
          iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          ! For now we are going to allow the code to move forward without
          ! finding this variable. In the future, we will probably restrict the
-         ! code to ensure things are more seamless. 
+         ! code to ensure things are more seamless.
          if(iret .ne. 0) then
             call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
             ldasOutDict%nCrsCharAtts = 0
@@ -878,8 +879,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                   case (NF90_UINT)
                      floatFlag = 1
                   case (NF90_INT64)
-                     floatFlag = 1 
-                  case (NF90_UINT64) 
+                     floatFlag = 1
+                  case (NF90_UINT64)
                      floatFlag = 1
                   case (NF90_DOUBLE)
                      floatFlag = 1
@@ -888,7 +889,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                end select
                if(charFlag .eq. 1) then
                   ldasOutDict%crsCharAttNames(crsCharAttCnt+1) = trim(tmpAttName)
-                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),ldasOutDict%crsCharAttVals(crsCharAttCnt+1)) 
+                  iret = nf90_get_att(ftnMeta,projVarId,trim(tmpAttName),ldasOutDict%crsCharAttVals(crsCharAttCnt+1))
                   call nwmCheck(diagFlag,iret,'ERROR: Unable to pull crs attributes')
                   crsCharAttCnt = crsCharAttCnt + 1
                else
@@ -903,9 +904,9 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
             end do
             ldasOutDict%nCrsRealAtts = crsRealAttCnt
             ldasOutDict%nCrsCharAtts = crsCharAttCnt
-         
+
          endif
-   
+
          ! Next pull the attributes from the x/y dimensions
          charFlag = 0
          floatFlag = 0
@@ -1257,9 +1258,9 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
 end subroutine initLdasDict
 
 subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(rtDomainMeta), intent(inout) :: rtDomainDict
    integer, intent(inout) :: procId,diagFlag
@@ -1277,8 +1278,8 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    integer :: tmpLen
    ! RT_DOMAIN files
 
-   rtDomainDict%numSoilLayers = nlst_rt(1)%nsoil
-   
+   rtDomainDict%numSoilLayers = nlst(1)%nsoil
+
    rtDomainDict%modelNdv = -9.E15
 
    ! First establish global attributes.
@@ -1303,9 +1304,9 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    yCharAttCnt = 0
 
    ! Pull spatial metadata information about the modeling domain from the
-   ! Fulldom file. 
+   ! Fulldom file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for hydro grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom metadata file. No crs variable or attributes will be created.')
@@ -1325,11 +1326,11 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
          charFlag = 0
          floatFlag = 0
          ! Find the crs variable and pull out the attributes, their names, and
-         ! their values. This will be translated to output files. 
+         ! their values. This will be translated to output files.
          iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          ! For now we are going to allow the code to move forward without
          ! finding this variable. In the future, we will probably restrict the
-         ! code to ensure things are more seamless. 
+         ! code to ensure things are more seamless.
 
          if(iret .ne. 0) then
             call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
@@ -1505,7 +1506,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
       ! Next get the number of columns on the land grid. This will be used to
       ! calculate the resolution of the routing grid in meters and aggfactor.
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
          numColLand = -9999
@@ -1517,7 +1518,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to retrieve number of columns in the LAND spatial metadata file')
          iret = nf90_inq_varid(ftnGeo,'x',xVarId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find x variable in LAND spatial metadata file')
-         iret = nf90_get_att(ftnGeo,xVarId,'resolution',resLand) 
+         iret = nf90_get_att(ftnGeo,xVarId,'resolution',resLand)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to get x resolution in LAND spatial metadata file')
          iret = nf90_close(ftnGeo)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to close the LAND spatial metadata file')
@@ -1526,7 +1527,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
       ! Next get the number of columns on the high-resolution routing grid.
       ! This will be used to calculate the resolution of the routing grid in
       ! meters.
-      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call nwmCheck(diagFlag,iret,'ERROR: Unable to open Fulldom file')
       else
@@ -1588,9 +1589,9 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 end subroutine initRtDomainDict
 
 subroutine initLakeDict(lakeOutDict,procId,diagFlag)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(lakeMeta), intent(inout) :: lakeOutDict
    integer, intent(inout) :: diagFlag
@@ -1603,9 +1604,9 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%modelNdv = -9.E15
    ! LAKE FILES
    ! NOTE !!!!! If you see PLC, this means OWP has no desire to output these,
-   !            which means meta-data standards have yet to be determined 
+   !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
-   ! First establish global attributes for the channel output files 
+   ! First establish global attributes for the channel output files
    lakeOutDict%fType = 'timeSeries'
    lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1614,9 +1615,9 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%conventions = 'CF-1.6'
 
    ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   ! spatial metadata file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
@@ -1636,7 +1637,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
                lakeOutDict%esri = ''
             endif
             iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',lakeOutDict%proj4)
-            ! We are going to put a relaxed constraint on the proj4 string. 
+            ! We are going to put a relaxed constraint on the proj4 string.
             if(iret .ne. 0) then
                call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
                lakeOutDict%proj4 = ''
@@ -1706,9 +1707,9 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
 end subroutine initLakeDict
 
 subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(chrtGrdMeta), intent(inout) :: chrtGrdDict
    integer, intent(inout) :: procId,diagFlag
@@ -1752,7 +1753,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    ! Pull spatial metadata information about the modeling domain from the
    ! Fulldom file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for hydro grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open Fulldom file. No crs variable or attributes will be created.')
@@ -1772,11 +1773,11 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
          charFlag = 0
          floatFlag = 0
          ! Find the crs variable and pull out the attributes, their names, and
-         ! their values. This will be translated to output files. 
+         ! their values. This will be translated to output files.
          iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          ! For now we are going to allow the code to move forward without
          ! finding this variable. In the future, we will probably restrict the
-         ! code to ensure things are more seamless. 
+         ! code to ensure things are more seamless.
 
          if(iret .ne. 0) then
             call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
@@ -1951,7 +1952,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
 
       ! Next get the number of columns on the land grid. This will be used to
       ! calculate the resolution of the routing grid in meters and aggfactor.
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND Spatial Metadata file. Defaulting to missing values.')
          numColLand = -9999
@@ -1972,7 +1973,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
       ! Next get the number of columns on the high-resolution routing grid.
       ! This will be used to calculate the resolution of the routing grid in
       ! meters.
-      iret = nf90_open(trim(nlst_rt(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
+      iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm),NF90_NOWRITE,ncid=ftnGeo)
       if(iret .ne. 0) then
          call nwmCheck(diagFlag,iret,'ERROR: Unable to open Fulldom file')
       else
@@ -2030,9 +2031,9 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
 end subroutine initChrtGrdDict
 
 subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
-   use module_namelist, only: nlst_rt
-   use netcdf
-   implicit none
+  use config_base, only: nlst
+  use netcdf
+  implicit none
 
    type(lsmMeta), intent(inout) :: lsmOutDict
    integer, intent(inout) :: procId
@@ -2049,8 +2050,8 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    integer :: tmpLen
    !LSMOUT files
 
-   lsmOutDict%numSoilLayers = nlst_rt(1)%nsoil
-   
+   lsmOutDict%numSoilLayers = nlst(1)%nsoil
+
    lsmOutDict%modelNdv = 9.9692099683868690E36
    lsmOutDict%modelNdvInt = -2147483647
 
@@ -2076,9 +2077,9 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    yCharAttCnt = 0
 
    ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   ! spatial metadata file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file. No crs variable or attributes will be created.')
@@ -2098,13 +2099,13 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
          charFlag = 0
          floatFlag = 0
          ! Find the crs variable and pull out the attributes, their names, and
-         ! their values. This will be translated to output files. 
+         ! their values. This will be translated to output files.
          iret = nf90_inq_varid(ftnMeta,'crs',projVarId)
          ! For now we are going to allow the code to move forward without
          ! finding this variable. In the future, we will probably restrict the
-         ! code to ensure things are more seamless. 
+         ! code to ensure things are more seamless.
 
-         ! code to ensure things are more seamless. 
+         ! code to ensure things are more seamless.
          if(iret .ne. 0) then
             call postDiagMsg(diagFlag,'WARNING: Unable to locate the crs variable. No crs variable or attributes will be created.')
             lsmOutDict%nCrsCharAtts = 0
@@ -2334,10 +2335,10 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
 end subroutine initLsmOutDict
 
 subroutine initChanObsDict(chObsDict,diagFlag,procId)
-   use module_namelist, only : nlst_rt
-   use netcdf
-   implicit none
-   
+  use config_base, only: nlst
+  use netcdf
+  implicit none
+
    type(chObsMeta), intent(inout) :: chObsDict
    integer, intent(inout) :: diagFlag
    integer, intent(inout) :: procId
@@ -2350,9 +2351,9 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    !CHANOBS FILES
 
    ! Pull spatial metadata information about the modeling domain from the land
-   ! spatial metadata file. 
+   ! spatial metadata file.
    if(procId .eq. 0) then
-      iret = nf90_open(trim(nlst_rt(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
+      iret = nf90_open(trim(nlst(1)%land_spatial_meta_flnm),NF90_NOWRITE,ncid=ftnMeta)
       if(iret .ne. 0) then
          ! Spatial metadata file not found for land grid.
          call postDiagMsg(diagFlag,'WARNING: Unable to open LAND spatial metadata file.')
@@ -2372,7 +2373,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
                chObsDict%esri = ''
             endif
             iret = nf90_get_att(ftnMeta,NF90_GLOBAL,'proj4',chObsDict%proj4)
-            ! We are going to put a relaxed constraint on the proj4 string. 
+            ! We are going to put a relaxed constraint on the proj4 string.
             if(iret .ne. 0) then
                call postDiagMsg(diagFlag,'WARNING: proj4 string not found. Defaulting to blank string.')
                chObsDict%proj4 = ''
@@ -2391,7 +2392,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    chObsDict%stOrder = 1
    chObsDict%cdm = 'Station'
    chObsDict%conventions = 'CF-1.6'
-   
+
    ! Next establish time attribues
    chObsDict%timeLName = 'valid output time'
    chObsDict%timeUnits = 'minutes since 1970-01-01 00:00:00 UTC'
@@ -2407,7 +2408,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    chObsDict%lonLName = "Feature longitude"
    chObsDict%lonUnits = "degrees_east"
    chObsDict%lonStName = "longitude"
-  
+
    ! Establish streamflw order attributes
    chObsDict%orderLName = "Streamflow Order"
    chObsDict%orderStName = "order"
@@ -2416,11 +2417,11 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    chObsDict%elevLName = "Feature Elevation"
    chObsDict%elevUnits = "meters"
    chObsDict%elevStName = "Elevation"
- 
+
    ! Next establish feature_id attributes
    chObsDict%featureIdLName = 'Reach ID'
    chObsDict%featureIdComment = 'NHDPlusv2 ComIDs within CONUS, arbitrary Reach IDs outside of CONUS'
-   chObsDict%cfRole = 'timeseries_id' 
+   chObsDict%cfRole = 'timeseries_id'
 
    chObsDict%varNames(:) = [character(len=64) :: "streamflow"]
    chObsDict%longName(:) = [character(len=64) :: "River Flow"]
@@ -2429,7 +2430,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
    chObsDict%scaleFactor(:) = [0.01]
    chObsDict%addOffset(:) = [0.0]
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
-   ! output subroutine. 
+   ! output subroutine.
    chObsDict%outFlag(:) = [0]
    chObsDict%timeZeroFlag(:) = [1]
    chObsDict%fillReal(:) = [-9999.0]

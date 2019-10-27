@@ -23,7 +23,7 @@ MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
   use mpi
-  use, intrinsic :: iso_fortran_env, only: error_unit
+  
   IMPLICIT NONE
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
   integer, public :: left_id,right_id,up_id,down_id,my_id
@@ -109,7 +109,7 @@ MODULE MODULE_MPP_LAND
         right_id = my_id + 1 
         if( left_right_p .eq. 0) left_id = -1
         if( left_right_p .eq. (left_right_np-1) ) right_id =-1
-
+    
 !    ### the IO node is the last processor.
 !yw        IO_id = numprocs - 1
          IO_id = 0
@@ -141,8 +141,8 @@ MODULE MODULE_MPP_LAND
 
   !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
   subroutine MPP_LAND_INIT()
-    !    ### initialize the land model logically based on the two D method. 
-    !    ### Call this function directly if it is nested with WRF.
+!    ### initialize the land model logically based on the two D method. 
+!    ### Call this function directly if it is nested with WRF.
     implicit none
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
@@ -155,7 +155,8 @@ MODULE MODULE_MPP_LAND
     if ( .not. mpi_inited ) then
        call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
-
+    endif
+    if (HYDRO_COMM_WORLD == MPI_COMM_NULL) then
        call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
     endif
@@ -2043,7 +2044,6 @@ MODULE MODULE_MPP_LAND
 !  subroutine get_globalDim(ix,g_ix)
 !     implicit none
 !     integer ix,g_ix, ierr
-!     include "mpif.h"
 !
 !     if ( my_id .eq. IO_id ) then
 !           g_ix = ix
@@ -2281,19 +2281,6 @@ MODULE MODULE_MPP_LAND
        call mpp_land_bcast_int1d(vinout)
    
   end subroutine mpp_collect_1d_int_mem
-
-     ! stop the job and log fatal error.
-     subroutine fatal_error_stop(msg)
-         character(len=*) :: msg
-         integer          :: ierr
-
-         write(error_unit,*) "Job stopped due to a fatal error: ", trim(msg)
-         call flush(error_unit)
-         call mpp_land_abort()
-         call MPI_finalize(ierr)
-
-         stop 1
-     end subroutine fatal_error_stop
 
      subroutine updateLake_seqInt(in,nsize,in0)
        implicit none

@@ -29,8 +29,9 @@ module module_HRLDAS_HYDRO
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
-    use module_namelist, only: nlst_rt
+    use config_base, only: nlst
     use module_gw_gw2d_data, only: gw2d
+    use module_hydro_stop, only:HYDRO_stop
 
     implicit none
     integer begg, endg
@@ -97,12 +98,12 @@ CONTAINS
         did = 1
 
 
-        if(nlst_rt(did)%rtFlag .eq. 0) return
+        if(nlst(did)%rtFlag .eq. 0) return
 !--------LPR add 2014-06-24---------------------------
 !    it is rapid model
 #ifdef WRF_HYDRO_RAPID
 
-        if(nlst_rt(did)%channel_option .eq. 4) then
+        if(nlst(did)%channel_option .eq. 4) then
                 !write(83,*) infxsrt
                 runoff  = infxsrt + soldrain
 
@@ -153,15 +154,15 @@ CONTAINS
 !        write(6,*) "nlst_rt(did)%CHANRTSWCRT nlst_rt(did)%SUBRTSWCRT  nlst_rt(did)%OVRTSWCRT =", &
 !                 nlst_rt(did)%CHANRTSWCRT, nlst_rt(did)%SUBRTSWCRT,  nlst_rt(did)%OVRTSWCRT
 
-        IF (nlst_rt(did)%GWBASESWCRT                 .eq. 0 &
-               .and. nlst_rt(did)%SUBRTSWCRT         .eq. 0 &
-               .and. nlst_rt(did)%OVRTSWCRT          .eq. 0 &
-               .and. nlst_rt(did)%channel_only       .eq. 0 &
-               .and. nlst_rt(did)%channelBucket_only .eq. 0  ) return
+        IF (nlst(did)%GWBASESWCRT                 .eq. 0 &
+               .and. nlst(did)%SUBRTSWCRT         .eq. 0 &
+               .and. nlst(did)%OVRTSWCRT          .eq. 0 &
+               .and. nlst(did)%channel_only       .eq. 0 &
+               .and. nlst(did)%channelBucket_only .eq. 0  ) return
 
 
-        if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-           nlst_rt(did)%channelBucket_only .eq. 0        ) then
+        if(nlst(did)%channel_only       .eq. 0 .and. &
+           nlst(did)%channelBucket_only .eq. 0        ) then
            ! decompose the hrldas 1-d data into routing domain
            RT_DOMAIN(did)%STC = STC
            RT_DOMAIN(did)%SMC = SMC
@@ -170,7 +171,7 @@ CONTAINS
            RT_DOMAIN(did)%soldrain = soldrain
         end if
 
-           if(nlst_rt(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
+           if(nlst(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
 
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then
@@ -192,15 +193,15 @@ CONTAINS
         endif
 #endif
 
-        if(nlst_rt(did)%channel_only       .eq. 0 .and. &
-           nlst_rt(did)%channelBucket_only .eq. 0        ) then
+        if(nlst(did)%channel_only       .eq. 0 .and. &
+           nlst(did)%channelBucket_only .eq. 0        ) then
            ! add for update the HRLDAS state variable.
            STC = rt_domain(did)%STC
            SMC = rt_domain(did)%SMC
            SH2OX = rt_domain(did)%SH2OX
            sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
         end if
-        if(nlst_rt(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
+        if(nlst(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
 
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
@@ -234,21 +235,21 @@ CONTAINS
 
 
         if(.not. RT_DOMAIN(did)%initialized) then
-           nlst_rt(did)%dt = dt
-           nlst_rt(did)%olddate(1:19) = olddate(1:19)
-           nlst_rt(did)%startdate(1:19) = olddate(1:19)
+           nlst(did)%dt = dt
+           nlst(did)%olddate(1:19) = olddate(1:19)
+           nlst(did)%startdate(1:19) = olddate(1:19)
 
-           nlst_rt(did)%nsoil = kk
+           nlst(did)%nsoil = kk
 #ifdef MPP_LAND
-           call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+           call mpp_land_bcast_int1(nlst(did)%nsoil)
 #endif
-           allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
-           nlst_rt(did)%zsoil8(1:nlst_rt(did)%nsoil) = zsoil(1:nlst_rt(did)%nsoil)
+           allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
+           nlst(did)%zsoil8(1:nlst(did)%nsoil) = zsoil(1:nlst(did)%nsoil)
 
 
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
-           if(nlst_rt(did)%sys_cpl .ne. 1) then
+           if(nlst(did)%sys_cpl .ne. 1) then
               call hydro_stop("In module_hrldas_HYDRO.F hrldas_cpl_HYDRO_ini()"// &
                    " - sys_cpl should be 1. Check hydro.namelist file.")
            endif
@@ -257,28 +258,28 @@ CONTAINS
 
 #ifdef WRF_HYDRO_RAPID
 !--------LPR add 2014-06-24---------------------------
-           if(nlst_rt(did)%rtFlag .eq. 0) return
+           if(nlst(did)%rtFlag .eq. 0) return
 !  it  is rapid model.
            return
         endif ! if(.not. RT_DOMAIN(did)%initialized) then
 !--------LPR add 2014-06-24---------------------------
 #endif
 
-          if (nlst_rt(did)%GWBASESWCRT .eq. 0 &
-               .and. nlst_rt(did)%SUBRTSWCRT .eq.0  &
-               .and. nlst_rt(did)%OVRTSWCRT .eq. 0 ) return
+          if (nlst(did)%GWBASESWCRT .eq. 0 &
+               .and. nlst(did)%SUBRTSWCRT .eq.0  &
+               .and. nlst(did)%OVRTSWCRT .eq. 0 ) return
 
 #ifdef MPP_LAND
-          call mpp_land_bcast_real1(nlst_rt(did)%dt)
+          call mpp_land_bcast_real1(nlst(did)%dt)
 #endif
           sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
           infxsrt = rt_domain(did)%infxsrt
-          if(nlst_rt(did)%rst_typ .eq. 1) then
+          if(nlst(did)%rst_typ .eq. 1) then
              STC = rt_domain(did)%STC
              SMC = rt_domain(did)%SMC
              SH2OX = rt_domain(did)%SH2OX
           else
-             if(nlst_rt(did)%sys_cpl .eq. 1) then
+             if(nlst(did)%sys_cpl .eq. 1) then
                 where( abs(STC) .gt. 500) stc = 282
                 where( abs(SMC) .gt. 500) SMC = 0.25
                 where( abs(SH2OX) .gt. 500) SH2OX = 0.25
