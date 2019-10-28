@@ -7,22 +7,22 @@
 program reservoir_unit_tests
     use module_levelpool_tests
     use module_persistence_levelpool_hybrid_tests
+    use module_rfc_forecasts_tests
 
     implicit none
 
     logical :: rv1 = .false.
     logical :: rv2 = .false.
     logical :: rv3 = .false.
-
-    rv1 = .false.
-    rv2 = .false.
-    rv3 = .false.
+    logical :: rv4 = .false.
 
     rv1 = test_levelpool()
     rv2 = test_levelpool_overflow_max_height()
     rv3 = test_persistence_levelpool_hybrid()
+    rv4 = test_rfc_forecasts_object()
 
-    if (rv1 .and. rv2 .and. rv3) then
+
+    if (rv1 .and. rv2 .and. rv3 .and. rv4) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -238,5 +238,29 @@ program reservoir_unit_tests
         end if
 
     end function test_levelpool_overflow_max_height
+
+    ! This tests the basic object creation for an RFC Forecasts type reservoir
+    function test_rfc_forecasts_object() result(rv)
+        implicit none
+
+        logical rv                        ! test result
+        logical :: call_status
+
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+        real :: water_elevation = 2.
+
+        call_status = .false.
+
+        print *, "calling init for rfc_forecasts"
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 20)
+
+        print *, "testing data in rfc_forecasts"
+        call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
+
+        if (call_status) then
+            rv = .true.
+        end if
+
+    end function test_rfc_forecasts_object
 
 end program
