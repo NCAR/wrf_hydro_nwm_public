@@ -55,11 +55,11 @@ modules or areas of the system.
 * **module_persistence_levelpool_hybrid_tests.F** holds unit tests that test for all components of a hybrid reservoir
 are properly initialized.
 
-* **module_reservoir_read_timeslice_data.F**, within the **Reservoirs** directory, reads USGS timeslice files to get gage discharge
-values that will be used by reservoirs. Future development will either expand this module or replicate its functionality to
-another module to read in other forms of observation and forecast data. An observation lookback period is passed in to
-determine how far back in time from the current model time the module will look for timeslice files. The observation
-resolution determines the time increments the module will look back. For instance, a standard lookback period would be
+* **module_reservoir_read_timeslice_data.F**, within the **Reservoirs** directory, reads USGS or Army Corps of Engineers (ACE)
+timeslice files to get gage discharge values that will be used by reservoirs. Future development will either expand this module
+or replicate its functionality to another module to read in other forms of observation and forecast data. An observation lookback
+period is passed in to determine how far back in time from the current model time the module will look for timeslice files. The
+observation resolution determines the time increments the module will look back. For instance, a standard lookback period would be
 18 hours with an observation resolution of 15 minutes, where a model current time of 8:00 PM would search for timeslice
 files at every 15 minute increment between 2:00 AM and 8:00 PM that day. The module will first search for the most recent
 timeslice files and grab the discharge for a particular lake/reservoir if the gage quality standard is met at that time.
