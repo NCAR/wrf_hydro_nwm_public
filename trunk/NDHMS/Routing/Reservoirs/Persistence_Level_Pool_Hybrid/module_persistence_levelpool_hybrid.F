@@ -23,7 +23,8 @@ module module_persistence_levelpool_hybrid
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
-    use module_reservoir_read_timeslice_data, only: timeslice_data
+    use module_reservoir_read_usgs_timeslice_data, only: usgs_timeslice_data
+    use module_reservoir_read_ace_timeslice_data, only: ace_timeslice_data
     implicit none
 
     ! Extend/derive hybrid type from the abstract base
@@ -58,7 +59,7 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, reservoir_type, persistence_parameter_file, start_date, &
+        lake_number, reservoir_type, reservoir_parameter_file, start_date, &
         timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
@@ -76,7 +77,7 @@ contains
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
         integer, intent(in)    :: reservoir_type            ! reservoir type
-        character(len=*),   intent(in) :: persistence_parameter_file
+        character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: timeslice_path
         integer,            intent(in) :: observation_lookback_hours
@@ -91,8 +92,8 @@ contains
         ! Call to initialize read timeslice data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
-        call timeslice_data%init(start_date, &
-            timeslice_path, persistence_parameter_file, observation_lookback_hours)
+        call usgs_timeslice_data%init(start_date, &
+            timeslice_path, reservoir_parameter_file, observation_lookback_hours)
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -123,7 +124,8 @@ contains
             else
                 ! initialize hybrid properties
                 call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-                observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
+                reservoir_type, observation_lookback_hours, observation_update_time_interval_seconds, &
+                reservoir_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -230,7 +232,7 @@ contains
         if (this%state%current_time >= this%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
-            call timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
+            call usgs_timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
             this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned

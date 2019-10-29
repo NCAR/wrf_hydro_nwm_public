@@ -36,13 +36,14 @@ object and its sub-objects. The hybrid reservoir type inherits input and output 
 instantiation of these into sub-objects. The hybrid reservoir type also points to types for hybrid properties and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
 instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
-type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F** that
-will read a timeslice file and return a corresponding observed discharge. The timeslice files will be read at a particular update
-time. For a particular timestep, the first hybrid reservoir on each processor to reach an update time at that timestep will call the
-function to read the timeslice files, which will read the observations for every reservoir and store those values in an array. Each subsequent
-reservoir held by the same processor at that timestep that reaches its update time will read its corresponding observation from the array. The
-run reservoir function also performs the functionality described above including calling level pool run reservoir along with weighting and combining
-that release with the weighted observed discharge, and finally calling mass balance checks before returning the release/outflow back to the model.
+type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_usgs_timeslice_data.F**
+or **module_reservoir_read_ace_timeslice_data.F** that will read a timeslice file and return a corresponding observed discharge. The
+timeslice files will be read at a particular update time. For a particular timestep, the first hybrid reservoir on each processor to
+reach an update time at that timestep will call the function to read the timeslice files, which will read the observations for every
+reservoir and store those values in an array. Each subsequent reservoir held by the same processor at that timestep that reaches its
+update time will read its corresponding observation from the array. The run reservoir function also performs the functionality described
+above including calling level pool run reservoir along with weighting and combining that release with the weighted observed discharge,
+and finally calling mass balance checks before returning the release/outflow back to the model.
 
 * **module_persistence_levelpool_hybrid_properties.F** defines and instantiates objects for a hybrid type reservoir's
 parameters/properties. Properties holds static/unchanging variables that are set when the given reservoir object is
@@ -55,10 +56,9 @@ modules or areas of the system.
 * **module_persistence_levelpool_hybrid_tests.F** holds unit tests that test for all components of a hybrid reservoir
 are properly initialized.
 
-* **module_reservoir_read_timeslice_data.F**, within the **Reservoirs** directory, reads USGS or Army Corps of Engineers (ACE)
-timeslice files to get gage discharge values that will be used by reservoirs. Future development will either expand this module
-or replicate its functionality to another module to read in other forms of observation and forecast data. An observation lookback
-period is passed in to determine how far back in time from the current model time the module will look for timeslice files. The
+* **module_reservoir_read_usgs_timeslice_data.F** and **module_reservoir_read_ace_timeslice_data.F** within the **Reservoirs** directory,
+reads USGS or Army Corps of Engineers (ACE) timeslice files to get gage discharge values that will be used by reservoirs. An observation
+lookback period is passed in to determine how far back in time from the current model time the module will look for timeslice files. The
 observation resolution determines the time increments the module will look back. For instance, a standard lookback period would be
 18 hours with an observation resolution of 15 minutes, where a model current time of 8:00 PM would search for timeslice
 files at every 15 minute increment between 2:00 AM and 8:00 PM that day. The module will first search for the most recent

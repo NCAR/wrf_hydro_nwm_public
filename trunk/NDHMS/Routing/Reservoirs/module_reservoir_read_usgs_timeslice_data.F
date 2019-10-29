@@ -19,7 +19,7 @@
 ! from current model time that the discharge is read will also
 ! be returned.
 
-module module_reservoir_read_timeslice_data
+module module_reservoir_read_usgs_timeslice_data
     use module_reservoir_utilities, only: get_timeslice_array_dimension, &
                                           read_timeslice_gage_ids, &
                                           read_timeslice_netcdf_real_1D_variables, &
@@ -59,7 +59,7 @@ module module_reservoir_read_timeslice_data
 
     end type timeslice_data_type
 
-    type (timeslice_data_type) :: timeslice_data
+    type (timeslice_data_type) :: usgs_timeslice_data
 
     integer, parameter :: observation_resolution_minutes = 15
     real,    parameter :: gage_quality_threshold = 0.9
@@ -68,12 +68,12 @@ contains
 
     ! Timeslice Data Type Constructor
     subroutine timeslice_data_init(this, start_date, timeslice_path, &
-        persistence_parameter_file, observation_lookback_hours)
+        reservoir_parameter_file, observation_lookback_hours)
         implicit none
         class(timeslice_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                   :: start_date
         character(len=256), intent(in)                   :: timeslice_path
-        character(len=*),   intent(in)                   :: persistence_parameter_file
+        character(len=*),   intent(in)                   :: reservoir_parameter_file
         integer,            intent(in)                   :: observation_lookback_hours
         integer                                          :: ncid, var_id
         integer                                          :: status  ! status of reading NetCDF
@@ -88,7 +88,7 @@ contains
         if (this%initialized) return
         this%initialized = .true.
 
-        status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
 
         call read_persistence_netcdf_gage_ids_all(ncid, "usgs_gage_id", var_id, this%number_of_reservoir_gages)
@@ -355,4 +355,4 @@ contains
     end subroutine read_timeslice_file
 
 
-end module module_reservoir_read_timeslice_data
+end module module_reservoir_read_usgs_timeslice_data
