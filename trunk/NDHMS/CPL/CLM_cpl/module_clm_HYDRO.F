@@ -25,12 +25,14 @@ module module_CLM_HYDRO
     use clm_varpar   , only : nlevgrnd
     use decompMod    , only : get_proc_bounds, get_proc_global
     use clm_varcon  , only : zsoi
-    ; use subgridAveMod, only: l2g_1d
+    use subgridAveMod, only: l2g_1d
     use subgridAveMod, only: c2g_1d, c2g_2d
 
+
 ! NDHMS  module   
-    use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
+     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_hydro_stop, only: HYDRO_stop
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     implicit none
@@ -54,7 +56,7 @@ CONTAINS
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       use module_namelist, only: nlst_rt 
+       use config_base, only: nlst
 
         implicit none
         integer k, ix,jx, nn
@@ -86,19 +88,19 @@ CONTAINS
 
             call HYDRO_ini(ntime,did,1,1)
 
-            if(nlst_rt(did)%sys_cpl .ne. 4) then
+            if(nlst(did)%sys_cpl .ne. 4) then
                write(6,*) "FATAL ERROR: sys_cpl should be 4."
                call hydro_stop("In module_clm_HYDRO.F clm_cpl_HYDRO() - "// &
                                "sys_cpl should be 4.  Check hydro.namelist file")
             endif
 
             RT_DOMAIN(did)%initialized = .true.
-            nlst_rt(did)%dt = cpl_land_dt
-            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
-            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+            nlst(did)%dt = cpl_land_dt
+            nlst(did)%startdate(1:19) = cpl_outdate(1:19)
+            nlst(did)%olddate(1:19) = cpl_outdate(1:19)
         endif
 
-        if(nlst_rt(did)%rtFlag .eq. 0) return
+        if(nlst(did)%rtFlag .eq. 0) return
 
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
@@ -147,7 +149,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                      ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
+                      ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                       RT_DOMAIN(did)%STC)
 
 #ifdef HYDRO_D
@@ -158,7 +160,7 @@ CONTAINS
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%SMC)
 #ifdef HYDRO_D
             write(6,*) "finish h2osoi_vol "
@@ -169,7 +171,7 @@ CONTAINS
             call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d, nn,nlevgrnd,zsoi(1:nlevgrnd), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX)
             RT_DOMAIN(did)%SH2OX =  RT_DOMAIN(did)%SH2OX /1000.
  #ifdef HYDRO_D  
@@ -192,7 +194,7 @@ CONTAINS
 
             r2p =>clm3%g%l%c%ces%t_soisno 
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%STC)
             call g2c_2d(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity')
@@ -202,7 +204,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_vol  
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)), &
+                     ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)), &
                      RT_DOMAIN(did)%SMC)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity', 0.01, 10.)
@@ -211,7 +213,7 @@ CONTAINS
 
             r2p => clm3%g%l%c%cws%h2osoi_liq  
             call Toclm3d(clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
-                     ix,jx, nlst_rt(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst_rt(did)%nsoil)),&
+                     ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX*1000)
             call g2c_2d_tmp(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity',0.01, 10.)

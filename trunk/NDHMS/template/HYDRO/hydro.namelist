@@ -155,7 +155,7 @@ route_lake_f = "./DOMAIN/LAKEPARM.nc"
 reservoir_persistence = .FALSE.
 
 ! Specify the Persistence Reservoir parameter file
-reservoir_persistence_parameter_file = "./DOMAIN/persistence_parm.nc"
+reservoir_parameter_file = "./DOMAIN/persistence_parm.nc"
 
 ! Specify the path to the Timeslice files to be used by Reservoirs
 reservoir_timeslice_path = "./Timeslices/"
@@ -167,10 +167,12 @@ reservoir_observation_lookback_hours = 18
 ! The default is 86400 (seconds per day) in retrospective mode and 1000000000 in all forecast modes
 reservoir_observation_update_time_interval_seconds = 86400
 
-! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
+! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through, 4=exp. bucket with area normalized parameters)
+! Option 4 is currently only supported if using reach-based routing with UDMP=1.
 GWBASESWCRT = 1
 
 ! Switch to activate bucket model loss (0=no, 1=yes)
+! This option is currently only supported if using reach-based routing with UDMP=1.
 bucket_loss = 0
 
 ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
@@ -180,7 +182,7 @@ gwbasmskfil = "./DOMAIN/GWBASINS.nc"
 ! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc")
 GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM.nc"
 
-! User defined mapping, such NHDPlus: 0=no (default), 1=yes
+! User defined mapping, such as NHDPlus: 0=no (default), 1=yes
 UDMP_OPT = 0
 
 ! If on, specify the user-defined mapping file (e.g.: "spatialweights.nc")

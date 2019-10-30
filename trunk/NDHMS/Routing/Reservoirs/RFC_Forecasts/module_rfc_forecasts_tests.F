@@ -137,14 +137,8 @@ contains
             data_state(8) = test_rfc_forecasts_levelpool_output(rfc_forecasts_reservoir_data%state%levelpool_ptr%output)
         end if
 
-        !if ( all(ptr_state) .and. all(data_state) ) then
-        if ( all(ptr_state) ) then
-
-<<<<<<< HEAD
-=======
         if ( all(ptr_state) .and. all(data_state) ) then
             data_info_result = .true.
->>>>>>> added rfc forecasts level pool object with unit tests passing
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Object Tests Passed"
             print *, "========================================================================"
@@ -157,7 +151,6 @@ contains
 
         end if
 
-        flush(6)
     end function rfc_forecasts_data_info
 
     ! test to see that each member of the input structure is correctly allocated and readable

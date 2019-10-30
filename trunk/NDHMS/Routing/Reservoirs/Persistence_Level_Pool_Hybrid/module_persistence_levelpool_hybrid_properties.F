@@ -77,18 +77,18 @@ contains
         if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
 
         ! Read relevant properties from Persistence Parameter NetCDF
-        call read_netcdf_lake_id(ncid, lake_number, "lake_id", lake_id_index)
+        call read_netcdf_lake_id(ncid, lake_number, "usgs_lake_id", lake_id_index)
 
-        call read_persistence_netcdf_gage_id(ncid, lake_id_index, "gage_id", this%gage_id)
+        call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usgs_gage_id", this%gage_id)
 
-        call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "persistence_coefficients", var_id, number_of_weights, number_of_lakes)
+        call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usgs_persistence_coefficients", var_id, number_of_weights, number_of_lakes)
 
         allocate(this%persistence_weighted_coefficients(number_of_weights))
 
         allocate(temp_real_2D_array(number_of_weights, number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_real_2D_array)
-        if (status /= nf90_noerr) call handle_err(status, "persistence_coefficients")
+        if (status /= nf90_noerr) call handle_err(status, "usgs_persistence_coefficients")
 
         this%persistence_weighted_coefficients(:) = temp_real_2D_array(:, lake_id_index)
 
