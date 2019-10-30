@@ -31,6 +31,7 @@ module module_HRLDAS_HYDRO
     use module_rt_data, only:  rt_domain
     use config_base, only: nlst
     use module_gw_gw2d_data, only: gw2d
+    use module_hydro_stop, only:HYDRO_stop
 
     implicit none
     integer begg, endg

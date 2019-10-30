@@ -195,8 +195,10 @@ include_directories(AFTER ${NETCDF_INCLUDES})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/Data_Rec)
 
 # build the various sup-projects
-add_subdirectory("utils")
 add_subdirectory("MPP")
+add_subdirectory("utils")
+add_subdirectory("IO")
+add_subdirectory("OrchestratorLayer")
 add_subdirectory("Debug_Utilities")
 add_subdirectory("Routing/Overland")
 add_subdirectory("Routing/Subsurface")
@@ -212,7 +214,10 @@ if (WRF_HYDRO_NUDGING STREQUAL "1")
 endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
 # add module dependencies
-add_dependencies(hydro_debug_utils hydro_mpp) 
+add_dependencies(hydro_debug_utils hydro_mpp)
+add_dependencies(hydro_utils hydro_mpp)
+
+add_dependencies(hydro_orchestrator hydro_netcdf_layer)
 
 add_dependencies(hydro_routing hydro_mpp)
 add_dependencies(hydro_routing hydro_routing_overland)
@@ -284,6 +289,7 @@ if (HYDRO_LSM MATCHES "NoahMP")
 	target_link_libraries(wrfhydro.exe noahmp_util)
 	target_link_libraries(wrfhydro.exe noahmp_phys)
 	target_link_libraries(wrfhydro.exe hydro_noahmp_cpl)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
 	target_link_libraries(wrfhydro.exe ${NETCDF_LIBRARIES})
 	
 	if (WRF_HYDRO_NUDGING STREQUAL "1")
@@ -335,9 +341,10 @@ elseif(HYDRO_LSM MATCHES "Noah")
         target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_levelpool)
         target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_hybrid)
         target_link_libraries(wrfhydro.exe hydro_routing_reservoirs)        
-	target_link_libraries(wrfhydro.exe noah_util)
+	    target_link_libraries(wrfhydro.exe noah_util)
         target_link_libraries(wrfhydro.exe noah)
         target_link_libraries(wrfhydro.exe hydro_noah_cpl)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
         target_link_libraries(wrfhydro.exe ${NETCDF_LIBRARIES})
         
 	if (WRF_HYDRO_NUDGING STREQUAL "1")

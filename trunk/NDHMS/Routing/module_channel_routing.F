@@ -28,6 +28,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 
 use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
+use module_hydro_stop, only: HYDRO_stop
 
 #endif
 implicit none

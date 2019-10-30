@@ -28,9 +28,11 @@ module module_CLM_HYDRO
     use subgridAveMod, only: l2g_1d
     use subgridAveMod, only: c2g_1d, c2g_2d
 
+
 ! NDHMS  module   
-    use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
+     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
+    use module_hydro_stop, only: HYDRO_stop
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
     implicit none
