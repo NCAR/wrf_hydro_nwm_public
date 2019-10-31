@@ -728,7 +728,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
-             nlst_rt(did)%reservoir_not_levelpool, rt_domain(did)%reservoir_type, &
+             nlst(did)%reservoir_not_levelpool, rt_domain(did)%reservoir_type, &
              nlst(did)%reservoir_parameter_file,    &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -772,7 +772,7 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst_rt(did)%reservoir_not_levelpool,                    &
+           nlst(did)%reservoir_not_levelpool,                    &
            rt_domain(did)%reservoir_type,                           &
            nlst(did)%reservoir_parameter_file,                      &
            rt_domain(did)%LATLAKE,                                  &
@@ -799,10 +799,10 @@ subroutine LandRT_ini(did)
        if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3) then
            allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst_rt(did)%reservoir_persistence_usgs) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst(did)%reservoir_persistence_usgs) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst_rt(did)%reservoir_rfc_forecasts) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then
           allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else
