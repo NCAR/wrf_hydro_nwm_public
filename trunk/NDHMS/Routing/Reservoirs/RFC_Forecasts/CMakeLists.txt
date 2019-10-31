@@ -6,5 +6,5 @@ add_library(hydro_routing_reservoirs_rfc STATIC
 	module_rfc_forecasts_properties.F
 )
 
-add_dependencies(hydro_routing_reservoirs_levelpool hydro_routing_reservoirs)
+add_dependencies(hydro_routing_reservoirs_rfc hydro_routing_reservoirs)
 
