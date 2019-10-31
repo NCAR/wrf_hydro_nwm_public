@@ -77,7 +77,7 @@
        end subroutine HYDRO_forcing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
-         use config_base, only: nlst
+          use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
           integer :: idim, jdim 
@@ -93,6 +93,7 @@
 
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
+          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
 #         include "netcdf.inc"
           character(len=*) :: fileName
