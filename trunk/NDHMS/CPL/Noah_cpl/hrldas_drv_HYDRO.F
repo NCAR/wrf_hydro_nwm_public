@@ -93,7 +93,7 @@
 
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
-          use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
+          use module_hydro_stop, only: HYDRO_stop
           implicit none
 #         include "netcdf.inc"
           character(len=*) :: fileName
