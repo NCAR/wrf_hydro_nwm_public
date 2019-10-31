@@ -9,7 +9,6 @@ add_library(hydro_routing_reservoirs STATIC
 
 add_subdirectory("Level_Pool")
 add_subdirectory("Persistence_Level_Pool_Hybrid")
+add_subdirectory("RFC_Forecasts")
 
 add_dependencies(hydro_routing_reservoirs hydro_utils)
-
-

@@ -33,7 +33,7 @@ mod: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	#Build the modules
 	make -C Level_Pool
 	make -C Persistence_Level_Pool_Hybrid
-
+	make -C RFC_Forecasts
 
 test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
@@ -43,6 +43,7 @@ test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 
 	make -C Level_Pool
 	make -C Persistence_Level_Pool_Hybrid
+	make -C RFC_Forecasts
 
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) reservoir_tests.F
 
@@ -63,6 +64,10 @@ test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_state.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid_tests.o \
 		Persistence_Level_Pool_Hybrid/module_persistence_levelpool_hybrid.o \
+		RFC_Forecasts/module_rfc_forecasts_properties.o \
+		RFC_Forecasts/module_rfc_forecasts_state.o \
+		RFC_Forecasts/module_rfc_forecasts_tests.o \
+		RFC_Forecasts/module_rfc_forecasts.o \
 		reservoir_tests.o
 
 
@@ -73,3 +78,4 @@ clean:
 
 	make -C Level_Pool clean
 	make -C Persistence_Level_Pool_Hybrid clean
+	make -C RFC_Forecasts clean
