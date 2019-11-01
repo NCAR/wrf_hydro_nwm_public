@@ -23,7 +23,8 @@ module module_persistence_levelpool_hybrid_properties
         real    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer :: lake_number                  ! lake number
         integer :: reservoir_type               ! reservoir type
-        integer :: gage_id
+        !integer :: gage_id
+        character(len=15) :: gage_id
         integer :: observation_lookback_hours
         integer :: observation_update_time_interval_seconds
         integer :: weight_update_time_interval

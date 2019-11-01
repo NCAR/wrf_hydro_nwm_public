@@ -1,25 +1,25 @@
-! This module reads Army Corps of Engineers timeslice files to get
-! gage discharge values that will be used by reservoirs. An
-! observation lookback period is passed in to determine how far
-! back in time from the current model time the module will look
-! for timeslice files. The observation resolution determines the
-! time increments the module will look back. For instance, a
-! standard lookback period would be 18 hours with an observation
-! resolution of 15 minutes, where a model current time of 8:00 PM
-! would search for timeslice files at every 15 minute increment
-! between 2:00 AM and 8:00 PM that day. The module will first
-! search for the most recent timeslice files and grab the discharge
-! for a particular lake/reservoir if the gage quality standard is
-! met at that time. If a gage discharge is missing or if the gage
-! quality standard is not met for any particular lake/reservoir in
-! the given timeslice file, the module will continue to look back
-! at every observation resolution increment until either all
+! This module reads USGS timeslice files to get gage discharge
+! values that will be used by reservoirs. An observation lookback
+! period is passed in to determine how far back in time from the
+! current model time the module will look for timeslice files.
+! The observation resolution determines the time increments the
+! module will look back. For instance, a standard lookback period
+! would be 18 hours with an observation resolution of 15 minutes,
+! where a model current time of 8:00 PM would search for timeslice
+! files at every 15 minute increment between 2:00 AM and 8:00 PM
+! that day. The module will first search for the most recent
+! timeslice files and grab the discharge for a particular
+! lake/reservoir if the gage quality standard is met at that time.
+! If a gage discharge is missing or if the gage quality standard
+! is not met for any particular lake/reservoir in the given
+! timeslice file, the module will continue to look back at every
+! observation resolution increment until either all
 ! lakes/reservoirs have a good quality discharge or the end of
 ! the lookback period is reached. The total lookback seconds
 ! from current model time that the discharge is read will also
 ! be returned.
 
-module module_reservoir_read_ace_timeslice_data
+module module_reservoir_read_timeslice_data
     use module_reservoir_utilities, only: get_timeslice_array_dimension, &
                                           read_timeslice_gage_ids, &
                                           read_timeslice_netcdf_real_1D_variables, &
@@ -37,6 +37,7 @@ module module_reservoir_read_ace_timeslice_data
         character(len=19)                             :: start_date
         character(len=19)                             :: current_date
         character(len=256)                            :: timeslice_path
+        character(len=15)                             :: data_source
         integer                                       :: number_of_reservoir_gages
         integer                                       :: observation_lookback_hours
         integer                                       :: current_lookback_seconds
@@ -59,7 +60,7 @@ module module_reservoir_read_ace_timeslice_data
 
     end type timeslice_data_type
 
-    type (timeslice_data_type) :: ace_timeslice_data
+    type (timeslice_data_type) :: usgs_timeslice_data, ace_timeslice_data
 
     integer, parameter :: observation_resolution_minutes = 15
     real,    parameter :: gage_quality_threshold = 0.9
@@ -68,12 +69,13 @@ contains
 
     ! Timeslice Data Type Constructor
     subroutine timeslice_data_init(this, start_date, timeslice_path, &
-        reservoir_parameter_file, observation_lookback_hours)
+        reservoir_parameter_file, data_source, observation_lookback_hours)
         implicit none
         class(timeslice_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                   :: start_date
         character(len=256), intent(in)                   :: timeslice_path
         character(len=*),   intent(in)                   :: reservoir_parameter_file
+        character(len=*),   intent(in)                   :: data_source
         integer,            intent(in)                   :: observation_lookback_hours
         integer                                          :: ncid, var_id
         integer                                          :: status  ! status of reading NetCDF
@@ -88,16 +90,20 @@ contains
         if (this%initialized) return
         this%initialized = .true.
 
+        this%data_source = ADJUSTL(trim(data_source))
+
+        this%data_source = ADJUSTL(trim(this%data_source))
+
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
-
-        call read_persistence_netcdf_gage_ids_all(ncid, "ace_gage_id", var_id, this%number_of_reservoir_gages)
-
+print *, '1.1'
+        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", var_id, this%number_of_reservoir_gages)
+print *, '1.2'
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, "ace_gage_id")
+        if (status /= nf90_noerr) call handle_err(status, this%data_source // "_gage_id")
 
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
@@ -142,6 +148,7 @@ contains
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
 
+print *, '1.3'
     end subroutine timeslice_data_init
 
 
@@ -230,7 +237,8 @@ contains
 
                     ! Construct timeslice filename with path
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
-                                    observation_resolution_string // 'min.aceTimeSlice.ncdf'
+                            observation_resolution_string // 'min.' // this%data_source // 'TimeSlice.ncdf'
+                                    !observation_resolution_string // 'min.usgsTimeSlice.ncdf'
 
                     ! Check if file exists
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
@@ -355,4 +363,4 @@ contains
     end subroutine read_timeslice_file
 
 
-end module module_reservoir_read_ace_timeslice_data
+end module module_reservoir_read_timeslice_data

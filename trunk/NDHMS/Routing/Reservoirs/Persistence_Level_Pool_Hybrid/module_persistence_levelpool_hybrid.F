@@ -23,8 +23,8 @@ module module_persistence_levelpool_hybrid
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
-    use module_reservoir_read_usgs_timeslice_data, only: usgs_timeslice_data
-    use module_reservoir_read_ace_timeslice_data, only: ace_timeslice_data
+    use module_reservoir_read_timeslice_data, only: usgs_timeslice_data, ace_timeslice_data
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
     ! Extend/derive hybrid type from the abstract base
@@ -92,8 +92,20 @@ contains
         ! Call to initialize read timeslice data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
-        call usgs_timeslice_data%init(start_date, &
-            timeslice_path, reservoir_parameter_file, observation_lookback_hours)
+        if (reservoir_type == 2) then
+            call usgs_timeslice_data%init(start_date, timeslice_path, &
+            reservoir_parameter_file, "usgs", observation_lookback_hours)
+
+        else if (reservoir_type == 3) then
+            call ace_timeslice_data%init(start_date, timeslice_path, &
+            reservoir_parameter_file, "usace", observation_lookback_hours)
+
+        else
+            write(lake_number_string, "(I15)") lake_number
+            call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
+
+        end if
+
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -143,7 +155,7 @@ contains
             ! Initialize persistence weight index to be out of bounds of the persistence weights array
             this%state%persistence_weight_index = SIZE(this%properties%persistence_weighted_coefficients) + 1
 
-            ! Call hydro stop if the initial storage is greater than max storage or less than zero.
+            ! Output warning if the initial storage is greater than max storage or less than zero.
             if (this%state%current_storage > this%properties%max_storage) then
                 this%state%current_storage = this%properties%max_storage
                 write(lake_number_string, "(I15)") lake_number
