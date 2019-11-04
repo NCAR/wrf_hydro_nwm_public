@@ -361,7 +361,12 @@ contains
 
         print *, "Checking read on gage_id"
         print *, o%gage_id
-        if ( o%gage_id .ne. 7198000) then
+        print *, ADJUSTL(trim(o%gage_id))
+        print *, len(ADJUSTL(trim(o%gage_id)))
+        print *, len(o%gage_id)
+        print *, len('07198000       ')
+        print *, ('07198000       ')
+        if ( ADJUSTL(trim(o%gage_id)) .ne. '07198000       ') then
             rv = .false.
             print *, "FAILED"
         end if

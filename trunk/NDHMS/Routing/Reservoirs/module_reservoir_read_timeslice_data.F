@@ -173,7 +173,8 @@ print *, '1.3'
         class(timeslice_data_type), intent(inout) :: this
         integer, intent(in)  :: update_interval_seconds
         integer, intent(in)  :: current_reservoir_time_seconds
-        integer, intent(in)  :: reservoir_gage_id
+        !integer, intent(in)  :: reservoir_gage_id
+        character(len=*), intent(in)  :: reservoir_gage_id
         integer, intent(out) :: gage_lookback_seconds
         real, intent(out)    :: reservoir_gage_discharge
         character(len=256)   :: timeslice_file_name
@@ -185,11 +186,12 @@ print *, '1.3'
 
         ! This check ensures that the timeslice is read only once for each processor at each timeslice update time
         if (current_reservoir_time_seconds .ne. this%last_update_time_seconds) then
-
+print *, '3.0'
             ! Checks if not the first timestep, then update date.
             if (this%last_update_time_seconds .ne. -999) then
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
             end if
+print *, '3.1'
 
             this%last_update_time_seconds = current_reservoir_time_seconds
 
@@ -200,6 +202,7 @@ print *, '1.3'
             this%current_lookback_seconds = 0
 
             total_timeslice_time_periods = this%observation_lookback_hours * (60 / observation_resolution_minutes)
+print *, '3.2'
 
             ! Allocate array of all timeslice files to potentially read
             if ( .not. allocated(this%timeslice_file_names) ) then
@@ -227,9 +230,12 @@ print *, '1.3'
 
             ! Negative for going back in time
             observation_resolution_seconds = observation_resolution_minutes * 60 * -1
+print *, '3.3'
 
             ! Loop through the total timeslice periods to look for and read timeslice files
             do timeslice_file_index = 1, total_timeslice_time_periods
+
+!print *, '3.4'
 
                 ! Use below for timeslice files with colons in the time
                 old_date = old_date(:13) // ':' // old_date(15:16) // ':' // old_date(18:)
@@ -240,12 +246,13 @@ print *, '1.3'
 
                     ! Construct timeslice filename with path
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
-                            observation_resolution_string // 'min.' // this%data_source // 'TimeSlice.ncdf'
+                            observation_resolution_string // 'min.' // ADJUSTL(trim(this%data_source)) // 'TimeSlice.ncdf'
                                     !observation_resolution_string // 'min.usgsTimeSlice.ncdf'
-
+!print *, timeslice_file_name
                     ! Check if file exists
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
                     if (file_exists) then
+                        print *, 'EXIST'
                         ! Call subroutine to read a particular timeslice file
                         call this%read_timeslice_file(timeslice_file_name)
                     end if
@@ -266,7 +273,12 @@ print *, '1.3'
 
         ! Loop through gages to return gage lookback seconds and gage discharge for a given reservoir
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
-            if (this%reservoir_gage_ids(reservoir_subset_index) == reservoir_gage_id) then
+            !if (this%reservoir_gage_ids(reservoir_subset_index) == reservoir_gage_id) then
+            !print *, this%reservoir_gage_ids(reservoir_subset_index)
+            !print *, reservoir_gage_id
+            !print *, '!!!!!!!!'
+            if (this%reservoir_gage_ids(reservoir_subset_index) .eq. reservoir_gage_id) then
+                print *, '2.1'
                 gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
             end if
@@ -295,7 +307,7 @@ print *, '1.3'
         allocate(this%gage_id(number_of_gages))
         allocate(this%gage_discharge(number_of_gages))
         allocate(this%gage_quality(number_of_gages))
-        allocate(gage_ids_integer_array(number_of_gages))
+        !allocate(gage_ids_integer_array(number_of_gages))
 
         ! Get gage ids
         call read_timeslice_gage_ids(ncid, 'stationId', this%gage_id)
@@ -307,9 +319,9 @@ print *, '1.3'
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', this%gage_quality)
 
         ! Convert gage ids to integers
-        do timeslice_gage_index = 1, number_of_gages
-            read (this%gage_id(timeslice_gage_index), *) gage_ids_integer_array(timeslice_gage_index)
-        end do
+        !do timeslice_gage_index = 1, number_of_gages
+        !    read (this%gage_id(timeslice_gage_index), *) gage_ids_integer_array(timeslice_gage_index)
+        !end do
 
         ! Normalize gage qualities to 1
         this%gage_quality = this%gage_quality/100
@@ -331,6 +343,16 @@ print *, '1.3'
         !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
         where(this%gage_discharge .ge. 90000.0) this%gage_quality=0
 
+                    !print *, ADJUSTL(trim(this%gage_id))
+                    print *, this%gage_id
+                                        print *, '==================='
+                    print *, '==================='
+                    print *, '==================='
+                    print *, '==================='
+
+                    print *, this%reservoir_gage_ids
+                    print *, '==================='
+
         ! Loop through reservoir gage array to look for gages that still have discharges set to -1.0.
         ! Match gage ids from the timeslice file gage id arrays to gage ids in the reservoir gage subset
         ! array. If the matched gage is good quality, then set that reservoir gage subset discharge to
@@ -340,7 +362,20 @@ print *, '1.3'
             if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
 
                 do timeslice_gage_index = 1, number_of_gages
-                    if (gage_ids_integer_array(timeslice_gage_index) == this%reservoir_gage_ids(reservoir_gage_index)) then
+                    !if (gage_ids_integer_array(timeslice_gage_index) == this%reservoir_gage_ids(reservoir_gage_index)) then
+                    !print *, ADJUSTL(trim(this%gage_id(4)))
+                    !print *, this%reservoir_gage_ids(reservoir_gage_index)
+                    !print *, '==================='
+
+
+                    !print *, len(ADJUSTL(trim(this%gage_id(4))))
+                    !print *, len(this%reservoir_gage_ids(reservoir_gage_index))
+                    !print *, '==================='
+
+
+
+                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
+                        print *, '2.2========================'
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
 
@@ -361,7 +396,7 @@ print *, '1.3'
     if(allocated(this%gage_id)) deallocate(this%gage_id)
     if(allocated(this%gage_discharge)) deallocate(this%gage_discharge)
     if(allocated(this%gage_quality)) deallocate(this%gage_quality)
-    if(allocated(gage_ids_integer_array)) deallocate(gage_ids_integer_array)
+    !if(allocated(gage_ids_integer_array)) deallocate(gage_ids_integer_array)
 
     end subroutine read_timeslice_file
 

@@ -98,7 +98,12 @@ seconds in order to prevent the module from reading any new timeslice observatio
 
 ### Testing
 
-To compile and run the unit tests, go to the Reservoir directory in the terminal and type
+To compile and run the unit tests, first go to the NDHMS directory and type
+```
+./compile_offline_NoahMP.sh template/setEnvar.sh
+```
+
+and hit enter. Then go to the Reservoir directory in the terminal and type
 
 ```
 make
