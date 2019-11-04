@@ -826,7 +826,7 @@ contains
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
      integer            :: split_output_count = 1
-     integer            :: khour
+     integer            :: khour = -999
      integer            :: kday = -999
      real               :: zlvl
      character(len=256) :: hrldas_setup_file = " "
@@ -958,8 +958,19 @@ contains
     noah_lsm%crop_option = crop_option
 
     noah_lsm%split_output_count = split_output_count
+
+    if (kday > 0) then
+        if (khour > 0) then
+            write(*, '("WARNING: Check Namelist: KHOUR and KDAY both defined, KHOUR will take precedence.")')
+            kday = -999
+        else
+            write(*, '("WARNING: KDAY is deprecated and may be removed in a future version, please use KHOUR.")')
+            khour = -999
+        end if
+    end if
+    noah_lsm%kday = kday
     noah_lsm%khour = khour
-    noah_lsm%kday = -999!kday
+
     noah_lsm%zlvl = zlvl
     noah_lsm%hrldas_setup_file = hrldas_setup_file
     noah_lsm%mmf_runoff_file = " "!mmf_runoff_file
