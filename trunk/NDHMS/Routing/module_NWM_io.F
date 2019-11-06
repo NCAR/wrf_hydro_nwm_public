@@ -1148,13 +1148,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
 
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
@@ -1849,13 +1851,15 @@ subroutine output_rt_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -2511,13 +2515,15 @@ subroutine output_lakes_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3071,13 +3077,15 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3528,13 +3536,15 @@ subroutine output_lsmOut_NWM(domainId)
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -4323,13 +4333,15 @@ subroutine output_chanObs_NWM(domainId)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -5127,13 +5139,15 @@ subroutine output_gw_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
