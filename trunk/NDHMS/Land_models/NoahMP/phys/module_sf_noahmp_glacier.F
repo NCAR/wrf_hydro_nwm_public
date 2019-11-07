@@ -126,7 +126,7 @@ contains
                    ILOC    ,JLOC    ,COSZ    ,NSNOW   ,NSOIL   ,DT      , & ! IN : Time/Space/Model-related
                    SFCTMP  ,SFCPRS  ,UU      ,VV      ,Q2      ,SOLDN   , & ! IN : Forcing
                    PRCP    ,LWDN    ,TBOT    ,ZLVL    ,FICEOLD ,ZSOIL   , & ! IN : Forcing
-                   QSNOW   ,SNEQVO  ,ALBOLD  ,CM      ,CH      ,ISNOW   , & ! IN/OUT : 
+                   QSNOW, QRAIN,  SNEQVO,  ALBOLD,  CM,   CH   ,ISNOW   , & ! IN/OUT : 
                    SNEQV   ,SMC     ,ZSNSO   ,SNOWH   ,SNICE   ,SNLIQ   , & ! IN/OUT :
                    TG      ,STC     ,SH2O    ,TAUSS   ,QSFC    ,          & ! IN/OUT : 
                    FSA     ,FSR     ,FIRA    ,FSH     ,FGEV    ,SSOIL   , & ! OUT : 
@@ -170,6 +170,7 @@ contains
 
 ! input/output : need arbitary intial values
   REAL                           , INTENT(INOUT) :: QSNOW  !snowfall [mm/s]
+  REAL                           , INTENT(INOUT) :: QRAIN  !rainfall [mm/s]
   REAL                           , INTENT(INOUT) :: SNEQVO !snow mass at last time step (mm)
   REAL                           , INTENT(INOUT) :: ALBOLD !snow albedo at last time step (CLASS type)
   REAL                           , INTENT(INOUT) :: CM     !momentum drag coefficient
@@ -280,7 +281,7 @@ contains
                          QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
                          ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                          DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,FSH    , & !inout
-                         RUNSRF ,RUNSUB ,QSNOW  ,PONDING1       ,PONDING2,QSNBOT,FPICE &  !out
+                         RUNSRF ,RUNSUB ,QSNOW, QRAIN, PONDING1, PONDING2,QSNBOT,FPICE &  !out
 #ifdef WRF_HYDRO
                         , sfcheadrt                     &
 #endif
@@ -2013,7 +2014,7 @@ END IF   ! OPT_GLA == 1
                             QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
                             ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                             DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,FSH    , & !inout
-                            RUNSRF ,RUNSUB ,QSNOW  ,PONDING1 ,PONDING2,QSNBOT,FPICE     &   !out
+                            RUNSRF ,RUNSUB ,QSNOW, QRAIN, PONDING1 ,PONDING2,QSNBOT,FPICE     &   !out
 #ifdef WRF_HYDRO
                             , sfcheadrt                                      &
 #endif
@@ -2054,13 +2055,13 @@ END IF   ! OPT_GLA == 1
   REAL,                            INTENT(OUT)   :: RUNSRF  !surface runoff [mm/s] 
   REAL,                            INTENT(OUT)   :: RUNSUB  !baseflow (sturation excess) [mm/s]
   REAL,                            INTENT(OUT)   :: QSNOW   !snow at ground srf (mm/s) [+]
+  REAL,                            INTENT(OUT)   :: QRAIN   !rain at ground srf (mm/s) [+]
   REAL,                            INTENT(OUT)   :: PONDING1
   REAL,                            INTENT(OUT)   :: PONDING2
   REAL,                            INTENT(OUT)   :: QSNBOT  !melting water out of snow bottom [mm/s]
   REAL,                            INTENT(OUT)   :: FPICE   !precipitation frozen fraction
 
 ! local
-  REAL                                           :: QRAIN   !rain at ground srf (mm) [+]
   REAL                                           :: QSEVA   !soil surface evap rate [mm/s]
   REAL                                           :: QSDEW   !soil surface dew rate [mm/s]
   REAL                                           :: QSNFRO  !snow surface frost rate[mm/s]
