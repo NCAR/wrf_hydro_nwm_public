@@ -218,7 +218,7 @@ program reservoir_unit_tests
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 2739068
+        lake_number = 4672717
         reservoir_type = 3
 
         print *, "calling init for persistence_levelpool_hybrid ACE type reservoir"
@@ -227,7 +227,7 @@ program reservoir_unit_tests
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
-        "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
+        "2016-10-10_02:00:00", cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for ACE type reservoir"
 
@@ -244,7 +244,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .ge. 16.08207 - epsilon(16.08207) .and. outflow .le. 16.08207 + epsilon(16.08207) ) then
+        if (outflow .ge. 16.0820713 - epsilon(16.0820713) .and. outflow .le. 16.0820713 + epsilon(16.0820713) ) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run ACE Reservoir Test Passed'

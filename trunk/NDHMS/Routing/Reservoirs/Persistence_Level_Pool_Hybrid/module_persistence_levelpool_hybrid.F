@@ -23,7 +23,7 @@ module module_persistence_levelpool_hybrid
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
-    use module_reservoir_read_timeslice_data, only: usgs_timeslice_data, ace_timeslice_data
+    use module_reservoir_read_timeslice_data, only: usgs_timeslice_data, usace_timeslice_data, timeslice_data_type
     use module_hydro_stop, only: HYDRO_stop
     implicit none
 
@@ -35,6 +35,7 @@ module module_persistence_levelpool_hybrid
         ! held by a level pool reservoir object.
         type (hybrid_properties_interface), pointer :: properties => null()
         type (hybrid_state_interface), pointer :: state => null()
+        type (timeslice_data_type), pointer :: timeslice_data => null()
 
         logical :: pointer_allocation_guard = .false.
 
@@ -89,26 +90,30 @@ contains
         call create_hybrid_diagnostic_log_file(lake_number)
 #endif
 
-        ! Call to initialize read timeslice data object. This object is a singleton,
-        ! so if another reservoir has already initialized the object, it will return
-        ! immediately.
-        if (reservoir_type == 2) then
-            call usgs_timeslice_data%init(start_date, timeslice_path, &
-            reservoir_parameter_file, "usgs", observation_lookback_hours)
-
-        else if (reservoir_type == 3) then
-            call ace_timeslice_data%init(start_date, timeslice_path, &
-            reservoir_parameter_file, "usace", observation_lookback_hours)
-
-        else
-            write(lake_number_string, "(I15)") lake_number
-            call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
-
-        end if
-
-
         if (this%pointer_allocation_guard .eqv. .false. ) then
-            ! try to allocate input
+
+            ! Call to initialize timeslice data object. This object is a singleton for either
+            ! USGS (U.S. Geological Survey) or USACE (U.S. Army Corps of Engineers) data source,
+            ! so if another reservoir has already initialized the object of a particular data
+            ! source, it will return immediately.
+            if (reservoir_type == 2) then
+                call usgs_timeslice_data%init(start_date, timeslice_path, &
+                reservoir_parameter_file, "usgs", observation_lookback_hours)
+
+                this%timeslice_data=>usgs_timeslice_data
+
+            else if (reservoir_type == 3) then
+                call usace_timeslice_data%init(start_date, timeslice_path, &
+                reservoir_parameter_file, "usace", observation_lookback_hours)
+
+                this%timeslice_data=>usace_timeslice_data
+
+            else
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
+
+            end if
+
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created write an error
@@ -179,7 +184,6 @@ contains
             orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         end if
-
     end subroutine hybrid_init
 
 
@@ -242,10 +246,16 @@ contains
         ! be retrieved. The first reservoir for each processor to reach an update time will call the function to read a new timeslice file,
         ! and these timeslice discharges will be held in memory for the subsequent reservoirs to use at that timestep.
         if (this%state%current_time >= this%state%timeslice_update_time) then
-
             ! Read new timeslice gage discharges
-            call usgs_timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
+            !call usgs_timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
+            !this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
+
+            call this%timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
             this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
+
+print *, 'this%state%gage_discharge'
+
+print *, this%state%gage_discharge
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
@@ -339,6 +349,10 @@ contains
         this%state%current_storage, this%properties%min_storage, &
         this%properties%max_storage, this%properties%lake_number, &
         this%state%current_time, int(routing_period), this%output%outflow, max_storage_reached)
+
+print *, 'max_storage_reached'
+print *, max_storage_reached
+print *, this%state%persisted_outflow
 
         ! If max storage has been reached, release greater of persistence or levelpool
         if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then

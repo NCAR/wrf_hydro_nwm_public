@@ -353,6 +353,10 @@ contains
         integer        :: char_index, number_counter
         character(len=1)   :: temp_char
 
+
+integer :: temp_val
+        !type(C_ptr) :: gage_id_string1
+
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
@@ -369,9 +373,40 @@ contains
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
+
+!gage_id_string1 = gage_id_string
+
+        !gage_id_string = cstr2f(gage_id_string)
+
+print *, '=========================='
+do char_index = 1, 15
+    !temp_char = gage_id_string(char_index:char_index)
+
+    temp_val = ichar(gage_id_string(char_index:char_index))
+
+print *, temp_val
+
+    ! Check if null character then pad with a space
+    if (temp_val == 0) then
+        gage_id_string(char_index:char_index) = ' '
+
+    end if
+
+end do
+print *, '=========================='
+
+
+
+
+
+
+
+
         gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
 
         gage_id = gage_id_string_trimmed
+
+
 
         !number_counter = 0
 
@@ -392,7 +427,6 @@ contains
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 
     end subroutine read_persistence_netcdf_gage_id
-
 
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF
     subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, &
@@ -969,7 +1003,6 @@ contains
 
     end subroutine geth_newdate
 
-
     integer function nfeb(year)
     !
     ! Compute the number of days in February for the given year.
@@ -991,5 +1024,19 @@ contains
        endif
     endif
     end function nfeb
+
+    function cstr2f(s)
+        use, intrinsic :: iso_c_binding
+        interface
+            pure function strlen(s) bind(c, name="strlen")
+                use, intrinsic :: iso_c_binding
+                type(c_ptr), intent(in) :: s
+                integer(c_size_t) strlen
+            end
+        end interface
+        type(c_ptr) s
+        character(kind=c_char, len=strlen(s)), pointer :: cstr2f
+        call c_f_pointer(s, cstr2f)
+    end
 
 end module module_reservoir_utilities

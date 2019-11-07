@@ -61,7 +61,10 @@ module module_reservoir_read_timeslice_data
 
     end type timeslice_data_type
 
-    type (timeslice_data_type) :: usgs_timeslice_data, ace_timeslice_data
+    type (timeslice_data_type), target :: usgs_timeslice_data, usace_timeslice_data
+
+    !type (timeslice_data_type), target :: usgs_timeslice_data
+    !type (timeslice_data_type), target :: usace_timeslice_data
 
     integer, parameter :: observation_resolution_minutes = 15
     real,    parameter :: gage_quality_threshold = 0.9
@@ -84,7 +87,7 @@ contains
         character(len=15), allocatable, dimension(:)     :: gage_ids_string_array
         character(len=15)                                :: gage_id_string, gage_id_string_trimmed
         integer                                          :: gage_id_integer
-        integer                                          :: char_index, number_counter
+        integer                                          :: char_index, number_counter, temp_val
         character(len=1)                                 :: temp_char
 
         ! Return from subroutine if this singleton is already initialized
@@ -99,13 +102,18 @@ contains
         if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
 print *, '1.1'
         call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", var_id, this%number_of_reservoir_gages)
+
+print *, ADJUSTL(trim(this%data_source)) // "_gage_id"
 print *, '1.2'
+print *, ADJUSTL(trim(this%data_source))
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
-
+print *, '1.3'
+print *, this%number_of_reservoir_gages
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, this%data_source // "_gage_id")
+        if (status /= nf90_noerr) call handle_err(status, ADJUSTL(trim(this%data_source)) // "_gage_id")
 
+print *, '1.4'
         status = nf90_close(ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
 
@@ -113,6 +121,29 @@ print *, '1.2'
         do timeslice_gage_index = 1, this%number_of_reservoir_gages
 
             gage_id_string = gage_ids_string_array(timeslice_gage_index)
+
+
+!print *, '1111111111111=========================='
+do char_index = 1, 15
+    !temp_char = gage_id_string(char_index:char_index)
+
+    temp_val = ichar(gage_id_string(char_index:char_index))
+
+!print *, temp_val
+
+    ! Check if null character then pad with a space
+    if (temp_val == 0) then
+        gage_id_string(char_index:char_index) = ' '
+
+    end if
+
+end do
+!print *, '111111111111111=========================='
+
+
+
+
+
 
             gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
 
@@ -151,7 +182,7 @@ print *, '1.2'
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
 
-print *, '1.3'
+print *, '1.5'
     end subroutine timeslice_data_init
 
 
@@ -248,7 +279,7 @@ print *, '3.3'
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
                             observation_resolution_string // 'min.' // ADJUSTL(trim(this%data_source)) // 'TimeSlice.ncdf'
                                     !observation_resolution_string // 'min.usgsTimeSlice.ncdf'
-!print *, timeslice_file_name
+print *, timeslice_file_name
                     ! Check if file exists
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
                     if (file_exists) then
@@ -271,6 +302,10 @@ print *, '3.3'
 
         end if
 
+
+print *, 'this%reservoir_gage_discharges'
+print *, this%reservoir_gage_discharges
+
         ! Loop through gages to return gage lookback seconds and gage discharge for a given reservoir
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
             !if (this%reservoir_gage_ids(reservoir_subset_index) == reservoir_gage_id) then
@@ -281,6 +316,11 @@ print *, '3.3'
                 print *, '2.1'
                 gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
+                print *, reservoir_gage_discharge
+                print *, reservoir_subset_index
+                print *, this%reservoir_gage_ids(reservoir_subset_index)
+                print *, reservoir_gage_id
+                print *, '!!!!!!!!'
             end if
         end do
 
@@ -379,6 +419,9 @@ print *, '3.3'
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
 
+print *, ADJUSTL(trim(this%gage_id(timeslice_gage_index)))
+print *, ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))
+print *, this%reservoir_gage_discharges(reservoir_gage_index)
                             this%gage_lookback_seconds(reservoir_gage_index) = this%current_lookback_seconds
 
                         end if
