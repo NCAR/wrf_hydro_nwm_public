@@ -20,7 +20,7 @@ program reservoir_unit_tests
     rv1 = test_levelpool()
     rv2 = test_levelpool_overflow_max_height()
     rv3 = test_persistence_levelpool_hybrid_usgs()
-    rv4 = test_persistence_levelpool_hybrid_ace()
+    rv4 = test_persistence_levelpool_hybrid_usace()
     rv5 = test_rfc_forecasts_object()
 
     if (rv1 .and. rv2 .and. rv3 .and. rv4) then
@@ -167,10 +167,10 @@ program reservoir_unit_tests
     end function test_persistence_levelpool_hybrid_usgs
 
 
-    ! This tests the Persistence Levelpool Hybrid Module run reservoir function for Army Corps of Engineers (ACE)
-    ! type reservoirs. It also reads the ACE persistence parameters from the provided reservoir parameter file
-    ! and a gage discharge from the provided ACE Timeslice file.
-    function test_persistence_levelpool_hybrid_ace() result(rv)
+    ! This tests the Persistence Levelpool Hybrid Module run reservoir function for U.S. Army Corps of Engineers (USACE)
+    ! type reservoirs. It also reads the USACE persistence parameters from the provided reservoir parameter file
+    ! and a gage discharge from the provided USACE Timeslice file.
+    function test_persistence_levelpool_hybrid_usace() result(rv)
 
         implicit none
         logical rv, rv1, rv2                        ! test result
@@ -221,7 +221,7 @@ program reservoir_unit_tests
         lake_number = 4672717
         reservoir_type = 3
 
-        print *, "calling init for persistence_levelpool_hybrid ACE type reservoir"
+        print *, "calling init for persistence_levelpool_hybrid USACE type reservoir"
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
@@ -229,7 +229,7 @@ program reservoir_unit_tests
         weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-10_02:00:00", cwd_full, 12, 1000000000)
 
-        print *, "calling reservoir run for persistence_levelpool_hybrid for ACE type reservoir"
+        print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
 
         water_elevation = 1331.18005
 
@@ -247,11 +247,11 @@ program reservoir_unit_tests
         if (outflow .ge. 16.0820713 - epsilon(16.0820713) .and. outflow .le. 16.0820713 + epsilon(16.0820713) ) then
             rv2 = .true.
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run ACE Reservoir Test Passed'
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run ACE Reservoir Test Failed'
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Test Failed'
             print *, 'Outflow should be 16.08207'
             print *, "========================================================================"
             print *, outflow
@@ -261,7 +261,7 @@ program reservoir_unit_tests
             rv = .true.
         end if
 
-    end function test_persistence_levelpool_hybrid_ace
+    end function test_persistence_levelpool_hybrid_usace
 
 
     ! This tests the reservoir function of the level pool module under the specific condition

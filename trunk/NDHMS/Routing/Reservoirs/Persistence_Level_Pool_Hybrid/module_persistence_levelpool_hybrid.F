@@ -100,15 +100,19 @@ contains
                 call usgs_timeslice_data%init(start_date, timeslice_path, &
                 reservoir_parameter_file, "usgs", observation_lookback_hours)
 
+                ! Assign pointer to usgs_timeslice_data object
                 this%timeslice_data=>usgs_timeslice_data
 
             else if (reservoir_type == 3) then
                 call usace_timeslice_data%init(start_date, timeslice_path, &
                 reservoir_parameter_file, "usace", observation_lookback_hours)
 
+                ! Assign pointer to usace_timeslice_data object
                 this%timeslice_data=>usace_timeslice_data
 
             else
+                ! Call hydro_stop if reservoir_type is not USGS or USACE because the
+                ! data source is not available.
                 write(lake_number_string, "(I15)") lake_number
                 call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
 
@@ -246,16 +250,10 @@ contains
         ! be retrieved. The first reservoir for each processor to reach an update time will call the function to read a new timeslice file,
         ! and these timeslice discharges will be held in memory for the subsequent reservoirs to use at that timestep.
         if (this%state%current_time >= this%state%timeslice_update_time) then
-            ! Read new timeslice gage discharges
-            !call usgs_timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
-            !this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
 
+            ! Read new timeslice gage discharges
             call this%timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
             this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
-
-print *, 'this%state%gage_discharge'
-
-print *, this%state%gage_discharge
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
@@ -349,10 +347,6 @@ print *, this%state%gage_discharge
         this%state%current_storage, this%properties%min_storage, &
         this%properties%max_storage, this%properties%lake_number, &
         this%state%current_time, int(routing_period), this%output%outflow, max_storage_reached)
-
-print *, 'max_storage_reached'
-print *, max_storage_reached
-print *, this%state%persisted_outflow
 
         ! If max storage has been reached, release greater of persistence or levelpool
         if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then

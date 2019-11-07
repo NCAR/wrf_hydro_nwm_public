@@ -23,7 +23,6 @@ module module_persistence_levelpool_hybrid_properties
         real    :: orifice_elevation            ! orifice elevation (meters AMSL)
         integer :: lake_number                  ! lake number
         integer :: reservoir_type               ! reservoir type
-        !integer :: gage_id
         character(len=15) :: gage_id
         integer :: observation_lookback_hours
         integer :: observation_update_time_interval_seconds
@@ -58,8 +57,6 @@ contains
         integer                      :: status                        ! status of reading NetCDF
         integer                      :: number_of_weights, number_of_lakes
         real, allocatable, dimension(:,:) :: temp_real_2D_array
-
-integer :: temp1, tempVal
 
         this%lake_area = lake_area * 1.0E6
 
@@ -100,14 +97,6 @@ integer :: temp1, tempVal
             status = nf90_get_var(ncid, var_id, temp_real_2D_array)
             if (status /= nf90_noerr) call handle_err(status, "usgs_persistence_coefficients")
 
-
-print *, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-do temp1 = 1, 15
-    tempVal = ichar(this%gage_id(temp1:temp1))
-
-    print *, tempVal
-
-end do
         ! If reservoir_type is 3, then look for ACE parameters
         else if (this%reservoir_type == 3) then
 

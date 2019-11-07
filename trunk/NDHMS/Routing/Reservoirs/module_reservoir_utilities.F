@@ -345,17 +345,13 @@ contains
     subroutine read_persistence_netcdf_gage_id(ncid, lake_id_index, netcdf_array_name, gage_id)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
-        character(len=*), intent(out) :: gage_id  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!len 15????
+        character(len=*), intent(out) :: gage_id
         character(len=15) :: gage_id_string, gage_id_string_trimmed
         character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
-        integer        :: char_index, number_counter
+        integer        :: char_index, number_counter, temp_val
         character(len=1)   :: temp_char
-
-
-integer :: temp_val
-        !type(C_ptr) :: gage_id_string1
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
@@ -373,56 +369,18 @@ integer :: temp_val
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
+        do char_index = 1, 15
+            temp_val = ichar(gage_id_string(char_index:char_index))
 
-!gage_id_string1 = gage_id_string
-
-        !gage_id_string = cstr2f(gage_id_string)
-
-print *, '=========================='
-do char_index = 1, 15
-    !temp_char = gage_id_string(char_index:char_index)
-
-    temp_val = ichar(gage_id_string(char_index:char_index))
-
-print *, temp_val
-
-    ! Check if null character then pad with a space
-    if (temp_val == 0) then
-        gage_id_string(char_index:char_index) = ' '
-
-    end if
-
-end do
-print *, '=========================='
-
-
-
-
-
-
-
+            ! Check if null character, then pad with a space
+            if (temp_val == 0) then
+                gage_id_string(char_index:char_index) = ' '
+            end if
+        end do
 
         gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
 
         gage_id = gage_id_string_trimmed
-
-
-
-        !number_counter = 0
-
-        !do char_index = 1, 15
-        !    temp_char = gage_id_string_trimmed(char_index:char_index)
-
-        !    if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
-        !    .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
-        !    .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
-        !    .or. temp_char .eq. '9') then
-        !        number_counter = number_counter + 1
-        !    end if
-
-        !end do
-
-        !read(gage_id_string_trimmed(1:number_counter), *) gage_id
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 
@@ -1024,19 +982,5 @@ print *, '=========================='
        endif
     endif
     end function nfeb
-
-    function cstr2f(s)
-        use, intrinsic :: iso_c_binding
-        interface
-            pure function strlen(s) bind(c, name="strlen")
-                use, intrinsic :: iso_c_binding
-                type(c_ptr), intent(in) :: s
-                integer(c_size_t) strlen
-            end
-        end interface
-        type(c_ptr) s
-        character(kind=c_char, len=strlen(s)), pointer :: cstr2f
-        call c_f_pointer(s, cstr2f)
-    end
 
 end module module_reservoir_utilities

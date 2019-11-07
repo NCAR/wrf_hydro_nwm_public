@@ -109,7 +109,7 @@ module config_base
      character(len=256) :: route_link_f=""
      character(len=256) :: route_lake_f=""
      logical            :: reservoir_persistence_usgs
-     logical            :: reservoir_persistence_ace
+     logical            :: reservoir_persistence_usace
      character(len=256) :: reservoir_parameter_file=""
      character(len=256) :: reservoir_timeslice_path=""
      integer            :: reservoir_observation_lookback_hours = 18
@@ -411,7 +411,7 @@ contains
       endif
    end if
 
-   if(self%reservoir_persistence_usgs .or. self%reservoir_persistence_ace) then
+   if(self%reservoir_persistence_usgs .or. self%reservoir_persistence_usace) then
       if(len(trim(self%reservoir_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
          reservoir persistence capability.')
@@ -438,7 +438,7 @@ contains
     logical            :: compound_channel
     character(len=256) :: route_lake_f=""
     logical            :: reservoir_persistence_usgs
-    logical            :: reservoir_persistence_ace
+    logical            :: reservoir_persistence_usace
     character(len=256) :: reservoir_parameter_file=""
     character(len=256) :: reservoir_timeslice_path=""
     integer            :: reservoir_observation_lookback_hours = 18
@@ -508,7 +508,7 @@ contains
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-         reservoir_persistence_usgs, reservoir_persistence_ace, reservoir_parameter_file, reservoir_timeslice_path, &
+         reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
          reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
          geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
@@ -545,7 +545,7 @@ contains
     compound_channel = .FALSE.
     bucket_loss = 0
     reservoir_persistence_usgs = .FALSE.
-    reservoir_persistence_ace = .FALSE.
+    reservoir_persistence_usace = .FALSE.
     reservoir_observation_lookback_hours = 18
     reservoir_observation_update_time_interval_seconds = 86400
     reservoir_rfc_forecasts = .FALSE.
@@ -625,14 +625,14 @@ contains
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
     nlst(did)%reservoir_persistence_usgs = reservoir_persistence_usgs
-    nlst(did)%reservoir_persistence_ace = reservoir_persistence_ace
+    nlst(did)%reservoir_persistence_usace = reservoir_persistence_usace
     nlst(did)%reservoir_parameter_file = reservoir_parameter_file
     nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
     nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
 
-    if (reservoir_persistence_usgs .or. reservoir_persistence_ace .or. reservoir_rfc_forecasts) then
+    if (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts) then
         reservoir_type_specified = .TRUE.
     end if
 
@@ -726,7 +726,7 @@ contains
     nlst(did)%route_lake_f = route_lake_f
 
     nlst(did)%reservoir_persistence_usgs = reservoir_persistence_usgs
-    nlst(did)%reservoir_persistence_ace = reservoir_persistence_ace
+    nlst(did)%reservoir_persistence_usace = reservoir_persistence_usace
     nlst(did)%reservoir_parameter_file = reservoir_parameter_file
     nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours

@@ -56,17 +56,17 @@ modules or areas of the system.
 * **module_persistence_levelpool_hybrid_tests.F** holds unit tests that test for all components of a hybrid reservoir
 are properly initialized.
 
-* **module_reservoir_read_usgs_timeslice_data.F** and **module_reservoir_read_ace_timeslice_data.F** within the **Reservoirs** directory,
-reads USGS or Army Corps of Engineers (ACE) timeslice files to get gage discharge values that will be used by reservoirs. An observation
-lookback period is passed in to determine how far back in time from the current model time the module will look for timeslice files. The
-observation resolution determines the time increments the module will look back. For instance, a standard lookback period would be
-18 hours with an observation resolution of 15 minutes, where a model current time of 8:00 PM would search for timeslice
-files at every 15 minute increment between 2:00 AM and 8:00 PM that day. The module will first search for the most recent
-timeslice files and grab the discharge for a particular lake/reservoir if the gage quality standard is met at that time.
-If a gage discharge is missing or if the gage quality standard is not met for any particular lake/reservoir in the given
-timeslice file, the module will continue to look back at every observation resolution increment until either all
-lakes/reservoirs have a good quality discharge or the end of the lookback period is reached. The total lookback seconds
-from current model time that the discharge is read will also be returned.
+* **module_reservoir_read_timeslice_data.F** within the **Reservoirs** directory, reads USGS (U.S. Geological Survey) or
+USACE (U.S. Army Corps of Engineers) timeslice files to get gage discharge values that will be used by reservoirs. An
+observation lookback period is passed in to determine how far back in time from the current model time the module will
+look for timeslice files. The observation resolution determines the time increments the module will look back. For instance,
+a standard lookback period would be 18 hours with an observation resolution of 15 minutes, where a model current time of
+8:00 PM would search for timeslice files at every 15 minute increment between 2:00 AM and 8:00 PM that day. The module will
+first search for the most recent timeslice files and grab the discharge for a particular lake/reservoir if the gage quality
+standard is met at that time. If a gage discharge is missing or if the gage quality standard is not met for any particular
+lake/reservoir in the given timeslice file, the module will continue to look back at every observation resolution increment
+until either all lakes/reservoirs have a good quality discharge or the end of the lookback period is reached. The total
+lookback seconds from current model time that the discharge is read will also be returned.
 
 * **module_reservoir_utilities.F**, also within the **Reservoirs** directory,
 contains multiple functions used by the Hybrid module. The modify_for_projected_storage function is called from the
@@ -79,9 +79,13 @@ persistence parameter and timeslice NetCDF files.
 
 This module requires five input parameters that are set in hydro.namelist.
 
-* ```reservoir_persistence_usgs``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated. This will set
+* ```reservoir_persistence_usgs``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated for USGS persistence. This will set
 the variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the reservoir parameter file.
-The reservoir_type for a USGS (U.S. Geological Survey) hybrid persistence reservoir is currently set to '2' in the reservoir parameter file.
+The reservoir_type for a USGS hybrid persistence reservoir is currently set to '2' in the reservoir parameter file.
+
+* ```reservoir_persistence_usace``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated for USACE. This will set
+the variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the reservoir parameter file.
+The reservoir_type for a USCAE hybrid persistence reservoir is currently set to '3' in the reservoir parameter file.
 
 * ```reservoir_parameter_file``` is the NetCDF parameter file that holds the weights and corresponding gage ID for each lake ID.
 

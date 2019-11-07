@@ -802,7 +802,7 @@ subroutine LandRT_ini(did)
        else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst(did)%reservoir_persistence_usgs) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 3 .and. nlst(did)%reservoir_persistence_ace) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 3 .and. nlst(did)%reservoir_persistence_usace) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then

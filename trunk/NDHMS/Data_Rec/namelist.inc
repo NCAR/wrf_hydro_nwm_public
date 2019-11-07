@@ -42,7 +42,7 @@
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
           logical            :: reservoir_persistence_usgs
-          logical            :: reservoir_persistence_ace
+          logical            :: reservoir_persistence_usace
           character(len=256) :: reservoir_parameter_file=""
           character(len=256) :: reservoir_timeslice_path=""
           integer            :: reservoir_observation_lookback_hours
