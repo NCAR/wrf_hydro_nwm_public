@@ -79,8 +79,9 @@ persistence parameter and timeslice NetCDF files.
 
 This module requires five input parameters that are set in hydro.namelist.
 
-* ```reservoir_persistence_usgs``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated. This will cause the model to read the Q_Type variable
-from LAKEPARM.nc, the lake parameter file. The Q_Type for a hybrid reservoir is currently set to '2' in the lake parameter file.
+* ```reservoir_persistence_usgs``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated. This will set
+the variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the reservoir parameter file.
+The reservoir_type for a USGS (U.S. Geological Survey) hybrid persistence reservoir is currently set to '2' in the reservoir parameter file.
 
 * ```reservoir_parameter_file``` is the NetCDF parameter file that holds the weights and corresponding gage ID for each lake ID.
 

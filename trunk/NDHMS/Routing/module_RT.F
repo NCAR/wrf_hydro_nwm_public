@@ -728,7 +728,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
-             nlst(did)%reservoir_not_levelpool, rt_domain(did)%reservoir_type, &
+             nlst(did)%reservoir_type_specified, rt_domain(did)%reservoir_type, &
              nlst(did)%reservoir_parameter_file,    &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -772,7 +772,7 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst(did)%reservoir_not_levelpool,                    &
+           nlst(did)%reservoir_type_specified,                      &
            rt_domain(did)%reservoir_type,                           &
            nlst(did)%reservoir_parameter_file,                      &
            rt_domain(did)%LATLAKE,                                  &

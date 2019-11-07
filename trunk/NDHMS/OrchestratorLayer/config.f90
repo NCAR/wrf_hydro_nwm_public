@@ -115,7 +115,7 @@ module config_base
      integer            :: reservoir_observation_lookback_hours = 18
      integer            :: reservoir_observation_update_time_interval_seconds = 86400
      logical            :: reservoir_rfc_forecasts
-     logical            :: reservoir_not_levelpool
+     logical            :: reservoir_type_specified
      character(len=256) :: route_direction_f=""
      character(len=256) :: route_order_f=""
      character(len=256) :: gwbasmskfil =""
@@ -400,7 +400,7 @@ contains
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
-   if(self%reservoir_not_levelpool) then
+   if(self%reservoir_type_specified) then
       if(len(trim(self%reservoir_parameter_file)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_parameter_file for &
          inputs to reservoirs that are not level pool type.')
@@ -444,7 +444,7 @@ contains
     integer            :: reservoir_observation_lookback_hours = 18
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
     logical            :: reservoir_rfc_forecasts
-    logical            :: reservoir_not_levelpool
+    logical            :: reservoir_type_specified
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
     character(len=256) :: gwbasmskfil =""
@@ -510,7 +510,7 @@ contains
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
          reservoir_persistence_usgs, reservoir_persistence_ace, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-         reservoir_rfc_forecasts, reservoir_not_levelpool, route_direction_f,route_order_f,gwbasmskfil, &
+         reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
          geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -549,7 +549,7 @@ contains
     reservoir_observation_lookback_hours = 18
     reservoir_observation_update_time_interval_seconds = 86400
     reservoir_rfc_forecasts = .FALSE.
-    reservoir_not_levelpool = .FALSE.
+    reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -633,10 +633,10 @@ contains
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
 
     if (reservoir_persistence_usgs .or. reservoir_persistence_ace .or. reservoir_rfc_forecasts) then
-        reservoir_not_levelpool = .TRUE.
+        reservoir_type_specified = .TRUE.
     end if
 
-    nlst(did)%reservoir_not_levelpool = reservoir_not_levelpool
+    nlst(did)%reservoir_type_specified = reservoir_type_specified
 
     write(nlst(did)%hgrid,'(I1)') igrid
 
@@ -838,7 +838,7 @@ contains
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
      integer            :: split_output_count = 1
-     integer            :: khour
+     integer            :: khour = -999
      integer            :: kday = -999
      real               :: zlvl
      character(len=256) :: hrldas_setup_file = " "
@@ -970,8 +970,19 @@ contains
     noah_lsm%crop_option = crop_option
 
     noah_lsm%split_output_count = split_output_count
+
+    if (kday > 0) then
+        if (khour > 0) then
+            write(*, '("WARNING: Check Namelist: KHOUR and KDAY both defined, KHOUR will take precedence.")')
+            kday = -999
+        else
+            write(*, '("WARNING: KDAY is deprecated and may be removed in a future version, please use KHOUR.")')
+            khour = -999
+        end if
+    end if
+    noah_lsm%kday = kday
     noah_lsm%khour = khour
-    noah_lsm%kday = -999!kday
+
     noah_lsm%zlvl = zlvl
     noah_lsm%hrldas_setup_file = hrldas_setup_file
     noah_lsm%mmf_runoff_file = " "!mmf_runoff_file
