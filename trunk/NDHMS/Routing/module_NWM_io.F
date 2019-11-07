@@ -507,13 +507,15 @@ subroutine output_chrt_NWM(domainId)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -1146,13 +1148,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
 
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
@@ -1170,53 +1174,88 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,& !1-10
+                             1,1,1,1,1,1,1,1,1,1,& !11-20
+                             1,1,1,1,1,1,1,1,1,1,& !21-30
+                             1,1,1,1,1,1,1,1,1,1,& !31-40
+                             1,1,1,1,1,1,1,1,1,1,& !41-50
+                             1,1,1,1,1,1,1,1,1,1,& !51-60
+                             1,1,1,1,1,1,1,1,1,1,& !61-70
+                             1,1,1,1,1,1,1,1,1,1,& !71-80
+                             1,1,1,1,1,1,1,1,1,1,& !81-90
+                             1,1,1,1,1,1,1,1]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             0,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,1,0,0,0,& !11-20
+                             0,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             0,0,1,1,1,1,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,1,1,0,1,0,0,1]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,0,0,0,0,& !11-20
+                             0,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             0,0,0,1,1,0,0,1,0,0,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,0,1,0,1,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
-                             0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             1,1,1,1,1,0,0,0,0,1,& !11-20
+                             0,0,0,0,0,0,0,1,1,1,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             0,0,1,1,1,0,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,1,1,0,1,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,&
-                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,0,0,0,1,& !11-20
+                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             0,0,0,0,1,0,0,0,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,0,1,1,0,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,1,& !1-20
-                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !21-40
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !41-60
-                             1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,& !61-80
-                             0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1]        !81-97
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,& !1-10
+                             1,1,0,1,1,0,0,1,0,1,& !11-20
+                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             1,0,1,1,1,0,0,1,0,0,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,0,0,0,0,1,1,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
-                             1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             1,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             1,1,1,1,1,0,0,0,0,1,& !11-20
+                             1,0,0,0,0,0,0,1,1,1,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             1,0,1,1,1,0,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,1,1,1,1,0,0,0]      !91-98
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1812,13 +1851,15 @@ subroutine output_rt_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -2474,13 +2515,15 @@ subroutine output_lakes_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3034,13 +3077,15 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3491,13 +3536,15 @@ subroutine output_lsmOut_NWM(domainId)
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -4286,13 +4333,15 @@ subroutine output_chanObs_NWM(domainId)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -5090,13 +5139,15 @@ subroutine output_gw_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)

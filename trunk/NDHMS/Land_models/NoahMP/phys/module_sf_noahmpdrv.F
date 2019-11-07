@@ -45,7 +45,7 @@ CONTAINS
  		    Z0,      ZNT,                                           & ! IN/OUT LSM eqv
                ISNOWXY,     TVXY,     TGXY,  CANICEXY, CANLIQXY,     EAHXY, & ! IN/OUT Noah MP only
 	         TAHXY,     CMXY,     CHXY,    FWETXY, SNEQVOXY,  ALBOLDXY, & ! IN/OUT Noah MP only
-               QSNOWXY, WSLAKEXY,    ZWTXY,      WAXY,     WTXY,    TSNOXY, & ! IN/OUT Noah MP only
+               QSNOWXY, QRAINXY, WSLAKEXY, ZWTXY,  WAXY,   WTXY,    TSNOXY, & ! IN/OUT Noah MP only
 	       ZSNSOXY,  SNICEXY,  SNLIQXY,  LFMASSXY, RTMASSXY,  STMASSXY, & ! IN/OUT Noah MP only
 	        WOODXY, STBLCPXY, FASTCPXY,    XLAIXY,   XSAIXY,   TAUSSXY, & ! IN/OUT Noah MP only
 	       SMOISEQ, SMCWTDXY,DEEPRECHXY,   RECHXY,                      & ! IN/OUT Noah MP only
@@ -204,6 +204,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  SNEQVOXY  ! snow mass at last time step(mm h2o)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ALBOLDXY  ! snow albedo at last time step (-)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  QSNOWXY   ! snowfall on the ground [mm/s]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  QRAINXY   ! rainfall on the ground [mm/s]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  WSLAKEXY  ! lake water storage [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  ZWTXY     ! water table depth [m]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  WAXY      ! water in the "aquifer" [mm]
@@ -349,6 +350,7 @@ CONTAINS
     REAL                                :: SNEQVO       ! snow mass at last time step(mm h2o)
     REAL                                :: ALBOLD       ! snow albedo at last time step (-)
     REAL                                :: QSNOW        ! snowfall on the ground [mm/s]
+    REAL                                :: QRAIN        ! rainfall on the ground [mm/s]
     REAL                                :: WSLAKE       ! lake water storage [mm]
     REAL                                :: ZWT          ! water table depth [m]
     REAL                                :: WA           ! water in the "aquifer" [mm]
@@ -607,6 +609,7 @@ CONTAINS
        SNEQVO                = SNEQVOXY(I,J)                ! SWE previous timestep
        ALBOLD                = ALBOLDXY(I,J)                ! albedo previous timestep, for snow aging
        QSNOW                 = QSNOWXY (I,J)                ! snow falling on ground
+       QRAIN                 = QRAINXY (I,J)                ! rain falling on ground
        WSLAKE                = WSLAKEXY(I,J)                ! lake water storage (can be neg.) (mm)
        ZWT                   = ZWTXY   (I,J)                ! depth to water table [m]
        WA                    = WAXY    (I,J)                ! water storage in aquifer [mm]
@@ -705,7 +708,7 @@ CONTAINS
          CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
                                T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
                                PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
-                              QSNOW,  SNEQVO,  ALBOLD,      CM,      CH,   ISNOW, & ! IN/OUT :
+                              QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
                                 SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
                                  TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
@@ -790,7 +793,7 @@ CONTAINS
             TBOT    , CO2PP   , O2PP    , FOLN    , FICEOLD , Z_ML    , & ! IN : Forcing
             ALBOLD  , SNEQVO  ,                                         & ! IN/OUT : 
             STC     , SMH2O   , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT : 
-            CANLIQ  , CANICE  , TV      , TG      , QSFC1D  , QSNOW   , & ! IN/OUT : 
+            CANLIQ  , CANICE  , TV      , TG    , QSFC1D, QSNOW, QRAIN, & ! IN/OUT : 
             ISNOW   , ZSNSO   , SNDPTH  , SWE     , SNICE   , SNLIQ   , & ! IN/OUT : 
             ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
             STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT : 
@@ -907,6 +910,7 @@ CONTAINS
              SNEQVOXY (I,J)                = SNEQVO
              ALBOLDXY (I,J)                = ALBOLD
              QSNOWXY  (I,J)                = QSNOW
+             QRAINXY  (I,J)                = QRAIN
              WSLAKEXY (I,J)                = WSLAKE
              ZWTXY    (I,J)                = ZWT
              WAXY     (I,J)                = WA
