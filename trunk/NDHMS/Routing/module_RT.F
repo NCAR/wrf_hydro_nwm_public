@@ -728,7 +728,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
-             nlst(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
+             nlst(did)%reservoir_type_specified, rt_domain(did)%reservoir_type, &
              nlst(did)%reservoir_parameter_file,    &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -772,9 +772,9 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst(did)%reservoir_persistence,                         &
+           nlst(did)%reservoir_type_specified,                      &
            rt_domain(did)%reservoir_type,                           &
-           nlst(did)%reservoir_parameter_file,          &
+           nlst(did)%reservoir_parameter_file,                      &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
@@ -796,11 +796,17 @@ subroutine LandRT_ini(did)
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3 .or. rt_domain(did)%reservoir_type(lake_index) == 4) then
+       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3) then
            allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst(did)%reservoir_persistence_usgs) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then
+          allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else
+          allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        end if
 

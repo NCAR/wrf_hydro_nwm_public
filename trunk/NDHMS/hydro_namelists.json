@@ -30,7 +30,7 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
-            "reservoir_persistence": false,
+            "reservoir_persistence_usgs": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
@@ -109,7 +109,7 @@
             "lsmout_domain": 0,
             "output_gw": 0,
             "output_channelbucket_influx": 2,
-            "reservoir_persistence": false
+            "reservoir_persistence_usgs": false
         },
         "nudging_nlist": {}
     },

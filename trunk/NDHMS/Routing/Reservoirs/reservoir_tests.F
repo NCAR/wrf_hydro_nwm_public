@@ -21,7 +21,6 @@ program reservoir_unit_tests
     rv3 = test_persistence_levelpool_hybrid()
     rv4 = test_rfc_forecasts_object()
 
-
     if (rv1 .and. rv2 .and. rv3 .and. rv4) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
@@ -252,9 +251,10 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 20)
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 11., 12., 14., 16., 18., 0.9, 20)
 
         print *, "testing data in rfc_forecasts"
+
         call_status = rfc_forecasts_data_info(rfc_forecasts_reservoir_data)
 
         if (call_status) then
