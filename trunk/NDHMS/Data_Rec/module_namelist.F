@@ -61,7 +61,7 @@ CONTAINS
           integer            :: reservoir_observation_lookback_hours
           integer            :: reservoir_observation_update_time_interval_seconds
           logical            :: reservoir_rfc_forecasts
-          logical            :: reservoir_not_levelpool
+          logical            :: reservoir_type_specified
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
           character(len=256) :: geo_finegrid_flnm =""
@@ -127,7 +127,7 @@ CONTAINS
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
                     reservoir_persistence_usgs, reservoir_parameter_file, reservoir_timeslice_path, &
                     reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-                    reservoir_rfc_forecasts, reservoir_not_levelpool, route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
+                    reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
                     GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -165,7 +165,7 @@ CONTAINS
    reservoir_observation_lookback_hours = 18
    reservoir_observation_update_time_interval_seconds = 86400
    reservoir_rfc_forecasts = .FALSE.
-   reservoir_not_levelpool = .FALSE.
+   reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
    ! Default values for NUDGING_nlist
@@ -270,10 +270,10 @@ CONTAINS
   nlst%reservoir_rfc_forecasts = reservoir_rfc_forecasts
 
   if (reservoir_persistence_usgs .or. reservoir_rfc_forecasts) then
-    reservoir_not_levelpool = .TRUE.
+    reservoir_type_specified = .TRUE.
   end if
 
-  nlst%reservoir_not_levelpool = reservoir_not_levelpool
+  nlst%reservoir_type_specified = reservoir_type_specified
 
 #ifdef MPP_LAND
   call mpp_land_bcast_char(256,nlst%RESTART_FILE)
@@ -285,7 +285,7 @@ CONTAINS
   call mpp_land_bcast_int1(nlst%reservoir_observation_lookback_hours)
   call mpp_land_bcast_int1(nlst%reservoir_observation_update_time_interval_seconds)
   call mpp_land_bcast_log1(nlst%reservoir_rfc_forecasts)
-  call mpp_land_bcast_log1(nlst%reservoir_not_levelpool)
+  call mpp_land_bcast_log1(nlst%reservoir_type_specified)
 #endif
 
   write(nlst%hgrid,'(I1)') igrid

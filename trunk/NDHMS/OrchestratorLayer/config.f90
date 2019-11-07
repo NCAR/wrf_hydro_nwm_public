@@ -114,7 +114,7 @@ module config_base
      integer            :: reservoir_observation_lookback_hours = 18
      integer            :: reservoir_observation_update_time_interval_seconds = 86400
      logical            :: reservoir_rfc_forecasts
-     logical            :: reservoir_not_levelpool
+     logical            :: reservoir_type_specified
      character(len=256) :: route_direction_f=""
      character(len=256) :: route_order_f=""
      character(len=256) :: gwbasmskfil =""
@@ -439,7 +439,7 @@ contains
     integer            :: reservoir_observation_lookback_hours = 18
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
     logical            :: reservoir_rfc_forecasts
-    logical            :: reservoir_not_levelpool
+    logical            :: reservoir_type_specified
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
     character(len=256) :: gwbasmskfil =""
@@ -505,7 +505,7 @@ contains
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
          reservoir_persistence_usgs, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-         reservoir_rfc_forecasts, reservoir_not_levelpool, route_direction_f,route_order_f,gwbasmskfil, &
+         reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
          geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -543,7 +543,7 @@ contains
     reservoir_observation_lookback_hours = 18
     reservoir_observation_update_time_interval_seconds = 86400
     reservoir_rfc_forecasts = .FALSE.
-    reservoir_not_levelpool = .FALSE.
+    reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -626,10 +626,10 @@ contains
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
 
     if (reservoir_persistence_usgs .or. reservoir_rfc_forecasts) then
-        reservoir_not_levelpool = .TRUE.
+        reservoir_type_specified = .TRUE.
     end if
 
-    nlst(did)%reservoir_not_levelpool = reservoir_not_levelpool
+    nlst(did)%reservoir_type_specified = reservoir_type_specified
 
     write(nlst(did)%hgrid,'(I1)') igrid
 
