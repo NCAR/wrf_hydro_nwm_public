@@ -58,6 +58,7 @@ set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF-Hydro coupling to R
 set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE STRING "Spatially distributed soil parameters for NoahMP 0=off 1=on")
 set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE STRING "Large netCDF file support 0=off, 1=on")
 set (NCEP_WCOSS $ENV{NCEP_WCOSS} CACHE STRING "WCOSS file units 0=off 1=on")
+set (NWM_META $ENV{NWM_META} CACHE STRING "NWM output metadata 0=off 1=on")
 set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
 set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
@@ -86,6 +87,10 @@ endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
 if (NCEP_WCOSS STREQUAL "")
 	set (NCEP_WCOSS "0" CACHE STRING "WCOSS file units 0=off, 1=on" FORCE)
 endif (NCEP_WCOSS STREQUAL "")
+
+if (NWM_META STREQUAL "")
+        set (NWM_META "0" CACHE STRING "NWM output metadata 0=off, 1=on" FORCE)
+endif (NWM_META STREQUAL "")
 
 if (WRF_HYDRO_NUDGING STREQUAL "")
 	set (WRF_HYDRO_NUDGING "0" CACHE STRING "Streamflow nudging 0=off, 1=on" FORCE)
@@ -143,6 +148,12 @@ message ("NCEP_WCOSS = " ${NCEP_WCOSS} )
 if (NCEP_WCOSS STREQUAL "1" )
 	add_definitions(-DNCEP_WCOSS)
 endif (NCEP_WCOSS STREQUAL "1") 
+
+#set -DNCEP_WCOSS from env
+message ("NWM_META = " ${NWM_META} )
+if (NWM_META STREQUAL "1" )
+        add_definitions(-DNWM_META)
+endif (NWM_META STREQUAL "1")
 
 #set -DSPATIAL_SOIL from env
 message ("WRF_HYDRO_NUDGING = " ${WRF_HYDRO_NUDGING} )

@@ -22,6 +22,7 @@ if [[ ! -z $env_file ]]; then
     unset WRF_HYDRO_RAPID
     unset WRFIO_NCD_LARGE_FILE_SUPPORT
     unset NCEP_WCOSS
+    unset NWM_META
     unset WRF_HYDRO_NUDGING
 
     echo "configure: Sourcing $env_file for the compile options."
