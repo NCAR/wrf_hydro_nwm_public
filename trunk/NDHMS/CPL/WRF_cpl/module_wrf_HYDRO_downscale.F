@@ -30,7 +30,6 @@ module module_WRF_HYDRO
 
     use module_rt_data, only:  rt_domain
     use module_CPL_LAND, only: cpl_outdate
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
     USE module_domain, ONLY : domain, domain_clock_get
 

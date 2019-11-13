@@ -933,6 +933,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               up_id,mpp_land_com_real, my_id, io_id, numprocs, &
                               mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
                               sum_real1
+   use module_hydro_stop, only:HYDRO_stop
 #endif
 
    implicit none
@@ -1279,7 +1280,6 @@ end subroutine disaggregateDomain
 subroutine SubsurfaceRouting_drv(did)
 
     use module_RT_data, only: rt_domain
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
 
     implicit none
@@ -1298,7 +1298,6 @@ end subroutine SubsurfaceRouting_drv
 
 subroutine OverlandRouting_drv(did)
     use module_RT_data, only: rt_domain
-    !use module_namelist, only: nlst_rt
     use config_base, only: nlst
 
     implicit none

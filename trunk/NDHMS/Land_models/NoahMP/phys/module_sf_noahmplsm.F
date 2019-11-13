@@ -391,7 +391,7 @@ contains
                    TBOT    , CO2AIR  , O2AIR   , FOLN    , FICEOLD , ZLVL    , & ! IN : Forcing
                    ALBOLD  , SNEQVO  ,                                         & ! IN/OUT : 
                    STC     , SH2O    , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT : 
-                   CANLIQ  , CANICE  , TV      , TG      , QSFC    , QSNOW   , & ! IN/OUT : 
+                   CANLIQ  , CANICE  , TV      , TG      , QSFC, QSNOW, QRAIN, & ! IN/OUT : 
                    ISNOW   , ZSNSO   , SNOWH   , SNEQV   , SNICE   , SNLIQ   , & ! IN/OUT : 
                    ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
                    STMASS  , WOOD    , STBLCP  , FASTCP  , LAI     , SAI     , & ! IN/OUT : 
@@ -474,6 +474,7 @@ contains
 
 ! input/output : need arbitary intial values
   REAL                           , INTENT(INOUT) :: QSNOW  !snowfall [mm/s]
+  REAL                           , INTENT(INOUT) :: QRAIN  !rainfall [mm/s]
   REAL                           , INTENT(INOUT) :: FWET   !wetted or snowed fraction of canopy (-)
   REAL                           , INTENT(INOUT) :: SNEQVO !snow mass at last time step (mm)
   REAL                           , INTENT(INOUT) :: EAH    !canopy air vapor pressure (pa)
@@ -660,7 +661,6 @@ contains
   REAL                                           :: QINTS   !interception (loading) rate for snowfall (mm/s)
   REAL                                           :: QDRIPS  !drip (unloading) rate for intercepted snow (mm/s)
   REAL                                           :: QTHROS  !throughfall of snowfall (mm/s)
-  REAL                                           :: QRAIN   !rain at ground srf (mm/s) [+]
   REAL                                           :: SNOWHIN !snow depth increasing rate (m/s)
   REAL                                 :: LATHEAV !latent heat vap./sublimation (j/kg)
   REAL                                 :: LATHEAG !latent heat vap./sublimation (j/kg)
@@ -848,7 +848,7 @@ contains
 ! urban - jref
     QFX = ETRAN + ECAN + EDIR
     IF ( parameters%urban_flag ) THEN
-       QSFC = (QFX/RHOAIR*CH) + QAIR
+       QSFC = QFX/(RHOAIR*CH) + QAIR
        Q2B = QSFC
     END IF
 
@@ -1846,6 +1846,15 @@ ENDIF   ! CROPTYPE == 0
         ZPD  = ZPDG
      END IF
 
+! special case for urban
+
+     IF (parameters%urban_flag) THEN
+       Z0MG = parameters%Z0MVT
+       ZPDG  = 0.65 * parameters%HVT
+       Z0M  = Z0MG
+       ZPD  = ZPDG
+     END IF
+
      ZLVL = MAX(ZPD,parameters%HVT) + ZREF
      IF(ZPDG >= ZLVL) ZLVL = ZPDG + ZREF
 !     UR   = UR*LOG(ZLVL/Z0M)/LOG(10./Z0M)       !input UR is at 10m
@@ -2363,7 +2372,8 @@ ENDIF   ! CROPTYPE == 0
     THKS = (THKQTZ ** parameters%QUARTZ(ISOIL))* (THKO ** (1. - parameters%QUARTZ(ISOIL)))
 
 ! UNFROZEN VOLUME FOR SATURATION (POROSITY*XUNFROZ)
-    XUNFROZ = SH2O / SMC
+    XUNFROZ = 1.0                       ! Prevent divide by zero (suggested by D. Mocko)
+    IF(SMC > 0.) XUNFROZ = SH2O / SMC
 ! SATURATED THERMAL CONDUCTIVITY
     XU = XUNFROZ * parameters%SMCMAX(ISOIL)
 
@@ -3556,6 +3566,7 @@ ENDIF   ! CROPTYPE == 0
         MOZ    = 0.
         MOZSGN = 0
         MOZOLD = 0.
+        FH2    = 0.
         HG     = 0.
         H      = 0.
         QFX    = 0.
@@ -4008,6 +4019,7 @@ ENDIF   ! CROPTYPE == 0
         MOZ    = 0.
         MOZSGN = 0
         MOZOLD = 0.
+        FH2    = 0.
         H      = 0.
         QFX    = 0.
         FV     = 0.1
@@ -4242,6 +4254,7 @@ ENDIF   ! CROPTYPE == 0
 
        TMPRB  = CWPC*50. / (1. - EXP(-CWPC/2.))
        RB     = TMPRB * SQRT(parameters%DLEAF/UC)
+       RB     = MAX(RB,20.0)
 !       RB = 200
 
   END SUBROUTINE RAGRB
@@ -4551,6 +4564,8 @@ ENDIF   ! CROPTYPE == 0
        ELSE
           ZETALU = MIN (ZETALU,ZTMAX)
           ZETALT = MIN (ZETALT,ZTMAX)
+          ZETAU  = MIN (ZETAU,ZTMAX/(ZSLU/ZU))   ! Barlage: add limit on ZETAU/ZETAT
+          ZETAT  = MIN (ZETAT,ZTMAX/(ZSLT/ZT))   ! Barlage: prevent SIMM/SIMH < 0
           PSMZ = PSPMS (ZETAU)
           SIMM = PSPMS (ZETALU) - PSMZ + RLOGU
           PSHZ = PSPHS (ZETAT)
@@ -4587,10 +4602,12 @@ ENDIF   ! CROPTYPE == 0
 !-----------------------------------------------------------------------
        RLOGT = log (ZSLT / ZT)
        USTARK = USTAR * VKRM
+       IF(SIMM < 1.e-6) SIMM = 1.e-6        ! Limit stability function
        AKMS = MAX (USTARK / SIMM,CXCH)
 !-----------------------------------------------------------------------
 ! IF STATEMENTS TO AVOID TANGENT LINEAR PROBLEMS NEAR ZERO
 !-----------------------------------------------------------------------
+       IF(SIMH < 1.e-6) SIMH = 1.e-6        ! Limit stability function
        AKHS = MAX (USTARK / SIMH,CXCH)
 
        IF (BTGH * AKHS * DTHV .ne. 0.0) THEN
@@ -5114,7 +5131,7 @@ ENDIF   ! CROPTYPE == 0
         IF (K == ISNOW+1) THEN
            AI(K)    =   0.0
            CI(K)    = - DF(K)   * DDZ(K) / DENOM(K)
-           IF (OPT_STC == 1 .OR. OPT_STC == 3) THEN
+           IF (OPT_STC == 1 .OR. OPT_STC == 3 ) THEN
               BI(K) = - CI(K)
            END IF                                        
            IF (OPT_STC == 2) THEN
@@ -5398,6 +5415,7 @@ ENDIF   ! CROPTYPE == 0
         SNEQV  = MAX(0.,TEMP1-XM(1))  
         PROPOR = SNEQV/TEMP1
         SNOWH  = MAX(0.,PROPOR * SNOWH)
+        SNOWH  = MIN(MAX(SNOWH,SNEQV/500.0),SNEQV/50.0)  ! limit adjustment to a reasonable density
         HEATR  = HM(1) - HFUS*(TEMP1-SNEQV)/DT  
         IF (HEATR > 0.) THEN
               XM(1) = HEATR*DT/HFUS             
@@ -6234,10 +6252,12 @@ ENDIF   ! CROPTYPE == 0
              IF(J /= 0) THEN
                 SNLIQ(J+1) = SNLIQ(J+1) + SNLIQ(J)
                 SNICE(J+1) = SNICE(J+1) + SNICE(J)
+                DZSNSO(J+1) = DZSNSO(J+1) + DZSNSO(J)
              ELSE
                IF (ISNOW_OLD < -1) THEN    ! MB/KM: change to ISNOW
                 SNLIQ(J-1) = SNLIQ(J-1) + SNLIQ(J)
                 SNICE(J-1) = SNICE(J-1) + SNICE(J)
+                DZSNSO(J-1) = DZSNSO(J-1) + DZSNSO(J)
                ELSE
 	         IF(SNICE(J) >= 0.) THEN
                   PONDING1 = SNLIQ(J)    ! ISNOW WILL GET SET TO ZERO BELOW; PONDING1 WILL GET 
@@ -6645,6 +6665,7 @@ ENDIF   ! CROPTYPE == 0
            ! The change in DZ due to compaction
 
            DZSNSO(J) = DZSNSO(J)*(1.+PDZDTC)
+           DZSNSO(J) = max(DZSNSO(J),SNICE(J)/DENICE + SNLIQ(J)/DENH2O)
         END IF
 
         ! Pressure of overlying snow
@@ -6707,6 +6728,7 @@ ENDIF   ! CROPTYPE == 0
    REAL, DIMENSION(-NSNOW+1:0) :: EPORE     !effective porosity = porosity - VOL_ICE
    REAL :: PROPOR, TEMP
    REAL :: PONDING1, PONDING2
+   REAL, PARAMETER :: max_liq_mass_fraction = 0.4
 ! ----------------------------------------------------------------------
 
 !for the case when SNEQV becomes '0' after 'COMBINE'
@@ -6729,6 +6751,7 @@ ENDIF   ! CROPTYPE == 0
       SNEQV  = SNEQV - QSNSUB*DT + QSNFRO*DT
       PROPOR = SNEQV/TEMP
       SNOWH  = MAX(0.,PROPOR * SNOWH)
+      SNOWH  = MIN(MAX(SNOWH,SNEQV/500.0),SNEQV/50.0)  ! limit adjustment to a reasonable density
 
       IF(SNEQV < 0.) THEN
          SICE(1) = SICE(1) + SNEQV/(DZSNSO(1)*1000.)
@@ -6785,7 +6808,15 @@ ENDIF   ! CROPTYPE == 0
      END IF
      QOUT = QOUT*DENH2O
      SNLIQ(J) = SNLIQ(J) - QOUT
+     IF((SNLIQ(J)/(SNICE(J)+SNLIQ(J))) > max_liq_mass_fraction) THEN
+       QOUT = QOUT + (SNLIQ(J) - max_liq_mass_fraction/(1.0 - max_liq_mass_fraction)*SNICE(J))
+       SNLIQ(J) = max_liq_mass_fraction/(1.0 - max_liq_mass_fraction)*SNICE(J)
+     ENDIF
      QIN = QOUT
+   END DO
+
+   DO J = ISNOW+1, 0
+     DZSNSO(J) = MAX(DZSNSO(J),SNLIQ(J)/DENH2O + SNICE(J)/DENICE)
    END DO
 
 ! Liquid water from snow bottom to soil
@@ -7098,7 +7129,7 @@ ENDIF   ! CROPTYPE == 0
 
    WD1 = 0.
    DO K = 1,NSOIL
-     WD1 = WD1 + (parameters%SMCMAX(K)-SH2O(K)) * DZSNSO(K) ! [m]
+     WD1 = WD1 + (parameters%SMCMAX(1)-SH2O(K)) * DZSNSO(K) ! [m]
    ENDDO
 
    DZFINE = 3.0 * (-ZSOIL(NSOIL)) / NFINE  
@@ -7110,8 +7141,8 @@ ENDIF   ! CROPTYPE == 0
 
    WD2 = 0.
    DO K = 1,NFINE
-     TEMP  = 1. + (ZWT-ZFINE(K))/parameters%PSISAT(K)
-     WD2   = WD2 + parameters%SMCMAX(K)*(1.-TEMP**(-1./parameters%BEXP(K)))*DZFINE
+     TEMP  = 1. + (ZWT-ZFINE(K))/parameters%PSISAT(1)
+     WD2   = WD2 + parameters%SMCMAX(1)*(1.-TEMP**(-1./parameters%BEXP(1)))*DZFINE
      IF(ABS(WD2-WD1).LE.0.01) THEN
         ZWT = ZFINE(K)
         EXIT
@@ -8176,10 +8207,10 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
 !  fraction of carbon into wood versus root
 
-     IF(WOOD.GT.0) THEN
+     IF(WOOD > 1.e-6) THEN
         WOODF = (1.-EXP(-BF*(parameters%WRRAT*RTMASS/WOOD))/BF)*parameters%WDPOOL
      ELSE
-        WOODF = 0.
+        WOODF = parameters%WDPOOL
      ENDIF
 
      ROOTPT = NONLEF*(1.-WOODF)

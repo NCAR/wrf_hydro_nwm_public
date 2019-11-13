@@ -1,0 +1,52 @@
+! This module defines and instantiates objects
+! for an rfc forecasts type reservoir's state.
+! State holds and tracks dynamic/changing variables
+! that are only relevant to the given rfc forecasts
+! reservoir object and not other modules or areas
+! of the system.
+
+module module_rfc_forecasts_state
+
+    use module_levelpool, only: levelpool
+    use module_reservoir, only: reservoir_state
+    implicit none
+
+    ! Extend/derive rfc forecasts state from the abstract base
+    ! type for reservoir state.
+    type, extends(reservoir_state) :: rfc_forecasts_state_interface
+        real    :: water_elevation              ! meters AMSL
+
+        type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
+
+    contains
+
+        procedure :: init => rfc_forecasts_state_init
+        procedure :: destroy => rfc_forecasts_state_destroy
+
+    end type rfc_forecasts_state_interface
+
+contains
+
+    ! RFC Forecasts State Constructor
+    subroutine rfc_forecasts_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+        implicit none
+        class(rfc_forecasts_state_interface), intent(inout) :: this ! the type object being initialized
+        real, intent(in) :: water_elevation           ! meters AMSL
+        real, intent(in) :: lake_area                 ! area of lake (km^2)
+        real, intent(in) :: lake_max_water_elevation  ! max water elevation (meters)
+        real, intent(in) :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real, intent(in) :: initial_fractional_depth  ! initial fraction water depth
+
+        ! Initialize the state water elevation in same manner as in module_RT.F
+        this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
+
+    end subroutine rfc_forecasts_state_init
+
+    ! RFC Forecasts State Destructor
+    subroutine rfc_forecasts_state_destroy(this)
+        implicit none
+        class(rfc_forecasts_state_interface), intent(inout) :: this ! the type object being destroyed
+
+    end subroutine rfc_forecasts_state_destroy
+
+end module module_rfc_forecasts_state

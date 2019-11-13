@@ -17,10 +17,12 @@ if [[ ! -z $env_file ]]; then
     ## and matching env vars and the sourced file.
     unset WRF_HYDRO
     unset HYDRO_D
+    unset RESERVOIR_D
     unset SPATIAL_SOIL
     unset WRF_HYDRO_RAPID
     unset WRFIO_NCD_LARGE_FILE_SUPPORT
     unset NCEP_WCOSS
+    unset NWM_META
     unset WRF_HYDRO_NUDGING
 
     echo "configure: Sourcing $env_file for the compile options."

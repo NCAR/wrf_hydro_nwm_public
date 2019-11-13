@@ -31,7 +31,6 @@ module module_gw_gw2d
 #endif
    use module_gw_gw2d_data, only: gw2d
    use module_rt_data, only: rt_domain
-   !use module_namelist
    use config_base, only: nlst
    
    implicit none

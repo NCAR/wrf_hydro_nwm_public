@@ -26,14 +26,16 @@ def test_run_reference_nwm_output_sim(
     print("\nQuestion: The reference nwm ouput configuration runs successfully?\n", end='')
     print('\n')
 
+    # Set run directory and change working directory to run dir for simulation
+    run_dir = output_dir / 'nwm_output_reference'
+    if run_dir.exists():
+        pytest.skip('Reference nwm output run exists, skipping nwm reference output run.')
+    run_dir.mkdir(parents=True)
+    os.chdir(str(run_dir))
+
     reference_nwm_output_sim_copy = copy.deepcopy(reference_nwm_output_sim)
     # Dont recompile the model, just use the reference's model.
     reference_nwm_output_sim_copy.model = copy.deepcopy(reference_sim.model)
-
-    # Set run directory and change working directory to run dir for simulation
-    run_dir = output_dir / 'nwm_output_reference'
-    run_dir.mkdir(parents=True)
-    os.chdir(str(run_dir))
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
@@ -83,14 +85,16 @@ def test_run_candidate_nwm_output_sim(
     print("\nQuestion: The candidate nwm ouput configuration runs successfully?\n", end='')
     print('\n')
 
+    # Set run directory and change working directory to run dir for simulation
+    run_dir = output_dir / 'nwm_output_candidate'
+    if run_dir.exists():
+        pytest.skip('Candidate nwm output run exists, skipping nwm candidate output run.')
+    run_dir.mkdir(parents=True)
+    os.chdir(str(run_dir))
+
     candidate_nwm_output_sim_copy = copy.deepcopy(candidate_nwm_output_sim)
     # Dont recompile the model, just use the candidate's model.
     candidate_nwm_output_sim_copy.model = copy.deepcopy(candidate_sim.model)
-
-    # Set run directory and change working directory to run dir for simulation
-    run_dir = output_dir / 'nwm_output_candidate'
-    run_dir.mkdir(parents=True)
-    os.chdir(str(run_dir))
 
     # Job
     exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))

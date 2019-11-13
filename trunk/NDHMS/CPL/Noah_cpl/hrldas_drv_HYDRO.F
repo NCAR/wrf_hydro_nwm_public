@@ -52,8 +52,8 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt,FORCING_TIMESTEP,prcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing, read_hydro_forcing_seq
-         !use module_namelist, only:nlst_rt
          use config_base, only: nlst
+         use module_hydro_stop, only: HYDRO_stop
 
          implicit none
          integer did, ixs,ixe,jxs,jxe
@@ -77,7 +77,7 @@
        end subroutine HYDRO_forcing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate)
-         use config_base, only: nlst
+          use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
           integer :: idim, jdim 
@@ -93,6 +93,7 @@
 
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
+          use module_hydro_stop, only: HYDRO_stop
           implicit none
 #         include "netcdf.inc"
           character(len=*) :: fileName
@@ -168,7 +169,8 @@
 
       subroutine HYDRO_HRLDAS_ini(fileName,ix,jx, nsoil,smc,stc,sh2ox, cmc, t1, weasd, &
             snodep,lai, fpar, vegtyp,SHDMIN,SHDMAX,FNDSNOWH)
-      ! read the field from wrfinput or output file
+          use module_hydro_stop, only: HYDRO_stop
+          ! read the field from wrfinput or output file
           implicit none
 #         include "netcdf.inc"
           character(len=*) fileName
@@ -177,7 +179,7 @@
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
-          logical :: FNDSNOWH
+          logical :: FNDSNOWH 
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
