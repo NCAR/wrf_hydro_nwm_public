@@ -1413,11 +1413,7 @@ contains
        iret = nf90_create(trim(output_flnm), &
             OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf90_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
-#endif
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 #endif
        call error_handler(iret, failure="Problem nf90_create for "//trim(output_flnm))
 
@@ -1859,14 +1855,10 @@ contains
     ierr = nf90_create(trim(output_flnm), &
          OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
 #else
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       ierr = nf90_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-    ierr = nf90_create(trim(output_flnm), NF90_CLOBBER, ncid)
-#endif
+    ierr = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 #endif
 
-    if (ierr /= 0) stop "Problem nf_create"
+    if (ierr /= 0) stop "Problem nf90_create"
 
     ierr = nf90_def_dim(ncid, "Time", NF90_UNLIMITED, dimid_times)
     ierr = nf90_def_dim(ncid, "DateStrLen", 19, dimid_datelen)

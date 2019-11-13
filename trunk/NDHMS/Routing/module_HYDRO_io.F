@@ -1,4 +1,4 @@
-!  Program Name:
+  Program Name:
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
@@ -1879,15 +1879,9 @@ end subroutine get_albedo12m_netcdf
 #ifdef HYDRO_D
        print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       write(6,*) "using large netcdf file for RTOUT_DOMAIN"
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       write(6,*) "using normal netcdf file for RTOUT_DOMAIN"
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
        if (iret /= 0) then
-         call hydro_stop("In output_rt() - Problem nf_create")
+         call hydro_stop("In output_rt() - Problem nf90_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -2377,15 +2371,10 @@ endif
 #endif
 
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
        if (iret /= 0) then
-         call hydro_stop("In output_gw_spinup() - Problem nf_create")
-       endif
+         call hydro_stop("In output_gw_spinup() - Problem nf90_create")
+       endif 
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
        iret = nf_def_dim(ncid, "x", ixrtd, dimid_ix)  !-- make a decimated grid
@@ -2722,14 +2711,9 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
 #endif
 
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
        if (iret /= 0) then
-         call hydro_stop("In output_gw_spinup() - Problem nf_create")
+         call hydro_stop("In output_gw_spinup() - Problem nf90_create")
        endif
 
        iret = nf_def_dim(ncid, "time", NF_UNLIMITED, dimid_times)
@@ -3153,23 +3137,15 @@ subroutine sub_output_gw(igrid, split_output_count, ixrt, jxrt, nsoil, &
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
+        iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
         if (iret /= 0) then
-           call hydro_stop("In output_chrt() - Problem nf_create points")
-        endif
+           call hydro_stop("In output_chrt() - Problem nf90_create points")
+        endif 
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
-#else
-       iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
-#endif
+        iret = nf90_create(trim(output_flnm2), OR(NF90_CLOBBER, NF90_NETCDF4), ncid2) 
         if (iret /= 0) then
-            call hydro_stop("In output_chrt() - Problem nf_create observation")
-        endif
+           call hydro_stop("In output_chrt() - Problem nf90_create observation")
+        endif 
 
        do i=1,nlk
         if(ORDER(i) .ge. order_to_write) then 
@@ -3921,23 +3897,15 @@ end subroutine output_chrt
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-        if (iret /= 0) then
-           call hydro_stop("In output_chrt() - Problem nf_create points")
-        endif
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
+       if (iret /= 0) then
+           call hydro_stop("In output_chrt() - Problem nf90_create points")
+       endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm2), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid2)
-#else
-       iret = nf_create(trim(output_flnm2), NF_CLOBBER, ncid2)
-#endif
-        if (iret /= 0) then
-            call hydro_stop("In output_chrt() - Problem nf_create observation")
-        endif
+       iret = nf90_create(trim(output_flnm2), OR(NF90_CLOBBER, NF90_NETCDF4), ncid2) 
+       if (iret /= 0) then
+           call hydro_stop("In output_chrt() - Problem nf90_create observation")
+       endif
 
        do i=1,nlk
         if(ORDER(i) .ge. order_to_write) then 
@@ -4846,15 +4814,10 @@ end subroutine mpp_output_chrt
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-
+      iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
       if (iret /= 0) then
-          call hydro_stop("In output_lakes() - Problem nf_create")
-      endif
+         call hydro_stop("In output_lakes() - Problem nf90_create")
+      endif 
 
       do i=1,NLAKES
          station_id(i) = i
@@ -5085,15 +5048,9 @@ end subroutine mpp_output_chrt
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-
+      iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
       if (iret /= 0) then
-          print*, "Problem nf_create" 
-          call hydro_stop("output_lakes") 
+         call hydro_stop("In output_lakes() - Problem nf90_create")
       endif 
 
       iret = nf_def_dim(ncid, "station", nlakes, stationdim)
@@ -5308,15 +5265,10 @@ end subroutine mpp_output_chrt
  
 
 !--- define dimension
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-
+        iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
         if (iret /= 0) then
-            call hydro_stop("In output_chrtgrd() - Problem nf_create ")
-        endif
+           call hydro_stop("In output_chrtgrd() - Problem nf90_create")
+        endif 
 
         iret = nf_def_dim(ncid, "time", NF_UNLIMITED, timedim)
         iret = nf_def_dim(ncid, "x", ixrt, ixlondim)
@@ -5685,18 +5637,14 @@ end subroutine mpp_output_chrt
      if(IO_id.eq.my_id) &
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(outFile), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
-#endif
+       iret = nf90_create(trim(outFile), OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
 
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif
 
        if (iret /= 0) then
-          call hydro_stop("In output_lsm() - Problem nf_create")
+          call hydro_stop("In output_lsm() - Problem nf90_create")
        endif
 
 
@@ -5787,27 +5735,14 @@ end subroutine mpp_output_chrt
      if(IO_id.eq.my_id) &
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(outFile), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#ifdef HYDRO_D
-       write(6,*) "yyywww using large netcdf file definition. "
-       call flush(6)
-#endif
-#else
-       iret = nf_create(trim(outFile), NF_CLOBBER, ncid)
-#ifdef HYDRO_D
-       write(6,*) "yyywww do not use large netcdf file definition. "
-       call flush(6)
-#endif
-#endif
-
+       iret = nf90_create(trim(outFile), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 
 #ifdef MPP_LAND
        call mpp_land_bcast_int1(iret)
 #endif
 
        if (iret /= 0) then
-          call hydro_stop("In RESTART_OUT_nc() - Problem nf_create")
+          call hydro_stop("In RESTART_OUT_nc() - Problem nf90_create")
        endif
 
 #ifdef MPP_LAND
@@ -8816,12 +8751,9 @@ end subroutine MPP_READ_CHROUTING_new
         real, dimension(:) :: chlat,chlon
         integer :: iret, nodes, i, ncid, dimid_n, varid
 
-        nodes = size(chlon,1)         
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create("nodeInfor.nc", IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create("nodeInfor.nc", NF_CLOBBER, ncid)
-#endif
+        nodes = size(chlon,1)        
+
+       iret = nf90_create("nodeInfor.nc", OR(NF90_CLOBBER, NF90_NETCDF4), ncid) 
        iret = nf_def_dim(ncid, "node", nodes, dimid_n)  !-- make a decimated grid
 !  define the varialbes
        iret = nf_def_var(ncid,"fromNode",NF_INT,1,(/dimid_n/),varid)
@@ -9638,15 +9570,11 @@ end subroutine mpp_output_chrt2
         print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
-        if (iret /= 0) then
-           print*,  "Problem nf_create points"
-           call hydro_stop("In output_chrt2() - Problem nf_create points.")
-        endif
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
+       if (iret /= 0) then
+           print*,  "Problem nf90_create points"
+           call hydro_stop("In output_chrt2() - Problem nf90_create points.")
+       endif
 
        iret = nf_def_dim(ncid, "station", nstations, stationdim)
        iret = nf_def_dim(ncid, "time", 1, timedim)
@@ -10072,14 +10000,10 @@ end subroutine output_chrt2
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(output_flnm), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
+      iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 
       if (iret /= 0) then
-          print*, "Problem nf_create" 
+          print*, "Problem nf90_create" 
           call hydro_stop("output_gw_netcdf") 
       endif 
 
@@ -10807,16 +10731,10 @@ end subroutine output_chrt2
        flush(6)
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       write(6,*) "using large netcdf file for LAKE TYPES"
-       iret = nf_create(trim(output_flnm), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       write(6,*) "using normal netcdf file for LAKE TYPES"
-       iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
+       iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 
        if (iret /= 0) then
-          print*,"Lakes: Problem nf_create"
+          print*,"Lakes: Problem nf90_create"
           call hydro_stop("output_lake_types")
        endif
 
@@ -10881,17 +10799,13 @@ subroutine hdtbl_out_nc(did,ncid,count,count_flag,varName,varIn,descrip,ixd,jxd)
 #ifdef MPP_LAND
      if(my_id .eq. IO_id) then
 #endif
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), IOR(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-       iret = nf_create(trim(nlst_rt(did)%hydrotbl_f), NF_CLOBBER, ncid)
-#endif
+     iret = nf90_create(trim(nlst_rt(did)%hydrotbl_f), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 #ifdef MPP_LAND
      endif
      call mpp_land_bcast_int1(iret)
 #endif
        if (iret /= 0) then
-          call hydro_stop("FATAL ERROR:   - Problem nf_create  in nc of hydrotab_f file")
+          call hydro_stop("FATAL ERROR:   - Problem nf90_create  in nc of hydrotab_f file")
        endif
 
 #ifdef MPP_LAND
