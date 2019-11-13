@@ -796,10 +796,13 @@ subroutine LandRT_ini(did)
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3) then
+       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
            allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst(did)%reservoir_persistence_usgs) then
+          allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 3 .and. nlst(did)%reservoir_persistence_usace) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then
@@ -841,10 +844,11 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%LAKEMAXH(lake_index),               &
                     rt_domain(did)%ELEVLAKE(lake_index),               &
                     rt_domain(did)%LAKEIDM(lake_index),                &
-                    nlst(did)%reservoir_parameter_file, &
-                    nlst(did)%startdate(1:19),                      &
-                    nlst(did)%reservoir_timeslice_path,             &
-                    nlst(did)%reservoir_observation_lookback_hours, &
+                    rt_domain(did)%reservoir_type(lake_index),         &
+                    nlst(did)%reservoir_parameter_file,                &
+                    nlst(did)%startdate(1:19),                         &
+                    nlst(did)%reservoir_timeslice_path,                &
+                    nlst(did)%reservoir_observation_lookback_hours,    &
                     nlst(did)%reservoir_observation_update_time_interval_seconds)
 
           type is (rfc_forecasts)
