@@ -345,12 +345,12 @@ contains
     subroutine read_persistence_netcdf_gage_id(ncid, lake_id_index, netcdf_array_name, gage_id)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: gage_id
+        character(len=*), intent(out) :: gage_id
         character(len=15) :: gage_id_string, gage_id_string_trimmed
         character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
-        integer        :: char_index, number_counter
+        integer        :: char_index, number_counter, temp_val
         character(len=1)   :: temp_char
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
@@ -369,28 +369,22 @@ contains
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
-        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
-
-        number_counter = 0
-
         do char_index = 1, 15
-            temp_char = gage_id_string_trimmed(char_index:char_index)
+            temp_val = ichar(gage_id_string(char_index:char_index))
 
-            if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
-            .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
-            .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
-            .or. temp_char .eq. '9') then
-                number_counter = number_counter + 1
+            ! Check if null character, then pad with a space
+            if (temp_val == 0) then
+                gage_id_string(char_index:char_index) = ' '
             end if
-
         end do
 
-        read(gage_id_string_trimmed(1:number_counter), *) gage_id
+        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
+
+        gage_id = gage_id_string_trimmed
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 
     end subroutine read_persistence_netcdf_gage_id
-
 
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF
     subroutine read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, &
@@ -457,11 +451,12 @@ contains
         persistence_current_weight, inflow, current_storage, water_elevation, gage_discharge, &
         persisted_outflow, levelpool_outflow, outflow)
         integer, intent(in) :: lake_number, current_time, timeslice_update_time
-        integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
+        integer, intent(in) :: weight_update_time, gage_lookback_seconds
         integer, intent(in) :: persistence_weight_index
         real,    intent(in) :: persistence_current_weight, inflow, current_storage
         real,    intent(in) :: water_elevation, gage_discharge, persisted_outflow
         real,    intent(in) :: levelpool_outflow, outflow
+        character(len=*), intent(in) :: gage_id
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
         character(len=50)   :: filename_string
 
@@ -471,7 +466,7 @@ contains
 
         open (113, file=filename_string, status="unknown", access = 'append')
 
-        write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, &
+        write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, A15, A1, I20, A1, F15.5, A1, F15.5, &
         A1, F15.15, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
         current_time, ',', timeslice_update_time, ',', weight_update_time, ',', &
         gage_lookback_seconds, ',', gage_id, ',', persistence_weight_index, ',', &
@@ -965,7 +960,6 @@ contains
     if (punct .and. (oldlen.ge.11) .and. (newlen.ge.11)) ndate(11:11) = sp
 
     end subroutine geth_newdate
-
 
     integer function nfeb(year)
     !
