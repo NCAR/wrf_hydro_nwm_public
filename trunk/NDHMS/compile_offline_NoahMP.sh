@@ -19,7 +19,6 @@ if [[ ! -z $env_file ]]; then
     unset HYDRO_D
     unset SPATIAL_SOIL
     unset WRF_HYDRO_RAPID
-    unset WRFIO_NCD_LARGE_FILE_SUPPORT
     unset NCEP_WCOSS
     unset WRF_HYDRO_NUDGING
 
@@ -82,7 +81,7 @@ fi
 echo
 echo '*****************************************************************'
 echo "The environment variables used in the compile:"
-grepStr="(WRF_HYDRO)|(HYDRO_D)|(SPATIAL_SOIL)|(WRF_HYDRO_RAPID)|(WRFIO_NCD_LARGE_FILE_SUPPORT)|(HYDRO_REALTIME)|(NCEP_WCOSS)|(WRF_HYDRO_NUDGING)|(NETCDF)"
+grepStr="(WRF_HYDRO)|(HYDRO_D)|(SPATIAL_SOIL)|(WRF_HYDRO_RAPID)|(HYDRO_REALTIME)|(NCEP_WCOSS)|(WRF_HYDRO_NUDGING)|(NETCDF)"
 printenv | egrep -w "${grepStr}" | sort
 
 exit 0
