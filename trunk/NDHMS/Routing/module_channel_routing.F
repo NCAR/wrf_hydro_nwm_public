@@ -964,9 +964,9 @@ END SUBROUTINE SUBMUSKINGCUNGE
                    
                 if(TYPEL(k) .eq. 1) then   !--link is a reservoir
 
-                   ! CALL LEVELPOOL(1,QLINK(k,1), Qup, QLINK(k,1), QLINK(k,2), &
-                   !  QLateral(k), DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
-                   !  WEIRC(k), WEIRL(k),ORIFICEE(k),  ORIFICEC(k), ORIFICEA(k))
+                     CALL LEVELPOOL(linkid(k),Quc, Qup, QLINK(k,1), &
+                      QLateral(k), DT, RESHT(k), HRZAREA(k), WEIRH(k), LAKEMAXH(k), &
+                      WEIRC(k), WEIRL(k), ORIFICEE(k), ORIFICEC(k), ORIFICEA(k))
 
                    elseif (channel_option .eq. 1) then  !muskingum routing
                        Km = MUSK(k)

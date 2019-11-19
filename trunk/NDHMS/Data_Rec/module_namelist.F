@@ -713,13 +713,13 @@ subroutine rt_nlst_check(nlst)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
    endif
    ! Only allow lakes to be ran with gridded routing or NWM routing
-   if(len(trim(nlst%route_lake_f)) .ne. 0) then
-      if(nlst%channel_option .ne. 3) then
-         if(nlst%UDMP_OPT .ne. 1) then 
-            call hydro_stop('hydro.namelist ERROR: Currently lakes only work with gridded channel routing or UDMP=1. Please change your namelist settings.')
-         endif
-      endif
-   endif
+!  if(len(trim(nlst%route_lake_f)) .ne. 0) then
+!     if(nlst%channel_option .ne. 3) then
+!        if(nlst%UDMP_OPT .ne. 1) then 
+!           call hydro_stop('hydro.namelist ERROR: Currently lakes only work with gridded channel routing or UDMP=1. Please change your namelist settings.')
+!        endif
+!     endif
+!  endif
 
    if((nlst%channel_option .eq. 3) .and. (nlst%compound_channel)) then
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")

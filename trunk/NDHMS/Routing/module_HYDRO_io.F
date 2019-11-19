@@ -1004,7 +1004,7 @@ end subroutine get_albedo12m_netcdf
 !!-- no longer find the lakes from the 2-d hi res grid
 !DJG inv       do j=jxrt,1,-1
 ! follwoing is modified by Wei Yu 03/24/2017
-     if(UDMP_OPT .eq. 0) then
+     if(UDMP_OPT .eq. 0 .and. channel_option .eq. 3) then
         NLAKES = 0
         do j=1,jxrt
            do i = 1,ixrt

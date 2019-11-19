@@ -449,6 +449,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                     call output_chrtout_grd_NWM(did,nlst_rt(did)%igrid)
                  endif
               endif
+
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
                       if(nlst_rt(did)%io_form_outputs .ne. 0) then
                          ! Output lakes in NWM format
