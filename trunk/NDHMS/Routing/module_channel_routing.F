@@ -985,9 +985,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
                 if(TYPEL(k) == 1) then   !--link is a reservoir
                     l_idx = lake_lookup(k)
                     if (l_idx >= 0) then     !-- -999 if not a reservoir in the lookup table (belt-and-suspenders check)
-                        print *, "CALL LEVELPOOL", l_idx,Quc, Qup, QLINK(k,2), QLateral(k), DT, &
-                                RESHT(l_idx), HRZAREA(l_idx), WEIRH(l_idx), LAKEMAXH(l_idx), &
-                                WEIRC(l_idx), WEIRL(l_idx), ORIFICEE(l_idx), ORIFICEC(l_idx), ORIFICEA(l_idx)
                         CALL LEVELPOOL(l_idx,Quc, Qup, QLINK(k,2), QLateral(k), DT, &
                                RESHT(l_idx), HRZAREA(l_idx), WEIRH(l_idx), LAKEMAXH(l_idx), &
                                WEIRC(l_idx), WEIRL(l_idx), ORIFICEE(l_idx), ORIFICEC(l_idx), ORIFICEA(l_idx))
@@ -1011,11 +1008,11 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !            endif !!! order(1) .ne. 1
          end do       !--k links
 
-   #ifdef MPP_LAND
+#ifdef MPP_LAND
          call updateLake_seq(RESHT,nlakes,tmpRESHT)
          call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
          call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
-   #endif
+#endif
 
 !yw check
 !        gQLINK = 0.0
