@@ -15,6 +15,7 @@ module module_rfc_forecasts
 
     use module_rfc_forecasts_properties, only: rfc_forecasts_properties_interface
     use module_rfc_forecasts_state, only: rfc_forecasts_state_interface
+    use module_levelpool, only: levelpool
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     implicit none
 
@@ -23,7 +24,7 @@ module module_rfc_forecasts
     type, extends(reservoir) :: rfc_forecasts
 
         ! Define pointers to sub-types / sub-objects to and
-        ! held by a level pool reservoir object.
+        ! held by an rfc reservoir object.
         type (rfc_forecasts_properties_interface), pointer :: properties => null()
         type (rfc_forecasts_state_interface), pointer :: state => null()
 
@@ -88,7 +89,7 @@ contains
                 write(0,*) "Failure to allocate rfc forecasts properties structure"
             else
                 ! initialize rfc forecasts properties
-                call this%properties%init()
+                call this%properties%init(lake_number)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -99,11 +100,19 @@ contains
                 write(0,*) "Failure to allocate rfc forecasts state structure"
             else
                 ! initialize rfc forecasts state
-                call this%state%init()
+                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
             end if
             this%pointer_allocation_guard = .true.
 
         end if
+
+        ! Allocate a single level pool reservoir
+        allocate(levelpool :: this%state%levelpool_ptr)
+
+        ! Initialize level pool reservoir
+        call this%state%levelpool_ptr%init(water_elevation, lake_area, &
+        weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
+        orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
     end subroutine rfc_forecasts_init
 

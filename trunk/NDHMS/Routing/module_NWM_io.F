@@ -507,13 +507,15 @@ subroutine output_chrt_NWM(domainId)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -669,7 +671,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -764,7 +766,7 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
-#ifndef NCEP_WCOSS
+#ifndef NWM_META
       ! Create channel lat/lon variables
       ! NOTE: NWM current operations do not permit the output of latitude and longitude for streamflow.
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
@@ -812,7 +814,7 @@ subroutine output_chrt_NWM(domainId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
-#ifndef NCEP_WCOSS
+#ifndef NWM_META
          iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for latitude.')
          iret = nf90_def_var_deflate(ftn,lonVarId,0,1,2)
@@ -924,7 +926,7 @@ subroutine output_chrt_NWM(domainId)
       iret = nf90_put_var(ftn,varId,varMetaInt(2,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
 
-#ifndef NCEP_WCOSS
+#ifndef NWM_META
       iret = nf90_inq_varid(ftn,'latitude',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate latitude in NetCDF file.')
       iret = nf90_put_var(ftn,varId,varMetaReal(1,:))
@@ -1146,13 +1148,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
 
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
@@ -1170,53 +1174,88 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if(nlst(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,& !1-10
+                             1,1,1,1,1,1,1,1,1,1,& !11-20
+                             1,1,1,1,1,1,1,1,1,1,& !21-30
+                             1,1,1,1,1,1,1,1,1,1,& !31-40
+                             1,1,1,1,1,1,1,1,1,1,& !41-50
+                             1,1,1,1,1,1,1,1,1,1,& !51-60
+                             1,1,1,1,1,1,1,1,1,1,& !61-70
+                             1,1,1,1,1,1,1,1,1,1,& !71-80
+                             1,1,1,1,1,1,1,1,1,1,& !81-90
+                             1,1,1,1,1,1,1,1]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             0,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,1,0,0,0,& !11-20
+                             0,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             0,0,1,1,1,1,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,1,1,0,1,0,0,1]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,0,0,0,0,& !11-20
+                             0,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             0,0,0,1,1,0,0,1,0,0,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,0,1,0,1,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
-                             0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             0,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             1,1,1,1,1,0,0,0,0,1,& !11-20
+                             0,0,0,0,0,0,0,1,1,1,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             0,0,1,1,1,0,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,1,1,0,1,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,&
-                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             0,0,0,0,0,0,0,0,0,1,& !11-20
+                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,0,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             0,0,0,0,1,0,0,0,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,0,1,1,0,0,0,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,1,& !1-20
-                             1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !21-40
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,& !41-60
-                             1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,& !61-80
-                             0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1]        !81-97
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,& !1-10
+                             1,1,0,1,1,0,0,1,0,1,& !11-20
+                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,0,0,& !51-60
+                             1,0,1,1,1,0,0,1,0,0,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             0,0,0,0,0,1,1,0]      !91-98
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,&
-                             1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,&
-                             1,0,1,1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0]
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
+                             1,1,1,1,1,0,0,0,0,1,& !11-20
+                             1,0,0,0,0,0,0,1,1,1,& !21-30
+                             0,0,0,0,0,0,0,0,0,0,& !31-40
+                             0,0,0,0,1,0,0,0,0,0,& !41-50
+                             0,0,0,0,0,0,0,0,1,1,& !51-60
+                             1,0,1,1,1,0,1,1,0,1,& !61-70
+                             0,0,0,0,0,0,0,0,0,0,& !71-80
+                             0,0,0,0,0,0,0,0,0,1,& !81-90
+                             1,1,1,1,1,0,0,0]      !91-98
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1264,7 +1303,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"code_version",trim(get_code_version()))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -1812,13 +1851,15 @@ subroutine output_rt_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -1853,7 +1894,7 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -2474,13 +2515,15 @@ subroutine output_lakes_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -2569,7 +2612,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -3034,13 +3077,15 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3078,7 +3123,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -3491,13 +3536,15 @@ subroutine output_lsmOut_NWM(domainId)
    validTime = trim(nlst(1)%olddate(1:4)//'-'//&
                     nlst(1)%olddate(6:7)//'-'//&
                     nlst(1)%olddate(9:10)//'_'//&
-                    nlst(1)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(1)%olddate(12:13)//':'//&
+                    nlst(1)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(1)%startdate(1:4)//'-'//&
                   nlst(1)%startdate(6:7)//'-'//&
                   nlst(1)%startdate(9:10)//'_'//&
-                  nlst(1)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(1)%startdate(12:13)//':'//&
+                  nlst(1)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -3547,7 +3594,7 @@ subroutine output_lsmOut_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -4286,13 +4333,15 @@ subroutine output_chanObs_NWM(domainId)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -4520,7 +4569,7 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif
@@ -5090,13 +5139,15 @@ subroutine output_gw_NWM(domainId,iGrid)
    validTime = trim(nlst(domainId)%olddate(1:4)//'-'//&
                     nlst(domainId)%olddate(6:7)//'-'//&
                     nlst(domainId)%olddate(9:10)//'_'//&
-                    nlst(domainId)%olddate(12:13)//&
-                    &':00:00')
+                    nlst(domainId)%olddate(12:13)//':'//&
+                    nlst(domainId)%olddate(15:16)//&
+                    &':00')
    initTime = trim(nlst(domainId)%startdate(1:4)//'-'//&
                   nlst(domainId)%startdate(6:7)//'-'//&
                   nlst(domainId)%startdate(9:10)//'_'//&
-                  nlst(domainId)%startdate(12:13)//&
-                  &':00:00')
+                  nlst(domainId)%startdate(12:13)//':'//&
+                  nlst(domainId)%startdate(15:16)//&
+                  &':00')
    ! Replace default values in the dictionary.
    fileMeta%initTime = trim(initTime)
    fileMeta%validTime = trim(validTime)
@@ -5151,7 +5202,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create conventions attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
-#ifdef NCEP_WCOSS
+#ifdef NWM_META
       iret = nf90_put_att(ftn,NF90_GLOBAL,"NWM_version_number",trim(get_nwm_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create NWM_version_number attribute')
 #endif

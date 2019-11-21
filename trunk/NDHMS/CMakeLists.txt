@@ -58,6 +58,7 @@ set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF-Hydro coupling to R
 set (SPATIAL_SOIL $ENV{SPATIAL_SOIL} CACHE STRING "Spatially distributed soil parameters for NoahMP 0=off 1=on")
 set (WRFIO_NCD_LARGE_FILE_SUPPORT $ENV{WRFIO_NCD_LARGE_FILE_SUPPORT} CACHE STRING "Large netCDF file support 0=off, 1=on")
 set (NCEP_WCOSS $ENV{NCEP_WCOSS} CACHE STRING "WCOSS file units 0=off 1=on")
+set (NWM_META $ENV{NWM_META} CACHE STRING "NWM output metadata 0=off 1=on")
 set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
 set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
@@ -86,6 +87,10 @@ endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "")
 if (NCEP_WCOSS STREQUAL "")
 	set (NCEP_WCOSS "0" CACHE STRING "WCOSS file units 0=off, 1=on" FORCE)
 endif (NCEP_WCOSS STREQUAL "")
+
+if (NWM_META STREQUAL "")
+        set (NWM_META "0" CACHE STRING "NWM output metadata 0=off, 1=on" FORCE)
+endif (NWM_META STREQUAL "")
 
 if (WRF_HYDRO_NUDGING STREQUAL "")
 	set (WRF_HYDRO_NUDGING "0" CACHE STRING "Streamflow nudging 0=off, 1=on" FORCE)
@@ -144,6 +149,12 @@ if (NCEP_WCOSS STREQUAL "1" )
 	add_definitions(-DNCEP_WCOSS)
 endif (NCEP_WCOSS STREQUAL "1") 
 
+#set -DNCEP_WCOSS from env
+message ("NWM_META = " ${NWM_META} )
+if (NWM_META STREQUAL "1" )
+        add_definitions(-DNWM_META)
+endif (NWM_META STREQUAL "1")
+
 #set -DSPATIAL_SOIL from env
 message ("WRF_HYDRO_NUDGING = " ${WRF_HYDRO_NUDGING} )
 if (WRF_HYDRO_NUDGING STREQUAL "1" )
@@ -169,17 +180,17 @@ message("=============================================================")
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     # set compile flags for gfortran
     message ( "-- Using gfortran")
-    set (CMAKE_Fortran_FLAGS " -O2 -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4")
+    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
     message ( "Using ifort")
-    set (CMAKE_Fortran_FLAGS "-O2 -g -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+    set (CMAKE_Fortran_FLAGS "-fpp -O2 -g -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
 else (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
     message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
     message ("No optimized Fortran compiler flags are known, we just try -O2...")
-    set (CMAKE_Fortran_FLAGS_RELEASE "-O2")
-    set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g")
+    set (CMAKE_Fortran_FLAGS_RELEASE "-cpp -O2")
+    set (CMAKE_Fortran_FLAGS_DEBUG   "-cpp -O0 -g")
 endif ( CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*" )
 
 #set output directories for libraries binaries and fortran .mod files
