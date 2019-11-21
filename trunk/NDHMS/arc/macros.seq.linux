@@ -49,7 +49,7 @@ F90FLAGS  =     -Mfree -Mfptrap -c -byteswapio -Ktrap=fp -O2 -Kieee
 LDFLAGS  =      $(F90FLAGS)
 MODFLAG	=	-I./ -I ../mod
 CPPINVOKE	= -Mpreprocess
-CPPFLAGS	=       -I ../Data_Rec $(HYDRO_D) $(WRF_HYDRO) $(SPATIAL_SOIL) $(WRFIO_NCD_LARGE_FILE_SUPPORT) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN)
+CPPFLAGS	=       -I ../Data_Rec $(HYDRO_D) $(WRF_HYDRO) $(SPATIAL_SOIL) $(WRF_HYDRO_NUDGING) $(OUTPUT_CHAN_CONN)
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
 NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
