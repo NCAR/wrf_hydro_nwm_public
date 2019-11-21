@@ -449,6 +449,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
                     call output_chrtout_grd_NWM(did,nlst_rt(did)%igrid)
                  endif
               endif
+
                if (RT_DOMAIN(did)%NLAKES.gt.0)  then
                       if(nlst_rt(did)%io_form_outputs .ne. 0) then
                          ! Output lakes in NWM format
@@ -984,16 +985,16 @@ else
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option, &
        RT_DOMAIN(did)%RETDEP_CHAN, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, &
-       RT_DOMAIN(did)%node_area  &
+       RT_DOMAIN(did)%node_area,  RT_DOMAIN(did)%LAKEIDX, &
 #ifdef MPP_LAND
-       ,RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
+       RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
-       RT_DOMAIN(did)%yw_mpp_nlinks  &
-       , RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID &
-       , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd  &
+       RT_DOMAIN(did)%yw_mpp_nlinks,  &
+       RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID, &
+       rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd,  &
 #endif
-       , rt_domain(did)%CH_LNKRT_SL   &
-       ,nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
+       rt_domain(did)%CH_LNKRT_SL,   &
+       nlst_rt(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst_rt(did)%gwChanCondSw, nlst_rt(did)%gwChanCondConstIn, &
        nlst_rt(did)%gwChanCondConstOut,rt_domain(did)%velocity &
        )

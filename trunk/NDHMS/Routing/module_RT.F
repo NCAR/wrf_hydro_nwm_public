@@ -532,7 +532,7 @@ if(nlst_rt(did)%channel_only       .eq. 1 .or. &
       rt_domain(did)%GNLINKSL = 1
       rt_domain(did)%NLINKSL = 1
    endif
-   if(nlst_rt(did)%UDMP_OPT .eq. 1) &
+   if(nlst_rt(did)%UDMP_OPT .eq. 1 .or. nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) &
         call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
 
    call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
@@ -588,7 +588,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !I
 
 endif
 
-if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+if(nlst_rt(did)%UDMP_OPT .eq. 1 .or. nlst_rt(did)%channel_option .eq. 1 .or. nlst_rt(did)%channel_option .eq. 2) then
    call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
 endif
 
@@ -1460,7 +1460,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then
    endif  !End if channel option eq 3; else;
 
 
-! Initialize Lake Elevations for Gridded and NWM routing.  
+! Initialize Lake Elevations for Gridded and NWM routing.  AND REACH Community?  
           do j=1,rt_domain(did)%NLAKES
                 rt_domain(did)%RESHT(j) = rt_domain(did)%ORIFICEE(j) + &
                   ((rt_domain(did)%LAKEMAXH(j) - rt_domain(did)%ORIFICEE(j) )* rt_domain(did)%ELEVLAKE(j)) 
