@@ -20,9 +20,7 @@ lib/libsmda.a:
 
 .F.o:
 	@echo ""
-	$(RM) $(*).f90
-	$(CPP) $(CPPFLAGS) $(CPP_NETCDF4_COMPRESS) $(*).F > $(*).f90
-	$(COMPILERF90) $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) -c $(NETCDFMOD) -I./lib -I./lib $(*).f90
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPP_NETCDF4_COMPRESS) $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) -c $(NETCDFMOD) -I./lib -I./lib $(*).F
 
 $(CMD):	lib/libsmda.a $(OBJS)
 	(cd lib; make)
@@ -30,7 +28,7 @@ $(CMD):	lib/libsmda.a $(OBJS)
 		-L./lib -lsmda $(NETCDFLIB) $(BZIP2_LIB) $(LIBJASPER)
 
 clean:
-	$(RM) *.o *~ *.exe *.mod *.f90
+	$(RM) *.o *~ *.exe *.mod
 	(cd lib; make clean)
 #
 

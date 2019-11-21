@@ -34,10 +34,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo "Routing Makefile:"
-	$(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
-#	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
-	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f
-#	$(RMD) $(*).f
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).F
 	@echo ""
 	ar -r ../lib/libHYDRO.a $(@)
 	cp *.mod ../mod
@@ -111,4 +108,4 @@ module_channel_routing.o: module_UDMAP.o\
 endif
 
 clean:	
-	rm -f *.o *.mod *.stb *~ *.f
+	rm -f *.o *.mod *.stb *~
