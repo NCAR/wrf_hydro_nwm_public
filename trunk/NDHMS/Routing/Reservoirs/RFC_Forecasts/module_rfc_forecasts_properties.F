@@ -17,7 +17,7 @@ module module_rfc_forecasts_properties
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
         integer           :: lake_number                  ! lake number
-        character(len=5) :: rfc_gage_id
+        character(len=5)  :: rfc_gage_id                  ! RFC gage id
 
     contains
 

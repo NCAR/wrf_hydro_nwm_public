@@ -18,6 +18,7 @@ module module_rfc_forecasts
     use module_levelpool, only: levelpool
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_rfc_time_series_data, only: time_series_data
+
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base
@@ -44,7 +45,7 @@ contains
     ! RFC Forecasts Constructor
     subroutine rfc_forecasts_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, rfc_forecasts_parameter_file)
         implicit none
@@ -54,13 +55,14 @@ contains
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
+        real,    intent(in)    :: dam_length                ! dam length (meters)
         real,    intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real,    intent(in)    :: orifice_coefficient       ! orifice coefficient
         real,    intent(in)    :: orifice_area              ! orifice area (meters^2)
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
-        character(len=*),   intent(in) :: rfc_forecasts_parameter_file
+        character(len=*), intent(in) :: rfc_forecasts_parameter_file
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -112,7 +114,7 @@ contains
 
         ! Initialize level pool reservoir
         call this%state%levelpool_ptr%init(water_elevation, lake_area, &
-        weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
+        weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         ! Call to initialize time series data object. This object is a singleton,

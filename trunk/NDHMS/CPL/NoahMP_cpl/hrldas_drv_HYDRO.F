@@ -3,24 +3,24 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !2345678
-       
+
        subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
@@ -34,15 +34,15 @@
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
-          end do 
+          end do
 
-          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
 
           do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)
-               SMC_io(:,k,:) = SMC(:,:,k) 
-               SH2OX_io(:,k,:) = SH2OX(:,:,k) 
-          end do 
+               SMC_io(:,k,:) = SMC(:,:,k)
+               SH2OX_io(:,k,:) = SH2OX(:,:,k)
+          end do
 
        end subroutine hrldas_drv_HYDRO
 
@@ -65,9 +65,9 @@
 
            do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)
-               SMC_io(:,k,:) = SMC(:,:,k) 
-               SH2OX_io(:,k,:) = SH2OX(:,:,k) 
-           end do 
+               SMC_io(:,k,:) = SMC(:,:,k)
+               SH2OX_io(:,k,:) = SH2OX(:,:,k)
+           end do
 
              call open_print_mpp(6)
        end subroutine hrldas_drv_HYDRO_ini
@@ -77,7 +77,7 @@
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
-         use module_namelist, only:nlst_rt
+         use config_base, only: nlst
          implicit none
          integer did, ixs,ixe,jxs,jxe
          integer ix,jx, kt
@@ -92,17 +92,17 @@
          did = 1
          call read_hydro_forcing( &
             indir, olddate, &
-            nlst_rt(did)%hgrid,&
+            nlst(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             lai,fpar,snodep,FORCING_TIMESTEP*1.0,kt, pcp_old)
        end subroutine HYDRO_frocing_drv
 
        subroutine get_greenfrac(inFile,greenfrac, idim, jdim, olddate,SHDMAX)
-          use module_namelist, only:nlst_rt
+         use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
-          integer :: idim, jdim 
+          integer :: idim, jdim
           real, dimension(idim,jdim),intent(out):: greenfrac
           real, dimension(idim,jdim),intent(out):: SHDMAX
           integer:: mm, dd, did
@@ -124,12 +124,12 @@
           use module_mpp_land, only:global_nx, global_ny, my_id, io_id, decompose_data_real
           implicit none
           character(len=*) :: olddate, inFile
-          integer, intent(in) :: idim, jdim 
+          integer, intent(in) :: idim, jdim
           real, dimension(idim,jdim), intent(out):: greenfrac,SHDMAX
           real, dimension(global_nx,global_ny):: ggreenfrac,gSHDMAX
           if(my_id .eq. io_id) then
                 call get_greenfrac(inFile,ggreenfrac, global_nx, global_ny, olddate,gSHDMAX)
-          endif 
+          endif
           call decompose_data_real( ggreenfrac, greenfrac)
           call decompose_data_real( gSHDMAX, SHDMAX)
        end subroutine get_greenfrac_mpp
@@ -137,6 +137,7 @@
 
       subroutine get_greenfrac_netcdf(fileName,array3, idim, jdim, ldim,mm,dd)
           use netcdf
+          use module_hydro_stop, only:HYDRO_stop
           implicit none
           character(len=*) :: fileName
           integer, intent(in) :: mm,dd
@@ -151,16 +152,16 @@
           integer :: i, j, mm2,daytot
           real :: ddfrac
           character(len=24), parameter :: name = "GREENFRAC"
-      
+
 !          units = "fraction"
 
           iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in get_greenfrac: ", trim(fileName)
-              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// & 
-                              "Failed to open file.") 
-          endif 
-            
+              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
+                              "Failed to open file.")
+          endif
+
           iret = nf90_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
              print*, 'name = "', trim(name)//'"'
@@ -168,7 +169,7 @@
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
                              "Failed to call nf90_inq_varid.")
           endif
-      
+
           iret = nf90_get_var(ncid, varid, xtmp)
           if (iret /= 0) then
 
@@ -177,35 +178,35 @@
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - "// &
                              "Faile to call nf90_get_var")
           endif
-      
-      
-          if (mm.lt.12) then 
+
+
+          if (mm.lt.12) then
             mm2 = mm+1
           else
             mm2 = 1
                 end if
-      
+
           !DJG_DES Set up dates for daily interpolation...
                 if (mm.eq.1.OR.mm.eq.3.OR.mm.eq.5.OR.mm.eq.7.OR.mm.eq.8.OR.mm.eq.10.OR.mm.eq.12) then
                    daytot = 31
-                else if (mm.eq.4.OR.mm.eq.6.OR.mm.eq.9.OR.mm.eq.11) then 
+                else if (mm.eq.4.OR.mm.eq.6.OR.mm.eq.9.OR.mm.eq.11) then
                    daytot = 30
                 else if (mm.eq.2) then
                    daytot = 28
                 end if
                 ddfrac = float(dd)/float(daytot)
                 if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
-      
+
 #ifdef HYDRO_D
                print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
 #endif
-      
+
           do i = 1, idim
              do j = 1, jdim
                 array(i,j) = xtmp(i,j,mm)   !GREENFRAC in geogrid in units of fraction from month 1
                 array2(i,j) = xtmp(i,j,mm2)   !GREENFRAC in geogrid in units of fraction from month 1
                 diff(i,j) = array2(i,j) - array(i,j)
-                array3(i,j) = array(i,j) + ddfrac * diff(i,j) 
+                array3(i,j) = array(i,j) + ddfrac * diff(i,j)
              enddo
           enddo
           iret=nf90_close(ncid)
@@ -213,6 +214,7 @@
 
         subroutine get_maxgreenfrac_netcdf(fileName, array3, idim, jdim, ldim)
           use netcdf
+          use module_hydro_stop, only:HYDRO_stop
           implicit none
           character(len=*) :: fileName
           integer, intent(in) :: idim, jdim, ldim
@@ -220,16 +222,16 @@
           integer :: iret, varid, ncid
           real, dimension(idim,jdim,ldim) :: xtmp
           character(len=24), parameter :: name = "GREENFRAC"
-      
+
 !          units = "fraction"
 
           iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in get_maxgreenfrac: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
-                              "Failed to open file.") 
-          endif 
-            
+                              "Failed to open file.")
+          endif
+
           iret = nf90_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
              print*, 'name = "', trim(name)//'"'
@@ -237,7 +239,7 @@
              call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
                              "Faile to call nf90_inq_varid.")
           endif
-      
+
           iret = nf90_get_var(ncid, varid, xtmp)
           if (iret /= 0) then
 
@@ -246,7 +248,7 @@
              call hydro_stop("In hrldas_drv_HYDRO.F get_maxgreenfrac_netcdf() - "// &
                              "Failed to call lnf90_get_var.")
           endif
-      
+
           array3 = maxval(xtmp,3)
           iret=nf90_close(ncid)
       end subroutine get_maxgreenfrac_netcdf
@@ -255,20 +257,21 @@
             snodep,lai, fpar, vegtyp,FNDSNOWH)
       ! read the field from wrfinput or output file
           use netcdf
+          use module_hydro_stop, only:HYDRO_stop
           implicit none
           character(len=*) fileName
           integer :: ix,jx , nsoil, i, j, k
           integer :: iret, ncid, ierr, varid
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
           real,dimension(ix,nsoil,jx):: smc_io,stc_io,sh2ox_io
-          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
+          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar
           integer, dimension(ix,jx) ::    vegtyp
           logical :: FNDSNOWH
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
 !yw              0.6,0.6,0.6,0.3,0,0.5,0,0,           &
-!yw              0,0,0,0,0,0,0,0,0,0,0,0,0,          & 
+!yw              0,0,0,0,0,0,0,0,0,0,0,0,0,          &
 !yw              0,0,0,0,0,0,0,0,0,0/
 
 
@@ -276,16 +279,16 @@
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in HYDRO_HRLDAS_ini: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F HYDRO_HRLDAS_ini() - "// &
-                              "Failed to open wrf input/output file.") 
+                              "Failed to open wrf input/output file.")
           else
 #ifdef HYDRO_D
               write(6,*) "initialization from the file  : ", trim(fileName)
 
 #endif
-          endif 
+          endif
 
            iret = nf90_inq_varid(ncid,"VEGFRA",  varid)
-           if (iret == 0) then 
+           if (iret == 0) then
               iret = nf90_get_var(ncid, varid, fpar)
               if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000) ) fpar = fpar/100.
            endif
@@ -303,7 +306,7 @@
              FNDSNOWH = .true.
           else
              FNDSNOWH   = .false.
-          endif  
+          endif
 
           iret = nf90_inq_varid(ncid,"SNOW",  varid)
           if (iret == 0) then
@@ -311,9 +314,9 @@
              print*, "read snow for initialization ...."
 #endif
              iret = nf90_get_var(ncid, varid, weasd)
-          endif  
-         
-          
+          endif
+
+
           iret = nf90_inq_varid(ncid,"TSK",  varid)
           if (iret == 0) iret = nf90_get_var(ncid, varid, t1)
 
@@ -331,7 +334,7 @@
 
           iret=nf90_close(ncid)
 
-!yw    added for 
+!yw    added for
 !yw          where(sh2ox == 0) sh2ox = smc
 
           do k = 1, nsoil
@@ -342,7 +345,7 @@
        end subroutine HYDRO_HRLDAS_ini
 
 #ifdef MPP_LAND
-      subroutine HYDRO_HRLDAS_ini_mpp(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, & 
+      subroutine HYDRO_HRLDAS_ini_mpp(fileName,ix,jx, nsoil,smc_io,stc_io,sh2ox_io, cmc, t1, weasd, &
                                 snodep,lai, fpar, vegtyp,FNDSNOWH)
           use module_mpp_land, only:global_nx, global_ny, my_id, io_id, decompose_data_real, &
                      decompose_data_int, mpp_land_bcast, write_io_real,write_io_int
@@ -351,23 +354,23 @@
           integer :: ix,jx , nsoil, i, j, k
           integer :: iret, ncid, ierr, varid
           real,dimension(ix,nsoil,jx):: smc_io,stc_io,sh2ox_io
-          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar 
+          real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar
           integer, dimension(ix,jx) ::    vegtyp
           logical :: FNDSNOWH
 
           real,dimension(global_nx,nsoil,global_ny):: gsmc_io,gstc_io,gsh2ox_io
-          real,dimension(global_nx,global_ny):: gcmc, gt1, gweasd, gsnodep, glai, gfpar 
+          real,dimension(global_nx,global_ny):: gcmc, gt1, gweasd, gsnodep, glai, gfpar
           integer, dimension(global_nx,global_ny) ::    gvegtyp
-         
-          call write_io_real(snodep,gsnodep) 
-          call write_io_real(lai,   glai   ) 
-          call write_io_real(fpar, gfpar  ) 
-          call write_io_int(vegtyp, gvegtyp)
-          call write_io_real(cmc, gcmc  ) 
-          call write_io_real(t1, gt1  ) 
-          call write_io_real(weasd, gweasd  ) 
 
-          if(my_id .eq. io_id) then 
+          call write_io_real(snodep,gsnodep)
+          call write_io_real(lai,   glai   )
+          call write_io_real(fpar, gfpar  )
+          call write_io_int(vegtyp, gvegtyp)
+          call write_io_real(cmc, gcmc  )
+          call write_io_real(t1, gt1  )
+          call write_io_real(weasd, gweasd  )
+
+          if(my_id .eq. io_id) then
           call HYDRO_HRLDAS_ini(fileName,global_nx,global_ny, nsoil,gsmc_io,gstc_io,gsh2ox_io, gcmc, gt1, gweasd, &
                gsnodep,glai, gfpar, gvegtyp,FNDSNOWH)
           endif
@@ -387,50 +390,50 @@
           call decompose_data_real(glai, lai)
           call decompose_data_real(gfpar, fpar)
           call decompose_data_int(gvegtyp,vegtyp)
-           
+
       end subroutine HYDRO_HRLDAS_ini_mpp
 #endif
-      subroutine get_iocflag(did, iocflag) 
-         use module_namelist, only:nlst_rt
+      subroutine get_iocflag(did, iocflag)
+        use config_base, only: nlst
          implicit none
          integer :: did, iocflag
-         iocflag = nlst_rt(did)%io_config_outputs
+         iocflag = nlst(did)%io_config_outputs
       end subroutine get_iocflag
 
-      subroutine get_t0OutputFlag(did, t0OutputFlag) 
-         use module_namelist, only:nlst_rt
+      subroutine get_t0OutputFlag(did, t0OutputFlag)
+        use config_base, only: nlst
          implicit none
          integer :: did, t0OutputFlag
-         t0OutputFlag = nlst_rt(did)%t0OutputFlag
+         t0OutputFlag = nlst(did)%t0OutputFlag
       end subroutine get_t0OutputFlag
 
 
       subroutine getNameList(varName,pVar)
-          use module_namelist, only:nlst_rt
+        use config_base, only: nlst
           implicit none
           integer :: pVar
           integer :: did
           character(len=*) :: varName
           did = 1
           if(varName .eq. "GWSPINCYCLES") then
-               pVar = nlst_rt(did)%gwSpinCycles
+               pVar = nlst(did)%gwSpinCycles
           elseif(varName .eq. "GWBASESWCRT") then
-               pVar = nlst_rt(did)%GWBASESWCRT
+               pVar = nlst(did)%GWBASESWCRT
           elseif(varName .eq. "GWSOILCPL") then
-               pVar = nlst_rt(did)%gwsoilcpl
+               pVar = nlst(did)%gwsoilcpl
           elseif(varName .eq. "channel_only") then
-               pVar = nlst_rt(did)%channel_only
+               pVar = nlst(did)%channel_only
           elseif(varName .eq. "channelBucket_only") then
-               pVar = nlst_rt(did)%channelBucket_only
+               pVar = nlst(did)%channelBucket_only
           elseif(varName .eq. "igrid") then
-               pVar = nlst_rt(did)%igrid
+               pVar = nlst(did)%igrid
           else
                pVar = 0
           endif
      end subroutine getNameList
 
       subroutine updateNameList(varName,pVarIn)
-          use module_namelist, only:nlst_rt
+        use config_base, only: nlst
 #ifdef MPP_LAND
           use module_mpp_land, only: mpp_land_bcast_int1
 #endif
@@ -444,16 +447,13 @@
 #ifdef MPP_LAND
              call mpp_land_bcast_int1(pVar)
 #endif
-             nlst_rt(did)%channel_only = pVar
+             nlst(did)%channel_only = pVar
           endif
           if(varName .eq. "channelBucket_only") then
 #ifdef MPP_LAND
              call mpp_land_bcast_int1(pVar)
 #endif
-             nlst_rt(did)%channelBucket_only = pVar
+             nlst(did)%channelBucket_only = pVar
           endif
 
      end subroutine updateNameList
- 
-
- 

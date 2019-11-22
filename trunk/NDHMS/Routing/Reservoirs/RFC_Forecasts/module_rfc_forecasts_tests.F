@@ -138,7 +138,6 @@ contains
             data_state(8) = test_rfc_forecasts_levelpool_output(rfc_forecasts_reservoir_data%state%levelpool_ptr%output)
         end if
 
-
         if ( all(ptr_state) .and. all(data_state) ) then
             data_info_result = .true.
             print *, "========================================================================"
@@ -153,7 +152,6 @@ contains
 
         end if
 
-        flush(6)
     end function rfc_forecasts_data_info
 
 
@@ -194,6 +192,7 @@ contains
 
     end function test_input_rfc_forecasts
 
+
     ! test to see that each member of the output structure is correctly allocated and readable
     function test_output_rfc_forecasts(o) result(rv)
         type (reservoir_output), intent(in) :: o
@@ -214,6 +213,7 @@ contains
         print *, " "
 
     end function test_output_rfc_forecasts
+
 
     ! test to see that each member of the state structure is correctly allocated and readable
     function test_rfc_forecasts_state(o) result(rv)
@@ -263,22 +263,6 @@ contains
             print *, "FAILED"
         end if
         print *, " "
-
-        !print *, "Checking read on observation_lookback_hours"
-        !print *, o%observation_lookback_hours
-        !if ( o%observation_lookback_hours .ne. 0) then
-        !    rv = .false.
-        !    print *, "FAILED"
-        !end if
-        !print *, " "
-
-        !print *, "Checking read on observation_update_time_interval_seconds"
-        !print *, o%observation_update_time_interval_seconds
-        !if ( o%observation_update_time_interval_seconds .ne. 0) then
-        !    rv = .false.
-        !    print *, "FAILED"
-        !end if
-        !print *, " "
 
     end function test_rfc_forecasts_properties
 
@@ -449,6 +433,7 @@ contains
 
     end function test_rfc_forecasts_levelpool_properties
 
+
     ! Test time series data object
     function time_series_data_info(time_series_data) result(data_info_result)
         implicit none
@@ -483,9 +468,6 @@ contains
 
         end if
 
-        flush(6)
-
     end function time_series_data_info
-
 
 end module

@@ -1,4 +1,5 @@
-! This module reads USGS timeslice files to get gage discharge
+! This module reads USGS (U.S. Geological Survey) or USACE
+! (U.S. Army Corps of Engineers) timeslice files to get gage discharge
 ! values that will be used by reservoirs. An observation lookback
 ! period is passed in to determine how far back in time from the
 ! current model time the module will look for timeslice files.
@@ -37,12 +38,13 @@ module module_reservoir_read_timeslice_data
         character(len=19)                             :: start_date
         character(len=19)                             :: current_date
         character(len=256)                            :: timeslice_path
+        character(len=15)                             :: data_source
         integer                                       :: number_of_reservoir_gages
         integer                                       :: observation_lookback_hours
         integer                                       :: current_lookback_seconds
         integer                                       :: last_update_time_seconds
         integer,            allocatable, dimension(:) :: gage_lookback_seconds
-        integer,            allocatable, dimension(:) :: reservoir_gage_ids
+        character(len=15),  allocatable, dimension(:) :: reservoir_gage_ids
         real,               allocatable, dimension(:) :: reservoir_gage_discharges
         character(len=256), allocatable, dimension(:) :: timeslice_file_names
         character(len=15),  allocatable, dimension(:) :: gage_id
@@ -59,7 +61,7 @@ module module_reservoir_read_timeslice_data
 
     end type timeslice_data_type
 
-    type (timeslice_data_type) :: timeslice_data
+    type (timeslice_data_type), target :: usgs_timeslice_data, usace_timeslice_data
 
     integer, parameter :: observation_resolution_minutes = 15
     real,    parameter :: gage_quality_threshold = 0.9
@@ -68,12 +70,13 @@ contains
 
     ! Timeslice Data Type Constructor
     subroutine timeslice_data_init(this, start_date, timeslice_path, &
-        persistence_parameter_file, observation_lookback_hours)
+        reservoir_parameter_file, data_source, observation_lookback_hours)
         implicit none
         class(timeslice_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                   :: start_date
         character(len=256), intent(in)                   :: timeslice_path
-        character(len=*),   intent(in)                   :: persistence_parameter_file
+        character(len=*),   intent(in)                   :: reservoir_parameter_file
+        character(len=*),   intent(in)                   :: data_source
         integer,            intent(in)                   :: observation_lookback_hours
         integer                                          :: ncid, var_id
         integer                                          :: status  ! status of reading NetCDF
@@ -81,51 +84,45 @@ contains
         character(len=15), allocatable, dimension(:)     :: gage_ids_string_array
         character(len=15)                                :: gage_id_string, gage_id_string_trimmed
         integer                                          :: gage_id_integer
-        integer                                          :: char_index, number_counter
+        integer                                          :: char_index, number_counter, temp_val
         character(len=1)                                 :: temp_char
 
         ! Return from subroutine if this singleton is already initialized
         if (this%initialized) return
         this%initialized = .true.
 
-        status = nf90_open(path = persistence_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open persistence reservoir parameter file")
+        this%data_source = ADJUSTL(trim(data_source))
 
-        call read_persistence_netcdf_gage_ids_all(ncid, "gage_id", var_id, this%number_of_reservoir_gages)
+        status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
+
+        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, "gage_id")
+        if (status /= nf90_noerr) call handle_err(status, ADJUSTL(trim(this%data_source)) // "_gage_id")
 
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close persistence reservoir parameter file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
 
         ! Convert gage ids to integers
         do timeslice_gage_index = 1, this%number_of_reservoir_gages
-
             gage_id_string = gage_ids_string_array(timeslice_gage_index)
+
+            do char_index = 1, 15
+                temp_val = ichar(gage_id_string(char_index:char_index))
+
+                ! Check if null character, then pad with a space
+                if (temp_val == 0) then
+                    gage_id_string(char_index:char_index) = ' '
+                end if
+            end do
 
             gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
 
-            number_counter = 0
-
-            do char_index = 1, 15
-                temp_char = gage_id_string_trimmed(char_index:char_index)
-
-                if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
-                .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
-                .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
-                .or. temp_char .eq. '9') then
-                    number_counter = number_counter + 1
-                end if
-
-            end do
-
-            read(gage_id_string_trimmed(1:number_counter), *) gage_id_integer
-
-            this%reservoir_gage_ids(timeslice_gage_index) = gage_id_integer
+            this%reservoir_gage_ids(timeslice_gage_index) = gage_id_string_trimmed
 
         end do
 
@@ -163,7 +160,7 @@ contains
         class(timeslice_data_type), intent(inout) :: this
         integer, intent(in)  :: update_interval_seconds
         integer, intent(in)  :: current_reservoir_time_seconds
-        integer, intent(in)  :: reservoir_gage_id
+        character(len=*), intent(in)  :: reservoir_gage_id
         integer, intent(out) :: gage_lookback_seconds
         real, intent(out)    :: reservoir_gage_discharge
         character(len=256)   :: timeslice_file_name
@@ -175,7 +172,6 @@ contains
 
         ! This check ensures that the timeslice is read only once for each processor at each timeslice update time
         if (current_reservoir_time_seconds .ne. this%last_update_time_seconds) then
-
             ! Checks if not the first timestep, then update date.
             if (this%last_update_time_seconds .ne. -999) then
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
@@ -230,7 +226,7 @@ contains
 
                     ! Construct timeslice filename with path
                     timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
-                                    observation_resolution_string // 'min.usgsTimeSlice.ncdf'
+                            observation_resolution_string // 'min.' // ADJUSTL(trim(this%data_source)) // 'TimeSlice.ncdf'
 
                     ! Check if file exists
                     inquire(FILE = timeslice_file_name, EXIST = file_exists)
@@ -255,7 +251,7 @@ contains
 
         ! Loop through gages to return gage lookback seconds and gage discharge for a given reservoir
         do reservoir_subset_index = 1, this%number_of_reservoir_gages
-            if (this%reservoir_gage_ids(reservoir_subset_index) == reservoir_gage_id) then
+            if (this%reservoir_gage_ids(reservoir_subset_index) .eq. reservoir_gage_id) then
                 gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
             end if
@@ -269,7 +265,6 @@ contains
         implicit none
         class(timeslice_data_type), intent(inout) :: this
         character(len=256), intent(in) :: timeslice_file
-        integer*8, allocatable, dimension(:) :: gage_ids_integer_array
         integer :: reservoir_gage_index, timeslice_gage_index, number_of_gages
         integer :: ncid, status
 
@@ -284,7 +279,6 @@ contains
         allocate(this%gage_id(number_of_gages))
         allocate(this%gage_discharge(number_of_gages))
         allocate(this%gage_quality(number_of_gages))
-        allocate(gage_ids_integer_array(number_of_gages))
 
         ! Get gage ids
         call read_timeslice_gage_ids(ncid, 'stationId', this%gage_id)
@@ -294,11 +288,6 @@ contains
 
         ! Get gage qualities
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', this%gage_quality)
-
-        ! Convert gage ids to integers
-        do timeslice_gage_index = 1, number_of_gages
-            read (this%gage_id(timeslice_gage_index), *) gage_ids_integer_array(timeslice_gage_index)
-        end do
 
         ! Normalize gage qualities to 1
         this%gage_quality = this%gage_quality/100
@@ -327,14 +316,11 @@ contains
         ! model time that the gage discharge is read from a timeslice file.
         do reservoir_gage_index = 1, this%number_of_reservoir_gages
             if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
-
                 do timeslice_gage_index = 1, number_of_gages
-                    if (gage_ids_integer_array(timeslice_gage_index) == this%reservoir_gage_ids(reservoir_gage_index)) then
+                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
-
                             this%gage_lookback_seconds(reservoir_gage_index) = this%current_lookback_seconds
-
                         end if
                         exit
                     end if
@@ -350,9 +336,7 @@ contains
     if(allocated(this%gage_id)) deallocate(this%gage_id)
     if(allocated(this%gage_discharge)) deallocate(this%gage_discharge)
     if(allocated(this%gage_quality)) deallocate(this%gage_quality)
-    if(allocated(gage_ids_integer_array)) deallocate(gage_ids_integer_array)
 
     end subroutine read_timeslice_file
-
 
 end module module_reservoir_read_timeslice_data

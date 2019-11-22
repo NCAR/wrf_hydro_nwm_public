@@ -23,7 +23,7 @@ module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/
 	-I../phys -I../Utility_routines -I../../../mod $(NETCDFMOD) $(*).F
 	@echo ""
 
-main_hrldas_driver.o: main_hrldas_driver.F
+main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o main_hrldas_driver.F
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
 	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP $(NETCDFMOD) $(*).F
@@ -33,7 +33,7 @@ main_hrldas_driver.o: main_hrldas_driver.F
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I ../../../mod -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).F
 	@echo ""
 
 .F.o:

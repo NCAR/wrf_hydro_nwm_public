@@ -3,7 +3,7 @@
 
 module module_reservoir_utilities
     use netcdf
-
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
 #ifndef NCEP_WCOSS
@@ -135,10 +135,6 @@ contains
 
         if (projected_next_time_interval_storage > max_storage) then
 
-            ! This releases only the excess water. If the new outflow is added to the existing outflow,
-            ! then the reservoir maintains storage at the last value before exceeding maximum.
-            outflow = inflow - (max_storage - previous_time_storage) / time_interval
-
             max_storage_reached = .true.
 
             write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
@@ -153,7 +149,7 @@ contains
 
         else if (projected_next_time_interval_storage <= 0.0) then
 
-            outflow = previous_time_storage / time_interval
+            outflow = inflow
 
             write(log_warning,*)  "Modified release to prevent storage deficit for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
@@ -163,6 +159,79 @@ contains
         if (outflow < 0.0) outflow = 0.0
 
     end subroutine modify_for_projected_storage
+
+    ! Reads the reservoir_type form the reservoir parameter file. This subroutine first checks to ensure that
+    ! the lake_id array in the reservoir parameter file matches the lake_id array in the lake parameter file and
+    ! calls hydro_stop if they do not match.
+    subroutine read_reservoir_type(reservoir_parameter_file, lake_parameter_lake_ids, number_of_lake_parameter_lakes, &
+        reservoir_types)
+        character(len=*), intent(in) :: reservoir_parameter_file
+        integer, dimension(:), intent(in) :: lake_parameter_lake_ids
+        integer, intent(in) :: number_of_lake_parameter_lakes
+        integer, dimension(:), intent(inout) :: reservoir_types
+        integer, allocatable, dimension(:) :: reservoir_parameter_lake_ids
+
+        integer, dimension(nf90_max_var_dims) :: dim_ids
+        integer :: ncid, var_id, lake_index, number_of_lakes, number_of_reservoir_types
+        integer :: status                        ! status of reading NetCDF
+
+        ! Open Reservoir Parameter NetCDF file
+        status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
+
+        status = nf90_inq_varid(ncid, "lake_id", var_id)
+        if (status /= nf90_noerr) call handle_err(status, "lake_id")
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id")
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id")
+
+        allocate(reservoir_parameter_lake_ids(number_of_lakes))
+
+        status = nf90_get_var(ncid, var_id, reservoir_parameter_lake_ids)
+        if (status /= nf90_noerr) call handle_err(status, "lake_id")
+
+        ! Check to ensure that the lake_id array size in the reservoir parameter file matches the lake_id array
+        ! size in the lake parameter file
+        if (number_of_lake_parameter_lakes .ne. number_of_lakes) then
+            call hydro_stop("Lake ID array in the reservoir parameter file does not match the Lake ID array &
+            in the lake parameter file.")
+
+        else
+            ! Check to ensure that each lake id in the lake_id array in the reservoir parameter file matches
+            ! each lake id in the lake_id array in the lake parameter file
+            do lake_index = 1, number_of_lakes
+
+                if (lake_parameter_lake_ids(lake_index) .ne. reservoir_parameter_lake_ids(lake_index)) then
+                    call hydro_stop("Lake ID array in the reservoir parameter file does not match the Lake ID array &
+                    in the lake parameter file.")
+                end if
+            end do
+        end if
+
+        status = nf90_inq_varid(ncid, "reservoir_type", var_id)
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type")
+
+        status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type")
+
+        status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_reservoir_types)
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type")
+
+        ! Check to ensure that the reservoir_type array size matches the lake_id array size.
+        if (number_of_reservoir_types .ne. number_of_lakes) then
+            call hydro_stop("Reservoir Type array size in the reservoir parameter file does not match the Lake ID array size &
+            in the lake parameter file.")
+        end if
+
+        status = nf90_get_var(ncid, var_id, reservoir_types)
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type")
+
+        if(allocated(reservoir_parameter_lake_ids)) deallocate(reservoir_parameter_lake_ids)
+
+    end subroutine read_reservoir_type
 
 
     ! Gets the dimensions of the gage arrays from the timeslice file
@@ -276,12 +345,12 @@ contains
     subroutine read_persistence_netcdf_gage_id(ncid, lake_id_index, netcdf_array_name, gage_id)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: gage_id
+        character(len=*), intent(out) :: gage_id
         character(len=15) :: gage_id_string, gage_id_string_trimmed
         character(len=15), allocatable, dimension(:) :: temp_gage_id_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
-        integer        :: char_index, number_counter
+        integer        :: char_index, number_counter, temp_val
         character(len=1)   :: temp_char
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
@@ -300,23 +369,18 @@ contains
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
-        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
-
-        number_counter = 0
-
         do char_index = 1, 15
-            temp_char = gage_id_string_trimmed(char_index:char_index)
+            temp_val = ichar(gage_id_string(char_index:char_index))
 
-            if (temp_char .eq. '0' .or. temp_char .eq. '1' .or. temp_char .eq. '2' &
-            .or. temp_char .eq. '3' .or. temp_char .eq. '4' .or. temp_char .eq. '5' &
-            .or. temp_char .eq. '6' .or. temp_char .eq. '7' .or. temp_char .eq. '8' &
-            .or. temp_char .eq. '9') then
-                number_counter = number_counter + 1
+            ! Check if null character, then pad with a space
+            if (temp_val == 0) then
+                gage_id_string(char_index:char_index) = ' '
             end if
-
         end do
 
-        read(gage_id_string_trimmed(1:number_counter), *) gage_id
+        gage_id_string_trimmed = ADJUSTL(trim(gage_id_string))
+
+        gage_id = gage_id_string_trimmed
 
         if(allocated(temp_gage_id_array)) deallocate(temp_gage_id_array)
 
@@ -425,11 +489,12 @@ contains
         persistence_current_weight, inflow, current_storage, water_elevation, gage_discharge, &
         persisted_outflow, levelpool_outflow, outflow)
         integer, intent(in) :: lake_number, current_time, timeslice_update_time
-        integer, intent(in) :: weight_update_time, gage_lookback_seconds, gage_id
+        integer, intent(in) :: weight_update_time, gage_lookback_seconds
         integer, intent(in) :: persistence_weight_index
         real,    intent(in) :: persistence_current_weight, inflow, current_storage
         real,    intent(in) :: water_elevation, gage_discharge, persisted_outflow
         real,    intent(in) :: levelpool_outflow, outflow
+        character(len=*), intent(in) :: gage_id
         character(len=15)   :: lake_number_string, lake_number_string_trimmed
         character(len=50)   :: filename_string
 
@@ -439,7 +504,7 @@ contains
 
         open (113, file=filename_string, status="unknown", access = 'append')
 
-        write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, F15.5, A1, F15.5, &
+        write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, A15, A1, I20, A1, F15.5, A1, F15.5, &
         A1, F15.15, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
         current_time, ',', timeslice_update_time, ',', weight_update_time, ',', &
         gage_lookback_seconds, ',', gage_id, ',', persistence_weight_index, ',', &
@@ -933,7 +998,6 @@ contains
     if (punct .and. (oldlen.ge.11) .and. (newlen.ge.11)) ndate(11:11) = sp
 
     end subroutine geth_newdate
-
 
     integer function nfeb(year)
     !
