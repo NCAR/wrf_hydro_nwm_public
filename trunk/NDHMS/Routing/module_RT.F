@@ -864,22 +864,8 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%ORIFICEA(lake_index),        &
                     rt_domain(did)%LAKEMAXH(lake_index),        &
                     rt_domain(did)%ELEVLAKE(lake_index),        &
-                    rt_domain(did)%LAKEIDM(lake_index)          )
-
-          type is (rfc_forecasts)
-              call reservoir%init(                              &
-                    rt_domain(did)%RESHT(lake_index),           &
-                    rt_domain(did)%HRZAREA(lake_index),         &
-                    rt_domain(did)%WEIRH(lake_index),           &
-                    rt_domain(did)%WEIRC(lake_index),           &
-                    rt_domain(did)%WEIRL(lake_index),           &
-                    rt_domain(did)%ORIFICEE(lake_index),        &
-                    rt_domain(did)%ORIFICEC(lake_index),        &
-                    rt_domain(did)%ORIFICEA(lake_index),        &
-                    rt_domain(did)%LAKEMAXH(lake_index),        &
-                    rt_domain(did)%ELEVLAKE(lake_index),        &
                     rt_domain(did)%LAKEIDM(lake_index),         &
-                    "Temp_name_for_param_file"                  )
+                    nlst(did)%reservoir_parameter_file          )
 
            end select
 
