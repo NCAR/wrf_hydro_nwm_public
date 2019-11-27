@@ -7201,6 +7201,7 @@ ENDIF   ! CROPTYPE == 0
   REAL                     :: INFMAX
   REAL, DIMENSION(1:NSOIL) :: DMAX
   INTEGER, PARAMETER       :: CVFRZ = 3
+  REAL                     :: imperv_eff   !effective imperviousness
 ! --------------------------------------------------------------------------------
 
     IF (QINSUR >  0.0) THEN
@@ -7249,13 +7250,15 @@ ENDIF   ! CROPTYPE == 0
        INFMAX = INFMAX * FCR
 
 ! imperviousness adjustment
-       RUNSRF = QINSUR * parameters%imperv
+       ! Effective imperviousness from Alley & Veenhuis
+       imperv_eff = 0.0015 * ( (100. * parameters%imperv)**1.41 )
+       RUNSRF = QINSUR * imperv_eff
 
        CALL WDFCND2 (parameters,WDF,WCND,SH2O(1),SICEMAX,1)
        INFMAX = MAX (INFMAX,WCND)
        INFMAX = MIN (INFMAX,PX)
 
-       RUNSRF = RUNSRF + MAX(0., (QINSUR * (1. - parameters%imperv)) - INFMAX)
+       RUNSRF = RUNSRF + MAX(0., (QINSUR * (1. - imperv_eff)) - INFMAX)
        PDDUM = QINSUR - RUNSRF
 
     END IF
