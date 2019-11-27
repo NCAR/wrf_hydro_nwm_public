@@ -217,6 +217,22 @@ contains
     end subroutine read_timeslice_netcdf_real_1D_variables
 
 
+    ! Read logical one dimension parameter arrays from the timeslice NetCDF
+    subroutine read_timeslice_netcdf_logical_1D_variables(ncid, netcdf_array_name, logical_var_array)
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: netcdf_array_name
+        logical, dimension(:), intent(out) :: logical_var_array
+        integer :: var_id, status
+
+        status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+        status = nf90_get_var(ncid, var_id, logical_var_array)
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
+
+    end subroutine read_timeslice_netcdf_logical_1D_variables
+
+
     ! Read all gage ids from persistence parameter NetCDF
     subroutine read_persistence_netcdf_gage_ids_all(ncid, netcdf_array_name, var_id, number_of_gages)
         integer, intent(in) :: ncid

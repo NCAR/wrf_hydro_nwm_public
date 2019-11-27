@@ -17,6 +17,7 @@ module module_reservoir_read_rfc_time_series_data
         integer                         :: forecast_counts
         integer                         :: time_step_seconds
         real, allocatable, dimension(:) :: forecast_discharges
+        logical, allocatable, dimension(:) :: synthetic_values
         logical                         :: forecast_found
 
     contains
@@ -36,7 +37,7 @@ contains
 
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id, &
-        lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
+        lookback_seconds, observation_counts, forecast_counts, time_step_seconds, observation_discharges, forecast_discharges, synthetic_values, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -44,9 +45,12 @@ contains
         integer,            intent(in)                  :: forecast_lookback_hours
         character(len=5),   intent(in)                  :: rfc_gage_id
         integer,            intent(out)                 :: lookback_seconds
+        integer,            intent(out)                 :: observation_counts
         integer,            intent(out)                 :: forecast_counts
         integer,            intent(out)                 :: time_step_seconds
+        real, allocatable, dimension(:), intent(inout)  :: observation_discharges
         real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
+        logical, allocatable, dimension(:), intent(inout)  :: synthetic_values
         logical,            intent(inout)               :: forecast_found
 
         this%forecast_found = .false.
@@ -57,22 +61,49 @@ contains
         this%rfc_gage_id = rfc_gage_id
 
         this%current_lookback_seconds = 0
+        this%observation_counts = 0
         this%forecast_counts = 0
         this%time_step_seconds = 0
 
         call this%setup_read_time_series()
 
         lookback_seconds = this%current_lookback_seconds
+        observation_counts = this%observation_counts
         forecast_counts = this%forecast_counts
         time_step_seconds = this%time_step_seconds
 
         if (this%forecast_found) then
-            allocate(forecast_discharges(forecast_counts))
 
+            !allocate(observation_discharges(observation_counts))
+
+            !allocate(forecast_discharges(forecast_counts))
+
+            allocate(forecast_discharges(observation_counts + forecast_counts))
+
+
+            allocate(synthetic_values(observation_counts + forecast_counts))
+
+            !observation_discharges = this%observation_discharges
+
+!!!MAYBE CHANGE NAME TO JUST DISCHARGES
             forecast_discharges = this%forecast_discharges
 
+            synthetic_values = this%synthetic_values
+
+            !!!RETHINK WHERE TO PUT THIS CHECK????
+            ! If all of the values are synthetic or any of the values equal -999.0 then
+            ! do not use the time series
+            if ( all(synthetic_values) .or. any(forecast_discharges) == -999.0 ) then
+                this%forecast_found = .false.
+            end if
+
+
             ! Deallocate forecast arrays
+            !if(allocated(this%observation_discharges)) deallocate(this%observation_discharges)
             if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
+            if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
+
+
         end if
 
         forecast_found = this%forecast_found
@@ -140,6 +171,7 @@ contains
 
     end subroutine setup_read_time_series
 
+!!!COMBINE OBS AND FORECAST ARRAYS HERE OR IN RFC MODULE?????
 
     ! Read given time series file to get gage discharges
     subroutine read_time_series_file(this, time_series_file)
@@ -150,21 +182,28 @@ contains
         integer :: reservoir_rfc_gage_index, time_series_rfc_gage_index
         integer :: ncid, status
 
+!!!!!READ IN T0 AND T-48?????
+
+
         ! Open Time Series NetCDF file
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
+
+        call read_time_series_netcdf_integer_variables(ncid, 'obsCounts', this%observation_counts)
 
         call read_time_series_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
         call read_time_series_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
+        allocate (this%observation_discharges(this%observation_counts))
         allocate (this%forecast_discharges(this%forecast_counts))
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)
 
+        call read_timeslice_netcdf_logical_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
+
         this%forecast_found = .true.
 
     end subroutine read_time_series_file
-
 
 end module module_reservoir_read_rfc_time_series_data

@@ -132,9 +132,18 @@ contains
         ! immediately.
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id, &
         this%properties%lookback_seconds, this%properties%forecast_counts, this%properties%time_step_seconds, &
-        this%state%forecast_discharges, this%state%forecast_found)
+        this%state%forecast_discharges, this%state%synthetic_values, this%state%forecast_found)
 
         if (this%state%forecast_found) then
+
+!!!!!!!!!!!
+!!!Need synthetic values array in this file also or just in the reader?????
+
+            !if (this%state%synthetic_values) then
+
+
+            !else
+
 
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
 
@@ -150,6 +159,9 @@ contains
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being destroyed
     end subroutine rfc_forecasts_destroy
+
+!!!!!CHANGE FORECAST_COUNTS TO THE COMBINED TOTAL COUNTS???
+
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
@@ -176,11 +188,18 @@ contains
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
 
+        ! If a forecast is found and the current time is less than the max time an RFC Forecast is persisted
         if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then
+
+            ! If current time is at or past the update time to cycle to the next value in the discharge array and the number
+            ! forecast counts has not yet been reached
             if (this%state%current_time .ge. this%state%time_series_update_time .and. this%state%time_series_index &
             .lt. this%properties%forecast_counts) then
+
+                ! Increment time series index
                 this%state%time_series_index = this%state%time_series_index + 1
 
+                ! Set next update time
                 this%state%time_series_update_time = this%state%time_series_update_time + this%properties%time_step_seconds
 
             end if
@@ -219,6 +238,10 @@ contains
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
 
+!!!!!!
+!!Temp if statement to only output at the hour
+if (modulo(this%state%current_time, 3600) == 0) then
+
 !#ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
         call log_rfc_forecasts_diagnostic_data(this%properties%lake_number, this%state%current_time, &
@@ -226,6 +249,8 @@ contains
         this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, this%state%water_elevation, &
         levelpool_outflow, this%output%outflow)
 !#endif
+
+end if
 
     end subroutine run_rfc_forecasts_reservoir
 
