@@ -7248,14 +7248,14 @@ ENDIF   ! CROPTYPE == 0
 
        INFMAX = INFMAX * FCR
 
-! jref for urban areas
-!       IF ( parameters%urban_flag ) INFMAX == INFMAX * 0.05
+! imperviousness adjustment
+       RUNSRF = QINSUR * parameters%imperv
 
        CALL WDFCND2 (parameters,WDF,WCND,SH2O(1),SICEMAX,1)
        INFMAX = MAX (INFMAX,WCND)
        INFMAX = MIN (INFMAX,PX)
 
-       RUNSRF= MAX(0., QINSUR - INFMAX)
+       RUNSRF = RUNSRF + MAX(0., (QINSUR * (1. - parameters%imperv)) - INFMAX)
        PDDUM = QINSUR - RUNSRF
 
     END IF
