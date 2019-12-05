@@ -7,4 +7,4 @@ add_library(hydro_routing_reservoirs_rfc STATIC
 )
 
 add_dependencies(hydro_routing_reservoirs_rfc hydro_routing_reservoirs)
-
+add_dependencies(hydro_routing_reservoirs_rfc hydro_routing_reservoirs_levelpool)
