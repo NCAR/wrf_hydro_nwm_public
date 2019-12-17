@@ -12,6 +12,7 @@ module module_reservoir_read_rfc_time_series_data
         character(len=19)               :: current_date
         character(len=256)              :: time_series_path
         integer                         :: forecast_lookback_hours
+        integer                         :: timeslice_offset_hours
         integer                         :: current_lookback_seconds
         character(len=5)                :: rfc_gage_id
         integer                         :: forecast_counts
@@ -36,21 +37,20 @@ module module_reservoir_read_rfc_time_series_data
 contains
 
    ! Time Series Data Type Constructor
-    subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, rfc_gage_id, &
-        lookback_seconds, observation_counts, forecast_counts, time_step_seconds, observation_discharges, forecast_discharges, synthetic_values, forecast_found)
+    subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, &
+        timeslice_offset_hours, rfc_gage_id, lookback_seconds, forecast_counts, time_step_seconds, &
+        forecast_discharges, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
         character(len=256), intent(in)                  :: time_series_path
         integer,            intent(in)                  :: forecast_lookback_hours
+        integer,            intent(in)                  :: timeslice_offset_hours
         character(len=5),   intent(in)                  :: rfc_gage_id
         integer,            intent(out)                 :: lookback_seconds
-        integer,            intent(out)                 :: observation_counts
         integer,            intent(out)                 :: forecast_counts
         integer,            intent(out)                 :: time_step_seconds
-        real, allocatable, dimension(:), intent(inout)  :: observation_discharges
         real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
-        logical, allocatable, dimension(:), intent(inout)  :: synthetic_values
         logical,            intent(inout)               :: forecast_found
 
         this%forecast_found = .false.
@@ -58,34 +58,25 @@ contains
         this%current_date = start_date
         this%time_series_path = time_series_path
         this%forecast_lookback_hours = forecast_lookback_hours
+        this%timeslice_offset_hours = timeslice_offset_hours
         this%rfc_gage_id = rfc_gage_id
 
         this%current_lookback_seconds = 0
-        this%observation_counts = 0
         this%forecast_counts = 0
         this%time_step_seconds = 0
 
         call this%setup_read_time_series()
 
         lookback_seconds = this%current_lookback_seconds
-        observation_counts = this%observation_counts
         forecast_counts = this%forecast_counts
         time_step_seconds = this%time_step_seconds
 
         if (this%forecast_found) then
 
-            !allocate(observation_discharges(observation_counts))
+            allocate(forecast_discharges(forecast_counts))
 
-            !allocate(forecast_discharges(forecast_counts))
+            allocate(synthetic_values(forecast_counts))
 
-            allocate(forecast_discharges(observation_counts + forecast_counts))
-
-
-            allocate(synthetic_values(observation_counts + forecast_counts))
-
-            !observation_discharges = this%observation_discharges
-
-!!!MAYBE CHANGE NAME TO JUST DISCHARGES
             forecast_discharges = this%forecast_discharges
 
             synthetic_values = this%synthetic_values
@@ -97,9 +88,7 @@ contains
                 this%forecast_found = .false.
             end if
 
-
             ! Deallocate forecast arrays
-            !if(allocated(this%observation_discharges)) deallocate(this%observation_discharges)
             if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
             if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
 
@@ -130,14 +119,19 @@ contains
         character(len=13)    :: old_date_trimmed
         character(len=2)     :: forecast_file_resolution_string
         integer :: total_time_series_file_periods, time_series_file_index
-        integer :: forecast_file_minute, forecast_file_resolution_seconds
+        integer :: forecast_file_minute, forecast_file_resolution_seconds, timeslice_offset_seconds
         logical :: file_exists
 
         this%current_lookback_seconds = 0
 
         total_time_series_file_periods = this%forecast_lookback_hours * (60 / forecast_file_resolution_minutes)
 
+        timeslice_offset_seconds = this%timeslice_offset_hours * 3600
+
         old_date = this%current_date
+
+        call geth_newdate(new_date, old_date, timeslice_offset_seconds)
+        old_date = new_date
 
         write(forecast_file_resolution_string, "(I2)") forecast_file_resolution_minutes
 
@@ -171,8 +165,6 @@ contains
 
     end subroutine setup_read_time_series
 
-!!!COMBINE OBS AND FORECAST ARRAYS HERE OR IN RFC MODULE?????
-
     ! Read given time series file to get gage discharges
     subroutine read_time_series_file(this, time_series_file)
         implicit none
@@ -189,13 +181,10 @@ contains
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
 
-        call read_time_series_netcdf_integer_variables(ncid, 'obsCounts', this%observation_counts)
-
         call read_time_series_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
         call read_time_series_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
-        allocate (this%observation_discharges(this%observation_counts))
         allocate (this%forecast_discharges(this%forecast_counts))
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)

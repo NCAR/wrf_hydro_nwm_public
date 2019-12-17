@@ -376,12 +376,12 @@ contains
     end subroutine read_reservoir_parameters_netcdf_rfc_gage_id
 
 
-    ! Read the number of days to persist an RFC forecast from the reservoir parameters NetCDF
-    subroutine read_reservoir_parameters_netcdf_rfc_persist_days(ncid, lake_id_index, netcdf_array_name, rfc_forecast_persist_days)
+    ! Read an RFC forecast integer variable for a corresponding lake id from the reservoir parameters NetCDF
+    subroutine read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, netcdf_array_name, integer_var)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
-        integer, intent(out) :: rfc_forecast_persist_days
-        integer, allocatable, dimension(:) :: temp_persist_days_array
+        integer, intent(out) :: integer_var
+        integer, allocatable, dimension(:) :: temp_integer_array
         integer :: var_id, status, number_of_lakes
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
@@ -394,16 +394,16 @@ contains
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
-        allocate(temp_persist_days_array(number_of_lakes))
+        allocate(temp_integer_array(number_of_lakes))
 
-        status = nf90_get_var(ncid, var_id, temp_persist_days_array)
+        status = nf90_get_var(ncid, var_id, temp_integer_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        rfc_forecast_persist_days = temp_persist_days_array(lake_id_index)
+        integer_var = temp_integer_array(lake_id_index)
 
-        if(allocated(temp_persist_days_array)) deallocate(temp_persist_days_array)
+        if(allocated(temp_integer_array)) deallocate(temp_integer_array)
 
-    end subroutine read_reservoir_parameters_netcdf_rfc_persist_days
+    end subroutine read_reservoir_parameters_netcdf_rfc_integer
 
 
     ! Read real two dimension parameter arrays from the persistence parameters NetCDF

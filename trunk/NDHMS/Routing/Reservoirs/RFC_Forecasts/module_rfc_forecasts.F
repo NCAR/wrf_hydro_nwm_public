@@ -130,26 +130,19 @@ contains
         ! Call to initialize time series data object. This object is a singleton,
         ! so if another reservoir has already initialized the object, it will return
         ! immediately.
-        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, this%properties%rfc_gage_id, &
-        this%properties%lookback_seconds, this%properties%forecast_counts, this%properties%time_step_seconds, &
-        this%state%forecast_discharges, this%state%synthetic_values, this%state%forecast_found)
+        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
+        this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
+        this%properties%lookback_seconds, this%properties%forecast_counts, &
+        this%properties%time_step_seconds, this%state%forecast_discharges, this%state%forecast_found)
 
         if (this%state%forecast_found) then
-
-!!!!!!!!!!!
-!!!Need synthetic values array in this file also or just in the reader?????
-
-            !if (this%state%synthetic_values) then
-
-
-            !else
-
-
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
 
             this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
-            this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1
+            this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
+            + this%properties%timeslice_offset_hours
+
         end if
 
     end subroutine rfc_forecasts_init
@@ -159,8 +152,6 @@ contains
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being destroyed
     end subroutine rfc_forecasts_destroy
-
-!!!!!CHANGE FORECAST_COUNTS TO THE COMBINED TOTAL COUNTS???
 
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir

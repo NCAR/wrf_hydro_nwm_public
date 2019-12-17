@@ -8,7 +8,7 @@
 module module_rfc_forecasts_properties
     use module_reservoir_utilities, only: read_netcdf_lake_id, &
                                           read_reservoir_parameters_netcdf_rfc_gage_id, &
-                                          read_reservoir_parameters_netcdf_rfc_persist_days, &
+                                          read_reservoir_parameters_netcdf_rfc_integer, &
                                           handle_err
     use module_reservoir, only: reservoir_properties
     use netcdf
@@ -24,6 +24,8 @@ module module_rfc_forecasts_properties
         integer           :: time_step_seconds
         integer           :: rfc_forecast_persist_days
         integer           :: rfc_forecast_persist_seconds
+        integer           :: rfc_timeslice_offset_hours
+        integer           :: observation_hours
 
     contains
 
@@ -33,6 +35,7 @@ module module_rfc_forecasts_properties
     end type rfc_forecasts_properties_interface
 
     integer, parameter :: seconds_in_day = 86400
+    integer, parameter :: observation_hours = 48
 
 contains
 
@@ -47,6 +50,8 @@ contains
 
         this%lake_number = lake_number
 
+        this%observation_hours = observation_hours
+
         ! Open RFC Reservoir Parameter NetCDF file
         status = nf90_open(path = rfc_forecasts_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open rfc forecasts parameter file")
@@ -56,9 +61,11 @@ contains
 
         call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", this%rfc_gage_id)
 
-        call read_reservoir_parameters_netcdf_rfc_persist_days(ncid, lake_id_index, "rfc_forecast_persist", this%rfc_forecast_persist_days)
+        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_forecast_persist", this%rfc_forecast_persist_days)
 
         this%rfc_forecast_persist_seconds = this%rfc_forecast_persist_days * seconds_in_day
+
+        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_timeslice_offset", this%rfc_timeslice_offset_hours)
 
     end subroutine rfc_forecasts_properties_init
 
