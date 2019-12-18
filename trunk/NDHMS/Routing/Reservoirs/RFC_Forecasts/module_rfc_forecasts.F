@@ -141,7 +141,7 @@ contains
             this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
-            + this%properties%timeslice_offset_hours
+            + this%properties%rfc_timeslice_offset_hours
 
         end if
 
@@ -241,7 +241,9 @@ if (modulo(this%state%current_time, 3600) == 0) then
         levelpool_outflow, this%output%outflow)
 !#endif
 
+!!
 end if
+!!!
 
     end subroutine run_rfc_forecasts_reservoir
 

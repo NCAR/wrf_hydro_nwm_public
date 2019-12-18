@@ -217,20 +217,20 @@ contains
     end subroutine read_timeslice_netcdf_real_1D_variables
 
 
-    ! Read logical one dimension parameter arrays from the timeslice NetCDF
-    subroutine read_timeslice_netcdf_logical_1D_variables(ncid, netcdf_array_name, logical_var_array)
+    ! Read integer one dimension parameter arrays from the timeslice NetCDF
+    subroutine read_timeslice_netcdf_integer_1D_variables(ncid, netcdf_array_name, integer_var_array)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_array_name
-        logical, dimension(:), intent(out) :: logical_var_array
+        integer, dimension(:), intent(out) :: integer_var_array
         integer :: var_id, status
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-        status = nf90_get_var(ncid, var_id, logical_var_array)
+        status = nf90_get_var(ncid, var_id, integer_var_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
 
-    end subroutine read_timeslice_netcdf_logical_1D_variables
+    end subroutine read_timeslice_netcdf_integer_1D_variables
 
 
     ! Read all gage ids from persistence parameter NetCDF
@@ -431,7 +431,7 @@ contains
 
 
     ! Read integer parameters from the RFC Time Series NetCDF
-    subroutine read_time_series_netcdf_integer_variables(ncid, netcdf_variable_name, integer_variable)
+    subroutine read_timeslice_netcdf_integer_variables(ncid, netcdf_variable_name, integer_variable)
         integer, intent(in) :: ncid
         character(len=*), intent(in) :: netcdf_variable_name
         integer, intent(out) :: integer_variable
@@ -443,7 +443,7 @@ contains
         status = nf90_get_var(ncid, var_id, integer_variable)
         if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name)
 
-    end subroutine read_time_series_netcdf_integer_variables
+    end subroutine read_timeslice_netcdf_integer_variables
 
 
     ! Handle NetCDF error

@@ -1,6 +1,7 @@
 module module_reservoir_read_rfc_time_series_data
-    use module_reservoir_utilities, only: read_time_series_netcdf_integer_variables, &
+    use module_reservoir_utilities, only: read_timeslice_netcdf_integer_variables, &
                                           read_timeslice_netcdf_real_1D_variables, &
+                                          read_timeslice_netcdf_integer_1D_variables, &
                                           geth_newdate, &
                                           handle_err
     use netcdf
@@ -8,18 +9,19 @@ module module_reservoir_read_rfc_time_series_data
 
     type :: time_series_data_type
 
-        character(len=19)               :: start_date
-        character(len=19)               :: current_date
-        character(len=256)              :: time_series_path
-        integer                         :: forecast_lookback_hours
-        integer                         :: timeslice_offset_hours
-        integer                         :: current_lookback_seconds
-        character(len=5)                :: rfc_gage_id
-        integer                         :: forecast_counts
-        integer                         :: time_step_seconds
-        real, allocatable, dimension(:) :: forecast_discharges
-        logical, allocatable, dimension(:) :: synthetic_values
-        logical                         :: forecast_found
+        character(len=19)                  :: start_date
+        character(len=19)                  :: current_date
+        character(len=256)                 :: time_series_path
+        integer                            :: forecast_lookback_hours
+        integer                            :: timeslice_offset_hours
+        integer                            :: current_lookback_seconds
+        character(len=5)                   :: rfc_gage_id
+        integer                            :: forecast_counts
+        integer                            :: time_step_seconds
+        real, allocatable, dimension(:)    :: forecast_discharges
+        integer, allocatable, dimension(:) :: synthetic_values
+        logical, allocatable, dimension(:) :: synthetic_values_logical
+        logical                            :: forecast_found
 
     contains
 
@@ -75,23 +77,17 @@ contains
 
             allocate(forecast_discharges(forecast_counts))
 
-            allocate(synthetic_values(forecast_counts))
-
             forecast_discharges = this%forecast_discharges
 
-            synthetic_values = this%synthetic_values
-
-            !!!RETHINK WHERE TO PUT THIS CHECK????
-            ! If all of the values are synthetic or any of the values equal -999.0 then
+            ! If all of the values are synthetic or any of the values are less than 0.0, then
             ! do not use the time series
-            if ( all(synthetic_values) .or. any(forecast_discharges) == -999.0 ) then
+            if ( all(this%synthetic_values_logical) .eqv. .true. .or. minval(this%forecast_discharges) < 0.0) then
                 this%forecast_found = .false.
             end if
 
             ! Deallocate forecast arrays
             if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
             if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
-
 
         end if
 
@@ -174,22 +170,21 @@ contains
         integer :: reservoir_rfc_gage_index, time_series_rfc_gage_index
         integer :: ncid, status
 
-!!!!!READ IN T0 AND T-48?????
-
-
         ! Open Time Series NetCDF file
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
 
-        call read_time_series_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
+        call read_timeslice_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
-        call read_time_series_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
-
-        allocate (this%forecast_discharges(this%forecast_counts))
+        call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)
 
-        call read_timeslice_netcdf_logical_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
+        call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
+
+        allocate (this%synthetic_values_logical(this%forecast_counts))
+
+        this%synthetic_values_logical = this%synthetic_values
 
         this%forecast_found = .true.
 
