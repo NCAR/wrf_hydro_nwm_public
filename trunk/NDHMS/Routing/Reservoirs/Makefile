@@ -10,7 +10,13 @@ MODFLAG := $(MODFLAG) -I ../../mod
 
 all: mod
 
-mod:
+../../MPP/mpp_land.mod:
+		make -C ../../MPP
+
+../../utils/module_hydro_stop.mod:
+		make -C ../../utils
+
+mod: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	#Build each sub module then build the module that depends on all sub modules
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir.F
@@ -29,8 +35,8 @@ mod:
 	make -C Persistence_Level_Pool_Hybrid
 	make -C RFC_Forecasts
 
-test:
-	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) hydro_stop.F
+
+test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_utilities.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_timeslice_data.F
@@ -45,7 +51,9 @@ test:
 
 
 	$(COMPILER90) $(NETCDFLIB) -o reservoir_tests \
-		hydro_stop.o \
+		../../MPP/mpp_land.o \
+		../../MPP/CPL_WRF.o \
+		../../utils/module_hydro_stop.o \
 		module_reservoir_utilities.o \
 		module_reservoir.o \
 		module_reservoir_read_timeslice_data.o \

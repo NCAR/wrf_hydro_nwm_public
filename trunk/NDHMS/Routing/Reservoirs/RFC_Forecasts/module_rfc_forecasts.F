@@ -46,10 +46,11 @@ contains
     ! RFC Forecasts Constructor
     subroutine rfc_forecasts_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
-        weir_length, orifice_elevation, orifice_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, rfc_forecasts_parameter_file, start_date, &
         time_series_path, forecast_lookback_hours)
+
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
@@ -57,6 +58,7 @@ contains
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
+        real,    intent(in)    :: dam_length                ! dam length (meters)
         real,    intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real,    intent(in)    :: orifice_coefficient       ! orifice coefficient
         real,    intent(in)    :: orifice_area              ! orifice area (meters^2)
@@ -103,6 +105,7 @@ contains
             else
                 ! initialize rfc forecasts properties
                 call this%properties%init(lake_number, rfc_forecasts_parameter_file)
+
             end if
             this%pointer_allocation_guard = .true.
 
@@ -124,7 +127,7 @@ contains
 
         ! Initialize level pool reservoir
         call this%state%levelpool_ptr%init(water_elevation, lake_area, &
-        weir_elevation, weir_coeffecient, weir_length, orifice_elevation, &
+        weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         ! Call to initialize time series data object. This object is a singleton,
@@ -152,7 +155,6 @@ contains
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being destroyed
     end subroutine rfc_forecasts_destroy
-
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
@@ -244,6 +246,7 @@ if (modulo(this%state%current_time, 3600) == 0) then
 !!
 end if
 !!!
+
 
     end subroutine run_rfc_forecasts_reservoir
 

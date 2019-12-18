@@ -41,7 +41,8 @@
           character(len=256) :: route_chan_f=""
           character(len=256) :: route_link_f=""
           character(len=256) :: route_lake_f=""
-          logical            :: reservoir_persistence
+          logical            :: reservoir_persistence_usgs
+          logical            :: reservoir_persistence_usace
           character(len=256) :: reservoir_parameter_file=""
           character(len=256) :: reservoir_timeslice_path=""
           integer            :: reservoir_observation_lookback_hours
@@ -49,7 +50,7 @@
           logical            :: reservoir_rfc_forecasts
           character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
           integer            :: reservoir_rfc_forecasts_lookback_hours
-          logical            :: reservoir_not_levelpool
+          logical            :: reservoir_type_specified
           character(len=256) :: route_direction_f=""
           character(len=256) :: route_order_f=""
           character(len=256) :: gwbasmskfil =""

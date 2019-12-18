@@ -2,25 +2,26 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_hrldas_netcdf_io
   use module_date_utilities
   use netcdf
+  use module_hydro_stop, only:HYDRO_stop
 
 #ifdef MPP_LAND
   use module_mpp_land, only:mpp_land_bcast_int1, decompose_data_real, mpp_land_bcast_real1, decompose_data_int, &
@@ -147,7 +148,7 @@ contains
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
-    logical, intent(in) :: fatal_if_error 
+    logical, intent(in) :: fatal_if_error
     integer, intent(out) :: ierr
     real, intent(out) :: layer_bottom
     real, intent(out) :: layer_top
@@ -228,10 +229,10 @@ contains
 
     ! Check that output directory OUTDIR exists and is writable, by
     ! trying to open a test file in that directory.  Include a random
-    ! number in the test file name, to greatly reduce the chance of 
-    ! collision with existing file names.  This assumes that the 
-    ! intrinsic random_seed routine, called without argument, will seed 
-    ! the random number generator based on something like system time 
+    ! number in the test file name, to greatly reduce the chance of
+    ! collision with existing file names.  This assumes that the
+    ! intrinsic random_seed routine, called without argument, will seed
+    ! the random number generator based on something like system time
     ! or hardware noise.
 
     integer,          intent(in) :: rank
@@ -372,7 +373,7 @@ contains
   subroutine read_dim(wrfinput_flnm, ix, jx)
        implicit none
        character(len=*),   intent(in)    :: wrfinput_flnm
-       integer,            intent(out)   :: ix, jx    ! dimensions 
+       integer,            intent(out)   :: ix, jx    ! dimensions
        integer  :: ncid, dimid, ierr
        ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
 
@@ -381,10 +382,10 @@ contains
 
        ierr = nf90_inquire_dimension(ncid, dimid, len=ix)
        call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'west_east'")
-   
+
        ierr = nf90_inq_dimid(ncid, "south_north", dimid)
        call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension 'south_north'")
-   
+
        ierr = nf90_inquire_dimension(ncid, dimid, len=jx)
        call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding dimension length for 'south_north'")
 
@@ -430,7 +431,7 @@ contains
     integer :: i
     integer :: rank
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
                                   "read_hrldas_hdrinfo() - MPI_COMM_RANK"
@@ -516,7 +517,7 @@ contains
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        "Problems finding global attribute 'MMINLU'")
-    
+
     ! IBM XLF seems to need something like this:
     do i = 1, 256
        if (ichar(llanduse(i:i)) == 0) llanduse(i:i) = " "
@@ -596,7 +597,7 @@ contains
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
                                   " - MPI_COMM_RANK"
@@ -698,14 +699,14 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: rivercond
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: pexp
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: fdepth
-    
+
     character(len=256) :: units
     integer :: ierr
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
                                   " - MPI_COMM_RANK"
@@ -787,7 +788,7 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: vcmx25_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mp_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: hvt_2d
-    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d    
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: rsurfexp_2d
 
     character(len=24)  :: name
@@ -811,7 +812,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       bexp_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -825,7 +826,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       smcdry_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -839,7 +840,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       smcwlt_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -853,7 +854,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       smcref_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -867,7 +868,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       smcmax_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -881,7 +882,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       dksat_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -895,7 +896,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       dwsat_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -909,7 +910,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       psisat_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -923,7 +924,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, xdum, start=(/xstart,ystart,1/), count=(/xend-xstart+1,yend-ystart+1,nsoil/))
-    
+
     do isoil = 1,4
       quartz_3d(:,isoil,:) = xdum(:,:,isoil)
     end do
@@ -937,7 +938,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, refdk_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-    
+
     name = "refkdt"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -947,7 +948,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, refkdt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-    
+
     name = "slope"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -957,7 +958,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, slope_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "cwpvt"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -967,7 +968,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, cwpvt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "vcmx25"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -977,7 +978,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, vcmx25_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "mp"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -987,7 +988,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, mp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "hvt"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -997,7 +998,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, hvt_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "mfsno"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -1007,7 +1008,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, mfsno_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!    
+!
     name = "rsurfexp"
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
@@ -1017,7 +1018,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, rsurfexp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-    
+
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
     if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_3d_soil() -  NF90_CLOSE"
@@ -1094,13 +1095,13 @@ contains
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
-    logical, intent(in) :: fatal_if_error 
+    logical, intent(in) :: fatal_if_error
     integer, intent(out) :: ierr
 #ifdef MPP_LAND
     real:: g_array(global_nx,global_ny)
 #endif
     units = " "
-    
+
 #ifdef MPP_LAND
     if(my_id .eq. 0) then
 #endif
@@ -1178,7 +1179,7 @@ contains
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
-    logical, intent(in) :: fatal_if_error 
+    logical, intent(in) :: fatal_if_error
     integer, intent(out) :: ierr
 
     integer :: iret, varid, isoil
@@ -1263,7 +1264,7 @@ contains
     integer,                                           intent(in)  :: nsoil
     real,    dimension(nsoil),                         intent(in)  :: sldpth
     character(len=*),                                  intent(in)  :: target_date
-    
+
     integer,                                           intent(out) :: ldasin_version
     real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: smc
     real,    dimension(xstart:xend,nsoil,ystart:yend), intent(out) :: stc
@@ -1335,7 +1336,7 @@ contains
 #ifdef HYDRO_D
        write(*,'("LDASIN TITLE attribute: ", A)') trim(titlestr)
 #endif
-       ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and 
+       ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and
        ! based on a search for the string "v20".
        idx = index(trim(titlestr), "v20")
        if (idx <= 0) then
@@ -1393,19 +1394,19 @@ contains
     if (ierr_snodep /= 0) fndsnowh = .false.
 
     ! Get the interfaces from the input file (not the variable as of v3.7)
-    
+
     ierr = nf90_inq_varid(ncid,  "DZS",  varid)
     ierr = nf90_get_var(ncid, varid, values=dzs, start=(/1/), count=(/4/))
-    
+
     layer_top(1) = 0.0
     layer_bottom(1) = dzs(1)
     do isoil = 2, 4
       layer_top(isoil) = layer_bottom(isoil-1)
       layer_bottom(isoil) = layer_top(isoil) + dzs(isoil)
     end do
-	
+
     call get_netcdf_soillevel("TSLB", ncid, soildummy, units,  xstart, xend, ystart, yend, FATAL, ierr)
-    
+
 #ifdef HYDRO_D
     write(*, '("layer_bottom(1:4) = ", 4F9.4)') layer_bottom(1:4)
     write(*, '("layer_top(1:4)    = ", 4F9.4)') layer_top(1:4)
@@ -1438,7 +1439,7 @@ contains
     integer :: ierr
     integer :: rank
 
-#ifdef _PARALLEL_    
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F init_interp()"// &
                                   " - MPI_COMM_RANK."
@@ -1473,7 +1474,7 @@ contains
 
        if (dst_centerpoint(k) < src_centerpoint(1)) then
           ! If the center of the destination layer is closer to the surface than
-          ! the center of the topmost source layer, then simply set the 
+          ! the center of the topmost source layer, then simply set the
           ! value of the destination layer equal to the topmost source layer:
           if (rank == 0) then
 #ifdef HYDRO_D
@@ -1487,7 +1488,7 @@ contains
 
        if (dst_centerpoint(k) > src_centerpoint(nvar)) then
           ! If the center of the destination layer is deeper than
-          ! the center of the deepest source layer, then simply set the 
+          ! the center of the deepest source layer, then simply set the
           ! value of the destination layer equal to the deepest source layer:
           if (rank == 0) then
 #ifdef HYDRO_D
@@ -1518,7 +1519,7 @@ contains
        ! Otherwise, do a linear interpolation
 
        ! Get ktop, the index of the top bracketing layer from the source dataset.
-       ! Which from the bottom up, will be the first source level that is closer 
+       ! Which from the bottom up, will be the first source level that is closer
        ! to the surface than the destination level
        ktop = -99999
        TOPLOOP : do kk = nvar,1,-1
@@ -1557,7 +1558,7 @@ contains
        var(:,:,k) = (src(:,ktop,:)*fraction) + (src(:,kbottom,:)*(1.0-fraction))
 
     enddo KLOOP
-     
+
   end subroutine init_interp
 
 !---------------------------------------------------------------------------------------------------------
@@ -1692,7 +1693,7 @@ contains
 
           ! Copy nextread to lastread
           lastread = nextread
-       
+
           ! Clear nextread
           call nullify_inputstruct(nextread)
        endif
@@ -1701,7 +1702,7 @@ contains
        ! If there is no last date, assume we're at the beginning of our processing
        ! and take the target_date as the first timestep, for which forcing data
        ! must be available.
-     
+
 #ifdef MPP_LAND
      call mpp_land_bcast_char(19,lastread%read_date(1:19))
 #endif
@@ -1757,9 +1758,9 @@ contains
        call get_2d_netcdf("LWDOWN",  ncid, nextread%lw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf("SWDOWN",  ncid, nextread%sw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf("RAINRATE",ncid, nextread%pcp,   units, xstart, xend, ystart, yend, FATAL, ierr)
-       
+
        if(update_veg) then    ! Barlage v3.7: update only if dveg option is appropriate
-       
+
          call get_2d_netcdf("VEGFRA",  ncid, nextread%vegfra,units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
          if (ierr /= 0) then
           ! print*, 'VEGFRA not found!'
@@ -1772,9 +1773,9 @@ contains
          endif
 
        endif
-	 
+
        if(update_lai) then    ! Barlage v3.7: update only if dveg option is appropriate
-	 
+
          call get_2d_netcdf("LAI",     ncid, nextread%lai,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
          if (ierr /= 0) then
           ! print*, 'LAI not found!'
@@ -1787,7 +1788,7 @@ contains
          endif
 
        endif
-	 
+
 #ifdef MPP_LAND
        if(my_id .eq. IO_id) &
 #endif
@@ -1805,7 +1806,7 @@ contains
     if (target_date == nextread%read_date) then
        !
        ! We have advanced to the later date of our bracketing times for interpolation.
-       ! Take that data as is, no interpolation necessary, move that data into the 
+       ! Take that data as is, no interpolation necessary, move that data into the
        ! lastread structure, and return that data.
        !
 
@@ -2266,7 +2267,7 @@ contains
        iret = nf90_def_var(ncid, "time", NF90_INT, (/dimid_times/), varid)
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_def_var for "//trim(output_flnm))
-       iret = nf90_put_att(ncid, varid, "long_name", "valid output time")  
+       iret = nf90_put_att(ncid, varid, "long_name", "valid output time")
        call error_handler(iret, failure="In module_hrldas_netcdf_io.F prepare_output_file_seq()"// &
                                         " - Problem nf90_put_var for "//trim(output_flnm))
        iret = nf90_put_att(ncid, varid, "units", trim(date340))
@@ -2356,7 +2357,7 @@ contains
 
     output_count_remember = output_count_remember + 1
     if (output_count_remember == split_output_count) then
-       output_count_remember = 0 
+       output_count_remember = 0
        ierr = nf90_close(ncid_remember)
        call error_handler(ierr, failure="In module_hrldas_netcdf_io.F "// &
             "prepare_output_file_seq() - Problem nf90_close for output file")
@@ -2385,7 +2386,7 @@ contains
     if (present(varlist)) then
 	namestretch = name
 	vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
 	vartest = .TRUE.
     endif
     if ( vartest ) then
@@ -2404,13 +2405,13 @@ contains
     character(len=15), dimension(30), optional :: varlist
     character(len=15) :: namestretch
     logical :: vartest
-    if (present(varlist)) then 
-        namestretch = name 
+    if (present(varlist)) then
+        namestretch = name
         vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
         vartest = .TRUE.
     endif
-    if ( vartest ) then 
+    if ( vartest ) then
     	call write_io_int(array,garray)
     	if(my_id .eq. io_id) then
         	 call add_to_output_2d_integer( garray, name, description, units, varlist )
@@ -2429,9 +2430,9 @@ contains
     character(len=15) :: namestretch
     logical :: vartest
     if (present(varlist)) then
-        namestretch = name 
+        namestretch = name
         vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
         vartest = .TRUE.
     endif
     if ( vartest ) then
@@ -2455,16 +2456,16 @@ contains
     character(len=15) :: namestretch
     logical :: vartest
     if (present(varlist)) then
-        namestretch = name 
+        namestretch = name
         vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
         vartest = .TRUE.
     endif
     if ( vartest ) then
     	if (define_mode_remember) then
        		call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
             		NF90_FLOAT , trim(name) , trim(description) , trim(units) )
-    	else 
+    	else
        		ixpar = size(array,1)
        		jxpar = size(array,2)
        		call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
@@ -2485,9 +2486,9 @@ contains
     character(len=15) :: namestretch
     logical :: vartest
     if (present(varlist)) then
-        namestretch = name 
+        namestretch = name
         vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
         vartest = .TRUE.
     endif
     if ( vartest ) then
@@ -2517,9 +2518,9 @@ contains
     character(len=15) :: namestretch
     logical :: vartest
     if (present(varlist)) then
-        namestretch = name 
+        namestretch = name
         vartest = ANY(varlist .eq. namestretch)
-    else 
+    else
         vartest = .TRUE.
     endif
     if ( vartest ) then
@@ -2534,7 +2535,7 @@ contains
        		endif
        		call make_var_att_3d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
             		NF90_FLOAT , zdimid, trim(name) , trim(description) , trim(units) )
-    	else 
+    	else
        		ixpar = size(array,1)
        		kxpar = size(array,2)
        		jxpar = size(array,3)
@@ -2741,7 +2742,7 @@ contains
     restart_filename_remember = " "
     iswater_remember   = -999999
     xstartpar_remember = -999999
-    
+
   end subroutine finalize_restart_file
 
 !---------------------------------------------------------------------------------------------------------
@@ -2783,7 +2784,7 @@ contains
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
        iswater, gvegtyp)
-    endif 
+    endif
 
     call mpp_land_sync()
 
@@ -3026,7 +3027,7 @@ contains
     else
        local_description = "-"
     endif
-    
+
     call put_var_2d(ncid, 1, vegtyp_remember, iswater, ixpar, jxpar, xstartpar_remember, name, array, .true.)
 
   end subroutine add_to_restart_2d_float
@@ -3134,7 +3135,7 @@ contains
        olddate)
 
     ! The restart file is dimensioned by our (possibly subwindowed) grid.  Our indices
-    ! for the parallel I/O reflect the dimensions of the (possibly subwindowed) grid, 
+    ! for the parallel I/O reflect the dimensions of the (possibly subwindowed) grid,
     ! but not the full domain for which LDAS input files may be available.
 
     implicit none
@@ -3205,7 +3206,7 @@ contains
                 write(*,'("RESTART TITLE attribute: ", A)') trim(titlestr)
 #endif
           endif
-          ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and 
+          ! Pull out the version number, assuming that the version is identified by vYYYYMMDD, and
           ! based on a search for the string "v20".
           idx = index(trim(titlestr), "v20")
           if (idx <= 0) then
@@ -3226,7 +3227,7 @@ contains
        ierr = nf90_inq_varid(ncid, "Times", varid)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F read_restart() - "// &
                                 "Problem finding variable in restart file: 'Times'")
-       
+
        ierr = nf90_get_var(ncid, varid, olddate)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F read_restart() - "// &
                                 "Problem finding variable in restart file: 'Times'")
@@ -3249,8 +3250,8 @@ contains
     integer,                            intent(in) :: ixfull
     integer,                            intent(in) :: jxfull
     character(len=*),                   intent(in)  :: name
-    real,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
-    real,             dimension(global_nx,global_ny):: garray 
+    real,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array
+    real,             dimension(global_nx,global_ny):: garray
     integer,          optional,         intent(out) :: return_error
 
     if(checkRstV(name) .ne. 0) return
@@ -3269,8 +3270,8 @@ contains
     integer,                            intent(in) :: ixfull
     integer,                            intent(in) :: jxfull
     character(len=*),                   intent(in)  :: name
-    integer,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array 
-    integer,             dimension(global_nx,global_ny):: garray 
+    integer,             dimension(parallel_xstart:parallel_xend,jxfull), intent(out) :: array
+    integer,             dimension(global_nx,global_ny):: garray
     integer,          optional,         intent(out) :: return_error
 
     if(checkRstV(name) .ne. 0) return
@@ -3298,7 +3299,7 @@ contains
 
     klevel = size(array,2)
     allocate(garray(global_nx,klevel,global_ny))
-    
+
 
       if(my_id .eq. IO_id) then
           call get_from_restart_3d(1, global_nx, 1, global_nx, global_ny, name, garray, return_error)
@@ -3388,7 +3389,7 @@ contains
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_float(): Problem closing restart file")
-    
+
   end subroutine get_from_restart_2d_float
 
 !-----------------------------------------------------------------------------------------
@@ -3447,7 +3448,7 @@ contains
     ierr = nf90_close(ncid)
     call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_2d_integer() - "// &
                              "Problem closing restart file")
-    
+
   end subroutine get_from_restart_2d_integer
 
 !-----------------------------------------------------------------------------------------
@@ -3508,7 +3509,7 @@ contains
     ierr = nf90_close(ncid)
     call error_handler(ierr, "In module_hrldas_netcdf_io.F get_from_restart_3d() - "// &
                        "Problem closing restart file")
-    
+
   end subroutine get_from_restart_3d
 
 !-----------------------------------------------------------------------------------------
@@ -3651,7 +3652,7 @@ contains
 
        call make_var_att_2d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_INT, name, "", "")
    end subroutine define_2d_int
-  
+
    subroutine define_3d_real(ncid, array,name,units,description, layers)
        implicit none
        real,         dimension(:,:,:),                              intent(in) :: array

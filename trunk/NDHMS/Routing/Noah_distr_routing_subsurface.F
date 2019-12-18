@@ -78,6 +78,7 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, CWAT
     use module_subsurface_static_data
     use module_subsurface_input
     use module_subsurface_output
+    use module_hydro_stop, only:HYDRO_stop
 #endif
     IMPLICIT NONE
 
@@ -566,6 +567,7 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
    use module_mpp_land, only: left_id, down_id, right_id, up_id, &
                               mpp_land_com_real8, my_id, mpp_land_com_real
 #endif
+   use module_hydro_stop, only:HYDRO_stop
 
    implicit none
 
@@ -589,8 +591,6 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
    ! Local variables
    integer :: i, j ! indices for local loops
    integer :: IXX0, JYY0, index ! i, j, and direction index for steepest slope neighbor
-   real    :: tmp_gsize ! for divide by distance calculations
-   real    :: dzdx, dzdy ! slope in x, y directions (m/m)
    real    :: beta ! total head slope (m/m)
    real    :: hh ! interim variable for subsurface solution per DHSVM (dimensionless)
    real    :: gamma ! interim variable for subsurface solution per DHSVM (m3/s)
@@ -616,10 +616,18 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
 
          if (i.ge.2.AND.i.le.XX-1.AND.j.ge.2.AND.j.le.YY-1) then !if grdcl chk
             ! check for boundary grid point?
+
+            ! Set initial guess values for steepest slope neighbor based on terrain
             IXX0 = SO8RT_D(i,j,1)
             JYY0 = SO8RT_D(i,j,2)
-
             index = SO8RT_D(i,j,3)
+            !beta = -1.0
+
+            ! ADCHANGE: Always call routine to check for steepest elev+head slope
+            ! Updates IXX0, JYY0, index, and beta for steepest slope neighbor.
+            ! Note that beta will be -1 if steepest slope cannot be found.
+            call GETSUB8(i, j, XX, YY, Z, so8rt, dist(i,j,:), &
+                         IXX0, JYY0, index, beta)
 
             if (dist(i,j,index) .le. 0) then
                 write(6,*) "FATAL ERROR: dist(i,j,index) is <= zero "
@@ -628,15 +636,6 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
             if (soldep(i,j) .eq. 0) then
                 call hydro_stop("In ROUTE_SUBSURFACE1() - soldep is = zero")
             endif
-
-            tmp_gsize = 1.0/dist(i,j,index)
-            dzdx = (z(i,j) - z(IXX0,JYY0)) * tmp_gsize
-            beta = so8RT(i,j,index) + dzdx
-
-            if (beta .lt. 1E-20 ) then   !if-then for direction...
-               call GETSUB8(I, J, XX, YY, Z, so8rt, dist(i,j,:), &
-                            IXX0, JYY0, beta)
-            end if
 
             if (beta .gt. 0) then            !if-then for flux calc
                if (beta .lt. 1E-20 ) then
@@ -678,7 +677,7 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
                !DJG Error Checks...
                if (qqsub .gt. 0) then
                   print*, "FATAL ERROR: qqsub should be negative, qqsub =",qqsub,&
-                     "gamma=",gamma,"hh=",hh,"beta=",beta,"dzdx=",dzdx,&
+                     "gamma=",gamma,"hh=",hh,"beta=",beta,&
                      "so8RT=",so8RT(i,j,index),"latksat=",ksat, &
                      "tan(beta)=",tan(beta),i,j,z(i,j),z(IXX0,JYY0)
                   print*, "ixx0=",ixx0, "jyy0=",jyy0
@@ -765,6 +764,7 @@ SUBROUTINE ROUTE_SUBSURFACE2(                                 &
         up_id,mpp_land_com_real,MPP_LAND_UB_COM, &
         MPP_LAND_LR_COM,mpp_land_com_integer
 #endif
+    use module_hydro_stop, only:HYDRO_stop
 
     IMPLICIT NONE
 

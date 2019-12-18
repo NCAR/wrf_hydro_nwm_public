@@ -28,6 +28,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 
 use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
+use module_hydro_stop, only: HYDRO_stop
 
 #endif
 implicit none
@@ -1561,7 +1562,7 @@ end subroutine drive_CHANNEL
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
-       use module_namelist, only:  nlst_rt
+       use config_base, only: nlst
 
 #ifdef WRF_HYDRO_NUDGING
        use module_RT_data, only: rt_domain
@@ -1712,8 +1713,8 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 !        !! qScfLatRunoff = qLateral - qBucket
 !        qSfcLatRunoff(1:NLINKSL) = qLateral(1:NLINKSL) - qout_gwsubbas(1:NLINKSL)
 
-   if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
-      nlst_rt(1)%output_channelBucket_influx .eq. 2       ) then
+   if(nlst(1)%output_channelBucket_influx .eq. 1 .or. &
+      nlst(1)%output_channelBucket_influx .eq. 2       ) then
 
       if(channel_only .eq. 1) &
         !! qScfLatRunoff = qLateral - qBucket
@@ -1725,7 +1726,7 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 
    end if
 
-   if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
+   if(nlst(1)%output_channelBucket_influx .eq. 3) &
         accSfcLatRunoff(1:NLINKSL) = qSfcLatRunoff * DT
 
 else
@@ -1754,10 +1755,10 @@ else
       call updateLinkV(tmpLQLateral, tmpQLateral)
 #endif
       if(NLINKSL .gt. 0) then
-         if (nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
-             nlst_rt(1)%output_channelBucket_influx .eq. 2      ) &
+         if (nlst(1)%output_channelBucket_influx .eq. 1 .or. &
+             nlst(1)%output_channelBucket_influx .eq. 2      ) &
                qSfcLatRunoff(1:NLINKSL) = tmpQLateral(1:NLINKSL)
-         if (nlst_rt(1)%output_channelBucket_influx .eq. 3) &
+         if (nlst(1)%output_channelBucket_influx .eq. 3) &
               accSfcLatRunoff(1:NLINKSL) = accSfcLatRunoff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
       endif
       tmpLQLateral = 0  !! JLM:: These lines imply that squeege runoff does not count towards
@@ -1789,10 +1790,10 @@ else
       !! JLM:: again why output in this conditional ?? why not just output QLateral
       !! after this section ????
       if(NLINKSL .gt. 0) then
-         if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .OR. &
-            nlst_rt(1)%output_channelBucket_influx .eq. 2       ) &
+         if(nlst(1)%output_channelBucket_influx .eq. 1 .OR. &
+            nlst(1)%output_channelBucket_influx .eq. 2       ) &
               qSfcLatRunoff(1:NLINKSL) = tmpQLateral(1:NLINKSL)
-         if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
+         if(nlst(1)%output_channelBucket_influx .eq. 3) &
               accSfcLatRunoff(1:NLINKSL) = accSfcLatRunoff(1:NLINKSL) + tmpQLateral(1:NLINKSL) * DT
       end if
 
@@ -1819,11 +1820,11 @@ else
    if(NLINKSL .gt. 0) QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
 endif  !! if(channel_only .eq. 1) then; else; endif
 
-if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
-   nlst_rt(1)%output_channelBucket_influx .eq. 2       ) &
+if(nlst(1)%output_channelBucket_influx .eq. 1 .or. &
+   nlst(1)%output_channelBucket_influx .eq. 2       ) &
       qBucket(1:NLINKSL) = qout_gwsubbas(1:NLINKSL)
 
-if(nlst_rt(1)%output_channelBucket_influx .eq. 3) &
+if(nlst(1)%output_channelBucket_influx .eq. 3) &
      accBucket(1:NLINKSL) = accBucket(1:NLINKSL) + qout_gwsubbas(1:NLINKSL) * DT
 
 

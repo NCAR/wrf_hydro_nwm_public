@@ -174,9 +174,9 @@ END SUBROUTINE GET8DIR
 
 
 SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
-                   maxneighI, maxneighJ, maxneighSlp)
+                   maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    implicit none
-   integer, intent(in)   :: I, J ! i, j indices for cell of interest
+   integer, intent(in)    :: I, J ! i, j indices for cell of interest
    integer, intent(in)    :: XX, YY ! rt domain dimensions
    real, intent(in)       :: wattbl(XX, YY) ! water table depth domain array (m)
    real, intent(in)       :: terrslpNeighbors(XX, YY, 8)
@@ -184,6 +184,8 @@ SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
    real, intent(in)       :: distNeighbors(9)
                              ! lateral distance array for all 8 neighbors of I,J cell (m)
    integer, intent(inout) :: maxneighI, maxneighJ ! i, j for max terrain+head slope neighbor
+   integer, intent(inout) :: maxneighIndx
+                             ! neighbor cell direction index for max terrain+head slope neighbor
    real, intent(inout)    :: maxneighSlp ! terrain+head slope for max slope neighbor (m/m)
 
    ! Local variables
@@ -199,42 +201,52 @@ SUBROUTINE GETSUB8(I, J, XX, YY, wattbl, terrslpNeighbors, distNeighbors, &
 
    ! Loop through all neighbors to update max elev+head slope neighbor
    do neighIndx = 1, 8
-      call GETSUB8DIR(I, J, XX, YY, neighI(neighIndx), neighJ(neighIndx), neighIndx, &
-                      wattbl, terrslpNeighbors(:,:,neighIndx), distNeighbors(neighIndx), &
-                      maxneighI, maxneighJ, maxneighSlp)
+      call GETSUB8DIR(I, J, wattbl(I, J), &
+                      neighI(neighIndx), neighJ(neighIndx), neighIndx, &
+                      wattbl(neighI(neighIndx), neighJ(neighIndx)), &
+                      terrslpNeighbors(I,J,neighIndx), distNeighbors(neighIndx), &
+                      maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    enddo
    RETURN
 END SUBROUTINE GETSUB8
 
-SUBROUTINE GETSUB8DIR(I, J, XX, YY, neighI, neighJ, neighIndx, &
-                      wattbl, terrslp, neighDist, &
-                      maxneighI, maxneighJ, maxneighSlp)
+SUBROUTINE GETSUB8DIR(I, J, selfWattbl, &
+                      neighI, neighJ, neighIndx, neighWattbl, &
+                      neighTerrslp, neighDist, &
+                      maxneighI, maxneighJ, maxneighIndx, maxneighSlp)
    implicit none
    integer, intent(in)    :: I, J ! i, j indices for cell of interest
-   integer, intent(in)    :: XX, YY ! rt domain dimensions
+   real, intent(in)       :: selfWattbl ! water table depth for cell of interest (m)
    integer, intent(in)    :: neighI, neighJ ! neighbor cell i, j indices
    integer, intent(in)    :: neighIndx ! neighbor cell direction index (1-8)
-   real, intent(in)       :: wattbl(XX, YY) ! water table depth (m)
-   real, intent(in)       :: terrslp(XX, YY)
+   real, intent(in)       :: neighWattbl ! water table depth for specified neighbor index (m)
+   real, intent(in)       :: neighTerrslp
                              ! terrain slope for specified neighbor index (m/m)
    real, intent(in)       :: neighDist
                              ! lateral distance for specified neighbor index (m)
    integer, intent(inout) :: maxneighI, maxneighJ ! i, j for max terrain+head slope neighbor
+   integer, intent(inout) :: maxneighIndx
+                             ! neighbor cell direction index for max terrain+head slope neighbor
    real, intent(inout)    :: maxneighSlp
                              ! terrain+head slope for max terrain+head slope neighbor (m/m)
 
    ! Local variables
    real                   :: dzdx ! subsurface head slope (m/m)
-   real                   :: beta ! total elevation+head slope (m/m)
+   real                   :: beta ! total terrain+head slope (m/m)
 
    ! Calculate total head slope
-   dzdx = ( wattbl(I,J) -  wattbl(maxneighI,maxneighJ) ) / neighDist !!THIS IS WRONG - will be fixed next bugfix
-   beta = terrslp(I,J) + dzdx !!THIS IS WRONG - will be fixed next bugfix
+   ! NOTE: wattbl is depth of water table from surface (e.g., 0m if saturated column,
+   ! 2m if no water table present). So total head slope should be:
+   !    beta = ( (elev - wattbl) - (elev_neigh - wattbl_neigh) ) / distance
+   !         = neighTerrslp - dzdx
+   dzdx = ( selfWattbl - neighWattbl ) / neighDist
+   beta = neighTerrslp - dzdx
    ! Check if this is max and update tracking variables
    if ( maxneighSlp < beta ) then
       maxneighI = neighI
       maxneighJ = neighJ
       maxneighSlp = beta
+      maxneighIndx = neighIndx
    end if
 END SUBROUTINE GETSUB8DIR
 
@@ -866,10 +878,11 @@ end subroutine MPP_seq_land_SO8
 
 subroutine disaggregateDomain_drv(did)
    use module_RT_data, only: rt_domain
-   use module_namelist, only: nlst_rt
+   use config_base, only: nlst
+
    integer :: did
-   call disaggregateDomain( RT_DOMAIN(did)%IX, RT_DOMAIN(did)%JX, nlst_rt(did)%NSOIL, &
-                            RT_DOMAIN(did)%IXRT, RT_DOMAIN(did)%JXRT, nlst_rt(did)%AGGFACTRT, &
+   call disaggregateDomain( RT_DOMAIN(did)%IX, RT_DOMAIN(did)%JX, nlst(did)%NSOIL, &
+                            RT_DOMAIN(did)%IXRT, RT_DOMAIN(did)%JXRT, nlst(did)%AGGFACTRT, &
                             RT_DOMAIN(did)%SICE, RT_DOMAIN(did)%SMC, RT_DOMAIN(did)%SH2OX, &
                             RT_DOMAIN(did)%INFXSRT, rt_domain(did)%dist_lsm(:,:,9), &
                             RT_DOMAIN(did)%SMCMAX1, RT_DOMAIN(did)%SMCREF1, &
@@ -920,6 +933,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               up_id,mpp_land_com_real, my_id, io_id, numprocs, &
                               mpp_land_sync,mpp_land_com_integer,mpp_land_max_int1, &
                               sum_real1
+   use module_hydro_stop, only:HYDRO_stop
 #endif
 
    implicit none
@@ -1266,10 +1280,11 @@ end subroutine disaggregateDomain
 subroutine SubsurfaceRouting_drv(did)
 
     use module_RT_data, only: rt_domain
-    use module_namelist, only: nlst_rt
+    use config_base, only: nlst
+
     implicit none
     integer :: did
-    IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
+    IF (nlst(did)%SUBRTSWCRT.EQ.1) THEN
         call subsurfaceRouting ( rt_domain(did)%subsurface, &
             rt_domain(did)%subsurface_static, &
             rt_domain(did)%subsurface_input, &
@@ -1283,10 +1298,11 @@ end subroutine SubsurfaceRouting_drv
 
 subroutine OverlandRouting_drv(did)
     use module_RT_data, only: rt_domain
-    use module_namelist, only: nlst_rt
+    use config_base, only: nlst
+
     implicit none
     integer :: did
-    if(nlst_rt(did)%OVRTSWCRT .eq. 1) then
+    if(nlst(did)%OVRTSWCRT .eq. 1) then
         !call OverlandRouting (nlst_rt(did)%DT, nlst_rt(did)%DTRT_TER, nlst_rt(did)%rt_option, &
             !         rt_domain(did)%ixrt, rt_domain(did)%jxrt,rt_domain(did)%overland%streams_and_lakes%lake_mask, &
             !         rt_domain(did)%overland%control%infiltration_excess, rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%overland%properties%roughness, &
@@ -1300,9 +1316,9 @@ subroutine OverlandRouting_drv(did)
             !         rt_domain(did)%overland%mass_balance%pre_soil_moisture_content,rt_domain(did)%overland%mass_balance%accumulated_change_in_soil_moisture )
         call OverlandRouting( &
             rt_domain(did)%overland, &
-            nlst_rt(did)%DT, &
-            nlst_rt(did)%DTRT_TER, &
-            nlst_rt(did)%rt_option, &
+            nlst(did)%DT, &
+            nlst(did)%DTRT_TER, &
+            nlst(did)%rt_option, &
             rt_domain(did)%ixrt, &
             rt_domain(did)%jxrt, &
             rt_domain(did)%q_sfcflx_x, &

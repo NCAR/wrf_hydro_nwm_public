@@ -12,6 +12,7 @@ program reservoir_unit_tests
     implicit none
 
     logical :: rv1 = .false.
+    logical :: rv2 = .false.
     logical :: rv3 = .false.
     logical :: rv4 = .false.
     logical :: rv5 = .false.
@@ -19,6 +20,7 @@ program reservoir_unit_tests
     logical :: rv7 = .false.
     logical :: rv8 = .false.
     logical :: rv9 = .false.
+    logical :: rv10 = .false.
 
 
     real, dimension(120) :: inflow_array
@@ -42,22 +44,26 @@ program reservoir_unit_tests
 
     rv1 = test_levelpool()
 
-    rv3 = test_persistence_levelpool_hybrid()
+    rv2 = test_levelpool_overflow_max_height()
 
-    rv4 = test_rfc_forecasts_object()
+    rv3 = test_persistence_levelpool_hybrid_usgs()
 
-    rv5 = test_rfc_forecasts_time_series_object()
+    rv4 = test_persistence_levelpool_hybrid_usace()
 
-    rv6 = test_rfc_forecasts_levelpool_fallback()
+    rv5 = test_rfc_forecasts_object()
 
-    rv7 = test_rfc_forecasts_time_series_output_with_lookback_and_offset()
+    rv6 = test_rfc_forecasts_time_series_object()
 
-    rv8 = test_rfc_forecasts_time_series_output_with_missing_data()
+    rv7 = test_rfc_forecasts_levelpool_fallback()
 
-    rv9 = test_rfc_forecasts_time_series_output_all_missing_data()
+    rv8 = test_rfc_forecasts_time_series_output_with_lookback_and_offset()
+
+    rv9 = test_rfc_forecasts_time_series_output_with_missing_data()
+
+    rv10 = test_rfc_forecasts_time_series_output_all_missing_data()
 
 
-    if (rv1 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7) then
+    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -67,7 +73,6 @@ program reservoir_unit_tests
         print *, 'Not All Reservoir Tests Passed'
         print *, "========================================================================"
     end if
-
 
     contains
 
@@ -89,7 +94,7 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for levelpool"
-        call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 20)
+        call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 11., 12., 14., 16., 18., 20)
 
         print *, "testing data in levelpool"
         call_status = levelpool_data_info(levelpool_reservoir_data)
@@ -101,21 +106,20 @@ program reservoir_unit_tests
     end function test_levelpool
 
 
-    ! This tests the Persistence Levelpool Hybrid Module run reservoir function. It also reads the persistence
-    ! parameters from the provided persistence parameter file and a gage discharge from the provided
-    ! Timeslice file.
-    function test_persistence_levelpool_hybrid() result(rv)
-
+    ! This tests the Persistence Levelpool Hybrid Module run reservoir function for USGS reservoirs.
+    ! It also reads the USGS persistence parameters from the provided reservoir parameter file and
+    ! a gage discharge from the provided USGS Timeslice file.
+    function test_persistence_levelpool_hybrid_usgs() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
         type (persistence_levelpool_hybrid) :: persistence_levelpool_hybrid_reservoir_data
         real :: outflow, inflow
         real :: water_elevation
         real :: prev_time_inflow
-        real :: lake_area, weir_elevation, weir_coefficient
-        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
-        integer :: lake_number
+        integer :: lake_number, reservoir_type
         integer :: timestep_count
         character*256 :: cwd_full
 
@@ -128,27 +132,29 @@ program reservoir_unit_tests
 
         lake_area = 2.096320037841796875e+02
         weir_elevation = 1.332074047851562455e+03
-        weir_coefficient = 4.000000000000000222e-01
+        weir_coeffecient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 166758723
+        lake_number = 402142
+        reservoir_type = 2
 
-        print *, "calling init for persistence_levelpool_hybrid"
+        print *, "calling init for persistence_levelpool_hybrid USGS type reservoir"
 
-        cwd_full = "./Testing_Files/"
+        cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, "Testing_Files/hybrid_persistence_levelpool_ACF.nc", &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
         rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
 
-        print *, "calling reservoir run for persistence_levelpool_hybrid"
+        print *, "calling reservoir run for persistence_levelpool_hybrid USGS type reservoir"
 
         water_elevation = 1331.18005
 
@@ -163,24 +169,163 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-
-        if (outflow == 7.14947987) then
+        if (outflow .ge. 13.73367 - epsilon(13.73367) .and. outflow .le. 13.73367 + epsilon(13.73367) ) then
             rv2 = .true.
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run Reservoir Test Passed'
+            print *, 'Persistence Levelpool Hybrid Run USGS Reservoir Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run reservoir Test Failed'
-            print *, 'Outflow should be 7.14947987'
+            print *, 'Persistence Levelpool Hybrid Run USGS reservoir Test Failed'
+            print *, 'Outflow should be 13.7336712'
             print *, "========================================================================"
+            print *, outflow
         end if
 
         if (rv1 .and. rv2) then
             rv = .true.
         end if
 
-    end function test_persistence_levelpool_hybrid
+    end function test_persistence_levelpool_hybrid_usgs
+
+
+    ! This tests the Persistence Levelpool Hybrid Module run reservoir function for U.S. Army Corps of Engineers (USACE)
+    ! type reservoirs. It also reads the USACE persistence parameters from the provided reservoir parameter file
+    ! and a gage discharge from the provided USACE Timeslice file.
+    function test_persistence_levelpool_hybrid_usace() result(rv)
+        implicit none
+        logical rv, rv1, rv2                        ! test result
+        type (persistence_levelpool_hybrid) :: persistence_levelpool_hybrid_reservoir_data
+        real :: outflow, inflow
+        real :: water_elevation
+        real :: prev_time_inflow
+        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
+        real :: orifice_area, max_depth, initial_fractional_depth
+        integer :: lake_number, reservoir_type
+        integer :: timestep_count
+        character*256 :: cwd_full
+
+        prev_time_inflow = 0.0
+        timestep_count = 0
+        water_elevation = 0.0
+        rv = .false.
+        rv2 = .false.
+
+        lake_area = 2.096320037841796875e+02
+        weir_elevation = 1.332074047851562455e+03
+        weir_coeffecient = 4.000000000000000222e-01
+        weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
+        orifice_elevation = 1.314473347981770758e+03
+        orifice_coefficient = 1.000000000000000056e-01
+        orifice_area = 1.0
+        max_depth = 1.335180053710937500e+03
+        initial_fractional_depth = 8.999999761581420898e-01
+        lake_number = 4672717
+        reservoir_type = 3
+
+        print *, "calling init for persistence_levelpool_hybrid USACE type reservoir"
+
+        cwd_full = "../../../../tests/local/reservoir_testing_files/"
+
+        call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        "2016-10-10_02:00:00", cwd_full, 12, 1000000000)
+
+        print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
+
+        water_elevation = 1331.18005
+
+        do timestep_count = 1, 120
+
+            inflow = inflow_array(timestep_count)
+            call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
+            inflow, 0.0, water_elevation, outflow, 900.0)
+
+            prev_time_inflow = inflow
+
+            print *, outflow
+        end do
+
+        if (outflow .ge. 16.0820713 - epsilon(16.0820713) .and. outflow .le. 16.0820713 + epsilon(16.0820713) ) then
+            rv2 = .true.
+            print *, "========================================================================"
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Test Failed'
+            print *, 'Outflow should be 16.08207'
+            print *, "========================================================================"
+            print *, outflow
+        end if
+
+        if (rv2) then
+            rv = .true.
+        end if
+
+    end function test_persistence_levelpool_hybrid_usace
+
+
+    ! This tests the reservoir function of the level pool module under the specific condition
+    ! where the water elevation reaches the max height.
+    function test_levelpool_overflow_max_height() result(rv)
+
+        implicit none
+        logical rv                       ! test result
+        type (levelpool) :: levelpool_reservoir_data
+        real :: lake_area, weir_elevation, weir_coefficient
+        real :: weir_length, dam_length, orifice_elevation
+        real :: orifice_coefficient, orifice_area, max_depth
+        integer :: lake_number
+        real :: inflow, prev_time_inflow, outflow, water_elevation
+        integer :: timestep_count
+
+        rv = .false.
+        prev_time_inflow = 0.0
+        timestep_count = 0
+        water_elevation = 0.0
+
+        lake_area = 1.509490013122558594e+01
+        weir_elevation = 9.626000022888183238e+00
+        weir_coefficient = 0.4
+        weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
+        orifice_elevation = 7.733333269755045869e+00
+        orifice_coefficient = 1.000000000000000056e-01
+        orifice_area = 1.0
+        max_depth = 9.960000038146972656e+00
+        lake_number = 16944276
+
+        call levelpool_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
+        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, lake_number)
+
+        water_elevation = 9.73733330
+
+        print *, "outflow"
+
+        do timestep_count = 1, 108
+            inflow = inflow_array(timestep_count)
+            call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0)
+
+            prev_time_inflow = inflow
+            print *, outflow
+        end do
+
+        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450)) then
+            rv = .true.
+            print *, "========================================================================"
+            print *, 'Levelpool Overflow Max Height Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'Levelpool Overflow Max Height Test Failed'
+            print *, 'Final outflow should be 17.0451450'
+            print *, "========================================================================"
+        end if
+
+    end function test_levelpool_overflow_max_height
 
 
     function test_rfc_forecasts_object() result(rv)
@@ -200,7 +345,7 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 12., 14., 16., 18., 0.9, 3745478, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 11., 12., 14., 16., 18., 0.9, 3745478, &
         "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-08-18_07:00:00", cwd_full, 24)
 
         print *, "testing data in rfc_forecasts"
@@ -255,8 +400,8 @@ program reservoir_unit_tests
         real :: outflow, inflow
         real :: water_elevation
         real :: prev_time_inflow
-        real :: lake_area, weir_elevation, weir_coefficient
-        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: lake_area, weir_elevation, weir_coeffecient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
         integer :: timestep_count
@@ -266,11 +411,13 @@ program reservoir_unit_tests
         timestep_count = 0
         water_elevation = 0.0
         rv = .false.
+        rv2 = .false.
 
         lake_area = 2.096320037841796875e+02
         weir_elevation = 1.332074047851562455e+03
         weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0
@@ -278,7 +425,7 @@ program reservoir_unit_tests
         initial_fractional_depth = 8.999999761581420898e-01
         lake_number = 3745478
 
-        cwd_full = "./Testing_Files/"
+        cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 3745478, &
         "Testing_Files/reservoir_index_usgs_rfc_usace.nc", "2019-05-01_22:00:00", cwd_full, 24)
@@ -320,7 +467,7 @@ program reservoir_unit_tests
         real :: water_elevation
         real :: prev_time_inflow
         real :: lake_area, weir_elevation, weir_coefficient
-        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
         integer :: timestep_count
@@ -335,6 +482,7 @@ program reservoir_unit_tests
         weir_elevation = 1.332074047851562455e+03
         weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0
@@ -376,7 +524,6 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_time_series_output_with_lookback_and_offset
 
 
-
     function test_rfc_forecasts_time_series_output_with_missing_data() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
@@ -385,7 +532,7 @@ program reservoir_unit_tests
         real :: water_elevation
         real :: prev_time_inflow
         real :: lake_area, weir_elevation, weir_coefficient
-        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
         integer :: timestep_count
@@ -400,6 +547,7 @@ program reservoir_unit_tests
         weir_elevation = 1.332074047851562455e+03
         weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0
@@ -441,7 +589,6 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_time_series_output_with_missing_data
 
 
-
     function test_rfc_forecasts_time_series_output_all_missing_data() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
@@ -450,7 +597,7 @@ program reservoir_unit_tests
         real :: water_elevation
         real :: prev_time_inflow
         real :: lake_area, weir_elevation, weir_coefficient
-        real :: weir_length, orifice_elevation, orifice_coefficient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
         real :: orifice_area, max_depth, initial_fractional_depth
         integer :: lake_number
         integer :: timestep_count
@@ -465,6 +612,7 @@ program reservoir_unit_tests
         weir_elevation = 1.332074047851562455e+03
         weir_coefficient = 4.000000000000000222e-01
         weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
         orifice_elevation = 1.314473347981770758e+03
         orifice_coefficient = 1.000000000000000056e-01
         orifice_area = 1.0

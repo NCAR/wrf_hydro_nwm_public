@@ -15,7 +15,7 @@
             "geo_finegrid_flnm": "NULL_specified_in_domain.json",
             "geo_static_flnm": "NULL_specified_in_domain.json",
             "gw_restart": 1,
-            "gwbaseswcrt": 1,
+            "gwbaseswcrt": 4,
             "gwbuckparm_file": "NULL_specified_in_domain.json",
             "hydrotbl_f": "NULL_specified_in_domain.json",
             "igrid": 1,
@@ -30,7 +30,7 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
-            "reservoir_persistence": false,
+            "reservoir_persistence_usgs": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
@@ -104,6 +104,16 @@
         "nudging_nlist": {}
     },
 
+    "nwm_channel-only_forecasts": {
+        "hydro_nlist": {
+            "lsmout_domain": 0,
+            "output_gw": 0,
+            "output_channelbucket_influx": 2,
+            "reservoir_persistence_usgs": false
+        },
+        "nudging_nlist": {}
+    },
+
     "nwm_output_ana": {
         "hydro_nlist": {
             "chanobs_domain": 0,
@@ -144,6 +154,7 @@
     "gridded": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -169,6 +180,7 @@
     "gridded_no_lakes": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "channel_option": 3,
             "dtrt_ch": 10,
@@ -194,6 +206,7 @@
     "reach": {
         "hydro_nlist": {
             "compound_channel": false,
+            "gwbaseswcrt": 1,
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
             "outlake": 0,

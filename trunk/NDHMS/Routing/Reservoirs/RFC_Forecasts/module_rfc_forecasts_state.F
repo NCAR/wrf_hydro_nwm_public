@@ -45,7 +45,6 @@ contains
 
         ! Initialize the state water elevation in same manner as in module_RT.F
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
-
         this%time_series_update_time = 0
         this%current_time = 0
         this%time_series_index = 1

@@ -27,10 +27,11 @@ module module_lis_HYDRO
 !    use LIS_historyMod, only: LIS_gather_gridded_output, lis_gather_tiled_vector_output
 
 ! use HYDRO module
+       use module_hydro_stop, only: HYDRO_stop
        use module_rt_data, only:  rt_domain
        use module_CPL_LAND, only: CPL_LAND_INIT, cpl_outdate
        use module_mpp_land
-       use module_namelist, only: nlst_rt
+       use config_base, only : nlst
        use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
 !!! temp use 
@@ -65,22 +66,22 @@ module module_lis_HYDRO
 
 !!! get soil layers from lis
 !!! ++++++++++++++
-        nlst_rt(did)%nsoil = noah271_struc(n)%nslay
+        nlst(did)%nsoil = noah271_struc(n)%nslay
 #ifdef MPP_LAND
-        call mpp_land_bcast_int1(nlst_rt(did)%nsoil)
+        call mpp_land_bcast_int1(nlst(did)%nsoil)
 #endif
-        if(nlst_rt(did)%nsoil < 1) then
+        if(nlst(did)%nsoil < 1) then
            write(6,*) "FATAL ERROR: nsoil is less than 1"
            call hydro_stop("In module_lis_HYDRO.F module_lis_HYDRO() - nsoil is less than 1") 
         endif
-        allocate(nlst_rt(did)%zsoil8(nlst_rt(did)%nsoil))
-        nlst_rt(did)%zsoil8(1) = -noah271_struc(n)%lyrthk(1)
-        DO KZ = 2,nlst_rt(did)%nsoil
-           nlst_rt(did)%zsoil8(KZ) = -noah271_struc(n)%lyrthk(KZ)+nlst_rt(did)%zsoil8(KZ-1)
+        allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
+        nlst(did)%zsoil8(1) = -noah271_struc(n)%lyrthk(1)
+        DO KZ = 2,nlst(did)%nsoil
+           nlst(did)%zsoil8(KZ) = -noah271_struc(n)%lyrthk(KZ)+nlst(did)%zsoil8(KZ-1)
         END DO
 !!! ----------
 #ifdef HYDRO_D
-        write(6,*) "zsoil8 = ",nlst_rt(did)%zsoil8
+        write(6,*) "zsoil8 = ",nlst(did)%zsoil8
 
 #endif
 
@@ -93,7 +94,7 @@ module module_lis_HYDRO
         call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
       endif
 
-        if(nlst_rt(did)%rtFlag .eq. 0) return
+        if(nlst(did)%rtFlag .eq. 0) return
 
         write(cpl_outdate(1:5),'(I4,"-")') LIS_rc%yr
 
@@ -128,7 +129,7 @@ module module_lis_HYDRO
         endif
 
 
-            nlst_rt(did)%olddate(1:19) = cpl_outdate(1:19)
+            nlst(did)%olddate(1:19) = cpl_outdate(1:19)
 
 
             jx = LIS_rc%lnr(n)
@@ -154,7 +155,7 @@ module module_lis_HYDRO
             write(6,*) "noah271_struc(n)%lyrthk=", noah271_struc(n)%lyrthk
 
 #endif
-            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+            nlst(did)%startdate(1:19) = cpl_outdate(1:19)
 
             call CPL_LAND_INIT(its,ite,jts,jte)
 
@@ -164,14 +165,14 @@ module module_lis_HYDRO
 
             call HYDRO_ini(ntime,did=did,ix0=1,jx0=1)
 
-            if(nlst_rt(did)%sys_cpl .ne. 3) then
+            if(nlst(did)%sys_cpl .ne. 3) then
                write(6,*) "FATAL ERROR: sys_cpl should be 3."
                call hydro_stop("In module_lis_HYDRO.F lis_cpl_HYDRO() - "// &
                                "sys_cpl should be 3. Check hydro.namelist file")
             endif
 !           write(6,*) "yyyywww step 5 my_id= ", my_id
 
-            nlst_rt(did)%dt = LIS_rc%ts   
+            nlst(did)%dt = LIS_rc%ts   
 
 !         write(6,*) "LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)", &
 !                LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)
@@ -182,7 +183,7 @@ module module_lis_HYDRO
 !         write(6,*) "LIS_nss_halo_ind,LIS_nse_halo_ind", LIS_nss_halo_ind,LIS_nse_halo_ind
 !         write(6,*) "LIS_ews_halo_ind,LIS_ewe_halo_ind",LIS_ews_halo_ind,LIS_ewe_halo_ind
 
-!            nlst_rt(did)%startdate(1:19) = cpl_outdate(1:19)
+!            nlst(did)%startdate(1:19) = cpl_outdate(1:19)
 
           RT_DOMAIN(did)%initialized = .true.
         endif
@@ -191,10 +192,10 @@ module module_lis_HYDRO
 !       write(6,*) "before call lis2HYDRO"
 
 !       write(6,*) "size(noah271_struc(n)%noah%smc(1)),n,ix,jx" , size(noah271_struc(n)%noah%smc(1)),n,ix,jx
-!       write(6,*) "nlst_rt(did)%nsoil = ", nlst_rt(did)%nsoil
+!       write(6,*) "nlst(did)%nsoil = ", nlst(did)%nsoil
 
             ! get the initial data from LIS 
-            do k = 1 , nlst_rt(did)%nsoil
+            do k = 1 , nlst(did)%nsoil
                 call lis2HYDRO(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
                 call lis2HYDRO(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)), n,ix,jx)
                 call lis2HYDRO(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
@@ -215,7 +216,7 @@ module module_lis_HYDRO
 
 ! add for update the land surface model state variable.
      ! 3 d variable
-        do k = 1 , nlst_rt(did)%nsoil
+        do k = 1 , nlst(did)%nsoil
              call HYDRO2lis_2d(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
              call HYDRO2lis_2d(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)),n,ix,jx)
              call HYDRO2lis_2d(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)

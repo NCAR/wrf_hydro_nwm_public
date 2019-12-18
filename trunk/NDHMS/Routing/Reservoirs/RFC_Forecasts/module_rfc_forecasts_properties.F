@@ -12,6 +12,7 @@ module module_rfc_forecasts_properties
                                           handle_err
     use module_reservoir, only: reservoir_properties
     use netcdf
+
     implicit none
 
     ! Extend/derive rfc forecasts properties from the abstract base

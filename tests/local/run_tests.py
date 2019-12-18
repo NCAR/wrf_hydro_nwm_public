@@ -16,16 +16,18 @@ def run_tests(
     candidate_dir: str,
     reference_dir: str,
     output_dir: str,
-    scheduler: bool=False,
-    exe_cmd: str=None,
-    ncores: int=216,
-    nnodes: int=6,
-    account: str='NRAL0017',
-    walltime: str='02:00:00',
-    queue: str='regular',
-    print_log: bool=False,
-    pdb: bool=False,
-    pdb_x: bool=False
+    scheduler: bool = False,
+    exe_cmd: str = None,
+    ncores: int = 216,
+    nnodes: int = 6,
+    account: str = 'NRAL0017',
+    walltime: str = '02:00:00',
+    queue: str = 'regular',
+    print_log: bool = False,
+    pdb: bool = False,
+    pdb_x: bool = False,
+    use_existing_test_dir: bool = False,
+    xrcmp_n_cores: int = 0
 ):
 
     """Function to run wrf_hydro_nwm pytests
@@ -47,6 +49,7 @@ def run_tests(
             print_log: Optional, print text logs instead of HTML logs
             pdb: Drop down to python debugger in pytest?
             pdb_x: Exit the debugger on success?
+            use_existing_test_dir: Run just output comparisions on existing test dir?
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
@@ -86,21 +89,25 @@ def run_tests(
         pytest_cmd += " --ignore=tests/test_supp_2_nwm_output.py "
 
     pytest_cmd += " --html=" + str(html_report) + " --self-contained-html"
-    pytest_cmd += " --config " + config.lower()
-    pytest_cmd += " --compiler " + compiler.lower()
-    pytest_cmd += " --domain_dir " + domain_dir
-    pytest_cmd += " --candidate_dir " + candidate_source_dir
-    pytest_cmd += " --reference_dir " + reference_source_dir
-    pytest_cmd += " --output_dir " + output_dir
-    pytest_cmd += " --exe_cmd " + exe_cmd
-    pytest_cmd += " --ncores " + str(ncores)
+    pytest_cmd += " --config=" + config.lower()
+    pytest_cmd += " --compiler=" + compiler.lower()
+    pytest_cmd += " --domain_dir=" + domain_dir
+    pytest_cmd += " --candidate_dir=" + candidate_source_dir
+    pytest_cmd += " --reference_dir=" + reference_source_dir
+    pytest_cmd += " --output_dir=" + output_dir
+    pytest_cmd += " --exe_cmd=" + exe_cmd
+    pytest_cmd += " --ncores=" + str(ncores)
+    pytest_cmd += " --xrcmp_n_cores=" + str(xrcmp_n_cores)
 
     if scheduler:
         pytest_cmd += " --scheduler "
-        pytest_cmd += " --nnodes " + str(nnodes)
-        pytest_cmd += " --account " + account
-        pytest_cmd += " --walltime " + walltime
-        pytest_cmd += " --queue " + queue
+        pytest_cmd += " --nnodes=" + str(nnodes)
+        pytest_cmd += " --account=" + account
+        pytest_cmd += " --walltime=" + walltime
+        pytest_cmd += " --queue=" + queue
+
+    if use_existing_test_dir:
+        pytest_cmd += " --use_existing_test_dir"
 
     subprocess_cmd = module_cmd + pytest_cmd
     print(subprocess_cmd)
@@ -178,7 +185,7 @@ def main():
         'The first/zeroth variable is set to the total number of cores (ncores). The '
         'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
     )
-    
+
     parser.add_argument(
         '--ncores',
         default='2',
@@ -246,6 +253,21 @@ def main():
         help='Exit pdb on first failure.'
     )
 
+    parser.add_argument(
+        '--use_existing_test_dir',
+        default=False,
+        required=False,
+        action='store_true',
+        help='Use existing compiles and runs, only perform output comparisons.'
+    )
+
+    parser.add_argument(
+        '--xrcmp_n_cores',
+        default=0,
+        required=False,
+        help='Use xrcmp if > 0, and how many cores if so?'
+    )
+
     args = parser.parse_args()
 
     # Make all directories pathlib objects
@@ -272,12 +294,15 @@ def main():
     print_log = args.print
     pdb = args.pdb
     pdb_x = args.x
+    use_existing_test_dir = args.use_existing_test_dir
+    xrcmp_n_cores = args.xrcmp_n_cores
 
     # Make output dir if does not exist
-    if output_dir.is_dir():
-        raise(IsADirectoryError('Output directory ' + str(output_dir) + ' already exists'))
-    else:
-        output_dir.mkdir(parents=True)
+    if not use_existing_test_dir:
+        if output_dir.is_dir():
+            raise(IsADirectoryError('Output directory ' + str(output_dir) + ' already exists'))
+        else:
+            output_dir.mkdir(parents=True)
 
     # Get the domain if asked for
     if domain_tag is not None:
@@ -308,16 +333,11 @@ def main():
     # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
     reference_copy = output_dir.joinpath(reference_dir.name + '_ref_pytest')
-
-    # Remove if exist and make if not
-    if candidate_copy.is_dir():
-        shutil.rmtree(str(candidate_copy))
-    if reference_copy.is_dir():
-        shutil.rmtree(str(reference_copy))
-
     # copy directories to avoid polluting user source code directories
-    shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
-    shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
+    if not candidate_copy.exists() or not use_existing_test_dir:
+        shutil.copytree(str(candidate_dir), str(candidate_copy), symlinks=True)
+    if not reference_copy.exists() or not use_existing_test_dir:
+        shutil.copytree(str(reference_dir), str(reference_copy), symlinks=True)
 
     # run pytest for each supplied config
     has_failure = False
@@ -346,7 +366,9 @@ def main():
             queue=queue,
             print_log=print_log,
             pdb=pdb,
-            pdb_x=pdb_x
+            pdb_x=pdb_x,
+            use_existing_test_dir=use_existing_test_dir,
+            xrcmp_n_cores=xrcmp_n_cores
         )
 
         if test_result.returncode != 0:
