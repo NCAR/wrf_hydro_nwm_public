@@ -464,6 +464,8 @@ contains
     integer            :: reservoir_observation_lookback_hours = 18
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
     logical            :: reservoir_rfc_forecasts
+    character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
+    integer            :: reservoir_rfc_forecasts_lookback_hours
     logical            :: reservoir_type_specified
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
@@ -530,7 +532,7 @@ contains
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
          reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-         reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
+         reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
          geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -569,6 +571,7 @@ contains
     reservoir_observation_lookback_hours = 18
     reservoir_observation_update_time_interval_seconds = 86400
     reservoir_rfc_forecasts = .FALSE.
+    reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
@@ -651,6 +654,8 @@ contains
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
     nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
+    nlst(did)%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
+    nlst(did)%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
 
     if (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts) then
         reservoir_type_specified = .TRUE.
@@ -752,6 +757,8 @@ contains
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
     nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
+    nlst(did)%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
+    nlst(did)%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
 
     nlst(did)%route_direction_f =  route_direction_f
     nlst(did)%route_order_f =  route_order_f
