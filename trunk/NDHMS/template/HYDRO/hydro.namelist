@@ -171,10 +171,10 @@ reservoir_observation_update_time_interval_seconds = 86400
 reservoir_rfc_forecasts = .FALSE.
 
 ! Specify the path to the RFC Time Series files to be used by Reservoirs
-reservoir_timeslice_path = "./RFC_Time_Series/"
+reservoir_rfc_forecasts_time_series_path = "./RFC_Time_Series/"
 
 ! Specify lookback hours to read Reservoir RFC Forecasts
-reservoir_observation_lookback_hours = 24
+reservoir_rfc_forecasts_lookback_hours = 24
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through, 4=exp. bucket with area normalized parameters)
 ! Option 4 is currently only supported if using reach-based routing with UDMP=1.
