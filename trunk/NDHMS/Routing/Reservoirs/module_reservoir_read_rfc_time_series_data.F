@@ -125,9 +125,10 @@ contains
         timeslice_offset_seconds = this%timeslice_offset_hours * 3600
 
         old_date = this%current_date
-
+print *, old_date
         call geth_newdate(new_date, old_date, timeslice_offset_seconds)
         old_date = new_date
+print *, old_date
 
         write(forecast_file_resolution_string, "(I2)") forecast_file_resolution_minutes
 
@@ -141,10 +142,11 @@ contains
 
             time_series_file_name = trim(this%time_series_path) // old_date_trimmed // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
-
+print *, time_series_file_name
             ! Check if file exists
             inquire(FILE = time_series_file_name, EXIST = file_exists)
             if (file_exists) then
+                print *, 'exists'
                 ! Call subroutine to read a particular time series file
                 call this%read_time_series_file(time_series_file_name)
                 exit
@@ -176,6 +178,7 @@ contains
 
         call read_timeslice_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
+print *, this%forecast_counts
         call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)

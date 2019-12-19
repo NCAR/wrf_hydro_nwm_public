@@ -276,13 +276,13 @@ contains
         character(len=*), intent(in) :: netcdf_array_name
         real, dimension(:), intent(out) :: real_var_array
         integer :: var_id, status
-
+print *, '1.1'
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
+print *, '1.2'
         status = nf90_get_var(ncid, var_id, real_var_array)
         if (status /= nf90_noerr) call handle_err(status, netcdf_array_name)
-
+print *, '1.3'
     end subroutine read_timeslice_netcdf_real_1D_variables
 
 
