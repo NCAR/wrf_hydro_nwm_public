@@ -58,9 +58,9 @@ program reservoir_unit_tests
 
     rv8 = test_rfc_forecasts_time_series_output_with_lookback_and_offset()
 
-    rv9 = test_rfc_forecasts_time_series_output_with_missing_data()
+    rv9 = test_rfc_forecasts_time_series_output_with_negative_data()
 
-    rv10 = test_rfc_forecasts_time_series_output_all_missing_data()
+    rv10 = test_rfc_forecasts_time_series_output_all_synthetic_data()
 
     if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10) then
         print *, "========================================================================"
@@ -343,6 +343,7 @@ program reservoir_unit_tests
     end function test_levelpool_overflow_max_height
 
 
+    ! This tests the basic object creation of an RFC Forecast type reservoir.
     function test_rfc_forecasts_object() result(rv)
         implicit none
 
@@ -374,6 +375,7 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_object
 
 
+    ! This tests the object creation and function of the RFC Forecasts Time Series Reader.
     function test_rfc_forecasts_time_series_object() result(rv)
         implicit none
 
@@ -382,6 +384,7 @@ program reservoir_unit_tests
         type (time_series_data_type) :: time_series_data, time_series_data_second
         character*256 :: cwd_full
         integer :: lookback_seconds, forecast_counts, time_step_seconds
+        integer :: timeslice_offset_hours
         real, allocatable, dimension(:) :: forecast_discharges
         logical :: forecast_found
 
@@ -391,10 +394,12 @@ program reservoir_unit_tests
 
         forecast_found = .false.
 
-        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, 0, "CCHC1", lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
+        timeslice_offset_hours = 3
+
+        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
 
         print *, "Checking reading of time series file"
-        if ( forecast_discharges(51) .ge. 0.368119 - epsilon(0.368119) .and. forecast_discharges(51) .le. 0.368119 + epsilon(0.368119) ) then
+        if ( forecast_discharges(8) .ge. 0.8 - epsilon(0.8) .and. forecast_discharges(8) .le. 0.8 + epsilon(0.8) ) then
             print *, "========================================================================"
             print *, "All RFC Forecast Reservoir Time Series Object Tests Passed"
             print *, "========================================================================"
@@ -402,12 +407,15 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, "Not All RFC Forecast Reservoir Time Series Object Tests Passed"
+            print *, '8th discharge in the discharge array should be 0.8'
             print *, "========================================================================"
         end if
 
     end function test_rfc_forecasts_time_series_object
 
 
+    ! This tests an RFC Forecasts Reservoir functionality to run levelpool whenever it does
+    ! not find its corresponding time series file within a given lookback window.
     function test_rfc_forecasts_levelpool_fallback() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
@@ -474,6 +482,10 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_levelpool_fallback
 
 
+    ! This tests an RFC Forecast Reservoirs functionality to offset 3 hours in the future
+    ! and look back up to 24 hours to find a time series file and output the appropriate
+    ! discharge in the array that matches up with model time as would be done in a standard
+    ! analysis and assimilation run.
     function test_rfc_forecasts_time_series_output_with_lookback_and_offset() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
@@ -512,18 +524,18 @@ program reservoir_unit_tests
 
         water_elevation = 1331.18005
 
-        do timestep_count = 1, 120
+        do timestep_count = 1, 30
 
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
-            inflow, 0.0, water_elevation, outflow, 900.0)
+            inflow, 0.0, water_elevation, outflow, 3600.0)
 
             prev_time_inflow = inflow
 
             print *, outflow
         end do
 
-        if (outflow .ge. 6.368119 - epsilon(6.368119) .and. outflow .le. 6.368119 + epsilon(6.368119) ) then
+        if (outflow .ge. 5.9 - epsilon(5.9) .and. outflow .le. 5.9 + epsilon(5.9) ) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Passed'
@@ -531,7 +543,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Failed'
-            print *, 'Outflow should be 6.368119'
+            print *, 'Outflow should be 5.9'
             print *, "========================================================================"
 
         end if
@@ -539,7 +551,9 @@ program reservoir_unit_tests
     end function test_rfc_forecasts_time_series_output_with_lookback_and_offset
 
 
-    function test_rfc_forecasts_time_series_output_with_missing_data() result(rv)
+    ! This tests an RFC Forecast Reservoir's functionality to run levelpool if
+    ! it receives any values from a Time Series Forecast file that are negative.
+    function test_rfc_forecasts_time_series_output_with_negative_data() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
@@ -588,23 +602,25 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .ge. 1.368119 - epsilon(1.368119) .and. outflow .le. 1.368119 + epsilon(1.368119) ) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) ) then
             rv = .true.
             print *, "========================================================================"
-            print *, 'RFC Forecasts Time Series Output Missing Data Test Passed'
+            print *, 'RFC Forecasts Time Series Output Negative Data Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'RFC Forecasts Time Series Output Missing Data Test Failed'
-            print *, 'Outflow should be 6.368119'
+            print *, 'RFC Forecasts Time Series Output Negative Data Test Failed'
+            print *, 'Outflow should be 1.81549609'
             print *, "========================================================================"
 
         end if
 
-    end function test_rfc_forecasts_time_series_output_with_missing_data
+    end function test_rfc_forecasts_time_series_output_with_negative_data
 
 
-    function test_rfc_forecasts_time_series_output_all_missing_data() result(rv)
+    ! This tests an RFC Forecast Reservoir's functionality to run levelpool if
+    ! it receives all synthetic values from a Time Series Forecast file.
+    function test_rfc_forecasts_time_series_output_all_synthetic_data() result(rv)
         implicit none
         logical rv, rv1, rv2                        ! test result
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
@@ -656,17 +672,17 @@ program reservoir_unit_tests
         if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) ) then
             rv = .true.
             print *, "========================================================================"
-            print *, 'RFC Forecasts Time Series Output All Missing Data Test Passed'
+            print *, 'RFC Forecasts Time Series Output All Synthetic Data Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'RFC Forecasts Time Series Output All Missing Data Test Failed'
+            print *, 'RFC Forecasts Time Series Output All Synthetic Data Test Failed'
             print *, 'Outflow should be 1.81549609'
             print *, "========================================================================"
 
         end if
 
-    end function test_rfc_forecasts_time_series_output_all_missing_data
+    end function test_rfc_forecasts_time_series_output_all_synthetic_data
 
 
 end program

@@ -532,7 +532,8 @@ contains
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
          reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_timeslice_path, &
          reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-         reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
+         reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, &
+         reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
          geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&

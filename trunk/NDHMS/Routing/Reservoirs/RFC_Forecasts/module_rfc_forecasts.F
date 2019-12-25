@@ -1,13 +1,13 @@
 ! This module defines and instantiates objects
-! for a rfc forecasts type reservoir. The rfc
-! forecasts reservoir type inherits input and
+! for a RFC Forecasts type reservoir. The RFC
+! Forecasts reservoir type inherits input and
 ! output types from the reservoir base module
 ! and calls instantiation of these into
-! sub-objects. The rfc forecasts reservoir
-! type also points to types for rfc forecasts
+! sub-objects. The RFC Forecasts reservoir
+! type also points to types for RFC Forecasts
 ! properties and state and calls instantiation
 ! of these into sub-objects. There is also a
-! subroutine to run rfc forecasts reservoir
+! subroutine to run RFC Forecasts reservoir
 ! that is derived from the reservoir base
 ! type interface to run reservoir.
 
@@ -71,10 +71,10 @@ contains
         integer,            intent(in) :: forecast_lookback_hours
         integer                        :: update_offset_seconds
 
-!#ifdef RESERVOIR_D
+#ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
         call create_rfc_forecasts_diagnostic_log_file(lake_number)
-!#endif
+#endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -135,7 +135,7 @@ contains
         ! immediately.
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
         this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
-        this%properties%lookback_seconds, this%properties%forecast_counts, &
+        this%properties%lake_number, this%properties%lookback_seconds, this%properties%forecast_counts, &
         this%properties%time_step_seconds, this%state%forecast_discharges, this%state%forecast_found)
 
         if (this%state%forecast_found) then
@@ -144,8 +144,7 @@ contains
             this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
-            + this%properties%rfc_timeslice_offset_hours
-
+            - this%properties%rfc_timeslice_offset_hours
         end if
 
     end subroutine rfc_forecasts_init
@@ -231,22 +230,13 @@ contains
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
 
-!!!!!!
-!!Temp if statement to only output at the hour
-if (modulo(this%state%current_time, 3600) == 0) then
-
-!#ifdef RESERVOIR_D
+#ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
         call log_rfc_forecasts_diagnostic_data(this%properties%lake_number, this%state%current_time, &
         this%properties%time_step_seconds, this%state%time_series_update_time, this%properties%lookback_seconds, &
         this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, this%state%water_elevation, &
         levelpool_outflow, this%output%outflow)
-!#endif
-
-!!
-end if
-!!!
-
+#endif
 
     end subroutine run_rfc_forecasts_reservoir
 

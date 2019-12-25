@@ -1,3 +1,10 @@
+! This module RFC Time Series files to get an array
+! of observed and forecasted discharges that will
+! be used by reservoirs. An forecast lookback hours
+! period is passed in to determine how far back in time from the
+! current model time the module will look for time series files.
+! The forecast_file_resolution_minutes determines the time increments
+! the module will look back.
 module module_reservoir_read_rfc_time_series_data
     use module_reservoir_utilities, only: read_timeslice_netcdf_integer_variables, &
                                           read_timeslice_netcdf_real_1D_variables, &
@@ -36,12 +43,18 @@ module module_reservoir_read_rfc_time_series_data
 
     integer, parameter :: forecast_file_resolution_minutes = 60
 
+#ifndef NCEP_WCOSS
+    integer, parameter :: log_warning = 6
+#else
+    integer, parameter :: log_warning = 78
+#endif
+
 contains
 
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, &
-        timeslice_offset_hours, rfc_gage_id, lookback_seconds, forecast_counts, time_step_seconds, &
-        forecast_discharges, forecast_found)
+        timeslice_offset_hours, rfc_gage_id, lake_number, lookback_seconds, forecast_counts, &
+        time_step_seconds, forecast_discharges, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -49,11 +62,13 @@ contains
         integer,            intent(in)                  :: forecast_lookback_hours
         integer,            intent(in)                  :: timeslice_offset_hours
         character(len=5),   intent(in)                  :: rfc_gage_id
+        integer,            intent(in)                  :: lake_number
         integer,            intent(out)                 :: lookback_seconds
         integer,            intent(out)                 :: forecast_counts
         integer,            intent(out)                 :: time_step_seconds
         real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
         logical,            intent(inout)               :: forecast_found
+        character(len=15)                               :: lake_number_string
 
         this%forecast_found = .false.
         this%start_date = start_date
@@ -81,13 +96,31 @@ contains
 
             ! If all of the values are synthetic or any of the values are less than 0.0, then
             ! do not use the time series
-            if ( all(this%synthetic_values_logical) .eqv. .true. .or. minval(this%forecast_discharges) < 0.0) then
+            if ( all(this%synthetic_values_logical) .eqv. .true.) then
                 this%forecast_found = .false.
+
+                write(lake_number_string, "(I15)") lake_number
+                write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
+
+            else if (minval(this%forecast_discharges) < 0.0) then
+                this%forecast_found = .false.
+
+                write(lake_number_string, "(I15)") lake_number
+                write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
+                " use level pool calculations instead."
             end if
 
             ! Deallocate forecast arrays
             if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
             if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
+            if(allocated(this%synthetic_values_logical)) deallocate(this%synthetic_values_logical)
+
+        else
+            write(lake_number_string, "(I15)") lake_number
+            write(log_warning,*) "Warning, RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
+            " is not available. This reservoir will use level pool calculations instead."
 
         end if
 
@@ -125,10 +158,9 @@ contains
         timeslice_offset_seconds = this%timeslice_offset_hours * 3600
 
         old_date = this%current_date
-print *, old_date
+
         call geth_newdate(new_date, old_date, timeslice_offset_seconds)
         old_date = new_date
-print *, old_date
 
         write(forecast_file_resolution_string, "(I2)") forecast_file_resolution_minutes
 
@@ -142,11 +174,11 @@ print *, old_date
 
             time_series_file_name = trim(this%time_series_path) // old_date_trimmed // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
-print *, time_series_file_name
+
             ! Check if file exists
             inquire(FILE = time_series_file_name, EXIST = file_exists)
             if (file_exists) then
-                print *, 'exists'
+
                 ! Call subroutine to read a particular time series file
                 call this%read_time_series_file(time_series_file_name)
                 exit
@@ -178,14 +210,17 @@ print *, time_series_file_name
 
         call read_timeslice_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
 
-print *, this%forecast_counts
+        allocate (this%forecast_discharges(this%forecast_counts))
+
+        allocate (this%synthetic_values(this%forecast_counts))
+
+        allocate (this%synthetic_values_logical(this%forecast_counts))
+
         call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
         call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)
 
         call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
-
-        allocate (this%synthetic_values_logical(this%forecast_counts))
 
         this%synthetic_values_logical = this%synthetic_values
 
