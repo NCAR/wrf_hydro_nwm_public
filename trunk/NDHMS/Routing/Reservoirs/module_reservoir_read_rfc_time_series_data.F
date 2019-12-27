@@ -23,9 +23,10 @@ module module_reservoir_read_rfc_time_series_data
         integer                            :: timeslice_offset_hours
         integer                            :: current_lookback_seconds
         character(len=5)                   :: rfc_gage_id
-        integer                            :: forecast_counts
+        integer                            :: total_counts
+        integer                            :: observed_counts
         integer                            :: time_step_seconds
-        real, allocatable, dimension(:)    :: forecast_discharges
+        real, allocatable, dimension(:)    :: discharges
         integer, allocatable, dimension(:) :: synthetic_values
         logical, allocatable, dimension(:) :: synthetic_values_logical
         logical                            :: forecast_found
@@ -53,8 +54,8 @@ contains
 
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, &
-        timeslice_offset_hours, rfc_gage_id, lake_number, lookback_seconds, forecast_counts, &
-        time_step_seconds, forecast_discharges, forecast_found)
+        timeslice_offset_hours, rfc_gage_id, lake_number, lookback_seconds, total_counts, &
+        observed_counts, time_step_seconds, discharges, forecast_found)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -64,9 +65,10 @@ contains
         character(len=5),   intent(in)                  :: rfc_gage_id
         integer,            intent(in)                  :: lake_number
         integer,            intent(out)                 :: lookback_seconds
-        integer,            intent(out)                 :: forecast_counts
+        integer,            intent(out)                 :: total_counts
+        integer,            intent(out)                 :: observed_counts
         integer,            intent(out)                 :: time_step_seconds
-        real, allocatable, dimension(:), intent(inout)  :: forecast_discharges
+        real, allocatable, dimension(:), intent(inout)  :: discharges
         logical,            intent(inout)               :: forecast_found
         character(len=15)                               :: lake_number_string
 
@@ -79,20 +81,22 @@ contains
         this%rfc_gage_id = rfc_gage_id
 
         this%current_lookback_seconds = 0
-        this%forecast_counts = 0
+        this%total_counts = 0
+        this%observed_counts = 0
         this%time_step_seconds = 0
 
         call this%setup_read_time_series()
 
         lookback_seconds = this%current_lookback_seconds
-        forecast_counts = this%forecast_counts
+        total_counts = this%total_counts
+        observed_counts = this%observed_counts
         time_step_seconds = this%time_step_seconds
 
         if (this%forecast_found) then
 
-            allocate(forecast_discharges(forecast_counts))
+            allocate(discharges(total_counts))
 
-            forecast_discharges = this%forecast_discharges
+            discharges = this%discharges
 
             ! If all of the values are synthetic or any of the values are less than 0.0, then
             ! do not use the time series
@@ -103,7 +107,7 @@ contains
                 write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
                 " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
 
-            else if (minval(this%forecast_discharges) < 0.0) then
+            else if (minval(this%discharges) < 0.0) then
                 this%forecast_found = .false.
 
                 write(lake_number_string, "(I15)") lake_number
@@ -113,7 +117,7 @@ contains
             end if
 
             ! Deallocate forecast arrays
-            if(allocated(this%forecast_discharges)) deallocate(this%forecast_discharges)
+            if(allocated(this%discharges)) deallocate(this%discharges)
             if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
             if(allocated(this%synthetic_values_logical)) deallocate(this%synthetic_values_logical)
 
@@ -208,17 +212,19 @@ contains
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
 
-        call read_timeslice_netcdf_integer_variables(ncid, 'forecastCounts', this%forecast_counts)
+        call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', this%total_counts)
 
-        allocate (this%forecast_discharges(this%forecast_counts))
+        allocate (this%discharges(this%total_counts))
 
-        allocate (this%synthetic_values(this%forecast_counts))
+        allocate (this%synthetic_values(this%total_counts))
 
-        allocate (this%synthetic_values_logical(this%forecast_counts))
+        allocate (this%synthetic_values_logical(this%total_counts))
+
+        call read_timeslice_netcdf_integer_variables(ncid, 'observedCounts', this%observed_counts)
 
         call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
 
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%forecast_discharges)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%discharges)
 
         call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
 

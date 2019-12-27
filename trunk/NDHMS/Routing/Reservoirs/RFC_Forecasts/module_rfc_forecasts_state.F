@@ -15,7 +15,7 @@ module module_rfc_forecasts_state
     ! type for reservoir state.
     type, extends(reservoir_state) :: rfc_forecasts_state_interface
         real                               :: water_elevation              ! meters AMSL
-        real, allocatable, dimension(:)    :: forecast_discharges
+        real, allocatable, dimension(:)    :: discharges
         logical, allocatable, dimension(:) :: synthetic_values
         integer                         :: time_series_update_time      ! seconds
         integer                         :: current_time                 ! seconds

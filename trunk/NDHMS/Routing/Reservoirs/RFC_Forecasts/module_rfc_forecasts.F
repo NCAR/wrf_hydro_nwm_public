@@ -135,8 +135,8 @@ contains
         ! immediately.
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
         this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
-        this%properties%lake_number, this%properties%lookback_seconds, this%properties%forecast_counts, &
-        this%properties%time_step_seconds, this%state%forecast_discharges, this%state%forecast_found)
+        this%properties%lake_number, this%properties%lookback_seconds, this%properties%total_counts, &
+        this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, this%state%forecast_found)
 
         if (this%state%forecast_found) then
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
@@ -144,7 +144,7 @@ contains
             this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
-            - this%properties%rfc_timeslice_offset_hours
+            + this%properties%observed_counts - this%properties%rfc_timeslice_offset_hours
         end if
 
     end subroutine rfc_forecasts_init
@@ -186,7 +186,7 @@ contains
             ! If current time is at or past the update time to cycle to the next value in the discharge array and the number
             ! forecast counts has not yet been reached
             if (this%state%current_time .ge. this%state%time_series_update_time .and. this%state%time_series_index &
-            .lt. this%properties%forecast_counts) then
+            .lt. this%properties%total_counts) then
 
                 ! Increment time series index
                 this%state%time_series_index = this%state%time_series_index + 1
@@ -196,7 +196,7 @@ contains
 
             end if
 
-            this%output%outflow = this%state%forecast_discharges(this%state%time_series_index)
+            this%output%outflow = this%state%discharges(this%state%time_series_index)
 
             if (this%output%outflow < 0) then
                 missing_outflow_index = this%state%time_series_index
@@ -204,7 +204,7 @@ contains
                 do while (this%output%outflow < 0 .and. missing_outflow_index > 1)
                     missing_outflow_index = missing_outflow_index - 1
 
-                    this%output%outflow = this%state%forecast_discharges(missing_outflow_index)
+                    this%output%outflow = this%state%discharges(missing_outflow_index)
 
                 end do
 

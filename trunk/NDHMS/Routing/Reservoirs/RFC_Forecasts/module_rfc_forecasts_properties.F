@@ -21,7 +21,8 @@ module module_rfc_forecasts_properties
         integer           :: lake_number                  ! lake number
         character(len=5)  :: rfc_gage_id
         integer           :: lookback_seconds
-        integer           :: forecast_counts
+        integer           :: total_counts
+        integer           :: observed_counts
         integer           :: time_step_seconds
         integer           :: rfc_forecast_persist_days
         integer           :: rfc_forecast_persist_seconds

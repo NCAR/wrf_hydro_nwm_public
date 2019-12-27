@@ -383,7 +383,7 @@ program reservoir_unit_tests
         logical :: call_status
         type (time_series_data_type) :: time_series_data, time_series_data_second
         character*256 :: cwd_full
-        integer :: lookback_seconds, forecast_counts, time_step_seconds
+        integer :: lookback_seconds, total_counts, observed_counts, time_step_seconds
         integer :: timeslice_offset_hours
         real, allocatable, dimension(:) :: forecast_discharges
         logical :: forecast_found
@@ -396,7 +396,7 @@ program reservoir_unit_tests
 
         timeslice_offset_hours = 3
 
-        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, forecast_counts, time_step_seconds, forecast_discharges, forecast_found)
+        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, total_counts, observed_counts, time_step_seconds, forecast_discharges, forecast_found)
 
         print *, "Checking reading of time series file"
         if ( forecast_discharges(8) .ge. 0.8 - epsilon(0.8) .and. forecast_discharges(8) .le. 0.8 + epsilon(0.8) ) then
@@ -515,16 +515,16 @@ program reservoir_unit_tests
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 3745478
+        lake_number = 17609317
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 17609317, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-08-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
 
-        do timestep_count = 1, 30
+        do timestep_count = 1, 80
 
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
@@ -535,7 +535,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .ge. 5.9 - epsilon(5.9) .and. outflow .le. 5.9 + epsilon(5.9) ) then
+        if (outflow .ge. 3.5 - epsilon(3.5) .and. outflow .le. 3.5 + epsilon(3.5) ) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Passed'
@@ -543,7 +543,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Failed'
-            print *, 'Outflow should be 5.9'
+            print *, 'Outflow should be 3.5'
             print *, "========================================================================"
 
         end if
@@ -582,11 +582,11 @@ program reservoir_unit_tests
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 3745478
+        lake_number = 17609317
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 17609317, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-09-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -649,11 +649,11 @@ program reservoir_unit_tests
         orifice_area = 1.0
         max_depth = 1.335180053710937500e+03
         initial_fractional_depth = 8.999999761581420898e-01
-        lake_number = 3745478
+        lake_number = 17609317
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 17609317, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-10-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
