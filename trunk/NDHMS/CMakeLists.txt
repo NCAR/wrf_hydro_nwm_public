@@ -117,19 +117,19 @@ add_definitions(-DMPP_LAND)
 message ("WRF_HYDRO = " ${WRF_HYDRO} )
 if (WRF_HYDRO STREQUAL "1" )
 	add_definitions(-DWRF_HYDRO)
-endif (WRF_HYDRO STREQUAL "1") 
+endif (WRF_HYDRO STREQUAL "1")
 
 #set -DHYDRO_D from env
 message ("HYDRO_D = " ${HYDRO_D} )
 if (HYDRO_D STREQUAL "1" )
 	add_definitions(-DHYDRO_D)
-endif (HYDRO_D STREQUAL "1") 
+endif (HYDRO_D STREQUAL "1")
 
 # set -DWRF_HYDRO_RAPID from env
 message ("WRF_HYDRO_RAPID = " ${WRF_HYDRO_RAPID} )
 if (WRF_HYDRO_RAPID STREQUAL "1" )
 	add_definitions(-DWRF_HYDRO_RAPID)
-endif (WRF_HYDRO_RAPID STREQUAL "1") 
+endif (WRF_HYDRO_RAPID STREQUAL "1")
 
 #set -DSPATIAL_SOIL from env
 message ("SPATIAL_SOIL = " ${SPATIAL_SOIL} )
@@ -141,13 +141,13 @@ endif (SPATIAL_SOIL STREQUAL "1")
 message ("WRFIO_NCD_LARGE_FILE_SUPPORT = " ${WRFIO_NCD_LARGE_FILE_SUPPORT} )
 if (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "1" )
 	add_definitions(-DWRFIO_NCD_LARGE_FILE_SUPPORT)
-endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "1") 
+endif (WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "1")
 
 #set -DNCEP_WCOSS from env
 message ("NCEP_WCOSS = " ${NCEP_WCOSS} )
 if (NCEP_WCOSS STREQUAL "1" )
 	add_definitions(-DNCEP_WCOSS)
-endif (NCEP_WCOSS STREQUAL "1") 
+endif (NCEP_WCOSS STREQUAL "1")
 
 #set -DNCEP_WCOSS from env
 message ("NWM_META = " ${NWM_META} )
@@ -159,19 +159,19 @@ endif (NWM_META STREQUAL "1")
 message ("WRF_HYDRO_NUDGING = " ${WRF_HYDRO_NUDGING} )
 if (WRF_HYDRO_NUDGING STREQUAL "1" )
 	add_definitions(-DWRF_HYDRO_NUDGING)
-endif (WRF_HYDRO_NUDGING STREQUAL "1") 
+endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
 #set -DSPATIAL_SOIL from env
 message ("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
 if (OUTPUT_CHAN_CONN STREQUAL "1" )
 	add_definitions(-DOUTPUT_CHAN_CONN)
-endif (OUTPUT_CHAN_CONN STREQUAL "1") 
+endif (OUTPUT_CHAN_CONN STREQUAL "1")
 
 #set -DSPATIAL_SOIL from env
 message ("PRECIP_DOUBLE = " ${PRECIP_DOUBLE} )
 if (PRECIP_DOUBLE STREQUAL "1" )
 	add_definitions(-DPRECIP_DOUBLE)
-endif (PRECIP_DOUBLE STREQUAL "1") 
+endif (PRECIP_DOUBLE STREQUAL "1")
 
 message("=============================================================")
 
@@ -267,13 +267,13 @@ add_dependencies(hydro_data_rec hydro_routing_reservoirs)
 if (HYDRO_LSM MATCHES "NoahMP")
 	message ("-- Building NoahMP LSM")
 	add_subdirectory("Land_models/NoahMP")
-	
+
 	add_subdirectory("CPL/NoahMP_cpl")
 	add_dependencies(hydro_noahmp_cpl hydro_routing)
 	add_dependencies(hydro_noahmp_cpl hydro_mpp )
 	add_dependencies(hydro_noahmp_cpl hydro_driver )
-	
-	
+
+
 	add_executable(wrfhydro.exe
 		Land_models/NoahMP/IO_code/main_hrldas_driver.F
 		Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.F
@@ -293,23 +293,23 @@ if (HYDRO_LSM MATCHES "NoahMP")
 	#target_link_libraries(wrfhydro.exe hydro_routing_groundwater_simple)
 	target_link_libraries(wrfhydro.exe hydro_data_rec)
 	target_link_libraries(wrfhydro.exe hydro_routing)
-        target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_levelpool)
-        target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_hybrid)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_levelpool)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_hybrid)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
 	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs)
 	target_link_libraries(wrfhydro.exe hydro_driver)
 	target_link_libraries(wrfhydro.exe noahmp_util)
 	target_link_libraries(wrfhydro.exe noahmp_phys)
 	target_link_libraries(wrfhydro.exe noahmp_data)
 	target_link_libraries(wrfhydro.exe hydro_noahmp_cpl)
-	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
 	target_link_libraries(wrfhydro.exe ${NETCDF_LIBRARIES})
-	
+
 	if (WRF_HYDRO_NUDGING STREQUAL "1")
 		target_link_libraries(wrfhydro.exe hydro_nudging)
  		add_dependencies(wrfhydro.exe hydro_nudging)
 	endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
-	add_custom_command(TARGET wrfhydro.exe POST_BUILD 
+	add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
 		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
@@ -320,8 +320,8 @@ if (HYDRO_LSM MATCHES "NoahMP")
 		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
 		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
-	)	
-		
+	)
+
 elseif(HYDRO_LSM MATCHES "Noah")
 	message ("-- Building Noah LSM")
 	add_subdirectory("Land_models/Noah")
@@ -350,21 +350,21 @@ elseif(HYDRO_LSM MATCHES "Noah")
         target_link_libraries(wrfhydro.exe hydro_data_rec)
         target_link_libraries(wrfhydro.exe hydro_routing)
         target_link_libraries(wrfhydro.exe hydro_driver)
-        target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_levelpool)
-        target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_hybrid)
-        target_link_libraries(wrfhydro.exe hydro_routing_reservoirs)        
-	    target_link_libraries(wrfhydro.exe noah_util)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_levelpool)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_hybrid)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
+	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs)
+	target_link_libraries(wrfhydro.exe noah_util)
         target_link_libraries(wrfhydro.exe noah)
         target_link_libraries(wrfhydro.exe hydro_noah_cpl)
-	target_link_libraries(wrfhydro.exe hydro_routing_reservoirs_rfc)
         target_link_libraries(wrfhydro.exe ${NETCDF_LIBRARIES})
-        
+
 	if (WRF_HYDRO_NUDGING STREQUAL "1")
                 target_link_libraries(wrfhydro.exe hydro_nudging)
                 add_dependencies(wrfhydro.exe hydro_nudging)
         endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
-        add_custom_command(TARGET wrfhydro.exe POST_BUILD 
+        add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
 		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
