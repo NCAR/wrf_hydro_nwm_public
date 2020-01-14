@@ -145,6 +145,13 @@ contains
 
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
             + this%properties%observed_counts - this%properties%rfc_timeslice_offset_hours
+
+            ! Check if starting index is out of range of discharge array and set forecast_found to false if out of range.
+            if (this%state%time_series_index .le. 0 .or. this%state%time_series_index .ge. this%properties%total_counts) then
+                this%state%forecast_found = .false.
+
+                this%state%time_series_index = 1
+            end if
         end if
 
     end subroutine rfc_forecasts_init
