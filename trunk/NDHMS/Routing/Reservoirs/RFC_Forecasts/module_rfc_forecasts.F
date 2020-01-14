@@ -41,6 +41,12 @@ module module_rfc_forecasts
 
     end type rfc_forecasts
 
+#ifndef NCEP_WCOSS
+    integer, parameter :: log_warning = 6
+#else
+    integer, parameter :: log_warning = 78
+#endif
+
 contains
 
     ! RFC Forecasts Constructor
@@ -136,7 +142,8 @@ contains
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
         this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
         this%properties%lake_number, this%properties%lookback_seconds, this%properties%total_counts, &
-        this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, this%state%forecast_found)
+        this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, &
+        this%state%forecast_found, this%state%all_discharges_synthetic)
 
         if (this%state%forecast_found) then
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
@@ -175,6 +182,36 @@ contains
         real, intent(in)    :: routing_period           ! seconds
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer		        :: missing_outflow_index
+        character(len=15)   :: lake_number_string
+
+        ! If first timestep, then check forecast aspects
+        if (this%state%current_time == 0) then
+            if (this%state%forecast_found) then
+
+                ! If all of the values are synthetic or any of the values are less than 0.0, then
+                ! do not use the time series
+                if (this%state%all_discharges_synthetic) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
+
+                else if (minval(this%state%discharges) < 0.0) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
+                    " use level pool calculations instead."
+                end if
+
+            else
+                write(lake_number_string, "(I15)") this%properties%lake_number
+                write(log_warning,*) "Warning, RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                " is not available. This reservoir will use level pool calculations instead."
+            end if
+        end if
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
@@ -190,9 +227,14 @@ contains
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
 
-        ! Check if Routing Period is greater than or equal to 1 hour, and if true, set forecast_found to false
-        if (routing_period .ge. 3600) then
+        ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false
+        if (routing_period .gt. 3600) then
             this%state%forecast_found = .false.
+
+            write(lake_number_string, "(I15)") this%properties%lake_number
+            write(log_warning,*) "Warning, the routing period is greater than one hour. Therefore, the RFC forecasts cannot be used", &
+            " for reservoir ", trim(ADJUSTL(lake_number_string)), &
+            ". This reservoir will use level pool calculations instead."
         end if
 
         ! If a forecast is found and the current time is less than the max time an RFC Forecast is persisted

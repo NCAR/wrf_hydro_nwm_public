@@ -30,6 +30,7 @@ module module_reservoir_read_rfc_time_series_data
         integer, allocatable, dimension(:) :: synthetic_values
         logical, allocatable, dimension(:) :: synthetic_values_logical
         logical                            :: forecast_found
+        logical                            :: all_discharges_synthetic
 
     contains
 
@@ -55,7 +56,7 @@ contains
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, &
         timeslice_offset_hours, rfc_gage_id, lake_number, lookback_seconds, total_counts, &
-        observed_counts, time_step_seconds, discharges, forecast_found)
+        observed_counts, time_step_seconds, discharges, forecast_found, all_discharges_synthetic)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -70,9 +71,11 @@ contains
         integer,            intent(out)                 :: time_step_seconds
         real, allocatable, dimension(:), intent(inout)  :: discharges
         logical,            intent(inout)               :: forecast_found
+        logical,            intent(inout)               :: all_discharges_synthetic
         character(len=15)                               :: lake_number_string
 
         this%forecast_found = .false.
+        this%all_discharges_synthetic = .false.
         this%start_date = start_date
         this%current_date = start_date
         this%time_series_path = time_series_path
@@ -93,27 +96,13 @@ contains
         time_step_seconds = this%time_step_seconds
 
         if (this%forecast_found) then
-
             allocate(discharges(total_counts))
 
             discharges = this%discharges
 
-            ! If all of the values are synthetic or any of the values are less than 0.0, then
-            ! do not use the time series
+            ! Check if all of the values are synthetic
             if ( all(this%synthetic_values_logical) .eqv. .true.) then
-                this%forecast_found = .false.
-
-                write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
-                " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
-
-            else if (minval(this%discharges) < 0.0) then
-                this%forecast_found = .false.
-
-                write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
-                " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
-                " use level pool calculations instead."
+                this%all_discharges_synthetic = .true.
             end if
 
             ! Deallocate forecast arrays
@@ -121,14 +110,10 @@ contains
             if(allocated(this%synthetic_values)) deallocate(this%synthetic_values)
             if(allocated(this%synthetic_values_logical)) deallocate(this%synthetic_values_logical)
 
-        else
-            write(lake_number_string, "(I15)") lake_number
-            write(log_warning,*) "Warning, RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
-            " is not available. This reservoir will use level pool calculations instead."
-
         end if
 
         forecast_found = this%forecast_found
+        all_discharges_synthetic = this%all_discharges_synthetic
 
     end subroutine time_series_data_init
 

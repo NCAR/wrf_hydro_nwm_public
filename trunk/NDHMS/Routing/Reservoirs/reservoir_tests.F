@@ -387,6 +387,7 @@ program reservoir_unit_tests
         integer :: timeslice_offset_hours
         real, allocatable, dimension(:) :: forecast_discharges
         logical :: forecast_found
+        logical :: all_discharges_synthetic
 
         call_status = .false.
 
@@ -394,9 +395,11 @@ program reservoir_unit_tests
 
         forecast_found = .false.
 
+        all_discharges_synthetic = .false.
+
         timeslice_offset_hours = 3
 
-        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, total_counts, observed_counts, time_step_seconds, forecast_discharges, forecast_found)
+        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, total_counts, observed_counts, time_step_seconds, forecast_discharges, forecast_found, all_discharges_synthetic)
 
         print *, "Checking reading of time series file"
         if ( forecast_discharges(8) .ge. 0.8 - epsilon(0.8) .and. forecast_discharges(8) .le. 0.8 + epsilon(0.8) ) then

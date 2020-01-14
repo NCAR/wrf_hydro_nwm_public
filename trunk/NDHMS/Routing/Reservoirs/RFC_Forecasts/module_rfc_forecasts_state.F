@@ -21,6 +21,7 @@ module module_rfc_forecasts_state
         integer                         :: current_time                 ! seconds
         integer                         :: time_series_index
         logical                         :: forecast_found
+        logical                         :: all_discharges_synthetic
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
@@ -49,6 +50,7 @@ contains
         this%current_time = 0
         this%time_series_index = 1
         this%forecast_found = .FALSE.
+        this%all_discharges_synthetic = .FALSE.
 
     end subroutine rfc_forecasts_state_init
 
