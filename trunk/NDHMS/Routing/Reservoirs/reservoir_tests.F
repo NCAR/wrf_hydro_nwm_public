@@ -535,7 +535,7 @@ program reservoir_unit_tests
             print *, outflow
         end do
 
-        if (outflow .ge. 3.5 - epsilon(3.5) .and. outflow .le. 3.5 + epsilon(3.5) ) then
+        if (outflow .ge. 3.6 - epsilon(3.6) .and. outflow .le. 3.6 + epsilon(3.6) ) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Passed'
@@ -543,7 +543,7 @@ program reservoir_unit_tests
         else
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Test Failed'
-            print *, 'Outflow should be 3.5'
+            print *, 'Outflow should be 3.6'
             print *, "========================================================================"
 
         end if

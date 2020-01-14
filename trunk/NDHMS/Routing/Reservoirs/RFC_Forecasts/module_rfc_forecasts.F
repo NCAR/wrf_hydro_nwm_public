@@ -169,6 +169,9 @@ contains
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer		        :: missing_outflow_index
 
+        ! Update the current time
+        this%state%current_time = this%state%current_time + int(routing_period)
+
         ! Update input variables
         this%input%inflow = inflow
         this%input%lateral_inflow = lateral_inflow
@@ -226,9 +229,6 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
-
-        ! Update the current time
-        this%state%current_time = this%state%current_time + int(routing_period)
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
