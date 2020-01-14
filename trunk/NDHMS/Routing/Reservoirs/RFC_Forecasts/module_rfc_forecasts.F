@@ -190,6 +190,11 @@ contains
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
 
+        ! Check if Routing Period is greater than or equal to 1 hour, and if true, set forecast_found to false
+        if (routing_period .ge. 3600) then
+            this%state%forecast_found = .false.
+        end if
+
         ! If a forecast is found and the current time is less than the max time an RFC Forecast is persisted
         if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then
 
