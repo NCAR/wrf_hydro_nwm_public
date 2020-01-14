@@ -45,12 +45,6 @@ module module_reservoir_read_rfc_time_series_data
 
     integer, parameter :: forecast_file_resolution_minutes = 60
 
-#ifndef NCEP_WCOSS
-    integer, parameter :: log_warning = 6
-#else
-    integer, parameter :: log_warning = 78
-#endif
-
 contains
 
    ! Time Series Data Type Constructor
