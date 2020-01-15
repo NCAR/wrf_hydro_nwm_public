@@ -335,11 +335,11 @@ program reservoir_unit_tests
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
-        "2016-10-12_02:00:00", cwd_full, 12, 1000000000)
+        "2016-10-10_02:00:00", cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
 
-        water_elevation = 1331.18005
+        water_elevation = 1338.18005
 
         do timestep_count = 1, 120
 
