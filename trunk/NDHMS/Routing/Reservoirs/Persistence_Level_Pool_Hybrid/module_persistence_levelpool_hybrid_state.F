@@ -24,6 +24,7 @@ module module_persistence_levelpool_hybrid_state
         integer :: persistence_weight_index
         real    :: levelpool_current_weight
         real    :: persistence_current_weight
+        integer :: dynamic_reservoir_type       ! dynamic reservoir type sent to lake out files
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 

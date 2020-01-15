@@ -124,7 +124,7 @@ contains
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -133,6 +133,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
 
     end subroutine run_rfc_forecasts_reservoir
 

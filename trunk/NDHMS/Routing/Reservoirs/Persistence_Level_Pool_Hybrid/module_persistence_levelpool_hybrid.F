@@ -200,7 +200,7 @@ contains
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -209,6 +209,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real                :: delta_storage            ! timestep change in storage (cubic meters)
         real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
@@ -332,7 +333,7 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, dynamic_reservoir_type)   !!!!!!!!!!put in state var here for dynamic_reservoir_type
 
         ! Calculate outflow weighted between persistence and levelpool
         this%output%outflow = this%state%persistence_current_weight &
