@@ -360,11 +360,11 @@ program reservoir_unit_tests
         if (outflow .ge. 229.226059 - epsilon(229.226059) .and. outflow .le. 229.226059 + epsilon(229.226059) .and. dynamic_reservoir_type == 1) then
             rv2 = .true.
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir No Timeslice Available Test Passed'
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Overflow Max Height Test Passed'
             print *, "========================================================================"
         else
             print *, "========================================================================"
-            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir No Timeslice Available Test Failed'
+            print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Overflow Max Height Test Failed'
             print *, 'Outflow should be 16.08207'
             print *, 'dynamic_reservoir_type needs to be 1 because reservoir outputs level pool instead of USACE persistence'
             print *, "========================================================================"

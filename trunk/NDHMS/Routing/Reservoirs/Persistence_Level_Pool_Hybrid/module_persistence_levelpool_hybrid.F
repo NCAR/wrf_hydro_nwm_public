@@ -336,6 +336,17 @@ contains
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
 
+        ! If the levelpool weight is within epsilon of 1.0
+        if (this%state%levelpool_current_weight .ge. 1.0 - epsilon(1.0)) then
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+        else
+
+            ! Set dynamic_reservoir_type to given USGS or USACE type
+            this%state%dynamic_reservoir_type = this%properties%reservoir_type
+        end if
+
         ! Calculate outflow weighted between persistence and levelpool
         this%output%outflow = this%state%persistence_current_weight &
         * this%state%persisted_outflow + this%state%levelpool_current_weight &
@@ -353,6 +364,9 @@ contains
         ! If max storage has been reached, release greater of persistence or levelpool
         if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then
             this%output%outflow = levelpool_outflow
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
         end if
 
         ! Calculate change in storage
@@ -373,6 +387,9 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
+
+        ! Update the dynamic reservoir type
+        dynamic_reservoir_type = this%state%dynamic_reservoir_type
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)
