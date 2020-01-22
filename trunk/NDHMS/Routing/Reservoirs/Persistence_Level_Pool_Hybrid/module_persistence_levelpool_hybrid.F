@@ -157,7 +157,8 @@ contains
                 write(0,*) "Failure to allocate hybrid state structure"
             else
                 ! initialize hybrid state
-                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
+                initial_fractional_depth, reservoir_type)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -333,7 +334,7 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, dynamic_reservoir_type)   !!!!!!!!!!put in state var here for dynamic_reservoir_type
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
 
         ! Calculate outflow weighted between persistence and levelpool
         this%output%outflow = this%state%persistence_current_weight &

@@ -25,6 +25,7 @@ module module_persistence_levelpool_hybrid_state
         real    :: levelpool_current_weight
         real    :: persistence_current_weight
         integer :: dynamic_reservoir_type       ! dynamic reservoir type sent to lake out files
+        integer :: levelpool_reservoir_type     ! reservoir type for levelpool
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
@@ -40,14 +41,16 @@ module module_persistence_levelpool_hybrid_state
 contains
 
     !Hybrid State Constructor
-    subroutine hybrid_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+    subroutine hybrid_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
+        initial_fractional_depth, reservoir_type)
         implicit none
         class(hybrid_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(in) :: water_elevation           ! meters AMSL
-        real, intent(in) :: lake_area                 ! area of lake (km^2)
-        real, intent(in) :: lake_max_water_elevation  ! max water elevation (meters)
-        real, intent(in) :: orifice_elevation         ! orifice elevation (meters AMSL)
-        real, intent(in) :: initial_fractional_depth  ! initial fraction water depth
+        real, intent(in)    :: water_elevation           ! meters AMSL
+        real, intent(in)    :: lake_area                 ! area of lake (km^2)
+        real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
+        real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
+        real, intent(in)    :: initial_fractional_depth  ! initial fraction water depth
+        integer, intent(in) :: reservoir_type            ! reservoir type
 
         ! Initialize the state water elevation in same manner as in module_RT.F
         this%water_elevation = orifice_elevation + ((lake_max_water_elevation - orifice_elevation) * initial_fractional_depth)
@@ -64,6 +67,18 @@ contains
         this%persistence_weight_index = 0
         this%levelpool_current_weight = 0.0
         this%persistence_current_weight = 0.0
+
+        ! If reservoir_type is set to 2 for USGS type, then set the dynamic_reservoir_type also to 2.
+        if (reservoir_type == 2) then
+            this%dynamic_reservoir_type = 2
+
+        ! If reservoir_type is set to 3 for USACE type, then set the dynamic_reservoir_type also to 3.
+        else if (reservoir_type == 3) then
+            this%dynamic_reservoir_type = 3
+        end if
+
+        ! Levelpool reservoir type set to 1
+        this%levelpool_reservoir_type = 1
 
     end subroutine hybrid_state_init
 
