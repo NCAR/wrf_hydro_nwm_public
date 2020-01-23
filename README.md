@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)
 [![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
-[![DOI](.github/badges/doi.svg)](https://doi.org/10.5281/zenodo.3625237)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3625237.svg)](https://doi.org/10.5281/zenodo.3625237)
 
 ## Description
 This is the code repository for [WRF-Hydro®](https://ral.ucar.edu/projects/wrf_hydro).
