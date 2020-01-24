@@ -411,8 +411,10 @@ module module_NoahMP_hrldas_driver
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
+
 #ifdef MPP_LAND
-    call  MPP_LAND_INIT()
+    call read_dim(noah_lsm%hrldas_setup_file,ix_tmp,jx_tmp)
+    call MPP_LAND_INIT(ix_tmp,jx_tmp)
 #endif
 
 #ifdef WRF_HYDRO
