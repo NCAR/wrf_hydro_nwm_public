@@ -1369,9 +1369,6 @@ integer:: ix0,jx0
 integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
 integer            :: iret, ncid, ascIndId
 
-#ifdef MPP_LAND
-call  MPP_LAND_INIT()
-#endif
 
 
 ! read the namelist
