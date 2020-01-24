@@ -140,13 +140,17 @@ MODULE MODULE_MPP_LAND
 
 
   !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
-  subroutine MPP_LAND_INIT()
-!    ### initialize the land model logically based on the two D method.
+  subroutine MPP_LAND_INIT(in_global_nx,in_global_ny)
+!    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
+    integer in_global_nx, in_global_ny
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
+
+    global_nx = in_global_nx
+    global_ny = in_global_ny 
 
     ! left_right_np = ew_numprocs
     ! up_down_np  = sn_numprocs
@@ -1357,18 +1361,28 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine decompose_RT_int
 
-  subroutine getNX_NY(nprocs, nx,ny)
+  subroutine getNX_NY(nprocs,nx,ny)
   ! calculate the nx and ny based on the total nprocs.
-    integer nprocs, nx, ny
-    integer i,j, max
+    integer nprocs, nx, ny, n
+    integer i, j, max
+
+    n = global_nx * global_ny
+    if( nprocs .ge. n ) then
+       call fatal_error_stop("Error: number of processes greater than number of cells in the land grid")
+    end if
+
     max = nprocs
     do j = 1, nprocs
        if( mod(nprocs,j) .eq. 0 ) then
            i = nprocs/j
-           if( abs(i-j) .lt. max) then
-               max = abs(i-j)
-               nx = i
-               ny = j
+           if( i .le. global_nx ) then
+               if( abs(i-j) .lt. max) then
+                   if( j .le. global_ny ) then
+                       max = abs(i-j)
+                       nx = i
+                       ny = j
+                   end if
+               end if
            end if
        end if
     end do
