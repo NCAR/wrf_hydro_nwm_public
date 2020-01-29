@@ -189,7 +189,7 @@ contains
 
         ! Open Time Series NetCDF file
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open time series file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file")
 
         call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', this%total_counts)
 
@@ -210,6 +210,10 @@ contains
         this%synthetic_values_logical = this%synthetic_values
 
         this%forecast_found = .true.
+
+        ! Close Time Series NetCDF file
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not close RFC time series file")
 
     end subroutine read_time_series_file
 

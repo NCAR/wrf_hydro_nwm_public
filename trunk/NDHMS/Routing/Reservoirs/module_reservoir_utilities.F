@@ -229,6 +229,10 @@ contains
         status = nf90_get_var(ncid, var_id, reservoir_types)
         if (status /= nf90_noerr) call handle_err(status, "reservoir_type")
 
+        ! Close Reservoir Parameter NetCDF file
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
+
         if(allocated(reservoir_parameter_lake_ids)) deallocate(reservoir_parameter_lake_ids)
 
     end subroutine read_reservoir_type

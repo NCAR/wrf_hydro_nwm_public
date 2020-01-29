@@ -54,7 +54,7 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, rfc_forecasts_parameter_file, start_date, &
+        lake_number, reservoir_parameter_file, start_date, &
         time_series_path, forecast_lookback_hours)
 
         implicit none
@@ -71,7 +71,7 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
-        character(len=*),   intent(in) :: rfc_forecasts_parameter_file
+        character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: time_series_path
         integer,            intent(in) :: forecast_lookback_hours
@@ -110,7 +110,7 @@ contains
                 write(0,*) "Failure to allocate rfc forecasts properties structure"
             else
                 ! initialize rfc forecasts properties
-                call this%properties%init(lake_number, rfc_forecasts_parameter_file)
+                call this%properties%init(lake_number, reservoir_parameter_file)
 
             end if
             this%pointer_allocation_guard = .true.
