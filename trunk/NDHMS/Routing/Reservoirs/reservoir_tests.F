@@ -148,7 +148,7 @@ program reservoir_unit_tests
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
-        "2010-10-01_07:00:00", cwd_full, 12, 1000000000)
+        "2010-10-01_07:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
         rv1 = persistence_levelpool_hybrid_data_info(persistence_levelpool_hybrid_reservoir_data)
@@ -230,7 +230,7 @@ program reservoir_unit_tests
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
         weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
-        "2016-10-10_02:00:00", cwd_full, 12, 1000000000)
+        "2016-10-10_02:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
 

@@ -847,7 +847,8 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%reservoir_type(lake_index),         &
                     nlst(did)%reservoir_parameter_file,                &
                     nlst(did)%startdate(1:19),                         &
-                    nlst(did)%reservoir_timeslice_path,                &
+                    nlst(did)%reservoir_usgs_timeslice_path,           &
+                    nlst(did)%reservoir_usace_timeslice_path,          &
                     nlst(did)%reservoir_observation_lookback_hours,    &
                     nlst(did)%reservoir_observation_update_time_interval_seconds)
 
