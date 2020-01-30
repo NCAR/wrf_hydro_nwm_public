@@ -136,20 +136,26 @@ contains
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
-        ! Call to initialize time series data object. This object is a singleton,
-        ! so if another reservoir has already initialized the object, it will return
-        ! immediately.
+        ! Call to initialize time series data object
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
         this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
         this%properties%lake_number, this%properties%lookback_seconds, this%properties%total_counts, &
         this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, &
         this%state%forecast_found, this%state%all_discharges_synthetic)
 
+        ! If the forecast was found and returned a discharge array
         if (this%state%forecast_found) then
+
+            ! Use modulo to calculate the offset seconds in between the hourly time-step to set the update time
+            ! for shifting values in the discharge array.
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
 
             this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
 
+            ! Set starting index in the time series discharge array depending on the lookback seconds to when
+            ! the RFC time series file was found, the number of observed values to offset from the beginning of
+            ! discharge array to reach the T0 issue time, and the offset hours that the model searched in the future
+            ! of model start time to for the time series file issue time.
             this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
             + this%properties%observed_counts - this%properties%rfc_timeslice_offset_hours
 
@@ -189,7 +195,8 @@ contains
             if (this%state%forecast_found) then
 
                 ! If all of the values are synthetic or any of the values are less than 0.0, then
-                ! do not use the time series
+                ! do not use the time series discharge array and revert to level pool. Otherwise,
+                ! if forecast was not found, also revert to level pool.
                 if (this%state%all_discharges_synthetic) then
                     this%state%forecast_found = .false.
 
@@ -227,7 +234,7 @@ contains
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
 
-        ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false
+        ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
         if (routing_period .gt. 3600) then
             this%state%forecast_found = .false.
 
@@ -253,8 +260,12 @@ contains
 
             end if
 
+            ! Set outflow to corresponding discharge from array
             this%output%outflow = this%state%discharges(this%state%time_series_index)
 
+            ! Check for outflows less than 0 and cycle backwards in the array until a
+            ! non-negative value is found. If all previous values are negative, then
+            ! use level pool outflow.
             if (this%output%outflow < 0) then
                 missing_outflow_index = this%state%time_series_index
 
@@ -262,7 +273,6 @@ contains
                     missing_outflow_index = missing_outflow_index - 1
 
                     this%output%outflow = this%state%discharges(missing_outflow_index)
-
                 end do
 
                 if (this%output%outflow < 0) then

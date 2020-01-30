@@ -1,10 +1,12 @@
+! This module holds tests for initialization of
+! various attributes of an RFC forecasts reservoir.
 module module_rfc_forecasts_tests
     use module_rfc_forecasts
     use module_reservoir_read_rfc_time_series_data
 
 contains
 
-    !Testing
+    ! Testing
     function rfc_forecasts_data_info(rfc_forecasts_reservoir_data) result(data_info_result)
         implicit none
         type (rfc_forecasts) :: rfc_forecasts_reservoir_data
@@ -154,7 +156,7 @@ contains
 
     end function rfc_forecasts_data_info
 
-    ! test to see that each member of the input structure is correctly allocated and readable
+    ! Test to see that each member of the input structure is correctly allocated and readable
     function test_input_rfc_forecasts(o) result(rv)
         type (reservoir_input), intent(in) :: o
         logical rv
@@ -191,7 +193,7 @@ contains
 
     end function test_input_rfc_forecasts
 
-    ! test to see that each member of the output structure is correctly allocated and readable
+    ! Test to see that each member of the output structure is correctly allocated and readable
     function test_output_rfc_forecasts(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
@@ -212,7 +214,7 @@ contains
 
     end function test_output_rfc_forecasts
 
-    ! test to see that each member of the state structure is correctly allocated and readable
+    ! Test to see that each member of the state structure is correctly allocated and readable
     function test_rfc_forecasts_state(o) result(rv)
         type (rfc_forecasts_state_interface), intent(in) :: o
         logical rv
@@ -234,7 +236,7 @@ contains
     end function test_rfc_forecasts_state
 
 
-    ! test to see that each member of the properties structure is correctly allocated and readable
+    ! Test to see that each member of the properties structure is correctly allocated and readable
     function test_rfc_forecasts_properties(o) result(rv)
         type (rfc_forecasts_properties_interface), intent(in) :: o
         logical rv
@@ -265,7 +267,7 @@ contains
 
 
     ! Levelpool data tests
-    ! test to see that each member of the levelpool input structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool input structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_input(o) result(rv)
         type (reservoir_input), intent(in) :: o
         logical rv
@@ -302,7 +304,7 @@ contains
 
     end function test_rfc_forecasts_levelpool_input
 
-    ! test to see that each member of the levelpool output structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool output structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_output(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
@@ -323,7 +325,7 @@ contains
 
     end function test_rfc_forecasts_levelpool_output
 
-    ! test to see that each member of the levelpool state structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool state structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_state(o) result(rv)
         type (rfc_forecasts_state_interface), intent(in) :: o
         logical rv
@@ -345,7 +347,7 @@ contains
     end function test_rfc_forecasts_levelpool_state
 
 
-    ! test to see that each member of the levelpool properties structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool properties structure is correctly allocated and readable
     function test_rfc_forecasts_levelpool_properties(o) result(rv)
         type (rfc_forecasts_state_interface), intent(in) :: o
         logical rv

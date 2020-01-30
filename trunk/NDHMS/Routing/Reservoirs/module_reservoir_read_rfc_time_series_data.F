@@ -1,10 +1,11 @@
-! This module RFC Time Series files to get an array
-! of observed and forecasted discharges that will
-! be used by reservoirs. An forecast lookback hours
-! period is passed in to determine how far back in time from the
-! current model time the module will look for time series files.
-! The forecast_file_resolution_minutes determines the time increments
-! the module will look back.
+! This module searches for and reads RFC Time Series files
+! to get an array of observed and forecasted discharges that
+! will be used by reservoirs. The forecast lookback hours
+! period is passed in to determine how far back in time from
+! the current model time plus another offset time to search
+! ahead of model time the module will look for time series files.
+! The forecast_file_resolution_minutes determines the time
+! increments the module will look back.
 module module_reservoir_read_rfc_time_series_data
     use module_reservoir_utilities, only: read_timeslice_netcdf_integer_variables, &
                                           read_timeslice_netcdf_real_1D_variables, &
@@ -82,6 +83,7 @@ contains
         this%observed_counts = 0
         this%time_step_seconds = 0
 
+        ! Call subroutine to search for and read an RFC time series file
         call this%setup_read_time_series()
 
         lookback_seconds = this%current_lookback_seconds
@@ -89,6 +91,7 @@ contains
         observed_counts = this%observed_counts
         time_step_seconds = this%time_step_seconds
 
+        ! If the time series forecast is found
         if (this%forecast_found) then
             allocate(discharges(total_counts))
 
@@ -136,12 +139,15 @@ contains
 
         this%current_lookback_seconds = 0
 
+        ! Determine the total number of time series files to search for
         total_time_series_file_periods = this%forecast_lookback_hours * (60 / forecast_file_resolution_minutes)
 
         timeslice_offset_seconds = this%timeslice_offset_hours * 3600
 
         old_date = this%current_date
 
+        ! Get the new date-time ahead of model start time to start searching
+        ! for time series files if the timeslice_offset_seconds is greater than 0.
         call geth_newdate(new_date, old_date, timeslice_offset_seconds)
         old_date = new_date
 
