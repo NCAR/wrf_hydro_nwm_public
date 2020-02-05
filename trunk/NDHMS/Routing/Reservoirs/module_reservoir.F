@@ -92,7 +92,7 @@ module module_reservoir
     ! inputs and outputs.
     abstract interface
         subroutine run_reservoir_interface(this, previous_timestep_inflow, inflow, &
-            lateral_inflow, water_elevation, outflow, routing_period)
+            lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
             import reservoir
             class(reservoir), intent(inout) :: this
             real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -101,6 +101,7 @@ module module_reservoir
             real, intent(inout) :: water_elevation          ! meters AMSL
             real, intent(out)   :: outflow                  ! cubic meters per second (cms)
             real, intent(in)    :: routing_period           ! seconds
+            integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
 
         end subroutine run_reservoir_interface
 
