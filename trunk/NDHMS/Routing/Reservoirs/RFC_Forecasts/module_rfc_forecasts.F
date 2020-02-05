@@ -157,7 +157,7 @@ contains
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -166,6 +166,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer		        :: missing_outflow_index
 
@@ -178,7 +179,7 @@ contains
 
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, dynamic_reservoir_type)
 
         ! If a forecast is found and the current time is less than the max time an RFC Forecast is persisted
         if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then

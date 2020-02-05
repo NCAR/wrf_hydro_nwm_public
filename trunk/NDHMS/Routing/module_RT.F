@@ -369,6 +369,7 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%reservoir_type(NLAKES) )        ! allocate array to specify type of reservoir
+        allocate ( rt_domain(did)%final_reservoir_type(NLAKES) )  ! allocate array to specify final type of reservoir
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -392,6 +393,7 @@ CONTAINS
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
          rt_domain(did)%reservoir_type = 1
+         rt_domain(did)%final_reservoir_type = 1
      endif
 
 
