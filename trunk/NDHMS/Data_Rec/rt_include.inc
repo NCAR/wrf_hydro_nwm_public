@@ -7,6 +7,7 @@
 
    class (reservoir_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: reservoir_type ! specifying type of reservoir
+   integer, allocatable, dimension(:) :: final_reservoir_type   ! resolved reservoir type (since it can change)
 
    INTEGER :: IX, JX
    logical :: initialized
