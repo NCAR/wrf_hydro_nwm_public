@@ -205,9 +205,10 @@ contains
         if (this%state%current_time == 0) then
             if (this%state%forecast_found) then
 
-                ! If all of the values are synthetic or any of the values are less than 0.0, then
-                ! do not use the time series discharge array and revert to level pool. Otherwise,
-                ! if forecast was not found, also revert to level pool.
+                ! If all of the values are synthetic or any of the values are less than 0.0
+                ! or greater than or equal to the MS river historical peak, then
+                ! do not use the time series discharge array and revert to level pool.
+                ! Otherwise, if forecast was not found, also revert to level pool.
                 if (this%state%all_discharges_synthetic) then
                     this%state%forecast_found = .false.
 
@@ -222,6 +223,17 @@ contains
                     write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
                     " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
                     " use level pool calculations instead."
+
+                !! peak flow on MS river *2
+                !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
+                !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+                else if (maxval(this%state%discharges) .ge. 90000.0) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " contain one or more values greater than the Mississippi River historical peak flow, and therefore all discharges are unusable. ", &
+                    "This reservoir will use level pool calculations instead."
                 end if
 
             else
