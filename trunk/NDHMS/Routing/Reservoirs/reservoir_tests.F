@@ -22,6 +22,7 @@ program reservoir_unit_tests
     logical :: rv9 = .false.
     logical :: rv10 = .false.
     logical :: rv11 = .false.
+    logical :: rv12 = .false.
 
 
     real, dimension(120) :: inflow_array
@@ -64,7 +65,9 @@ program reservoir_unit_tests
 
     rv11 = test_rfc_forecasts_data_exceeding_max_range()
 
-    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10 .and. rv11) then
+    rv12 = test_rfc_forecasts_with_offset_for_extended_AnA()
+
+    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10 .and. rv11 .and. rv12) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -957,6 +960,80 @@ program reservoir_unit_tests
         end if
 
     end function test_rfc_forecasts_data_exceeding_max_range
+
+
+    ! This tests an RFC Forecast Reservoirs functionality to offset 28 hours in the future
+    ! and look back up to 24 hours to find a time series file and output the appropriate
+    ! discharge in the array that matches up with model time as would be done in an extended
+    ! analysis and assimilation run.
+    function test_rfc_forecasts_with_offset_for_extended_AnA() result(rv)
+        implicit none
+        logical rv, rv1, rv2                        ! test result
+        type (rfc_forecasts) :: rfc_forecasts_reservoir_data
+        real :: outflow, inflow
+        real :: water_elevation
+        real :: prev_time_inflow
+        real :: lake_area, weir_elevation, weir_coefficient
+        real :: weir_length, dam_length, orifice_elevation, orifice_coefficient
+        real :: orifice_area, max_depth, initial_fractional_depth
+        integer :: lake_number, reservoir_type
+        integer :: timestep_count
+        character*256 :: cwd_full
+        integer :: dynamic_reservoir_type
+
+        prev_time_inflow = 0.0
+        timestep_count = 0
+        water_elevation = 0.0
+        rv = .false.
+
+        lake_area = 2.096320037841796875e+02
+        weir_elevation = 1.332074047851562455e+03
+        weir_coefficient = 4.000000000000000222e-01
+        weir_length = 1.000000000000000000e+01
+        dam_length = 10.0
+        orifice_elevation = 1.314473347981770758e+03
+        orifice_coefficient = 1.000000000000000056e-01
+        orifice_area = 1.0
+        max_depth = 1.335180053710937500e+03
+        initial_fractional_depth = 8.999999761581420898e-01
+        lake_number = 17609317
+        reservoir_type = 4
+
+        cwd_full = "../../../../tests/local/reservoir_testing_files/"
+
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        "../../../../tests/local/reservoir_testing_files/reservoir_index_AnA_represents_Extended_MR.nc", "2019-12-18_03:00:00", cwd_full, 24)
+
+        water_elevation = 1331.18005
+
+        do timestep_count = 1, 35
+
+            inflow = inflow_array(timestep_count)
+            call rfc_forecasts_reservoir_data%run(inflow, &
+            inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type)
+
+            prev_time_inflow = inflow
+
+            print *, outflow
+        end do
+
+        print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
+
+        if (outflow .ge. 7.8 - epsilon(7.8) .and. outflow .le. 7.8 + epsilon(7.8) .and. dynamic_reservoir_type == 4) then
+            rv = .true.
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output For Extended AnA Test Passed'
+            print *, "========================================================================"
+        else
+            print *, "========================================================================"
+            print *, 'RFC Forecasts Time Series Output For Extended AnA Test Failed'
+            print *, 'Outflow should be 7.8'
+            print *, 'dynamic_reservoir_type needs to be 4 for RFC forecast output'
+            print *, "========================================================================"
+
+        end if
+
+    end function test_rfc_forecasts_with_offset_for_extended_AnA
 
 
 end program
