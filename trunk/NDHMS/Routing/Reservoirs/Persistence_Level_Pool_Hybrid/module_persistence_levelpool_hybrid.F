@@ -115,7 +115,7 @@ contains
                 ! Call hydro_stop if reservoir_type is not USGS or USACE because the
                 ! data source is not available.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
+                call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
 
             end if
 
@@ -389,7 +389,7 @@ contains
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
 
-        ! Update the dynamic reservoir type
+        ! Update the dynamic_reservoir_type returned from this subroutine
         dynamic_reservoir_type = this%state%dynamic_reservoir_type
 
         ! Update the current time

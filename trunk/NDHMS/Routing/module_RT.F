@@ -868,6 +868,7 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%LAKEMAXH(lake_index),                &
                     rt_domain(did)%ELEVLAKE(lake_index),                &
                     rt_domain(did)%LAKEIDM(lake_index),                 &
+                    rt_domain(did)%reservoir_type(lake_index),          &
                     nlst(did)%reservoir_parameter_file,                 &
                     nlst(did)%startdate(1:19),                          &
                     nlst(did)%reservoir_rfc_forecasts_time_series_path, &

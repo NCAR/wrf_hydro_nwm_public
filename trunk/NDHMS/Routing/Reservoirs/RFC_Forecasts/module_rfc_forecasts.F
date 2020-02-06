@@ -20,6 +20,7 @@ module module_rfc_forecasts
                                           log_rfc_forecasts_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_rfc_time_series_data, only: time_series_data
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base
@@ -54,7 +55,7 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, reservoir_parameter_file, start_date, &
+        lake_number, reservoir_type, reservoir_parameter_file, start_date, &
         time_series_path, forecast_lookback_hours)
 
         implicit none
@@ -71,11 +72,13 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
+        integer, intent(in)    :: reservoir_type            ! reservoir type
         character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
         character(len=256), intent(in) :: time_series_path
         integer,            intent(in) :: forecast_lookback_hours
         integer                        :: update_offset_seconds
+        character(len=15)              :: lake_number_string
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -135,6 +138,13 @@ contains
         call this%state%levelpool_ptr%init(water_elevation, lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
+
+        if (reservoir_type .ne. 4) then
+            ! Call hydro_stop if reservoir_type is not RFC Forecast because the
+            ! data source is not available.
+            write(lake_number_string, "(I15)") lake_number
+            call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
+        end if
 
         ! Call to initialize time series data object
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
@@ -233,7 +243,7 @@ contains
 
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, dynamic_reservoir_type)
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
 
         ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
         if (routing_period .gt. 3600) then
@@ -264,6 +274,9 @@ contains
             ! Set outflow to corresponding discharge from array
             this%output%outflow = this%state%discharges(this%state%time_series_index)
 
+            ! Set dynamic_reservoir_type to RFC Forecasts Type
+            this%state%dynamic_reservoir_type = this%properties%reservoir_type
+
             ! Check for outflows less than 0 and cycle backwards in the array until a
             ! non-negative value is found. If all previous values are negative, then
             ! use level pool outflow.
@@ -278,12 +291,18 @@ contains
 
                 if (this%output%outflow < 0) then
                     this%output%outflow = levelpool_outflow
+
+                    ! Set dynamic_reservoir_type to levelpool type
+                    this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
                 end if
 
             end if
 
         else
             this%output%outflow = levelpool_outflow
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
         end if
 
         ! Update output variable returned from this subroutine
@@ -294,6 +313,9 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
+
+        ! Update the dynamic_reservoir_type returned from this subroutine
+        dynamic_reservoir_type = this%state%dynamic_reservoir_type
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes

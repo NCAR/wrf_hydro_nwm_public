@@ -22,6 +22,8 @@ module module_rfc_forecasts_state
         integer                         :: time_series_index
         logical                         :: forecast_found
         logical                         :: all_discharges_synthetic
+        integer                         :: dynamic_reservoir_type       ! dynamic reservoir type sent to lake out files
+        integer                         :: levelpool_reservoir_type     ! reservoir type for levelpool
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
@@ -51,6 +53,12 @@ contains
         this%time_series_index = 1
         this%forecast_found = .FALSE.
         this%all_discharges_synthetic = .FALSE.
+
+        ! Initialize dynamic_reservoir_type to 4 for RFC type reservoir
+        this%dynamic_reservoir_type = 4
+
+        ! Levelpool reservoir type set to 1
+        this%levelpool_reservoir_type = 1
 
     end subroutine rfc_forecasts_state_init
 

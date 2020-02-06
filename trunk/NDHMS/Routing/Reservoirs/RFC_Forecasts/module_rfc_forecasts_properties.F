@@ -19,6 +19,7 @@ module module_rfc_forecasts_properties
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
         integer           :: lake_number                  ! lake number
+        integer           :: reservoir_type               ! reservoir type
         character(len=5)  :: rfc_gage_id
         integer           :: lookback_seconds
         integer           :: total_counts
@@ -51,6 +52,9 @@ contains
         integer                      :: status                        ! status of reading NetCDF
 
         this%lake_number = lake_number
+
+        ! reservoir_type set to 4 for RFC type forecasts
+        this%reservoir_type = 4
 
         this%observation_hours = observation_hours
 
