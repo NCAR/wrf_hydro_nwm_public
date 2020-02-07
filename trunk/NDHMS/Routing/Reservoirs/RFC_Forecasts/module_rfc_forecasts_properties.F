@@ -19,6 +19,7 @@ module module_rfc_forecasts_properties
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
         integer           :: lake_number                  ! lake number
+        integer           :: reservoir_type               ! reservoir type
         character(len=5)  :: rfc_gage_id
         integer           :: lookback_seconds
         integer           :: total_counts
@@ -42,21 +43,24 @@ module module_rfc_forecasts_properties
 contains
 
     ! RFC Forecasts Properties Constructor
-    subroutine rfc_forecasts_properties_init(this, lake_number, rfc_forecasts_parameter_file)
+    subroutine rfc_forecasts_properties_init(this, lake_number, reservoir_parameter_file)
         implicit none
         class(rfc_forecasts_properties_interface), intent(inout) :: this ! the type object being initialized
         integer, intent(in)          :: lake_number                   ! lake number
-        character(len=*), intent(in) :: rfc_forecasts_parameter_file
+        character(len=*), intent(in) :: reservoir_parameter_file
         integer                      :: ncid, var_id, lake_id_index
         integer                      :: status                        ! status of reading NetCDF
 
         this%lake_number = lake_number
 
+        ! reservoir_type set to 4 for RFC type forecasts
+        this%reservoir_type = 4
+
         this%observation_hours = observation_hours
 
-        ! Open RFC Reservoir Parameter NetCDF file
-        status = nf90_open(path = rfc_forecasts_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open rfc forecasts parameter file")
+        ! Open Reservoir Parameter NetCDF file
+        status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
 
         ! Read relevant properties from Persistence Parameter NetCDF
         call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", lake_id_index)
@@ -68,6 +72,10 @@ contains
         this%rfc_forecast_persist_seconds = this%rfc_forecast_persist_days * seconds_in_day
 
         call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_timeslice_offset", this%rfc_timeslice_offset_hours)
+
+        ! Close Reservoir Parameter NetCDF file
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
 
     end subroutine rfc_forecasts_properties_init
 

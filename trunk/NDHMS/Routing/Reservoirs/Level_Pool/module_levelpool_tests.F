@@ -1,3 +1,5 @@
+! This module holds tests for initialization of
+! various attributes of a levelpool reservoir.
 module module_levelpool_tests
     use module_levelpool
 
@@ -86,7 +88,7 @@ contains
     end function levelpool_data_info
 
 
-    ! test to see that each member of the input structure is correctly allocated and readable
+    ! Test to see that each member of the input structure is correctly allocated and readable
     function test_input(o) result(rv)
         type (reservoir_input), intent(in) :: o
         logical rv
@@ -123,7 +125,7 @@ contains
 
     end function test_input
 
-    ! test to see that each member of the output structure is correctly allocated and readable
+    ! Test to see that each member of the output structure is correctly allocated and readable
     function test_output(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
@@ -144,7 +146,7 @@ contains
 
     end function test_output
 
-    ! test to see that each member of the state structure is correctly allocated and readable
+    ! Test to see that each member of the state structure is correctly allocated and readable
     function test_levelpool_state(o) result(rv)
         type (levelpool_state_interface), intent(in) :: o
         logical rv
@@ -166,7 +168,7 @@ contains
     end function test_levelpool_state
 
 
-    ! test to see that each member of the properties structure is correctly allocated and readable
+    ! Test to see that each member of the properties structure is correctly allocated and readable
     function test_levelpool_properties(o) result(rv)
         type (levelpool_properties_interface), intent(in) :: o
         logical rv

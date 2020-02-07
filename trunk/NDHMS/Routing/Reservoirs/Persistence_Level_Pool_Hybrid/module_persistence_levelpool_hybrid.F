@@ -61,7 +61,7 @@ contains
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, reservoir_type, reservoir_parameter_file, start_date, &
-        timeslice_path, observation_lookback_hours, &
+        usgs_timeslice_path, usace_timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
@@ -80,7 +80,8 @@ contains
         integer, intent(in)    :: reservoir_type            ! reservoir type
         character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
-        character(len=256), intent(in) :: timeslice_path
+        character(len=256), intent(in) :: usgs_timeslice_path
+        character(len=256), intent(in) :: usace_timeslice_path
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
@@ -97,14 +98,14 @@ contains
             ! so if another reservoir has already initialized the object of a particular data
             ! source, it will return immediately.
             if (reservoir_type == 2) then
-                call usgs_timeslice_data%init(start_date, timeslice_path, &
+                call usgs_timeslice_data%init(start_date, usgs_timeslice_path, &
                 reservoir_parameter_file, "usgs", observation_lookback_hours)
 
                 ! Assign pointer to usgs_timeslice_data object
                 this%timeslice_data=>usgs_timeslice_data
 
             else if (reservoir_type == 3) then
-                call usace_timeslice_data%init(start_date, timeslice_path, &
+                call usace_timeslice_data%init(start_date, usace_timeslice_path, &
                 reservoir_parameter_file, "usace", observation_lookback_hours)
 
                 ! Assign pointer to usace_timeslice_data object
@@ -114,7 +115,7 @@ contains
                 ! Call hydro_stop if reservoir_type is not USGS or USACE because the
                 ! data source is not available.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
+                call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
 
             end if
 
@@ -388,7 +389,7 @@ contains
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
 
-        ! Update the dynamic reservoir type
+        ! Update the dynamic_reservoir_type returned from this subroutine
         dynamic_reservoir_type = this%state%dynamic_reservoir_type
 
         ! Update the current time
