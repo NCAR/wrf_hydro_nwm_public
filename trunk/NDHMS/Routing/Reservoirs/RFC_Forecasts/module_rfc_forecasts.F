@@ -1,13 +1,13 @@
 ! This module defines and instantiates objects
-! for a rfc forecasts persistence levelpool type
-! reservoir. The rfc forecasts reservoir type
-! inherits input and output types from the
-! reservoir base module and calls instantiation
-! of these into sub-objects. The rfc forecasts
-! reservoir type also points to types for
-! rfc forecasts properties and state and calls
-! instantiation of these into sub-objects.
-! There is also a subroutine to run rfc forecasts reservoir
+! for a RFC Forecasts type reservoir. The RFC
+! Forecasts reservoir type inherits input and
+! output types from the reservoir base module
+! and calls instantiation of these into
+! sub-objects. The RFC Forecasts reservoir
+! type also points to types for RFC Forecasts
+! properties and state and calls instantiation
+! of these into sub-objects. There is also a
+! subroutine to run RFC Forecasts reservoir
 ! that is derived from the reservoir base
 ! type interface to run reservoir.
 
@@ -16,7 +16,11 @@ module module_rfc_forecasts
     use module_rfc_forecasts_properties, only: rfc_forecasts_properties_interface
     use module_rfc_forecasts_state, only: rfc_forecasts_state_interface
     use module_levelpool, only: levelpool
+    use module_reservoir_utilities, only: create_rfc_forecasts_diagnostic_log_file, &
+                                          log_rfc_forecasts_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
+    use module_reservoir_read_rfc_time_series_data, only: time_series_data
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base
@@ -38,6 +42,12 @@ module module_rfc_forecasts
 
     end type rfc_forecasts
 
+#ifndef NCEP_WCOSS
+    integer, parameter :: log_warning = 6
+#else
+    integer, parameter :: log_warning = 78
+#endif
+
 contains
 
     ! RFC Forecasts Constructor
@@ -45,7 +55,9 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number)
+        lake_number, reservoir_type, reservoir_parameter_file, start_date, &
+        time_series_path, forecast_lookback_hours)
+
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
@@ -60,6 +72,18 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
+        integer, intent(in)    :: reservoir_type            ! reservoir type
+        character(len=*),   intent(in) :: reservoir_parameter_file
+        character(len=19),  intent(in) :: start_date
+        character(len=256), intent(in) :: time_series_path
+        integer,            intent(in) :: forecast_lookback_hours
+        integer                        :: update_offset_seconds
+        character(len=15)              :: lake_number_string
+
+#ifdef RESERVOIR_D
+        ! Create diagnostic log file only for development/debugging purposes
+        call create_rfc_forecasts_diagnostic_log_file(lake_number)
+#endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
             ! try to allocate input
@@ -89,7 +113,8 @@ contains
                 write(0,*) "Failure to allocate rfc forecasts properties structure"
             else
                 ! initialize rfc forecasts properties
-                call this%properties%init(lake_number)
+                call this%properties%init(lake_number, reservoir_parameter_file)
+
             end if
             this%pointer_allocation_guard = .true.
 
@@ -114,6 +139,44 @@ contains
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
+        if (reservoir_type .ne. 4) then
+            ! Call hydro_stop if reservoir_type is not RFC Forecast because the
+            ! data source is not available.
+            write(lake_number_string, "(I15)") lake_number
+            call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
+        end if
+
+        ! Call to initialize time series data object
+        call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
+        this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
+        this%properties%lake_number, this%properties%lookback_seconds, this%properties%total_counts, &
+        this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, &
+        this%state%forecast_found, this%state%all_discharges_synthetic)
+
+        ! If the forecast was found and returned a discharge array
+        if (this%state%forecast_found) then
+
+            ! Use modulo to calculate the offset seconds in between the hourly time-step to set the update time
+            ! for shifting values in the discharge array.
+            update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
+
+            this%state%time_series_update_time = this%properties%time_step_seconds - update_offset_seconds
+
+            ! Set starting index in the time series discharge array depending on the lookback seconds to when
+            ! the RFC time series file was found, the number of observed values to offset from the beginning of
+            ! discharge array to reach the T0 issue time, and the offset hours that the model searched in the future
+            ! of model start time to for the time series file issue time.
+            this%state%time_series_index = this%properties%lookback_seconds / this%properties%time_step_seconds + 1 &
+            + this%properties%observed_counts - this%properties%rfc_timeslice_offset_hours
+
+            ! Check if starting index is out of range of discharge array and set forecast_found to false if out of range.
+            if (this%state%time_series_index .le. 0 .or. this%state%time_series_index .ge. this%properties%total_counts) then
+                this%state%forecast_found = .false.
+
+                this%state%time_series_index = 1
+            end if
+        end if
+
     end subroutine rfc_forecasts_init
 
     ! RFC Forecasts Destructor
@@ -124,7 +187,7 @@ contains
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -133,6 +196,146 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+        real                :: levelpool_outflow        ! cubic meters per second (cms)
+        integer		        :: missing_outflow_index
+        character(len=15)   :: lake_number_string
+
+        ! If first timestep, then check forecast aspects
+        if (this%state%current_time == 0) then
+            if (this%state%forecast_found) then
+
+                ! If all of the values are synthetic or any of the values are less than 0.0
+                ! or greater than or equal to the MS river historical peak, then
+                ! do not use the time series discharge array and revert to level pool.
+                ! Otherwise, if forecast was not found, also revert to level pool.
+                if (this%state%all_discharges_synthetic) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
+
+                else if (minval(this%state%discharges) < 0.0) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
+                    " use level pool calculations instead."
+
+                !! peak flow on MS river *2
+                !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
+                !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+                else if (maxval(this%state%discharges) .ge. 90000.0) then
+                    this%state%forecast_found = .false.
+
+                    write(lake_number_string, "(I15)") this%properties%lake_number
+                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                    " contain one or more values greater than the Mississippi River historical peak flow, and therefore all discharges are unusable. ", &
+                    "This reservoir will use level pool calculations instead."
+                end if
+
+            else
+                write(lake_number_string, "(I15)") this%properties%lake_number
+                write(log_warning,*) "Warning, RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                " is not available. This reservoir will use level pool calculations instead."
+            end if
+        end if
+
+        ! Update the current time
+        this%state%current_time = this%state%current_time + int(routing_period)
+
+        ! Update input variables
+        this%input%inflow = inflow
+        this%input%lateral_inflow = lateral_inflow
+
+        ! Update state water elevation
+        this%state%water_elevation = water_elevation
+
+        ! Run levelpool reservoir
+        call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
+
+        ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
+        if (routing_period .gt. 3600) then
+            this%state%forecast_found = .false.
+
+            write(lake_number_string, "(I15)") this%properties%lake_number
+            write(log_warning,*) "Warning, the routing period is greater than one hour. Therefore, the RFC forecasts cannot be used", &
+            " for reservoir ", trim(ADJUSTL(lake_number_string)), &
+            ". This reservoir will use level pool calculations instead."
+        end if
+
+        ! If a forecast is found and the current time is less than the max time an RFC Forecast is persisted
+        if (this%state%forecast_found .and. this%state%current_time .le. this%properties%rfc_forecast_persist_seconds) then
+
+            ! If current time is at or past the update time to cycle to the next value in the discharge array and the number
+            ! forecast counts has not yet been reached
+            if (this%state%current_time .ge. this%state%time_series_update_time .and. this%state%time_series_index &
+            .lt. this%properties%total_counts) then
+
+                ! Increment time series index
+                this%state%time_series_index = this%state%time_series_index + 1
+
+                ! Set next update time
+                this%state%time_series_update_time = this%state%time_series_update_time + this%properties%time_step_seconds
+
+            end if
+
+            ! Set outflow to corresponding discharge from array
+            this%output%outflow = this%state%discharges(this%state%time_series_index)
+
+            ! Set dynamic_reservoir_type to RFC Forecasts Type
+            this%state%dynamic_reservoir_type = this%properties%reservoir_type
+
+            ! Check for outflows less than 0 and cycle backwards in the array until a
+            ! non-negative value is found. If all previous values are negative, then
+            ! use level pool outflow.
+            if (this%output%outflow < 0) then
+                missing_outflow_index = this%state%time_series_index
+
+                do while (this%output%outflow < 0 .and. missing_outflow_index > 1)
+                    missing_outflow_index = missing_outflow_index - 1
+
+                    this%output%outflow = this%state%discharges(missing_outflow_index)
+                end do
+
+                if (this%output%outflow < 0) then
+                    this%output%outflow = levelpool_outflow
+
+                    ! Set dynamic_reservoir_type to levelpool type
+                    this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+                end if
+
+            end if
+
+        else
+            this%output%outflow = levelpool_outflow
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+        end if
+
+        ! Update output variable returned from this subroutine
+        outflow = this%output%outflow
+
+        ! Set current inflow to previous_timestep_inflow
+        this%input%previous_timestep_inflow = inflow
+
+        ! Update water_elevation variable returned from this subroutine
+        water_elevation = this%state%water_elevation
+
+        ! Update the dynamic_reservoir_type returned from this subroutine
+        dynamic_reservoir_type = this%state%dynamic_reservoir_type
+
+#ifdef RESERVOIR_D
+        ! Log diagnostic data only for development/debugging purposes
+        call log_rfc_forecasts_diagnostic_data(this%properties%lake_number, this%state%current_time, &
+        this%properties%time_step_seconds, this%state%time_series_update_time, this%properties%lookback_seconds, &
+        this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, this%state%water_elevation, &
+        levelpool_outflow, this%output%outflow)
+#endif
 
     end subroutine run_rfc_forecasts_reservoir
 

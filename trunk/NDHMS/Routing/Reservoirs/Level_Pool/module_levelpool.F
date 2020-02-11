@@ -135,7 +135,7 @@ contains
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
     subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(levelpool), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -144,6 +144,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
 
         ! Update input variables
         this%input%inflow = inflow
@@ -178,6 +179,10 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
+
+        ! The dynamic reservoir type is always set to 1 for level pool in this module because
+        ! it cannot change reservoir types
+        dynamic_reservoir_type = 1
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
@@ -273,7 +278,7 @@ contains
            else
              discharge = 0.0   !in the dead pool
            endif
-       
+
            if (sap > 0) then
               dh1 = ((It - discharge)/sap)*dt
            else

@@ -58,10 +58,13 @@ CONTAINS
           logical            :: reservoir_persistence_usgs
           logical            :: reservoir_persistence_usace
           character(len=256) :: reservoir_parameter_file=""
-          character(len=256) :: reservoir_timeslice_path = ""
+          character(len=256) :: reservoir_usgs_timeslice_path = ""
+          character(len=256) :: reservoir_usace_timeslice_path = ""
           integer            :: reservoir_observation_lookback_hours
           integer            :: reservoir_observation_update_time_interval_seconds
           logical            :: reservoir_rfc_forecasts
+          character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
+          integer            :: reservoir_rfc_forecasts_lookback_hours
           logical            :: reservoir_type_specified
           character(len=256) :: gwbasmskfil =""
           character(len=256) :: gwstrmfil =""
@@ -126,9 +129,10 @@ CONTAINS
                     GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
                     GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
                     route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-                    reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_timeslice_path, &
-                    reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-                    reservoir_rfc_forecasts, reservoir_type_specified, route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
+                    reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_usgs_timeslice_path, &
+                    reservoir_usace_timeslice_path, reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
+                    reservoir_rfc_forecasts,  reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, &
+                    reservoir_type_specified, route_direction_f,route_order_f, gwbasmskfil, geo_finegrid_flnm, gwstrmfil, &
                     GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
                     order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
@@ -167,6 +171,7 @@ CONTAINS
    reservoir_observation_lookback_hours = 18
    reservoir_observation_update_time_interval_seconds = 86400
    reservoir_rfc_forecasts = .FALSE.
+   reservoir_rfc_forecasts_lookback_hours = 24
    reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
@@ -267,10 +272,13 @@ CONTAINS
   nlst%reservoir_persistence_usgs = reservoir_persistence_usgs
   nlst%reservoir_persistence_usace = reservoir_persistence_usace
   nlst%reservoir_parameter_file = reservoir_parameter_file
-  nlst%reservoir_timeslice_path = reservoir_timeslice_path
+  nlst%reservoir_usgs_timeslice_path = reservoir_usgs_timeslice_path
+  nlst%reservoir_usace_timeslice_path = reservoir_usace_timeslice_path
   nlst%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
   nlst%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
   nlst%reservoir_rfc_forecasts = reservoir_rfc_forecasts
+  nlst%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
+  nlst%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
 
   if (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts) then
     reservoir_type_specified = .TRUE.
@@ -285,10 +293,13 @@ CONTAINS
   call mpp_land_bcast_log1(nlst%reservoir_persistence_usgs)
   call mpp_land_bcast_log1(nlst%reservoir_persistence_usace)
   call mpp_land_bcast_char(256,nlst%reservoir_parameter_file )
-  call mpp_land_bcast_char(256,nlst%reservoir_timeslice_path)
+  call mpp_land_bcast_char(256,nlst%reservoir_usgs_timeslice_path)
+  call mpp_land_bcast_char(256,nlst%reservoir_usace_timeslice_path)
   call mpp_land_bcast_int1(nlst%reservoir_observation_lookback_hours)
   call mpp_land_bcast_int1(nlst%reservoir_observation_update_time_interval_seconds)
   call mpp_land_bcast_log1(nlst%reservoir_rfc_forecasts)
+  call mpp_land_bcast_char(256,nlst%reservoir_rfc_forecasts_time_series_path)
+  call mpp_land_bcast_int1(nlst%reservoir_rfc_forecasts_lookback_hours)
   call mpp_land_bcast_log1(nlst%reservoir_type_specified)
 #endif
 
@@ -508,9 +519,13 @@ CONTAINS
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
     write(6,*) " nlst%reservoir_parameter_file ", reservoir_parameter_file
-    write(6,*) " nlst%reservoir_timeslice_path ", reservoir_timeslice_path
+    write(6,*) " nlst%reservoir_usgs_timeslice_path ", reservoir_usgs_timeslice_path
+    write(6,*) " nlst%reservoir_usace_timeslice_path ", reservoir_usace_timeslice_path
     write(6,*) " nlst%reservoir_observation_lookback_hours ", nlst%reservoir_observation_lookback_hours
     write(6,*) " nlst%reservoir_observation_update_time_interval_seconds ", nlst%reservoir_observation_update_time_interval_seconds
+    write(6,*) " nlst%reservoir_rfc_forecasts ", reservoir_rfc_forecasts
+    write(6,*) " nlst%reservoir_rfc_forecasts_time_series_path ", reservoir_rfc_forecasts_time_series_path
+    write(6,*) " nlst%reservoir_rfc_forecasts_lookback_hours ", reservoir_rfc_forecasts_lookback_hours
     write(6,*) " nlst%route_direction_f ",  route_direction_f
     write(6,*) " nlst%route_order_f ",  route_order_f
     write(6,*) " nlst%gwbasmskfil ",  gwbasmskfil
@@ -789,10 +804,36 @@ subroutine rt_nlst_check(nlst)
       endif
    end if
 
-   if(nlst%reservoir_persistence_usgs .or. nlst%reservoir_persistence_usace) then
-      if(len(trim(nlst%reservoir_timeslice_path)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
-         reservoir persistence capability.')
+   if(nlst%reservoir_persistence_usgs) then
+      if(len(trim(nlst%reservoir_usgs_timeslice_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usgs timeslice_path for reservoir USGS persistence capability.')
+      endif
+      if(len(trim(nlst%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
+      endif
+    end if
+
+   if(nlst%reservoir_persistence_usace) then
+      if(len(trim(nlst%reservoir_usace_timeslice_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usace_timeslice_path for reservoir USACE persistence capability.')
+      endif
+      if(len(trim(nlst%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
+      endif
+    end if
+
+   if(nlst%reservoir_rfc_forecasts) then
+      if(len(trim(nlst%reservoir_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_parameter_file for inputs to rfc forecast type reservoirs.')
+      endif
+      if(len(trim(nlst%reservoir_rfc_forecasts_time_series_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_rfc_forecasts_time_series_path for reservoir rfc forecast capability.')
+      endif
+      if(len(trim(nlst%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(nlst%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
    end if
 

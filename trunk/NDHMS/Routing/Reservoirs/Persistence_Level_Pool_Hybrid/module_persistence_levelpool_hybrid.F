@@ -61,7 +61,7 @@ contains
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
         lake_number, reservoir_type, reservoir_parameter_file, start_date, &
-        timeslice_path, observation_lookback_hours, &
+        usgs_timeslice_path, usace_timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
@@ -80,7 +80,8 @@ contains
         integer, intent(in)    :: reservoir_type            ! reservoir type
         character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
-        character(len=256), intent(in) :: timeslice_path
+        character(len=256), intent(in) :: usgs_timeslice_path
+        character(len=256), intent(in) :: usace_timeslice_path
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
@@ -97,14 +98,14 @@ contains
             ! so if another reservoir has already initialized the object of a particular data
             ! source, it will return immediately.
             if (reservoir_type == 2) then
-                call usgs_timeslice_data%init(start_date, timeslice_path, &
+                call usgs_timeslice_data%init(start_date, usgs_timeslice_path, &
                 reservoir_parameter_file, "usgs", observation_lookback_hours)
 
                 ! Assign pointer to usgs_timeslice_data object
                 this%timeslice_data=>usgs_timeslice_data
 
             else if (reservoir_type == 3) then
-                call usace_timeslice_data%init(start_date, timeslice_path, &
+                call usace_timeslice_data%init(start_date, usace_timeslice_path, &
                 reservoir_parameter_file, "usace", observation_lookback_hours)
 
                 ! Assign pointer to usace_timeslice_data object
@@ -114,7 +115,7 @@ contains
                 ! Call hydro_stop if reservoir_type is not USGS or USACE because the
                 ! data source is not available.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Data source for reservoir " // lake_number_string // " is not available." )
+                call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
 
             end if
 
@@ -157,7 +158,8 @@ contains
                 write(0,*) "Failure to allocate hybrid state structure"
             else
                 ! initialize hybrid state
-                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
+                initial_fractional_depth, reservoir_type)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -200,7 +202,7 @@ contains
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -209,6 +211,7 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real                :: delta_storage            ! timestep change in storage (cubic meters)
         real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
@@ -332,7 +335,18 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
+
+        ! If the levelpool weight is within epsilon of 1.0
+        if (this%state%levelpool_current_weight .ge. 1.0 - epsilon(1.0)) then
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+        else
+
+            ! Set dynamic_reservoir_type to given USGS or USACE type
+            this%state%dynamic_reservoir_type = this%properties%reservoir_type
+        end if
 
         ! Calculate outflow weighted between persistence and levelpool
         this%output%outflow = this%state%persistence_current_weight &
@@ -351,6 +365,9 @@ contains
         ! If max storage has been reached, release greater of persistence or levelpool
         if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then
             this%output%outflow = levelpool_outflow
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
         end if
 
         ! Calculate change in storage
@@ -371,6 +388,9 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
+
+        ! Update the dynamic_reservoir_type returned from this subroutine
+        dynamic_reservoir_type = this%state%dynamic_reservoir_type
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)

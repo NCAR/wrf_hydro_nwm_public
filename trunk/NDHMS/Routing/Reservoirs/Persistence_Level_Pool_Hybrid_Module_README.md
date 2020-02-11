@@ -77,7 +77,7 @@ persistence parameter and timeslice NetCDF files.
 
 ### Input Parameters
 
-This module requires five input parameters that are set in hydro.namelist.
+This module requires six input parameters that are set in hydro.namelist.
 
 * ```reservoir_persistence_usgs``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated for USGS persistence. This will set
 the variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the reservoir parameter file.

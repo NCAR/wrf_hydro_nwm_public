@@ -306,6 +306,10 @@ type lakeMeta
    character (len=256) :: featureIdLName ! long_name - usually lake COMMON ID
    character (len=256) :: featureIdComment ! Comment attribute
    character (len=64) :: cfRole ! cf_role attribute
+   ! reservoir_type attributes
+   character (len=64) :: reservoirTypeLName ! long_name - usually "reservoir_type"
+   integer, dimension(4) :: reservoirTypeFlagValues ! valid flags attribute
+   character (len=64) :: reservoirTypeFlagMeanings ! flag meanings attribute
    ! latitude variable attributes
    character (len=64) :: latLName ! long_name
    character (len=64) :: latUnits ! units
@@ -1737,7 +1741,12 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
    lakeOutDict%cfRole = 'timeseries_id'
 
-   ! Esatablish lat/lon attributes
+   ! Establish reservoir_type attributes
+   lakeOutDict%reservoirTypeLName = "reservoir_type"
+   lakeOutDict%reservoirTypeFlagValues = [1,2,3,4]
+   lakeOutDict%reservoirTypeFlagMeanings = "Level_pool USGS-persistence USACE-persistence RFC-forecasts"
+
+  ! Esatablish lat/lon attributes
    lakeOutDict%latLName = "Lake latitude"
    lakeOutDict%latUnits = "degrees_north"
    lakeOutDict%latStName = "latitude"
