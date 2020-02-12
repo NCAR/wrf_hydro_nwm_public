@@ -306,7 +306,7 @@ contains
 
         !! peak flow on MS river *2
         !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
-        !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+        !! baton rouge 1945: 1,473,000cfs=41,711cms, multiply it roughly by 2
         where(this%gage_discharge .ge. 90000.0) this%gage_quality=0
 
         ! Loop through reservoir gage array to look for gages that still have discharges set to -1.0.
