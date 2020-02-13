@@ -123,7 +123,7 @@ contains
         real                    :: excess, projected_next_time_interval_storage
 
         if (outflow < 0.0) then
-            write(log_warning,*) "Calculations return a negative outflow for reservoir ", lake_number
+            write(log_warning,*) "WARNING: Calculations return a negative outflow for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
             outflow = 0.0
         end if
@@ -137,21 +137,21 @@ contains
 
             max_storage_reached = .true.
 
-            write(log_warning,*) "Modified release to prevent maximum storage exceedance for reservoir ", lake_number
+            write(log_warning,*) "WARNING: Modified release to prevent maximum storage exceedance for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
 
             outflow = (projected_next_time_interval_storage - min_storage) / time_interval + outflow
 
-            write(log_warning,*) "Modified release to maintain minimum storage for reservoir ", lake_number
+            write(log_warning,*) "WARNING: Modified release to maintain minimum storage for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         else if (projected_next_time_interval_storage <= 0.0) then
 
             outflow = inflow
 
-            write(log_warning,*)  "Modified release to prevent storage deficit for reservoir ", lake_number
+            write(log_warning,*)  "WARNING: Modified release to prevent storage deficit for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
         end if
@@ -520,8 +520,7 @@ contains
         integer, intent (in) :: status
         character (len=*), intent(in) :: variable_error
         if(status /= nf90_noerr) then
-            print *, trim(nf90_strerror(status)), ': ', variable_error
-            stop "Stopped"
+            call hydro_stop("ERROR: NetCDF - " // trim(nf90_strerror(status)) // ': ' // variable_error)
         end if
 
     end subroutine handle_err

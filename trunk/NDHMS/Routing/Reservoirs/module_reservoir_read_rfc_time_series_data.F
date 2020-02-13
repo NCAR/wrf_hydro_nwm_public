@@ -20,6 +20,7 @@ module module_reservoir_read_rfc_time_series_data
         character(len=19)                  :: start_date
         character(len=19)                  :: current_date
         character(len=256)                 :: time_series_path
+        character(len=256)                 :: time_series_file_name
         integer                            :: forecast_lookback_hours
         integer                            :: timeslice_offset_hours
         integer                            :: current_lookback_seconds
@@ -51,7 +52,8 @@ contains
    ! Time Series Data Type Constructor
     subroutine time_series_data_init(this, start_date, time_series_path, forecast_lookback_hours, &
         timeslice_offset_hours, rfc_gage_id, lake_number, lookback_seconds, total_counts, &
-        observed_counts, time_step_seconds, discharges, forecast_found, all_discharges_synthetic)
+        observed_counts, time_step_seconds, discharges, forecast_found, all_discharges_synthetic, &
+        time_series_file_name)
         implicit none
         class(time_series_data_type), intent(inout) :: this ! object being initialized
         character(len=19),  intent(in)                  :: start_date
@@ -67,6 +69,7 @@ contains
         real, allocatable, dimension(:), intent(inout)  :: discharges
         logical,            intent(inout)               :: forecast_found
         logical,            intent(inout)               :: all_discharges_synthetic
+        character(len=256), intent(out)                 :: time_series_file_name
         character(len=15)                               :: lake_number_string
 
         this%forecast_found = .false.
@@ -77,6 +80,7 @@ contains
         this%forecast_lookback_hours = forecast_lookback_hours
         this%timeslice_offset_hours = timeslice_offset_hours
         this%rfc_gage_id = rfc_gage_id
+        this%time_series_file_name = ""
 
         this%current_lookback_seconds = 0
         this%total_counts = 0
@@ -111,6 +115,7 @@ contains
 
         forecast_found = this%forecast_found
         all_discharges_synthetic = this%all_discharges_synthetic
+        time_series_file_name = this%time_series_file_name
 
     end subroutine time_series_data_init
 
@@ -170,6 +175,10 @@ contains
 
                 ! Call subroutine to read a particular time series file
                 call this%read_time_series_file(time_series_file_name)
+
+                this%time_series_file_name = old_date_trimmed // "." // &
+                            forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSlice.ncdf'
+
                 exit
             end if
 
@@ -195,7 +204,7 @@ contains
 
         ! Open Time Series NetCDF file
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file " // trim(ADJUSTL(time_series_file)) // ".")
 
         call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', this%total_counts)
 
@@ -219,7 +228,7 @@ contains
 
         ! Close Time Series NetCDF file
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close RFC time series file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close RFC time series file " // trim(ADJUSTL(time_series_file)) // ".")
 
     end subroutine read_time_series_file
 

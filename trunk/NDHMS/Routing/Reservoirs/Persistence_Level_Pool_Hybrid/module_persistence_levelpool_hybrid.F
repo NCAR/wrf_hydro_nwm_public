@@ -85,6 +85,8 @@ contains
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
+        character(len=15)              :: reservoir_type_string
+
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -115,14 +117,16 @@ contains
                 ! Call hydro_stop if reservoir_type is not USGS or USACE because the
                 ! data source is not available.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
-
+                write(reservoir_type_string, "(I15)") reservoir_type
+                call hydro_stop("ERROR: Incorrect reservoir type for reservoir " // trim(ADJUSTL(lake_number_string)) // &
+                ". Expected reservoir type 2 or 3 and instead received reservoir type " // trim(ADJUSTL(reservoir_type_string)) // "." )
             end if
 
+            ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid input structure"
+                call hydro_stop("ERROR: Failure to allocate hybrid input structure")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -132,7 +136,7 @@ contains
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
                 ! if the output structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid output structure"
+                call hydro_stop("ERROR: Failure to allocate hybrid output structure")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -142,7 +146,7 @@ contains
             allocate ( this%properties )
             if ( .not. associated(this%properties) ) then
                 ! if the properties structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid properties structure"
+                call hydro_stop("ERROR: Failure to allocate hybrid properties structure")
             else
                 ! initialize hybrid properties
                 call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
@@ -155,7 +159,7 @@ contains
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid state structure"
+                call hydro_stop("ERROR: Failure to allocate hybrid state structure")
             else
                 ! initialize hybrid state
                 call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
@@ -170,13 +174,13 @@ contains
             if (this%state%current_storage > this%properties%max_storage) then
                 this%state%current_storage = this%properties%max_storage
                 write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, initial storage exceeds max storage for reservoir ", lake_number_string, &
+                write(log_warning,*) "WARNING: initial storage exceeds max storage for reservoir ", lake_number_string, &
                 ". Setting initial storage to max storage."
 
             else if (this%state%current_storage < this%properties%min_storage) then
                 this%state%current_storage = this%properties%min_storage
                 write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, initial storage is less than zero for reservoir ", lake_number_string, &
+                write(log_warning,*) "WARNING: initial storage is less than zero for reservoir ", lake_number_string, &
                 ". Setting initial storage to zero."
 
             end if

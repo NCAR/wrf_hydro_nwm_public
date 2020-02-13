@@ -29,6 +29,7 @@ module module_rfc_forecasts_properties
         integer           :: rfc_forecast_persist_seconds
         integer           :: rfc_timeslice_offset_hours
         integer           :: observation_hours
+        character(len=256):: time_series_file_name
 
     contains
 
@@ -58,9 +59,11 @@ contains
 
         this%observation_hours = observation_hours
 
+        this%time_series_file_name = ""
+
         ! Open Reservoir Parameter NetCDF file
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Read relevant properties from Persistence Parameter NetCDF
         call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", lake_id_index)
@@ -75,7 +78,7 @@ contains
 
         ! Close Reservoir Parameter NetCDF file
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file" // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
     end subroutine rfc_forecasts_properties_init
 
