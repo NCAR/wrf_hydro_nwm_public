@@ -206,7 +206,7 @@ contains
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file " // trim(ADJUSTL(time_series_file)) // ".")
 
-        call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', this%total_counts)
+        call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', time_series_file, this%total_counts)
 
         allocate (this%discharges(this%total_counts))
 
@@ -214,13 +214,13 @@ contains
 
         allocate (this%synthetic_values_logical(this%total_counts))
 
-        call read_timeslice_netcdf_integer_variables(ncid, 'observedCounts', this%observed_counts)
+        call read_timeslice_netcdf_integer_variables(ncid, 'observedCounts', time_series_file, this%observed_counts)
 
-        call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', this%time_step_seconds)
+        call read_timeslice_netcdf_integer_variables(ncid, 'timeSteps', time_series_file, this%time_step_seconds)
 
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', this%discharges)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharges', time_series_file, this%discharges)
 
-        call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', this%synthetic_values)
+        call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', time_series_file, this%synthetic_values)
 
         this%synthetic_values_logical = this%synthetic_values
 

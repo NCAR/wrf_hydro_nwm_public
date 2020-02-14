@@ -66,15 +66,15 @@ contains
         if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Read relevant properties from Persistence Parameter NetCDF
-        call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", lake_id_index)
+        call read_netcdf_lake_id(ncid, lake_number, "rfc_lake_id", reservoir_parameter_file, lake_id_index)
 
-        call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", this%rfc_gage_id)
+        call read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, "rfc_gage_id", reservoir_parameter_file, this%rfc_gage_id)
 
-        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_forecast_persist", this%rfc_forecast_persist_days)
+        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_forecast_persist", reservoir_parameter_file, this%rfc_forecast_persist_days)
 
         this%rfc_forecast_persist_seconds = this%rfc_forecast_persist_days * seconds_in_day
 
-        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_timeslice_offset", this%rfc_timeslice_offset_hours)
+        call read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, "rfc_timeslice_offset", reservoir_parameter_file, this%rfc_timeslice_offset_hours)
 
         ! Close Reservoir Parameter NetCDF file
         status = nf90_close(ncid)

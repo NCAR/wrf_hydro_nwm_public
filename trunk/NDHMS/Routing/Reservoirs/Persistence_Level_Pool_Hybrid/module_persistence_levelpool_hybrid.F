@@ -125,8 +125,9 @@ contains
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write an error
-                call hydro_stop("ERROR: Failure to allocate hybrid input structure")
+                ! if the input structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid input structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -135,8 +136,9 @@ contains
             ! try to allocate output
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write an error
-                call hydro_stop("ERROR: Failure to allocate hybrid output structure")
+                ! if the output structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid output structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -145,8 +147,9 @@ contains
             ! try to allocate properties
             allocate ( this%properties )
             if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write an error
-                call hydro_stop("ERROR: Failure to allocate hybrid properties structure")
+                ! if the properties structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid properties structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid properties
                 call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
@@ -158,8 +161,9 @@ contains
             ! try to allocate state
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
-                ! if the state structure could not be created write an error
-                call hydro_stop("ERROR: Failure to allocate hybrid state structure")
+                ! if the state structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid state structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid state
                 call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &

@@ -96,7 +96,7 @@ contains
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
-        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", var_id, this%number_of_reservoir_gages)
+        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", reservoir_parameter_file, var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
@@ -273,7 +273,7 @@ contains
         if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
 
         ! Get dimension of gage arrays
-        call get_timeslice_array_dimension(ncid, 'discharge', number_of_gages)
+        call get_timeslice_array_dimension(ncid, 'discharge', timeslice_file, number_of_gages)
 
         ! Allocate gage info arrays
         allocate(this%gage_id(number_of_gages))
@@ -281,13 +281,13 @@ contains
         allocate(this%gage_quality(number_of_gages))
 
         ! Get gage ids
-        call read_timeslice_gage_ids(ncid, 'stationId', this%gage_id)
+        call read_timeslice_gage_ids(ncid, 'stationId', timeslice_file, this%gage_id)
 
         ! Get gage discharges
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', this%gage_discharge)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', timeslice_file, this%gage_discharge)
 
         ! Get gage qualities
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', this%gage_quality)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', timeslice_file, this%gage_quality)
 
         ! Normalize gage qualities to 1
         this%gage_quality = this%gage_quality/100

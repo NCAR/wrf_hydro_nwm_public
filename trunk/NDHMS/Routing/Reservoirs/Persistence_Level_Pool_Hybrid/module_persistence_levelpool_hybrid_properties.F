@@ -84,11 +84,11 @@ contains
         ! If reservoir_type is 2, then look for USGS parameters
         if (this%reservoir_type == 2) then
 
-            call read_netcdf_lake_id(ncid, lake_number, "usgs_lake_id", lake_id_index)
+            call read_netcdf_lake_id(ncid, lake_number, "usgs_lake_id", reservoir_parameter_file, lake_id_index)
 
-            call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usgs_gage_id", this%gage_id)
+            call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usgs_gage_id", reservoir_parameter_file, this%gage_id)
 
-            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usgs_persistence_coefficients", var_id, number_of_weights, number_of_lakes)
+            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usgs_persistence_coefficients", reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
 
             allocate(this%persistence_weighted_coefficients(number_of_weights))
 
@@ -100,11 +100,11 @@ contains
         ! If reservoir_type is 3, then look for ACE parameters
         else if (this%reservoir_type == 3) then
 
-            call read_netcdf_lake_id(ncid, lake_number, "usace_lake_id", lake_id_index)
+            call read_netcdf_lake_id(ncid, lake_number, "usace_lake_id", reservoir_parameter_file, lake_id_index)
 
-            call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usace_gage_id", this%gage_id)
+            call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usace_gage_id", reservoir_parameter_file, this%gage_id)
 
-            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usace_persistence_coefficients", var_id, number_of_weights, number_of_lakes)
+            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usace_persistence_coefficients", reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
 
             allocate(this%persistence_weighted_coefficients(number_of_weights))
 
