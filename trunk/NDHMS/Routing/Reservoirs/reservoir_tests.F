@@ -23,6 +23,8 @@ program reservoir_unit_tests
     logical :: rv10 = .false.
     logical :: rv11 = .false.
     logical :: rv12 = .false.
+    logical :: rv13 = .false.
+    logical :: rv14 = .false.
 
 
     real, dimension(120) :: inflow_array
@@ -67,7 +69,11 @@ program reservoir_unit_tests
 
     rv12 = test_rfc_forecasts_with_offset_for_extended_AnA()
 
-    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10 .and. rv11 .and. rv12) then
+    rv13 = test_persistence_levelpool_hybrid_usace_overtop()
+
+    rv14 = test_persistence_levelpool_hybrid_usace_no_timeslice_available()
+
+    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10 .and. rv11 .and. rv12 .and. rv13 .and. rv14) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -506,10 +512,13 @@ program reservoir_unit_tests
             call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0, dynamic_reservoir_type)
 
             prev_time_inflow = inflow
+
             print *, outflow
         end do
 
-        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450)) then
+        print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
+
+        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450) .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Passed'
@@ -518,6 +527,7 @@ program reservoir_unit_tests
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Failed'
             print *, 'Final outflow should be 17.0451450'
+             print *, 'dynamic_reservoir_type needs to be 1 for level pool type'
             print *, "========================================================================"
         end if
 
