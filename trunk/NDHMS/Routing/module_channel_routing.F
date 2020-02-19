@@ -1674,6 +1674,7 @@ end subroutine drive_CHANNEL
        integer :: n, kk2, nt, nsteps  ! tmp
        real, intent(in), dimension(:) :: qout_gwsubbas
        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+       integer, allocatable, dimension(:) :: tmpFinalResType
 
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
@@ -1681,6 +1682,7 @@ end subroutine drive_CHANNEL
             allocate(tmpQLAKEO(NLAKES))
             allocate(tmpQLAKEI(NLAKES))
             allocate(tmpRESHT(NLAKES))
+            allocate(tmpFinalResType(nlakes))
 #ifdef MPP_LAND
         endif
 #endif
@@ -1844,6 +1846,7 @@ do nt = 1, nsteps
       tmpQLAKEO = QLAKEO
       tmpQLAKEI = QLAKEI
       tmpRESHT = RESHT
+      tmpFinalResType = rt_domain(did)%final_reservoir_type
 #ifdef MPP_LAND
    endif
 #endif
@@ -1940,6 +1943,7 @@ do nt = 1, nsteps
    call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
    call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
+   call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?
@@ -1968,6 +1972,7 @@ if(my_id .eq. io_id)      then
    if(allocated(tmpQLAKEO))  deallocate(tmpQLAKEO)
    if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
    if(allocated(tmpRESHT))  deallocate(tmpRESHT)
+   if(allocated(tmpFinalResType)) deallocate(tmpFinalResType)
 endif
 #endif
 
