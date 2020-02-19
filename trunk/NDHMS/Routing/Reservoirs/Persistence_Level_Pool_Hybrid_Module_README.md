@@ -36,8 +36,8 @@ object and its sub-objects. The hybrid reservoir type inherits input and output 
 instantiation of these into sub-objects. The hybrid reservoir type also points to types for hybrid properties and state and calls
 instantiation of these into sub-objects. A pointer to a levelpool reservoir object is also held in state, and this module
 instantiates that levelpool object. There is also a subroutine to run hybrid reservoir that is derived from the reservoir base
-type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_usgs_timeslice_data.F**
-or **module_reservoir_read_ace_timeslice_data.F** that will read a timeslice file and return a corresponding observed discharge. The
+type interface to run reservoir. The run reservoir function will periodically call a function in **module_reservoir_read_timeslice_data.F**
+that will read a timeslice file and return a corresponding observed discharge. The
 timeslice files will be read at a particular update time. For a particular timestep, the first hybrid reservoir on each processor to
 reach an update time at that timestep will call the function to read the timeslice files, which will read the observations for every
 reservoir and store those values in an array. Each subsequent reservoir held by the same processor at that timestep that reaches its
@@ -60,8 +60,8 @@ are properly initialized.
 USACE (U.S. Army Corps of Engineers) timeslice files to get gage discharge values that will be used by reservoirs. An
 observation lookback period is passed in to determine how far back in time from the current model time the module will
 look for timeslice files. The observation resolution determines the time increments the module will look back. For instance,
-a standard lookback period would be 18 hours with an observation resolution of 15 minutes, where a model current time of
-8:00 PM would search for timeslice files at every 15 minute increment between 2:00 AM and 8:00 PM that day. The module will
+a standard lookback period would be 24 hours with an observation resolution of 15 minutes, where a model current time of
+8:00 PM would search for timeslice files at every 15 minute increment between 8:00 PM that day and 8:00 PM the day before. The module will
 first search for the most recent timeslice files and grab the discharge for a particular lake/reservoir if the gage quality
 standard is met at that time. If a gage discharge is missing or if the gage quality standard is not met for any particular
 lake/reservoir in the given timeslice file, the module will continue to look back at every observation resolution increment
@@ -89,7 +89,10 @@ The reservoir_type for a USCAE hybrid persistence reservoir is currently set to 
 
 * ```reservoir_parameter_file``` is the NetCDF parameter file that holds the weights and corresponding gage ID for each lake ID.
 
-* ```reservoir_timeslice_path``` is the path to all the
+* ```reservoir_usgs_timeslice_path``` is the path to all USGS
+timeslice files used by this module.
+
+* ```reservoir_usace_timeslice_path``` is the path to all USACE
 timeslice files used by this module.
 
 * ```reservoir_observation_lookback_hours``` is an integer parameter that specifies how many hours before the model start time the module will
