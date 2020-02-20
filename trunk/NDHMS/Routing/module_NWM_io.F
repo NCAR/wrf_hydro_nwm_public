@@ -1,11 +1,7 @@
 ! Module for handling National Water Model streamflow, land surface,
 ! gridded routing, lake, and groundwater output.
 
-! Logan Karsten
-! National Center for Atmospheric Research
-! Research Applications Laboratory
-! karsten@ucar.edu
-! 303-497-2693
+! Logan Karsten, NCAR, RAL
 
 module module_NWM_io
 
@@ -645,7 +641,7 @@ subroutine output_chrt_NWM(domainId)
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
       ! Open output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHRTOUT NetCDF file.')
 
       ! Write global attributes.
@@ -1121,7 +1117,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
    ! Initialize water type to 16.
    ! NOTE THIS MAY CHANGE IN THE FUTURE!!!!!
-   waterVal = 16
+   waterVal = rt_domain(1)%iswater
 
    ! Initialize NWM dictionary derived type containing all the necessary
    ! metadata for the output file.
@@ -1286,7 +1282,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                   date(6:7)//date(9:10)//date(12:13)//date(15:16)//date(18:19), igrid
          endif
 
-         iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+         iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create LDASOUT NetCDF file.')
          ftnNoahMP = ftn
 
@@ -1879,8 +1875,8 @@ subroutine output_rt_NWM(domainId,iGrid)
                        nlst(domainId)%olddate(15:16), igrid
 
    if(myId .eq. 0) then
-      ! Create output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      ! Create output NetCDF file for writing. 
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
@@ -2600,7 +2596,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LAKEOUT NetCDF file.')
 
       ! Write global attributes.
@@ -3136,8 +3132,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
    if(myId .eq. 0) then
-      ! Create output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      ! Create output NetCDF file for writing. 
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
@@ -3605,8 +3601,8 @@ subroutine output_lsmOut_NWM(domainId)
             nlst(domainId)%olddate(6:7)//nlst(domainId)%olddate(9:10)//&
             nlst(domainId)%olddate(12:13)//nlst(domainId)%olddate(15:16),&
             nlst(domainId)%igrid
-
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+  
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LSMOUT NetCDF file.')
 
       ! Write global attributes
@@ -4571,7 +4567,7 @@ subroutine output_chanObs_NWM(domainId)
      modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
       ! Create NetCDF for output.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
 
       ! Write global attributes.
@@ -5208,7 +5204,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create GWOUT NetCDF file.')
 
       ! Write global attributes.
