@@ -57,14 +57,14 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChVars) :: units ! Units for each variable.
    character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                  ! the actual data. This was done because time 0
@@ -133,14 +133,14 @@ type ldasMeta
    character (len=128), dimension(numLdasVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
    integer, dimension(numLdasVars) :: numLev ! Number of levels for each variable.
-   integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLdasVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLdasVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLdasVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLdasVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was done because time 0
@@ -206,14 +206,14 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numRtDomainVars) :: units ! Units for each variable.
    character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numRtDomainVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numRtDomainVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numRtDomainVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numRtDomainVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                        ! the actual data. This was done because time 0
@@ -276,14 +276,14 @@ type lakeMeta
    character (len=64), dimension(numLakeVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLakeVars) :: units ! Units for each variable.
    character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLakeVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLakeVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLakeVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLakeVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was done because time 0
@@ -350,14 +350,14 @@ type chrtGrdMeta
    character (len=64), dimension(numChGrdVars) :: longName ! longname for each variable
    character (len=64), dimension(numChGrdVars) :: units ! Units for each variable.
    character (len=64), dimension(numChGrdVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChGrdVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChGrdVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChGrdVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChGrdVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChGrdVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChGrdVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChGrdVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChGrdVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                        ! the actual data. This
@@ -424,14 +424,14 @@ type lsmMeta
    character (len=64), dimension(numLsmVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLsmVars) :: units ! Units for each variable.
    integer, dimension(numLsmVars) :: numLev ! Number of levels for each variable.
-   integer*8, dimension(numLsmVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLsmVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLsmVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLsmVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLsmVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLsmVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLsmVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLsmVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLsmVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLsmVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
@@ -495,14 +495,14 @@ type chObsMeta
    character (len=64), dimension(numChObsVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChObsVars) :: units ! Units for each variable.
    character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChObsVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChObsVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChObsVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChObsVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChObsVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChObsVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                  ! the actual data. This was
@@ -568,14 +568,14 @@ type gwMeta
    character (len=64), dimension(numGwVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numGwVars) :: units ! Units for each variable.
    !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numGwVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numGwVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
