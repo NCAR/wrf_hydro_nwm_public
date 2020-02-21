@@ -119,7 +119,8 @@ contains
                 write(lake_number_string, "(I15)") lake_number
                 write(reservoir_type_string, "(I15)") reservoir_type
                 call hydro_stop("ERROR: Incorrect reservoir type for reservoir " // trim(ADJUSTL(lake_number_string)) // &
-                ". Expected reservoir type 2 or 3 and instead received reservoir type " // trim(ADJUSTL(reservoir_type_string)) // "." )
+                ". Expected reservoir type 2 or 3 and instead received reservoir type "  &
+                // trim(ADJUSTL(reservoir_type_string)) // "." )
             end if
 
             ! try to allocate input
@@ -127,7 +128,8 @@ contains
             if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate hybrid input structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate hybrid input structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -138,7 +140,8 @@ contains
             if ( .not. associated(this%output) ) then
                 ! if the output structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate hybrid output structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate hybrid output structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -149,7 +152,8 @@ contains
             if ( .not. associated(this%properties) ) then
                 ! if the properties structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate hybrid properties structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate hybrid properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid properties
                 call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
@@ -163,7 +167,8 @@ contains
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate hybrid state structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate hybrid state structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid state
                 call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
@@ -255,11 +260,12 @@ contains
 
         local_water_elevation = this%state%water_elevation
 
-        ! If update time to read new timeslice gage discharges. In forecast modes, the update time automatically is set to 1,000,000
-        ! to ensure that gage discharges are only read at the first timestep. For analysis runs, a timeslice update time is set as a
-        ! namelist parameter. A typical update time for an analysis run would be 3600 seconds (1 hour), at which time new observations would
-        ! be retrieved. The first reservoir for each processor to reach an update time will call the function to read a new timeslice file,
-        ! and these timeslice discharges will be held in memory for the subsequent reservoirs to use at that timestep.
+        ! If update time to read new timeslice gage discharges. In forecast modes, the update time automatically is set to
+        ! 1,000,000 to ensure that gage discharges are only read at the first timestep. For analysis runs, a timeslice
+        ! update time is set as a namelist parameter. A typical update time for an analysis run would be 3600 seconds
+        ! (1 hour), at which time new observations would be retrieved. The first reservoir for each processor to reach an
+        ! update time will call the function to read a new timeslice file, and these timeslice discharges will be held in
+        ! memory for the subsequent reservoirs to use at that timestep.
         if (this%state%current_time >= this%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
@@ -271,7 +277,8 @@ contains
             ! the weight update logic to set the persistence weight to 0.0. Therefore, only levelpool calculations will be used.
             if (this%state%gage_discharge < 0.0) then
 
-                ! If at weight update time, then increment persistence weight index. Otherwise, continue using previous persistence weight index
+                ! If at weight update time, then increment persistence weight index.
+                ! Otherwise, continue using previous persistence weight index.
                 if (this%state%current_time >= this%state%weight_update_time) then
                     ! Increment weight index
                     this%state%persistence_weight_index = this%state%persistence_weight_index + 1
@@ -299,8 +306,8 @@ contains
                 ! Grab first persistence weight at index 1 from array
                 this%state%persistence_current_weight = this%properties%persistence_weighted_coefficients(this%state%persistence_weight_index)
 
-                ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
-                ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
+                ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is
+                ! 24 hours, and the gage discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
                 this%state%weight_update_time = this%state%current_time + this%properties%weight_update_time_interval - gage_lookback_seconds
 
             end if

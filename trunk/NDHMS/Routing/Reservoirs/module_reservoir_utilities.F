@@ -137,10 +137,12 @@ contains
 
             max_storage_reached = .true.
 
-            write(log_warning,*) "WARNING: Modified release to prevent maximum storage exceedance for reservoir ", lake_number
+            write(log_warning,*) "WARNING: Modified release to prevent maximum storage exceedance", &
+            " for reservoir ", lake_number
             write(log_warning,*) "at ", current_time, " seconds after model start time."
 
-        else if (projected_next_time_interval_storage < min_storage .AND. projected_next_time_interval_storage > 0.0) then
+        else if (projected_next_time_interval_storage < min_storage &
+            .AND. projected_next_time_interval_storage > 0.0) then
 
             outflow = (projected_next_time_interval_storage - min_storage) / time_interval + outflow
 
@@ -177,21 +179,26 @@ contains
 
         ! Open Reservoir Parameter NetCDF file
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inq_varid(ncid, "lake_id", var_id)
-        if (status /= nf90_noerr) call handle_err(status, "lake_id read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "lake_id read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, "lake_id read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_reservoirs)
-        if(status /= nf90_NoErr) call handle_err(status, "lake_id read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, "lake_id read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         allocate(reservoir_parameter_lake_ids(number_of_reservoirs))
 
         status = nf90_get_var(ncid, var_id, reservoir_parameter_lake_ids)
-        if (status /= nf90_noerr) call handle_err(status, "lake_id read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "lake_id read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Check to ensure that the lake_id array size in the reservoir parameter file matches the lake_id array
         ! size in the lake parameter file
@@ -212,13 +219,16 @@ contains
         end if
 
         status = nf90_inq_varid(ncid, "reservoir_type", var_id)
-        if (status /= nf90_noerr) call handle_err(status, "reservoir_type read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_reservoir_types)
-        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, "reservoir_type read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Check to ensure that the reservoir_type array size matches the lake_id array size.
         if (number_of_reservoir_types .ne. number_of_lake_parameter_lakes) then
@@ -227,11 +237,13 @@ contains
         end if
 
         status = nf90_get_var(ncid, var_id, reservoir_types)
-        if (status /= nf90_noerr) call handle_err(status, "reservoir_type read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "reservoir_type read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Close Reservoir Parameter NetCDF file
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         if(allocated(reservoir_parameter_lake_ids)) deallocate(reservoir_parameter_lake_ids)
 
@@ -248,13 +260,16 @@ contains
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_gages)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
     end subroutine get_timeslice_array_dimension
 
@@ -268,10 +283,12 @@ contains
         integer :: var_id, status
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_get_var(ncid, var_id, gage_id_var_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
     end subroutine read_timeslice_gage_ids
 
@@ -285,10 +302,12 @@ contains
         integer :: var_id, status
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_get_var(ncid, var_id, real_var_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
     end subroutine read_timeslice_netcdf_real_1D_variables
 
@@ -302,10 +321,12 @@ contains
         integer :: var_id, status
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_get_var(ncid, var_id, integer_var_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
     end subroutine read_timeslice_netcdf_integer_1D_variables
 
@@ -320,13 +341,16 @@ contains
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_gages)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
     end subroutine read_persistence_netcdf_gage_ids_all
 
@@ -343,18 +367,21 @@ contains
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         allocate(temp_lake_id_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_lake_id_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         do lake_index = 1, number_of_lakes
             if (temp_lake_id_array(lake_index) == lake_number) then
@@ -381,18 +408,22 @@ contains
         character(len=1)   :: temp_char
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         allocate(temp_gage_id_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_gage_id_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
@@ -415,7 +446,8 @@ contains
 
 
     ! Read rfc gage id array from the reservoir parameters file
-    subroutine read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, netcdf_array_name, reservoir_parameter_file, rfc_gage_id)
+    subroutine read_reservoir_parameters_netcdf_rfc_gage_id(ncid, lake_id_index, &
+        netcdf_array_name, reservoir_parameter_file, rfc_gage_id)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
         character(len=*), intent(in) :: reservoir_parameter_file
@@ -428,18 +460,21 @@ contains
         character(len=1)   :: temp_char
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+         // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
         if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name)
 
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         allocate(temp_gage_id_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_gage_id_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         gage_id_string = temp_gage_id_array(lake_id_index)
 
@@ -453,7 +488,8 @@ contains
 
 
     ! Read an RFC forecast integer variable for a corresponding lake id from the reservoir parameter file
-    subroutine read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, netcdf_array_name, reservoir_parameter_file, integer_var)
+    subroutine read_reservoir_parameters_netcdf_rfc_integer(ncid, lake_id_index, &
+        netcdf_array_name, reservoir_parameter_file, integer_var)
         integer, intent(in) :: ncid, lake_id_index
         character(len=*), intent(in) :: netcdf_array_name
         character(len=*), intent(in) :: reservoir_parameter_file
@@ -463,18 +499,22 @@ contains
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         allocate(temp_integer_array(number_of_lakes))
 
         status = nf90_get_var(ncid, var_id, temp_integer_array)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         integer_var = temp_integer_array(lake_id_index)
 
@@ -494,16 +534,20 @@ contains
         integer, dimension(nf90_max_var_dims) :: dim_ids
 
         status = nf90_inq_varid(ncid, netcdf_array_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_variable(ncid, var_id, dimids = dim_ids)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(1), len = number_of_weights)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_inquire_dimension(ncid, dim_ids(2), len = number_of_lakes)
-        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if(status /= nf90_NoErr) call handle_err(status, netcdf_array_name // " read error in reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
     end subroutine read_persistence_netcdf_real_2D_parameters
 
@@ -517,10 +561,12 @@ contains
         integer :: var_id, status
 
         status = nf90_inq_varid(ncid, netcdf_variable_name, var_id)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         status = nf90_get_var(ncid, var_id, integer_variable)
-        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name // " read error in timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, netcdf_variable_name // " read error in timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
     end subroutine read_timeslice_netcdf_integer_variables
 

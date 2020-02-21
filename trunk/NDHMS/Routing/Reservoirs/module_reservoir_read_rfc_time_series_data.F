@@ -204,7 +204,8 @@ contains
 
         ! Open Time Series NetCDF file
         status = nf90_open(path = trim(time_series_file), mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file " // trim(ADJUSTL(time_series_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open RFC time series file " &
+        // trim(ADJUSTL(time_series_file)) // ".")
 
         call read_timeslice_netcdf_integer_variables(ncid, 'totalCounts', time_series_file, this%total_counts)
 
@@ -228,7 +229,8 @@ contains
 
         ! Close Time Series NetCDF file
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close RFC time series file " // trim(ADJUSTL(time_series_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close RFC time series file " &
+        // trim(ADJUSTL(time_series_file)) // ".")
 
     end subroutine read_time_series_file
 

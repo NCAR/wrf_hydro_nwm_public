@@ -78,7 +78,8 @@ contains
 
         ! Open Reservoir Parameter NetCDF file
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Read relevant properties from Reservoir Parameter NetCDF
         ! If reservoir_type is 2, then look for USGS parameters
@@ -88,14 +89,16 @@ contains
 
             call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usgs_gage_id", reservoir_parameter_file, this%gage_id)
 
-            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usgs_persistence_coefficients", reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
+            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usgs_persistence_coefficients", &
+            reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
 
             allocate(this%persistence_weighted_coefficients(number_of_weights))
 
             allocate(temp_real_2D_array(number_of_weights, number_of_lakes))
 
             status = nf90_get_var(ncid, var_id, temp_real_2D_array)
-            if (status /= nf90_noerr) call handle_err(status, "Error reading usgs_persistence_coefficients from " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+            if (status /= nf90_noerr) call handle_err(status, "Error reading usgs_persistence_coefficients from " &
+            // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! If reservoir_type is 3, then look for ACE parameters
         else if (this%reservoir_type == 3) then
@@ -104,15 +107,16 @@ contains
 
             call read_persistence_netcdf_gage_id(ncid, lake_id_index, "usace_gage_id", reservoir_parameter_file, this%gage_id)
 
-            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usace_persistence_coefficients", reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
+            call read_persistence_netcdf_real_2D_parameters(ncid, lake_id_index, "usace_persistence_coefficients", &
+            reservoir_parameter_file, var_id, number_of_weights, number_of_lakes)
 
             allocate(this%persistence_weighted_coefficients(number_of_weights))
 
             allocate(temp_real_2D_array(number_of_weights, number_of_lakes))
 
             status = nf90_get_var(ncid, var_id, temp_real_2D_array)
-            if (status /= nf90_noerr) call handle_err(status, "Error reading usace_persistence_coefficients from " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
-
+            if (status /= nf90_noerr) call handle_err(status, "Error reading usace_persistence_coefficients from " &
+            // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         end if
 
@@ -121,7 +125,8 @@ contains
         if(allocated(temp_real_2D_array)) deallocate(temp_real_2D_array)
 
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
     end subroutine hybrid_properties_init
 

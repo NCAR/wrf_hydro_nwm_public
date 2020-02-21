@@ -82,7 +82,8 @@ contains
             if ( .not. associated(this%input) ) then
                 ! if the input structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate level pool input structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate level pool input structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -93,7 +94,8 @@ contains
             if ( .not. associated(this%output) ) then
                 ! if the output structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate level pool output structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate level pool output structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -104,7 +106,8 @@ contains
             if ( .not. associated(this%properties) ) then
                 ! if the properties structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate levelpool properties structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate levelpool properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize levelpool properties
                 call this%properties%init( lake_area,  &
@@ -119,7 +122,8 @@ contains
             if ( .not. associated(this%state) ) then
                 ! if the state structure could not be created, call hydro_stop.
                 write(lake_number_string, "(I15)") lake_number
-                call hydro_stop("ERROR: Failure to allocate state properties structure for reservoir " // trim(ADJUSTL(lake_number_string)) // ".")
+                call hydro_stop("ERROR: Failure to allocate state properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize levelpool state
                 call this%state%init( water_elevation )

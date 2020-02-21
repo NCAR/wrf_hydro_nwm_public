@@ -94,18 +94,22 @@ contains
         this%data_source = ADJUSTL(trim(data_source))
 
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
-        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", reservoir_parameter_file, var_id, this%number_of_reservoir_gages)
+        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", &
+        reservoir_parameter_file, var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, "Error reading " // ADJUSTL(trim(this%data_source)) // "_gage_id from " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Error reading " // ADJUSTL(trim(this%data_source)) &
+         // "_gage_id from " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Convert gage ids to integers
         do timeslice_gage_index = 1, this%number_of_reservoir_gages
@@ -270,7 +274,8 @@ contains
 
         ! Open Timeslice NetCDF file
         status = nf90_open(path = trim(timeslice_file), mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         ! Get dimension of gage arrays
         call get_timeslice_array_dimension(ncid, 'discharge', timeslice_file, number_of_gages)
@@ -317,7 +322,8 @@ contains
         do reservoir_gage_index = 1, this%number_of_reservoir_gages
             if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
                 do timeslice_gage_index = 1, number_of_gages
-                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
+                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) &
+                    .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
                             this%gage_lookback_seconds(reservoir_gage_index) = this%current_lookback_seconds
