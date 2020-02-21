@@ -2481,6 +2481,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       allocate(g_lakeInflowOut(gsize))
       allocate(g_lakeOutflowOut(gsize))
       allocate(g_lakeidOut(gsize))
+      allocate(g_lakeTypeOut(gsize))
       allocate(chIndArray(gsize))
       g_lakeLat = RT_DOMAIN(domainID)%LATLAKE
       g_lakeLon = RT_DOMAIN(domainID)%LONLAKE
@@ -2909,6 +2910,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    deallocate(g_lakeInflow)
    deallocate(g_lakeOutflow)
    deallocate(g_lakeid)
+   deallocate(g_lakeType)
    if(myId .eq. 0) then
       deallocate(g_lakeLonOut)
       deallocate(g_lakeLatOut)
@@ -2916,6 +2918,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       deallocate(g_lakeInflowOut)
       deallocate(g_lakeOutflowOut)
       deallocate(g_lakeidOut)
+      deallocate(g_lakeTypeOut)
       deallocate(chIndArray)
    endif
 
