@@ -393,7 +393,7 @@ contains
 
   subroutine read_hrldas_hdrinfo(wrfinput_flnm, ix, jx, &
        xstart, xend, ystart, yend,                      &
-       iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+       iswater, islake, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
 #ifdef _PARALLEL_
        igrid, mapproj, dum2d_ptr)
 #else
@@ -412,6 +412,7 @@ contains
     integer,            intent(inout) :: xend, yend     ! Subwindow definition
 #endif
     integer,            intent(out)   :: iswater   ! vegetation category corresponding to water bodies
+    integer,            intent(out)   :: islake    ! vegetation category corresponding to lakes
     integer,            intent(out)   :: isurban   ! vegetation category corresponding to urban areas
     integer,            intent(out)   :: isice     ! vegetation category corresponding to ice areas
     character(len=256), intent(out)   :: llanduse  ! Landuse dataset (USGS or MODI)
@@ -506,6 +507,12 @@ contains
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        "Problems finding global attribute 'ISWATER'")
 
+    ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISLAKE", islake)
+    if(ierr /= 0) then
+      write(*,*) "Problems finding global attribute: ISLAKE; setting to -1"
+      islake = -1
+    end if
+
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "ISURBAN", isurban)
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        "Problems finding global attribute 'ISURBAN'")
@@ -576,11 +583,13 @@ contains
   subroutine readland_hrldas(wrfinput_flnm,                            &
        xstart, xend,                                                   &
        ystart, yend,                                                   &
-       iswater, vegtyp, soltyp, terrain, tbot_2d, latitude, longitude,xland,seaice,msftx,msfty)
+       iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
+       longitude, xland, seaice, msftx, msfty)
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
     integer,                   intent(in)  :: iswater
+    integer,                   intent(in)  :: islake
     integer, dimension(xstart:xend,ystart:yend), intent(out) :: vegtyp, soltyp
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
@@ -679,7 +688,7 @@ contains
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
     ! by setting soil category to water when vegetation category is water, and
     ! vice-versa.
-    where (vegtyp == ISWATER) soltyp = 14
+    where (vegtyp == ISWATER .or. vegtyp == ISLAKE) soltyp = 14
     where (soltyp == 14) vegtyp = ISWATER
 
   end subroutine readland_hrldas
