@@ -21,6 +21,7 @@ module module_levelpool
     use module_levelpool_state, only: levelpool_state_interface
     use module_reservoir, only: reservoir, reservoir_input, &
                                      reservoir_output
+    use module_hydro_stop, only: HYDRO_stop
 
 #ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
@@ -68,6 +69,7 @@ contains
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
         integer, intent(in) :: lake_number               ! lake number
+        character(len=15)   :: lake_number_string
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -78,8 +80,10 @@ contains
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write an error
-                write(0,*) "Failure to allocate level pool input structure"
+                ! if the input structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate level pool input structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -88,8 +92,10 @@ contains
             ! try to allocate output
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write an error
-                write(0,*) "Failure to allocate level pool output structure"
+                ! if the output structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate level pool output structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -98,10 +104,12 @@ contains
             ! try to allocate properties
             allocate ( this%properties )
             if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write an error
-                write(0,*) "Failure to allocate levelpool properties structure"
+                ! if the properties structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate levelpool properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
-                ! initialize levelpool parameters
+                ! initialize levelpool properties
                 call this%properties%init( lake_area,  &
                     weir_elevation, weir_coeffecient, weir_length, dam_length, &
                     orifice_elevation, orifice_coefficient, &
@@ -112,8 +120,10 @@ contains
             ! try to allocate state
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
-                ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate state properties structure"
+                ! if the state structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate state properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize levelpool state
                 call this%state%init( water_elevation )

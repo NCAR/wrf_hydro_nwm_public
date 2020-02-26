@@ -79,6 +79,7 @@ contains
         integer,            intent(in) :: forecast_lookback_hours
         integer                        :: update_offset_seconds
         character(len=15)              :: lake_number_string
+        character(len=15)              :: reservoir_type_string
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -86,11 +87,22 @@ contains
 #endif
 
         if (this%pointer_allocation_guard .eqv. .false. ) then
+
+            if (reservoir_type .ne. 4) then
+                ! Call hydro_stop if reservoir_type is not RFC Forecast.
+                write(lake_number_string, "(I15)") lake_number
+                write(reservoir_type_string, "(I15)") reservoir_type
+                call hydro_stop("ERROR: Incorrect reservoir type for reservoir " // trim(ADJUSTL(lake_number_string)) // &
+                ". Expected reservoir type 4 and instead received reservoir type " // reservoir_type_string // "." )
+            end if
+
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write an error
-                write(0,*) "Failure to allocate rfc forecasts input structure"
+                ! if the input structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate rfc forecasts input structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -99,8 +111,10 @@ contains
             ! try to allocate output
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write an error
-                write(0,*) "Failure to allocate rfc forecasts output structure"
+                ! if the output structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate rfc forecasts output structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -109,23 +123,27 @@ contains
             ! try to allocate properties
             allocate ( this%properties )
             if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write an error
-                write(0,*) "Failure to allocate rfc forecasts properties structure"
+                ! if the properties structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate rfc forecasts properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize rfc forecasts properties
                 call this%properties%init(lake_number, reservoir_parameter_file)
-
             end if
             this%pointer_allocation_guard = .true.
 
             ! try to allocate state
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
-                ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate rfc forecasts state structure"
+                ! if the state structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate rfc forecasts state structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize rfc forecasts state
-                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, &
+                orifice_elevation, initial_fractional_depth)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -139,19 +157,12 @@ contains
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
-        if (reservoir_type .ne. 4) then
-            ! Call hydro_stop if reservoir_type is not RFC Forecast because the
-            ! data source is not available.
-            write(lake_number_string, "(I15)") lake_number
-            call hydro_stop("Data source for reservoir " // trim(ADJUSTL(lake_number_string)) // " is not available." )
-        end if
-
         ! Call to initialize time series data object
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &
         this%properties%rfc_timeslice_offset_hours, this%properties%rfc_gage_id, &
         this%properties%lake_number, this%properties%lookback_seconds, this%properties%total_counts, &
         this%properties%observed_counts, this%properties%time_step_seconds, this%state%discharges, &
-        this%state%forecast_found, this%state%all_discharges_synthetic)
+        this%state%forecast_found, this%state%all_discharges_synthetic, this%properties%time_series_file_name)
 
         ! If the forecast was found and returned a discharge array
         if (this%state%forecast_found) then
@@ -213,16 +224,19 @@ contains
                     this%state%forecast_found = .false.
 
                     write(lake_number_string, "(I15)") this%properties%lake_number
-                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
-                    " are all synthetic and therefore unusable. This reservoir will use level pool calculations instead."
+                    write(log_warning,*) "WARNING: RFC Forecast Time Series discharges for reservoir ", &
+                    trim(ADJUSTL(lake_number_string)), " using time series file ", &
+                    trim(ADJUSTL(this%properties%time_series_file_name)), &
+                    " are all synthetic. This reservoir will use level pool calculations instead."
 
                 else if (minval(this%state%discharges) < 0.0) then
                     this%state%forecast_found = .false.
 
                     write(lake_number_string, "(I15)") this%properties%lake_number
-                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
-                    " contain one or more negative values, and therefore all discharges are unusable. This reservoir will", &
-                    " use level pool calculations instead."
+                    write(log_warning,*) "WARNING: RFC Forecast Time Series discharges for reservoir ", &
+                    trim(ADJUSTL(lake_number_string)), " using time series file ", &
+                    trim(ADJUSTL(this%properties%time_series_file_name)), &
+                    " contains missing or negative values. This reservoir will use level pool calculations instead."
 
                 !! peak flow on MS river *2
                 !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
@@ -231,14 +245,17 @@ contains
                     this%state%forecast_found = .false.
 
                     write(lake_number_string, "(I15)") this%properties%lake_number
-                    write(log_warning,*) "Warning, RFC Forecast Time Series discharges for reservoir ", trim(ADJUSTL(lake_number_string)), &
-                    " contain one or more values greater than the Mississippi River historical peak flow, and therefore all discharges are unusable. ", &
-                    "This reservoir will use level pool calculations instead."
+                    write(log_warning,*) "WARNING: RFC Forecast Time Series discharges for reservoir ", &
+                    trim(ADJUSTL(lake_number_string)), " using time series file ", &
+                    trim(ADJUSTL(this%properties%time_series_file_name)), &
+                    " contain one or more values greater than or equal to 90,000 Cubic Meters per Second", &
+                    " (twice the Mississippi River historical peak flow). These values are assumed to be incorrect.", &
+                    " This reservoir will use level pool calculations instead."
                 end if
 
             else
                 write(lake_number_string, "(I15)") this%properties%lake_number
-                write(log_warning,*) "Warning, RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
+                write(log_warning,*) "WARNING: RFC Forecast Time Series file for reservoir ", trim(ADJUSTL(lake_number_string)), &
                 " is not available. This reservoir will use level pool calculations instead."
             end if
         end if
@@ -262,8 +279,8 @@ contains
             this%state%forecast_found = .false.
 
             write(lake_number_string, "(I15)") this%properties%lake_number
-            write(log_warning,*) "Warning, the routing period is greater than one hour. Therefore, the RFC forecasts cannot be used", &
-            " for reservoir ", trim(ADJUSTL(lake_number_string)), &
+            write(log_warning,*) "WARNING: the routing period is greater than one hour. Therefore, the RFC forecasts", &
+            " cannot be used for reservoir ", trim(ADJUSTL(lake_number_string)), &
             ". This reservoir will use level pool calculations instead."
         end if
 

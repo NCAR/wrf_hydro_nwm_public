@@ -23,6 +23,8 @@ program reservoir_unit_tests
     logical :: rv10 = .false.
     logical :: rv11 = .false.
     logical :: rv12 = .false.
+    logical :: rv13 = .false.
+    logical :: rv14 = .false.
 
 
     real, dimension(120) :: inflow_array
@@ -67,7 +69,12 @@ program reservoir_unit_tests
 
     rv12 = test_rfc_forecasts_with_offset_for_extended_AnA()
 
-    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. rv10 .and. rv11 .and. rv12) then
+    rv13 = test_persistence_levelpool_hybrid_usace_overtop()
+
+    rv14 = test_persistence_levelpool_hybrid_usace_no_timeslice_available()
+
+    if (rv1 .and. rv2 .and. rv3 .and. rv4 .and. rv5 .and. rv6 .and. rv7 .and. rv8 .and. rv9 .and. &
+    rv10 .and. rv11 .and. rv12 .and. rv13 .and. rv14) then
         print *, "========================================================================"
         print *, 'All Reservoir Tests Passed'
         print *, "========================================================================"
@@ -153,7 +160,8 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, &
+        initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2010-10-01_07:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "testing data in persistence_levelpool_hybrid"
@@ -176,7 +184,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 13.73367 - epsilon(13.73367) .and. outflow .le. 13.73367 + epsilon(13.73367) .and. dynamic_reservoir_type == 2 ) then
+        if (outflow .ge. 13.73367 - epsilon(13.73367) .and. outflow .le. 13.73367 + epsilon(13.73367) &
+        .and. dynamic_reservoir_type == 2 ) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run USGS Reservoir Test Passed'
@@ -239,7 +248,9 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        max_depth, initial_fractional_depth, lake_number, reservoir_type, &
+        "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-10_02:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
@@ -259,7 +270,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 16.0820713 - epsilon(16.0820713) .and. outflow .le. 16.0820713 + epsilon(16.0820713) .and. dynamic_reservoir_type == 3) then
+        if (outflow .ge. 16.0820713 - epsilon(16.0820713) .and. outflow .le. 16.0820713 + epsilon(16.0820713) &
+        .and. dynamic_reservoir_type == 3) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Test Passed'
@@ -322,7 +334,9 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        max_depth, initial_fractional_depth, lake_number, reservoir_type, &
+        "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-10_02:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
@@ -343,7 +357,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 229.226059 - epsilon(229.226059) .and. outflow .le. 229.226059 + epsilon(229.226059) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 229.226059 - epsilon(229.226059) .and. outflow .le. 229.226059 + epsilon(229.226059) &
+        .and. dynamic_reservoir_type == 1) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run USACE Reservoir Overflow Max Height Test Passed'
@@ -406,7 +421,9 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
+        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        max_depth, initial_fractional_depth, lake_number, reservoir_type, &
+        "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-12_02:00:00", cwd_full, cwd_full, 12, 1000000000)
 
         print *, "calling reservoir run for persistence_levelpool_hybrid for USACE type reservoir"
@@ -426,7 +443,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) &
+        .and. dynamic_reservoir_type == 1) then
             rv2 = .true.
             print *, "========================================================================"
             print *, 'Persistence Levelpool Hybrid Run USACE Reservoir No Timeslice Available Test Passed'
@@ -506,10 +524,14 @@ program reservoir_unit_tests
             call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0, dynamic_reservoir_type)
 
             prev_time_inflow = inflow
+
             print *, outflow
         end do
 
-        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450)) then
+        print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
+
+        if (outflow .ge. 17.0451450 - epsilon(17.0451450) .and. outflow .le. 17.0451450 + epsilon(17.0451450) &
+        .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Passed'
@@ -518,6 +540,7 @@ program reservoir_unit_tests
             print *, "========================================================================"
             print *, 'Levelpool Overflow Max Height Test Failed'
             print *, 'Final outflow should be 17.0451450'
+             print *, 'dynamic_reservoir_type needs to be 1 for level pool type'
             print *, "========================================================================"
         end if
 
@@ -569,6 +592,7 @@ program reservoir_unit_tests
         real, allocatable, dimension(:) :: forecast_discharges
         logical :: forecast_found
         logical :: all_discharges_synthetic
+        character(len=256):: time_series_file_name
 
         call_status = .false.
 
@@ -580,7 +604,9 @@ program reservoir_unit_tests
 
         timeslice_offset_hours = 3
 
-        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, lookback_seconds, total_counts, observed_counts, time_step_seconds, forecast_discharges, forecast_found, all_discharges_synthetic)
+        call time_series_data%init("2019-08-18_07:00:00", cwd_full, 24, timeslice_offset_hours, "CCHC1", 3745478, &
+        lookback_seconds, total_counts, observed_counts, time_step_seconds, forecast_discharges, forecast_found, &
+        all_discharges_synthetic, time_series_file_name)
 
         print *, "Checking reading of time series file"
         if ( forecast_discharges(8) .ge. 0.8 - epsilon(0.8) .and. forecast_discharges(8) .le. 0.8 + epsilon(0.8) ) then
@@ -636,7 +662,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 3745478, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, 3745478, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-05-01_22:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -654,7 +681,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) &
+        .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Levelpool Fallback Test Passed'
@@ -710,7 +738,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-08-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -782,7 +811,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-09-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -800,7 +830,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) &
+        .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Negative Data Test Passed'
@@ -854,7 +885,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-10-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -872,7 +904,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) &
+        .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output All Synthetic Data Test Passed'
@@ -927,7 +960,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-11-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -945,7 +979,8 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) .and. dynamic_reservoir_type == 1) then
+        if (outflow .ge. 1.81549609 - epsilon(1.81549609) .and. outflow .le. 1.81549609 + epsilon(1.81549609) &
+        .and. dynamic_reservoir_type == 1) then
             rv = .true.
             print *, "========================================================================"
             print *, 'RFC Forecasts Time Series Output Data Exceeding Max Test Passed'
@@ -1001,8 +1036,10 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
-        "../../../../tests/local/reservoir_testing_files/reservoir_index_AnA_represents_Extended_MR.nc", "2019-12-18_03:00:00", cwd_full, 24)
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
+        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        "../../../../tests/local/reservoir_testing_files/reservoir_index_AnA_represents_Extended_MR.nc", &
+        "2019-12-18_03:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
 
