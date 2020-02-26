@@ -33,6 +33,7 @@
   INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  !## for reach based channel routing
 
   INTEGER :: iswater     !id for water in vegtyp
+  INTEGER :: islake      !id for lake in vegtyp
   INTEGER :: isurban     !id for urban in vegtyp
   INTEGER :: isoilwater  !id for water in soiltyp
 
