@@ -20,7 +20,7 @@ HYDROTBL_F = "./DOMAIN/hydro2dtbl.nc"
 LAND_SPATIAL_META_FLNM = "./DOMAIN/GEOGRID_LDASOUT_Spatial_Metadata.nc"
 
 ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
-RESTART_FILE  = 'HYDRO_RST.2013-09-12_04:00_DOMAIN3'
+RESTART_FILE  = 'RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1'
 
 !!!! --------------------- MODEL SETUP OPTIONS -------------------- !!!!
 
@@ -113,10 +113,10 @@ ZSOIL8(3) = -1.00
 ZSOIL8(4) = -2.00
 
 ! Specify the grid spacing of the terrain routing grid...(meters)
-DXRT = 100.0
+DXRT = 250.0
 
 ! Specify the integer multiple between the land model grid and the terrain routing grid...(integer)
-AGGFACTRT = 10
+AGGFACTRT = 4
 
 ! Specify the channel routing model timestep...(seconds)
 DTRT_CH = 10
@@ -150,6 +150,37 @@ compound_channel = .FALSE.
 ! Specify the lake parameter file (e.g.: "LAKEPARM.nc").
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
+
+! If using USGS persistence reservoirs, set to True. (default=.FALSE.)
+reservoir_persistence_usgs = .FALSE.
+
+! If using USACE persistence reservoirs, set to True. (default=.FALSE.)
+reservoir_persistence_usace = .FALSE.
+
+! Specify the reservoir parameter file
+reservoir_parameter_file = "./DOMAIN/persistence_parm.nc"
+
+! Specify the path to the timeslice files to be used by USGS reservoirs
+reservoir_usgs_timeslice_path = "./Timeslices/"
+
+! Specify the path to the timeslice files to be used by USACE reservoirs
+reservoir_usace_timeslice_path = "./Timeslices/"
+
+! Specify lookback hours to read reservoir observation data
+reservoir_observation_lookback_hours = 18
+
+! Specify update time interval in seconds to read new reservoir observation data
+! The default is 86400 (seconds per day) in retrospective mode and 1000000000 in all forecast modes
+reservoir_observation_update_time_interval_seconds = 86400
+
+! If using RFC forecast reservoirs, set to True. (default=.FALSE.)
+reservoir_rfc_forecasts = .FALSE.
+
+! Specify the path to the RFC time series files to be used by reservoirs
+reservoir_rfc_forecasts_time_series_path = "./RFC_Time_Series/"
+
+! Specify lookback hours to read reservoir RFC forecasts
+reservoir_rfc_forecasts_lookback_hours = 24
 
 ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through, 4=exp. bucket with area normalized parameters)
 ! Option 4 is currently only supported if using reach-based routing with UDMP=1.
