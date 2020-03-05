@@ -151,38 +151,40 @@ compound_channel = .FALSE.
 ! Note REQUIRED if lakes are on.
 route_lake_f = "./DOMAIN/LAKEPARM.nc"
 
+! Specify the reservoir parameter file
+reservoir_parameter_file = "./DOMAIN/persistence_parm.nc"
+
 ! If using USGS persistence reservoirs, set to True. (default=.FALSE.)
 reservoir_persistence_usgs = .FALSE.
+
+! Specify the path to the timeslice files to be used by USGS reservoirs
+reservoir_usgs_timeslice_path = "./usgs_timeslices/"
 
 ! If using USACE persistence reservoirs, set to True. (default=.FALSE.)
 reservoir_persistence_usace = .FALSE.
 
-! Specify the reservoir parameter file
-reservoir_parameter_file = "./DOMAIN/persistence_parm.nc"
-
-! Specify the path to the timeslice files to be used by USGS reservoirs
-reservoir_usgs_timeslice_path = "./Timeslices/"
-
 ! Specify the path to the timeslice files to be used by USACE reservoirs
-reservoir_usace_timeslice_path = "./Timeslices/"
+reservoir_usace_timeslice_path = "./usace_timeslices/"
 
 ! Specify lookback hours to read reservoir observation data
-reservoir_observation_lookback_hours = 18
+reservoir_observation_lookback_hours = 24
 
 ! Specify update time interval in seconds to read new reservoir observation data
-! The default is 86400 (seconds per day) in retrospective mode and 1000000000 in all forecast modes
-reservoir_observation_update_time_interval_seconds = 86400
+! The default is 86400 (seconds per day). Set to 3600 for standard and extended AnA simulations.
+! Set to 1000000000 for short range and medium range forecasts.
+reservoir_observation_update_time_interval_seconds = 3600
 
 ! If using RFC forecast reservoirs, set to True. (default=.FALSE.)
 reservoir_rfc_forecasts = .FALSE.
 
 ! Specify the path to the RFC time series files to be used by reservoirs
-reservoir_rfc_forecasts_time_series_path = "./RFC_Time_Series/"
+reservoir_rfc_forecasts_time_series_path = "./rfc_timeseries/"
 
 ! Specify lookback hours to read reservoir RFC forecasts
-reservoir_rfc_forecasts_lookback_hours = 24
+reservoir_rfc_forecasts_lookback_hours = 28
 
-! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through, 4=exp. bucket with area normalized parameters)
+! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through,
+! 4=exp. bucket with area normalized parameters)
 ! Option 4 is currently only supported if using reach-based routing with UDMP=1.
 GWBASESWCRT = 1
 
@@ -191,7 +193,7 @@ GWBASESWCRT = 1
 bucket_loss = 0
 
 ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
-!Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
+! Note: Only required if baseflow  model is active (1 or 2) and UDMP_OPT=0.
 gwbasmskfil = "./DOMAIN/GWBASINS.nc"
 
 ! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc")
