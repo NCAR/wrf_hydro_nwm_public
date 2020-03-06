@@ -39,7 +39,7 @@ forecast files for an array of time series forecast values.
 This module requires four input parameters that are set in hydro.namelist.
 
 * ```reservoir_rfc_forecasts``` is a boolean parameter that will need to be set to ```.TRUE.``` for this module to be activated.
-This will set the variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the
+This will set the model variable ```reservoir_type_specified``` to ```TRUE``` and cause the model to read the reservoir_type variable from the
 reservoir parameter file. The reservoir_type for a RFC (River Forecast Center) Forecast reservoir is currently set to '4' in the reservoir
 parameter file.
 
@@ -47,7 +47,7 @@ parameter file.
 RFC time series files used by this module.
 
 * ```reservoir_rfc_forecasts_lookback_hours``` is an integer parameter that specifies how many hours before the model start time the module will
-search for a corresponding time series file, and '24' would be a typical value and is the default.
+search for a corresponding time series file, and '28' would be a typical value and is the default.
 
 * ```reservoir_parameter_file``` is the NetCDF parameter file that holds the corresponding gage ID for each lake ID.
 
