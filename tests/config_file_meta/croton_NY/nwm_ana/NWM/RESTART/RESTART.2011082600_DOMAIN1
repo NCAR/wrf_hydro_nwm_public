@@ -1,4 +1,4 @@
-md5sum: 6c58f62c004face37e8cbb583d43f98d  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/RESTART.2011082600_DOMAIN1
+md5sum: 0a1e9461016ebb1d301873c65ee6070a  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/RESTART.2011082600_DOMAIN1
 ncdump -h: netcdf RESTART {
 dimensions:
 	Time = UNLIMITED ; // (1 currently)
@@ -264,7 +264,7 @@ variables:
 // global attributes:
 		:TITLE = "RESTART FILE FROM HRLDAS v20150506" ;
 		:missing_value = -1.e+33f ;
-		:START_DATE = "2010-08-01_00:00:00" ;
+		:START_DATE = "2011-07-01_00:00:00" ;
 		:MAP_PROJ = 1 ;
 		:LAT1 = 41.42281f ;
 		:LON1 = -73.85333f ;

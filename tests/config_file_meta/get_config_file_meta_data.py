@@ -14,8 +14,6 @@ from wrfhydropy import JSONNamelist
 # 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
-    "/glade/work/jamesmcc/domains/private/CONUS",
-    "/glade/work/jamesmcc/domains/private/HAWAII",
     "/glade/work/jamesmcc/domains/public/croton_NY"
 ]
 

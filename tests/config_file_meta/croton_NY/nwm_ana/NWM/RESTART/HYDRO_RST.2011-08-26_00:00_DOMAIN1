@@ -1,4 +1,4 @@
-md5sum: 77ac7b1e7e258c05e24e6f4758ddabcc  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1
+md5sum: 73b445b7451424cb89d60e6ec5b594e4  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1
 ncdump -h: netcdf HYDRO_RST {
 dimensions:
 	depth = 4 ;
@@ -43,9 +43,9 @@ variables:
 	float z_gwsubbas(links) ;
 
 // global attributes:
-		:his_out_counts = 13 ;
+		:his_out_counts = 41 ;
 		:Restart_Time = "2011-08-26_00:00:00" ;
-		:Since_Date = "2010-08-01_00:00:00" ;
+		:Since_Date = "2007-01-01_00:00:00" ;
 		:DTCT = 300.f ;
 		:channel_only = 0 ;
 		:channelBucket_only = 0 ;

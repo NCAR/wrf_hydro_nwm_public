@@ -1,4 +1,4 @@
-md5sum: cf49e5e3e958eec8c164e426702f58d5  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/nudgingLastObs.2011-08-26_00:00:00.nc
+md5sum: f9423c42a02ebfb3535e5a1049d7a800  /glade/work/jamesmcc/domains/public/croton_NY/NWM/RESTART/nudgingLastObs.2011-08-26_00:00:00.nc
 ncdump -h: netcdf nudgingLastObs.2011-08-26_00\:00\:00 {
 dimensions:
 	timeStrLen = 19 ;

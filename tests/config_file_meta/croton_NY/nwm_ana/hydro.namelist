@@ -13,7 +13,7 @@
     geo_finegrid_flnm = './NWM/DOMAIN/Fulldom_hires.nc'
     geo_static_flnm = './NWM/DOMAIN/geo_em.d01.nc'
     gw_restart = 1
-    gwbaseswcrt = 1
+    gwbaseswcrt = 4
     gwbuckparm_file = './NWM/DOMAIN/GWBUCKPARM.nc'
     hydrotbl_f = './NWM/DOMAIN/hydro2dtbl.nc'
     igrid = 1
@@ -28,6 +28,7 @@
     output_channelbucket_influx = 0
     output_gw = 1
     ovrtswcrt = 1
+    reservoir_persistence_usgs = .false.
     restart_file = './NWM/RESTART/HYDRO_RST.2011-08-26_00:00_DOMAIN1'
     route_lake_f = './NWM/DOMAIN/LAKEPARM.nc'
     route_link_f = './NWM/DOMAIN/Route_Link.nc'

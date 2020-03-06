@@ -1,4 +1,4 @@
-md5sum: b6f3d7dac32c0b1e94c5dfbe63b2a19e  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/Route_Link.nc
+md5sum: e2bd085dd65ddf5a9fa45d735ffa6cfd  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN_LR/Route_Link.nc
 ncdump -h: netcdf Route_Link {
 dimensions:
 	feature_id = 185 ;
@@ -90,9 +90,9 @@ variables:
 // global attributes:
 		:Convention = "CF-1.6" ;
 		:featureType = "timeSeries" ;
-		:history = "Thu Sep  6 17:56:57 2018: ncks -O -d feature_id,1,185 /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0_LongRange//0137462010/Route_Link.nc /glade/scratch/adugger/TestCases/NY_Croton/DOMAIN_NWMv2.0_LongRange//0137462010/Route_Link.nc\n",
-			"Created Tue Feb 27 14:45:27 2018" ;
-		:processing_notes = "This file was produced Tue Feb 27 14:24:11 2018 by Kevin Sampson (NCAR) and has the following attributes: \n",
+		:history = "Thu May 23 15:30:13 2019: ncks -O -d feature_id,1,185 /glade/scratch/arezoo/rfc_cutout_basins/Cutout_Basins/Full_Physics//0137462010/Route_Link.nc /glade/scratch/arezoo/rfc_cutout_basins/Cutout_Basins/Full_Physics//0137462010/Route_Link.nc\n",
+			"Created Wed Nov 07 23:45:44 2018" ;
+		:processing_notes = "This file was produced Wed Nov 07 17:14:48 2018 by Kevin Sampson (NCAR) and has the following attributes: \n",
 			"   This file uses the NHDPlus v21 \"flattened\" geodatabase: NHDPlusV21_National_Flattened.gdb.\n",
 			"   This file excludes reaches in Puerto Rico and Hawaii.\n",
 			"   Routing using Arc-Hydro derived segments for Regions 01a, 02b, 09a, 10i, 10h, 13a, 13b, 13d, 15a, 15b, 17b, 18a.\n",
@@ -103,6 +103,6 @@ variables:
 			"   Gage additions made using: Add_Gage_Association.csv.\n",
 			"   Gage-to-flowline association changes made using: Bad_Gage_Associations.csv.\n",
 			"   Tidal-influenced gages removed using: TidalGageList_20170316.csv.\n",
-			"   Waterbody associations using spatial join with Lake feature class Waterbodies_V2_1km_plus.shp." ;
+			"   Waterbody associations using spatial join with Lake feature class Waterbodies_V2_1km_plus_20181012.shp." ;
 		:NCO = "netCDF Operators version 4.7.4 (http://nco.sf.net)" ;
 }

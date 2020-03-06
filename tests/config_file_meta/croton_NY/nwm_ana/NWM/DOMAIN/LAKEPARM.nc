@@ -1,4 +1,4 @@
-md5sum: 6e518b330f13ab4c5cd6d260c15bac87  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/LAKEPARM.nc
+md5sum: 98ccc6b16e951b127cd1e7efd971c16c  /glade/work/jamesmcc/domains/public/croton_NY/NWM/DOMAIN/LAKEPARM.nc
 ncdump -h: netcdf LAKEPARM {
 dimensions:
 	feature_id = 1 ;
@@ -74,6 +74,7 @@ variables:
 		time:units = "days since 2000-01-01 00:00:00" ;
 		time:coordinates = "lat lon" ;
 		time:grid_mapping = "crs" ;
+	double Dam_Length(feature_id) ;
 
 // global attributes:
 		:Conventions = "CF-1.5" ;
