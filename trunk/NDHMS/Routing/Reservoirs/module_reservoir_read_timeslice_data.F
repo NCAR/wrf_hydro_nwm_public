@@ -229,7 +229,7 @@ contains
                 if ( any(this%reservoir_gage_discharges == -1.0)) then
 
                     ! Construct timeslice filename with path
-                    timeslice_file_name = trim(this%timeslice_path) // old_date // "." // &
+                    timeslice_file_name = trim(this%timeslice_path) // '/' // old_date // "." // &
                             observation_resolution_string // 'min.' // ADJUSTL(trim(this%data_source)) // 'TimeSlice.ncdf'
 
                     ! Check if file exists
