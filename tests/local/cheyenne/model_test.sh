@@ -176,8 +176,8 @@ module list
 #-------------------------------------------------------
 # Python Env
 deactivate > /dev/null 2>&1
-# source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate || exit 9
-source /glade/work/jamesmcc/python_envs/36dv/bin/activate || exit 9
+source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate || exit 9
+
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
 cd $candidate_dir
