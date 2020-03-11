@@ -227,7 +227,6 @@ python3 $run_test_path/run_tests.py \
        --queue $queue \
        --walltime $walltime \
        --xrcmp_n_cores $xrcmp_n_cores \
-       --pdb \
        $use_existing_test_dir
 
 exit $?
