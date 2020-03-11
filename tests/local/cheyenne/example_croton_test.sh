@@ -8,7 +8,8 @@
     --config='nwm_ana' \
     --ncores=6 --queue=share \
     --reference_update=false \
-    --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
+    --domain_dir /glade/work/jamesmcc/domains/public/croton_NY \
+    --use_existing_test_dir
 
 # Can be added
 #    --use_existing_test_dir
