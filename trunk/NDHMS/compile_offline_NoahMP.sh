@@ -66,17 +66,16 @@ fi
 cd Run
 mv  wrf_hydro.exe wrf_hydro_NoahMP.exe; ln -sf wrf_hydro_NoahMP.exe wrf_hydro.exe
 
-cp ../template/NoahMP/namelist.hrldas .
-cp ../template/HYDRO/hydro.namelist .
-
-if [ "$(cat ../.nwm_version)" == "none" ]; then
-    # if it is not an nwm version, use the stock ones.
+if [ "$NWM_META" != "1" ]; then
+    # If it is not an nwm version, copy the stock namelists and tables.
+    cp ../template/NoahMP/namelist.hrldas .
+    cp ../template/HYDRO/hydro.namelist .
     cp ../Land_models/NoahMP/run/*TBL .
     cp ../template/HYDRO/HYDRO.TBL .
     cp ../template/HYDRO/CHANPARM.TBL .
 else
-    # If it's an nwm version (nwm release branch), then use these
-    cp ../template/WCOSS/TBLS/* .
+    # If it's an nwm version (nwm release branch), grab the nwm versions from elsewhere.
+    echo 'NWM version: not populating with generic templates'
 fi
     
 
