@@ -79,7 +79,7 @@ call flush(6)
 find_timeslice_file=''
 ! is there a file with this name?
 ! note files are not resolved below minutes.
-tmpTimeSlice = trim(nlst(did)%timeSlicePath) // date // "." // &
+tmpTimeSlice = trim(nlst(did)%timeSlicePath) // '/' //date // "." // &
                     obsResolution // 'min.usgsTimeSlice.ncdf'
 inquire(FILE=tmpTimeSlice, EXIST=fileExists)
 if (fileExists) find_timeslice_file = trim(tmpTimeSlice)
