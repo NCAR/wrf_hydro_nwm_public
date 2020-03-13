@@ -5008,6 +5008,7 @@ type(ESMF_KeywordEnforcer), optional:: keywordEnforcer ! must use keywords below
     endif
 
   end subroutine
+#undef METHOD
 
   !-----------------------------------------------------------------------------
 
@@ -5045,6 +5046,7 @@ type(ESMF_KeywordEnforcer), optional:: keywordEnforcer ! must use keywords below
     if (present(rc)) rc = stat
 
   end subroutine
+#undef METHOD
 
   !-----------------------------------------------------------------------------
 
