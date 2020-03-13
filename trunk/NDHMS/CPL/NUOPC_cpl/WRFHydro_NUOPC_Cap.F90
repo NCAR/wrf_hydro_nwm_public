@@ -259,6 +259,9 @@ module WRFHydro_NUOPC
     logical                  :: nestToNest       = .FALSE.
     logical                  :: importDependency = .FALSE.
     character(len=128)       :: dirOutput        = "."
+    character(len=128)       :: dirInput         = "."
+    logical                  :: writeRestart     = .FALSE.
+    logical                  :: readRestart      = .FALSE.
     logical                  :: multiInstance    = .FALSE.
     character                :: hgrid            = '0'
     integer                  :: nnests           = 1
@@ -397,7 +400,7 @@ module WRFHydro_NUOPC
     endif
 
     ! prepare diagnostics folder
-    if (btest(diagnostic,16)) then
+    if (btest(diagnostic,16) .OR. is%wrap%writeRestart) then
       call ESMF_UtilIOMkDir(pathName=trim(is%wrap%dirOutput), &
         relaxedFlag=.true., rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
@@ -500,6 +503,27 @@ module WRFHydro_NUOPC
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       is%wrap%dirOutput = trim(value)
 
+      ! Get component input directory
+      call ESMF_AttributeGet(gcomp, name="input_directory", &
+        value=value, defaultValue=trim(cname)//"_INPUT", &
+        convention="NUOPC", purpose="Instance", rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      is%wrap%dirInput = trim(value)
+
+      ! Write cap restart state
+      call ESMF_AttributeGet(gcomp, name="write_restart", &
+        value=value, defaultValue="false", &
+        convention="NUOPC", purpose="Instance", rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      is%wrap%writeRestart = (trim(value)=="true")
+
+      ! Read cap restart state
+      call ESMF_AttributeGet(gcomp, name="read_restart", &
+        value=value, defaultValue="false", &
+        convention="NUOPC", purpose="Instance", rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      is%wrap%readRestart = (trim(value)=="true")
+
       ! Determine Import Dependency
       call ESMF_AttributeGet(gcomp, name="multi_instance_hyd", &
         value=value, defaultValue="false", &
@@ -541,6 +565,15 @@ module WRFHydro_NUOPC
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
         write (logMsg, "(A,(A,A))") trim(cname)//": ", &
           "Output Directory       = ",trim(is%wrap%dirOutput)
+        call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
+        write (logMsg, "(A,(A,A))") trim(cname)//": ", &
+          "Input Directory        = ",trim(is%wrap%dirInput)
+        call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
+        write (logMsg, "(A,(A,L1))") trim(cname)//': ', &
+          "Write Restart          = ",is%wrap%writeRestart
+        call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
+        write (logMsg, "(A,(A,L1))") trim(cname)//': ', &
+          "Read Restart           = ",is%wrap%readRestart
         call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO)
         write (logMsg, "(A,(A,L1))") trim(cname)//': ', &
           "Multiple Instances     = ",is%wrap%multiInstance
@@ -1004,39 +1037,56 @@ module WRFHydro_NUOPC
       endif
     endif
 
-    call ESMF_StateGet(is%wrap%NStateExp(1),itemCount=itemCount, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return ! bail out
+    if (is%wrap%readRestart) then
+      call ESMF_StateGet(is%wrap%NStateExp(1),itemCount=itemCount, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    allocate( &
-      itemNameList(itemCount), &
-      itemTypeList(itemCount), &
-      stat=stat)
-    if (ESMF_LogFoundAllocError(statusToCheck=stat, &
-      msg="Allocation of state item list memory failed.", &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      allocate( &
+        itemNameList(itemCount), &
+        itemTypeList(itemCount), &
+        stat=stat)
+      if (ESMF_LogFoundAllocError(statusToCheck=stat, &
+        msg="Allocation of state item list memory failed.", &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
 
-    call ESMF_StateGet(is%wrap%NStateExp(1),itemNameList=itemNameList, &
-      itemTypeList=itemTypeList,rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return
+      call ESMF_StateGet(is%wrap%NStateExp(1),itemNameList=itemNameList, &
+        itemTypeList=itemTypeList,rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return
 
-    do iIndex=1, itemCount
-      if ( itemTypeList(iIndex) == ESMF_STATEITEM_FIELD) then
-        call ESMF_StateGet(is%wrap%NStateExp(1),field=field, &
-          itemName=itemNameList(iIndex),rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-        call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-      endif
-    enddo
+      do iIndex=1, itemCount
+        if ( itemTypeList(iIndex) == ESMF_STATEITEM_FIELD) then
+          call ESMF_StateGet(is%wrap%NStateExp(1),field=field, &
+            itemName=itemNameList(iIndex),rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          call ESMF_AttributeGet(field, name="StandardName", &
+            value=value, convention="NUOPC", purpose="Instance", rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          call ESMF_FieldRead(field, &
+            fileName=trim(is%wrap%dirInput)//"/restart_"//trim(cname)// &
+              "_exp_D"//trim(nStr)//"_"//trim(currTimeStr)//"_"// &
+              trim(itemNameList(iIndex))//".nc", &
+            variableName=value, iofmt=ESMF_IOFMT_NETCDF, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+        endif
+      enddo
 
-    deallocate(itemNameList, itemTypeList, stat=stat)
-    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
-      msg="Deallocation of state item list memory failed.", &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+      deallocate(itemNameList, itemTypeList, stat=stat)
+      if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
+        msg="Deallocation of state item list memory failed.", &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      call ESMF_LogWrite( &
+        trim(cname)//': '//rname//' Read cap restart complete! Nest='//trim(nStr), &
+        ESMF_LOGMSG_INFO)
+      is%wrap%readRestart = .FALSE.
+
+    endif ! readRestart
 
     ! set InitializeDataComplete Attribute to "true", indicating to the
     ! generic code that all inter-model data dependencies are satisfied
@@ -1422,6 +1472,7 @@ subroutine CheckImport(gcomp, rc)
     type(ESMF_Clock)           :: modelClock
     type(ESMF_Time)            :: currTime
     character(len=32)          :: currTimeStr
+    character(len=9)           :: nStr
 
     rc = ESMF_SUCCESS
 
@@ -1459,6 +1510,17 @@ subroutine CheckImport(gcomp, rc)
 
     call ESMF_TimeGet(currTime, timeString=currTimeStr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+    write (nStr,"(I0)") is%wrap%did
+
+    ! Write export file
+    if (is%wrap%writeRestart) then
+      call NUOPC_Write(is%wrap%NStateExp(1), &
+        fileNamePrefix=trim(is%wrap%dirOutput)//"/restart_"//trim(cname)// &
+          "_exp_D"//trim(nStr)//"_"//trim(currTimeStr)//"_", &
+          overwrite=.true., status=ESMF_FILESTATUS_REPLACE, timeslice=1, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    endif
 
     call wrfhydro_nuopc_fin(is%wrap%did,rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
