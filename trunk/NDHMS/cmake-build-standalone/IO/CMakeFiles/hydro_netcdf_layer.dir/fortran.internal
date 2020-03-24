@@ -1,0 +1,3 @@
+# The fortran modules provided by this target.
+provides
+ netcdf_layer_base

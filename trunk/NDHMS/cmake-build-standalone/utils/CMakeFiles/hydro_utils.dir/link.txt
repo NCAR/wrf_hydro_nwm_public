@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_utils.a  CMakeFiles/hydro_utils.dir/module_version.F.o CMakeFiles/hydro_utils.dir/module_hydro_stop.F.o
+/usr/bin/ranlib ../lib/libhydro_utils.a

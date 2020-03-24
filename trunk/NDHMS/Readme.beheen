@@ -1,0 +1,80 @@
+created: 11/12/19 - Beheen
+modified: 12/17/19, 1/2/2020, 1/10/2020, 3/21/2020
+
+11/12/19 - the version of NWM is latest, v2.1 from git repo:
+           git clone https://github.com/NCAR/wrf_hydro_nwm_public.git NWM
+           git log:
+           commit 67f942df227eec1cde43ae22d5554befd7d39aad
+         - nuopc part is unique and not checked in with NWM code base.
+         - Using CMake included with the latest version of NWM
+
+12/17/19 - the latest version of NWM doesn't work with the operational dataset
+           V2.1 dataset is requested.
+
+git https://github.com/trimbleava/nwm-nuopc.git -  working out of this branch
+
+Had to change few envs in setEnvar.sh for Assimilation & Analysis configuration.
+
+To compile in stand alone mode with Makefile, read README.build.txt
+
+To compile in nuopc mode with Makefile.mainApp:
+    check to make sure files:
+    1) compile_nuopc_NoahMP.sh exists and modified accordingly for nuopc
+    2) Makefile.nuopc exists in CPL/NUOPC_cpl/Makefile.nuopc
+    3) Makefile.NoahMP.nuopc exists in CPL/NUOPC_cpl/Makefile.NoahMP.nuopc 
+    4) Makefile.IO_code.nuopc exists in CPL/NUOPC_cpl/Makefile.IO-code.nuopc 
+    5) setEnvar.sh and esmf-impi-env.sh exist - copies available in CPL/NUOPC_cpl/
+    Then ready to compile as follow:
+    source setEnvar.sh
+    source esmf-impi-env.sh
+    ./configure
+    3
+    ./compile_nuopc_NoahMP.sh   
+Also see  CPL/NUOPC_cpl/mainApp.Readme
+
+=========================================
+To compile in stand alone mode with cmake:
+source setEnvar.sh
+mkdir cmake-build-standalone
+cd cmake-build-standalone
+rm -rf *; cmake ..
+make
+
+To compile in nuopc mode with cmake:
+source setEnvar.sh
+source esmf-impi-env.sh
+mkdir cmake-build-nuopc
+cd cmake-build-nuopc
+rm -rf *; cmake -DNUOPCMODE=1 -Wno-dev .. 
+make VERBOSE=1
+
+
+=========================================
+To run in standalone mode:
+got to test area: 
+cd /scratch2/COASTAL/coastal/save/Beheen.M.Trimble/nems-test-data/NWM_CROTON_DATA/example_case/NWM
+make sure config files, TBL files, and all other exists and configured correctly per Assimiliation & Analysis configuration
+make a softlink to compiled/executable version:
+ln -s /scratch2/COASTAL/coastal/save/NAMED_STORMS/NEMS_APP/NWM/cmake-build-standalone/Run/wrf_hydro.exe nwm.exe
+
+
+
+Had to add hera to arc and adjust configure script
+Had to copy setEnvar.sh and esmf-impi-env.sh from my latest version
+
+
+1/21/2020 - following logic needs to be added to NWM for NEMS
+I would like to ask your help in getting all the scripts and utilities
+that used to subset NWM and run the model on a specific region.
+What we want to do is to be able to run a "regional" NWM implementation
+depending on a named storm's path and landfall area(s).
+
+It means that we need to be able to (a) subset NWM's domain, (b) supply
+boundary conditions (flow rates/stages) to the model, (c) initialize the model
+and (d) finally run the model. This implementation of NWM will be using
+high resolution topo/bathymetry data and will be forced by HWRF
+or other authoritative atmospheric data sets. The boundary and initial conditions
+will be supplied by the NWM retrospective runs.
+
+At the end the above NWM implementation will be 2-way coupled
+with DFlow/ADCIRC for our Coastal ACT works.

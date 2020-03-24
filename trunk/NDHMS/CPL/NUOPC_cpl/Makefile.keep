@@ -1,0 +1,89 @@
+# ---
+#  # --- NWM ESMF/NUOPC makefile
+# --- Requires ESMV V8+
+#  # --- NWM ESMF component.
+#
+
+ifneq ($(origin ESMFMKFILE), environment)
+$(error Environment variable ESMFMKFILE was not set.)
+endif
+include $(ESMFMKFILE)
+
+# #########################
+# # Determine Build Precision
+# # #########################
+
+ifeq ($(BUILD_PREC),r4)
+override ESMF_F90COMPILECPPFLAGS += -DREAL4
+else ifeq ($(BUILD_PREC),r8)
+override ESMF_F90COMPILECPPFLAGS += -DREAL8
+else
+override ESMF_F90COMPILECPPFLAGS += -DREAL4
+endif
+
+# #################################
+# Compile with Debugging Directives
+# #################################
+
+ifeq ($(DEBUG),on)
+override ESMF_F90COMPILECPPFLAGS += -DDEBUG
+override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
+endif
+
+
+.SUFFIXES:
+.SUFFIXES: .c .C .f90 .F90 .F .f
+
+	
+MODEL_OBJCS = ../../MPP/mpp_land.o ../../Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.o ../../Land_models/NoahMP/Utility_routines/module_date_utilities.o ../../Land_models/NoahMP/Utility_routines/kwm_string_utilities.o ../../Land_models/NoahMP/phys/module_sf_noahmpdrv.o ../../Land_models/NoahMP/phys/module_sf_noahmplsm.o ../../Land_models/NoahMP/phys/module_sf_noahmp_groundwater.o ../../Land_models/NoahMP/phys/module_sf_noahmp_glacier.o ../../Land_models/NoahMP/Utility_routines/module_wrf_utilities.o 
+
+
+
+OBJS = NWM_ESMF_Extensions.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o 
+
+$(CAP_LIB): $(OBJS) ../../lib/libHYDRO.a
+	@echo $(HR)
+	@echo "Creating static library $@..."
+	@echo
+	cp ../../lib/libHYDRO.a $@
+	ar cr $@ $(OBJS)
+
+ 
+all: $(OBJS) $(CAP_LIB)
+
+
+##	@echo ""
+##	$(ESMF_F90LINKER) $(ESMF_F90LINKOPTS) $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) $(OBJS) $(MODEL_OBJCS) $(ESMF_F90ESMFLINKLIBS) ../../lib/libHYDRO.a 
+##	@echo ""
+##	# ar -r libNUOPC.a $(@)
+
+NWM_ESMF_Extensions.o: NWM_ESMF_Extensions.F90
+	@echo ""
+	$(ESMF_F90COMPILER) $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
+	-DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -c NWM_ESMF_Extensions.F90
+
+NWM_NUOPC_Gluecode.o: NWM_NUOPC_Gluecode.F90
+	@echo ""
+	$(ESMF_F90COMPILER) $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
+	-DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -I ../../Land_models/NoahMP/Utility_routines -I ../../Land_models/NoahMP/IO_code \
+	-I ../../Land_models/NoahMP/phys -I ../../MPP -I ../../mod -c NWM_NUOPC_Gluecode.F90
+
+NWM_NUOPC_Cap.o: NWM_NUOPC_Cap.F90
+	@echo ""
+	$(ESMF_F90COMPILER) $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
+	-DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -c NWM_NUOPC_Cap.F90
+
+
+# ############
+# Dependencies
+# ############
+NWM_NUOPC_Cap.o: NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o NWM_NUOPC_Macros.h
+# ---------------------------------------------------------------
+
+.PHONY: dust clean distclean info edit
+dust:
+	rm -f PET*.ESMF_LogFile *.nc
+nuopcclean:
+	rm -f *.o *.mod libNUOPC.a
+distclean: dust clean
+

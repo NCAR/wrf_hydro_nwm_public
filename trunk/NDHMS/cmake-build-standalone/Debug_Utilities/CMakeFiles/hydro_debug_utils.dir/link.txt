@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_debug_utils.a  CMakeFiles/hydro_debug_utils.dir/debug_dump_variable.F.o
+/usr/bin/ranlib ../lib/libhydro_debug_utils.a

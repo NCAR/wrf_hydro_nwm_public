@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../../lib/libnoahmp_util.a  CMakeFiles/noahmp_util.dir/kwm_string_utilities.F.o CMakeFiles/noahmp_util.dir/module_date_utilities.F.o CMakeFiles/noahmp_util.dir/module_model_constants.F.o CMakeFiles/noahmp_util.dir/module_wrf_utilities.F.o
+/usr/bin/ranlib ../../../lib/libnoahmp_util.a

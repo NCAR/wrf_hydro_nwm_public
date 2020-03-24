@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_orchestrator.a  CMakeFiles/hydro_orchestrator.dir/config.f90.o CMakeFiles/hydro_orchestrator.dir/io_manager.f90.o CMakeFiles/hydro_orchestrator.dir/orchestrator.f90.o
+/usr/bin/ranlib ../lib/libhydro_orchestrator.a

@@ -1,0 +1,5 @@
+# The fortran modules provided by this target.
+provides
+ module_rfc_forecasts
+ module_rfc_forecasts_properties
+ module_rfc_forecasts_state

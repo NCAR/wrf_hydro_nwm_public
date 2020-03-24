@@ -168,8 +168,11 @@ subroutine output_chrt_NWM(domainId)
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
-      call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
+    call MPI_COMM_RANK( HYDRO_COMM_WORLD, myId , ierr)
+    if (ierr .ne. 0) then 
+        call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+    endif
+    call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.') 
 #endif
    else
       myId = 0

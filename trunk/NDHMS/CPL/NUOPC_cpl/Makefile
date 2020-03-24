@@ -1,14 +1,14 @@
 #
-# --- WRF-HYDRO makefile 
-# --- Requires ESMVv7+
-# --- WRF-HYDRO ESMF component.
+# --- NWM makefile 
+# --- Requires ESMVv8+
+# --- NWM ESMF component.
 #
 
 # ###############
 # Local Variables
 # ###############
 
-HR    := ========================================
+HR    := " "
 HR    := $(HR)$(HR)
 COMMA := ,
 DIR   := $(CURDIR)
@@ -18,7 +18,9 @@ DIR   := $(CURDIR)
 # ###########################
 
 ifneq ($(origin ESMFMKFILE), environment)
-$(error Environment variable ESMFMKFILE was not set.)
+  $(warning Environment variable ESMFMKFILE was not set.)
+  export ESMFMKFILE=/scratch1/NCEPDEV/nems/emc.nemspara/soft/esmf/8.0.0bs48g-intel18.0.5.274-impi2018.0.4-netcdf4.6.1/lib/esmf.mk
+  $(info Setting to $(ESMFMKFILE))
 endif
 include $(ESMFMKFILE)
 
@@ -47,116 +49,92 @@ endif
 # Determine Installation Path
 # ###########################
 
-ifndef DESTDIR
-DESTDIR  := $(DIR)
+ifndef DESTDIR     # this var is coming from NEMS/src/incmake/component_NWM.mk
+  $(info Environment variable DESTDIR was not set.)
+  DESTDIR  := $(DIR)
+  $(info Setting to $(DESTDIR) )
+else
+  $(info DESTDIR=$(DESTDIR))
 endif
 
-ifndef INSTDIR
-INSTDIR  := WRFHYDRO_$(shell date '+%Y-%m-%d-%H-%M-%S')
+
+ifndef INSTDIR     # this var is coming from NEMS/src/incmake/component_NWM.mk
+  $(warning Environment variable INSTDIR was not set.)
+  INSTDIR  := NWM_$(shell date '+%Y-%m-%d-%H-%M-%S')
+  $(info Setting to $(INSTDIR) )
+else
+  $(info INSTDIR=$(INSTDIR) )
 endif
 
-ifndef INSTPATH
-INSTPATH := $(abspath $(DESTDIR)/$(INSTDIR))
+ifndef INSTPATH   
+  $(warning Environment variable INSTPATH was not set.)
+  INSTPATH := $(abspath $(DESTDIR)/$(INSTDIR))
+  $(info Setting to $(INSTPATH) )
+else
+  $(info INSTPATH=$(INSTPATH) )
 endif
 
 # ###############
 # Model Variables
 # ###############
 
-ifndef WRFHYDRO_DIR
-MODEL_DIR    := $(abspath $(DIR)/../..)
-else
-MODEL_DIR    := $(abspath $(WRFHYDRO_DIR))
+ifndef COMP_SRCDIR      # this var is coming from NEMS/src/incmake/component_NWM.mk
+  $(warning Environment variable COMP_SRCDIR was not set.)
+  MODEL_DIR    := $(abspath $(DIR)/../..)
+  $(info Setting to $(MODEL_DIR) )
+else 
+  MODEL_DIR    := $(abspath $(COMP_SRCDIR))
+  $(info Environment variable COMP_SRCDIR=$(MODEL_DIR) )
 endif
-MODEL_LIBDIR := $(abspath $(MODEL_DIR)/lib)
-MODEL_MODDIR := $(abspath $(MODEL_DIR)/mod)
-MODEL_MPPDIR := $(abspath $(MODEL_DIR)/MPP)
-MODEL_LIB    := $(abspath $(MODEL_LIBDIR)/libHYDRO.a)
-MODEL_MKDIR  := $(abspath $(MODEL_DIR))
-MODEL_MK     := $(abspath $(MODEL_MKDIR)/Makefile.comm)
-MODEL_MKINC  := $(abspath $(MODEL_DIR)/macros)
 
-MODEL_MODS   := $(abspath $(MODEL_MPPDIR)/module_mpp_land.mod)
-MODEL_MODS   += $(abspath $(MODEL_MPPDIR)/module_cpl_land.mod)
-MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_hydro_drv.mod)
-MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_rt_data.mod)
-MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_namelist.mod)
-MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_hydro_io.mod)
-MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_lsm_forcing.mod)
+MODEL_LIB := $(abspath $(MODEL_DIR)/lib/libHYDRO.a)
 
-MODEL_FILES  := $(MODEL_LIB) $(MODEL_MODS)
+
+MODEL_OBJS := ../../MPP/mpp_land.o ../../Land_models/NoahMP/IO_code/module_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.o ../../Land_models/NoahMP/Utility_routines/module_date_utilities.o ../../Land_models/NoahMP/Utility_routines/kwm_string_utilities.o ../../Land_models/NoahMP/phys/module_sf_noahmpdrv.o ../../Land_models/NoahMP/phys/module_sf_noahmplsm.o ../../Land_models/NoahMP/phys/module_sf_noahmp_groundwater.o ../../Land_models/NoahMP/phys/module_sf_noahmp_glacier.o ../../Land_models/NoahMP/Utility_routines/module_wrf_utilities.o
+
 
 # #############
 # Cap Variables
 # #############
 
 CAP_DIR       := $(abspath $(DIR))
-CAP_LIB       := libwrfhydro_nuopc.a
-CAP_DEP_FRONT := wrfhydro_nuopc
+CAP_LIB       := libnwm_nuopc.a
+CAP_DEP_FRONT := nwm_nuopc_cap    # for NEMS, must be same name as its module
 CAP_VERS      := VERSION
-CAP_MK        := wrfhydro.mk
+CAP_MK        := nwm.mk           # for NEMS
 
-CAP_OBJS      := WRFHydro_NUOPC_Cap.o
-CAP_OBJS      += WRFHydro_NUOPC_Gluecode.o
-CAP_OBJS      += WRFHydro_ESMF_Extensions.o
+CAP_OBJS      := NWM_NUOPC_Cap.o
+CAP_OBJS      += NWM_NUOPC_Gluecode.o
+CAP_OBJS      += NWM_ESMF_Extensions.o
 
-CAP_MODS      := wrfhydro_nuopc.mod
-CAP_MODS      += wrfhydro_nuopc_gluecode.mod
-CAP_MODS      += wrfhydro_esmf_extensions.mod
+CAP_MODS      := nwm_esmf_extensions.mod  nwm_nuopc_cap.mod  nwm_nuopc_gluecode.mod
 
-CAP_FILES     := $(CAP_OBJS) $(CAP_MODS) $(CAP_LIB) $(CAP_VERS) $(CAP_MK)
+CAP_FILES     := $(CAP_OBJS) $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) $(CAP_MK)
 
-# ###############################
-# Include Model Makefile Fragment
-# ###############################
-
-include $(MODEL_MKINC)
-override ESMF_F90COMPILEPATHS    += -I$(MODEL_MODDIR)
-override ESMF_F90COMPILEPATHS    += -I$(MODEL_MPPDIR)
-override ESMF_F90COMPILECPPFLAGS += $(HYDRO_D)
 
 # #######################
 # Primary Makefile Target
 # #######################
-.PHONY: nuopc nuopcinstall nuopcdistclean nuopcclean install_mk
+.PHONY: nuopc nuopcinstall nuopcdistclean nuopcclean install_mk dust
+
 
 nuopc: $(CAP_FILES)
 
 nuopcinstall: $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) \
- $(addprefix $(INSTPATH)/,$(CAP_LIB)) \
- $(addprefix $(INSTPATH)/,$(CAP_MODS)) \
- $(addprefix $(INSTPATH)/,$(CAP_VERS)) \
+ $(addprefix $(CAP_DIR)/,$(CAP_LIB)) \
+ $(addprefix $(CAP_DIR)/,$(CAP_MODS)) \
+ $(addprefix $(CAP_DIR)/,$(CAP_VERS)) \
  install_mk
 
 # ############
 # Dependencies
 # ############
 
-WRFHydro_NUOPC_Cap.o: WRFHydro_NUOPC_Macros.h \
- WRFHydro_NUOPC_Gluecode.o WRFHydro_ESMF_Extensions.o
-WRFHydro_NUOPC_Gluecode.o: WRFHydro_NUOPC_Macros.h \
- WRFHydro_ESMF_Extensions.o $(MODEL_MODS)
+NWM_NUOPC_Cap.o: NWM_NUOPC_Macros.h \
+ NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o
+NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h \
+ NWM_ESMF_Extensions.o $(MODEL_MODS)
 
-wrfhydro_nuopc.mod: WRFHydro_NUOPC_Cap.o
-wrfhydro_nuopc_gluecode.mod: WRFHydro_NUOPC_Gluecode.o
-wrfhydro_esmf_extensions.mod: WRFHydro_ESMF_Extensions.o
-
-# ###############
-# Build Model
-# ###############
-
-build_model:
-	@echo $(HR)
-	@echo "Building Model..."
-	@echo ""
-	$(call checkdir, $(MODEL_DIR))
-	mkdir -p $(MODEL_LIBDIR)
-	mkdir -p $(MODEL_MODDIR)
-	make -C $(MODEL_DIR) -f $(MODEL_MK)
-
-$(MODEL_MODS): build_model
-
-$(MODEL_LIB): build_model
 
 # ##############
 # Build Settings
@@ -184,19 +162,24 @@ $(MODEL_LIB): build_model
 	@echo $(HR)
 	@echo "Compiling $@..."
 	@echo
-	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) $<
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) $< \
+	-DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -I ../../Land_models/NoahMP/Utility_routines -I ../../Land_models/NoahMP/IO_code \
+	-I ../../Land_models/NoahMP/phys -I ../../MPP -I ../../mod -c NWM_NUOPC_Gluecode.F90
+        
 
 # #####################
 # Build NUOPC Component
 # #####################
 
-$(CAP_LIB): $(MODEL_LIB) $(CAP_OBJS)
+$(CAP_LIB): $(MODEL_OBJS) $(MODEL_LIB) $(CAP_OBJS)
 	@echo $(HR)
 	@echo "Creating static library $@..."
 	@echo
-	$(call checkfile, $(MODEL_LIB))
+	$(call checkfile, $(MODEL_LIB))	
 	cp $(MODEL_LIB) $@
 	ar cr $@ $(CAP_OBJS)
+	ar r $(CAP_LIB) $(MODEL_OBJS)
+
 
 $(CAP_VERS):
 	@echo $(HR)
@@ -241,16 +224,18 @@ $(INSTPATH)/%:
 install_mk: 
 	@echo $(HR)
 	@echo "Installing NUOPC Makefile Fragment"
-	@echo
 	@mkdir -p $(INSTPATH)
 	@echo "# ESMF self-describing build dependency makefile fragment" > $(INSTPATH)/$(CAP_MK)
 	@echo "" >> $(INSTPATH)/$(CAP_MK)
 	@echo "ESMF_DEP_FRONT     = $(CAP_DEP_FRONT)" >> $(INSTPATH)/$(CAP_MK)
-	@echo "ESMF_DEP_INCPATH   = $(INSTPATH)" >> $(INSTPATH)/$(CAP_MK)
+	@echo "ESMF_DEP_INCPATH   = $(CAP_DIR) $(INSTPATH)" >> $(INSTPATH)/$(CAP_MK)
 	@echo "ESMF_DEP_CMPL_OBJS = " >> $(INSTPATH)/$(CAP_MK)
 	@echo "ESMF_DEP_LINK_OBJS = $(INSTPATH)/$(CAP_LIB)" >> $(INSTPATH)/$(CAP_MK)
 	@echo "ESMF_DEP_SHRD_PATH = " >> $(INSTPATH)/$(CAP_MK)
 	@echo "ESMF_DEP_SHRD_LIBS = " >> $(INSTPATH)/$(CAP_MK)
+	cp -f $(CAP_LIB) $(INSTPATH)
+	cp -f $(CAP_MODS) $(INSTPATH)
+	@echo $(HR)
 
 # ###########
 # Check Build
@@ -260,7 +245,6 @@ define checkfile
 	@if [ ! -e $(1) ]; then \
 	echo "File is missing:$(1)"; \
 	exit 1; fi;
-
 endef # blank line in checkfile is required
 
 define checkdir
@@ -269,7 +253,7 @@ define checkdir
 	exit 1; fi;
 endef # blank line in checkdir is required
 
-check: check_esmf check_model check_cap
+check: check_esmf
 
 # ##################
 # Check ESMF Version
@@ -280,41 +264,22 @@ check_esmf:
 	@echo "Checking ESMFMKFILE file..."
 	@echo
 	@echo "ESMFMKFILE=$(ESMFMKFILE)"
-	@if [ "$(ESMF_VERSION_MAJOR)" -lt 7 ]; then \
-	echo "Please use ESMF version 7+"; \
+	@if [ "$(ESMF_VERSION_MAJOR)" -lt 8 ]; then \
+	echo "Please use ESMF version 8+"; \
 	exit 1; fi;
 	@echo "ESMF Version=$(ESMF_VERSION_STRING)"
 
-# ###########
-# Check Model
-# ###########
 
-check_model:
-	@echo $(HR)
-	@echo "Checking for Model files..."
-	@echo
-	$(foreach FILENAME, $(MODEL_FILES), $(call checkfile, $(FILENAME)))
-
-# #########
-# Check Cap
-# #########
-
-check_cap: 
-	@echo $(HR)
-	@echo "Checking for WRF-Hydro NUOPC files..."
-	@echo
-	$(foreach FILENAME, $(CAP_FILES), $(call checkfile, $(FILENAME)))
-
-# ###################
 # Clean Cap and Model
 # ###################
 
 nuopcdistclean: nuopcclean
 	@echo $(HR)
-	@echo "Cleaning Model build..."
+	@echo "Cleaning Model build..."             # used for local installation/build
 	@echo ""
 	$(call checkdir, $(MODEL_DIR))
-	make -C $(MODEL_DIR) -f $(MODEL_MK) clean
+	make -C $(MODEL_DIR) -f $(MODEL_MK) clean PET*.ESMF_LogFile *.nc
+	@echo $(HR)
 
 # #########
 # Clean Cap
@@ -325,5 +290,13 @@ nuopcclean:
 	@echo "Cleaning Cap build..."
 	@echo
 	rm -f $(CAP_FILES)
+	@echo $(HR)
+
+dust:
+	@echo $(HR)
+	@echo "Dusting ..."
+	@echo
+	rm -f PET*.ESMF_LogFile *.nc
+	@echo $(HR)
 
 # ------------------------------------------------------------------------------

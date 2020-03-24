@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../../lib/libnoahmp_phys.a  CMakeFiles/noahmp_phys.dir/module_sf_noahmpdrv.F.o CMakeFiles/noahmp_phys.dir/module_sf_noahmp_glacier.F.o CMakeFiles/noahmp_phys.dir/module_sf_noahmp_groundwater.F.o CMakeFiles/noahmp_phys.dir/module_sf_noahmplsm.F.o
+/usr/bin/ranlib ../../../lib/libnoahmp_phys.a

@@ -1,0 +1,6 @@
+# The fortran modules provided by this target.
+provides
+ module_cpl_land
+ module_mpp_gwbucket
+ module_mpp_land
+ module_mpp_reachls

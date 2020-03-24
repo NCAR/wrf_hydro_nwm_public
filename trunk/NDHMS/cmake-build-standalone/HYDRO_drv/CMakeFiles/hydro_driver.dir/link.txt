@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_driver.a  CMakeFiles/hydro_driver.dir/module_HYDRO_drv.F.o
+/usr/bin/ranlib ../lib/libhydro_driver.a

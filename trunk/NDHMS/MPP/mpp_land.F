@@ -140,10 +140,11 @@ MODULE MODULE_MPP_LAND
 
 
   !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
-  subroutine MPP_LAND_INIT()
+  subroutine MPP_LAND_INIT(nuopc_comm)
 !    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
+    integer, optional :: nuopc_comm      ! used in coupled system
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
@@ -156,6 +157,11 @@ MODULE MODULE_MPP_LAND
        call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
     endif
+
+    if (present(nuopc_comm)) then
+        HYDRO_COMM_WORLD = nuopc_comm
+    endif
+
     if (HYDRO_COMM_WORLD == MPI_COMM_NULL) then
        call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")

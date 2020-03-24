@@ -55,11 +55,12 @@ MODULE MODULE_CPL_LAND
   !  call CPL_LAND_INIT(istart,iend,jstart,jend)
   !end subroutine
 
-  subroutine CPL_LAND_INIT(istart,iend,jstart,jend)
+  subroutine CPL_LAND_INIT(istart,iend,jstart,jend,nuopc_comm)
       implicit none
       integer ierr
       logical mpi_inited
       integer istart,iend,jstart,jend
+      integer, optional :: nuopc_comm
       
       integer :: xx, ndim
       integer, dimension(0:1) :: dims, coords
@@ -72,6 +73,11 @@ MODULE MODULE_CPL_LAND
         call mpi_init(ierr)
         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
       endif
+
+      if (present(nuopc_comm)) then
+        HYDRO_COMM_WORLD = nuopc_comm
+      endif
+
       if (HYDRO_COMM_WORLD == MPI_COMM_NULL) then
         call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")

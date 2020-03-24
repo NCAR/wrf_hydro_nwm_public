@@ -301,6 +301,9 @@ CONTAINS
   call mpp_land_bcast_char(256,nlst%reservoir_rfc_forecasts_time_series_path)
   call mpp_land_bcast_int1(nlst%reservoir_rfc_forecasts_lookback_hours)
   call mpp_land_bcast_log1(nlst%reservoir_type_specified)
+  ! Beheen - 09/13/19 - added for NUOPC
+  call mpp_land_bcast_char(256,nlst%geo_static_flnm)
+
 #endif
 
   write(nlst%hgrid,'(I1)') igrid

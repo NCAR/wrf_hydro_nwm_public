@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_nudging.a  CMakeFiles/hydro_nudging.dir/module_date_utils_nudging.F.o CMakeFiles/hydro_nudging.dir/module_nudging_io.F.o CMakeFiles/hydro_nudging.dir/module_nudging_utils.F.o CMakeFiles/hydro_nudging.dir/module_stream_nudging.F.o
+/usr/bin/ranlib ../lib/libhydro_nudging.a

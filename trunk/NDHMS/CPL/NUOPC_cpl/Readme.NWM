@@ -1,0 +1,57 @@
+Beheen - 5/14/2019
+This version of NWM cap is a modified version of WRF_HYDRO cap developed 
+by Daniel Rosen - NOAA Affiliate <daniel.rosen@noaa.gov>.
+
+Checked out original version:
+  git clone -n https://github.com/NCAR/wrf_hydro_nwm_public.git WRFHYDRO
+  cd WRFHYDRO
+  git checkout 79c1c6adbd76960885011f6acf39ce5f4f42ff65
+
+
+Started from the copy of the WRFHYDRO version. Changed all the WRFHYDRO strings
+to NWM, and adjusted the codes as needed. Also,  modified the make file is accordingly.
+
+This version is compiled as follow:
+- created a shell script, compile_nuopc_NoahMP.sh in trunk/NDHMS to be consistent with standalone version.
+- created 3 other Makefiles to substitude with standalone Makefiles. A copy of these Makefiles are preserved
+  in CPL/NUOPC_cpl directory. The shell script copies each of these Makefiles into appropriate directories.
+  These makefiles are: Makefile.IO_code.nuopc  Makefile.NoahMP.nuopc  Makefile.nuopc
+- While in trunk/NDHMS type: ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
+  where:
+     setEnvar.sh sets up environment variables for NWM
+     esmf-impi-env.sh setsup environment variables for ESMF/NUOPC
+     '3' sets up compiler options, which is input to ./configure script
+  when compilation is finished:
+     a library is created in CPL/NUOPC_cpl called libnwm_nuopc.a 
+     a makefile fragment, called nwm.mk is created
+     both of these files are to be used with NEMS application.
+
+- While in CPL/NUOPC_cpl:
+  make nuopcclean
+  make nuopcinstall
+  make nuopcdistclean
+  make dust
+
+Note: below  modules are required that are being set with esmf-impi-env.sh
+  module load mvapich2/2.1rc1
+  module use /scratch4/NCEPDEV/nems/noscrub/emc.nemspara/soft/modulefiles
+  module load esmf/7.1.0r-mvapich2
+  module load hdf5/1.8.14
+  module load intel/14.0.2
+  module load netcdf/4.4.0
+  module load  szip/2.1
+
+
+This is new implementation of field dictionary in form of yaml - setup but not used yet.
+URL to ESMF Yaml - comprehensive list of all fields: https://github.com/ESCOMP/NUOPCFieldDictionary/tree/cmeps?files=1
+You need to request permission from Rocky Dunlap <dunlap@ucar.edu> to access this code. 
+1) git clone -n https://github.com/ESCOMP/NUOPCFieldDictionary.git
+2) cd NUOPCFieldDictionary
+3) git checkout 9be1c1a  -> branch cmeps
+4) To check in use trimbleava@gmail.com --> my github account given permission by Rocky Dunlap <dunlap@ucar.edu>
+ 
+You will need to use a recent snapshot of ESMF.  The latest is 8.0.0 beta snapshot 40.  It is available on HERA:
+5) module use /home/emc.nemspara/SOFT/modulefiles
+6) module load intel/15.1.133 impi/5.1.1.109 netcdf/4.3.0 yaml-cpp esmf/8.0.0bs40
+7) Use this function to read the yaml file instead of field dictionaries --> NUOPC_FieldDictionarySetup(file, rc)
+

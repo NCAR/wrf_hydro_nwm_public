@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_mpp.a  CMakeFiles/hydro_mpp.dir/CPL_WRF.F.o CMakeFiles/hydro_mpp.dir/module_mpp_GWBUCKET.F.o CMakeFiles/hydro_mpp.dir/module_mpp_ReachLS.F.o CMakeFiles/hydro_mpp.dir/mpp_land.F.o
+/usr/bin/ranlib ../lib/libhydro_mpp.a

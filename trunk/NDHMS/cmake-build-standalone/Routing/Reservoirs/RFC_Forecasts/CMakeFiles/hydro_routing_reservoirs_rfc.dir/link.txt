@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../../lib/libhydro_routing_reservoirs_rfc.a  CMakeFiles/hydro_routing_reservoirs_rfc.dir/module_rfc_forecasts.F.o CMakeFiles/hydro_routing_reservoirs_rfc.dir/module_rfc_forecasts_state.F.o CMakeFiles/hydro_routing_reservoirs_rfc.dir/module_rfc_forecasts_properties.F.o
+/usr/bin/ranlib ../../../lib/libhydro_routing_reservoirs_rfc.a

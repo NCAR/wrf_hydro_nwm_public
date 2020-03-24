@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../lib/libhydro_routing_reservoirs.a  CMakeFiles/hydro_routing_reservoirs.dir/module_reservoir.F.o CMakeFiles/hydro_routing_reservoirs.dir/module_reservoir_read_timeslice_data.F.o CMakeFiles/hydro_routing_reservoirs.dir/module_reservoir_read_rfc_time_series_data.F.o CMakeFiles/hydro_routing_reservoirs.dir/module_reservoir_utilities.F.o
+/usr/bin/ranlib ../../lib/libhydro_routing_reservoirs.a

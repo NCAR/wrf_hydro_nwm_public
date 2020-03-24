@@ -1,0 +1,5 @@
+# The fortran modules provided by this target.
+provides
+ kwm_string_utilities
+ module_date_utilities
+ module_model_constants

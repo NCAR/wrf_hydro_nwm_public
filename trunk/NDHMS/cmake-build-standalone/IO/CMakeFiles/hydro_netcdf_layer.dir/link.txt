@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../lib/libhydro_netcdf_layer.a  CMakeFiles/hydro_netcdf_layer.dir/netcdf_layer.f90.o
+/usr/bin/ranlib ../lib/libhydro_netcdf_layer.a

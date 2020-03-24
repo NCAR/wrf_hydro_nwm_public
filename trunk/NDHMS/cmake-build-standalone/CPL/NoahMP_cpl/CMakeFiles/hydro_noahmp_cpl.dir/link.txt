@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../lib/libhydro_noahmp_cpl.a  CMakeFiles/hydro_noahmp_cpl.dir/module_hrldas_HYDRO.F.o CMakeFiles/hydro_noahmp_cpl.dir/hrldas_drv_HYDRO.F.o
+/usr/bin/ranlib ../../lib/libhydro_noahmp_cpl.a

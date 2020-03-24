@@ -1,0 +1,5 @@
+# The fortran modules provided by this target.
+provides
+ module_persistence_levelpool_hybrid
+ module_persistence_levelpool_hybrid_properties
+ module_persistence_levelpool_hybrid_state

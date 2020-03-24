@@ -1,0 +1,6 @@
+# The fortran modules provided by this target.
+provides
+ module_date_utils_nudging
+ module_nudging_io
+ module_nudging_utils
+ module_stream_nudging

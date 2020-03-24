@@ -1,0 +1,9 @@
+# The fortran modules provided by this target.
+provides
+ module_subsurface_data
+ module_subsurface_grid_transform
+ module_subsurface_input
+ module_subsurface_output
+ module_subsurface_properties
+ module_subsurface_state
+ module_subsurface_static_data

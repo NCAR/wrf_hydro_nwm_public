@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../../lib/libnoahmp_data.a  CMakeFiles/noahmp_data.dir/forcing.f90.o CMakeFiles/noahmp_data.dir/geometry.f90.o CMakeFiles/noahmp_data.dir/parameters.f90.o CMakeFiles/noahmp_data.dir/state.f90.o
+/usr/bin/ranlib ../../../lib/libnoahmp_data.a

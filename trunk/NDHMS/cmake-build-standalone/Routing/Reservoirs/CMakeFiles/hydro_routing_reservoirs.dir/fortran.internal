@@ -1,0 +1,6 @@
+# The fortran modules provided by this target.
+provides
+ module_reservoir
+ module_reservoir_read_rfc_time_series_data
+ module_reservoir_read_timeslice_data
+ module_reservoir_utilities

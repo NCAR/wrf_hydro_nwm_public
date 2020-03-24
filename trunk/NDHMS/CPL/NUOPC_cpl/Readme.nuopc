@@ -1,0 +1,42 @@
+Beheen - 1/10/2020
+
+This directory contains 
+1) WRFHYDRO nuopc cap with dependencies (i.e. Makefile.wrfhydro, Readme.WRFHYDRO, ...)
+2) NWM V2.1 and its nuopc cap with dependencies (i.e. Makefile.mainApp, Readme.NWM, ...)
+3) NWM V2.1 and its nuopc cap (same code as 2) with CMake build tool
+
+Note: below files are like templates used for compilation of NWM in nuopc mode with and 
+without mainApp. Please do not remove:
+    1) Makefile.IO_code.nuopc  2) Makefile.NoahMP.nuopc  3) Makefile.nuopc
+    4) esmf-impi-env.sh  5) setEnvar.sh
+
+NWM NUOPC files 
+==============
+  - Makefile - Makefile that is based on the standard esmf.mk mechanism.
+  - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
+  - Readme.NWM
+
+
+NWM NUOPC files with mainApp - TO DO
+==============
+  - Makefile.mainApp - Makefile that is based on the standard esmf.mk mechanism.
+  - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
+  - driver.F90 - Driver specializing NUOPC_Driver, driving the single MODEL.
+  - mainApp.F90 - Main application cap.
+  - Readme.mainApp
+
+
+WRFHYDRO NUOPC files 
+==============
+  - Makefile.wrfhydro - Makefile that is based on the standard esmf.mk mechanism.
+  - WRFHydro_ESMF_Extensions.F90  WRFHydro_NUOPC_Cap.F90  WRFHydro_NUOPC_Gluecode.F90  WRFHydro_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
+  - Readme.WRFHYDRO
+
+
+NWM NUOPC files - TO DO
+==============
+  - CMakefile.txt - cmake version of Makefile
+  - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
+  - 
+  
+Description: To test NWM in NUOPC coupled mode, we need a main and a nuopc driver and a model.
