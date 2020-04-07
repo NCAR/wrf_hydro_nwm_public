@@ -167,6 +167,9 @@ contains
         ! If the forecast was found and returned a discharge array
         if (this%state%forecast_found) then
 
+            ! Set the assimilated_source_file
+            this%state%assimilated_source_file = this%properties%time_series_file_name
+
             ! Use modulo to calculate the offset seconds in between the hourly time-step to set the update time
             ! for shifting values in the discharge array.
             update_offset_seconds = mod(this%properties%lookback_seconds, this%properties%time_step_seconds)
@@ -198,7 +201,8 @@ contains
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
+        assimilated_value, assimilated_source_file)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -208,6 +212,8 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+        real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
+        character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer		        :: missing_outflow_index
         character(len=15)   :: lake_number_string
@@ -272,7 +278,8 @@ contains
 
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
+        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
 
         ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
         if (routing_period .gt. 3600) then
@@ -306,6 +313,9 @@ contains
             ! Set dynamic_reservoir_type to RFC Forecasts Type
             this%state%dynamic_reservoir_type = this%properties%reservoir_type
 
+            ! Set the assimilated_value to corresponding discharge from array
+            this%state%assimilated_value = this%state%discharges(this%state%time_series_index)
+
             ! Check for outflows less than 0 and cycle backwards in the array until a
             ! non-negative value is found. If all previous values are negative, then
             ! use level pool outflow.
@@ -323,6 +333,12 @@ contains
 
                     ! Set dynamic_reservoir_type to levelpool type
                     this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+                    ! Set the assimilated_value to sentinel, -9999.0
+                    this%state%assimilated_value = -9999.0
+
+                    ! Set the assimilated_source_file to empty string
+                    this%state%assimilated_source_file = ""
                 end if
 
             end if
@@ -332,6 +348,12 @@ contains
 
             ! Set dynamic_reservoir_type to levelpool type
             this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+            ! Set the assimilated_value to sentinel, -9999.0
+            this%state%assimilated_value = -9999.0
+
+            ! Set the assimilated_source_file to empty string
+            this%state%assimilated_source_file = ""
         end if
 
         ! Update output variable returned from this subroutine
@@ -345,6 +367,12 @@ contains
 
         ! Update the dynamic_reservoir_type returned from this subroutine
         dynamic_reservoir_type = this%state%dynamic_reservoir_type
+
+        ! Update the assimilated_value returned from this subroutine
+        assimilated_value = this%state%assimilated_value
+
+        ! Update the assimilated_source_file returned from this subroutine
+        assimilated_source_file = this%state%assimilated_source_file
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
