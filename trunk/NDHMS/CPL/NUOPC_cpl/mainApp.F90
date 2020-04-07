@@ -56,40 +56,6 @@ program mainApp
     file=__FILE__)) &
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
     
-  ! Create & set config for the driver Component
-  configFile = 'nwm_esmf.rc'
-  call ESMF_UtilGetArgC(argCount, rc=rc)
-   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     call ESMF_Finalize(endflag=ESMF_END_ABORT)
-
-   if (argCount.eq.1) then
-     call ESMF_UtilGetArg(1, argValue=configFile, rc=rc)
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       call ESMF_Finalize(endflag=ESMF_END_ABORT)
-   endif
-
-  config = ESMF_ConfigCreate(rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     call ESMF_Finalize(endflag=ESMF_END_ABORT)
-
-  call ESMF_ConfigLoadFile(config, trim(configFile), rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     call ESMF_Finalize(endflag=ESMF_END_ABORT)
-
-  call ESMF_GridCompSet(drvComp, config=config, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     call ESMF_Finalize(endflag=ESMF_END_ABORT)
-
 
   ! SET DRIVER SERVICES
   call ESMF_GridCompSetServices(drvComp, driver_SS, userRc=userRc, rc=rc)
@@ -106,14 +72,14 @@ program mainApp
     file=__FILE__)) &
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
       
-  ! RUN THE DRIVER
+  ! Call Run for earth system component
   call ESMF_GridCompRun(drvComp, userRc=userRc, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
   
-  ! FINALIZE THE DRIVER
+  ! Call Finalize for earth system component
   call ESMF_GridCompFinalize(drvComp, userRc=userRc, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
@@ -129,7 +95,7 @@ program mainApp
     call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
   ! Destroy the driver Component
-  call ESMF_GridCompDestroy(drvcomp, rc=rc)
+  call ESMF_GridCompDestroy(drvComp, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &

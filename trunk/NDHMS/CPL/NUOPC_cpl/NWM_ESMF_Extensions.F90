@@ -5180,8 +5180,8 @@ type(ESMF_KeywordEnforcer), optional:: keywordEnforcer ! must use keywords below
 
     ! get the clock start time
     call ESMF_TimeGet(startTime,yy=YY, mm=MM, dd=DD, h=H, m=M, s=S, rc=rc)
-    write(logMsg, *) "startTime: ", YY, "/", MM, "/", DD, &
-             " ", H, ":", M, ":", S
+    write(logMsg, *) "startTime: ", YY, MM, DD, &
+             " ", H, M, S
     call ESMF_LogWrite(logMsg, ESMF_LOGMSG_INFO)
 
     ! stop time

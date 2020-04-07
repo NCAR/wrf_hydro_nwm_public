@@ -1338,9 +1338,6 @@ module module_NoahMP_hrldas_driver
 
   NTIME=(KHOUR)*3600./nint(dtbl)
 
-#ifdef HYDRO_D
-  print*, "NTIME = ", NTIME , "KHOUR=",KHOUR,"dtbl = ", dtbl
-#endif
 
   ! assinging the KHOUR to be used in the NWM output routing for global metadata
   nlst(did)%khour = khour

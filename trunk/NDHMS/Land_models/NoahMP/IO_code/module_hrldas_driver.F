@@ -26,11 +26,7 @@ module module_hrldas_driver
 
   ! NEW MODULE WITH DT INCLUDING STATE, PARAMETER,FORCING AND GEOMETRY. Different modules
   use state_module, only: state_type
-  use parameters
-  use forcing
-  use geometry
   use orchestrator_base
-  
   IMPLICIT NONE
 
   contains
@@ -40,22 +36,18 @@ module module_hrldas_driver
     integer :: NTIME, nuopc_comm
     type(state_type) :: state
 
-print *, "entered noahMP_init 11111111111......... "
-
     call orchestrator%init()
-print *, "entered noahMP_init 2222222222222222......... "
     call land_driver_ini(NTIME, state, nuopc_comm)
-print *, "entered noahMP_init 3333333333333333......... "
   
   end subroutine noahMP_init
+
 
   subroutine noahMP_exe(ITIME, state)
     ! arguments
     integer :: ITIME
     type(state_type) :: state
 
-     ! DTs must be passed to the exe.
-     call land_driver_exe(ITIME, state)
+    call land_driver_exe(ITIME, state)
   end subroutine
 
   

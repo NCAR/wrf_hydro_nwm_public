@@ -13,11 +13,13 @@ module NWM_NUOPC_Gluecode
 !
 ! !REVISION HISTORY:
 !  13Oct15    Dan Rosen  Initial Specification
+!  3/30/2020  Beheen Trimble - calls NWM standalone directly
 !
-! !USES:
+
   use ESMF
   use NUOPC
   use NWM_ESMF_Extensions
+
   use module_mpp_land, only: &
     numprocs, &        ! total number of requested process to run the model 
     global_nx, &       ! grid total cols, number of cells in x direction
@@ -38,13 +40,15 @@ module NWM_NUOPC_Gluecode
 
     IO_id, &           ! 1st processor number, where all the writing/broadcasting occurs
     my_id              ! place holder for processor number (i.e. PET, MPI rank, DE id,)
-  use module_NoahMP_hrldas_driver, only: ITIME, NTIME
-  use module_hrldas_driver, only : noahMP_init, noahMP_exe, noahMP_finish
-  use state_module, only   : state_type
-  use module_rt_data, only : rt_domain
-  use module_namelist, only: &
-    nlst_rt, &         ! NWM data structure holding metadata and data
-    read_rt_nlst 
+
+  use module_hrldas_driver,        only: noahMP_init, noahMP_exe, noahMP_finish
+  use module_NoahMP_hrldas_driver, only: NTIME
+  use state_module,                only: state_type
+  use module_rt_data,              only: rt_domain
+  use module_namelist,             only: nlst_rt         ! NWM data structure holding metadata and data
+  use module_hydro_stop,           only: HYDRO_stop
+  use config_base,                 only: noah_lsm, nlst  ! see if this is needed
+
 
   implicit none
 
@@ -82,6 +86,8 @@ module NWM_NUOPC_Gluecode
 
   type(NWM_Field),dimension(19) :: NWM_FieldList = (/ & 
     ! NWM output - file: 201905160600.CHRTOUT_DOMAIN1
+    ! Routing/module_NWM_io.F: 3415       iret = nf90_inq_varid(ftn,'streamflow',varId) 
+    ! Routing/module_NWM_io.F: 335 call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
     NWM_Field( & !(1)
       stdname='flow_rate', units='m3 s-1', &
       desc='volume of fluid passing by some location through an area during a period of time.', shortname='streamflow', &
@@ -94,7 +100,7 @@ module NWM_NUOPC_Gluecode
       stdname='river_velocity', units='m s-1', &
       desc='vector filed of river or flow velocity.', shortname='velocity', &
       adImport=.FALSE.,adExport=.TRUE.), &
-    NWM_Field( & !(4 - file ???)
+    NWM_Field( & !(4 - file from dflow)
       stdname='waterlevel', units='m', &
       desc='water level from dflow to check on this', shortname='wl', &
       adImport=.FALSE.,adExport=.TRUE.), &
@@ -166,8 +172,6 @@ module NWM_NUOPC_Gluecode
 
   ! Local version variables from NWM LSM grid
   type(ESMF_DistGrid)        :: NWM_DistGrid
-  character(len=ESMF_MAXSTR) :: indir = 'FORCING'
-
   integer                    :: nx_global(1)     ! 4608  num grids in x direction
   integer                    :: ny_global(1)     ! 3840  num grids in y direction
   integer                    :: x_start
@@ -200,32 +204,31 @@ contains
 #undef METHOD
 #define METHOD "NWM_NUOPC_Init"
 
-  subroutine NWM_NUOPC_Init(did,vm,clock,state,rc)
+  subroutine NWM_NUOPC_Init(did, vm,clock, hydstate, rc)
 
     !use module_NoahMP_hrldas_driver, only: land_driver_ini
     use module_hrldas_driver, only: noahMP_init
     use state_module, only: state_type
     
     ! arguments
-    integer, intent(in)         :: did
-    type(ESMF_VM),intent(in)    :: vm
-    type(ESMF_Clock),intent(in) :: clock
-    integer, intent(out)        :: rc
-    type(state_type)            :: state
+    type(ESMF_VM),intent(in)       :: vm
+    type(ESMF_Clock),intent(in)    :: clock
+    integer                        :: rc, itime, ntime
+    type(state_type), intent(out)  :: hydstate
+    integer                        :: did  
 
     ! Local variables
     integer                     :: localPet       ! current process number
     integer                     :: stat       
     integer                     :: esmf_comm, nuopc_comm
-    integer                     :: itime, ntime1, ntimestep
-    character(32)               :: startdate
+    character(20)               :: starttime_str="1111"
+
     ! clock coming from NEMS
-    type(ESMF_Time)             :: startTime
-    type(ESMF_Time)             :: stopTime
-    type(ESMF_TimeInterval)     :: timeStep         ! comes in sec. from NEMS
+    type(ESMF_Time)             :: startTime        ! comes in sec. from NEMS
     type(ESMF_TimeInterval)     :: runDuration      ! comes in sec. from NEMS
-    real(ESMF_KIND_R8)          :: dt 
-    integer                     :: YY, MM, DD, H, M, S
+    real(ESMF_KIND_R8)          :: run_duration        
+    character(20)               :: startTimeStr="2222"
+   
 
 #ifdef DEBUG
     character(ESMF_MAXSTR)      :: logMsg
@@ -248,36 +251,56 @@ contains
     ! code. Here the MPI_Barrier() routine is called.
     call MPI_Barrier(nuopc_comm, rc) 
 
-    ! Get the models timestep(at this time is NEMS default = 3600 s),
-    ! startTime and runDuration are model's set in model_configure
-    call ESMF_ClockGet(clock,timeStep=timeStep,startTime=startTime, &
+
+    ! Initialize NWM before setting up fields
+    ! getting back ntime and state from NWM here
+    call noahMP_init(ntime, hydstate, nuopc_comm=esmf_comm)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+    ! after nwm initialization, runduration (i.e. NTIME) and hydro state
+    ! are returned as well as other variables are initialized that are
+    ! accessible here, such as nlst data structure:
+    ! Using this for comparison with model_config and for creation of the 
+    ! NWM model clock. Note this clock is in addition to nems driver clock. 
+    starttime_str = nlst(did)%olddate
+
+    ! set and return the first ith loop to 1, as is set in nwm main program
+    itime = 1
+
+    ! Get the models timestep(at this time came from reading nems.configure
+    ! @3600 s) for the comparison with nwm config inofrmation
+    ! startTime and runDuration are read from model_configure, common to all
+    ! models. However, both must be consistent with NWM configuration files to
+    ! work.
+    call ESMF_ClockGet(clock,startTime=startTime, &
                        runDuration=runDuration,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call ESMF_TimeIntervalGet(timeStep,s_r8=dt,rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    write(logMsg,*) dt
-    call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO,rc=RC)
-
+    ! Check with NWM configs values, exit if not the same!
     call NWM_TimeToString(startTime,timestr=startTimeStr,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call ESMF_LogWrite(startTimeStr,ESMF_LOGMSG_INFO,rc=RC)
-
-    call ESMF_TimeIntervalGet(runDuration, s_r8=dt, rc=rc)
-    write(logMsg,*) dt
-    call ESMF_LogWrite(trim(logMsg),ESMF_LOGMSG_INFO,rc=RC)
-
- 
-    ! Initialize NWM before setting up fields
-    ! getting back ntime and state from NWM here
-    call noahMP_init(ntime1, state, nuopc_comm=esmf_comm)
+    call ESMF_TimeIntervalGet(runDuration, s_r8=run_duration, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    ! Passing to calling method for model clock
-    startdate = nlst_rt(did)%startdate(1:19)
-    ntimestep = nlst_rt(did)%dt      ! noah_timestep   
-    itime = 0                        ! starts from 1 in cap and in NWM
-    print *, startdate, ntimestep
+    ! compare to make sure nems config and nwm config files are in sync
+    ! Currently, nwm lsm only works with 3600 sec. timestep, so the value
+    ! of timesteps in nems.configure file must be same as in nwm config
+    if( (startTimeStr .ne. starttime_str) .and. &
+        (nlst(did)%dt .ne. 3600) .and. &
+        (real(run_duration) .ne. real(ntime * 3600)) ) then 
+      
+      call hydro_stop("ERROR: Start Time or Noah Timestep or NTIME Comparison Between NEMS And NWM Config Failed.")
+      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+                            msg=METHOD//": Comparison Between NEMS And NWM Config Failed!", &
+                            file=FILENAME,rcToReturn=rc)
+      return  ! bail out
+    else
+#ifdef DEBUG
+      write (logMsg,"(A)") MODNAME//": Comparison Between NEMS And NWM Config Succeeded."//METHOD
+      call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
+#endif
+
+    endif
 
     ! Broadcasts a contiguous data array from rootPet to all other PETs of 
     ! the ESMF_VM object. root_pet = IO_id = pet0 on 1st node.
@@ -300,8 +323,7 @@ contains
 #undef METHOD
 #define METHOD "NWM_NUOPC_Run"
 
-  subroutine NWM_NUOPC_Run(did,mode,clock,state,itime, ntime, importState,exportState,rc)
-    !use module_NoahMP_hrldas_driver, only: land_driver_exe
+  subroutine NWM_NUOPC_Run(did,mode,clock,state,itime,importState,exportState,rc)
     use module_hrldas_driver, only: noahMP_exe
     use state_module, only: state_type
 
@@ -312,11 +334,11 @@ contains
     type(ESMF_State),intent(inout)          :: exportState
     integer, intent(out)                    :: rc
     type(state_type)                        :: state
-    integer, intent(in)                     :: itime,ntime
-    !character(32), intent(in)               :: startdate_str
+    integer, intent(in)                     :: itime
    
     ! local variables
     type(ESMF_TimeInterval)     :: timeStep
+    character(32)               :: startdate_str
     integer                     :: dt
 
 #ifdef DEBUG
@@ -325,25 +347,12 @@ contains
 
     rc = ESMF_SUCCESS
 
-    call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    !call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
+    !if(ESMF_STDERRORCHECK(rc)) return ! bail out
     
-    dt = NWM_TimeIntervalGetReal(timeInterval=timeStep,rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
- 
-    ! dt is the driver requested time step. NWM regardless of time step
-    ! only runs once per hour (noah_timestep = 3600 sec).
-    ! at this time we should keep track of dt's until 3600 sec is passed
-    ! then call this method. Meanwhile, previous data is being passed
-    ! around until new data set comes. We have to emulate this:
-    ! do ITIME = 1, NTIME land_driver_exe(ITIME)
-
-    ! TO DO
-    ! if (exeTimeFlag) then
-    !    call land_driver_exe(itime)
-    ! endif
-
-    !call land_driver_exe(itime, state)
+    !dt = NWM_TimeIntervalGetReal(timeInterval=timeStep,rc=rc)
+    !if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    
     call noahMp_exe(itime, state)
 
 #ifdef DEBUG
@@ -469,6 +478,7 @@ contains
   ! A LocStream differs from a Grid in that no topological structure is 
   ! maintained between the points (e.g. the class contains no information  
   ! about which point is the neighbor of which other point). 
+  !
   ! This is needed for adding location information to the 1D channel data 
   ! structure that will be used to transfer streamflow data from NWM to
   ! ADCIRC. (i.e. station "5" doesn't have to be located next to station 
@@ -534,12 +544,13 @@ contains
     !              4) one DE per PET
     !              5) #ifndef NCEP_WCOSS
     !-------------------------------------------------------------------
-    if(nlst_rt(did)%channel_option .ne. 3) then
+    if(nlst(did)%channel_option .ne. 3) then
       globalNumloc = rt_domain(did)%gnlinksl
     else
       globalNumloc = rt_domain(did)%gnlinks
     endif
-    
+    print *,"Beheen in LOCSTREAM ", globalNumloc
+
     quotient = globalNumloc/petCount
     rem = globalNumloc - quotient
     if (localPet.eq.(petCount-1)) then
@@ -618,6 +629,14 @@ contains
   !-----------------------------------------------------------------------------
   ! Creates NWM Land Surface grid locally for the purpose of
   ! importing/exporting data between models.  
+  !
+  ! DistGrid object, which defines the Grid's index space(1d,2d,3d)
+  ! uniform, rectilinear,
+  ! or curvilinear),connectivities, and 
+  ! distribution(decomposition, broken up between DE's). 
+  ! topology(index space and connections) 
+  ! ESMF_DistGridCreateDG(distgrid,firstExtra,lastExtra,indexflag, &
+  !                       connectionList,balanceflag,delayout,vm,rc)
   !-----------------------------------------------------------------------------
 #undef METHOD
 #define METHOD "NWM_LSMGridCreate"
@@ -644,8 +663,8 @@ contains
     integer                     :: i,j, i1,j1
     character(len=16)           :: xlat_corner_name, xlon_corner_name
 
-    integer, allocatable        :: deBlockList(:,:,:)   ! there is one global for use on other methods,
-                                                        ! delete this or that one, after more progress
+    integer, allocatable        :: deBlockList(:,:,:)   
+                                                       
 
 #ifdef DEBUG
     character(ESMF_MAXSTR)      :: logMsg
@@ -673,6 +692,7 @@ contains
         deBlockList(2,1,i),":",deBlockList(2,2,i),")"
       call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
     enddo
+
     ! Create a DistGrid
     NWM_DistGrid = ESMF_DistGridCreate( &
       minIndex=(/1,1/), maxIndex=(/global_nx,global_ny/), &
@@ -681,7 +701,7 @@ contains
     deallocate(deBlockList)
 
     ! Create a esmf grid per domain 
-    NWM_LSMGridCreate = ESMF_GridCreate(name='NWM_LSMGrid_D'//trim(nlst_rt(did)%hgrid), &
+    NWM_LSMGridCreate = ESMF_GridCreate(name='NWM_LSMGrid_D'//trim(nlst(did)%hgrid), &
       distgrid=NWM_DistGrid, coordSys = ESMF_COORDSYS_SPH_DEG, &
       coordTypeKind=ESMF_TYPEKIND_COORD, &
 !      gridEdgeLWidth=(/0,0/), gridEdgeUWidth=(/0,1/), &
@@ -696,7 +716,7 @@ contains
       file=FILENAME, rcToReturn=rc)) return ! bail out
 
 
-    call NWM_ESMF_NetcdfReadIXJX("XLAT_M",nlst_rt(did)%geo_static_flnm, &
+    call NWM_ESMF_NetcdfReadIXJX("XLAT_M",nlst(did)%geo_static_flnm, &
         (/startx(my_id+1),starty(my_id+1)/),latitude,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -706,7 +726,7 @@ contains
       msg=METHOD//': Allocation of longitude memory failed.', &
       file=FILENAME, rcToReturn=rc)) return ! bail out
 
-    call NWM_ESMF_NetcdfReadIXJX("XLONG_M",nlst_rt(did)%geo_static_flnm, &
+    call NWM_ESMF_NetcdfReadIXJX("XLONG_M",nlst(did)%geo_static_flnm, &
       (/startx(my_id+1),starty(my_id+1)/),longitude,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -715,7 +735,7 @@ contains
     write(logMsg,"(A,4(F0.3,A))") MODNAME//": Center Coordinates = (", &
       longitude(1,1),":",longitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),",", &
       latitude(1,1),":",latitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),")"
-    call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
+    !call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
 #endif
 
     ! Add Center Coordinates to Grid
@@ -751,7 +771,7 @@ contains
       msg=METHOD//': Allocation of mask memory failed.', &
       file=FILENAME, rcToReturn=rc)) return ! bail out
 
-    call NWM_ESMF_NetcdfReadIXJX("LANDMASK",nlst_rt(did)%geo_static_flnm, &
+    call NWM_ESMF_NetcdfReadIXJX("LANDMASK",nlst(did)%geo_static_flnm, &
       (/startx(my_id+1),starty(my_id+1)/),mask,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -782,15 +802,19 @@ contains
     ! CORNERS
     ! The original WPS implementation used the _CORNER names
     ! but it was then changes to the _C names.  Support both
-    ! options.
-    if (NWM_ESMF_NetcdfIsPresent("XLAT_CORNER",nlst_rt(did)%geo_static_flnm) .AND. &
-        NWM_ESMF_NetcdfIsPresent("XLONG_CORNER",nlst_rt(did)%geo_static_flnm)) then
+    ! options. As of 4/2/2020 for NWM V2.1 is corner_lats/_lons
+    if (NWM_ESMF_NetcdfIsPresent("XLAT_CORNER",nlst(did)%geo_static_flnm) .AND. &
+        NWM_ESMF_NetcdfIsPresent("XLONG_CORNER",nlst(did)%geo_static_flnm)) then
         xlat_corner_name = "XLAT_CORNER"
         xlon_corner_name = "XLONG_CORNER"
-    else if (NWM_ESMF_NetcdfIsPresent("XLAT_C",nlst_rt(did)%geo_static_flnm) .AND. &
-       NWM_ESMF_NetcdfIsPresent("XLONG_C",nlst_rt(did)%geo_static_flnm)) then
+    else if (NWM_ESMF_NetcdfIsPresent("XLAT_C",nlst(did)%geo_static_flnm) .AND. &
+       NWM_ESMF_NetcdfIsPresent("XLONG_C",nlst(did)%geo_static_flnm)) then
        xlat_corner_name = "XLAT_C"
        xlon_corner_name = "XLONG_C"
+    else if (NWM_ESMF_NetcdfIsPresent("corner_lats",nlst(did)%geo_static_flnm) .AND. &
+       NWM_ESMF_NetcdfIsPresent("corner_lons",nlst(did)%geo_static_flnm)) then
+       xlat_corner_name = "corner_lats"
+       xlon_corner_name = "corner_lons"
     else
        xlat_corner_name = ""
        xlon_corner_name = ""
@@ -803,7 +827,7 @@ contains
         msg=METHOD//': Allocation of corner latitude memory failed.', &
         file=FILENAME, rcToReturn=rc)) return ! bail out
 
-      call NWM_ESMF_NetcdfReadIXJX(trim(xlat_corner_name),nlst_rt(did)%geo_static_flnm, &
+      call NWM_ESMF_NetcdfReadIXJX(trim(xlat_corner_name),nlst(did)%geo_static_flnm, &
         (/startx(my_id+1),starty(my_id+1)/),latitude,rc=rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -813,7 +837,7 @@ contains
           msg=METHOD//': Allocation of corner longitude memory failed.', &
           file=FILENAME, rcToReturn=rc)) return ! bail out
 
-      call NWM_ESMF_NetcdfReadIXJX(trim(xlon_corner_name),nlst_rt(did)%geo_static_flnm, &
+      call NWM_ESMF_NetcdfReadIXJX(trim(xlon_corner_name),nlst(did)%geo_static_flnm, &
                                    (/startx(my_id+1),starty(my_id+1)/),longitude,rc=rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -1080,7 +1104,7 @@ contains
 
     rc = ESMF_SUCCESS
 
-    hgrid = nlst_rt(did)%hgrid
+    hgrid = nlst(did)%hgrid
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
@@ -1259,7 +1283,8 @@ contains
 
     rc = ESMF_SUCCESS
 
-    nlst_rt(did)%dt = dt
+    print *, "Beheen in NWM_SetTimestep expeted 3600 ",dt,nlst(did)%dt
+    nlst(did)%dt = dt
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)

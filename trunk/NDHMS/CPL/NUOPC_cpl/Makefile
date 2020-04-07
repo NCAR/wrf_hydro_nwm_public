@@ -133,7 +133,7 @@ nuopcinstall: $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) \
 NWM_NUOPC_Cap.o: NWM_NUOPC_Macros.h \
  NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o
 NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h \
- NWM_ESMF_Extensions.o $(MODEL_MODS)
+ NWM_ESMF_Extensions.o 
 
 
 # ##############
@@ -164,7 +164,7 @@ NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h \
 	@echo
 	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) $< \
 	-DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -I ../../Land_models/NoahMP/Utility_routines -I ../../Land_models/NoahMP/IO_code \
-	-I ../../Land_models/NoahMP/phys -I ../../MPP -I ../../mod -c NWM_NUOPC_Gluecode.F90
+	-I ../../Land_models/NoahMP/phys -I ../../MPP -I ../../mod -I ../../OrchestratorLayer -I ../../Land_models/NoahMP/data_structures/
         
 
 # #####################

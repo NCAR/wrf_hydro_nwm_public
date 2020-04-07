@@ -197,7 +197,6 @@ contains
 
     !  ! Go through and make some logical checks for each hydro.namelist option.
     !  ! Some of these checks will depend on specific options chosen by the user.
-    print *, "in rt_nlst_check ................."
     if( (self%sys_cpl .lt. 1) .or. (self%sys_cpl .gt. 4) ) then
        call hydro_stop("hydro.namelist ERROR: Invalid sys_cpl value specified.")
     endif
@@ -449,7 +448,6 @@ contains
       endif
    end if
 
-   print *, "exited rt_nlst_check ................."
 
   end subroutine rt_nlst_check
 
@@ -567,7 +565,6 @@ contains
 #endif
 
     !! ---- End definitions ----
-   print *, "entered namelist field ................."
 
     ! Default values for HYDRO_nlist
     UDMP_OPT = 0
@@ -806,7 +803,6 @@ contains
     nlst(did)%noConstInterfBias      = noConstInterfBias
 #endif
 
-    print *, "calling nlst(did)%check .............."
     call nlst(did)%check()
 
     ! derive rtFlag
@@ -830,7 +826,6 @@ contains
     !finemesh,finemesh_factor,forc_typ, snow_assim , GEO_STATIC_FLNM, HRLDAS_ini_typ
 
 #ifndef NCEP_WCOSS
-    print *, "2 - reading wrf_hydro_offline ............... "
     read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
 #else
     read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
@@ -942,10 +937,9 @@ contains
     noah_lsm%output_timestep         = -999
     noah_lsm%restart_frequency_hours = -999
 
-    write(*,*) 'Calling config noahlsm_offline'
+    !write(*,*) 'Calling config noahlsm_offline'
 
 #ifndef NCEP_WCOSS
-    print *, "reading namelist ........... "
     open(30, file="namelist.hrldas", form="FORMATTED")
     read(30, NML=NOAHLSM_OFFLINE, iostat=ierr)
 #else
@@ -966,7 +960,6 @@ contains
     endif
 
 #ifndef NCEP_WCOSS
-    print *, "reading wrf_hydro_offline ............... "
     read(30, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
 #else
     read(11, NML=WRF_HYDRO_OFFLINE, iostat=ierr)
@@ -988,12 +981,10 @@ contains
     wrf_hydro%snow_assim = 0!snow_assim
 
     noah_lsm%indir = indir
-    print *, "indir ......... ", noah_lsm%indir
     noah_lsm%nsoil = nsoil ! number of soil layers
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
     noah_lsm%start_year = start_year
-    print *, "start_year ......... ", noah_lsm%start_year
     noah_lsm%start_month = start_month
     noah_lsm%start_day = start_day
     noah_lsm%start_hour = start_hour

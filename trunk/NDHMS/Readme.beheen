@@ -30,6 +30,8 @@ To compile in nuopc mode with Makefile.mainApp:
     ./configure
     3
     ./compile_nuopc_NoahMP.sh   
+    OR ./compile_nuopc_NoaMP.sh setEnvar.sh esmf-impi-env.sh 3
+
 Also see  CPL/NUOPC_cpl/mainApp.Readme
 
 =========================================

@@ -14,9 +14,6 @@
 ## copy this file from CPL/NUOPC_cpl if doesn't exists
 ## in NDHMS directory.
 ## compiler option for configure script
-## ------------------- TO RUN
-## ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
-## ------------------
 
 env_file=$1
 esmf_env=$2
@@ -31,7 +28,7 @@ if [[ ! -z $comp_opt ]]; then
     ./configure $comp_opt
 else
     echo "configure: You must configure compiler option! Run ./configure"
-    echo "configure: Input value of 3 - if running impi"
+    echo "configure: Input value of 3 - if running impi
 fi
 
 if [[ ! -z $esmf_env ]]; then
@@ -72,7 +69,7 @@ fi
 if [[ -e "Makefile.nuopc" ]]; then  rm -f  Makefile.nuopc; fi
 if [[ -e "Makefile.nuopc_with_main" ]]; then  rm -f  Makefile.nuopc_with_main; fi
 
-if [ "${MAINAPP}" == "ON" ]; then
+if [[ "$MAINAPP" == "ON" ]]; then
     echo
     echo "Compiling NUOPC with mainApp ......"
     cp CPL/NUOPC_cpl/Makefile.nuopc_with_main Makefile.nuopc

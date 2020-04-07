@@ -40,10 +40,8 @@ program noah_hrldas_driver
   integer :: ITIME, NTIME
   type(state_type) :: state
   
-  print *, "in main - calling irchestrator ..........."
   call orchestrator%init()
 
-  print *, "in main - calling land_driver ..........."
   call land_driver_ini(NTIME, state)
   
 #ifdef WRF_HYDRO   

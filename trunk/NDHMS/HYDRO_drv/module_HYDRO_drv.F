@@ -1792,7 +1792,7 @@ end subroutine HYDRO_ini
        call hdtbl_out(did)
     else
        ! input from HYDRO.TBL.nc file
-       print*, "reading from hydrotbl_f(HYDRO.TBL.nc)  file ...."
+       !print*, "reading from hydrotbl_f(HYDRO.TBL.nc)  file ...."
        call hdtbl_in_nc(did)
        !ADCHANGE: For consistency, mirror urban and param value checks used in table read
        where (rt_domain(did)%VEGTYP == rt_domain(did)%isurban)

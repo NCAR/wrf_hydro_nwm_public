@@ -26,6 +26,12 @@ Dependencies:
   
 Build: To compile follow below instructions:
   - Go to trunk/NDHMS
+  - Set environment variable MAINAPP:
+    > export MAINAPP=ON
+  - ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
+  OR
+  - Set environment variable MAINAPP:
+    > MAINAPP=ON
   - Set NWM required environment variable:
     source setEnvar.sh 		==> located in trunk/NDHMS
   - Set environment variable ESMFMKFILE:

@@ -359,8 +359,7 @@ contains
       ix=nx_global(1),jx=ny_global(1))
 
 #ifdef DEBUG
-    write (logMsg,"(A,2(I0,A))") MODNAME//": Global Dimensions = (", &
-      nx_global(1),",",ny_global(1),")"
+    write (logMsg,"(A,2(I0,A))") MODNAME//": Global Dimensions = (", nx_global(1),",",ny_global(1),")"
     call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
 #endif
 
