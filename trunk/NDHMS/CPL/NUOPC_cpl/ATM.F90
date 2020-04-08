@@ -93,7 +93,7 @@ module ATM
     
     ! exportable field: air_pressure_at_sea_level
     call NUOPC_Advertise(exportState, &
-      StandardName="air_pressure_at_sea_level", name="pmsl", rc=rc)
+      StandardName="streamflow", name="pmsl", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

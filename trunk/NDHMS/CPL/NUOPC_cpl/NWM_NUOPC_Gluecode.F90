@@ -84,7 +84,7 @@ module NWM_NUOPC_Gluecode
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
   end type NWM_Field
 
-  type(NWM_Field),dimension(19) :: NWM_FieldList = (/ & 
+  type(NWM_Field),dimension(20) :: NWM_FieldList = (/ & 
     ! NWM output - file: 201905160600.CHRTOUT_DOMAIN1
     ! Routing/module_NWM_io.F: 3415       iret = nf90_inq_varid(ftn,'streamflow',varId) 
     ! Routing/module_NWM_io.F: 335 call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
@@ -104,6 +104,10 @@ module NWM_NUOPC_Gluecode
       stdname='waterlevel', units='m', &
       desc='water level from dflow to check on this', shortname='wl', &
       adImport=.FALSE.,adExport=.TRUE.), &
+    NWM_Field( & !(test with ADCIRC)
+      stdname="sea_surface_height_above_sea_level",  shortname= "zeta", &
+      adImport=.FALSE.,adExport=.TRUE.), &
+    
 
     ! Atmospheric Forcing, HWRF - file: 2011082720.LDASIN_DOMAIN1, func: READFORC_HRLDAS
     NWM_Field( & !(5) U_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D U wind component [m/s]
@@ -255,7 +259,7 @@ contains
     ! Initialize NWM before setting up fields
     ! getting back ntime and state from NWM here
     call noahMP_init(ntime, hydstate, nuopc_comm=esmf_comm)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    ! Beheen add an error dete. here
 
     ! after nwm initialization, runduration (i.e. NTIME) and hydro state
     ! are returned as well as other variables are initialized that are
@@ -285,16 +289,17 @@ contains
     ! compare to make sure nems config and nwm config files are in sync
     ! Currently, nwm lsm only works with 3600 sec. timestep, so the value
     ! of timesteps in nems.configure file must be same as in nwm config
-    if( (startTimeStr .ne. starttime_str) .and. &
-        (nlst(did)%dt .ne. 3600) .and. &
-        (real(run_duration) .ne. real(ntime * 3600)) ) then 
-      
+    if( (startTimeStr .ne. starttime_str) .or. &
+        (nlst(did)%dt .ne. 3600) .or. &
+        (int(run_duration) .ne. int(ntime * 3600)) ) then 
+      rc = ESMF_FAILURE
       call hydro_stop("ERROR: Start Time or Noah Timestep or NTIME Comparison Between NEMS And NWM Config Failed.")
       call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
                             msg=METHOD//": Comparison Between NEMS And NWM Config Failed!", &
                             file=FILENAME,rcToReturn=rc)
-      return  ! bail out
+      if(ESMF_STDERRORCHECK(rc)) return  ! bail out
     else
+      rc = ESMF_SUCCESS
 #ifdef DEBUG
       write (logMsg,"(A)") MODNAME//": Comparison Between NEMS And NWM Config Succeeded."//METHOD
       call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
