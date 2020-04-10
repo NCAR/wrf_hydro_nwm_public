@@ -10266,7 +10266,7 @@ end subroutine output_chrt2
 
     end subroutine nhdLakeMap
 
-    subroutine nhdLaknhdLakeMap_mppeMap_mpp(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
+    subroutine nhdLakeMap_mpp(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
         !--- get the lake configuration here.
         implicit none
         integer, dimension(:),   intent(out) :: TYPEL, LAKELINKID, LAKEIDX
