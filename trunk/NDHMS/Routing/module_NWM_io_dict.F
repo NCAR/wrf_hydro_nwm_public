@@ -310,6 +310,10 @@ type lakeMeta
    character (len=64) :: reservoirTypeLName ! long_name - usually "reservoir_type"
    integer, dimension(4) :: reservoirTypeFlagValues ! valid flags attribute
    character (len=64) :: reservoirTypeFlagMeanings ! flag meanings attribute
+   ! reservoir_assimilated_value attributes
+   character (len=64) :: reservoirAssimilatedValueLName ! long_name - usually "reservoir_assimilated_value, m3 s-1"
+   ! reservoir_assimilated_source_file attributes
+   character (len=64) :: reservoirAssimilatedSourceFileLName ! long_name - usually "reservoir_assimilated_source_file"
    ! latitude variable attributes
    character (len=64) :: latLName ! long_name
    character (len=64) :: latUnits ! units
@@ -1745,6 +1749,12 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%reservoirTypeLName = "reservoir_type"
    lakeOutDict%reservoirTypeFlagValues = [1,2,3,4]
    lakeOutDict%reservoirTypeFlagMeanings = "Level_pool USGS-persistence USACE-persistence RFC-forecasts"
+
+   ! Establish reservoir_assimilated_value attributes
+   lakeOutDict%reservoirAssimilatedValueLName = "reservoir_assimilated_value"
+
+   ! Establish reservoir_assimilated_source_file attributes
+   lakeOutDict%reservoirAssimilatedSourceFileLName= "reservoir_assimilated_source_file"
 
   ! Esatablish lat/lon attributes
    lakeOutDict%latLName = "Lake latitude"

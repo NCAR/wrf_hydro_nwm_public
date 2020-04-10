@@ -8,6 +8,8 @@
    class (reservoir_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: reservoir_type ! specifying type of reservoir
    integer, allocatable, dimension(:) :: final_reservoir_type   ! resolved reservoir type (since it can change)
+   real, allocatable, dimension(:) :: reservoir_assimilated_value ! observation or forecast assimilated to reservoir discharge
+   character(len=256), allocatable, dimension(:) :: reservoir_assimilated_source_file ! source file of assimilated value
 
    INTEGER :: IX, JX
    logical :: initialized
