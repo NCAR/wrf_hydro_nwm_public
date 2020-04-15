@@ -449,6 +449,7 @@ module NWM_NUOPC_Cap
     integer                    :: fIndex
 
 #ifdef DEBUG
+    ! number of entrance is pet PE (i.e 767 for NWM)
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
@@ -463,17 +464,17 @@ module NWM_NUOPC_Cap
     call ESMF_UserCompGetInternalState(gcomp, label_InternalState, is, rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    NWM_LSMGrid = NWM_LSMGridCreate(is%wrap%did,rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
-    if (is%wrap%lwrite_grid) then
-      call NWM_ESMF_GridWrite(NWM_LSMGrid, &
-        trim(cname)//'_LSMGrid_D'//trim(is%wrap%hgrid)//".nc", rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    endif
-
-    !NWM_LocStream = NWM_LocStreamCreate(is%wrap%did,rc=rc)
+    !NWM_LSMGrid = NWM_LSMGridCreate(is%wrap%did,rc=rc)
     !if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+    !if (is%wrap%lwrite_grid) then
+    !  call NWM_ESMF_GridWrite(NWM_LSMGrid, &
+    !    trim(cname)//'_LSMGrid_D'//trim(is%wrap%hgrid)//".nc", rc=rc)
+    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    !endif
+
+    NWM_LocStream = NWM_LocStreamCreate(is%wrap%did,rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
     do fIndex = 1, size(NWM_FieldList)

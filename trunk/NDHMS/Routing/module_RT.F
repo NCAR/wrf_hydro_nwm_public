@@ -112,7 +112,6 @@ CONTAINS
       endif
       rt_domain(did)%nlinksize = nsizes
 
-
       if(rt_domain(did)%NLINKS .eq. 0) NLINKS = 1
       if(rt_domain(did)%NLAKES .eq. 0) NLAKES = 1
       if(rt_domain(did)%NLINKSL .eq. 0) NLINKSL = 1

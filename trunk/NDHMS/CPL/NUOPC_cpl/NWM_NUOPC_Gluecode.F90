@@ -12,7 +12,7 @@ module NWM_NUOPC_Gluecode
 !   and finalize to NWM.
 !
 ! !REVISION HISTORY:
-!  13Oct15    Dan Rosen  Initial Specification
+!  13Oct15    Dan Rosen - Initial design and development
 !  3/30/2020  Beheen Trimble - calls NWM standalone directly
 !
 
@@ -461,22 +461,8 @@ contains
 
   end function
 
- !-----------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
-! read_rt_nlst(nlst)
-! nlst%geo_finegrid_flnm
-! ./DOMAIN/Fulldom_hires.nc
-! rt_domain(did)%g_IXRT, rt_domain(did)%g_JXRT, rt_domain(did)%ixrt, rt_domain(did)%jxrt
-!          60          64          22          21
-! rt_domain(did)%ix, rt_domain(did)%jx
-!           5           5
-! global_nx, global_ny, local_nx, local_ny
-!          15          16           5     
-! read LINKID for CH_LNKRT from ./DOMAIN/Fulldom_hires.nc
-! NLINKS IS          560
-! read file to get NLINKSL from./DOMAIN/Route_Link.nc
-! getting dimension from file: ./DOMAIN/Route_Link.nc
-!
   !-----------------------------------------------------------------------------
   ! Creating an ESMF domain data structure capable of data transfer from 
   ! point to point using points coordinates called a Location Stream. 
@@ -488,12 +474,15 @@ contains
   ! structure that will be used to transfer streamflow data from NWM to
   ! ADCIRC. (i.e. station "5" doesn't have to be located next to station 
   ! "6" because they can be stations in different rivers)
+  !
+  ! This LocStream object is the contents of the file "RouteLink_NWMv2.1.nc"
+  ! The coordinate system on this file is WSG84 with lat/lon and featureid
+  ! Create a LocStream with user allocated memory, as defined in NWM code.
   !-----------------------------------------------------------------------------
 #undef METHOD
 #define METHOD "NWM_LocStreamCreate"
 
   function NWM_LocStreamCreate(did,rc)
-    use module_NWM_io, only: output_chrt_NWM
     ! Return value
     type(ESMF_LocStream)       :: NWM_LocStreamCreate
 
@@ -513,8 +502,7 @@ contains
     integer              :: localNumloc      ! number of points on each pet
     integer              :: i
     real, allocatable    :: lat(:), lon(:)
-    type(ESMF_DistGrid)  :: distgrid
-    type(ESMF_Field)     :: field_streamflow
+    type(ESMF_Field)     :: locStreamField
     type(ESMF_LocStream) :: locStream
     type(ESMF_LocStream) :: locStreamOut
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
@@ -542,54 +530,65 @@ contains
     !-------------------------------------------------------------------
     ! Allocate and set equal number of points the destination LocStream 
     ! will have on each PET.  
-    !  
-    ! Assumptions: 1) nlst_rt(1)%io_config_outputs=1, assimilation, 
-    !              2) mppFlag=1,
-    !              3) nlst_rt(domainId)%channel_option!=3,
-    !              4) one DE per PET
-    !              5) #ifndef NCEP_WCOSS
+    ! Note: I think we only want channel_option 1 & 2 - TODO
+    ! interface read_rst_crt_reach_nc
+    ! module_RT.F call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
+    !                      GCH_NETLNK, rt_domain(did)%GNLINKS, &
+
     !-------------------------------------------------------------------
+
     if(nlst(did)%channel_option .ne. 3) then
+      ! reach based channel routing
+      ! maximum number of reaches
       globalNumloc = rt_domain(did)%gnlinksl
     else
+      ! maximum number of unique links in channel for parallel computation
+      ! for grid based channel routing
       globalNumloc = rt_domain(did)%gnlinks
     endif
-    print *,"Beheen in LOCSTREAM ", globalNumloc
 
-    quotient = globalNumloc/petCount
-    rem = globalNumloc - quotient
-    if (localPet.eq.(petCount-1)) then
-      localNumloc = quotient + rem
-    else
-      localNumloc = quotient
-    endif
-    localLocBeg = 1 + (quotient*localPet)
-    !  g_chlon = RT_DOMAIN(domainId)%CHLON
-    !  g_chlat = RT_DOMAIN(domainId)%CHLAT
+    !           2776738           2776738                 23537185        3616
+    !print *, "Beheen RT_DOMAIN(domainId)%NLINKS vs globalNumloc ", &
+    !          globalNumloc, rt_domain(did)%gnlinksl, rt_domain(did)%gnlinks,  &
+    !          rt_domain(did)%nlinksize
+
+    localNumloc = 20
+   allocate(lon(localNumloc))
+   allocate(lat(localNumloc))
+
+   do i=1,localNumloc
+      lon(i)=360.0*i/localNumloc
+      lat(i)=100*REAL(localPet,ESMF_KIND_R8)/REAL(petCount,ESMF_KIND_R8)-50.0
+   enddo
+   do i=1, localNumloc
+      print *, lon(i), lat(i) 
+   enddo
+   print *, "================================="
+
     allocate(lon(globalNumloc))
     allocate(lat(globalNumloc))
 
     do i=1,globalNumloc
-      lon(i)=360.0*i/globalNumloc
-      lat(i)=100*REAL(localPet,ESMF_KIND_R8)/REAL(petCount,ESMF_KIND_R8)-50.0
+      lon(i)=rt_domain(did)%chlon(1)
+      lat(i)=rt_domain(did)%chlat(1)
     enddo
 
     !-------------------------------------------------------------------
     ! Allocate and set stream flow field data
     !-------------------------------------------------------------------
     ! g_qlink = RT_DOMAIN(domainId)%QLINK
-    allocate(streamflow(globalNumloc))
-
-    do i=1,globalNumloc
-      streamflow(i)= 300 - abs(lat(i))
-    enddo
+    print *, "Beheen qlink ", rt_domain(did)%qlink(1,2)
+    
+    !do i=1,globalNumloc
+    !  streamflow(i)=rt_domain 
+    !enddo
 
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
     ! define the number and distribution of the locations. 
     !-------------------------------------------------------------------
-    locStream=ESMF_LocStreamCreate(name="NWM_streamflow",          &
-                                   localCount=localNumloc,         &
+    locStream=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
+                                   localCount=globalNumloc,         &
                                    coordSys=ESMF_COORDSYS_SPH_DEG, &
                                    rc=rc)
 
@@ -616,11 +615,11 @@ contains
     ! Field is created from a user array, but any of the other
     ! Field create methods (e.g. from ArraySpec) would also apply.
     !-------------------------------------------------------------------       
-    field_streamflow = ESMF_FieldCreate(locStream=locStream,  &
-                             typekind=ESMF_TYPEKIND_R8,       &
+    locStreamField = ESMF_FieldCreate(locStream=locStream,  &
+                             typekind=ESMF_TYPEKIND_R8, &
                              name="flow_rate", &
                              rc=rc)
-
+    ! flow in link
     ! RT_DOMAIN(domainId)%QLINK(:,1)  g_qlink(:1)
  
      
@@ -635,11 +634,16 @@ contains
   ! Creates NWM Land Surface grid locally for the purpose of
   ! importing/exporting data between models.  
   !
-  ! DistGrid object, which defines the Grid's index space(1d,2d,3d)
-  ! uniform, rectilinear,
-  ! or curvilinear),connectivities, and 
-  ! distribution(decomposition, broken up between DE's). 
-  ! topology(index space and connections) 
+  ! DistGrid object sits on top of the DELayout class
+  ! and holds domain information in index space.
+  !
+  ! Complex index space topologies can be constructed by specifying 
+  ! connection relationships between tiles during creation
+  !
+  ! Grid's index space(i.e. 1d,2d,3d)
+  ! uniform, rectilinear, curvilinear
+  ! connectivities and distribution(decomposition, broken up between DE's). 
+  !
   ! ESMF_DistGridCreateDG(distgrid,firstExtra,lastExtra,indexflag, &
   !                       connectionList,balanceflag,delayout,vm,rc)
   !-----------------------------------------------------------------------------

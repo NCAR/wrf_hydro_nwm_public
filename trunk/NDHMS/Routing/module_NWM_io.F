@@ -307,6 +307,8 @@ subroutine output_chrt_NWM(domainId)
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       velocityLocal = RT_DOMAIN(domainId)%velocity
 
+      print *, "Beheen NLINK is: ",rt_domain(domainId)%NLINKS
+
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
@@ -405,8 +407,10 @@ subroutine output_chrt_NWM(domainId)
          endif
       endif
 
-   else
+   else       
+      ! reach based routing
       gSize = rt_domain(domainId)%nlinksl
+
       ! No MPI - We are running on a single processor
       allocate(g_chlon(gsize))
       allocate(g_chlat(gsize))
