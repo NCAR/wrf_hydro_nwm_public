@@ -21,7 +21,7 @@
 
 !2345678
        
-       subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,nlakes,ii,jj,kk)
+       subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,lake_grids,nlakes,ii,jj,kk)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
           integer:: ii,jj,kk, k
@@ -31,6 +31,7 @@
           real,dimension(ii,kk,jj) :: STC_io,SMC_io,SH2OX_io
           real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
           real,dimension(nlakes) ::lake_precip,lake_evap
+          integer,dimension(nlakes) ::lake_grids
 
           do k = 1, kk
               STC(:,:,k) = STC_io(:,k,:)
@@ -38,7 +39,7 @@
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
           end do
 
-          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,nlakes,ii,jj,kk)  
+          call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,lake_grids,nlakes,ii,jj,kk)  
 
           do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)

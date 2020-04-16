@@ -344,11 +344,12 @@ module module_NoahMP_hrldas_driver
 !------------------------------------------------------------------------
 ! Needed for wrf_hydro lake model
 !------------------------------------------------------------------------
-  INTEGER                             :: ilake
-  INTEGER                             :: nlakes
+  INTEGER                                :: ilake
+  INTEGER                                :: nlakes
 
-  REAL, ALLOCATABLE, DIMENSION(:)     :: lake_precip
-  REAL, ALLOCATABLE, DIMENSION(:)     :: lake_evap
+  REAL   , ALLOCATABLE, DIMENSION(:)     :: lake_precip
+  REAL   , ALLOCATABLE, DIMENSION(:)     :: lake_evap
+  INTEGER, ALLOCATABLE, DIMENSION(:)     :: lake_grids
 
   INTEGER, ALLOCATABLE, DIMENSION(:,:)   :: lake_id
 
@@ -1522,8 +1523,10 @@ module module_NoahMP_hrldas_driver
 
    allocate(lake_precip(nlakes))
    allocate(lake_evap(nlakes))
+   allocate(lake_grids(nlakes))
    lake_precip = 0.0
    lake_evap   = 0.0
+   lake_grids  = 0
 
 call get_iocflag(1, io_config_outputs)
 
@@ -1855,9 +1858,12 @@ end subroutine land_driver_ini
                      qfx          ,t2             ,th2          ,q2 )
  
  
+         where(ivgtyp == islake) qfx = 10.0/3600.0  ! fake test for conservation
+
          do ilake = 1, nlakes
 	   lake_precip(ilake) = 0.0
-	   lake_evap(ilake) = 0.0
+	   lake_evap(ilake) = sum(qfx, mask = lake_id == ilake)
+	   lake_grids(ilake) = sum(lake_id, mask = lake_id == ilake) / ilake
 	 end do
          ENDIF
  
@@ -1888,7 +1894,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
-     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,nlakes,ix,jx,NSOIL) 
+     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,lake_grids,nlakes,ix,jx,NSOIL) 
 #endif
 
 ! Output for history
