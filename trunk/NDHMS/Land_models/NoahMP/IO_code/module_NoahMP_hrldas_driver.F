@@ -1208,7 +1208,7 @@ module module_NoahMP_hrldas_driver
      end if
 
      lake_id = 0
-     call read_lake_id(hrldas_setup_file, xstart, xend, ystart, yend, lake_id)
+     call read_lake_id(noah_lsm%hrldas_setup_file, xstart, xend, ystart, yend, lake_id)
 
   end if
   
