@@ -25,7 +25,7 @@ module module_HRLDAS_HYDRO
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
-                 mpp_land_bcast_int1, mpp_land_sync
+                 mpp_land_bcast_int1, mpp_land_sync, sum_real1d, sum_int1d
 #endif
     use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe, HYDRO_rst_out
     use module_rt_data, only:  rt_domain
@@ -59,7 +59,7 @@ module module_HRLDAS_HYDRO
 
 CONTAINS
 
-    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,nlakes,ii,jj,kk)
+    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,lake_precip,lake_evap,lake_grids,nlakes,ii,jj,kk)
 
 !---lpr added 2015-07-30---------
 #ifdef WRF_HYDRO_RAPID
@@ -76,6 +76,7 @@ CONTAINS
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
        real,dimension(nlakes) ::lake_precip,lake_evap
+       integer,dimension(nlakes) ::lake_grids
 
 !lpr add 2014-06-24
 #ifdef WRF_HYDRO_RAPID
@@ -166,6 +167,11 @@ CONTAINS
         if(nlst(did)%channel_only       .eq. 0 .and. &
            nlst(did)%channelBucket_only .eq. 0        ) then
            ! decompose the hrldas 1-d data into routing domain
+           
+           call sum_real1d(lake_evap, nlakes)
+           call sum_int1d(lake_grids, nlakes)
+           where(lake_grids>0) lake_evap = lake_evap / lake_grids
+           
            RT_DOMAIN(did)%STC = STC
            RT_DOMAIN(did)%SMC = SMC
            RT_DOMAIN(did)%SH2OX = SH2OX
