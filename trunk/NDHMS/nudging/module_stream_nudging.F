@@ -60,6 +60,7 @@ type(obsTimeStructure), allocatable, dimension(:) :: obsTimeStr ! size=nObsTimes
 ! How observations from the past are carried forward.
 ! Type defined in module_nudging_io.F
 type(lastObsStructure), allocatable, dimension(:) :: lastObsStr
+type(lastObsStructure_SoA) :: lastObsStr_SoA
 
 !========================
 ! This holds static information for a given gage for a given cycle (when R, G, and tau) do not
@@ -81,12 +82,25 @@ type, extends(lastObsStructure) :: obsStaticStructure
    real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
 end type obsStaticStructure
 
+type, extends(lastObsStructure_SoA) :: obsStaticStructure_SoA
+   !! Inherited components
+   !!character(len=15) :: usgsId        ! the 15 char USGS identifier.
+   !!real              :: lastObsDischarge(:)       ! last observed discharge
+   !!character(len=19) :: lastObsTime(:)            ! time of last obs discharge (.le.hydroTime)
+   !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
+   !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
+   !! New components
+   integer, allocatable :: obsCellInd(:)    ! index of obs on model channel network, for distance calc
+   real,allocatable    :: R(:), G(:), tau(:)     ! the nudging parameters at this gage.
+end type obsStaticStructure_SoA
+
 ! The static obs/gage information - store here to perform calculations
 ! only once per cycle.
 ! Currently the dimensions of this are fixed to 10000 which should
 ! work for the forseeable future. May want to consider some routine for
 ! augmenting this size if necessary.
 type(obsStaticStructure), allocatable, dimension(:) :: obsStaticStr
+type(obsStaticStructure_SoA) :: obsStaticStr_Soa
 
 !! The number of up/down stream links which can be collected
 !! using R to solve which links are "neighboring".
@@ -594,12 +608,26 @@ end if ! temporalPersistence
 #endif /* MPP_LAND */
 
 
-allocate(obsStaticStr(size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%usgsId(size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%R(size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%tau(size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%G(size(nudgingParamsStr%usgsId)))
 ! This seems silly now that I'm solving the whole thing at init.
+obsStaticStr_SoA%R(:) = nudgingParamsStr%R(:)
+obsStaticStr_SoA%G(:) = nudgingParamsStr%G(:)
+obsStaticStr_SoA%tau(:) = nudgingParamsStr%tau(:)
+obsStaticStr_SoA%usgsId(:) = nudgingParamsStr%usgsId(:)
+
 obsStaticStr(:)%R      = nudgingParamsStr%R
 obsStaticStr(:)%G      = nudgingParamsStr%G
 obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
+
+allocate(obsStaticStr_SoA%lastObsDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
+allocate(obsStaticStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
+allocate(obsStaticStr_SoA%lastObsTime(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
+allocate(obsStaticStr_SoA%lastObsQuality(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
+
 do ll=1,size(nudgingParamsStr%usgsId)
    allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
    allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
@@ -635,6 +663,12 @@ if(my_id .eq. io_id) then
          nStnLastObs = get_netcdf_dim(nudgingLastObsFileTry, 'stationIdInd', 'init_stream_nudging')
          if(nStnLastObs .gt. 0) then
             print*,'Reading in nudgingLastObsFileTry: ', trim(nudgingLastObsFileTry)
+            allocate(lastObsStr_SoA%usgsId(nStnLastObs))
+            allocate(lastObsStr_SoA%lastObsDischarge(nlst(did)%nLastObs,nStnLastObs))
+            allocate(lastObsStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs,nStnLastObs))
+            allocate(lastObsStr_SoA%lastObsTime(nlst(did)%nLastObs,nStnLastObs))
+            allocate(lastObsStr_SoA%lastObsQuality(nlst(did)%nLastObs,nStnLastObs))
+
             allocate(lastObsStr(nStnLastObs))
             do ll=1,nStnLastObs
                allocate(lastObsStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
@@ -645,7 +679,7 @@ if(my_id .eq. io_id) then
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
             call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
-
+            call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
    end if ! temporalPersistence

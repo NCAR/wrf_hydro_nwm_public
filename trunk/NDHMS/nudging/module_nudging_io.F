@@ -40,6 +40,14 @@ type lastObsStructure
    real,              allocatable, dimension(:) :: lastObsQuality
 end type lastObsStructure
 
+type lastObsStructure_SoA
+   character(len=15), allocatable, dimension(:)   :: usgsId
+   real,              allocatable, dimension(:,:) :: lastObsDischarge
+   real,              allocatable, dimension(:,:) :: lastObsModelDischarge
+   character(len=19), allocatable, dimension(:,:) :: lastObsTime
+   real,              allocatable, dimension(:,:) :: lastObsQuality
+end type lastObsStructure_SoA
+
 integer, parameter :: did = 1
 
 contains
@@ -844,6 +852,95 @@ flush(6)
 #endif
 
 end subroutine read_nudging_last_obs
+
+subroutine read_nudging_last_obs_soa(fileName, lastObsStr, g_nudge)
+
+implicit none
+character(len=*),       intent(in)                  :: fileName
+type(lastObsStructure_Soa), intent(inout) :: lastObsStr
+real,                   intent(inout), dimension(:) :: g_nudge
+
+integer :: nSpace, nTime, tt, ss
+integer:: ncid, iret, varid
+real,              allocatable, dimension(:,:) :: tmpFloat
+integer*2,         allocatable, dimension(:,:) :: qualityInt2
+character(len=19), allocatable, dimension(:,:) :: charArr19
+character(len=15), allocatable, dimension(:)   :: charArr15
+
+print*,'read_nudging_last_obs_soa'
+
+nSpace = size(lastObsStr%usgsId)
+nTime  = size(lastObsStr%lastObsDischarge,2)
+
+iret = nf90_open(fileName, nf90_nowrite, ncid)
+
+!! gageId read var
+allocate(charArr15(nSpace))
+iret = nf90_inq_varid(ncid, "stationId", varid)
+iret = nf90_get_var(ncid, varid, charArr15)
+lastObsStr%usgsId(:) = charArr15
+deallocate(charArr15)
+
+! time read var
+iret = nf90_inq_varid(ncid, "time", varid)
+allocate(charArr19(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, charArr19)
+do tt=1,nTime
+   do ss=1,nSpace
+      lastObsStr%lastObsTime(tt,ss)=charArr19(tt,ss)
+   end do
+end do
+deallocate(charArr19)
+
+! discharge read var
+iret = nf90_inq_varid(ncid, "discharge", varid)
+allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, tmpFloat)
+do tt=1,nTime
+   do ss=1,nSpace
+      lastObsStr%lastObsDischarge(tt,ss) = tmpFloat(tt,ss)
+   end do
+end do
+deallocate(tmpFloat)
+
+! model discharge read var
+iret = nf90_inq_varid(ncid, "model_discharge", varid)
+allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, tmpFloat)
+do tt=1,nTime
+   do ss=1,nSpace
+      lastObsStr%lastObsModelDischarge(tt,ss) = tmpFloat(tt,ss)
+   end do
+end do
+deallocate(tmpFloat)
+
+!discharge _quality read var
+iret = nf90_inq_varid(ncid, "discharge_quality", varid)
+allocate(qualityInt2(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, qualityInt2)
+do tt=1,nTime
+   do ss=1,nSpace
+      lastObsStr%lastObsQuality(tt,ss) = qualityInt2(tt,ss)/real(100)
+   end do
+end do
+deallocate(qualityInt2)
+
+iret = nf90_inq_varid(ncid, "nudge", varid)
+if(iret .eq. nf90_noerr) then
+   iret = nf90_get_var(ncid, varid, g_nudge)
+else
+   g_nudge=0.0000000000
+end if
+
+!! close
+iret= nf90_close(ncid)
+
+#ifdef HYDRO_D
+print*,'Ndg: end read_nudging_last_obs'
+flush(6)
+#endif
+
+end subroutine read_nudging_last_obs_soa
 
 
 !===================================================================================================
