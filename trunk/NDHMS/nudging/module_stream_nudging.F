@@ -621,9 +621,9 @@ obsStaticStr_SoA%G(:) = nudgingParamsStr%G(:)
 obsStaticStr_SoA%tau(:) = nudgingParamsStr%tau(:)
 obsStaticStr_SoA%usgsId(:) = nudgingParamsStr%usgsId(:)
 
-obsStaticStr(:)%R      = nudgingParamsStr%R
-obsStaticStr(:)%G      = nudgingParamsStr%G
-obsStaticStr(:)%tau    = nudgingParamsStr%tau
+! obsStaticStr(:)%R      = nudgingParamsStr%R
+! obsStaticStr(:)%G      = nudgingParamsStr%G
+! obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
 
 allocate(obsStaticStr_SoA%lastObsDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
@@ -1179,10 +1179,10 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       ! Treat obs_static_to_strutct
       call mpp_land_bcast_int1d_root(obsTimeStr(tt)%obsStr(:)%obsStaticInd, iiImage)
       call mpp_land_bcast_char1d_root(obsStaticStr(:)%usgsId, iiImage)
-      call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
-      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
-      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
-      call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
+      !call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
+      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
+      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
+      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
 
       call mpp_land_bcast_char1d_root(obsStaticStr_SoA%usgsId(:), iiImage)
       call mpp_land_bcast_int1d_root(obsStaticStr_SoA%obsCellInd(:), iiImage)
@@ -1603,7 +1603,7 @@ if(my_id .eq. io_id) then
 end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
-call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
+!call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
@@ -1731,8 +1731,8 @@ if(my_id .eq. io_id) then
          print*,'Ndg: obsStaticStr(ll)%usgsId: ',        obsStaticStr(ll)%usgsId
          print*,'Ndg: obsStaticStr(ll)%obsCellInd: ',    obsStaticStr_SoA%obsCellInd(ll)
          print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr_SoA%R(ll)
-         print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr(ll)%G
-         print*,'Ndg: obsStaticStr(ll)%tau: ',           obsStaticStr(ll)%tau
+         print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr_SoA%G(ll)
+         print*,'Ndg: obsStaticStr(ll)%tau: ',           obsStaticStr_SoA%tau(ll)
          print*,'Ndg: obsStaticStr(ll)%cellsAffected: ', obsStaticStr(ll)%cellsAffected
          print*,'Ndg: obsStaticStr(ll)%dist: ',          obsStaticStr(ll)%dist
          print*,'Ndg: obsStaticStr(ll)%ws: ',            obsStaticStr(ll)%ws
@@ -2443,12 +2443,12 @@ do tt=1,size(obsTimeStr)
 
       nudge_term_link = nudge_term_link                 &
            +theInnov                                    &
-           *obsStaticStr(staticInd)%G                   &
+           *obsStaticStr_SoA%G(staticInd)                   &
            *time_wt(hydroTime,                          &
-                    obsStaticStr(staticInd)%tau,        &
+                    obsStaticStr_SoA%tau(staticInd),        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
            *time_wt(hydroTime,                          &
-                    obsStaticStr(staticInd)%tau,        &
+                    obsStaticStr_SoA%tau(staticInd),        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
            *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)
@@ -2457,10 +2457,10 @@ do tt=1,size(obsTimeStr)
       !! or the whole nudge is ignored.
       weighting = weighting                             &
            +time_wt(hydroTime,                          &
-                    obsStaticStr(staticInd)%tau,        &
+                    obsStaticStr_SoA%tau(staticInd),        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
            *time_wt(hydroTime,                          &
-                    obsStaticStr(staticInd)%tau,        &
+                    obsStaticStr_SoA%tau(staticInd),        &
                     obsTimeStr(tt)%obsStr(oo)%obsTime)  &
            *obsStaticStr(staticInd)%ws(ll)              &
            *obsStaticStr(staticInd)%ws(ll)
@@ -2483,7 +2483,7 @@ do tt=1,size(obsTimeStr)
          print*,'Ndg: checkInd: obsQC: ',        obsTimeStr(tt)%obsStr(oo)%obsQC
          print*,'Ndg: checkInd: usgsId: ',       obsTimeStr(tt)%obsStr(oo)%usgsId
 
-         print*,'Ndg: checkInd: time_wt: ', time_wt(hydroTime,obsStaticStr(staticInd)%tau, &
+         print*,'Ndg: checkInd: time_wt: ', time_wt(hydroTime,obsStaticStr_SoA%tau(staticInd), &
               obsTimeStr(tt)%obsStr(oo)%obsTime      )
          print*,'Ndg: checkInd: hydroTime          : ', hydroTime
          print*,'Ndg: checkInd: obsTimeStr(tt)%time: ', obsTimeStr(tt)%time
