@@ -1587,12 +1587,12 @@ if(my_id .eq. io_id) then
    allocate(theMask(size(nodeGageStr%usgsId)))
    ! loop over the entire structure and solve %obsCellind
    nudgeSpatial=.false.
-   do ll=1,size(obsStaticStr_SoA%usgsId)
+   do ll=1,size(obsStaticStr%usgsId)
       !! this will always have a match b/c all
       !! obsStaticStr%usgsId=nudgingParamsStr$usgsId
       !! are in nodeGageStr by construction
       !! (if we were looping on nodeGageStr%usgsId this would not be assured)
-      theMask = nodeGageStr%usgsId .eq. obsStaticStr_SoA%usgsId(ll)
+      theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
       !! This is a double for loop... thanks to whUniLoop
       obsStaticStr_SoA%obsCellInd(ll) = nodeGageStr%nodeId(whUniLoop(theMask))
       if(obsStaticStr_SoA%R(ll) .ge. chanlen_image0(obsStaticStr_SoA%obsCellInd(ll))/2) &
@@ -1603,6 +1603,7 @@ if(my_id .eq. io_id) then
 end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
+call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
