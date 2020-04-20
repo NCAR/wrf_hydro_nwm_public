@@ -75,8 +75,8 @@ type, extends(lastObsStructure) :: obsStaticStructure
    !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
    !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
    !! New components
-   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
-   real    :: R, G, tau     ! the nudging parameters at this gage.
+!   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
+!   real    :: R, G, tau     ! the nudging parameters at this gage.
    integer, allocatable, dimension(:) ::  cellsAffected  ! indices of cells affected
    real,    allocatable, dimension(:) ::  dist           ! optional: dist to affected cells, optional
    real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
@@ -652,6 +652,11 @@ if(my_id .eq. io_id) then
          obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
       end do
 
+      obsStaticStr_SoA%lastObsDischarge      = real(-9999)
+      obsStaticStr_SoA%lastObsModelDischarge = real(-9999)
+      obsStaticStr_SoA%lastObsTime    = missingLastObsTime
+      obsStaticStr_SoA%lastObsQuality        = real(0) !! keep this zero
+
       !! if blank, look for file at the current/init time
       if(trim(nudgingLastObsFile) .eq. '') then
          nudgingLastObsFileTry = 'nudgingLastObs.' // nlst(did)%olddate // '.nc'
@@ -1126,7 +1131,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       tt = whObsMiss(ii)
 #endif
       if(obsTimeStrAllocated(ii)) then
-         allocate(theMask(size(obsStaticStr%usgsId)))
+         allocate(theMask(size(obsStaticStr_SoA%usgsId)))
          do oo=1,size(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
             ! If the gage is not in the parameter file, skip it
             if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
@@ -1176,8 +1181,14 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
       call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
 
-      nStatic = sum( (/ (1, cc=1,size(obsStaticStr(:)%obsCellInd)) /), &
-                     mask=obsStaticStr(:)%obsCellInd .ne. 0            )
+      call mpp_land_bcast_char1d_root(obsStaticStr_SoA%usgsId(:), iiImage)
+      call mpp_land_bcast_int1d_root(obsStaticStr_SoA%obsCellInd(:), iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%R(:), iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%G(:), iiImage)
+      call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%tau(:), iiImage)
+
+      nStatic = sum( (/ (1, cc=1,size(obsStaticStr_SoA%obsCellInd(:))) /), &
+                     mask=obsStaticStr_SoA%obsCellInd(:) .ne. 0            )
       do cc=1,nStatic
          if(my_id .eq. iiImage) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
          call mpp_land_bcast_int1_root(nCellsInR, iiImage)
