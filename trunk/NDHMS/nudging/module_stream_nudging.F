@@ -614,6 +614,7 @@ allocate(obsStaticStr_SoA%usgsId(size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%R(size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%tau(size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%G(size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%obsCellInd(size(nudgingParamsStr%usgsId)))
 ! This seems silly now that I'm solving the whole thing at init.
 obsStaticStr_SoA%R(:) = nudgingParamsStr%R(:)
 obsStaticStr_SoA%G(:) = nudgingParamsStr%G(:)
