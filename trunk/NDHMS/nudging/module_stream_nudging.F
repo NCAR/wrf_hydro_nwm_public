@@ -685,7 +685,7 @@ if(my_id .eq. io_id) then
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
             call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
-            call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
+            !call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
    end if ! temporalPersistence
