@@ -21,7 +21,7 @@
 module module_stream_nudging
 
   use config_base, only: nlst
-  use module_nudging_io,    only: lastObsStructure
+  use module_nudging_io,    only: lastObsStructure, lastObsStructure_SoA
 #ifdef MPP_LAND
   use module_mpp_land
   use module_mpp_reachls,  only: ReachLS_write_io
@@ -75,8 +75,8 @@ type, extends(lastObsStructure) :: obsStaticStructure
    !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
    !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
    !! New components
-!   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
-!   real    :: R, G, tau     ! the nudging parameters at this gage.
+   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
+   real    :: R, G, tau     ! the nudging parameters at this gage.
    integer, allocatable, dimension(:) ::  cellsAffected  ! indices of cells affected
    real,    allocatable, dimension(:) ::  dist           ! optional: dist to affected cells, optional
    real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
@@ -283,7 +283,8 @@ use module_nudging_io,    only: get_netcdf_dim,                      &
                                 read_nudging_param_file,             &
                                 read_network_reexpression,           &
                                 find_nudging_last_obs_file,          &
-                                read_nudging_last_obs
+                                read_nudging_last_obs, &
+                                read_nudging_last_obs_soa
 use module_mpp_reachls,  only: ReachLS_decomp
 
 implicit none
@@ -623,10 +624,10 @@ obsStaticStr(:)%G      = nudgingParamsStr%G
 obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
 
-allocate(obsStaticStr_SoA%lastObsDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
-allocate(obsStaticStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
-allocate(obsStaticStr_SoA%lastObsTime(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
-allocate(obsStaticStr_SoA%lastObsQuality(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId))
+allocate(obsStaticStr_SoA%lastObsDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%lastObsTime(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
+allocate(obsStaticStr_SoA%lastObsQuality(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 
 do ll=1,size(nudgingParamsStr%usgsId)
    allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
