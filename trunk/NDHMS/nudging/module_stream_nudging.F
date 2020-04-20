@@ -1134,7 +1134,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       tt = whObsMiss(ii)
 #endif
       if(obsTimeStrAllocated(ii)) then
-         allocate(theMask(size(obsStaticStr%usgsId)))
+         allocate(theMask(size(obsStaticStr_SoA%usgsId)))
          do oo=1,size(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
             ! If the gage is not in the parameter file, skip it
             if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
@@ -1145,7 +1145,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
                                                        obsTimeStr(tt)%obsStr(oo)%usgsId)
                cycle !! skip this observation.
             endif
-            theMask = obsStaticStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId
+            theMask = obsStaticStr_SoA%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId
             !! This is a double (tripple?!) for loop... thanks to whUniLoop
             obsTimeStr(tt)%obsStr(oo)%obsStaticInd = whUniLoop(theMask)
          end do
@@ -1587,12 +1587,12 @@ if(my_id .eq. io_id) then
    allocate(theMask(size(nodeGageStr%usgsId)))
    ! loop over the entire structure and solve %obsCellind
    nudgeSpatial=.false.
-   do ll=1,size(obsStaticStr%usgsId)
+   do ll=1,size(obsStaticStr_SoA%usgsId)
       !! this will always have a match b/c all
       !! obsStaticStr%usgsId=nudgingParamsStr$usgsId
       !! are in nodeGageStr by construction
       !! (if we were looping on nodeGageStr%usgsId this would not be assured)
-      theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
+      theMask = nodeGageStr%usgsId .eq. obsStaticStr_SoA%usgsId(ll)
       !! This is a double for loop... thanks to whUniLoop
       obsStaticStr_SoA%obsCellInd(ll) = nodeGageStr%nodeId(whUniLoop(theMask))
       if(obsStaticStr_SoA%R(ll) .ge. chanlen_image0(obsStaticStr_SoA%obsCellInd(ll))/2) &
@@ -1622,11 +1622,11 @@ if(nudgeSpatial) call get_netwk_reexpression()
 ! 2) the lastObs info: %lastObsDischarge, %lastObsModelDischarge, %lastObsTime, %lastObsQuality
 ! 3) print diagnostics with or witout spatial info
 
-allocate(nCellsInR(size(obsStaticStr(:)%usgsId)))
+allocate(nCellsInR(size(obsStaticStr_SoA%usgsId(:))))
 #ifdef MPP_LAND
 if(my_id .eq. io_id) then
 #endif
-   do ll=1,size(obsStaticStr(:)%usgsId)
+   do ll=1,size(obsStaticStr_SoA%usgsId(:))
 
       !! spatial static info
       if(nudgeSpatial) then
@@ -1696,9 +1696,9 @@ if(my_id .eq. io_id) then
          ! this puts in dummy values if none are found
          setLastObsInfo = .false.
          if(allocated(lastObsStr)) then
-            if(any(lastObsStr(:)%usgsId .eq. obsStaticStr(ll)%usgsId)) then
+            if(any(lastObsStr(:)%usgsId .eq. obsStaticStr_SoA%usgsId(ll))) then
                allocate(theMask(size(lastObsStr(:)%usgsId)))
-               theMask = lastObsStr(:)%usgsId .eq. obsStaticStr(ll)%usgsId
+               theMask = lastObsStr(:)%usgsId .eq. obsStaticStr_SoA%usgsId(ll)
                whLastObsStr = whUniLoop(theMask)
                deallocate(theMask)
                !! Drop in the entire derived type for each array index! Very nice.
@@ -1728,7 +1728,7 @@ if(my_id .eq. io_id) then
          print*,'Ndg: '
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: ! obsStaticStr(',ll,'):'
-         print*,'Ndg: obsStaticStr(ll)%usgsId: ',        obsStaticStr(ll)%usgsId
+         print*,'Ndg: obsStaticStr(ll)%usgsId: ',        obsStaticStr_SoA%usgsId(ll)
          print*,'Ndg: obsStaticStr(ll)%obsCellInd: ',    obsStaticStr_SoA%obsCellInd(ll)
          print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr_SoA%R(ll)
          print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr_SoA%G(ll)
@@ -1753,7 +1753,7 @@ if(my_id .eq. io_id) then
 end if  !! my_id .eq. io_id
 
 !broadcast  %cellsAffected, %dist, %ws
-do ll=1,size(obsStaticStr%usgsId)
+do ll=1,size(obsStaticStr_SoA%usgsId)
    call mpp_land_bcast_int1(nCellsInR(ll))
    if(my_id .ne. io_id) then
       allocate(obsStaticStr(ll)%cellsAffected(nCellsInR(ll)))
@@ -2535,7 +2535,7 @@ else if (temporalPersistence) then
    whGageId = whUniLoop(theMask)
 
    deallocate(theMask)
-   prstGageId = obsStaticStr(whGageId)%usgsId
+   prstGageId = obsStaticStr_SoA%usgsId(whGageId)
    obsInd     = obsStaticStr_SoA%obsCellInd(whGageId)
 
    !! 2) minimum number of observations
