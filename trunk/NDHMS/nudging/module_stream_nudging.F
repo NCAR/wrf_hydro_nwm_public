@@ -1594,8 +1594,8 @@ if(my_id .eq. io_id) then
       !! (if we were looping on nodeGageStr%usgsId this would not be assured)
       theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
       !! This is a double for loop... thanks to whUniLoop
-      obsStaticStr(ll)%obsCellInd = nodeGageStr%nodeId(whUniLoop(theMask))
-      if(obsStaticStr(ll)%R .ge. chanlen_image0(obsStaticStr(ll)%obsCellInd)/2) &
+      obsStaticStr_SoA%obsCellInd(ll) = nodeGageStr%nodeId(whUniLoop(theMask))
+      if(obsStaticStr_SoA%R(ll) .ge. chanlen_image0(obsStaticStr_SoA%obsCellInd(ll))/2) &
            nudgeSpatial=.true.
    end do
    deallocate(theMask)
@@ -1638,9 +1638,9 @@ if(my_id .eq. io_id) then
          upLastInd = 0
          call distance_along_channel(         &
               upNetwkStr,                     & ! traversal structure in up/down direction
-              obsStaticStr(ll)%obsCellInd,    & ! the starting link
+              obsStaticStr_SoA%obsCellInd(ll),    & ! the starting link
               0.0000000000,                   & ! distance (m) at the starting node (this iter.)
-              obsStaticStr(ll)%R,             & ! to traverse, in meters.
+              obsStaticStr_SoA%R(ll),             & ! to traverse, in meters.
               upAllInds,                      & ! collected links/inds
               upAllDists,                     & ! distance to collected links
               upLastInd                       ) ! index of last collected link in above 2 arrays.
@@ -1649,9 +1649,9 @@ if(my_id .eq. io_id) then
          downLastInd = 0
          call distance_along_channel(         &
               downNetwkStr,                   & ! traversal structure in up/down direction
-              obsStaticStr(ll)%obsCellInd,    & ! the starting link
+              obsStaticStr_SoA%obsCellInd(ll),    & ! the starting link
               0.0000000000,                   & ! distance (m) at the starting node (this iter.)
-              obsStaticStr(ll)%R,             & ! to traverse, in meters.
+              obsStaticStr_SoA%R(ll),             & ! to traverse, in meters.
               downAllInds,                    & ! collected links/inds
               downAllDists,                   & ! distance to collected links
               downLastInd                     ) ! index of last collected link in above 2 arrays.
@@ -1662,7 +1662,7 @@ if(my_id .eq. io_id) then
          allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
          allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
 
-         obsStaticStr(ll)%cellsAffected(1)                           = obsStaticStr(ll)%obsCellInd
+         obsStaticStr(ll)%cellsAffected(1)                           = obsStaticStr_SoA%obsCellInd(ll)
          obsStaticStr(ll)%cellsAffected(2:(upLastInd+1))             = upAllInds(1:upLastInd)
          obsStaticStr(ll)%cellsAffected((upLastInd+2):nCellsInR(ll)) = downAllInds(1:downLastInd)
 
@@ -1674,8 +1674,8 @@ if(my_id .eq. io_id) then
 
          ! Calculate the cressman spatial weights
          obsStaticStr(ll)%ws = &
-              ( obsStaticStr(ll)%R**2 - obsStaticStr(ll)%dist**2 ) / &
-              ( obsStaticStr(ll)%R**2 + obsStaticStr(ll)%dist**2 )
+              ( obsStaticStr_SoA%R(ll)**2 - obsStaticStr(ll)%dist**2 ) / &
+              ( obsStaticStr_SoA%R(ll)**2 + obsStaticStr(ll)%dist**2 )
 
       else
 
@@ -1685,7 +1685,7 @@ if(my_id .eq. io_id) then
          allocate(obsStaticStr(ll)%dist(nCellsInR(ll)))
          allocate(obsStaticStr(ll)%ws(nCellsInR(ll)))
 
-         obsStaticStr(ll)%cellsAffected(1) = obsStaticStr(ll)%obsCellInd
+         obsStaticStr(ll)%cellsAffected(1) = obsStaticStr_SoA%obsCellInd(ll)
          obsStaticStr(ll)%dist(1)          = 0
          obsStaticStr(ll)%ws = 1
 
@@ -1729,8 +1729,8 @@ if(my_id .eq. io_id) then
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: ! obsStaticStr(',ll,'):'
          print*,'Ndg: obsStaticStr(ll)%usgsId: ',        obsStaticStr(ll)%usgsId
-         print*,'Ndg: obsStaticStr(ll)%obsCellInd: ',    obsStaticStr(ll)%obsCellInd
-         print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr(ll)%R
+         print*,'Ndg: obsStaticStr(ll)%obsCellInd: ',    obsStaticStr_SoA%obsCellInd(ll)
+         print*,'Ndg: obsStaticStr(ll)%R: ',             obsStaticStr_SoA%R(ll)
          print*,'Ndg: obsStaticStr(ll)%G: ',             obsStaticStr(ll)%G
          print*,'Ndg: obsStaticStr(ll)%tau: ',           obsStaticStr(ll)%tau
          print*,'Ndg: obsStaticStr(ll)%cellsAffected: ', obsStaticStr(ll)%cellsAffected
@@ -1822,11 +1822,11 @@ if(.not. temporalPersistence) return
 !! 3. communicate it's last ob back to image0.
 allocate(theMask(size(linkls_s)))  ! number of processors
 
-do oo=1, size(obsStaticStr(:)%obsCellInd) ! loop over the gages
+do oo=1, size(obsStaticStr_SoA%obsCellInd(:)) ! loop over the gages
 
    ! Is this gage in the range for this image?
-   theMask = ( obsStaticStr(oo)%obsCellInd .ge. linkls_s .and. &
-               obsStaticStr(oo)%obsCellInd .le. linkls_e        )
+   theMask = ( obsStaticStr_SoA%obsCellInd(oo) .ge. linkls_s .and. &
+               obsStaticStr_SoA%obsCellInd(oo) .le. linkls_e        )
    ! The image where the gage info is located
    whImage = whUniLoop(theMask) - 1
 
@@ -2179,7 +2179,7 @@ do tt=1,size(obsTimeStr)
    nObsTt = size(obsTimeStr(tt)%obsStr)
    do oo=1,nObsTt
       staticInd = obsTimeStr(tt)%obsStr(oo)%obsStaticInd
-      linkInd = obsStaticStr(staticInd)%obsCellInd
+      linkInd = obsStaticStr_SoA%obsCellInd(staticInd)
       obsTimeStr(tt)%obsStr(oo)%innov =                                      &
            ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(linkInd,2) ) &
            *obsTimeStr(tt)%obsStr(oo)%obsQC
@@ -2424,7 +2424,7 @@ do tt=1,size(obsTimeStr)
             obsStaticStr(staticInd)%lastObsDischarge(nTimesLastObs)      = &
                  obsTimeStr(tt)%obsStr(oo)%obsDischarge
             obsStaticStr(staticInd)%lastObsModelDischarge(nTimesLastObs) = &
-                 discharge(obsStaticStr(staticInd)%obsCellInd)
+                 discharge(obsStaticStr_SoA%obsCellInd(staticInd))
             obsStaticStr(staticInd)%lastObsQuality(nTimesLastObs)        = &
                  obsTimeStr(tt)%obsStr(oo)%obsQC
          end if
@@ -2435,7 +2435,7 @@ do tt=1,size(obsTimeStr)
       ll = whUniLoop(theMask)
       deallocate(theMask)
 
-      obsInd = obsStaticStr(staticInd)%obsCellInd
+      obsInd = obsStaticStr_SoA%obsCellInd(staticInd)
 
       theInnov =                                                            &
            ( obsTimeStr(tt)%obsStr(oo)%obsDischarge - discharge(obsInd) ) &
@@ -2527,16 +2527,16 @@ else if (temporalPersistence) then
    nudge_term_link = zero
 
    !! 1) what is the current link's gageId?
-   if(.not. any(obsStaticStr(:)%obsCellInd .eq. linkInd)) return
+   if(.not. any(obsStaticStr_SoA%obsCellInd(:) .eq. linkInd)) return
 
-   allocate(theMask(size(obsStaticStr(:)%obsCellInd)))
+   allocate(theMask(size(obsStaticStr_SoA%obsCellInd(:))))
 
-   theMask  = obsStaticStr(:)%obsCellInd .eq. linkInd
+   theMask  = obsStaticStr_SoA%obsCellInd(:) .eq. linkInd
    whGageId = whUniLoop(theMask)
 
    deallocate(theMask)
    prstGageId = obsStaticStr(whGageId)%usgsId
-   obsInd     = obsStaticStr(whGageId)%obsCellInd
+   obsInd     = obsStaticStr_SoA%obsCellInd(whGageId)
 
    !! 2) minimum number of observations
    if(persistBias_local) then
