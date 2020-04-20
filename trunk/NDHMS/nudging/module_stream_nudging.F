@@ -1594,8 +1594,8 @@ if(my_id .eq. io_id) then
       !! (if we were looping on nodeGageStr%usgsId this would not be assured)
       theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
       !! This is a double for loop... thanks to whUniLoop
-      obsStaticStr_SoA%obsCellInd(ll) = nodeGageStr%nodeId(whUniLoop(theMask))
-      if(obsStaticStr_SoA%R(ll) .ge. chanlen_image0(obsStaticStr_SoA%obsCellInd(ll))/2) &
+      obsStaticStr(ll)%obsCellInd = nodeGageStr%nodeId(whUniLoop(theMask))
+      if(obsStaticStr(ll)%R .ge. chanlen_image0(obsStaticStr(ll)%obsCellInd)/2) &
            nudgeSpatial=.true.
    end do
    deallocate(theMask)
@@ -1604,7 +1604,7 @@ end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
 call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
-call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
+!call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
 
