@@ -1190,8 +1190,8 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%G(:), iiImage)
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%tau(:), iiImage)
 
-      nStatic = sum( (/ (1, cc=1,size(obsStaticStr(:)%obsCellInd)) /), &
-                     mask=obsStaticStr(:)%obsCellInd .ne. 0            )
+      nStatic = sum( (/ (1, cc=1,size(obsStaticStr_SoA%obsCellInd(:))) /), &
+                     mask=obsStaticStr_SoA%obsCellInd(:) .ne. 0            )
       do cc=1,nStatic
          if(my_id .eq. iiImage) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
          call mpp_land_bcast_int1_root(nCellsInR, iiImage)
@@ -1604,7 +1604,7 @@ end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
 call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
-!call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
+call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
 
