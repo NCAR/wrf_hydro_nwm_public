@@ -608,6 +608,7 @@ if(temporalPersistence) then
 end if ! temporalPersistence
 #endif /* MPP_LAND */
 
+allocate(obsStaticStr(size(nudgingParamsStr%usgsId)))
 
 allocate(obsStaticStr_SoA%usgsId(size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%R(size(nudgingParamsStr%usgsId)))
