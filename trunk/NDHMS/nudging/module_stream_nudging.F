@@ -686,7 +686,7 @@ if(my_id .eq. io_id) then
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
             call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
-            !call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
+            call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
    end if ! temporalPersistence
@@ -1586,15 +1586,15 @@ if(my_id .eq. io_id) then
    allocate(theMask(size(nodeGageStr%usgsId)))
    ! loop over the entire structure and solve %obsCellind
    nudgeSpatial=.false.
-   do ll=1,size(obsStaticStr%usgsId)
+   do ll=1,size(obsStaticStr_SoA%usgsId)
       !! this will always have a match b/c all
       !! obsStaticStr%usgsId=nudgingParamsStr$usgsId
       !! are in nodeGageStr by construction
       !! (if we were looping on nodeGageStr%usgsId this would not be assured)
-      theMask = nodeGageStr%usgsId .eq. obsStaticStr(ll)%usgsId
+      theMask = nodeGageStr%usgsId .eq. obsStaticStr_SoA%usgsId(ll)
       !! This is a double for loop... thanks to whUniLoop
-      obsStaticStr(ll)%obsCellInd = nodeGageStr%nodeId(whUniLoop(theMask))
-      if(obsStaticStr(ll)%R .ge. chanlen_image0(obsStaticStr(ll)%obsCellInd)/2) &
+      obsStaticStr_SoA%obsCellInd(ll) = nodeGageStr%nodeId(whUniLoop(theMask))
+      if(obsStaticStr_SoA%R(ll) .ge. chanlen_image0(obsStaticStr_SoA%obsCellInd(ll))/2) &
            nudgeSpatial=.true.
    end do
    deallocate(theMask)
@@ -1602,7 +1602,7 @@ if(my_id .eq. io_id) then
 end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
-call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
+call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
 
