@@ -1132,7 +1132,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       tt = whObsMiss(ii)
 #endif
       if(obsTimeStrAllocated(ii)) then
-         allocate(theMask(size(obsStaticStr_SoA%usgsId)))
+         allocate(theMask(size(obsStaticStr%usgsId)))
          do oo=1,size(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
             ! If the gage is not in the parameter file, skip it
             if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
@@ -1188,8 +1188,8 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%G(:), iiImage)
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%tau(:), iiImage)
 
-      nStatic = sum( (/ (1, cc=1,size(obsStaticStr_SoA%obsCellInd(:))) /), &
-                     mask=obsStaticStr_SoA%obsCellInd(:) .ne. 0            )
+      nStatic = sum( (/ (1, cc=1,size(obsStaticStr(:)%obsCellInd)) /), &
+                     mask=obsStaticStr(:)%obsCellInd .ne. 0            )
       do cc=1,nStatic
          if(my_id .eq. iiImage) nCellsInR = size(obsStaticStr(cc)%cellsAffected)
          call mpp_land_bcast_int1_root(nCellsInR, iiImage)
