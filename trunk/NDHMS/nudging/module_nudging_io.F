@@ -1024,44 +1024,44 @@ nTime  = size(lastObsStr%lastObsDischarge,1)
 iret = nf90_open(fileName, nf90_nowrite, ncid)
 
 !! gageId read var
-allocate(charArr15(nSpace))
+!allocate(charArr15(nSpace))
 iret = nf90_inq_varid(ncid, "stationId", varid)
-iret = nf90_get_var(ncid, varid, charArr15)
-lastObsStr%usgsId(:) = charArr15
-deallocate(charArr15)
+iret = nf90_get_var(ncid, varid, lastObsStr%usgsId(:))
+!lastObsStr%usgsId(:) = charArr15
+!deallocate(charArr15)
 
 ! time read var
 iret = nf90_inq_varid(ncid, "time", varid)
-allocate(charArr19(nTime,nSpace))
-iret = nf90_get_var(ncid, varid, charArr19)
-do tt=1,nTime
-   do ss=1,nSpace
-      lastObsStr%lastObsTime(tt,ss)=charArr19(tt,ss)
-   end do
-end do
-deallocate(charArr19)
+!allocate(charArr19(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, lastObsStr%lastObsTime)
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      lastObsStr%lastObsTime(tt,ss)=charArr19(tt,ss)
+!   end do
+!end do
+!deallocate(charArr19)
 
 ! discharge read var
 iret = nf90_inq_varid(ncid, "discharge", varid)
-allocate(tmpFloat(nTime,nSpace))
-iret = nf90_get_var(ncid, varid, tmpFloat)
-do tt=1,nTime
-   do ss=1,nSpace
-      lastObsStr%lastObsDischarge(tt,ss) = tmpFloat(tt,ss)
-   end do
-end do
-deallocate(tmpFloat)
+!allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, lastObsStr%lastObsDischarge)
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      lastObsStr%lastObsDischarge(tt,ss) = tmpFloat(tt,ss)
+!   end do
+!end do
+!deallocate(tmpFloat)
 
 ! model discharge read var
 iret = nf90_inq_varid(ncid, "model_discharge", varid)
-allocate(tmpFloat(nTime,nSpace))
-iret = nf90_get_var(ncid, varid, tmpFloat)
-do tt=1,nTime
-   do ss=1,nSpace
-      lastObsStr%lastObsModelDischarge(tt,ss) = tmpFloat(tt,ss)
-   end do
-end do
-deallocate(tmpFloat)
+!allocate(tmpFloat(nTime,nSpace))
+iret = nf90_get_var(ncid, varid, lastObsStr%lastObsModelDischarge)
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      lastObsStr%lastObsModelDischarge(tt,ss) = tmpFloat(tt,ss)
+!   end do
+!end do
+!deallocate(tmpFloat)
 
 !discharge _quality read var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
@@ -1069,7 +1069,7 @@ allocate(qualityInt2(nTime,nSpace))
 iret = nf90_get_var(ncid, varid, qualityInt2)
 do tt=1,nTime
    do ss=1,nSpace
-      lastObsStr%lastObsQuality(tt,ss) = qualityInt2(tt,ss)/real(100)
+      lastObsStr%lastObsQuality(tt,ss) = qualityInt2(tt,ss)*0.01!/real(100)
    end do
 end do
 deallocate(qualityInt2)
