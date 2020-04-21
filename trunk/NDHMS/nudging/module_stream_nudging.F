@@ -631,12 +631,12 @@ allocate(obsStaticStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs, size(nudging
 allocate(obsStaticStr_SoA%lastObsTime(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%lastObsQuality(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 
-do ll=1,size(nudgingParamsStr%usgsId)
-   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsTime(          nlst(did)%nLastObs))
-   allocate(obsStaticStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
-end do
+!do ll=1,size(nudgingParamsStr%usgsId)
+!   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
+!   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
+   !allocate(obsStaticStr(ll)%lastObsTime(          nlst(did)%nLastObs))
+   !allocate(obsStaticStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
+!end do
 
 !=================================================
 ! 4. Read in 'nudgingLastObs.nc' file (initialization and broadcasting come later)
@@ -646,14 +646,14 @@ if(my_id .eq. io_id) then
 
       !! Initalizing the structure is not contingent upon there
       !! being a file on disk
-      do ll=1,size(obsStaticStr(:)%usgsId)
+      !do ll=1,size(obsStaticStr%usgsId)
          !obsStaticStr(ll)%lastObsDischarge      = real(-9999)
-         obsStaticStr(ll)%lastObsModelDischarge = real(-9999)
-         do tt=1,nTimesLastObs
-            obsStaticStr(ll)%lastObsTime(tt)    = missingLastObsTime
-         enddo
-         obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
-      end do
+         !obsStaticStr(ll)%lastObsModelDischarge = real(-9999)
+         ! do tt=1,nTimesLastObs
+         !    obsStaticStr(ll)%lastObsTime(tt)    = missingLastObsTime
+         ! enddo
+       !  obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
+      !end do
 
       obsStaticStr_SoA%lastObsDischarge      = real(-9999)
       obsStaticStr_SoA%lastObsModelDischarge = real(-9999)
@@ -686,7 +686,7 @@ if(my_id .eq. io_id) then
             end do
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
-            call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
+            !call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
             call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
@@ -1709,11 +1709,11 @@ if(my_id .eq. io_id) then
 
          if(.not. setLastObsInfo) then ! the gage did not have a last observation
             obsStaticStr_SoA%lastObsDischarge(:,ll)      = real(-9999)
-            obsStaticStr(ll)%lastObsModelDischarge = real(-9999)
+            obsStaticStr_SoA%lastObsModelDischarge(:,ll) = real(-9999)
             do tt=1,nTimesLastObs
-               obsStaticStr(ll)%lastObsTime(tt)    = missingLastObsTime
+               obsStaticStr_SoA%lastObsTime(tt,ll)    = missingLastObsTime
             end do
-            obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
+            obsStaticStr_SoA%lastObsQuality(:,ll)        = real(0) !! keep this zero
          end if
       end if !temporalPersistence
 
@@ -1738,9 +1738,9 @@ if(my_id .eq. io_id) then
          print*,'Ndg: obsStaticStr(ll)%ws: ',            obsStaticStr(ll)%ws
          if(temporalPersistence) then
             print*,'Ndg: obsStaticStr(ll)%lastObsDischarge: ', obsStaticStr_SoA%lastObsDischarge(:,ll)
-            print*,'Ndg: obsStaticStr(ll)%lastObsDischarge: ', obsStaticStr(ll)%lastObsModelDischarge
-            print*,'Ndg: obsStaticStr(ll)%lastObsTime: ',      obsStaticStr(ll)%lastObsTime
-            print*,'Ndg: obsStaticStr(ll)%lastObsQuality: ',   obsStaticStr(ll)%lastObsQuality
+            print*,'Ndg: obsStaticStr(ll)%lastObsDischarge: ', obsStaticStr_SoA%lastObsModelDischarge(:,ll)
+            print*,'Ndg: obsStaticStr(ll)%lastObsTime: ',      obsStaticStr_SoA%lastObsTime(:,ll)
+            print*,'Ndg: obsStaticStr(ll)%lastObsQuality: ',   obsStaticStr_SoA%lastObsQuality(:,ll)
          endif
          print*,'Ndg: !----------------------------------'
          print*,'Ndg: '
@@ -1766,9 +1766,9 @@ do ll=1,size(obsStaticStr_SoA%usgsId)
 
    if(temporalPersistence) then
       call mpp_land_bcast_real_1d(obsStaticStr_SoA%lastObsDischarge(:,ll))
-      call mpp_land_bcast_real_1d(obsStaticStr(ll)%lastObsModelDischarge(:))
-      call mpp_land_bcast_char1d( obsStaticStr(ll)%lastObsTime(:))
-      call mpp_land_bcast_real_1d(obsStaticStr(ll)%lastObsQuality(:))
+      call mpp_land_bcast_real_1d(obsStaticStr_SoA%lastObsModelDischarge(:,ll))
+      call mpp_land_bcast_char1d( obsStaticStr_SoA%lastObsTime(:,ll))
+      call mpp_land_bcast_real_1d(obsStaticStr_SoA%lastObsQuality(:,ll))
    endif
 end do
 #endif /* MPP_LAND */
@@ -1803,7 +1803,7 @@ end subroutine obs_static_to_struct
 subroutine output_nudging_last_obs()
 use module_RT_data,        only: rt_domain
 use module_nudging_utils,  only: whUniLoop
-use module_nudging_io,     only: write_nudging_last_obs
+use module_nudging_io,     only: write_nudging_last_obs, write_nudging_last_obs_soa
 #ifdef MPP_LAND
 use MODULE_mpp_ReachLS,   only: linkls_s, linkls_e
 implicit none
@@ -1836,9 +1836,9 @@ do oo=1, size(obsStaticStr_SoA%obsCellInd(:)) ! loop over the gages
    if(whImage .eq. io_id) cycle
 
    call mpp_comm_1d_real(obsStaticStr_SoA%lastObsDischarge(:,oo),      whImage, io_id)
-   call mpp_comm_1d_real(obsStaticStr(oo)%lastObsModelDischarge, whImage, io_id)
-   call mpp_comm_1d_char(obsStaticStr(oo)%lastObsTime,           whImage, io_id)
-   call mpp_comm_1d_real(obsStaticStr(oo)%lastObsQuality,        whImage, io_id)
+   call mpp_comm_1d_real(obsStaticStr_SoA%lastObsModelDischarge(:,oo), whImage, io_id)
+   call mpp_comm_1d_char(obsStaticStr_SoA%lastObsTime(:,oo),           whImage, io_id)
+   call mpp_comm_1d_real(obsStaticStr_SoA%lastObsQuality(:,oo),        whImage, io_id)
 
 end do
 
@@ -1854,7 +1854,7 @@ call ReachLS_write_io(RT_DOMAIN(1)%nudge,g_nudge)
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      !! write out the last obs to file
-     call write_nudging_last_obs(obsStaticStr%lastObsStructure, &
+     call write_nudging_last_obs_soa(obsStaticStr%lastObsStructure_SoA, &
                                  nlst(did)%olddate,          &
                                  g_nudge                         )
 
@@ -2399,33 +2399,33 @@ do tt=1,size(obsTimeStr)
          call geth_idts(hydroTime, obsTimeStr(tt)%obsStr(oo)%obsTime, prstDtErrInt)
 
          if(missingLastObsTime .eq.                           &
-            obsStaticStr(staticInd)%lastObsTime(nTimesLastObs)) then
+            obsStaticStr_SoA%lastObsTime(nTimesLastObs,staticInd)) then
             obsDtInt=1
          else
             call geth_idts(obsTimeStr(tt)%obsStr(oo)%obsTime,                          &
-                           obsStaticStr(staticInd)%lastObsTime(nTimesLastObs), obsDtInt)
+                           obsStaticStr_SoA%lastObsTime(nTimesLastObs,staticInd), obsDtInt)
          end if
 
          if(prstDtErrInt .ge. 0 .and. &
             obsDtInt     .gt. 0 .and. &
             obsTimeStr(tt)%obsStr(oo)%obsQC .eq. 1) then
             !! shift (note cshift does not work for all these)
-            obsStaticStr(staticInd)%lastObsTime(1:(nTimesLastObs-1))           = &
-                 obsStaticStr(staticInd)%lastObsTime(2:nTimesLastObs)
+            obsStaticStr_SoA%lastObsTime(1:(nTimesLastObs-1),staticInd)           = &
+                 obsStaticStr_SoA%lastObsTime(2:nTimesLastObs,staticInd)
             obsStaticStr_SoA%lastObsDischarge(1:(nTimesLastObs-1),staticInd)      = &
                  obsStaticStr_SoA%lastObsDischarge(2:nTimesLastObs,staticInd)
-            obsStaticStr(staticInd)%lastObsModelDischarge(1:(nTimesLastObs-1)) = &
-                 obsStaticStr(staticInd)%lastObsModelDischarge(2:nTimesLastObs)
-            obsStaticStr(staticInd)%lastObsQuality(1:(nTimesLastObs-1))        = &
-                 obsStaticStr(staticInd)%lastObsQuality(2:nTimesLastObs)
+            obsStaticStr_SoA%lastObsModelDischarge(1:(nTimesLastObs-1),staticInd) = &
+                 obsStaticStr_SoA%lastObsModelDischarge(2:nTimesLastObs,staticInd)
+            obsStaticStr_SoA%lastObsQuality(1:(nTimesLastObs-1),staticInd)        = &
+                 obsStaticStr_SoA%lastObsQuality(2:nTimesLastObs,staticInd)
 
-            obsStaticStr(staticInd)%lastObsTime(nTimesLastObs)           = &
+            obsStaticStr_SoA%lastObsTime(nTimesLastObs,staticInd)           = &
                  obsTimeStr(tt)%obsStr(oo)%obsTime
             obsStaticStr_SoA%lastObsDischarge(nTimesLastObs,staticInd)      = &
                  obsTimeStr(tt)%obsStr(oo)%obsDischarge
-            obsStaticStr(staticInd)%lastObsModelDischarge(nTimesLastObs) = &
+            obsStaticStr_SoA%lastObsModelDischarge(nTimesLastObs,staticInd) = &
                  discharge(obsStaticStr_SoA%obsCellInd(staticInd))
-            obsStaticStr(staticInd)%lastObsQuality(nTimesLastObs)        = &
+            obsStaticStr_SoA%lastObsQuality(nTimesLastObs,staticInd)        = &
                  obsTimeStr(tt)%obsStr(oo)%obsQC
          end if
       endif   !temporalPersistence
@@ -2557,13 +2557,13 @@ else if (temporalPersistence) then
          if(persistBias_local .and. invDistTimeWeightBias) biasWeights = -9999
          do tt=nTimesLastObs,1,-1
             !! missing obs are not mixed with good obs. The first missing obs means the rest are missing.
-            if(obsStaticStr(whGageId)%lastObsTime(tt) .eq. missingLastObsTime) exit
+            if(obsStaticStr_SoA%lastObsTime(tt,whGageId) .eq. missingLastObsTime) exit
             if(biasWindowBeforeT0) then
                !! use the init time to define the end of the bias window
-               call geth_idts(initTime,  obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)
+               call geth_idts(initTime,  obsStaticStr_SoA%lastObsTime(tt,whGageId), obsDtInt)
             else
                !! use the hydro model time to define the end of the bias window
-               call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), obsDtInt)
+               call geth_idts(hydroTime, obsStaticStr_SoA%lastObsTime(tt,whGageId), obsDtInt)
             endif
             if(persistBias_local .and. invDistTimeWeightBias) &
                  !JLM OLD
@@ -2574,22 +2574,22 @@ else if (temporalPersistence) then
             if(obsDtInt .gt. (maxAgePairsBiasPersist*60*60)) exit
             whObsTooOld(tt) = .false.
          end do
-         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
-                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
-                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero               .and. &
+         biasMask= obsStaticStr_SoA%lastObsQuality(:,whGageId)  .eq. one                .and. &
+                   obsStaticStr_SoA%lastObsTime(:,whGageId)     .ne. missingLastObsTime .and. &
+                   obsStaticStr_SoA%lastObsModelDischarge(:,whGageId) .gt. zero               .and. &
                    (.not. whObsTooOld)
       end if
 
       if(maxAgePairsBiasPersist .eq. 0) then
-         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
-                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
-                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero
+         biasMask= obsStaticStr_SoA%lastObsQuality(:,whGageId)        .eq. one                .and. &
+                   obsStaticStr_SoA%lastObsTime(:,whGageId)     .ne. missingLastObsTime .and. &
+                   obsStaticStr_SoA%lastObsModelDischarge(:,whGageId) .gt. zero
       endif
 
       if(maxAgePairsBiasPersist .lt. 0) then
-         biasMask= obsStaticStr(whGageId)%lastObsQuality        .eq. one                .and. &
-                   obsStaticStr(whGageId)%lastObsTime           .ne. missingLastObsTime .and. &
-                   obsStaticStr(whGageId)%lastObsModelDischarge .gt. zero
+         biasMask= obsStaticStr_SoA%lastObsQuality(:,whGageId)        .eq. one                .and. &
+                   obsStaticStr_SoA%lastObsTime(:,whGageId)     .ne. missingLastObsTime .and. &
+                   obsStaticStr_SoA%lastObsModelDischarge(:,whGageId) .gt. zero
 
          !if((-1*maxAgePairs) .ge. nTimesLastObs) then there's nothing to do.
          if((-1*maxAgePairsBiasPersist) .lt. nTimesLastObs) then
@@ -2622,7 +2622,7 @@ else if (temporalPersistence) then
 
    !! Must check this for both cases obs and persistance nudging
    !! JLM: currently not also checking the quality. May be ok, but not ideal.
-   if(obsStaticStr(whGageId)%lastObsTime(nTimesLastObs) .eq. missingLastObsTime) return
+   if(obsStaticStr_SoA%lastObsTime(nTimesLastObs,whGageId) .eq. missingLastObsTime) return
 
    !! 3) are there parameters for this link? no -> return
    if(.not. any(nudgingParamsStr%usgsId .eq. prstGageId)) return
@@ -2660,12 +2660,12 @@ else if (temporalPersistence) then
       if(persistBias_local) then
          if(.not. biasMask(tt)) cycle
       else
-         if(obsStaticStr(whGageId)%lastObsQuality(tt) .eq. 0) cycle
+         if(obsStaticStr_SoA%lastObsQuality(tt,whGageId) .eq. 0) cycle
       end if
-      call geth_idts(hydroTime, obsStaticStr(whGageId)%lastObsTime(tt), prstDtErrInt)
+      call geth_idts(hydroTime, obsStaticStr_SoA%lastObsTime(tt,whGageId), prstDtErrInt)
       if(prstDtErrInt .lt. zeroInt) then
          print*,'initTime:', hydroTime
-         print*,'obsStaticStr(whGageId)%lastObsTime(tt):', obsStaticStr(whGageId)%lastObsTime(tt)
+         print*,'obsStaticStr(whGageId)%lastObsTime(tt):', obsStaticStr_SoA%lastObsTime(tt,whGageId)
          print*,'prstDtErrInt:',prstDtErrInt
          print*,'Ndg: WARNING: lastObs times are in the future of the model time.'
          if(futureLastObsFatal) then
@@ -2714,7 +2714,7 @@ else if (temporalPersistence) then
 
             theBias = sum( biasWeights *                                              &
                            (obsStaticStr_SoA%lastObsDischarge(:,whGageId) -                 &
-                            obsStaticStr(whGageId)%lastObsModelDischarge),            &
+                            obsStaticStr_SoA%lastObsModelDischarge(:,whGageId)),            &
                                          mask=biasMask .and. (biasWeights.gt.zero)) / &
                                          biasWeightSum
 
@@ -2724,7 +2724,7 @@ else if (temporalPersistence) then
 
          !! Simple, straight average / unweighted,  way of calculating bias
          theBias = sum( obsStaticStr_SoA%lastObsDischarge(:,whGageId) -                       &
-                        obsStaticStr(whGageId)%lastObsModelDischarge, mask=biasMask ) / &
+                        obsStaticStr_SoA%lastObsModelDischarge(:,whGageId), mask=biasMask ) / &
                    max( 1, count(biasMask) )
 
       end if
@@ -2784,11 +2784,11 @@ else if (temporalPersistence) then
    !! 11) solution
    if(.not. persistBias_local) then
       nudge_term_link = &
-           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
+           obsStaticStr_SoA%lastObsQuality(nTimesLastObs,whGageId) * &
            prstErr * exp(real(-1)*prstDtErr/prstB)
    else
       nudge_term_link = &
-           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *   &
+           obsStaticStr_SoA%lastObsQuality(nTimesLastObs,whGageId) *   &
            prstErr * exp(real(-1)*prstDtErr/prstB)                + &
            theBias * (1.0 - exp(real(-1)*prstDtErr/prstB) )
 
@@ -2816,10 +2816,10 @@ else if (temporalPersistence) then
       print*,'Ndg: checkInd pst: initTime:',         initTime
       print*,'Ndg: checkInd pst: hydroTime: ',       hydroTime
       print*,'Ndg: checkInd pst: flowmonth: ',       flowMonth
-      print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr(whGageId)%lastObsTime(nTimesLastObs)
+      print*,'Ndg: checkInd pst: lastObsTime: ',     obsStaticStr_SoA%lastObsTime(nTimesLastObs,whGageId)
       print*,'Ndg: checkInd pst: time difference mins: ', prstDtErr
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality: ', &
-           obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs)
+           obsStaticStr_SoA%lastObsQuality(nTimesLastObs,whGageId)
       print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsDischarge: ', &
            obsStaticStr_SoA%lastObsDischarge(nTimesLastObs,whGageId)
       print*,'Ndg: checkInd pst: modeled discharge(obsInd): ', discharge(obsInd)
@@ -2836,9 +2836,9 @@ else if (temporalPersistence) then
             if(biasMask(tt)) then
                print*,'checkInd:  ---- tt:', tt
                print*,'checkInd: Diff: ', obsStaticStr_SoA%lastObsDischarge(tt,whGageId) -   &
-                    obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+                    obsStaticStr_SoA%lastObsModelDischarge(tt,whGageId)
                print*,'checkInd: o - : ', obsStaticStr_SoA%lastObsDischarge(tt,whGageId)
-               print*,'checkInd:    m: ', obsStaticStr(whGageId)%lastObsModelDischarge(tt)
+               print*,'checkInd:    m: ', obsStaticStr_Soa%lastObsModelDischarge(tt,whGageId)
                print*,'checkInd: biasWeights: ', biasWeights(tt)
             end if
          end do
@@ -2850,7 +2850,7 @@ else if (temporalPersistence) then
          print*,'Ndg: checkInd pst: theBias/corr:', theBias/corr
          print*,'Ndg: checkInd pst: obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) *'
          print*,'Ndg: checkInd pst:  prstErr * exp(real(-1)*prstDtErr/prstB)', &
-              obsStaticStr(whGageId)%lastObsQuality(nTimesLastObs) * &
+              obsStaticStr_SoA%lastObsQuality(nTimesLastObs,whGageId) * &
               prstErr * exp(real(-1)*prstDtErr/prstB)
          print*,'Ndg: checkInd pst: theBias * (1-exp(real(-1)*prstDtErr/prstB)):', &
               theBias * (1-exp(real(-1)*prstDtErr/prstB))
