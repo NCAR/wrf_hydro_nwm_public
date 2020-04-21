@@ -786,44 +786,44 @@ iret = nf90_enddef(ncid)
 
 !! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
-allocate(charArr15(nSpace))
-charArr15=lastObsStr%usgsId(:)
+!allocate(charArr15(nSpace))
+!charArr15=lastObsStr%usgsId(:)
 
-iret = nf90_put_var(ncid, varid, charArr15)
-deallocate(charArr15)
+iret = nf90_put_var(ncid, varid, lastObsStr%usgsId)
+!deallocate(charArr15)
 
 ! time write var
 iret = nf90_inq_varid(ncid, "time", varid)
-allocate(charArr19(nTime,nSpace))
-do tt=1,nTime
-   do ss=1,nSpace
-      charArr19(tt,ss) = lastObsStr%lastObsTime(tt,ss)
-   end do
-end do
-iret = nf90_put_var(ncid, varid, charArr19)
-deallocate(charArr19)
+!allocate(charArr19(nTime,nSpace))
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      charArr19(tt,ss) = lastObsStr%lastObsTime(tt,ss)
+!   end do
+!end do
+iret = nf90_put_var(ncid, varid, lastObsStr%lastObsTime)
+!deallocate(charArr19)
 
 ! discharge write var
 iret = nf90_inq_varid(ncid, "discharge", varid)
-allocate(tmpFloat(nTime,nSpace))
-do tt=1,nTime
-   do ss=1,nSpace
-      tmpFloat(tt,ss) = lastObsStr%lastObsDischarge(tt,ss)
-   end do
-end do
-iret = nf90_put_var(ncid, varid, tmpFloat)
-deallocate(tmpFloat)
+!allocate(tmpFloat(nTime,nSpace))
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      tmpFloat(tt,ss) = lastObsStr%lastObsDischarge(tt,ss)
+!   end do
+!end do
+iret = nf90_put_var(ncid, varid, lastObsStr%lastObsDischarge)
+!deallocate(tmpFloat)
 
 ! model discharge write var
 iret = nf90_inq_varid(ncid, "model_discharge", varid)
-allocate(tmpFloat(nTime,nSpace))
-do tt=1,nTime
-   do ss=1,nSpace
-      tmpFloat(tt,ss) = lastObsStr%lastObsModelDischarge(tt,ss)
-   end do
-end do
-iret = nf90_put_var(ncid, varid, tmpFloat)
-deallocate(tmpFloat)
+!allocate(tmpFloat(nTime,nSpace))
+!do tt=1,nTime
+!   do ss=1,nSpace
+!      tmpFloat(tt,ss) = lastObsStr%lastObsModelDischarge(tt,ss)
+!   end do
+!end do
+iret = nf90_put_var(ncid, varid, lastObsStr%lastObsModelDischarge)
+!deallocate(tmpFloat)
 
 ! discharge_quality write var
 iret = nf90_inq_varid(ncid, "discharge_quality", varid)
