@@ -725,7 +725,7 @@ flush(6)
 #endif
 
 nSpace = size(lastObsStr%usgsId)
-nTime  = size(lastObsStr%lastObsDischarge,2)
+nTime  = size(lastObsStr%lastObsDischarge,1)
 nFeature = size(g_nudge)
 
 !           !1234567891123456789212345678931234567
@@ -1019,7 +1019,7 @@ character(len=15), allocatable, dimension(:)   :: charArr15
 print*,'read_nudging_last_obs_soa'
 
 nSpace = size(lastObsStr%usgsId)
-nTime  = size(lastObsStr%lastObsDischarge,2)
+nTime  = size(lastObsStr%lastObsDischarge,1)
 
 iret = nf90_open(fileName, nf90_nowrite, ncid)
 
