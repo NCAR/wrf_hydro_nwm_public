@@ -53,13 +53,15 @@ contains
 
     !Level Pool Constructor
     subroutine levelpool_init(this, water_elevation,  &
-        lake_area, weir_elevation, weir_coeffecient, &
+        lake_area, lake_precip, lake_evap, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
+        real, intent(in)    :: lake_precip               ! lake precipitation rate (mm/hr)
+        real, intent(in)    :: lake_evap                 ! lake evaporation rate (mm/hr)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
         real, intent(in)    :: weir_length               ! weir length (meters)
@@ -110,7 +112,7 @@ contains
                 // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize levelpool properties
-                call this%properties%init( lake_area,  &
+                call this%properties%init( lake_area,  lake_precip, lake_evap, &
                     weir_elevation, weir_coeffecient, weir_length, dam_length, &
                     orifice_elevation, orifice_coefficient, &
                     orifice_area, max_depth, lake_number )

@@ -4,7 +4,7 @@ set (CMAKE_C_COMPILER "mpicc")
 set (CMAKE_CXX_COMPILER "mpicxx")
 set (CMAKE_Fortran_COMPILER "mpif90")
 
-project (WRF_Hydro)
+project (WRF_Hydro-Lakes-Dev)
 
 #set version numbers
 set (WRF_Hydro_VERSION_MAJOR 5)

@@ -57,9 +57,10 @@ contains
 
     ! Hybrid Constructor
     subroutine hybrid_init(this, water_elevation,  &
-        lake_area, weir_elevation, weir_coeffecient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, lake_max_water_elevation, initial_fractional_depth, &
+        lake_area, lake_precip, lake_evap, &
+        weir_elevation, weir_coeffecient, weir_length, dam_length, &
+        orifice_elevation, orifice_coefficient, orifice_area, &
+        lake_max_water_elevation, initial_fractional_depth, &
         lake_number, reservoir_type, reservoir_parameter_file, start_date, &
         usgs_timeslice_path, usace_timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
@@ -67,6 +68,8 @@ contains
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
+        real,    intent(in)    :: lake_precip               ! lake precipitation rate (mm/hr)
+        real,    intent(in)    :: lake_evap                 ! lake evaporation rate (mm/hr)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
@@ -198,9 +201,9 @@ contains
             allocate(levelpool :: this%state%levelpool_ptr)
 
             ! Initialize level pool reservoir
-            call this%state%levelpool_ptr%init(water_elevation, lake_area, &
-            weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
-            orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
+            call this%state%levelpool_ptr%init(water_elevation, lake_area, lake_precip, lake_evap, &
+                    weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
+                    orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         end if
     end subroutine hybrid_init
