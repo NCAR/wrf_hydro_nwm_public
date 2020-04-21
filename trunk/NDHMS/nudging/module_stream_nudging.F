@@ -1854,7 +1854,7 @@ call ReachLS_write_io(RT_DOMAIN(1)%nudge,g_nudge)
 if(my_id .eq. io_id) &
 #endif /* MPP_LAND */
      !! write out the last obs to file
-     call write_nudging_last_obs_soa(obsStaticStr%lastObsStructure_SoA, &
+     call write_nudging_last_obs_soa(obsStaticStr_SoA%lastObsStructure_SoA, &
                                  nlst(did)%olddate,          &
                                  g_nudge                         )
 
