@@ -63,7 +63,7 @@ module module_HYDRO_drv
   integer :: clock_count_2 = 0
   integer :: clock_rate    = 0
 #endif
-  integer :: rtout_factor
+  integer :: rtout_factor  = 0
 
   integer, parameter :: r4 = selected_real_kind(4)
   real,    parameter :: zeroFlt=0.0000000000000000000_r4
@@ -265,7 +265,9 @@ module module_HYDRO_drv
             if(nlst(did)%RTOUT_DOMAIN       .eq. 1 .and. &
                     nlst(did)%channel_only       .eq. 0 .and. &
                     nlst(did)%channelBucket_only .eq. 0       ) then
-                if(mod(rtout_factor,3) .eq. 0 .or. nlst(did)%io_config_outputs .ne. 5) then
+                if(mod(rtout_factor,3) .eq. 2 .or. &
+                   nlst(did)%io_config_outputs .ne. 5 .and. &
+                   nlst(did)%io_config_outputs .ne. 3) then
                     ! Output gridded routing variables on National Water Model
                     ! high-res routing grid
                     if(nlst(did)%io_form_outputs .ne. 0) then
