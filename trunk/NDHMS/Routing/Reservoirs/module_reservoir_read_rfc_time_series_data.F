@@ -176,7 +176,7 @@ contains
                 ! Call subroutine to read a particular time series file
                 call this%read_time_series_file(time_series_file_name)
 
-                this%time_series_file_name = old_date_trimmed // "/" //  "." // &
+                this%time_series_file_name = old_date_trimmed // "." // &
                             forecast_file_resolution_string // 'min.' // this%rfc_gage_id // '.RFCTimeSeries.ncdf'
 
                 exit

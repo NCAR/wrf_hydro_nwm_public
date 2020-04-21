@@ -25,7 +25,11 @@ module module_persistence_levelpool_hybrid_state
         real    :: levelpool_current_weight
         real    :: persistence_current_weight
         integer :: dynamic_reservoir_type       ! dynamic reservoir type sent to lake out files
+        real    :: assimilated_value
+        character(len=256) :: assimilated_source_file
         integer :: levelpool_reservoir_type     ! reservoir type for levelpool
+        real    :: levelpool_assimilated_value  ! levelpool assimilated sentinel value
+        character(len=256) :: levelpool_assimilated_source_file ! none for levelpool assimilated source
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
 
@@ -77,8 +81,20 @@ contains
             this%dynamic_reservoir_type = 3
         end if
 
+        ! Initialize to default sentinel, -9999.0
+        this%assimilated_value = -9999.0
+
+        ! Initialize to default empty string
+        this%assimilated_source_file = ""
+
         ! Levelpool reservoir type set to 1
         this%levelpool_reservoir_type = 1
+
+        ! Set to default sentinel, -999.0
+        this%levelpool_assimilated_value = -9999.0
+
+        ! Set to default string
+        this%levelpool_assimilated_source_file = ""
 
     end subroutine hybrid_state_init
 

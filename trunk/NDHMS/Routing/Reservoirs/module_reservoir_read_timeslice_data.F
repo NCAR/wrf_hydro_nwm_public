@@ -139,9 +139,10 @@ contains
 
         this%last_update_time_seconds = -999
 
-        ! Allocate lookback and dishcharge arrays
+        ! Allocate lookback, dishcharge, and timeslice name arrays
         allocate (this%gage_lookback_seconds(this%number_of_reservoir_gages))
         allocate (this%reservoir_gage_discharges(this%number_of_reservoir_gages))
+        allocate(this%timeslice_file_names(this%number_of_reservoir_gages))
 
     end subroutine timeslice_data_init
 
@@ -158,7 +159,7 @@ contains
     ! Set up list of timeslice files to read
     ! The timeslices are read only once on each processor at each timeslice update time
     subroutine setup_read_timeslice(this, update_interval_seconds, current_reservoir_time_seconds, &
-        reservoir_gage_id, gage_lookback_seconds, reservoir_gage_discharge)
+        reservoir_gage_id, gage_lookback_seconds, reservoir_gage_discharge, reservoir_timeslice_file_name)
         implicit none
 
         class(timeslice_data_type), intent(inout) :: this
@@ -167,7 +168,9 @@ contains
         character(len=*), intent(in)  :: reservoir_gage_id
         integer, intent(out) :: gage_lookback_seconds
         real, intent(out)    :: reservoir_gage_discharge
+        character(len=256), intent(out)   :: reservoir_timeslice_file_name
         character(len=256)   :: timeslice_file_name
+        character(len=256)   :: timeslice_file_name_full
         character(len=19)    :: old_date, new_date
         character(len=2)     :: observation_resolution_string
         integer :: total_timeslice_time_periods, timeslice_file_index, reservoir_subset_index, lake_index
@@ -176,6 +179,7 @@ contains
 
         ! This check ensures that the timeslice is read only once for each processor at each timeslice update time
         if (current_reservoir_time_seconds .ne. this%last_update_time_seconds) then
+
             ! Checks if not the first timestep, then update date.
             if (this%last_update_time_seconds .ne. -999) then
                 call geth_newdate(this%current_date, this%current_date, update_interval_seconds)
@@ -189,12 +193,10 @@ contains
             this%gage_lookback_seconds = 0
             this%current_lookback_seconds = 0
 
-            total_timeslice_time_periods = this%observation_lookback_hours * (60 / observation_resolution_minutes)
+            ! Set timeslice file names to empty strings by default
+            this%timeslice_file_names = ""
 
-            ! Allocate array of all timeslice files to potentially read
-            if ( .not. allocated(this%timeslice_file_names) ) then
-                allocate(this%timeslice_file_names(total_timeslice_time_periods))
-            end if
+            total_timeslice_time_periods = this%observation_lookback_hours * (60 / observation_resolution_minutes)
 
             old_date = this%current_date
 
@@ -228,15 +230,18 @@ contains
                 ! time timeslice file available.
                 if ( any(this%reservoir_gage_discharges == -1.0)) then
 
-                    ! Construct timeslice filename with path
-                    timeslice_file_name = trim(this%timeslice_path) // '/' // old_date // "." // &
+                    ! Construct timeslice filename
+                    timeslice_file_name = old_date // "." // &
                             observation_resolution_string // 'min.' // ADJUSTL(trim(this%data_source)) // 'TimeSlice.ncdf'
 
+                    ! Add path to timeslice filename
+                    timeslice_file_name_full = trim(this%timeslice_path) // "/" // ADJUSTL(trim(timeslice_file_name))
+
                     ! Check if file exists
-                    inquire(FILE = timeslice_file_name, EXIST = file_exists)
+                    inquire(FILE = timeslice_file_name_full, EXIST = file_exists)
                     if (file_exists) then
                         ! Call subroutine to read a particular timeslice file
-                        call this%read_timeslice_file(timeslice_file_name)
+                        call this%read_timeslice_file(timeslice_file_name_full, timeslice_file_name)
                     end if
 
                     ! Call subroutine to get the date from one observation resolution back in time
@@ -258,6 +263,7 @@ contains
             if (this%reservoir_gage_ids(reservoir_subset_index) .eq. reservoir_gage_id) then
                 gage_lookback_seconds = this%gage_lookback_seconds(reservoir_subset_index)
                 reservoir_gage_discharge = this%reservoir_gage_discharges(reservoir_subset_index)
+                reservoir_timeslice_file_name = this%timeslice_file_names(reservoir_subset_index)
             end if
         end do
 
@@ -265,20 +271,21 @@ contains
 
 
     ! Read given timeslice file to get gage discharges
-    subroutine read_timeslice_file(this, timeslice_file)
+    subroutine read_timeslice_file(this, timeslice_file_full, timeslice_file)
         implicit none
         class(timeslice_data_type), intent(inout) :: this
+        character(len=256), intent(in) :: timeslice_file_full
         character(len=256), intent(in) :: timeslice_file
         integer :: reservoir_gage_index, timeslice_gage_index, number_of_gages
         integer :: ncid, status
 
         ! Open Timeslice NetCDF file
-        status = nf90_open(path = trim(timeslice_file), mode = nf90_nowrite, ncid = ncid)
+        status = nf90_open(path = trim(timeslice_file_full), mode = nf90_nowrite, ncid = ncid)
         if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file " &
-        // trim(ADJUSTL(timeslice_file)) // ".")
+        // trim(ADJUSTL(timeslice_file_full)) // ".")
 
         ! Get dimension of gage arrays
-        call get_timeslice_array_dimension(ncid, 'discharge', timeslice_file, number_of_gages)
+        call get_timeslice_array_dimension(ncid, 'discharge', timeslice_file_full, number_of_gages)
 
         ! Allocate gage info arrays
         allocate(this%gage_id(number_of_gages))
@@ -286,13 +293,13 @@ contains
         allocate(this%gage_quality(number_of_gages))
 
         ! Get gage ids
-        call read_timeslice_gage_ids(ncid, 'stationId', timeslice_file, this%gage_id)
+        call read_timeslice_gage_ids(ncid, 'stationId', timeslice_file_full, this%gage_id)
 
         ! Get gage discharges
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', timeslice_file, this%gage_discharge)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', timeslice_file_full, this%gage_discharge)
 
         ! Get gage qualities
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', timeslice_file, this%gage_quality)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', timeslice_file_full, this%gage_quality)
 
         ! Normalize gage qualities to 1
         this%gage_quality = this%gage_quality/100
@@ -327,6 +334,7 @@ contains
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
                             this%gage_lookback_seconds(reservoir_gage_index) = this%current_lookback_seconds
+                            this%timeslice_file_names(reservoir_gage_index) = ADJUSTL(trim(timeslice_file))
                         end if
                         exit
                     end if
@@ -336,7 +344,7 @@ contains
 
     ! Close timeslice NetCDF file
     status = nf90_close(ncid)
-    if (status /= nf90_noerr) call handle_err(status, "Could not close timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
+    if (status /= nf90_noerr) call handle_err(status, "Could not close timeslice file " // trim(ADJUSTL(timeslice_file_full)) // ".")
 
     ! Deallocate gage arrays
     if(allocated(this%gage_id)) deallocate(this%gage_id)

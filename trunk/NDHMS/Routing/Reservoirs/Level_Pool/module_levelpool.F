@@ -145,7 +145,8 @@ contains
     ! which will then call the LEVELPOOL method/subroutine for processing the
     ! inputs and returning the output.
     subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
+        assimilated_value, assimilated_source_file)
         implicit none
         class(levelpool), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -155,6 +156,9 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+        real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
+        character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
+
 
         ! Update input variables
         this%input%inflow = inflow
@@ -193,6 +197,13 @@ contains
         ! The dynamic reservoir type is always set to 1 for level pool in this module because
         ! it cannot change reservoir types
         dynamic_reservoir_type = 1
+
+        ! The assimilated value would always be a sentinel of -9999.0 because level pool does
+        ! not assimilate any external observations or forecasts
+        assimilated_value = -9999.0
+
+        ! The assimilated source file would always be an empty string
+        assimilated_source_file = ""
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes

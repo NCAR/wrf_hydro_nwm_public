@@ -1172,7 +1172,8 @@ gwOption:   if(gwBaseSwCRT == 3) then
               ! Inflow, lateral inflow, water elevation, and the routing period
               ! are passed in. Updated outflow and water elevation are returned.
               call rt_domain(did)%reservoirs(i)%ptr%run(QLAKEIP(i), QLAKEI(i), &
-                   QLLAKE(i), RESHT(i), QLAKEO(i), DTCT, rt_domain(did)%final_reservoir_type(i))
+                   QLLAKE(i), RESHT(i), QLAKEO(i), DTCT, rt_domain(did)%final_reservoir_type(i), &
+                   rt_domain(did)%reservoir_assimilated_value(i), rt_domain(did)%reservoir_assimilated_source_file(i))
 
               ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
               !       inside the reservoir module, but it requires a redesign of the lake
@@ -1675,6 +1676,8 @@ end subroutine drive_CHANNEL
        real, intent(in), dimension(:) :: qout_gwsubbas
        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
        integer, allocatable, dimension(:) :: tmpFinalResType
+       real, allocatable,dimension(:) :: tmpAssimilatedValue
+       character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
 
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
@@ -1847,6 +1850,9 @@ do nt = 1, nsteps
       tmpQLAKEI = QLAKEI
       tmpRESHT = RESHT
       tmpFinalResType = rt_domain(did)%final_reservoir_type
+      tmpAssimilatedValue = rt_domain(did)%reservoir_assimilated_value
+      tmpAssimilatedSourceFile = rt_domain(did)%reservoir_assimilated_source_file
+
 #ifdef MPP_LAND
    endif
 #endif
@@ -1898,7 +1904,8 @@ do nt = 1, nsteps
             ! Inflow, lateral inflow, water elevation, and the routing period
             ! are passed in. Updated outflow and water elevation are returned.
             call rt_domain(did)%reservoirs(lakeid)%ptr%run(Qup, Quc, 0.0, &
-                 RESHT(lakeid), tmpQLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(lakeid))
+                 RESHT(lakeid), tmpQLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(lakeid), &
+                 rt_domain(did)%reservoir_assimilated_value(lakeid), rt_domain(did)%reservoir_assimilated_source_file(lakeid))
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake
@@ -1944,6 +1951,8 @@ do nt = 1, nsteps
    call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
+   call updateLake_seq(rt_domain(did)%reservoir_assimilated_value, nlakes, tmpAssimilatedValue)
+   call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?
