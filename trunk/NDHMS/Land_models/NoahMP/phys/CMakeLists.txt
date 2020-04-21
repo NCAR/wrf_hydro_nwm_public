@@ -5,4 +5,5 @@ add_library(noahmp_phys STATIC
 	module_sf_noahmp_glacier.F
 	module_sf_noahmp_groundwater.F
 	module_sf_noahmplsm.F
+	module_sf_lake.F
 )
