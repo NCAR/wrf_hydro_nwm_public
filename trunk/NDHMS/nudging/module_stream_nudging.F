@@ -75,8 +75,8 @@ type, extends(lastObsStructure) :: obsStaticStructure
    !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
    !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
    !! New components
-   integer :: obsCellInd    ! index of obs on model channel network, for distance calc
-   real    :: R, G, tau     ! the nudging parameters at this gage.
+   !integer :: obsCellInd    ! index of obs on model channel network, for distance calc
+   !real    :: R, G, tau     ! the nudging parameters at this gage.
    integer, allocatable, dimension(:) ::  cellsAffected  ! indices of cells affected
    real,    allocatable, dimension(:) ::  dist           ! optional: dist to affected cells, optional
    real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
@@ -678,12 +678,12 @@ if(my_id .eq. io_id) then
             allocate(lastObsStr_SoA%lastObsQuality(nlst(did)%nLastObs,nStnLastObs))
 
             allocate(lastObsStr(nStnLastObs))
-            do ll=1,nStnLastObs
-               allocate(lastObsStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsTime(          nlst(did)%nLastObs))
-               allocate(lastObsStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
-            end do
+            ! do ll=1,nStnLastObs
+            !    allocate(lastObsStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
+            !    allocate(lastObsStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
+            !    allocate(lastObsStr(ll)%lastObsTime(          nlst(did)%nLastObs))
+            !    allocate(lastObsStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
+            ! end do
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
             !call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
@@ -1134,7 +1134,7 @@ do ii=1,nObsMiss ! if nObsMiss is zero, this loop is skipped?
       tt = whObsMiss(ii)
 #endif
       if(obsTimeStrAllocated(ii)) then
-         allocate(theMask(size(obsStaticStr_SoA%usgsId)))
+         allocate(theMask(size(nudgingParamsStr%usgsId)))
          do oo=1,size(obsTimeStr(tt)%obsStr(:)%obsStaticInd)
             ! If the gage is not in the parameter file, skip it
             if(.not. any(nudgingParamsStr%usgsId .eq. obsTimeStr(tt)%obsStr(oo)%usgsId)) then
@@ -1587,7 +1587,7 @@ if(my_id .eq. io_id) then
    allocate(theMask(size(nodeGageStr%usgsId)))
    ! loop over the entire structure and solve %obsCellind
    nudgeSpatial=.false.
-   do ll=1,size(obsStaticStr_SoA%usgsId)
+   do ll=1,size(obsStaticStr_SoA%usgsId(:))
       !! this will always have a match b/c all
       !! obsStaticStr%usgsId=nudgingParamsStr$usgsId
       !! are in nodeGageStr by construction
@@ -1695,14 +1695,20 @@ if(my_id .eq. io_id) then
          ! the last obs "static" info
          ! this puts in dummy values if none are found
          setLastObsInfo = .false.
-         if(allocated(lastObsStr)) then
-            if(any(lastObsStr(:)%usgsId .eq. obsStaticStr_SoA%usgsId(ll))) then
-               allocate(theMask(size(lastObsStr(:)%usgsId)))
-               theMask = lastObsStr(:)%usgsId .eq. obsStaticStr_SoA%usgsId(ll)
+         if(allocated(lastObsStr_SoA%usgsId)) then
+            if(any(lastObsStr_SoA%usgsId(:) .eq. obsStaticStr_SoA%usgsId(ll))) then
+               allocate(theMask(size(lastObsStr_SoA%usgsId(:))))
+               theMask = lastObsStr_SoA%usgsId(:) .eq. obsStaticStr_SoA%usgsId(ll)
                whLastObsStr = whUniLoop(theMask)
                deallocate(theMask)
                !! Drop in the entire derived type for each array index! Very nice.
-               obsStaticStr(ll)%lastObsStructure = lastObsStr(whLastObsStr)
+               ! obsStaticStr(ll)%lastObsStructure = lastObsStr(whLastObsStr)
+               obsStaticStr_SoA%lastObsStructure_SoA%usgsId(ll) = lastObsStr_SoA%usgsId(whLastObsStr)
+               obsStaticStr_SoA%lastObsStructure_SoA%lastObsDischarge(:,ll) = lastObsStr_SoA%lastObsDischarge(:,whLastObsStr)
+               obsStaticStr_SoA%lastObsStructure_SoA%lastObsTime(:,ll) = lastObsStr_SoA%lastObsTime(:,whLastObsStr)
+               obsStaticStr_SoA%lastObsStructure_SoA%lastObsQuality(:,ll) = lastObsStr_SoA%lastObsQuality(:,whLastObsStr)
+               obsStaticStr_SoA%lastObsStructure_SoA%lastObsModelDischarge(:,ll) = lastObsStr_SoA%lastObsModelDischarge(:,whLastObsStr)
+
                setLastObsInfo = .true.
             endif
          endif
