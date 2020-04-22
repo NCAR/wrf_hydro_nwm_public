@@ -1178,7 +1178,7 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       tt = whObsMiss(ii)
       ! Treat obs_static_to_strutct
       call mpp_land_bcast_int1d_root(obsTimeStr(tt)%obsStr(:)%obsStaticInd, iiImage)
-      call mpp_land_bcast_char1d_root(obsStaticStr(:)%usgsId, iiImage)
+      call mpp_land_bcast_char1d_root(obsStaticStr_SoA%usgsId(:), iiImage)
       !call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
       ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
       ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
