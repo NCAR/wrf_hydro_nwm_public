@@ -11,6 +11,7 @@ before_install:
   - cp -r $TRAVIS_BUILD_DIR $TEST_DIR_TRAVIS/candidate
   - git clone -b $TRAVIS_PULL_REQUEST_BRANCH https://github.com/NCAR/wrf_hydro_nwm_public.git $TEST_DIR_TRAVIS/reference
   - cd $TEST_DIR_TRAVIS/reference
+  - echo $TRAVIS_BRANCH $TRAVIS_PULL_REQUEST_BRANCH
   - git checkout $TRAVIS_BRANCH
   - sudo chmod -R 777 $TEST_DIR_TRAVIS
   #Get docker images
