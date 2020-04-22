@@ -1865,7 +1865,11 @@ subroutine output_rt_NWM(domainId,iGrid)
    fileMeta%timeValidMax = minSinceEpoch1 + int(nlst(1)%khour * 60/nlst(1)%out_dt) * nlst(1)%out_dt
 
    ! calculate total_valid_time
-   fileMeta%totalValidTime = int(nlst(1)%khour * 60 / nlst(1)%out_dt)  ! # number of valid time (#of output files)
+   if(nlst(domainId)%io_config_outputs .ne. 3 .and. nlst(domainId)%io_config_outputs .ne. 5) then
+       fileMeta%totalValidTime = int(nlst(1)%khour * 60 / nlst(1)%out_dt)  ! # number of valid time (#of output files)
+   else
+       fileMeta%totalValidTime = int(nlst(1)%khour * 60 / nlst(1)%out_dt / 3)  ! # number of valid time (#of output files)
+   endif
 
    ! Create output filename
    write(output_flnm, '(A12,".RTOUT_DOMAIN",I1)') nlst(domainId)%olddate(1:4)//&
