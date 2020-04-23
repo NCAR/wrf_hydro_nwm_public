@@ -567,7 +567,7 @@ subroutine getChanDim(did)
 
    return
 
-endif
+  endif
 
 
 allocate(CH_NETLNK(ixrt,jxrt))

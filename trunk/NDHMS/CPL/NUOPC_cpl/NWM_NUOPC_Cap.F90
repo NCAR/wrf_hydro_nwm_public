@@ -464,14 +464,14 @@ module NWM_NUOPC_Cap
     call ESMF_UserCompGetInternalState(gcomp, label_InternalState, is, rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    !NWM_LSMGrid = NWM_LSMGridCreate(is%wrap%did,rc=rc)
-    !if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    NWM_LSMGrid = NWM_LSMGridCreate(is%wrap%did,rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    !if (is%wrap%lwrite_grid) then
-    !  call NWM_ESMF_GridWrite(NWM_LSMGrid, &
-    !    trim(cname)//'_LSMGrid_D'//trim(is%wrap%hgrid)//".nc", rc=rc)
-    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    !endif
+    if (is%wrap%lwrite_grid) then
+      call NWM_ESMF_GridWrite(NWM_LSMGrid, &
+        trim(cname)//'_LSMGrid_D'//trim(is%wrap%hgrid)//".nc", rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    endif
 
     NWM_LocStream = NWM_LocStreamCreate(is%wrap%did,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -484,29 +484,31 @@ module NWM_NUOPC_Cap
       !! The model doesn't realize all fields because it's wasteful
       if (NWM_FieldList(fIndex)%adImport) then
         importConnected = NUOPC_IsConnected(is%wrap%NStateImp(1), &
-                          fieldName=NWM_FieldList(fIndex)%stdname)
+                         fieldName=NWM_FieldList(fIndex)%stdname)
       else
         importConnected = .FALSE.
       endif
 
       if (importConnected) then 
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
-        field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
-                                grid=NWM_LSMGrid, did=is%wrap%did,rc=rc)
+            field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
+                        grid=NWM_LSMGrid, locstream=NWM_LocStream, &
+                                            did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
 
+
       elseif(NWM_FieldList(fIndex)%adImport) then
         call ESMF_StateRemove(is%wrap%NStateImp(1), &
-             (/trim(NWM_FieldList(fIndex)%stdname)/), &
-             relaxedflag=.true.,rc=rc)
+           (/trim(NWM_FieldList(fIndex)%stdname)/), &
+                          relaxedflag=.true.,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
       endif
 
       if (NWM_FieldList(fIndex)%adExport) then
         exportConnected = NUOPC_IsConnected(is%wrap%NStateExp(1), &
-                          fieldName=NWM_FieldList(fIndex)%stdname)   
+                         fieldName=NWM_FieldList(fIndex)%stdname)   
       else
         exportConnected = .FALSE.
       endif
@@ -514,15 +516,16 @@ module NWM_NUOPC_Cap
       if (exportConnected) then
         NWM_FieldList(fIndex)%realizedExport = .TRUE.
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
-                                grid=NWM_LSMGrid, did=is%wrap%did,rc=rc)
+                             grid=NWM_LSMGrid,locstream=NWM_LocStream, &
+                                                did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateExp(1), field=field,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
 
       elseif(NWM_FieldList(fIndex)%adExport) then
         call ESMF_StateRemove(is%wrap%NStateExp(1), &
-             (/trim(NWM_FieldList(fIndex)%stdname)/), &
-             relaxedflag=.true.,rc=rc)
+           (/trim(NWM_FieldList(fIndex)%stdname)/), &
+                          relaxedflag=.true.,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
       endif
 

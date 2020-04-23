@@ -390,13 +390,6 @@ contains
     rc = ESMF_SUCCESS
 
     ! WRF-Hydro finish routine cannot be called because it stops MPI
-
-!    DCR - Turned off to let the model deallocate memory
-!    deallocate(nlst_rt(did)%zsoil8)
-!    if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
-!      msg=METHOD//': Deallocation of model soil depth memory failed.', &
-!      file=FILENAME,rcToReturn=rc)) return ! bail out
-
 #ifdef WRF_HYDRO
     !call hydro_finish(stat)  !?????? see above note
 #endif
@@ -416,12 +409,13 @@ contains
 #undef METHOD
 #define METHOD "NWM_FieldCreate"
 
-  function NWM_FieldCreate(stdName,grid,did,rc)
+  function NWM_FieldCreate(stdName,grid,locstream,did,rc)
     ! RETURN VALUE
     type(ESMF_Field) :: NWM_FieldCreate
     ! ARGUMENTS
     character(*), intent(in)                :: stdName
     type(ESMF_Grid), intent(in)             :: grid
+    type(ESMF_LocStream), intent(in)        :: locstream
     integer, intent(in)                     :: did
     integer,          intent(out)           :: rc
     ! LOCAL VARIABLES
@@ -434,24 +428,29 @@ contains
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%qlink(:,1), &  
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
+                              farray=rt_domain(did)%qlink(:,1), &
+                                  indexflag=ESMF_INDEX_DELOCAL, &
+                          datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                          name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%qSfcLatRunoff, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+                               farray=rt_domain(did)%qSfcLatRunoff, &
+                               indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
       CASE ('river_velocity')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-          farray=rt_domain(did)%velocity, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+                                    farray=rt_domain(did)%velocity, &
+                               indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
       CASE DEFAULT
-        call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+                   call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
           msg=METHOD//": Field hookup missing: "//trim(stdName), &
-          file=FILENAME,rcToReturn=rc)
+                                    file=FILENAME,rcToReturn=rc)
         return  ! bail out
     END SELECT
 
@@ -495,21 +494,30 @@ contains
     type(ESMF_VM)        :: vm
     integer              :: localPet
     integer              :: petCount
-    integer              :: globalNumloc     ! total number of chrouting points
-    integer              :: quotient         ! integer part of a division
-    integer              :: rem              ! remainder part of a division
-    integer              :: localLocBeg      ! pet begin point
-    integer              :: localNumloc      ! number of points on each pet
-    integer              :: i
-    real, allocatable    :: lat(:), lon(:)
-    type(ESMF_Field)     :: locStreamField
+    integer              :: gblElmCnt     ! total number of reaches elements
+    integer              :: gblElmDiv     ! integer part of a division
+    integer              :: gblElmExt     ! remainder part of a division
+    integer              :: linkls_start  ! current pet start id (i.e reach fid) 
+    integer              :: linkls_end    ! current pet end id (i.e reach fid) 
+    integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
+    integer              :: locElmCnt1
+    integer              :: locElmBeg
+    integer              :: gsize, i, ii, last_index
+    real, allocatable    :: lat(:),lon(:),qi(:) ! initial flow in stream
+    real, allocatable    :: chlat(:),chlon(:),qlink(:,:) 
+    integer, allocatable :: fid(:), link(:)
+    type(ESMF_Field)     :: field_streamflow, field_velocity
     type(ESMF_LocStream) :: locStream
     type(ESMF_LocStream) :: locStreamOut
+
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
     real, allocatable, dimension(:) :: streamflow, velocity
+        
+    integer, allocatable    :: deBlockList(:)
+    integer, allocatable    :: arbSeqIndexList(:)
 
 #ifdef DEBUG
-    character(ESMF_MAXSTR)      :: logMsg
+    character(ESMF_MAXSTR)  :: logMsg
 #endif
  
 #ifdef DEBUG
@@ -527,68 +535,120 @@ contains
 
     call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
     !-------------------------------------------------------------------
     ! Allocate and set equal number of points the destination LocStream 
-    ! will have on each PET.  
-    ! Note: I think we only want channel_option 1 & 2 - TODO
-    ! interface read_rst_crt_reach_nc
+    ! will have on each PET. This is consistance with the way NWM has
+    ! distributed the stream location reaches. NWM reads the input data
+    ! from the file "RouteLink_NHDPLUS.nc" and processes streamflow and
+    ! returns it in a series of files "yyyymmddhh00.CHRTOUT_DOMAIN1".  
+    !
+    ! Note: this method is implemented based on this options from
+    ! hydro.namelist: SUBRTSWCRT=1, OVRTSWCRT=1, CHANRTSWCRT=1,
+    ! channel_option=1, GWBASESWCRT=0, UDMP_OPT=1 AND
+    ! channel_only=0, channelBucket_only=0, forc_typ=1
+    !
+    !interface read_rst_crt_reach_nc
     ! module_RT.F call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
     !                      GCH_NETLNK, rt_domain(did)%GNLINKS, &
-
+    ! localPet =  my_id rt_domain(did)%linklsS, rt_domain(did)%linklsE
     !-------------------------------------------------------------------
 
+    ! total number of point locations = rt_domain(did)%gnlinksl = 2,776,738
+    ! ii=2776738, CHLON(ii)=-74.54775, CHLAT(ii)=44.99520, ZELEV(ii)=46.81000
+
+    !-------------------------------------------------------------------
+    ! reach based channel routing only
+    !-------------------------------------------------------------------
     if(nlst(did)%channel_option .ne. 3) then
-      ! reach based channel routing
-      ! maximum number of reaches
-      globalNumloc = rt_domain(did)%gnlinksl
+        gblElmCnt = rt_domain(did)%gnlinksl
     else
-      ! maximum number of unique links in channel for parallel computation
-      ! for grid based channel routing
-      globalNumloc = rt_domain(did)%gnlinks
+        rc = ESMF_FAILURE
+        if(ESMF_STDERRORCHECK(rc)) return
     endif
 
-    !           2776738           2776738                 23537185        3616
-    !print *, "Beheen RT_DOMAIN(domainId)%NLINKS vs globalNumloc ", &
-    !          globalNumloc, rt_domain(did)%gnlinksl, rt_domain(did)%gnlinks,  &
-    !          rt_domain(did)%nlinksize
+    ! checking on the differences between equal 
+    ! distribution of points per PET using this
+    ! code below versus the same distribution
+    ! done within the NWM code. They are not the
+    ! same!! 
+    ! equal count of points per localpet
+    !gblElmCnt = rt_domain(did)%gnlinksl
+    !gblElmDiv = gblElmCnt/petCount
+    !gblElmExt = MOD(gblElmCnt,petCount)
 
-    localNumloc = 20
-   allocate(lon(localNumloc))
-   allocate(lat(localNumloc))
+    !if (localPet .eq. (petCount-1)) then
+    !  locElmCnt1 = gblElmDiv + gblElmExt
+    !else
+    !  locElmCnt1 = gblElmDiv
+    !endif
+    
+    !locElmBeg = 1 + (gblElmDiv*localPet)
+        
+    ! create local element list
+    !allocate(arbSeqIndexList(locElmCnt1))
+    !do i=1, locElmCnt1
+    !    arbSeqIndexList(i) = locElmBeg + (i - 1)
+    !enddo
 
-   do i=1,localNumloc
-      lon(i)=360.0*i/localNumloc
-      lat(i)=100*REAL(localPet,ESMF_KIND_R8)/REAL(petCount,ESMF_KIND_R8)-50.0
-   enddo
-   do i=1, localNumloc
-      print *, lon(i), lat(i) 
-   enddo
-   print *, "================================="
 
-    allocate(lon(globalNumloc))
-    allocate(lat(globalNumloc))
 
-    do i=1,globalNumloc
-      lon(i)=rt_domain(did)%chlon(1)
-      lat(i)=rt_domain(did)%chlat(1)
+    !-------------------------------------------------------------------
+    ! NWM implementation - ReachLS_ini()
+    ! how many elements (i.e. reaches) are on this PET (localPet) 
+    ! and what is the start and end index of the elements
+    !-------------------------------------------------------------------
+    linkls_start = rt_domain(did)%linklsS
+    linkls_end   = rt_domain(did)%linklsE
+    locElmCnt = linkls_end - linkls_start + 1   ! to include the end - TODO chek on this
+
+    ! save the local elements in a list for future access
+    allocate(deBlockList(locElmCnt))
+    do i = 1, locElmCnt
+        deBlockList(i) = linkls_start + (i - 1)
+    end do
+    
+    !do i = 1, locElmCnt
+    !    print *, "Beheen ", my_id, linkls_start, linkls_end, &
+    !                        deBlockList(i), arbSeqIndexList(i), &
+    !                        locElmCnt,locElmCnt1
+    !enddo
+   
+
+    !-------------------------------------------------------------------
+    ! extract the attibute values from the NWM model variables
+    ! and save them into the allocated space - readLinkSL()
+    ! total number of point locations = rt_domain(did)%gnlinksl = ! 2,776,738
+    ! ii=2776738, CHLON(ii)=-74.54775, CHLAT(ii)=44.99520, ZELEV(ii)=46.81000
+    !-------------------------------------------------------------------
+    gsize = locElmCnt          !rt_domain(did)%gnlinksl      ! get_netcdf_dim()
+
+    !-------------------------------------------------------------------
+    ! allocate space for the  lon/lat/feature_id/streamflow(QI) attribute of 
+    ! each element for the current PET
+    !-------------------------------------------------------------------
+    allocate(lon(gsize))
+    allocate(lat(gsize))
+    allocate(fid(gsize))
+    !allocate(streamflow(gsize))
+   
+    do i = 1, gsize 
+        lon(i) = rt_domain(did)%chlon(i)
+        lat(i) = rt_domain(did)%chlat(i)
+        fid(i) = rt_domain(did)%linkid(i)
+        !streamflow(i)=rt_domain(did)%qlink(i,1)
     enddo
 
-    !-------------------------------------------------------------------
-    ! Allocate and set stream flow field data
-    !-------------------------------------------------------------------
-    ! g_qlink = RT_DOMAIN(domainId)%QLINK
-    print *, "Beheen qlink ", rt_domain(did)%qlink(1,2)
-    
-    !do i=1,globalNumloc
-    !  streamflow(i)=rt_domain 
-    !enddo
+    print *, "Beheen gzie ", localPet, fid(1), fid(gsize), &
+                             lon(1),lon(gsize),lat(1),lat(gsize)
+
 
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
     ! define the number and distribution of the locations. 
     !-------------------------------------------------------------------
     locStream=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
-                                   localCount=globalNumloc,         &
+                                   localCount=locElmCnt,         &
                                    coordSys=ESMF_COORDSYS_SPH_DEG, &
                                    rc=rc)
 
@@ -610,18 +670,18 @@ contains
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyUnits="Degrees",     &
                              keyLongName="Longitude", rc=rc)
+
     !-------------------------------------------------------------------
     ! Create a Field on the Location Stream. In this case the 
     ! Field is created from a user array, but any of the other
     ! Field create methods (e.g. from ArraySpec) would also apply.
     !-------------------------------------------------------------------       
-    locStreamField = ESMF_FieldCreate(locStream=locStream,  &
-                             typekind=ESMF_TYPEKIND_R8, &
-                             name="flow_rate", &
-                             rc=rc)
-    ! flow in link
-    ! RT_DOMAIN(domainId)%QLINK(:,1)  g_qlink(:1)
- 
+    !field_streamflow = ESMF_FieldCreate(locstream=locStream, &
+    !                                    farray=streamflow, &
+    !                                    indexflag=ESMF_INDEX_DELOCAL, &
+    !                                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
+    !                                    name="flow_rate", rc=rc)   ! standard name
+
      
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
@@ -855,7 +915,7 @@ contains
       write(logMsg,"(A,4(F0.3,A))") MODNAME//": Corner Coordinates = (", &
             longitude(1,1),":",longitude(local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1),",", &
             latitude(1,1),":",latitude(local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1),")"
-      call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
+      !call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
 #endif
 
       ! Add Corner Coordinates to Grid

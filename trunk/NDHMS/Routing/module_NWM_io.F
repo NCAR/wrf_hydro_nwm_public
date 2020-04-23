@@ -307,8 +307,6 @@ subroutine output_chrt_NWM(domainId)
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       velocityLocal = RT_DOMAIN(domainId)%velocity
 
-      print *, "Beheen NLINK is: ",rt_domain(domainId)%NLINKS
-
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
 #ifdef MPP_LAND

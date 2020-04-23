@@ -385,8 +385,7 @@ MODULE MODULE_mpp_ReachLS
 ! get my_id and numprocs
      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-
-
+     
      nlinksl = glinksl / numprocs
      allocate(linkls_s(numprocs))
      allocate(linkls_e(numprocs))
@@ -413,11 +412,13 @@ MODULE MODULE_mpp_ReachLS
      linklsE = linkls_e(my_id+1)
      tmpnlinksl = aLinksl(my_id+1)
      l_nlinksl = nlinksl
-
+    
      max_nlinksl = l_nlinksl
      call mpp_land_max_int1(max_nlinksl)
 
      gNlinksl = glinksl
+
+    
   end subroutine ReachLS_ini
 
   subroutine MapGrid2ReachIni(in2d)

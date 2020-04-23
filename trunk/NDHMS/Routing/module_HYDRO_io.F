@@ -5466,7 +5466,7 @@ end subroutine mpp_output_chrt
         call mpp_land_bcast_int1(GNLINKS)
         call mpp_land_bcast_int1(NLINKSL)
         call mpp_land_bcast_int1(NLAKES)
-
+        
 
         call decompose_RT_int(g_CH_NETLNK,GCH_NETLNK,g_IXRT,g_JXRT,ixrt,jxrt)
         if(allocated(g_CH_NETLNK)) deallocate(g_CH_NETLNK)
@@ -6681,13 +6681,11 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
    nlst(did)%OVRTSWCRT   .eq. 1 .or. &
    nlst(did)%GWBASESWCRT .ne. 0       ) then
    !! JLM ?? restarting channel depends on these options?
-   print *, "Beheen in 1 1 0 "
 
    if( nlst(did)%channel_only       .eq. 0 .and. &
        nlst(did)%channelBucket_only .eq. 0         ) then
 
       if(nlst(did)%SUBRTSWCRT.eq.1.or.nlst(did)%OVRTSWCRT.eq.1) then
-         print *, "Beheen in 1 & 1 "
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%INFXSWGT,"infxswgt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%surface_water_head_routing,"sfcheadsubrt")
          call read_rt_nc2(ncid,rt_domain(did)%ixrt,rt_domain(did)%jxrt,rt_domain(did)%overland%control%boundary_flux,"QBDRYRT")
@@ -6702,14 +6700,12 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 
    if(nlst(did)%CHANRTSWCRT.eq.1) then
       if(nlst(did)%channel_option .eq. 3) then
-         print *,"Beheen in 1 & 3 "
          !! Have not setup channel_only for gridded routing YET
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%HLINK,rt_domain(did)%NLINKS,"hlink",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,1),rt_domain(did)%NLINKS,"qlink1",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%QLINK(:,2),rt_domain(did)%NLINKS,"qlink2",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
          call read_rst_crt_stream_nc(ncid,rt_domain(did)%CVOL,rt_domain(did)%NLINKS,"cvol",rt_domain(did)%GNLINKS,rt_domain(did)%map_l2g)
       else
-         print *,"Beheen in 1 & not 3 "
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%HLINK,"hlink",rt_domain(did)%GNLINKSL,fatalErr=.FALSE.)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,1),"qlink1",rt_domain(did)%GNLINKSL)
          call read_rst_crt_reach_nc(ncid,rt_domain(did)%QLINK(:,2),"qlink2",rt_domain(did)%GNLINKSL)
@@ -7098,7 +7094,6 @@ end subroutine RESTART_IN_nc
          real :: scale_factor, add_offset
          integer :: ovrtswcrt_in, ss
          real,allocatable,dimension(:) ::  var, varTmp
-       print *, "Beheen read_rst_crt_reach_nc_real "
 
          fatalErr_local = .false.
          if(present(fatalErr)) fatalErr_local=fatalErr
@@ -7118,7 +7113,6 @@ end subroutine RESTART_IN_nc
 
 #ifdef MPP_LAND
          if(my_id .eq. IO_id) then
-            print *, "Beheen varStr ", trim(varStr)
 
             iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
          endif
@@ -8387,7 +8381,6 @@ end subroutine read_routelink
 
         call ReachLS_decomp(tmpLINKID,  LINKID )
         call ReachLS_decomp(tmpLAKEIDA, LAKEIDA )
-
         call ReachLS_decomp(tmpTO_NODE, TO_NODE)
         call ReachLS_decomp(tmpCHLON,    CHLON  )
         call ReachLS_decomp(tmpCHLAT,    CHLAT  )
