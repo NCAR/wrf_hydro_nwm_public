@@ -59,7 +59,19 @@ MODULE MODULE_mpp_ReachLS
      module procedure updateLinkV4_mem
   end interface
 
+  interface
+     subroutine hash_getLocalIndx(gLinkId,glinksl,LLINKID,LLINKIDINDX,LLINKLEN) bind(C, name="getLocalIndx_C")
 
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: gLinkId(*), LLINKID(*)
+       
+       integer(c_int) :: LLINKIDINDX(*) !OUTPUT
+       
+       integer(c_int),value :: glinksl,LLINKLEN
+
+     end subroutine hash_getLocalIndx
+  end interface
 
   include "mpif.h"
 
@@ -339,19 +351,6 @@ MODULE MODULE_mpp_ReachLS
      call mpi_bcast(outV(1:gnlinksl),gnlinksl,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
   end subroutine gbcastInt
-
-  subroutine hash_getLocalIndx(gLinkId,glinksl,LLINKID,LLINKIDINDX,LLINKLEN) bind(C, name="getLocalIndx_C")
-
-       use iso_c_binding, only : c_int
-
-       integer(c_int) :: gLinkId(*),LLINKID(*)
-
-       integer(c_int) :: LLINKIDINDX(*) !OUTPUT
-
-       integer(c_int),value :: glinksl,LLINKLEN
-
-     end subroutine hash_getLocalIndx
-
 
   subroutine getLocalIndx(glinksl,LINKID, LLINKID)
        implicit none

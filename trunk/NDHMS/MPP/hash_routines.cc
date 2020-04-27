@@ -1,8 +1,9 @@
 #include <map>
+#include <iostream>
 
 using namespace std;
 
-void getLocalIndx_C(int * gLinkId, int *llinkid, int * llinkidindx, int glinksl, int llinklen)
+void _getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
 {
   map<int,int> hash;
   map<int,int>::iterator it;
@@ -20,8 +21,12 @@ void getLocalIndx_C(int * gLinkId, int *llinkid, int * llinkidindx, int glinksl,
 	}
     }
 
-  printf("Statically setting output array to 1\n");
-  for(int i=0;i<llinklen;i++)
-    llinkidindx[i]=1;
+}
 
+extern "C"
+{
+  void getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
+  {
+    _getLocalIndx_C(gLinkId, glinksl, llinkid, llinkidindx, llinklen);
+  }
 }
