@@ -8,7 +8,7 @@ void getLocalIndx_C(int * gLinkId, int *llinkid, int * llinkidindx, int glinksl,
   map<int,int>::iterator it;
 
   for(int i=0; i < llinklen; i++)
-    hash.insert(std::pair<int,int>(llinkid[i],i+1));
+    hash.insert(std::pair<int,int>(llinkid[i],i));
 
   for(int i=0; i < glinksl; i++)
     {
@@ -19,5 +19,9 @@ void getLocalIndx_C(int * gLinkId, int *llinkid, int * llinkidindx, int glinksl,
 	  hash.erase(it);
 	}
     }
+
+  printf("Statically setting output array to 1\n");
+  for(int i=0;i<llinklen;i++)
+    llinkidindx[i]=1;
 
 }
