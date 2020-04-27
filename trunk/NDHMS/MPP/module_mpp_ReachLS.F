@@ -344,9 +344,9 @@ MODULE MODULE_mpp_ReachLS
 
        use iso_c_binding, only : c_int
 
-       real(c_int) :: gLinkId(*),LLINKID(*)
+       integer(c_int) :: gLinkId(*),LLINKID(*)
 
-       real(c_int) :: LLINKIDINDX(*) !OUTPUT
+       integer(c_int) :: LLINKIDINDX(*) !OUTPUT
 
        integer(c_int),value :: glinksl,LLINKLEN
 
@@ -371,19 +371,21 @@ MODULE MODULE_mpp_ReachLS
        call mpi_bcast(gLinkId(1:glinksl),glinksl,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
 
-       cache_block = 256
-       do cache_idx = 0, glinksl - 1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, glinksl)
-          do i = 1, LLINKLEN
-             if(LLINKIDINDX(i) /= 0) cycle
-             do k = cache_block_begin, cache_block_end
-                if(LLINKID(i) .eq. gLinkId(k)) then
-                   LLINKIDINDX(i) = k
-                endif
-             end do
-          end do
-       end do
+       call hash_getLocalIndx(gLinkId,glinksl,LLINKID,LLINKIDINDX,LLINKLEN)
+
+       ! cache_block = 256
+       ! do cache_idx = 0, glinksl - 1, cache_block
+       !    cache_block_begin = cache_idx + 1
+       !    cache_block_end = min(cache_idx + cache_block, glinksl)
+       !    do i = 1, LLINKLEN
+       !       if(LLINKIDINDX(i) /= 0) cycle
+       !       do k = cache_block_begin, cache_block_end
+       !          if(LLINKID(i) .eq. gLinkId(k)) then
+       !             LLINKIDINDX(i) = k
+       !          endif
+       !       end do
+       !    end do
+       ! end do
 
        call mpp_land_sync()
   end subroutine getLocalIndx
