@@ -340,6 +340,18 @@ MODULE MODULE_mpp_ReachLS
             IO_id,HYDRO_COMM_WORLD,ierr)
   end subroutine gbcastInt
 
+  subroutine hash_getLocalIndx(gLinkId,glinksl,LLINKID,LLINKIDINDX,LLINKLEN) bind(C, name="getLocalIndx_C")
+
+       use iso_c_binding, only : c_int
+
+       real(c_int) :: gLinkId(*),LLINKID(*)
+
+       real(c_int) :: LLINKIDINDX(*) !OUTPUT
+
+       integer(c_int),value :: glinksl,LLINKLEN
+
+     end subroutine hash_getLocalIndx
+
 
   subroutine getLocalIndx(glinksl,LINKID, LLINKID)
        implicit none
