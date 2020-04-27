@@ -372,8 +372,6 @@ MODULE MODULE_mpp_ReachLS
 
        call hash_getLocalIndx(gLinkId,glinksl,LLINKID,LLINKIDINDX,LLINKLEN)
 
-       write(*,*) 'LLINKIDINDX: ',LLINKIDINDX
-
        ! cache_block = 256
        ! do cache_idx = 0, glinksl - 1, cache_block
        !    cache_block_begin = cache_idx + 1
