@@ -54,6 +54,20 @@ MODULE module_Routing
    integer, parameter :: r4 = selected_real_kind(4)
    real  ,  parameter :: zeroFlt=0.0000000000000000000_r4
 
+  interface
+     subroutine hash_LandRT(ch_lnkrt,ch_lnkrt_sl,i_start,i_end,j_start,j_end,LLINKID,LNLINKSL,leading_dim) bind(C, name="LandRT_C")
+
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: ch_lnkrt(*), LLINKID(*)
+       
+       integer(c_int) :: ch_lnkrt_sl(*) !OUTPUT
+       
+       integer(c_int),value :: i_start,i_end,j_start,j_end,LNLINKSL, leading_dim
+
+     end subroutine hash_LandRT
+  end interface
+
 CONTAINS
 
    subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)
@@ -986,36 +1000,49 @@ subroutine LandRT_ini(did)
 
         endif  ! end if block for UDMP_OPT
 
-        new_start_i = 0; new_start_j = 1
+        new_start_i = 1; new_start_j = 1
         new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
 
-        if(left_id .ge. 0) new_start_i = 1
+        if(left_id .ge. 0) new_start_i = 2
         if(right_id .ge. 0) new_end_i = rt_domain(did)%ixrt - 1
         if(down_id .ge. 0) new_start_j = 2
         if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
 
-        cache_block = 256
-        num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
-        !$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
-        !$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
-        do j = new_start_j, new_end_j
-           do cache_idx = 0, num_blocks - 1
-              cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
-              cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
-              do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
-                 cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
-                 cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
-                 do i = cache_block_begin_i, cache_block_end_i
-                    do k = cache_block_begin_k, cache_block_end_k
-                       if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                          rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                       endif
-                    end do
-                 end do
-              end do
-           end do
-        end do
-        !$omp end parallel do
+
+        ! do k = 1, rt_domain(did)%LNLINKSL
+        !    do j = new_start_j, new_end_j
+        !       do i = new_start_i, new_end_i
+        !          if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+        !             rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+        !          endif
+        !       end  do
+        !    end do
+        ! end do
+        
+        call hash_LandRT(rt_domain(did)%ch_lnkrt,rt_domain(did)%ch_lnkrt_sl,new_start_i,new_end_i,new_start_j,new_end_j,rt_domain(did)%LLINKID,rt_domain(did)%LNLINKSL,size(rt_domain(did)%CH_LNKRT,1))
+
+        ! cache_block = 256
+        ! num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
+        ! !$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
+        ! !$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
+        ! do j = new_start_j, new_end_j
+        !    do cache_idx = 0, num_blocks - 1
+        !       cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
+        !       cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
+        !       do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
+        !          cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
+        !          cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
+        !          do i = cache_block_begin_i, cache_block_end_i
+        !             do k = cache_block_begin_k, cache_block_end_k
+        !                if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+        !                   rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+        !                endif
+        !             end do
+        !          end do
+        !       end do
+        !    end do
+        ! end do
+        ! !$omp end parallel do
 
         call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
