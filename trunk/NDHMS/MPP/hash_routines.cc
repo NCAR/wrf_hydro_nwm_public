@@ -89,10 +89,10 @@ extern "C"
   }
 
   void readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
-		       int *nhdBuckMask, float *gw_buck_coeff, float *gw_buck_exp,
-		       float *tmpCoeff, float *tmpExp, float *tmpLoss, float *tmpz_max,
-		       float *tmpz_init, float *gw_buck_loss, float *z_max, float *z_init,
-		       int bucket_loss)
+			int *nhdBuckMask, float *gw_buck_coeff, float *gw_buck_exp,
+			float *gw_buck_loss, float *tmpCoeff, float *tmpExp, float *tmpLoss,
+			float *z_max, float *z_init, float *tmpz_max, float *tmpz_init,
+			int bucket_loss)
   {
     _readBucket_nhd_C(tmpLinkid, gnid, linkid, numbasns,
 		      nhdBuckMask, gw_buck_coeff, gw_buck_exp,
