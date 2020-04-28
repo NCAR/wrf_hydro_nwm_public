@@ -9252,7 +9252,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
        call hash_readBucket_nhd(tmpLinkid,gnid,LINKID,numbasns,&
             nhdBuckMask, gw_buck_coeff, gw_buck_exp, gw_buck_loss,&
             tmpCoeff, tmpExp, tmpLoss, z_max, z_init, &
-            tmpz_max, tmpz_init, bucket_loss)
+            tmpz_max, tmpz_init, nlst(did)%bucket_loss)
        ! cache_block = 128
        ! do cache_idx = 0, gnid-1, cache_block
        !    cache_block_begin = cache_idx + 1
