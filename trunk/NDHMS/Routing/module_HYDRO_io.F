@@ -53,14 +53,12 @@ module module_HYDRO_io
           tmpCoeff, tmpExp, tmpLoss, z_max, z_init, &
           tmpz_max, tmpz_init, bucket_loss) bind(C, name="readBucket_nhd_C")
 
-       use iso_c_binding, only : c_int
+       use iso_c_binding, only : c_int, c_float
 
-       integer(c_int) :: tmpLinkid(*), LINKID(*)
-       
-       integer(c_int) :: nhdBuckMask(*), gw_buck_coeff(*), gw_buck_exp(*), gw_buck_loss(*)
-       integer(c_int) :: tmpCoeff(*), tmpExp(*), tmpLoss(*)
-       integer(c_int) :: z_max(*), z_init(*), tmpz_max(*), tmpz_init(*)
-       
+       integer(c_int) :: tmpLinkid(*), LINKID(*), nhdBuckMask(*)
+       real(c_float) :: gw_buck_coeff(*), gw_buck_exp(*), gw_buck_loss(*)
+       real(c_float) :: tmpCoeff(*), tmpExp(*), tmpLoss(*)
+       real(c_float) :: z_max(*), z_init(*), tmpz_max(*), tmpz_init(*)
        integer(c_int),value :: gnid, numbasns, bucket_loss
 
      end subroutine hash_readBucket_nhd

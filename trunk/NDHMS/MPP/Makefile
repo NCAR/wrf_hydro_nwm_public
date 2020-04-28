@@ -5,7 +5,7 @@
 
 include ../macros
 
-COMPILERCC = icpc -O3
+COMPILERCC = icpc -O3 -g
 
 OBJS =  CPL_WRF.o mpp_land.o module_mpp_ReachLS.o module_mpp_GWBUCKET.o hash_routines.o
 

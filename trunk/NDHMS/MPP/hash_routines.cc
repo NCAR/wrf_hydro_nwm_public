@@ -48,9 +48,9 @@ void _LandRT_C(int *ch_lnkrt, int *ch_lnkrt_sl, int i_start, int i_end, int j_st
 }
 
 void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
-		       int *nhdBuckMask, int *gw_buck_coeff, int *gw_buck_exp,
-		       int *tmpCoeff, int *tmpExp, int *tmpLoss, int *tmpz_max,
-		       int *tmpz_init, int *gw_buck_loss, int *z_max, int *z_init,
+		       int *nhdBuckMask, float *gw_buck_coeff, float *gw_buck_exp,
+		       float *tmpCoeff, float *tmpExp, float *tmpLoss, float *tmpz_max,
+		       float *tmpz_init, float *gw_buck_loss, float *z_max, float *z_init,
 		       int bucket_loss)
 {
   map<int,int> hash;
@@ -61,7 +61,7 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 
   for(int i=0; i < gnid; i++)
     {
-      it = hash.find(tmplinkid[i]);
+      it = hash.find(tmpLinkid[i]);
       if(it != hash.end())
 	{
 	  gw_buck_coeff[it->second] = tmpCoeff[i+1];
@@ -89,10 +89,10 @@ extern "C"
   }
 
   void readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
-		       int *nhdBuckMask, int *gw_buck_coeff, int *gw_buck_exp,
-			int *gw_buck_loss, int *tmpCoeff, int *tmpExp, int *tmpLoss,
-			int *z_max, int *z_init, int *tmpz_max, int *tmpz_init,
-			int bucket_loss)
+		       int *nhdBuckMask, float *gw_buck_coeff, float *gw_buck_exp,
+		       float *tmpCoeff, float *tmpExp, float *tmpLoss, float *tmpz_max,
+		       float *tmpz_init, float *gw_buck_loss, float *z_max, float *z_init,
+		       int bucket_loss)
   {
     _readBucket_nhd_C(tmpLinkid, gnid, linkid, numbasns,
 		      nhdBuckMask, gw_buck_coeff, gw_buck_exp,
