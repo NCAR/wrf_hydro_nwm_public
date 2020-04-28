@@ -27,7 +27,7 @@ CPL_WRF.o: CPL_WRF.F
 module_mpp_ReachLS.o: module_mpp_ReachLS.F hash_routines.cc
 	@echo ""
 	$(RMD) $(*).o $(*).mod $(*).stb *~
-	$(COMPILERCC) -O3 -c hash_routines.cc
+	$(COMPILERCC) -c hash_routines.cc
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) -c $(*).F
 	ar -r ../lib/libHYDRO.a $(@) hash_routines.o
 
