@@ -85,7 +85,10 @@ void _nhdLakeMap_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl, 
   int *tmp = new int[nlinksl];
 
   for(int i=0; i < nlinksl; i++)
-    hash.insert(std::pair<int,int>(linkid[i],i));
+    {
+      tmp[i] = 0;
+      hash.insert(std::pair<int,int>(linkid[i],i));
+    }
 
   for(int i=0; i < gnlinksl; i++)
     {
@@ -97,7 +100,10 @@ void _nhdLakeMap_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl, 
 	}
     }
 
-  *tmp_max_num = *max_element(tmp,tmp + nlinksl);
+  for(int i=0;i<nlinksl;i++)
+    if(*tmp_max_num < tmp[i])
+      *tmp_max_num = tmp[i];
+
   delete(tmp);
 }
 

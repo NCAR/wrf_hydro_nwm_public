@@ -10331,10 +10331,12 @@ end subroutine output_chrt2
 
       call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
 
+      write(*,*) 'kk and maxNum ',kk,maxNum
+
       allocate(num_a(NLINKSL))
       cache_block = 256
       num_a = 0
-      ! tmp_num = 0
+      tmp_num = 0
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
       !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
@@ -10374,6 +10376,20 @@ end subroutine output_chrt2
       num_a = 1
       tmp_num = 0
       kk = 0
+
+! do m = 1, NLINKSL
+!          num = 1
+!          do k = 1, gnlinksl
+!              if(gto(k) .eq. LINKID(m) ) then
+!                  kk = kk +1
+!                  ind(kk) = k
+!                  tmpTO_NODE(kk) = gto(k)
+!                  gToNodeOut(m,num+1) = kk
+!                  gToNodeOut(m,1) = num
+!                  num = num + 1
+!              endif
+!           end do
+! enddo
       do cache_idx = 0, gnlinksl-1, cache_block
          cache_block_begin = cache_idx + 1
          cache_block_end = min(cache_idx + cache_block, gnlinksl)
