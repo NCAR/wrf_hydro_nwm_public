@@ -10332,8 +10332,8 @@ end subroutine output_chrt2
       call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
 
       allocate(num_a(NLINKSL))
-      ! cache_block = 256
-      ! num_a = 0
+      cache_block = 256
+      num_a = 0
       ! tmp_num = 0
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
