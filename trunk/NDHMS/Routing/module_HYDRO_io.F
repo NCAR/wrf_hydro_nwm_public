@@ -47,6 +47,25 @@ module module_HYDRO_io
       module procedure read_rst_crt_reach_nc_real8
    end interface
 
+  interface
+     subroutine hash_readBucket_nhd(tmpLinkid,gnid,LINKID,numbasns,&
+          nhdBuckMask, gw_buck_coeff, gw_buck_exp, gw_buck_loss,&
+          tmpCoeff, tmpExp, tmpLoss, z_max, z_init, &
+          tmpz_max, tmpz_init, bucket_loss) bind(C, name="readBucket_nhd_C")
+
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: tmpLinkid(*), LINKID(*)
+       
+       integer(c_int) :: nhdBuckMask(*), gw_buck_coeff(*), gw_buck_exp(*), gw_buck_loss(*)
+       integer(c_int) :: tmpCoeff(*), tmpExp(*), tmpLoss(*)
+       integer(c_int) :: z_max(*), z_init(*), tmpz_max(*), tmpz_init(*)
+       
+       integer(c_int),value :: gnid, numbasns, bucket_loss
+
+     end subroutine hash_readBucket_nhd
+  end interface
+
    integer, parameter :: did=1
    integer :: logUnit
 
@@ -9232,26 +9251,30 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 #endif
 
        nhdBuckMask = -999
-       cache_block = 128
-       do cache_idx = 0, gnid-1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, gnid)
-          do k = 1, numbasns
-             if(nhdBuckMask(k) /= -999) cycle
-             do i = cache_block_begin, cache_block_end
-                if(LINKID(k) .eq. tmpLinkid(i)) then
-                   gw_buck_coeff(k) = tmpCoeff(i)
-                   gw_buck_exp(k) = tmpExp(i)
-                   if(nlst(did)%bucket_loss .eq. 1) then
-                      gw_buck_loss(k) = tmpLoss(i)
-                   endif
-                   z_max(k) = tmpz_max(i)
-                   z_init(k) = tmpz_init(i)
-                   nhdBuckMask(k) = 1
-                endif
-             end do
-          end do
-       end do
+       call hash_readBucket_nhd(tmpLinkid,gnid,LINKID,numbasns,&
+            nhdBuckMask, gw_buck_coeff, gw_buck_exp, gw_buck_loss,&
+            tmpCoeff, tmpExp, tmpLoss, z_max, z_init, &
+            tmpz_max, tmpz_init, bucket_loss)
+       ! cache_block = 128
+       ! do cache_idx = 0, gnid-1, cache_block
+       !    cache_block_begin = cache_idx + 1
+       !    cache_block_end = min(cache_idx + cache_block, gnid)
+       !    do k = 1, numbasns
+       !       if(nhdBuckMask(k) /= -999) cycle
+       !       do i = cache_block_begin, cache_block_end
+       !          if(LINKID(k) .eq. tmpLinkid(i)) then
+       !             gw_buck_coeff(k) = tmpCoeff(i)
+       !             gw_buck_exp(k) = tmpExp(i)
+       !             if(nlst(did)%bucket_loss .eq. 1) then
+       !                gw_buck_loss(k) = tmpLoss(i)
+       !             endif
+       !             z_max(k) = tmpz_max(i)
+       !             z_init(k) = tmpz_init(i)
+       !             nhdBuckMask(k) = 1
+       !          endif
+       !       end do
+       !    end do
+       ! end do
 
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
