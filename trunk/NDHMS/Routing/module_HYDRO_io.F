@@ -64,6 +64,20 @@ module module_HYDRO_io
      end subroutine hash_readBucket_nhd
   end interface
 
+  interface
+     subroutine hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum) &
+          bind(C, name="nhdLakeMap_mpp_maxNum_C")
+
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: gto(*), LINKID(*)
+       integer(c_int) :: kk, maxNum
+       integer(c_int),value :: gnlinksl, nlinksl
+
+     end subroutine hash_nhdLakeMap_mpp_maxNum
+  end interface
+
+
    integer, parameter :: did=1
    integer :: logUnit
 
@@ -10303,26 +10317,40 @@ end subroutine output_chrt2
 
       maxNum = 0
       kk = 0
+
+    ! do m = 1, NLINKSL
+    !       num = 0
+    !       do k = 1, gnlinksl
+    !          if(gto(k) .eq. LINKID(m) ) then
+    !              kk = kk +1
+    !              num = num + 1
+    !          endif
+    !       end do
+    !       if(num .gt. maxNum) maxNum = num
+    ! end do
+
+      call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
+
       allocate(num_a(NLINKSL))
-      cache_block = 256
-      num_a = 0
-      tmp_num = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  kk = kk +1
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-            num = tmp_num
-            if(num .gt. maxNum) maxNum = num
-         end do
-      end do
+      ! cache_block = 256
+      ! num_a = 0
+      ! tmp_num = 0
+      ! do cache_idx = 0, gnlinksl-1, cache_block
+      !    cache_block_begin = cache_idx + 1
+      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
+      !    do m = 1, NLINKSL
+      !       tmp_num = num_a(m)
+      !       do k = cache_block_begin, cache_block_end
+      !          if(gto(k) .eq. LINKID(m) ) then
+      !             kk = kk +1
+      !             tmp_num = tmp_num + 1
+      !          endif
+      !       end do
+      !       num_a(m) = tmp_num
+      !       num = tmp_num
+      !       if(num .gt. maxNum) maxNum = num
+      !    end do
+      ! end do
 
       allocate(ind(kk))
       allocate(gToNodeOut(NLINKSL,maxNum+1))
@@ -10573,6 +10601,7 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
       allocate(num_a(NLINKSL))
+
       cache_block = 256
       num_a = 0
       tmp_num = 0

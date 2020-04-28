@@ -1,5 +1,6 @@
 #include <map>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -76,6 +77,30 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
     }
 }
 
+void _nhdLakeMap_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl, int *tmp_kk, int *tmp_max_num)
+{
+  map<int,int> hash;
+  map<int,int>::iterator it;
+
+  int *tmp = new int[nlinksl];
+
+  for(int i=0; i < nlinksl; i++)
+    hash.insert(std::pair<int,int>(linkid[i],i));
+
+  for(int i=0; i < gnlinksl; i++)
+    {
+      it = hash.find(gto[i]);
+      if(it != hash.end())
+	{
+	  (*tmp_kk)++;
+	  tmp[it->second]++;
+	}
+    }
+
+  *tmp_max_num = *max_element(tmp,tmp + nlinksl);
+  delete(tmp);
+}
+
 extern "C"
 {
   void getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
@@ -101,5 +126,14 @@ extern "C"
 		      bucket_loss);
   }
 
+
+  void nhdLakeMap_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl, int *kk, int *maxNum)
+  {
+    int tmp_max_num = *maxNum;
+    int tmp_kk = 0;
+    _nhdLakeMap_mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, &tmp_kk, &tmp_max_num);
+    *maxNum = tmp_max_num;
+    *kk = tmp_kk;
+  }
 
 }
