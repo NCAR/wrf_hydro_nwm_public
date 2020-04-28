@@ -53,29 +53,8 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 		       float *z_max, float *z_init, float *tmpz_max, float *tmpz_init,
 		       int bucket_loss)
 {
-  multimap<int,int> hash;
-  multimap<int,int>::iterator it;
-
-  // for(int i=0; i < gnid; i++)
-  //   hash.insert(std::pair<int,int>(tmpLinkid[i],i));
-
-  // for(int i=0; i < numbasns; i++)
-  //   {
-  //     if(nhdBuckMask[i] != -999)
-  // 	{
-  // 	  it = hash.find(linkid[i]);
-  // 	  if(it != hash.end())
-  // 	    {
-  // 	      gw_buck_coeff[i] = tmpCoeff[it->second];
-  // 	      gw_buck_exp[i] = tmpExp[it->second];
-  // 	      if(bucket_loss == 1)
-  // 		gw_buck_loss[i] = tmpLoss[it->second];
-  // 	      z_max[i] = tmpz_max[it->second];
-  // 	      z_init[i] = tmpz_init[it->second];
-  // 	      nhdBuckMask[i] = 1;
-  // 	    }
-  // 	}
-  //   }
+  map<int,int> hash;
+  map<int,int>::iterator it;
 
   for(int i=0; i < numbasns; i++)
     hash.insert(std::pair<int,int>(linkid[i],i));
@@ -83,8 +62,7 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
   for(int i=0; i < gnid; i++)
     {
       it = hash.find(tmpLinkid[i]);
-      int n = hash.count(tmpLinkid[i]);
-      if(n > 0 && nhdBuckMask[it->second] == -999)
+      if(it != hash.end() && nhdBuckMask[it->second] == -999)
 	{
 	  gw_buck_coeff[it->second] = tmpCoeff[i];
 	  gw_buck_exp[it->second] = tmpExp[i];
