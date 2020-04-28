@@ -62,7 +62,7 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
   for(int i=0; i < gnid; i++)
     {
       it = hash.find(tmpLinkid[i]);
-      if(it != hash.end())
+      if(it != hash.end() && nhdBuckMask[it->second] != -999)
 	{
 	  gw_buck_coeff[it->second] = tmpCoeff[i+1];
 	  gw_buck_exp[it->second] = tmpExp[i+1];
@@ -71,7 +71,6 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 	  z_max[it->second] = tmpz_max[i+1];
 	  z_init[it->second] = tmpz_init[i+1];
 	  nhdBuckMask[it->second] = 1;
-	  hash.erase(it);
 	}
     }
 }
