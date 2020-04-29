@@ -73,6 +73,19 @@ MODULE MODULE_mpp_ReachLS
      end subroutine hash_getLocalIndx
   end interface
 
+  interface
+     subroutine hash_getToInd_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum) &
+          bind(C, name="nhdLakeMap_mpp_maxNum_C")
+
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: gto(*), LINKID(*)
+       integer(c_int) :: kk, maxNum
+       integer(c_int),value :: gnlinksl, nlinksl
+
+     end subroutine hash_getToInd_maxNum
+  end interface
+
   include "mpif.h"
 
   integer,allocatable,dimension(:) :: sDataRec  ! sending data size
@@ -853,27 +866,30 @@ MODULE MODULE_mpp_ReachLS
        mm = l_nlinksl
 
       allocate(num_a(mm))
-      cache_block = 256
-      num_a = 0
-      tmp_num = 0
+
       kk = 0
       maxNum = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, mm
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. from(m) ) then
-                  kk = kk + 1
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-            num = tmp_num
-            if(num .gt. maxNum) maxNum = num
-         end do
-      enddo
+      call hash_getToInd_maxNum(gto,gnlinksl,from,l_nlinksl,kk,maxNum)
+
+      cache_block = 256
+      num_a = 0
+      ! tmp_num = 0
+      ! do cache_idx = 0, gnlinksl-1, cache_block
+      !    cache_block_begin = cache_idx + 1
+      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
+      !    do m = 1, mm
+      !       tmp_num = num_a(m)
+      !       do k = cache_block_begin, cache_block_end
+      !          if(gto(k) .eq. from(m) ) then
+      !             kk = kk + 1
+      !             tmp_num = tmp_num + 1
+      !          endif
+      !       end do
+      !       num_a(m) = tmp_num
+      !       num = tmp_num
+      !       if(num .gt. maxNum) maxNum = num
+      !    end do
+      ! enddo
 
       allocate(ind(kk))
       allocate(gToNodeOut(mm,maxNum+1))
