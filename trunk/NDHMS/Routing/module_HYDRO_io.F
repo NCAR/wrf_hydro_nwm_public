@@ -77,6 +77,20 @@ module module_HYDRO_io
      end subroutine hash_nhdLakeMap_mpp_maxNum
   end interface
 
+  interface
+     subroutine hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,&
+          ind,tmpTo_Node,gToNodeOut) &
+          bind(C, name="nhdLakeMap_mpp_tonodeout_C")
+
+       use iso_c_binding, only : c_int
+
+       integer(c_int) :: gto(*), LINKID(*), ind(*), tmpTo_Node(*), gToNodeOut(*)
+       integer(c_int) :: kk
+       integer(c_int),value :: gnlinksl, nlinksl
+
+     end subroutine hash_nhdLakeMap_mpp_tonodeout
+  end interface
+
 
    integer, parameter :: did=1
    integer :: logUnit
@@ -10331,9 +10345,9 @@ end subroutine output_chrt2
 
       call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
 
-      allocate(num_a(NLINKSL))
+      ! allocate(num_a(NLINKSL))
       cache_block = 256
-      num_a = 0
+      ! num_a = 0
       tmp_num = 0
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
@@ -10371,7 +10385,7 @@ end subroutine output_chrt2
          TYPEL = -999
       endif
 
-      num_a = 1
+      ! num_a = 1
       tmp_num = 0
       kk = 0
 
@@ -10388,25 +10402,28 @@ end subroutine output_chrt2
 !              endif
 !           end do
 ! enddo
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  kk = kk +1
-                  ind(kk) = k
-                  tmpTO_NODE(kk) = gto(k)
-                  gToNodeOut(m,tmp_num+1) = kk
-                  gToNodeOut(m,1) = tmp_num
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-         end do
-      end do
-      deallocate(num_a)
+
+      call hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
+
+      ! do cache_idx = 0, gnlinksl-1, cache_block
+      !    cache_block_begin = cache_idx + 1
+      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
+      !    do m = 1, NLINKSL
+      !       tmp_num = num_a(m)
+      !       do k = cache_block_begin, cache_block_end
+      !          if(gto(k) .eq. LINKID(m) ) then
+      !             kk = kk +1
+      !             ind(kk) = k
+      !             tmpTO_NODE(kk) = gto(k)
+      !             gToNodeOut(m,tmp_num+1) = kk
+      !             gToNodeOut(m,1) = tmp_num
+      !             tmp_num = tmp_num + 1
+      !          endif
+      !       end do
+      !       num_a(m) = tmp_num
+      !    end do
+      ! end do
+      ! deallocate(num_a)
       size2 = kk
       deallocate (gto)
 

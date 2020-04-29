@@ -107,6 +107,36 @@ void _nhdLakeMap_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl, 
   delete(tmp);
 }
 
+void _nhdLakeMap_mpp_tonodeout_C(int *gto,int gnlinksl,int *linkid,int nlinksl,int *tmp_kk,
+				 int *ind, int *tmpTo_Node, int *gToNodeOut)
+{
+  map<int,int> hash;
+  map<int,int>::iterator it;
+
+  int *tmp = new int[nlinksl];
+
+  for(int m=0; m < nlinksl; m++)
+    {
+      tmp[m] = 1;
+      hash.insert(std::pair<int,int>(linkid[m],m));
+    }
+
+  for(int k=0; k < gnlinksl; k++)
+    {
+      it = hash.find(gto[k]);
+      if(it != hash.end())
+	{
+	  ind[*tmp_kk] = k+1; //To fortran
+	  tmpTo_Node[*tmp_kk] = gto[k];
+	  gToNodeOut[INDX(it->second,tmp[k]+1,nlinksl)] = *tmp_kk + 1; //To fortran
+	  gToNodeOut[INDX(it->second,0,nlinksl)] = tmp[k] + 1; //To Fortran
+	  tmp[k]++;
+	  (*tmp_kk)++;
+	}
+    }
+  delete(tmp);
+}
+
 extern "C"
 {
   void getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
@@ -139,6 +169,15 @@ extern "C"
     int tmp_kk = 0;
     _nhdLakeMap_mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, &tmp_kk, &tmp_max_num);
     *maxNum = tmp_max_num;
+    *kk = tmp_kk;
+  }
+
+  void nhdLakeMap_mpp_tonodeout_C(int *gto,int gnlinksl,int *linkid,int nlinksl,int *kk,
+				  int *ind, int *tmpTo_Node, int *gToNodeOut)
+  {
+    int tmp_kk = *kk;
+    _nhdLakeMap_mpp_tonodeout_C(gto, gnlinksl, linkid, nlinksl, &tmp_kk,
+				ind, tmpTo_Node, gToNodeOut);
     *kk = tmp_kk;
   }
 
