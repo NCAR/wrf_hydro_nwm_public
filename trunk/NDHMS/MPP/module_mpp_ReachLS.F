@@ -88,12 +88,12 @@ MODULE MODULE_mpp_ReachLS
 
   interface
      subroutine hash_getToInd_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,&
-          ind,tmpTo_Node,gToNodeOut) &
-          bind(C, name="nhdLakeMap_mpp_tonodeout_C")
+          ind,gToNodeOut) &
+          bind(C, name="nhdLakeMap_mpp_tonodeout_light_C")
 
        use iso_c_binding, only : c_int
 
-       integer(c_int) :: gto(*), LINKID(*), ind(*), tmpTo_Node(*), gToNodeOut(*)
+       integer(c_int) :: gto(*), LINKID(*), ind(*), gToNodeOut(*)
        integer(c_int) :: kk
        integer(c_int),value :: gnlinksl, nlinksl
 
@@ -915,7 +915,7 @@ MODULE MODULE_mpp_ReachLS
       !num_a = 1
       tmp_num = 1
 
-      call hash_getToInd_tonodeout(gto,gnlinksl,from,l_nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
+      call hash_getToInd_tonodeout(gto,gnlinksl,from,l_nlinksl,kk,ind,gToNodeOut)
 
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
