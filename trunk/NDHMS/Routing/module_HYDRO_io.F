@@ -10345,9 +10345,9 @@ end subroutine output_chrt2
 
       call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
 
-      ! allocate(num_a(NLINKSL))
+      !allocate(num_a(NLINKSL))
       cache_block = 256
-      ! num_a = 0
+      !num_a = 0
       tmp_num = 0
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
@@ -10385,7 +10385,7 @@ end subroutine output_chrt2
          TYPEL = -999
       endif
 
-      ! num_a = 1
+      !num_a = 1
       tmp_num = 0
       kk = 0
 
@@ -10405,6 +10405,9 @@ end subroutine output_chrt2
 
       call hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
 
+      ! write(*,*) 'kk coming from c',kk
+      ! kk = 0
+
       ! do cache_idx = 0, gnlinksl-1, cache_block
       !    cache_block_begin = cache_idx + 1
       !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
@@ -10423,7 +10426,10 @@ end subroutine output_chrt2
       !       num_a(m) = tmp_num
       !    end do
       ! end do
-      ! deallocate(num_a)
+
+      ! write(*,*) 'kk coming from fortran',kk
+
+      ! deallocate(num_a) 
       size2 = kk
       deallocate (gto)
 
