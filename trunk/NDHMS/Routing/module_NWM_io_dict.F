@@ -100,6 +100,7 @@ type chrtMeta
    character (len=64) :: orderLName ! long_name
    character (len=64) :: orderStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -181,7 +182,7 @@ type ldasMeta
    integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
-   character (len=128) :: title ! File TITLE
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -253,6 +254,7 @@ type rtDomainMeta
 
    ! Global attributes
    integer :: decimation ! Decimation factor
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -327,6 +329,7 @@ type lakeMeta
    character (len=64) :: elevUnits ! units
    character (len=64) :: elevStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -403,6 +406,7 @@ type chrtGrdMeta
 
    ! Global attributes
    integer :: decimation ! Decimation factor
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -476,7 +480,7 @@ type lsmMeta
    integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
-   character (len=128) :: title ! File TITLE
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -543,6 +547,7 @@ type chObsMeta
    character (len=64) :: orderLName ! long_name
    character (len=64) :: orderStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -617,6 +622,7 @@ type gwMeta
    !character (len=64) :: elevUnits ! units
    !character (len=64) :: elevStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    !character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -686,6 +692,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files
+   chrtOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    chrtOutDict%fType = 'timeSeries'
    chrtOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1362,6 +1369,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    rtDomainDict%modelNdv = -9.E15
 
    ! First establish global attributes.
+   rtDomainDict%title = "OUTPUT FROM " // trim(get_model_version())
    rtDomainDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    rtDomainDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    rtDomainDict%decimation = 1
@@ -1686,6 +1694,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files
+   lakeOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    lakeOutDict%fType = 'timeSeries'
    lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1820,6 +1829,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    chrtGrdDict%modelNdv = -9.E15
 
    ! First establish global attributes.
+   chrtGrdDict%title = "OUTPUT FROM " // trim(get_model_version())
    chrtGrdDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    chrtGrdDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    chrtGrdDict%decimation = 1
@@ -2475,6 +2485,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
       endif
    endif
 
+   chObsDict%title = "OUTPUT FROM " // trim(get_model_version())
    chObsDict%fType = 'timeSeries'
    chObsDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chObsDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -2554,6 +2565,7 @@ subroutine initGwDict(gwOutDict)
 
    gwOutDict%modelNdv = -9.E15
 
+   gwOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    gwOutDict%fType = 'timeSeries'
    !gwOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    gwOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
