@@ -96,6 +96,7 @@ type chrtMeta
    character (len=64) :: elevLName ! long_name
    character (len=64) :: elevUnits ! units
    character (len=64) :: elevStName ! Standard Name
+
    ! Order variable attributes
    character (len=64) :: orderLName ! long_name
    character (len=64) :: orderStName ! Standard Name
@@ -312,6 +313,7 @@ type lakeMeta
    character (len=64) :: reservoirTypeFlagMeanings ! flag meanings attribute
    ! reservoir_assimilated_value attributes
    character (len=64) :: reservoirAssimilatedValueLName ! long_name - usually "reservoir_assimilated_value, m3 s-1"
+   character (len=64) :: reservoirAssimilatedValueUnits ! units
    ! reservoir_assimilated_source_file attributes
    character (len=64) :: reservoirAssimilatedSourceFileLName ! long_name - usually "reservoir_assimilated_source_file"
    ! latitude variable attributes
@@ -326,6 +328,7 @@ type lakeMeta
    character (len=64) :: elevLName ! long_name
    character (len=64) :: elevUnits ! units
    character (len=64) :: elevStName ! Standard Name
+   character (len=256) :: elevComment ! Comment
    ! Global attributes
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
@@ -1739,6 +1742,10 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Establish elevation variable attributes
    lakeOutDict%elevLName = "Water Surface Elevation"
    lakeOutDict%elevUnits = "m" ! meters
+   lakeOutDict%elevComment = "If the reservoir_type is 4, " &
+   // "RFC-forecasts, the water surface elevation is not valid " &
+   // "because this value corresponds only to the level pool " &
+   // "calculations running in the background."
 
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake ComID"
@@ -1752,6 +1759,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
 
    ! Establish reservoir_assimilated_value attributes
    lakeOutDict%reservoirAssimilatedValueLName = "reservoir_assimilated_value"
+   lakeOutDict%reservoirAssimilatedValueUnits = "m3 s-1"
 
    ! Establish reservoir_assimilated_source_file attributes
    lakeOutDict%reservoirAssimilatedSourceFileLName= "reservoir_assimilated_source_file"
