@@ -645,6 +645,8 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHRTOUT NetCDF file.')
 
       ! Write global attributes.
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -1884,6 +1886,8 @@ subroutine output_rt_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -2628,6 +2632,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LAKEOUT NetCDF file.')
 
       ! Write global attributes.
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -3202,6 +3208,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
+      iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -3672,15 +3680,15 @@ subroutine output_lsmOut_NWM(domainId)
 
       ! Write global attributes
       iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LDASOUT file.')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model output time attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'modle_total_valid_time',fileMeta%totalValidTime)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid time attribute into LDASOUT file.')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place model total valid time attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'Conventions',trim(fileMeta%conventions))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LDASOUT file.')
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place CF conventions attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"code_version",trim(get_code_version()))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create code_version attribute')
 #ifdef NWM_META
@@ -4636,6 +4644,8 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
 
       ! Write global attributes.
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -5273,6 +5283,8 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create GWOUT NetCDF file.')
 
       ! Write global attributes.
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       !iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
