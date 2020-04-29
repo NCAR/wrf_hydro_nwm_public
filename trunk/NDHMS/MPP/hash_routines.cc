@@ -167,7 +167,7 @@ void _nhdLakeMap_mpp_tonodeout_light_C(int *gto,int gnlinksl,int *linkid,int nli
 }
 
 void _nhdLakeMap_scan_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl,
-				   int *gtoLakeId_g, int* lakeida, int *kk, int *maxNum)
+				   int *gtoLakeId_g, int* lakeida, int *tmp_kk, int *tmp_max_num)
   {
     map<int,int> hash;
     map<int,int>::iterator it;
@@ -251,14 +251,14 @@ void nhdLakeMap_mpp_tonodeout_light_C(int *gto,int gnlinksl,int *linkid,int nlin
     *kk = tmp_kk;
   }
 
-}
-
 void nhdLakeMap_scan_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl,
 				  int *gtoLakeId_g, int* lakeida, int *kk, int *maxNum)
   {
     int tmp_max_num = *maxNum;
     int tmp_kk = 0;
-    _nhdLakeMap_scan mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, gtoLakeId_g, lakeida, &tmp_kk, &tmp_max_num);
+    _nhdLakeMap_scan_mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, gtoLakeId_g, lakeida, &tmp_kk, &tmp_max_num);
     *maxNum = tmp_max_num;
     *kk = tmp_kk;
   }
+
+}
