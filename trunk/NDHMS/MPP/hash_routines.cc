@@ -128,9 +128,9 @@ void _nhdLakeMap_mpp_tonodeout_C(int *gto,int gnlinksl,int *linkid,int nlinksl,i
 	{
 	  ind[*tmp_kk] = k+1; //To fortran
 	  tmpTo_Node[*tmp_kk] = gto[k];
-	  gToNodeOut[INDX(it->second,tmp[k]+1,nlinksl)] = *tmp_kk + 1; //To fortran
-	  gToNodeOut[INDX(it->second,0,nlinksl)] = tmp[k] + 1; //To Fortran
-	  tmp[k]++;
+	  gToNodeOut[INDX(it->second, tmp[it->second] + 1, nlinksl)] = *tmp_kk + 1; //To fortran
+	  gToNodeOut[INDX(it->second, 0, nlinksl)] = tmp[it->second] + 1; //To Fortran
+	  tmp[it->second]++;
 	  (*tmp_kk)++;
 	}
     }
