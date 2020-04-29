@@ -10405,7 +10405,6 @@ end subroutine output_chrt2
 
       call hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
 
-      ! write(*,*) 'kk coming from c',kk
       ! kk = 0
 
       ! do cache_idx = 0, gnlinksl-1, cache_block
@@ -10427,9 +10426,7 @@ end subroutine output_chrt2
       !    end do
       ! end do
 
-      ! write(*,*) 'kk coming from fortran',kk
-
-      ! deallocate(num_a) 
+      ! deallocate(num_a)
       size2 = kk
       deallocate (gto)
 
