@@ -6,7 +6,7 @@ using namespace std;
 
 #define INDX(row, col, ld) (row + col*ld)
 
-void _UMDP_C(int *linkid, int nlinksl, int *Ibufid_tmp, int *bufidflag, int ix_bufid)
+void _UMDP_C(int *linkid, int nlinksl, int *bufid_tmp, int *bufidflag, int ix_bufid)
 {
   map<int,int> hash;
   map<int,int>::iterator it;
