@@ -166,6 +166,38 @@ void _nhdLakeMap_mpp_tonodeout_light_C(int *gto,int gnlinksl,int *linkid,int nli
   delete(tmp);
 }
 
+void _nhdLakeMap_scan_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl,
+				   int *gtoLakeId_g, int* lakeida, int *kk, int *maxNum)
+  {
+    map<int,int> hash;
+    map<int,int>::iterator it;
+
+    int *tmp = new int[nlinksl];
+
+    for(int i=0; i < nlinksl; i++)
+      {
+	tmp[i] = 0;
+	hash.insert(std::pair<int,int>(linkid[i],i));
+      }
+
+    for(int k=0; k < gnlinksl; k++)
+      {
+	it = hash.find(gto[k]);
+	if(it != hash.end())
+	  {
+	    gtoLakeId_g[k] = lakeida[it->second];
+	    (*tmp_kk)++;
+	    tmp[it->second]++;
+	  }
+      }
+    
+    for(int i=0;i<nlinksl;i++)
+      if(*tmp_max_num < tmp[i])
+	*tmp_max_num = tmp[i];
+    
+    delete(tmp);
+  }
+
 extern "C"
 {
   void getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
@@ -220,3 +252,13 @@ void nhdLakeMap_mpp_tonodeout_light_C(int *gto,int gnlinksl,int *linkid,int nlin
   }
 
 }
+
+void nhdLakeMap_scan_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlinksl,
+				  int *gtoLakeId_g, int* lakeida, int *kk, int *maxNum)
+  {
+    int tmp_max_num = *maxNum;
+    int tmp_kk = 0;
+    _nhdLakeMap_scan mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, gtoLakeId_g, lakeida, &tmp_kk, &tmp_max_num);
+    *maxNum = tmp_max_num;
+    *kk = tmp_kk;
+  }
