@@ -34,6 +34,14 @@ module module_UDMAP
        com_decomp1dInt, pack_decomp_int, pack_decomp_real8
   use module_hydro_stop, only:HYDRO_stop
 
+  interface
+     subroutine hash_UMDP(linkid,nlinksl,bufid_tmp,bufidflag,ix_bufid) bind(C, name="UMDP_C")
+       use iso_c_binding, only : c_int
+       integer(c_int) :: LINKID(*), bufid_tmp(*), bufidflag(*)
+       integer(c_int),value :: nlinksl,ix_bufid
+     end subroutine hash_UMDP
+  end interface
+
 #endif
 
   implicit none
@@ -169,19 +177,21 @@ contains
           bufidflag = -999
        endif
 
-       cache_block = 256
-       do cache_idx = 0, nlinksl - 1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, nlinksl)
-          do i = 1, ix_bufid
-             if(bufidflag(i) /= -999) cycle
-             do j = cache_block_begin, cache_block_end
-                if(bufid_tmp(i) .eq. linkid(j)) then
-                   bufidflag(i) = bufid_tmp(i)
-                endif
-             end do
-          enddo
-       enddo
+       call hash_UMDP(linkid,nlinksl,bufid_tmp,bufidflag,ix_bufid)
+
+       ! cache_block = 256
+       ! do cache_idx = 0, nlinksl - 1, cache_block
+       !    cache_block_begin = cache_idx + 1
+       !    cache_block_end = min(cache_idx + cache_block, nlinksl)
+       !    do i = 1, ix_bufid
+       !       if(bufidflag(i) /= -999) cycle
+       !       do j = cache_block_begin, cache_block_end
+       !          if(bufid_tmp(i) .eq. linkid(j)) then
+       !             bufidflag(i) = bufid_tmp(i)
+       !          endif
+       !       end do
+       !    enddo
+       ! enddo
 #ifdef MPP_LAND
       call com_write1dInt(bufidflag,ix_bufid,gbufid,npid)
 #endif

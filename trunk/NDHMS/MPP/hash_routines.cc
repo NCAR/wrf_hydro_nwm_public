@@ -6,6 +6,26 @@ using namespace std;
 
 #define INDX(row, col, ld) (row + col*ld)
 
+void _UMDP_C(int *linkid, int nlinksl, int *Ibufid_tmp, int *bufidflag, int ix_bufid)
+{
+  map<int,int> hash;
+  map<int,int>::iterator it;
+
+  for(int i=0; i < ix_bufid; i++)
+    hash.insert(std::pair<int,int>(bufid_tmp[i],i));
+
+  for(int j = 0; j < nlinksl; j++)
+    {
+      it = hash.find(linkid[j]);
+      if(it != hash.end())
+	{
+	  bufidflag[it->second] = bufid_tmp[it->second];
+	  hash.erase(it);
+	}
+    }
+
+}
+
 void _getLocalIndx_C(int * gLinkId, int glinksl, int *llinkid, int * llinkidindx, int llinklen)
 {
   map<int,int> hash;
@@ -259,6 +279,11 @@ void nhdLakeMap_scan_mpp_maxNum_C(int *gto, int gnlinksl, int *linkid, int nlink
     _nhdLakeMap_scan_mpp_maxNum_C(gto, gnlinksl, linkid, nlinksl, gtoLakeId_g, lakeida, &tmp_kk, &tmp_max_num);
     *maxNum = tmp_max_num;
     *kk = tmp_kk;
+  }
+
+  void UMDP_C(int *linkid, int nlinksl, int *bufid_tmp, int *bufidflag, int ix_bufid)
+  {
+    _UMDP_C(linkid, nlinksl, bufid_tmp, bufidflag, ix_bufid);
   }
 
 }
