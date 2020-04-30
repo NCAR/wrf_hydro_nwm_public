@@ -51,6 +51,7 @@ endif
 RM		=	rm -f  
 RMD		=	rm -f    
 COMPILER90=	mpif90
+COMPILERCC = g++
 F90FLAGS  =     -Mfree -c -byteswapio -O2 -Kieee 
 LDFLAGS  =      $(F90FLAGS)
 MODFLAG	=	-I./ -I ../../MPP -I ../MPP -I ../mod 
