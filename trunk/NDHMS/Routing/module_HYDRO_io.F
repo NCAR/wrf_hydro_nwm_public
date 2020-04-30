@@ -9203,7 +9203,6 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     integer, allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
-    integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
 
 !   get gnid
 #ifdef MPP_LAND
@@ -9291,30 +9290,26 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 #endif
 
        nhdBuckMask = -999
+
+       ! The following loops are replaced by a hashtable-based algorithm
+       !   do k = 1, numbasns
+       !         do i = 1, gnid
+       !             if(LINKID(k) .eq. tmpLinkid(i)) then
+       !                gw_buck_coeff(k) = tmpCoeff(i)
+       !                gw_buck_exp(k) = tmpExp(i)
+       !                z_max(k) = tmpz_max(i)
+       !                z_init(k) = tmpz_init(i)
+       !                nhdBuckMask(k) = 1
+       !                goto 301 
+       !             endif
+       !         end do
+       ! 301     continue
+       !     end do 
+
        call hash_readBucket_nhd(tmpLinkid,gnid,LINKID,numbasns,&
             nhdBuckMask, gw_buck_coeff, gw_buck_exp, gw_buck_loss,&
             tmpCoeff, tmpExp, tmpLoss, z_max, z_init, &
-            tmpz_max, tmpz_init, nlst(did)%bucket_loss)
-       ! cache_block = 128
-       ! do cache_idx = 0, gnid-1, cache_block
-       !    cache_block_begin = cache_idx + 1
-       !    cache_block_end = min(cache_idx + cache_block, gnid)
-       !    do k = 1, numbasns
-       !       if(nhdBuckMask(k) /= -999) cycle
-       !       do i = cache_block_begin, cache_block_end
-       !          if(LINKID(k) .eq. tmpLinkid(i)) then
-       !             gw_buck_coeff(k) = tmpCoeff(i)
-       !             gw_buck_exp(k) = tmpExp(i)
-       !             if(nlst(did)%bucket_loss .eq. 1) then
-       !                gw_buck_loss(k) = tmpLoss(i)
-       !             endif
-       !             z_max(k) = tmpz_max(i)
-       !             z_init(k) = tmpz_init(i)
-       !             nhdBuckMask(k) = 1
-       !          endif
-       !       end do
-       !    end do
-       ! end do 
+            tmpz_max, tmpz_init, nlst(did)%bucket_loss) 
 
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
@@ -10321,8 +10316,6 @@ end subroutine output_chrt2
         integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
       integer tmpBuf(GNLINKSL)
-      integer, allocatable :: num_a(:)
-      integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       tmpSize = size(TO_NODE,1)
       allocate(OUTLAKEID(tmpSize))
@@ -10346,39 +10339,19 @@ end subroutine output_chrt2
       maxNum = 0
       kk = 0
 
-    ! do m = 1, NLINKSL
-    !       num = 0
-    !       do k = 1, gnlinksl
-    !          if(gto(k) .eq. LINKID(m) ) then
-    !              kk = kk +1
-    !              num = num + 1
-    !          endif
-    !       end do
-    !       if(num .gt. maxNum) maxNum = num
-    ! end do
-
-      call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
-
-      !allocate(num_a(NLINKSL))
-      cache_block = 256
-      !num_a = 0
-      tmp_num = 0
-      ! do cache_idx = 0, gnlinksl-1, cache_block
-      !    cache_block_begin = cache_idx + 1
-      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
-      !    do m = 1, NLINKSL
-      !       tmp_num = num_a(m)
-      !       do k = cache_block_begin, cache_block_end
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !       num = 0
+      !       do k = 1, gnlinksl
       !          if(gto(k) .eq. LINKID(m) ) then
-      !             kk = kk +1
-      !             tmp_num = tmp_num + 1
+      !              kk = kk +1
+      !              num = num + 1
       !          endif
       !       end do
-      !       num_a(m) = tmp_num
-      !       num = tmp_num
       !       if(num .gt. maxNum) maxNum = num
-      !    end do
       ! end do
+
+      call hash_nhdLakeMap_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,kk,maxNum)
 
       allocate(ind(kk))
       allocate(gToNodeOut(NLINKSL,maxNum+1))
@@ -10399,48 +10372,25 @@ end subroutine output_chrt2
          TYPEL = -999
       endif
 
-      !num_a = 1
-      tmp_num = 0
       kk = 0
 
-! do m = 1, NLINKSL
-!          num = 1
-!          do k = 1, gnlinksl
-!              if(gto(k) .eq. LINKID(m) ) then
-!                  kk = kk +1
-!                  ind(kk) = k
-!                  tmpTO_NODE(kk) = gto(k)
-!                  gToNodeOut(m,num+1) = kk
-!                  gToNodeOut(m,1) = num
-!                  num = num + 1
-!              endif
-!           end do
-! enddo
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !          num = 1
+      !          do k = 1, gnlinksl
+      !              if(gto(k) .eq. LINKID(m) ) then
+      !                  kk = kk +1
+      !                  ind(kk) = k
+      !                  tmpTO_NODE(kk) = gto(k)
+      !                  gToNodeOut(m,num+1) = kk
+      !                  gToNodeOut(m,1) = num
+      !                  num = num + 1
+      !              endif
+      !           end do
+      ! enddo
 
       call hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
 
-      ! kk = 0
-
-      ! do cache_idx = 0, gnlinksl-1, cache_block
-      !    cache_block_begin = cache_idx + 1
-      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
-      !    do m = 1, NLINKSL
-      !       tmp_num = num_a(m)
-      !       do k = cache_block_begin, cache_block_end
-      !          if(gto(k) .eq. LINKID(m) ) then
-      !             kk = kk +1
-      !             ind(kk) = k
-      !             tmpTO_NODE(kk) = gto(k)
-      !             gToNodeOut(m,tmp_num+1) = kk
-      !             gToNodeOut(m,1) = tmp_num
-      !             tmp_num = tmp_num + 1
-      !          endif
-      !       end do
-      !       num_a(m) = tmp_num
-      !    end do
-      ! end do
-
-      ! deallocate(num_a)
       size2 = kk
       deallocate (gto)
 
@@ -10630,8 +10580,6 @@ end subroutine output_chrt2
 !       integer tmpBuf(GNLINKSL)
         integer, dimension(nlakes) :: lakemask
         integer ii
-        integer, allocatable :: num_a(:)
-        integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       allocate (gto(GNLINKSL))
       allocate (gtoLakeId_g(GNLINKSL))
@@ -10648,30 +10596,22 @@ end subroutine output_chrt2
 
       maxNum = 0
       kk = 0
-      ! allocate(num_a(NLINKSL))
 
-      ! cache_block = 256
-      ! num_a = 0
-      tmp_num = 0
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !    num = 0
+      !    do k = 1, gnlinksl
+      !       if(gto(k) .eq. LINKID(m) ) then
+      !          gtoLakeId_g(k) = lakeida(m)
+      !          kk = kk +1
+      !          num = num + 1
+      !       endif
+      !    end do
+      !    if(num .gt. maxNum) maxNum = num
+      ! end do
+
       call hash_nhdLakeMap_scan_mpp_maxNum(gto,gnlinksl,linkid,nlinksl,gtoLakeId_g,&
            lakeida,kk,maxNum)
-      ! do cache_idx = 0, gnlinksl-1, cache_block
-      !    cache_block_begin = cache_idx + 1
-      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
-      !    do m = 1, NLINKSL
-      !       tmp_num = num_a(m)
-      !       do k = cache_block_begin, cache_block_end
-      !          if(gto(k) .eq. LINKID(m) ) then
-      !             gtoLakeId_g(k) = lakeida(m)
-      !             kk = kk +1
-      !             tmp_num = tmp_num + 1
-      !          endif
-      !       end do
-      !       num_a(m) = tmp_num
-      !       num = tmp_num
-      !       if(num .gt. maxNum) maxNum = num
-      !    end do
-      ! end do
 
       allocate(ind(kk))
       allocate(gToNodeOut(NLINKSL,maxNum+1))
@@ -10679,31 +10619,25 @@ end subroutine output_chrt2
       allocate(tmpLAKEIDA(kk))
       allocate(tmpTO_NODE(kk))
 
-      ! num_a = 1
-      tmp_num = 0
       kk = 0
+
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !    num = 1
+      !    do k = 1, gnlinksl
+      !       if(gto(k) .eq. LINKID(m) ) then
+      !          kk = kk +1
+      !          ind(kk) = k
+      !          tmpTO_NODE(kk) = gto(k)
+      !          gToNodeOut(m,num+1) = kk
+      !          gToNodeOut(m,1) = num
+      !          num = num + 1
+      !       endif
+      !    end do
+      ! end do
 
       call hash_nhdLakeMap_mpp_tonodeout(gto,gnlinksl,linkid,nlinksl,kk,ind,tmpTo_Node,gToNodeOut)
 
-      ! do cache_idx = 0, gnlinksl-1, cache_block
-      !    cache_block_begin = cache_idx + 1
-      !    cache_block_end = min(cache_idx + cache_block, gnlinksl)
-      !    do m = 1, NLINKSL
-      !       tmp_num = num_a(m)
-      !       do k = cache_block_begin, cache_block_end
-      !          if(gto(k) .eq. LINKID(m) ) then
-      !             kk = kk +1
-      !             ind(kk) = k
-      !             tmpTO_NODE(kk) = gto(k)
-      !             gToNodeOut(m,tmp_num+1) = kk
-      !             gToNodeOut(m,1) = tmp_num
-      !             tmp_num = tmp_num + 1
-      !          endif
-      !       end do
-      !       num_a(m) = tmp_num
-      !    end do
-      ! end do
-      !deallocate(num_a)
       size = kk
       if(allocated(gto)) deallocate (gto)
 
