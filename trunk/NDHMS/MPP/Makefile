@@ -22,7 +22,7 @@ CPL_WRF.o: CPL_WRF.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) -c $(*).F
 	ar -r ../lib/libHYDRO.a $(@)
 
-module_mpp_ReachLS.o: module_mpp_ReachLS.F hash_routines.cc
+module_mpp_ReachLS.o: module_mpp_ReachLS.F
 	@echo ""
 	$(RMD) $(*).o $(*).mod $(*).stb *~
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) -c $(*).F

@@ -56,6 +56,7 @@ endif
 
 RMD		=	rm -f
 COMPILER90=	mpif90  
+COMPILERCC=     g++
 F90FLAGS  =       -w -c -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 
 MODFLAG	=	-I"./" -I"../../MPP" -I"../MPP" -I"../mod"
 LDFLAGS	=	
@@ -64,4 +65,4 @@ CPPFLAGS	=   -DMPP_LAND -I"../Data_Rec" $(HYDRO_D) $(SPATIAL_SOIL) $(NWM_META) $
 
 LIBS 	=	
 NETCDFINC       =       $(NETCDF_INC)
-NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf
+NETCDFLIB       =       -L$(NETCDF_LIB) -lnetcdff -lnetcdf -lstdc++
