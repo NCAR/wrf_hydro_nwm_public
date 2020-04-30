@@ -1742,10 +1742,8 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Establish elevation variable attributes
    lakeOutDict%elevLName = "Water Surface Elevation"
    lakeOutDict%elevUnits = "m" ! meters
-   lakeOutDict%elevComment = "If the reservoir_type is 4, " &
-   // "RFC-forecasts, the water surface elevation is not valid " &
-   // "because this value corresponds only to the level pool " &
-   // "calculations running in the background."
+   lakeOutDict%elevComment = "If reservoir_type = 4, " &
+       // "water_sfc_elev is invalid because this value corresponds only to level pool"
 
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake ComID"
