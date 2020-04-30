@@ -2750,6 +2750,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_assimilated_value variable.')
       iret = nf90_put_att(ftn, reservoirAssimilatedValueVarId, 'long_name', trim(fileMeta%reservoirAssimilatedValueLName))
       call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_assimilated_value variable')
+      iret = nf90_put_att(ftn,reservoirAssimilatedValueVarId,'units',trim(fileMeta%reservoirAssimilatedValueUnits))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reservoir_assimilated_value variable')
 
       ! Create reservoir_assimilated_source_file variable
       iret = nf90_def_var(ftn, "reservoir_assimilated_source_file", nf90_char, [dimId(4), dimId(1)], reservoirAssimilatedSourceFileVarId)
@@ -2784,6 +2786,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into water_sfc_elev variable')
       iret = nf90_put_att(ftn,elevVarId,'units',trim(fileMeta%elevUnits))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into water_sfc_elev variable')
+      iret = nf90_put_att(ftn,elevVarId,'comment',trim(fileMeta%elevComment))
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place comment attribute into water_sfc_elev variable')
 
       ! Define deflation levels for these meta-variables. For now, we are going to
       ! default to a compression level of 2. Only compress if io_form_outputs is set to 1.
@@ -4804,6 +4808,7 @@ subroutine output_chanObs_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place long_name attribute into elevation variable')
       iret = nf90_put_att(ftn,elevVarId,'standard_name',trim(fileMeta%elevStName))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place stndard_name attribute into elevation variable')
+
 
       ! Define deflation levels for these meta-variables. For now, we are going
       ! to
