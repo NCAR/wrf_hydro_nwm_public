@@ -14,9 +14,14 @@ F90FLAGS += -DNWM_VERSION=$(NWM_VERSION) -DWRF_HYDRO_VERSION=$(WRF_HYDRO_VERSION
 
 OBJS = \
 	module_version.o \
-	module_hydro_stop.o
+	module_hydro_stop.o \
+	hash_routines.o
 
 all:	$(OBJS)
+
+.cc.o:
+	$(COMPILERCC) -O3 -g -c hash_routines.cc
+	ar -r ../lib/libHYDRO.a $(@)
 
 ## The insertion of compile-time constants strangely requires the capital F in the extension.
 .F.o:

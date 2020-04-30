@@ -5,9 +5,7 @@
 
 include ../macros
 
-COMPILERCC = icpc -O3 -g
-
-OBJS =  CPL_WRF.o mpp_land.o module_mpp_ReachLS.o module_mpp_GWBUCKET.o hash_routines.o
+OBJS =  CPL_WRF.o mpp_land.o module_mpp_ReachLS.o module_mpp_GWBUCKET.o
 
 all:	$(OBJS)
 mpp_land.o: mpp_land.F
@@ -27,9 +25,8 @@ CPL_WRF.o: CPL_WRF.F
 module_mpp_ReachLS.o: module_mpp_ReachLS.F hash_routines.cc
 	@echo ""
 	$(RMD) $(*).o $(*).mod $(*).stb *~
-	$(COMPILERCC) -c hash_routines.cc
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) -c $(*).F
-	ar -r ../lib/libHYDRO.a $(@) hash_routines.o
+	ar -r ../lib/libHYDRO.a $(@)
 
 module_mpp_GWBUCKET.o: module_mpp_GWBUCKET.F
 	@echo ""
