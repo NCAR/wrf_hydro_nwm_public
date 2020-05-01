@@ -54,9 +54,9 @@ void _LandRT_C(int *ch_lnkrt, int *ch_lnkrt_sl, int i_start, int i_end, int j_st
   for(int i=0; i < LNLINKSL; i++)
     hash.insert(std::pair<int,int>(LLINKID[i],i));
   
-  for(int i=i_start-1; i < i_end-1; i++)
+  for(int i=i_start-1; i < i_end; i++)
     {
-      for(int j=j_start-1; j < j_end-1; j++)
+      for(int j=j_start-1; j < j_end; j++)
 	{
 	  it = hash.find(ch_lnkrt[INDX(i, j, leading_dim)]);
 	  if(it != hash.end())
