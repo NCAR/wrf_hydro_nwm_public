@@ -92,7 +92,7 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 	  z_max[it->second] = tmpz_max[i];
 	  z_init[it->second] = tmpz_init[i];
 	  nhdBuckMask[it->second] = 1;
-	  hash.erase(it);
+	  //hash.erase(it);
 	}
     }
 }
