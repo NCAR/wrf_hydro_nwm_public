@@ -74,8 +74,8 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 		       float *z_max, float *z_init, float *tmpz_max, float *tmpz_init,
 		       int bucket_loss)
 {
-  map<int,int> hash;
-  map<int,int>::iterator it;
+  multimap<int,int> hash;
+  multimap<int,int>::iterator it;
 
   for(int i=0; i < numbasns; i++)
     hash.insert(std::pair<int,int>(linkid[i],i));
@@ -92,7 +92,7 @@ void _readBucket_nhd_C(int *tmpLinkid, int gnid, int *linkid, int numbasns,
 	  z_max[it->second] = tmpz_max[i];
 	  z_init[it->second] = tmpz_init[i];
 	  nhdBuckMask[it->second] = 1;
-	  //hash.erase(it);
+	  hash.erase(it);
 	}
     }
 }
