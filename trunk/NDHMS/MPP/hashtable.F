@@ -190,6 +190,7 @@ contains
     integer :: bucket_id
 
     success = .false.
+    if(this%n_buckets == 0) return
     bucket_id = modulo(key,this%n_buckets) + 1
     call this%buckets(bucket_id)%node_get(key, value, success)
   end subroutine get
