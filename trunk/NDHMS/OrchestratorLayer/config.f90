@@ -41,7 +41,7 @@ module config_base
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
 
-     integer            :: split_output_count = 1
+     integer            :: split_output_count = 1 
      integer            :: khour
      integer            :: kday = -999
      real               :: zlvl
@@ -868,6 +868,8 @@ contains
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
+         
+         soil_data_option, pedotransfer_option, crop_option, &
 
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
