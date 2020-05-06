@@ -94,18 +94,22 @@ contains
         this%data_source = ADJUSTL(trim(data_source))
 
         status = nf90_open(path = reservoir_parameter_file, mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
-        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", var_id, this%number_of_reservoir_gages)
+        call read_persistence_netcdf_gage_ids_all(ncid, ADJUSTL(trim(this%data_source)) // "_gage_id", &
+        reservoir_parameter_file, var_id, this%number_of_reservoir_gages)
 
         allocate (this%reservoir_gage_ids(this%number_of_reservoir_gages))
         allocate (gage_ids_string_array(this%number_of_reservoir_gages))
 
         status = nf90_get_var(ncid, var_id, gage_ids_string_array)
-        if (status /= nf90_noerr) call handle_err(status, ADJUSTL(trim(this%data_source)) // "_gage_id")
+        if (status /= nf90_noerr) call handle_err(status, "Error reading " // ADJUSTL(trim(this%data_source)) &
+         // "_gage_id from " // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         status = nf90_close(ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not close reservoir parameter file " &
+        // trim(ADJUSTL(reservoir_parameter_file)) // ".")
 
         ! Convert gage ids to integers
         do timeslice_gage_index = 1, this%number_of_reservoir_gages
@@ -270,10 +274,11 @@ contains
 
         ! Open Timeslice NetCDF file
         status = nf90_open(path = trim(timeslice_file), mode = nf90_nowrite, ncid = ncid)
-        if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file")
+        if (status /= nf90_noerr) call handle_err(status, "Could not open timeslice file " &
+        // trim(ADJUSTL(timeslice_file)) // ".")
 
         ! Get dimension of gage arrays
-        call get_timeslice_array_dimension(ncid, 'discharge', number_of_gages)
+        call get_timeslice_array_dimension(ncid, 'discharge', timeslice_file, number_of_gages)
 
         ! Allocate gage info arrays
         allocate(this%gage_id(number_of_gages))
@@ -281,13 +286,13 @@ contains
         allocate(this%gage_quality(number_of_gages))
 
         ! Get gage ids
-        call read_timeslice_gage_ids(ncid, 'stationId', this%gage_id)
+        call read_timeslice_gage_ids(ncid, 'stationId', timeslice_file, this%gage_id)
 
         ! Get gage discharges
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', this%gage_discharge)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge', timeslice_file, this%gage_discharge)
 
         ! Get gage qualities
-        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', this%gage_quality)
+        call read_timeslice_netcdf_real_1D_variables(ncid, 'discharge_quality', timeslice_file, this%gage_quality)
 
         ! Normalize gage qualities to 1
         this%gage_quality = this%gage_quality/100
@@ -306,7 +311,7 @@ contains
 
         !! peak flow on MS river *2
         !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
-        !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+        !! baton rouge 1945: 1,473,000cfs=41,711cms, multiply it roughly by 2
         where(this%gage_discharge .ge. 90000.0) this%gage_quality=0
 
         ! Loop through reservoir gage array to look for gages that still have discharges set to -1.0.
@@ -317,7 +322,8 @@ contains
         do reservoir_gage_index = 1, this%number_of_reservoir_gages
             if (this%reservoir_gage_discharges(reservoir_gage_index) == -1.0) then
                 do timeslice_gage_index = 1, number_of_gages
-                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
+                    if (ADJUSTL(trim(this%gage_id(timeslice_gage_index))) &
+                    .eq. ADJUSTL(trim(this%reservoir_gage_ids(reservoir_gage_index)))) then
                         if (this%gage_quality(timeslice_gage_index) .gt. gage_quality_threshold) then
                             this%reservoir_gage_discharges(reservoir_gage_index) = this%gage_discharge(timeslice_gage_index)
                             this%gage_lookback_seconds(reservoir_gage_index) = this%current_lookback_seconds
@@ -330,7 +336,7 @@ contains
 
     ! Close timeslice NetCDF file
     status = nf90_close(ncid)
-    if (status /= nf90_noerr) call handle_err(status, "Could not close timeslice file")
+    if (status /= nf90_noerr) call handle_err(status, "Could not close timeslice file " // trim(ADJUSTL(timeslice_file)) // ".")
 
     ! Deallocate gage arrays
     if(allocated(this%gage_id)) deallocate(this%gage_id)

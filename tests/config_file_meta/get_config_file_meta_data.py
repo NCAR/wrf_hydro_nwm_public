@@ -14,9 +14,7 @@ from wrfhydropy import JSONNamelist
 # 5) This script skips non-existent files and ignores timeslices.
 
 domain_paths = [
-    "/glade/work/jamesmcc/domains/private/CONUS",
-    "/glade/work/jamesmcc/domains/private/HAWAII",
-    "/glade/work/jamesmcc/domains/public/croton_NY"
+    "/glade/p/cisl/nwc/model_testing_domains/croton_NY"
 ]
 
 configs = [
@@ -55,9 +53,9 @@ def get_nlst_file_meta(
                 raise ValueError("The file does not exist: " + str(the_file_abs))
             
             meta_path_rel = the_file_rel
-            the_cmd = 'meta_path=' + str(meta_path_rel)
+            the_cmd = 'meta_path=' + str(meta_path_rel) + ".md5"
             the_cmd += ' && data_path=' + str(the_file_abs)
-            the_cmd += ' && echo "md5sum $data_path/*: $(md5sum $data_path/*)" > $meta_path'
+            the_cmd += ' && md5sum $data_path/* > $meta_path'
             proc = subprocess.run(
                 the_cmd,
                 cwd=config_dir,
@@ -75,11 +73,17 @@ def get_nlst_file_meta(
         # The sub process command is executed in the root of the meta path,
         # use the relative data path/
         meta_path_rel = the_file_rel
+        if meta_path_rel.suffix == '.nc':
+            meta_path_base = meta_path_rel.with_suffix("")
+        else:
+            meta_path_base = meta_path_rel
         the_cmd = 'meta_path=' + str(meta_path_rel)
+        the_cmd += ' && meta_path_md5=' + str(meta_path_base) + '.md5'
+        the_cmd += ' && meta_path_cdl=' + str(meta_path_base) + '.cdl'
         the_cmd += ' && data_path=' + str(the_file_abs)
         the_cmd += ' && mkdir -p $(dirname $meta_path)'
-        the_cmd += ' && echo "md5sum: $(md5sum $data_path)" > $meta_path'
-        the_cmd += ' && echo "ncdump -h: $(ncdump -h $data_path)" >> $meta_path'
+        the_cmd += ' && md5sum $data_path > $meta_path_md5'
+        the_cmd += ' && ncdump -h $data_path > $meta_path_cdl'
         proc = subprocess.run(
             the_cmd,
             cwd=config_dir,

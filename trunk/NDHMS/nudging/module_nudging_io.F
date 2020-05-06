@@ -195,7 +195,7 @@ if (sanityQcDischarge) then
    where(gageDischarge .le. 0.000) gageQC=0
    !! peak flow on MS river *2
    !! http://nwis.waterdata.usgs.gov/nwis/peak?site_no=07374000&agency_cd=USGS&format=html
-   !! baton rouge 1945: 1,473,000cfs=41,711cfs, multiply it roughly by 2
+   !! baton rouge 1945: 1,473,000cfs=41,711cms, multiply it roughly by 2
    where(gageDischarge .ge. 90000.0) gageQC=0
    if(any(gageQc .eq. 0)) then
       write(6,*) 'Ndg: some gageQC set to zero'
@@ -1072,16 +1072,10 @@ if(my_id .eq. io_id) then
    flush(6)
 #endif
 
-#ifdef WRFIO_NCD_LARGE_FILE_SUPPORT
-   write(6,*) "using large netcdf file for CHANNEL_CONNECTIVITY"
-   iret = nf_create(trim(output_flnm), ior(NF_CLOBBER,NF_64BIT_OFFSET), ncid)
-#else
-   write(6,*) "using normal netcdf file for CHANNEL_CONNECTIVITY"
-   iret = nf_create(trim(output_flnm), NF_CLOBBER, ncid)
-#endif
+   iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 
    if (iret /= 0) then
-      print*,"Ndg: Problem nf_create"
+      print*,"Ndg: Problem nf90_create"
       call hydro_stop("output_channel_connectivity")
    endif
 

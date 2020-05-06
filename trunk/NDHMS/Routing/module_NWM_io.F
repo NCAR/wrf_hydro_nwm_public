@@ -1,11 +1,7 @@
 ! Module for handling National Water Model streamflow, land surface,
 ! gridded routing, lake, and groundwater output.
 
-! Logan Karsten
-! National Center for Atmospheric Research
-! Research Applications Laboratory
-! karsten@ucar.edu
-! 303-497-2693
+! Logan Karsten, NCAR, RAL
 
 module module_NWM_io
 
@@ -645,7 +641,7 @@ subroutine output_chrt_NWM(domainId)
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
       ! Open output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHRTOUT NetCDF file.')
 
       ! Write global attributes.
@@ -1121,7 +1117,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
    ! Initialize water type to 16.
    ! NOTE THIS MAY CHANGE IN THE FUTURE!!!!!
-   waterVal = 16
+   waterVal = rt_domain(1)%iswater
 
    ! Initialize NWM dictionary derived type containing all the necessary
    ! metadata for the output file.
@@ -1286,7 +1282,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                   date(6:7)//date(9:10)//date(12:13)//date(15:16)//date(18:19), igrid
          endif
 
-         iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+         iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create LDASOUT NetCDF file.')
          ftnNoahMP = ftn
 
@@ -1879,8 +1875,8 @@ subroutine output_rt_NWM(domainId,iGrid)
                        nlst(domainId)%olddate(15:16), igrid
 
    if(myId .eq. 0) then
-      ! Create output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      ! Create output NetCDF file for writing. 
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
@@ -2319,6 +2315,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    integer :: refTimeId ! Dimension ID for the reference time dimension.
    integer :: coordVarId ! Variable to hold crs
    integer :: featureVarId ! feature_id NetCDF variable ID
+   integer :: reservoirTypeVarId ! reservoir_type netCDF variable ID
    integer :: latVarId, lonVarId ! lat/lon NetCDF variable ID values
    integer :: elevVarId ! elevation NetCDF variable ID
    integer :: varRange(2) ! Local storage of valid min/max values
@@ -2331,10 +2328,11 @@ subroutine output_lakes_NWM(domainId,iGrid)
    ! Allocatable arrays to hold output variables.
    real, allocatable, dimension(:) :: g_lakeLat,g_lakeLon,g_lakeElev
    real, allocatable, dimension(:) :: g_lakeInflow,g_lakeOutflow
+   real, allocatable, dimension(:) :: g_lakeType
    integer, allocatable, dimension(:) :: g_lakeid
    real, allocatable, dimension(:) :: g_lakeLatOut,g_lakeLonOut,g_lakeElevOut
    real, allocatable, dimension(:) :: g_lakeInflowOut,g_lakeOutflowOut
-   integer, allocatable, dimension(:) :: g_lakeidOut
+   integer, allocatable, dimension(:) :: g_lakeTypeOut, g_lakeidOut
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after
                                                      ! scale_factor/add_offset
@@ -2429,13 +2427,16 @@ subroutine output_lakes_NWM(domainId,iGrid)
       allocate(g_lakeElev(gsize))
       allocate(g_lakeInflow(gsize))
       allocate(g_lakeOutflow(gsize))
+      allocate(g_lakeType(gsize))
       allocate(g_lakeid(gsize))
-      if(myId .eq. 0) then
+
+      if(myId == 0) then
          allocate(g_lakeLonOut(gsize))
          allocate(g_lakeLatOut(gsize))
          allocate(g_lakeElevOut(gsize))
          allocate(g_lakeInflowOut(gsize))
          allocate(g_lakeOutflowOut(gsize))
+         allocate(g_lakeTypeOut(gsize))
          allocate(g_lakeidOut(gsize))
          allocate(chIndArray(gsize))
       endif
@@ -2446,6 +2447,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeInflow = RT_DOMAIN(domainID)%QLAKEI
       g_lakeOutflow = RT_DOMAIN(domainID)%QLAKEO
       g_lakeid = RT_DOMAIN(domainId)%LAKEIDM
+      g_lakeType = RT_DOMAIN(domainID)%final_reservoir_type
 
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
@@ -2462,6 +2464,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call write_lake_real(g_lakeElev,RT_DOMAIN(domainId)%lake_index,gsize)
       call write_lake_real(g_lakeInflow,RT_DOMAIN(domainId)%lake_index,gsize)
       call write_lake_real(g_lakeOutflow,RT_DOMAIN(domainId)%lake_index,gsize)
+      call write_lake_real(g_lakeType,RT_DOMAIN(domainId)%lake_index,gsize)
 #endif
    else
       gSize = rt_domain(domainId)%NLAKES
@@ -2478,6 +2481,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       allocate(g_lakeInflowOut(gsize))
       allocate(g_lakeOutflowOut(gsize))
       allocate(g_lakeidOut(gsize))
+      allocate(g_lakeTypeOut(gsize))
       allocate(chIndArray(gsize))
       g_lakeLat = RT_DOMAIN(domainID)%LATLAKE
       g_lakeLon = RT_DOMAIN(domainID)%LONLAKE
@@ -2485,6 +2489,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeInflow = RT_DOMAIN(domainID)%QLAKEI
       g_lakeOutflow = RT_DOMAIN(domainID)%QLAKEO
       g_lakeid = RT_DOMAIN(domainId)%LAKEIDM
+      g_lakeType = RT_DOMAIN(domainId)%final_reservoir_type
    endif
 
    ! Sync all processes up.
@@ -2574,6 +2579,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
             g_lakeLonOut(iTmp) = g_lakeLon(indTmp)
             g_lakeLatOut(iTmp) = g_lakeLat(indTmp)
             g_lakeElevOut(iTmp) = g_lakeElev(indTmp)
+            g_lakeTypeOut(iTmp) = g_lakeType(indTmp)
             g_lakeidOut(iTmp) = g_lakeid(indTmp)
          end do
       else
@@ -2582,6 +2588,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
          g_lakeLonOut = g_lakeLon
          g_lakeLatOut = g_lakeLat
          g_lakeElevOut = g_lakeElev
+         g_lakeTypeOut = g_lakeType
          g_lakeidOut = g_lakeid
       endif
       varOutReal(1,:) = g_lakeInflowOut(:)
@@ -2590,7 +2597,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LAKEOUT NetCDF file.')
 
       ! Write global attributes.
@@ -2693,6 +2700,16 @@ subroutine output_lakes_NWM(domainId,iGrid)
       iret = nf90_put_att(ftn,featureVarId,'cf_role',trim(fileMeta%cfRole))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place cf_role attribute into feature_id variable')
 
+      ! Create reservoir_type variable
+      iret = nf90_def_var(ftn, "reservoir_type", nf90_int, dimId(1), reservoirTypeVarId)
+      call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_type variable.')
+      iret = nf90_put_att(ftn, reservoirTypeVarId, 'long_name', trim(fileMeta%reservoirTypeLName))
+      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_type variable')
+      iret = nf90_put_att(ftn, reservoirTypeVarId, 'flag_values', fileMeta%reservoirTypeFlagValues)
+      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place flag_values attribute into reservoir_type variable')
+      iret = nf90_put_att(ftn, reservoirTypeVarId, 'flag_meanings', trim(fileMeta%reservoirTypeFlagMeanings))
+      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place flag_meanings attribute into reservoir_type variable')
+
       ! Create lake lat/lon variables
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create latitude variable.')
@@ -2726,6 +2743,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for time.')
          iret = nf90_def_var_deflate(ftn,featureVarId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for feature_id.')
+         iret = nf90_def_var_deflate(ftn,reservoirTypeVarId,0,1,2)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reservoir_type.')
          iret = nf90_def_var_deflate(ftn,refTimeId,0,1,2)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define compression level for reference_time.')
          iret = nf90_def_var_deflate(ftn,latVarId,0,1,2)
@@ -2835,6 +2854,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       iret = nf90_put_var(ftn,varId,g_lakeidOut)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
 
+      ! Place reservoir_type values into the NetCDF file
+      iret = nf90_inq_varid(ftn,'reservoir_type',varId)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate reservoir_type in NetCDF file.')
+      iret = nf90_put_var(ftn,varId,g_lakeTypeOut)
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into reservoir_type output variable.')
+
       ! Place lake metadata into NetCDF file
       iret = nf90_inq_varid(ftn,'water_sfc_elev',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate water_sfc_elev in NetCDF file.')
@@ -2885,6 +2910,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
    deallocate(g_lakeInflow)
    deallocate(g_lakeOutflow)
    deallocate(g_lakeid)
+   deallocate(g_lakeType)
    if(myId .eq. 0) then
       deallocate(g_lakeLonOut)
       deallocate(g_lakeLatOut)
@@ -2892,6 +2918,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       deallocate(g_lakeInflowOut)
       deallocate(g_lakeOutflowOut)
       deallocate(g_lakeidOut)
+      deallocate(g_lakeTypeOut)
       deallocate(chIndArray)
    endif
 
@@ -3108,8 +3135,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
    if(myId .eq. 0) then
-      ! Create output NetCDF file for writing.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      ! Create output NetCDF file for writing. 
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create RT_DOMAIN NetCDF file.')
 
       ! Write global attributes
@@ -3577,8 +3604,8 @@ subroutine output_lsmOut_NWM(domainId)
             nlst(domainId)%olddate(6:7)//nlst(domainId)%olddate(9:10)//&
             nlst(domainId)%olddate(12:13)//nlst(domainId)%olddate(15:16),&
             nlst(domainId)%igrid
-
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+  
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create LSMOUT NetCDF file.')
 
       ! Write global attributes
@@ -4543,7 +4570,7 @@ subroutine output_chanObs_NWM(domainId)
      modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
       ! Create NetCDF for output.
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
 
       ! Write global attributes.
@@ -5180,7 +5207,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
 
-      iret = nf90_create(trim(output_flnm),cmode=nf90_hdf5,ncid = ftn)
+      iret = nf90_create(trim(output_flnm),cmode=NF90_NETCDF4,ncid = ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create GWOUT NetCDF file.')
 
       ! Write global attributes.

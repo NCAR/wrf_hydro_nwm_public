@@ -531,8 +531,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
        IMPLICIT NONE
 
-! -------- DECLARATIONS ------------------------
-
+        ! -------- DECLARATIONS ------------------------
         INTEGER, INTENT(IN) :: did, IXRT,JXRT,channel_option
         INTEGER, INTENT(IN) :: NLINKS,NLAKES, NLINKSL
         integer, INTENT(INOUT) :: KT   ! flag of cold start (1) or continue run.
@@ -1173,7 +1172,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               ! Inflow, lateral inflow, water elevation, and the routing period
               ! are passed in. Updated outflow and water elevation are returned.
               call rt_domain(did)%reservoirs(i)%ptr%run(QLAKEIP(i), QLAKEI(i), &
-                   QLLAKE(i), RESHT(i), QLAKEO(i), DTCT)
+                   QLLAKE(i), RESHT(i), QLAKEO(i), DTCT, rt_domain(did)%final_reservoir_type(i))
 
               ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
               !       inside the reservoir module, but it requires a redesign of the lake
@@ -1576,7 +1575,6 @@ end subroutine drive_CHANNEL
        implicit none
 
 ! -------- DECLARATIONS ------------------------
-
        integer, intent(IN) :: did, IXRT,JXRT,channel_option, OVRTSWCRT, SUBRTSWCRT
        integer, intent(IN) :: NLAKES, NLINKSL, nlinks
        integer, intent(INOUT) :: KT   ! flag of cold start (1) or continue run.
@@ -1676,6 +1674,7 @@ end subroutine drive_CHANNEL
        integer :: n, kk2, nt, nsteps  ! tmp
        real, intent(in), dimension(:) :: qout_gwsubbas
        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+       integer, allocatable, dimension(:) :: tmpFinalResType
 
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
@@ -1683,6 +1682,7 @@ end subroutine drive_CHANNEL
             allocate(tmpQLAKEO(NLAKES))
             allocate(tmpQLAKEI(NLAKES))
             allocate(tmpRESHT(NLAKES))
+            allocate(tmpFinalResType(nlakes))
 #ifdef MPP_LAND
         endif
 #endif
@@ -1846,6 +1846,7 @@ do nt = 1, nsteps
       tmpQLAKEO = QLAKEO
       tmpQLAKEI = QLAKEI
       tmpRESHT = RESHT
+      tmpFinalResType = rt_domain(did)%final_reservoir_type
 #ifdef MPP_LAND
    endif
 #endif
@@ -1897,7 +1898,7 @@ do nt = 1, nsteps
             ! Inflow, lateral inflow, water elevation, and the routing period
             ! are passed in. Updated outflow and water elevation are returned.
             call rt_domain(did)%reservoirs(lakeid)%ptr%run(Qup, Quc, 0.0, &
-                 RESHT(lakeid), tmpQLINK(k,2), DTRT_CH)
+                 RESHT(lakeid), tmpQLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(lakeid))
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake
@@ -1942,6 +1943,7 @@ do nt = 1, nsteps
    call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
    call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
+   call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?
@@ -1970,6 +1972,7 @@ if(my_id .eq. io_id)      then
    if(allocated(tmpQLAKEO))  deallocate(tmpQLAKEO)
    if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
    if(allocated(tmpRESHT))  deallocate(tmpRESHT)
+   if(allocated(tmpFinalResType)) deallocate(tmpFinalResType)
 endif
 #endif
 
