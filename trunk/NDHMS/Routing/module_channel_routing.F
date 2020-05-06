@@ -1686,6 +1686,8 @@ end subroutine drive_CHANNEL
             allocate(tmpQLAKEI(NLAKES))
             allocate(tmpRESHT(NLAKES))
             allocate(tmpFinalResType(nlakes))
+            allocate(tmpAssimilatedValue(NLAKES))
+            allocate(tmpAssimilatedSourceFile(NLAKES))
 #ifdef MPP_LAND
         endif
 #endif
@@ -1982,6 +1984,8 @@ if(my_id .eq. io_id)      then
    if(allocated(tmpQLAKEI))  deallocate(tmpQLAKEI)
    if(allocated(tmpRESHT))  deallocate(tmpRESHT)
    if(allocated(tmpFinalResType)) deallocate(tmpFinalResType)
+   if(allocated(tmpAssimilatedSourceFile)) deallocate(tmpAssimilatedSourceFile)
+   if(allocated(tmpAssimilatedValue)) deallocate(tmpAssimilatedValue)
 endif
 #endif
 
