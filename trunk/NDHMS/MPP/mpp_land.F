@@ -2382,9 +2382,9 @@ MODULE MODULE_MPP_LAND
      subroutine updateLake_seq_char(in,nsize,in0)
        implicit none
        integer :: nsize
-       character(len=256), dimension(nsize) :: in
+       character(len=256), dimension(nsize), intent(inout) :: in
        character(len=256), dimension(nsize) :: tmp
-       character(len=256), dimension(:) :: in0
+       character(len=256), dimension(:), intent(in) :: in0
        integer tag, i, status, ierr, k, in_len
        if(nsize .le. 0) return
 
