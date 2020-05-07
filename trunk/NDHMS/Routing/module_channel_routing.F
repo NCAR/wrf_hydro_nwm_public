@@ -1688,6 +1688,7 @@ end subroutine drive_CHANNEL
             allocate(tmpFinalResType(nlakes))
             allocate(tmpAssimilatedValue(NLAKES))
             allocate(tmpAssimilatedSourceFile(NLAKES))
+            tmpAssimilatedSourceFile = repeat(char(0), 256)
 #ifdef MPP_LAND
         endif
 #endif
