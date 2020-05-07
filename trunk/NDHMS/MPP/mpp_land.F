@@ -1935,7 +1935,8 @@ MODULE MODULE_MPP_LAND
 
      subroutine write_lake_char(v,nodelist_in,nlakes)
         implicit none
-        character(len=256) recv(nlakes), v(nlakes)
+        character(len=256) recv(nlakes)
+        character(len=256), allocatable, intent(inout) :: v(:)
         integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
         integer i, ierr, tag, k, in_len
         integer length, node
