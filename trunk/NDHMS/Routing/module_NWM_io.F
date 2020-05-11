@@ -2754,12 +2754,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reservoir_assimilated_value variable')
 
       ! Create reservoir_assimilated_source_file variable
-      iret = nf90_def_var(ftn, "reservoir_assimilated_source_file", nf90_char, [dimId(4), dimId(1)], reservoirAssimilatedSourceFileVarId)
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_assimilated_source_file variable.')
-      iret = nf90_put_att(ftn, reservoirAssimilatedSourceFileVarId, 'long_name', trim(fileMeta%reservoirAssimilatedSourceFileLName))
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_assimilated_source_file variable')
-      iret = nf90_def_var_fill(ftn, reservoirAssimilatedSourceFileVarId, 0, 0);
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place _FillValue attribute into reservoir_assimilated_source_file variable')
+      !iret = nf90_def_var(ftn, "reservoir_assimilated_source_file", nf90_char, [dimId(4), dimId(1)], reservoirAssimilatedSourceFileVarId)
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_assimilated_source_file variable.')
+      !iret = nf90_put_att(ftn, reservoirAssimilatedSourceFileVarId, 'long_name', trim(fileMeta%reservoirAssimilatedSourceFileLName))
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_assimilated_source_file variable')
+      !iret = nf90_def_var_fill(ftn, reservoirAssimilatedSourceFileVarId, 0, 0);
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to place _FillValue attribute into reservoir_assimilated_source_file variable')
 
       ! Create lake lat/lon variables
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
