@@ -118,8 +118,8 @@ module Driver
       file=__FILE__)) &
       return  ! bail out
 
-        ! SetServices for OCN
-    call NUOPC_DriverAddComp(driver, "NWM", ocnSS, comp=child, rc=rc)
+    ! SetServices for OCN
+    call NUOPC_DriverAddComp(driver, "NWM", nwmSS, comp=child, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -150,7 +150,7 @@ module Driver
       file=__FILE__)) &
       return  ! bail out
 
-    ! SetServices for ocn2atm
+    ! SetServices for nwm2atm
     call NUOPC_DriverAddComp(driver, srcCompLabel="NWM", dstCompLabel="ATM", &
       compSetServicesRoutine=cplSS, comp=connector, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -166,7 +166,7 @@ module Driver
 #endif
 
     ! set the driver clock
-    call ESMF_TimeIntervalSet(timeStep, m=60, rc=rc) ! 15 minute steps
+    call ESMF_TimeIntervalSet(timeStep, m=60, rc=rc) ! 60 minute steps
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
