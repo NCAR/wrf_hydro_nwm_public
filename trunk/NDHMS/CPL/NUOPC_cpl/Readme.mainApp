@@ -1,4 +1,4 @@
-Modified: Beheen - 1/9/2020
+Beheen - 1/9/2020
 
 README for single Model NUOPC prototype with main and driver for
 NWM V2.1 - commit 8f248ef1b6b639214ebafed41e3cfd7e4d216b76 (origin/master, origin/HEAD, master)
@@ -46,7 +46,8 @@ Build: To compile follow below instructions:
 Execution: To test you must setup a location where NWM input files are located
 	and mainApp executable is linked or copied into this location (NWM_RUN)
   - Optionally set environment variable ESMF_RUNTIME_COMPLIANCECHECK to ON.
-  - mpirun -np X ./esmApp (where X is the total number of PETs)
+  - salloc --x11=first -t 00:60:00 --nodes=32 -A coastal
+  - mpirun -np 768 ./mainApp.exe (where X is the total number of PETs)
   
 Output:
   - PET*.Log files containing compliance checker output if turned on.
