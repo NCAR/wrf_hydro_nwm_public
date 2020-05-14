@@ -1727,8 +1727,10 @@ end subroutine land_driver_ini
      if(forc_typ .eq. 0) then
         CALL READFORC_HRLDAS(INFLNM_TEMPLATE, noah_lsm%FORCING_TIMESTEP, OLDDATE,  &
              XSTART, XEND, YSTART, YEND,                                  &
-       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
+             noah_lsm%forcing_name_T ,noah_lsm%forcing_name_Q ,noah_lsm%forcing_name_U , &
+	     noah_lsm%forcing_name_V ,noah_lsm%forcing_name_P ,noah_lsm%forcing_name_LW, &
+	     noah_lsm%forcing_name_SW,noah_lsm%forcing_name_PR,noah_lsm%forcing_name_SN, &
+	     noah_lsm%forcing_name_LF, &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
 	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai)
      else
@@ -1748,8 +1750,10 @@ end subroutine land_driver_ini
 #else
      CALL READFORC_HRLDAS(INFLNM_TEMPLATE, noah_lsm%FORCING_TIMESTEP, OLDDATE,  &
           XSTART, XEND, YSTART, YEND,                                  &
-       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
+          noah_lsm%forcing_name_T ,noah_lsm%forcing_name_Q ,noah_lsm%forcing_name_U , &
+	  noah_lsm%forcing_name_V ,noah_lsm%forcing_name_P ,noah_lsm%forcing_name_LW, &
+	  noah_lsm%forcing_name_SW,noah_lsm%forcing_name_PR,noah_lsm%forcing_name_SN, &
+	  noah_lsm%forcing_name_LF, &
           T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
 	    P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai)
 #endif

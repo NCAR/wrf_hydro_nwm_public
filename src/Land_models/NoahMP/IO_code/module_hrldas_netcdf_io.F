@@ -1875,7 +1875,7 @@ contains
 
   subroutine READFORC_HRLDAS(flnm_template, forcing_timestep, target_date, xstart, xend, ystart, yend,  &
        forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
-       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
        t,q,u,v,p,lw,sw,pcp,snow,vegfra,update_veg,lai,update_lai)
     use kwm_string_utilities
     implicit none
@@ -1894,6 +1894,7 @@ contains
     character(len=256),                 intent(in)  :: forcing_name_SW
     character(len=256),                 intent(in)  :: forcing_name_PR
     character(len=256),                 intent(in)  :: forcing_name_SN
+    character(len=256),                 intent(in)  :: forcing_name_LF
 
     real,             dimension(xstart:xend,ystart:yend), intent(out)   :: t
     real,             dimension(xstart:xend,ystart:yend), intent(out)   :: q
@@ -1908,6 +1909,9 @@ contains
     real,             dimension(xstart:xend,ystart:yend), intent(inout) :: vegfra
     logical,                            intent(in)  :: update_veg, update_lai  ! Barlage v3.7: for veg read control
 
+    real,             dimension(xstart:xend,ystart:yend)                :: liqfrac
+    logical :: snow_read = .false.
+
     character(len=256) :: flnm
     character(len=256) :: units
     character(len=256) :: nextflnm
@@ -1916,9 +1920,9 @@ contains
     integer :: rank
 
     type(inputstruct) :: lastread = inputstruct("0000-00-00_00:00:00", &
-         null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null() )
+         null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null())
     type(inputstruct) :: nextread= inputstruct("0000-00-00_00:00:00", &
-         null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null() )
+         null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null())
 
 !KWM    print*, 'target_date        = ', target_date
 !KWM    print*, 'lastread%read_date = ', lastread%read_date
@@ -2009,7 +2013,16 @@ contains
        call get_2d_netcdf(trim(forcing_name_PR), ncid, nextread%pcp,   units, xstart, xend, ystart, yend, FATAL, ierr)
        
        nextread%snow = 0.0  ! Assume zero in case not present
-       call get_2d_netcdf(trim(forcing_name_SN), ncid, nextread%snow,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+       if(forcing_name_SN /= "") then
+         call get_2d_netcdf(trim(forcing_name_SN), ncid, nextread%snow,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+         if(ierr == 0) snow_read = .true.
+       end if
+       
+       if(forcing_name_LF /= "" .and. .not. snow_read) then   ! snow was not read in
+         liqfrac = 1.0            ! Assume all liquid in case not present
+         call get_2d_netcdf(trim(forcing_name_LF), ncid, liqfrac,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+         if (ierr == 0) nextread%snow = (1.0 - liqfrac ) * nextread%pcp
+       end if
        
        if(update_veg) then    ! Barlage v3.7: update only if dveg option is appropriate
 
