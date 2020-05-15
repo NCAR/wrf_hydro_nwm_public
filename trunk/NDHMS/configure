@@ -108,6 +108,7 @@ if [[ "$theArgument" == "3" ]] || [[ "$theArgument" == "ifort" ]]; then
         echo "Configured: ifort on Summit haswell"
 
     else
+        # for Hera
 	cp arc/macros.mpp.ifort macros 
 	echo "Configured: ifort"
     fi

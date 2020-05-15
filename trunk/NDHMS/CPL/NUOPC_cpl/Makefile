@@ -101,7 +101,7 @@ CAP_DIR       := $(abspath $(DIR))
 CAP_LIB       := libnwm_nuopc.a
 CAP_DEP_FRONT := nwm_nuopc_cap    # for NEMS, must be same name as its module
 CAP_VERS      := VERSION
-CAP_MK        := nwm.mk           # for NEMS
+CAP_MK        := nwm.mk           # for NEMS must be same as in components_NWM.mk
 
 CAP_OBJS      := NWM_NUOPC_Cap.o
 CAP_OBJS      += NWM_NUOPC_Gluecode.o
