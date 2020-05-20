@@ -72,6 +72,7 @@ cp ../template/HYDRO/hydro.namelist .
 if [ "$(cat ../.nwm_version)" == "none" ]; then
     # if it is not an nwm version, use the stock ones.
     cp ../Land_models/NoahMP/run/*TBL .
+    cp ../Land_models/NoahMP/noahmp/parameters/*TBL .
     cp ../template/HYDRO/HYDRO.TBL .
     cp ../template/HYDRO/CHANPARM.TBL .
 else
