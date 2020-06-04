@@ -177,6 +177,8 @@ contains
                                routing_period,                               &
                                this%state%water_elevation,                   &
                                this%properties%lake_area,                    &
+							   this%properties%lake_precip,                  &
+							   this%properties%lake_evap,                    &
                                this%properties%weir_elevation,               &
                                this%properties%max_depth,                    &
                                this%properties%weir_coeffecient,             &
@@ -218,7 +220,7 @@ contains
     !   SUBROUTINE LEVELPOOL
     ! ------------------------------------------------
 
-    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,dl,oe,oc,oa)
+    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,lakep,lakeet,we,maxh,wc,wl,dl,oe,oc,oa)
 
         !! ----------------------------  argument variables
         !! All elevations should be relative to a common base (often belev(k))
@@ -230,6 +232,8 @@ contains
         real, intent(OUT)   :: qo1     ! outflow at current timestep
         real, intent(IN)    :: ql      ! lateral inflow
         real, intent(IN)    :: ar      ! area of reservoir (km^2)
+        real, intent(IN)    :: lakep   ! precip on lake surface (mm/hr)
+        real, intent(IN)    :: lakeet  ! evap from lake surface (mm/hr)
         real, intent(IN)    :: we      ! bottom of weir elevation
         real, intent(IN)    :: wc      ! weir coeff.
         real, intent(IN)    :: wl      ! weir length (m)
@@ -268,7 +272,11 @@ contains
         if (LAKE_OPT == 1) then     ! If-block for simple pass through scheme....
 
            qo1 = qi1                 ! Set outflow equal to inflow at current time
-           H = Htmp                  ! Set new lake water elevation to incoming lake el.
+           !H = Htmp                  ! Set new lake water elevation to incoming lake el.
+		   ! Set new lake water elevation to incoming lake el.
+		   ! and update based on net (P-ET) at surface
+		   ! units converted from mm/hr to m
+		   H = Htmp + (lakep - lakeet) * dt / 3600. / 1000.                 
 
         else if (LAKE_OPT == 2) then   ! If-block for Chow et al level pool scheme
 
@@ -365,7 +373,10 @@ contains
 
            !-- determine dh and H
            dh = (dh1/4.) + (0.75*dh3)
-           H = H + dh
+           !H = H + dh
+		   ! update H based on net (P-ET) at surface
+		   ! units converted from mm/hr to m
+		   H = H + dh + (lakep - lakeet) * dt / 3600. / 1000.   
 
            !-- compute final discharge
            dh = H - we
