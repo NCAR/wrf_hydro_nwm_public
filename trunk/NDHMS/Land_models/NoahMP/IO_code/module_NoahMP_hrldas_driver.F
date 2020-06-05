@@ -1857,7 +1857,7 @@ end subroutine land_driver_ini
                      hfx          ,lh             ,grdflx       ,tsk             ,&  !o
                      qfx          ,t2             ,th2          ,q2 )
  
-		 where(ivgtyp == islake) rainbl  = 10.0/3600.0  ! fake test for conservation
+         where(ivgtyp == islake) rainbl  = 10.0/3600.0  ! fake test for conservation
          where(ivgtyp == islake) qfx = 10.0/3600.0  ! fake test for conservation
 		 
          do ilake = 1, nlakes
