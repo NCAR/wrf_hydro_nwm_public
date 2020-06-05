@@ -168,10 +168,10 @@ CONTAINS
            nlst(did)%channelBucket_only .eq. 0        ) then
            ! decompose the hrldas 1-d data into routing domain
            
-		   call sum_real1d(lake_precip, nlakes)
+           call sum_real1d(lake_precip, nlakes)
            call sum_real1d(lake_evap, nlakes)
            call sum_int1d(lake_grids, nlakes)
-		   where(lake_grids>0) lake_precip = lake_precip / lake_grids
+           where(lake_grids>0) lake_precip = lake_precip / lake_grids
            where(lake_grids>0) lake_evap = lake_evap / lake_grids
            
            RT_DOMAIN(did)%STC = STC
