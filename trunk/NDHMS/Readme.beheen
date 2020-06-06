@@ -1,5 +1,5 @@
 created: 11/12/19 - Beheen
-modified: 12/17/19, 1/2/2020, 1/10/2020, 3/21/2020
+modified: 12/17/19, 1/2/2020, 1/10/2020, 3/21/2020, 5/21/2020
 
 11/12/19 - the version of NWM is latest, v2.1 from git repo:
            git clone https://github.com/NCAR/wrf_hydro_nwm_public.git NWM
@@ -8,22 +8,26 @@ modified: 12/17/19, 1/2/2020, 1/10/2020, 3/21/2020
          - nuopc part is unique and not checked in with NWM code base.
          - Using CMake included with the latest version of NWM
 
-12/17/19 - the latest version of NWM doesn't work with the operational dataset
+12/17/19 - NWM V2.1 doesn't work with the operational dataset of NWM V2.0
            V2.1 dataset is requested.
 
 git https://github.com/trimbleava/nwm-nuopc.git -  working out of this branch
 
 Had to change few envs in setEnvar.sh for Assimilation & Analysis configuration.
 
-To compile in stand alone mode with Makefile, read README.build.txt
+HOMEDIR = trunk/NDHMS/  and where this file should be located.
+NOTE: all the direction on this document are relative to HOMEDIR
+                                         ***********************
 
-To compile in nuopc mode with Makefile.mainApp:
+a) To compile in stand alone mode with Makefile, read README.build.txt
+
+b) To compile in nuopc mode for running with NEMS:
     check to make sure files:
-    1) compile_nuopc_NoahMP.sh exists and modified accordingly for nuopc
+    1) compile_nuopc_NoahMP.sh exists in HOMEDIR
     2) Makefile.nuopc exists in CPL/NUOPC_cpl/Makefile.nuopc
     3) Makefile.NoahMP.nuopc exists in CPL/NUOPC_cpl/Makefile.NoahMP.nuopc 
     4) Makefile.IO_code.nuopc exists in CPL/NUOPC_cpl/Makefile.IO-code.nuopc 
-    5) setEnvar.sh and esmf-impi-env.sh exist - copies available in CPL/NUOPC_cpl/
+    5) setEnvar.sh and esmf-impi-env.sh exist in HOMEDIR - copies available in CPL/NUOPC_cpl/
     Then ready to compile as follow:
     source setEnvar.sh
     source esmf-impi-env.sh
@@ -32,9 +36,18 @@ To compile in nuopc mode with Makefile.mainApp:
     ./compile_nuopc_NoahMP.sh   
     OR ./compile_nuopc_NoaMP.sh setEnvar.sh esmf-impi-env.sh 3
 
-Also see  CPL/NUOPC_cpl/mainApp.Readme
+    Also see  CPL/NUOPC_cpl/Readme.nuopc
 
-=========================================
+========================================= updated on 5/21/2020 left unfinished !! =================
+c) To compile in nuopc mode for running in standalone mode with a mainApp
+    1) make sure item b) applies
+    2) make sure CPL/NUOPC/TEST/(ATM.F90, Driver.F90, Makefile.mainApp, Makefile.nuopc_with_main, Readme.mainApp, mainApp.F90) exist
+    Then ready to compile as follow:
+    export MAINAPP=ON
+    ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
+    Also see CPL/NUOPC_cpl/TEST/Readme.mainApp
+
+==========================================
 To compile in stand alone mode with cmake:
 source setEnvar.sh
 mkdir cmake-build-standalone
@@ -49,7 +62,6 @@ mkdir cmake-build-nuopc
 cd cmake-build-nuopc
 rm -rf *; cmake -DNUOPCMODE=1 -Wno-dev .. 
 make VERBOSE=1
-
 
 =========================================
 To run in standalone mode:

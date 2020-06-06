@@ -2,11 +2,11 @@ Beheen - 1/10/2020
 
 This directory contains 
 1) WRFHYDRO nuopc cap with dependencies (i.e. Makefile.wrfhydro, Readme.WRFHYDRO, ...)
-2) NWM V2.1 and its nuopc cap with dependencies (i.e. Makefile.mainApp, Readme.NWM, ...)
+2) NWM V2.1 and its nuopc cap with dependencies (i.e. Makefile, Makefile.nuopc, Readme.NWM, Readme.nuopc, ...)
 3) NWM V2.1 and its nuopc cap (same code as 2) with CMake build tool
 
-Note: below files are like templates used for compilation of NWM in nuopc mode with and 
-without mainApp. Please do not remove:
+Note: below files are like templates used for compilation of NWM in nuopc mode 
+with NEMS. Please do not remove:
     1) Makefile.IO_code.nuopc  2) Makefile.NoahMP.nuopc  3) Makefile.nuopc
     4) esmf-impi-env.sh  5) setEnvar.sh
 
@@ -15,9 +15,9 @@ NWM NUOPC files
   - Makefile - Makefile that is based on the standard esmf.mk mechanism.
   - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
   - Readme.NWM
+  - Readme.nuopc (this file)
 
-
-NWM NUOPC files with mainApp - TO DO
+NWM NUOPC files with mainApp - moved to TEST directory
 ==============
   - Makefile.mainApp - Makefile that is based on the standard esmf.mk mechanism.
   - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
@@ -33,10 +33,12 @@ WRFHYDRO NUOPC files
   - Readme.WRFHYDRO
 
 
-NWM NUOPC files - TO DO
+NWM NUOPC files
 ==============
   - CMakefile.txt - cmake version of Makefile
   - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90  NWM_NUOPC_Macros.h - The MODEL component, specializing generic NUOPC_Model.
   - 
   
 Description: To test NWM in NUOPC coupled mode, we need a main and a nuopc driver and a model.
+             One way is to use NEMS with NWM NUOPC code and another way is to have a main and a driver.
+             We move the later case in TEST directory and running with NEMS in this directory.
