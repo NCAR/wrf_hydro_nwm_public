@@ -1,0 +1,62 @@
+Beheen - 1/9/2020
+
+README for single Model NUOPC prototype with main and driver for
+NWM V2.1 - commit 8f248ef1b6b639214ebafed41e3cfd7e4d216b76 (origin/master, origin/HEAD, master)
+------------------------------------------------------------------------
+
+Description: To test NWM in NUOPC coupled mode, we need a main and a nuopc driver and a model.
+  - Makefile.mainApp - Makefile that is based on the standard esmf.mk mechanism.
+  - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90 - The MODEL component, specializing generic NUOPC_Model.
+  - driver.F90 - Driver specializing NUOPC_Driver, driving the single MODEL.
+  - mainApp.F90 - Main application cap.
+
+The above source codes are to be compiled and then to be tested with NWM input files (parameters & forcing)
+ 	
+Dependencies: 
+  - ESMF v8.0.0 beta
+  - module load intel/18.0.5.274
+  - module load impi/2018.0.4
+  - module load szip/2.1
+  - module load hdf5/1.10.4
+  - module load netcdf/4.6.1
+  - module use /home/emc.nemspara/SOFT-hera/modulefiles
+  - module load esmf/8.0.0bs48g
+  See file esmf-impi-env.sh
+
+  
+Build: To compile follow below instructions:
+  - Go to trunk/NDHMS
+  - Set environment variable MAINAPP:
+    > export MAINAPP=ON
+  - ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
+  OR
+  - Set environment variable MAINAPP:
+    > MAINAPP=ON
+  - Set NWM required environment variable:
+    source setEnvar.sh 		==> located in trunk/NDHMS
+  - Set environment variable ESMFMKFILE:
+    source esmf-impi-env.sh 	==> located in trunk/NDHMS
+  - Configure compiler option:
+    ./configure
+    3            		==> enter option number 3
+  - Ready to compile, run this script
+    ./compile_nuopc_NoahMP.sh
+  - See the executable in trunk/NDHMS/CPL/NUOPC_cpl/mainApp
+ 
+Execution: To test you must setup a location where NWM input files are located
+	and mainApp executable is linked or copied into this location (NWM_RUN)
+  - Optionally set environment variable ESMF_RUNTIME_COMPLIANCECHECK to ON.
+  - salloc --x11=first -t 00:60:00 --nodes=32 -A coastal
+  - mpirun -np 768 ./mainApp.exe (where X is the total number of PETs)
+  
+Output:
+  - PET*.Log files containing compliance checker output if turned on.
+  - The prototype outputs time stepping information to stdout.
+  
+
+
+Code structure:
+  - Main.mk     - Makefile that is based on the standard esmf.mk mechanism.
+  - NWM_ESMF_Extensions.F90  NWM_NUOPC_Cap.F90  NWM_NUOPC_Gluecode.F90   - The MODEL component, specializing generic NUOPC_Model.
+  - driver.F90  - Driver specializing NUOPC_Driver, driving the single MODEL.
+  - mainApp.F90 - Main application cap.
