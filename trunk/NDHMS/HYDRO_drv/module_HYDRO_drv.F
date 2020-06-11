@@ -468,13 +468,14 @@ module module_HYDRO_drv
                             RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
                             RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
                             RT_DOMAIN(did)%QLAKEO, &
+                            RT_DOMAIN(did)%LAKE_PRECIP,RT_DOMAIN(did)%LAKE_EVAP, &
                             RT_DOMAIN(did)%RESHT,nlst(did)%DT,Kt)
                     endif
                     if(nlst(did)%outlake .eq. 2) then
 #ifdef MPP_LAND
                         call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
 #else
-                            call output_lakes2(  &
+							call output_lakes2(  &
 #endif
                             nlst(did)%igrid, nlst(did)%split_output_count, &
                             RT_DOMAIN(did)%NLAKES, &
@@ -482,6 +483,7 @@ module module_HYDRO_drv
                             RT_DOMAIN(did)%LATLAKE,RT_DOMAIN(did)%LONLAKE, &
                             RT_DOMAIN(did)%ELEVLAKE,RT_DOMAIN(did)%QLAKEI, &
                             RT_DOMAIN(did)%QLAKEO, &
+                            RT_DOMAIN(did)%LAKE_PRECIP,RT_DOMAIN(did)%LAKE_EVAP, &
                             RT_DOMAIN(did)%RESHT,nlst(did)%DT,Kt,RT_DOMAIN(did)%LAKEIDM)
                     endif
 
@@ -938,6 +940,7 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
        RT_DOMAIN(did)%RESHT, &
        RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
+       !RT_DOMAIN(did)%LAKE_PRECIP,RT_DOMAIN(did)%LAKE_EVAP, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst(did)%channel_option,  &
        RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
        RT_DOMAIN(did)%qout_gwsubbas, &
@@ -978,6 +981,7 @@ else
        RT_DOMAIN(did)%RESHT, &
        RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
+       !RT_DOMAIN(did)%LAKE_PRECIP,RT_DOMAIN(did)%LAKE_EVAP, &
        RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
        RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, &
        RT_DOMAIN(did)%CHANYJ, nlst(did)%channel_option, &

@@ -4662,7 +4662,7 @@ end subroutine mpp_output_chrt
 !-- output the ilake info an IDV 'station' compatible format -----------
    subroutine mpp_output_lakes(lake_index,igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt_ch,K)
+        qlakei,qlakeo,lake_precip,lake_evap, resht,dtrt_ch,K)
 
    USE module_mpp_land
 
@@ -4672,6 +4672,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real, dimension(NLAKES),                  intent(in) :: lake_precip,lake_evap  !-- lake precip and evap
      real,                                     intent(in) :: dtrt_ch
 
      character(len=*),                         intent(in) :: startdate
@@ -4685,10 +4686,12 @@ end subroutine mpp_output_chrt
      call write_lake_real(resht,lake_index,nlakes)
      call write_lake_real(qlakei,lake_index,nlakes)
      call write_lake_real(qlakeo,lake_index,nlakes)
+     call write_lake_real(lake_precip,lake_index,nlakes)
+     call write_lake_real(lake_evap,lake_index,nlakes)
      if(my_id.eq. IO_id) then
         call output_lakes(igrid, split_output_count, NLAKES, &
            startdate, date, latlake, lonlake, elevlake, &
-           qlakei,qlakeo, resht,dtrt_ch,K)
+           qlakei,qlakeo,lake_precip,lake_evap,resht,dtrt_ch,K)
      end if
      call mpp_land_sync()
      return
@@ -4696,7 +4699,7 @@ end subroutine mpp_output_chrt
 
    subroutine mpp_output_lakes2(lake_index,igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt_ch,K, LAKEIDM)
+        qlakei,qlakeo,lake_precip,lake_evap,resht,dtrt_ch,K, LAKEIDM)
 
    USE module_mpp_land
 
@@ -4706,6 +4709,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(inout) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(inout) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real, dimension(NLAKES),                  intent(inout) :: lake_precip,lake_evap !-- lake precip and evap
      real,                                     intent(in) :: dtrt_ch
      integer, dimension(NLAKES),               intent(in) :: LAKEIDM     ! lake id
 
@@ -4719,11 +4723,13 @@ end subroutine mpp_output_chrt
      call write_lake_real(resht,lake_index,nlakes)
      call write_lake_real(qlakei,lake_index,nlakes)
      call write_lake_real(qlakeo,lake_index,nlakes)
+     call write_lake_real(lake_precip,lake_index,nlakes)
+     call write_lake_real(lake_evap,lake_index,nlakes)
 
      if(my_id.eq. IO_id) then
         call output_lakes2(igrid, split_output_count, NLAKES, &
            startdate, date, latlake, lonlake, elevlake, &
-           qlakei,qlakeo, resht,dtrt_ch,K, LAKEIDM)
+           qlakei,qlakeo,lake_precip,lake_evap,resht,dtrt_ch,K, LAKEIDM)
      end if
      call mpp_land_sync()
      return
@@ -4734,7 +4740,7 @@ end subroutine mpp_output_chrt
 !-- output the ilake info an IDV 'station' compatible format
    subroutine output_lakes(igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt_ch,K)
+        qlakei,qlakeo,lake_precip,lake_evap,resht,dtrt_ch,K)
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -4742,6 +4748,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real, dimension(NLAKES),                  intent(in) :: lake_precip,lake_evap !-- lake precip and evap
      real,                                     intent(in) :: dtrt_ch
 
      character(len=*),                         intent(in) :: startdate
@@ -4859,6 +4866,14 @@ end subroutine mpp_output_chrt
       iret = nf90_def_var(ncid, "outflow", NF90_FLOAT, (/dimdata/), varid)
       iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
+!     !- precipitation over lake
+      iret = nf90_def_var(ncid, "lake_precip", NF90_FLOAT, (/dimdata/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'mm')
+
+!     !- evaporation lake
+      iret = nf90_def_var(ncid, "lake_evap", NF90_FLOAT, (/dimdata/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'mm')
+
      !-- station  id
      ! define character-position dimension for strings of max length 6
          iret = NF90_DEF_DIM(ncid, "id_len", 6, charid)
@@ -4943,6 +4958,11 @@ end subroutine mpp_output_chrt
          iret = nf90_inq_varid(ncid,"outflow", varid)
          iret = nf90_put_var(ncid, varid, qlakeo(i), (/start_pos/))
 
+         iret = nf90_inq_varid(ncid,"lake_precip", varid)
+         iret = nf90_put_var(ncid, varid, lake_precip(i), (/start_pos/))
+
+         iret = nf90_inq_varid(ncid,"lake_evap", varid)
+         iret = nf90_put_var(ncid, varid, lake_evap(i), (/start_pos/))
          !-- station index.. will repeat for every timesstep
 !        iret = nf90_inq_varid(ncid,"parent_index", varid)
 !        iret = nf90_put_var(ncid, varid, cnt, (/start_pos/))
@@ -4992,7 +5012,7 @@ end subroutine mpp_output_chrt
 !-- output the lake as regular netcdf file format for better performance than point netcdf file.
    subroutine output_lakes2(igrid, split_output_count, NLAKES, &
         startdate, date, latlake, lonlake, elevlake, &
-        qlakei,qlakeo, resht,dtrt_ch,K,LAKEIDM)
+        qlakei,qlakeo,lake_precip,lake_evap,resht,dtrt_ch,K,LAKEIDM)
 
 !!output the routing variables over just channel
      integer,                                  intent(in) :: igrid, K
@@ -5000,6 +5020,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
+     real, dimension(NLAKES),                  intent(in) :: lake_precip,lake_evap !-- lake precip and evap
      integer, dimension(NLAKES),               intent(in) :: LAKEIDM        !-- LAKE ID
      real,                                     intent(in) :: dtrt_ch
 
@@ -5078,6 +5099,14 @@ end subroutine mpp_output_chrt
       iret = nf90_def_var(ncid, "outflow", NF90_FLOAT, (/stationdim/), varid)
       iret = nf90_put_att(ncid, varid, 'units', 'meter^3 / sec')
 
+!     !- Precipitation over lake
+      iret = nf90_def_var(ncid, "lake_precip", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'mm')
+
+!     !- Evaporation from lake
+      iret = nf90_def_var(ncid, "lake_evap", NF90_FLOAT, (/stationdim/), varid)
+      iret = nf90_put_att(ncid, varid, 'units', 'mm')
+
       ! Time variable
       iret = nf90_def_var(ncid, "time", NF90_INT, (/timeDim/), varid)
       iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
@@ -5123,6 +5152,14 @@ end subroutine mpp_output_chrt
         !-- write elevation  of inflow
         iret = nf90_inq_varid(ncid,"outflow", varid)
         iret = nf90_put_var(ncid, varid, qlakeo, (/1/), (/NLAKES/))
+
+        !-- write precipitation over lake
+        iret = nf90_inq_varid(ncid,"lake_precip", varid)
+        iret = nf90_put_var(ncid, varid, lake_precip, (/1/), (/NLAKES/))
+
+        !-- write lake evaporation
+        iret = nf90_inq_varid(ncid,"lake_evap", varid)
+        iret = nf90_put_var(ncid, varid, lake_evap, (/1/), (/NLAKES/))
 
         !-- write lake id
         iret = nf90_inq_varid(ncid,"lake_id", varid)
@@ -5816,6 +5853,8 @@ end subroutine mpp_output_chrt
             iret = nf90_def_var(ncid, "resht", NF90_FLOAT, (/dimid_lakes/), varid)
             iret = nf90_def_var(ncid, "qlakeo", NF90_FLOAT, (/dimid_lakes/), varid)
             iret = nf90_def_var(ncid, "qlakei", NF90_FLOAT, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "lake_precip", NF90_FLOAT, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "lake_evap", NF90_FLOAT, (/dimid_lakes/), varid)
          endif
 
          if( nlst(did)%channel_only       .eq. 0 .and. &
@@ -6025,6 +6064,18 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
            )
 
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%lake_precip,"lake_precip" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
+
+      call w_rst_crt_nc1_lake(ncid,rt_domain(did)%nlakes,rt_domain(did)%lake_evap,"lake_evap" &
+#ifdef MPP_LAND
+           ,rt_domain(did)%lake_index  &
+#endif
+           )
+
       if( nlst(did)%channel_only       .eq. 0 .and. &
           nlst(did)%channelBucket_only .eq. 0         ) &
 
@@ -6127,6 +6178,8 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    write(iunit,ERR=101) rt_domain(did)%resht
                    write(iunit,ERR=101) rt_domain(did)%qlakeo
                    write(iunit,ERR=101) rt_domain(did)%qlakei
+                   write(iunit,ERR=101) rt_domain(did)%lake_precip
+                   write(iunit,ERR=101) rt_domain(did)%lake_evap
                    write(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
 
@@ -6222,6 +6275,8 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                    read(iunit,ERR=101) rt_domain(did)%resht
                    read(iunit,ERR=101) rt_domain(did)%qlakeo
                    read(iunit,ERR=101) rt_domain(did)%qlakei
+                   read(iunit,ERR=101) rt_domain(did)%lake_precip
+                   read(iunit,ERR=101) rt_domain(did)%lake_evap
                    read(iunit,ERR=101) rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
                 end if
 
@@ -6729,6 +6784,8 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
          call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+         call read_rst_crt_nc(ncid,rt_domain(did)%lake_precip,rt_domain(did)%NLAKES,"lake_precip")
+         call read_rst_crt_nc(ncid,rt_domain(did)%lake_evap,rt_domain(did)%NLAKES,"lake_evap")
       endif
 
       if( nlst(did)%channel_only       .eq. 0 .and. &
