@@ -5145,11 +5145,11 @@ end subroutine mpp_output_chrt
         iret = nf90_inq_varid(ncid,"wse", varid)
         iret = nf90_put_var(ncid, varid, resht, (/1/), (/NLAKES/))
 
-        !-- write elevation  of inflow
+        !-- write lake inflow
         iret = nf90_inq_varid(ncid,"inflow", varid)
         iret = nf90_put_var(ncid, varid, qlakei, (/1/), (/NLAKES/))
 
-        !-- write elevation  of inflow
+        !-- write lake outflow
         iret = nf90_inq_varid(ncid,"outflow", varid)
         iret = nf90_put_var(ncid, varid, qlakeo, (/1/), (/NLAKES/))
 
