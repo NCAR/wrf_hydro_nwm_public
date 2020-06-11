@@ -21,7 +21,7 @@ implicit none
 integer, parameter :: numChVars = 10
 integer, parameter :: numLdasVars = 98
 integer, parameter :: numRtDomainVars = 5
-integer, parameter :: numLakeVars = 2
+integer, parameter :: numLakeVars = 4
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 14
 integer, parameter :: numChObsVars = 1
@@ -1781,18 +1781,20 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    lakeOutDict%lonUnits = "degrees_east"
    lakeOutDict%lonStName = "longitude"
 
-   lakeOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow']
-   lakeOutDict%longName(:) = [character(len=64) :: 'Lake Inflow','Lake Outflow']
-   lakeOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1']
-   lakeOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude']
-   lakeOutDict%scaleFactor(:) = [0.01,0.01]
-   lakeOutDict%addOffset(:) = [0.0,0.0]
-   lakeOutDict%outFlag(:) = [0,0]
-   lakeOutDict%timeZeroFlag(:) = [1,1]
-   lakeOutDict%fillReal(:) = [-9999.0,-9999.0]
-   lakeOutDict%missingReal(:) = [-9999.0,-9999.0]
-   lakeOutDict%validMinDbl(:) = [-10000.0d0, -10000.0d0]
-   lakeOutDict%validMaxDbl(:) = [10000.0d0, 10000.0d0]
+   lakeOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','lake_precip','lake_evap']
+   lakeOutDict%longName(:) = [character(len=64) :: 'Lake Inflow','Lake Outflow', &
+        'Lake Precipitation','Lake Evaporation']
+   lakeOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1', 'mm', 'mm']
+   lakeOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude', &
+        'latitude longitude','latitude longitude','latitude longitude']
+   lakeOutDict%scaleFactor(:) = [0.01,0.01,0.01,0.01]
+   lakeOutDict%addOffset(:) = [0.0,0.0,0.0,0.0]
+   lakeOutDict%outFlag(:) = [0,0,0,0]
+   lakeOutDict%timeZeroFlag(:) = [1,1,1,1]
+   lakeOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
+   lakeOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0]
+   lakeOutDict%validMinDbl(:) = [-10000.0d0, -10000.0d0, -10000.0d0, -10000.0d0]
+   lakeOutDict%validMaxDbl(:) = [10000.0d0, 10000.0d0, 10000.0d0, 10000.0d0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
