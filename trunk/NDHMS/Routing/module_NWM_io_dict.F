@@ -1645,8 +1645,8 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
    rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
                                "QBDRYRT","SOIL_M"]
-   rtDomainDict%longName(:) = [character(len=64) :: "water table depth","surface head",&
-                               "channel inflow",&
+   rtDomainDict%longName(:) = [character(len=64) :: "depth to saturation, rounded to highest saturated layer",&
+                               "surface head","channel inflow",&
                                "accumulated value of the boundary flux, + into domain - out of domain",&
                                "volumetric soil moisture"]
    rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm","m3 m-3"]
