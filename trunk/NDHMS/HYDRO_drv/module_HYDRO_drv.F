@@ -475,7 +475,7 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
                         call mpp_output_lakes2( RT_DOMAIN(did)%lake_index, &
 #else
-							call output_lakes2(  &
+                            call output_lakes2(  &
 #endif
                             nlst(did)%igrid, nlst(did)%split_output_count, &
                             RT_DOMAIN(did)%NLAKES, &
