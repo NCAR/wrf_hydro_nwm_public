@@ -27,8 +27,10 @@ contains
 
     if( IOManager_init%parallel .eqv. .false.) then
        allocate(NetCDF_serial_ :: IOManager_init%netcdf_layer)
+       IOManager_init%netcdf_layer%open_file => nf90_open
     else
        allocate(NetCDF_parallel_ :: IOManager_init%netcdf_layer)
+       IOManager_init%netcdf_layer%open_file => nf90_open
     end if
     
   end function IOManager_init
