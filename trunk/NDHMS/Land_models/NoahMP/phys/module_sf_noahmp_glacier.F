@@ -2276,13 +2276,13 @@ END IF   ! OPT_GLA == 1
 
 !to obtain equilibrium state of snow in glacier region
        
-   IF(SNEQV > 5000.) THEN   ! 5000 mm -> maximum water depth
-      BDSNOW      = SNICE(0) / DZSNSO(0)
-      SNOFLOW     = (SNEQV - 5000.)
-      SNICE(0)    = SNICE(0)  - SNOFLOW 
-      DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
-      SNOFLOW     = SNOFLOW / DT
-   END IF
+!   IF(SNEQV > 5000.) THEN   ! 5000 mm -> maximum water depth
+!      BDSNOW      = SNICE(0) / DZSNSO(0)
+!      SNOFLOW     = (SNEQV - 5000.)
+!      SNICE(0)    = SNICE(0)  - SNOFLOW 
+!      DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
+!      SNOFLOW     = SNOFLOW / DT
+!   END IF
 
 ! sum up snow mass for layered snow
 
