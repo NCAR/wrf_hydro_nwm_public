@@ -750,11 +750,6 @@ contains
 
 ! compute energy budget (momentum & energy fluxes and phase changes) 
 
-    !if (TG .ne. TG .and. VEGTYP .ne. 14) then
-       print *, "adcheck_pre_energy: TG", TG
-       print *, "adcheck_pre_energy: SOLAD", SOLAD
-    !endif
-
     CALL ENERGY (parameters,ICE    ,VEGTYP ,IST    ,NSNOW  ,NSOIL  , & !in
                  ISNOW  ,DT     ,RHOAIR ,SFCPRS ,QAIR   , & !in
                  SFCTMP ,THAIR  ,LWDN   ,UU     ,VV     ,ZLVL   , & !in
@@ -788,10 +783,6 @@ contains
     QVAP = MAX( FGEV/LATHEAG, 0.)       ! positive part of fgev; Barlage change to ground v3.6
     QDEW = ABS( MIN(FGEV/LATHEAG, 0.))  ! negative part of fgev
     EDIR = QVAP - QDEW
-
-    !if (TG .ne. TG .and. VEGTYP .ne. 14) then
-       print *, "adcheck_post_energy: TG", TG
-    !endif
 
 ! compute water budgets (water storages, ET components, and runoff)
 
@@ -1102,16 +1093,12 @@ IF (CROPTYPE == 0) THEN
      SAI  = 0.
   ENDIF
 
-  print *, "adcheck_phenology: LAI, SAI", LAI, SAI
-
 ENDIF   ! CROPTYPE == 0
 
 !buried by snow
 
      DB = MIN( MAX(SNOWH - parameters%HVB,0.), parameters%HVT-parameters%HVB )
      FB = DB / MAX(1.E-06,parameters%HVT-parameters%HVB)
-
-    print *, "adcheck_phenology: DB, FB", DB, FB
 
      IF(parameters%HVT> 0. .AND. parameters%HVT <= 1.0) THEN          !MB: change to 1.0 and 0.2 to reflect
        SNOWHC = parameters%HVT*EXP(-SNOWH/0.2)             !      changes to HVT in MPTABLE
@@ -1122,16 +1109,10 @@ ENDIF   ! CROPTYPE == 0
        endif
      ENDIF
 
-    print *, "adcheck_phenology: SNOWH", SNOWH
-    print *, "adcheck_phenology: HVT, HVB", parameters%HVT, parameters%HVB
-    print *, "adcheck_phenology: SNOWHC, FB", SNOWHC, FB
-
      ELAI =  LAI*(1.-FB)
      ESAI =  SAI*(1.-FB)
      IF (ESAI < 0.05 .and. CROPTYPE == 0) ESAI = 0.0                   ! MB: ESAI CHECK, change to 0.05 v3.6
      IF ((ELAI < 0.05 .OR. ESAI == 0.0) .and. CROPTYPE == 0) ELAI = 0.0  ! MB: LAI CHECK
-
-   print *, "adcheck_phenology: ELAI, ESAI", ELAI, ESAI
 
 ! set growing season flag
 
@@ -2033,10 +2014,6 @@ ENDIF   ! CROPTYPE == 0
 !jref:end                            
     END IF
 
-    !if (TG .ne. TG .and. VEGTYP .ne. 14) then
-       print *, "adcheck_post_vegeflux: TG", TG
-    !endif
-
     TGB = TG
     CMB = CM
     CHB = CH
@@ -2053,10 +2030,6 @@ ENDIF   ! CROPTYPE == 0
                     QC      ,QSFC    ,PSFC    , & !in
                     SFCPRS  ,Q2B,   CHB2)                          !in 
 !jref:end                            
-
-    !if (TGB .ne. TGB .and. VEGTYP .ne. 14) then
-       print *, "adcheck_post_bareflux: TGB", TGB
-    !endif
 
 !energy balance at vege canopy: SAV          =(IRC+SHC+EVC+TR)     *FVEG  at   FVEG 
 !energy balance at vege ground: SAG*    FVEG =(IRG+SHG+EVG+GHV)    *FVEG  at   FVEG
@@ -2848,22 +2821,12 @@ ENDIF   ! CROPTYPE == 0
     TRD = SOLAD(IB)*FTDD(IB)
     TRI = SOLAD(IB)*FTID(IB) + SOLAI(IB)*FTII(IB)
 
-    print *, "adcheck_surrad: SOLAD", SOLAD
-    print *, "adcheck_surrad: FTDD", FTDD
-    print *, "adcheck_surrad: FTID", FTID
-    print *, "adcheck_surrad: SOLAI", SOLAI
-    print *, "adcheck_surrad: FTII", FTII
-
 ! solar radiation absorbed by ground surface
 
     ABS = TRD*(1.-ALBGRD(IB)) + TRI*(1.-ALBGRI(IB))
     SAG = SAG + ABS
     FSA = FSA + ABS
   END DO
-
-  print *, "adcheck_surrad: TRD, TRI", TRD, TRI
-  print *, "adcheck_surrad: ALBGRD, ALBGRI", ALBGRD, ALBGRI
-  print *, "adcheck_surrad: SAG, ABS", SAG, ABS
 
 ! partition visible canopy absorption to sunlit and shaded fractions
 ! to get average absorbed par for sunlit and shaded leaves
@@ -2939,16 +2902,6 @@ ENDIF   ! CROPTYPE == 0
    ENDIF
 
    FAGE= TAUSS/(TAUSS+1.)
-
-   !if (isnan(TAUSS)) then
-      print *, "adcheck_alb: DT, TAU0", DT, parameters%TAU0
-      print *, "adcheck_alb: GRAIN_GROWTH, EXTRA_GROWTH", parameters%GRAIN_GROWTH, parameters%EXTRA_GROWTH
-      print *, "adcheck_alb: TFRZ, TG", TFRZ, TG
-      print *, "adcheck_alb: DIRT_SOOT, SWEMX", parameters%DIRT_SOOT, parameters%SWEMX
-      print *, "adcheck_alb: AGE1, AGE2, AGE3", AGE1, AGE2, AGE3
-      print *, "adcheck_alb: DELA0, DELA", DELA0, DELA
-      print *, "adcheck_alb: DELS, SGE", DELS, SGE
-   !endif
 
   END SUBROUTINE SNOW_AGE
 
@@ -3336,9 +3289,6 @@ ENDIF   ! CROPTYPE == 0
 ! downward direct and diffuse fluxes below vegetation
 ! Niu and Yang (2004), JGR.
 
-   print *, "adcheck_twostream: S2, GAP", S2, GAP
-   print *, "adcheck_twostream: EXT, VAI", EXT, VAI
-
      IF (IC .EQ. 0) THEN
         FTDS = S2                           *(1.0-GAP) + GAP
         FTIS = (H4*S2/SIGMA + H5*S1 + H6/S1)*(1.0-GAP)
@@ -3348,8 +3298,6 @@ ENDIF   ! CROPTYPE == 0
      END IF
      FTD(IB) = FTDS
      FTI(IB) = FTIS
-
-   print *, "adcheck_twostream: FTD, FTI", FTD, FTI
 
 ! flux reflected by the surface (veg. and ground)
 
@@ -4146,10 +4094,6 @@ ENDIF   ! CROPTYPE == 0
         EVB   = CEV * (ESTG*RHSUR - EAIR        )
         GHB   = CGH * (TGB        - STC(ISNOW+1))
 
-   print *, "adcheck_bare1: IRB, SHB", IRB, SHB
-   print *, "adcheck_bare1: EVB, GHB", EVB, GHB
-   print *, "adcheck_bare1: SAG, PAHB", SAG, PAHB
-
         B     = SAG-IRB-SHB-EVB-GHB+PAHB
         A     = 4.*CIR*TGB**3 + CSH + CEV*DESTG + CGH
         DTG   = B/A
@@ -4159,15 +4103,8 @@ ENDIF   ! CROPTYPE == 0
         EVB = EVB + CEV*DESTG*DTG
         GHB = GHB + CGH*DTG
 
-   print *, "adcheck_bare2: B, A", B, A
-   print *, "adcheck_bare2: DTG", DTG
-   print *, "adcheck_bare2: IRB, SHB", IRB, SHB
-   print *, "adcheck_bare2: EVB, GHB", EVB, GHB
-
 ! update ground surface temperature
         TGB = TGB + DTG
-
-   print *, "adcheck_bare2: TGB", TGB
 
 ! for M-O length
         H = CSH * (TGB - SFCTMP)
@@ -4199,11 +4136,6 @@ ENDIF   ! CROPTYPE == 0
      END IF
      END IF
 
-   print *, "adcheck_bare3: IRB, SHB", IRB, SHB
-   print *, "adcheck_bare3: EVB, GHB", EVB, GHB
-   print *, "adcheck_bare3: B, A", B, A
-   print *, "adcheck_bare3: DTG, TGB", DTG, TGB
-
 ! wind stresses
          
      TAUXB = -RHOAIR*CM*UR*UU
@@ -4227,11 +4159,6 @@ ENDIF   ! CROPTYPE == 0
 
 ! update CH 
      CH = EHB
-
-   print *, "adcheck_bare4: IRB, SHB", IRB, SHB
-   print *, "adcheck_bare4: EVB, GHB", EVB, GHB
-   print *, "adcheck_bare4: B, A", B, A
-   print *, "adcheck_bare4: DTG, TGB", DTG, TGB
 
   END SUBROUTINE BARE_FLUX
 
