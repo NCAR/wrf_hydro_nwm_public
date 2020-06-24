@@ -781,6 +781,13 @@ CONTAINS
 
 
     ELSE
+         if (i .eq. 488 .and. j .eq. 191) then
+
+      print *, "adcheck_pre_sflx: albold sneqvo", ALBOLD, SNEQVO
+      print *, "adcheck_pre_sflx: sndpth swe", SNDPTH, SWE
+      print *, "adcheck_pre_sflx: tauss tgb", TAUSS, TGB
+      print *, "adcheck_pre_sflx: albsnd albsni", ALBSND, ALBSNI
+
          ICE=0                              ! Neither sea ice or land ice.
          CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
@@ -821,7 +828,21 @@ CONTAINS
             QFX(I,J) = ECAN + ESOIL + ETRAN
             LH       (I,J)                = FCEV + FGEV + FCTR
 
+      print *, "adcheck_post_sflx: albold sneqvo", ALBOLD, SNEQVO
+      print *, "adcheck_post_sflx: sndpth swe", SNDPTH, SWE
+      print *, "adcheck_post_sflx: tauss tgb", TAUSS, TGB
+      print *, "adcheck_post_sflx: albsnd albsni", ALBSND, ALBSNI
+
+          endif
    ENDIF ! glacial split ends 
+
+   !if (i .eq. 488 .and. j .eq. 191) then
+   !   print *, "adcheck1: albold sneqvo", ALBOLD, SNEQVO
+   !   print *, "adcheck1: sndpth swe", SNDPTH, SWE
+   !   print *, "adcheck1: tauss grain", TAUSS, GRAIN
+   !   print *, "adcheck1: albsnd albsni", ALBSND, ALBSNI
+   !endif
+
 
 #ifdef WRF_HYDRO
 
