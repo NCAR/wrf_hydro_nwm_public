@@ -1193,9 +1193,11 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%MFSNO  =  MFSNO_TABLE(VEGTYPE)       !snowmelt m parameter ()
     parameters%HVT    =    HVT_TABLE(VEGTYPE)       !top of canopy (m)
     parameters%MP     =     MP_TABLE(VEGTYPE)       !slope of conductance-to-photosynthesis relationship
-   parameters%RSURF_EXP  =   RSURF_EXP_TABLE
+    parameters%RSURF_EXP  =   RSURF_EXP_TABLE
 #endif
-
+    parameters%AXAJ = AXAJ_TABLE(SOILTYPE)
+    parameters%BXAJ = BXAJ_TABLE(SOILTYPE)
+    parameters%XXAJ = XXAJ_TABLE(SOILTYPE)
 ! ----------------------------------------------------------------------
 ! Transfer GENPARM parameters
 ! ----------------------------------------------------------------------
