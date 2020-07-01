@@ -35,6 +35,7 @@ module module_NoahMP_hrldas_driver
 #endif
 #ifdef WRF_HYDRO
   use module_NWM_io, only: output_NoahMP_NWM
+  use module_rt_data, only:  rt_domain
 #endif
 
   IMPLICIT NONE
@@ -344,7 +345,7 @@ module module_NoahMP_hrldas_driver
 !------------------------------------------------------------------------
 ! Needed for wrf_hydro lake model
 !------------------------------------------------------------------------
-  INTEGER                                :: ilake
+#ifdef WRF_HYDRO
   INTEGER                                :: nlakes
 
   REAL   , ALLOCATABLE, DIMENSION(:)     :: lake_precip
@@ -352,7 +353,7 @@ module module_NoahMP_hrldas_driver
   INTEGER, ALLOCATABLE, DIMENSION(:)     :: lake_grids
 
   INTEGER, ALLOCATABLE, DIMENSION(:,:)   :: lake_id
-
+#endif
 !------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
 !------------------------------------------------------------------------
@@ -1521,12 +1522,6 @@ module module_NoahMP_hrldas_driver
          infxsrt,sfcheadrt,soldrain,nlakes,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep),          &
          olddate,zsoil(1:NSOIL))
 
-   allocate(lake_precip(nlakes))
-   allocate(lake_evap(nlakes))
-   allocate(lake_grids(nlakes))
-   lake_precip = 0.0
-   lake_evap   = 0.0
-   lake_grids  = 0
 
 call get_iocflag(1, io_config_outputs)
 
@@ -1541,6 +1536,13 @@ if (io_config_outputs .gt. 0) then
      ACSNOM = 0.0
      ACSNOW = 0.0
 endif
+
+   allocate(lake_precip(nlakes))
+   allocate(lake_evap(nlakes))
+   allocate(lake_grids(nlakes))
+   lake_precip = 0.0
+   lake_evap   = 0.0
+   lake_grids  = 0
 #endif
 
    !!--- Setup variable list. Change as needed; rest of parsing should adapt automatically.
@@ -1623,9 +1625,17 @@ end subroutine land_driver_ini
   subroutine land_driver_exe(itime, state)
     use module_hydro_io, only: read_channel_only
     use state_module, only: state_type
+#ifdef WRF_HYDRO
+    use module_RT_data, only: rt_domain
+#endif
     implicit  none
     type(state_type) :: state
     integer :: itime          ! timestep loop
+#ifdef WRF_HYDRO
+    integer :: ilake
+    integer :: lake_idx
+    integer, parameter :: did=1
+#endif
 
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
@@ -1856,17 +1866,20 @@ end subroutine land_driver_ini
                      lakemask                                                    ,&
                      hfx          ,lh             ,grdflx       ,tsk             ,&  !o
                      qfx          ,t2             ,th2          ,q2 )
- 
+
          where(ivgtyp == islake) rainbl  = 20.0/3600.0  ! fake test for conservation
          where(ivgtyp == islake) qfx = 10.0/3600.0  ! fake test for conservation
 
+#ifdef WRF_HYDRO
          do ilake = 1, nlakes
-           lake_precip(ilake) = 10.0
-           lake_evap(ilake) = 20.0
-           !lake_precip(ilake) = sum(rainbl , mask = lake_id == ilake)
-           !lake_evap(ilake) = sum(qfx, mask = lake_id == ilake)
-           lake_grids(ilake) = sum(lake_id, mask = lake_id == ilake) / ilake
+           ! find this ID for this lake
+           lake_idx = rt_domain(did)%lakeidm(ilake)
+
+           lake_precip(ilake) = sum(rainbl , mask = lake_id == lake_idx)
+           lake_evap(ilake) = sum(qfx, mask = lake_id == lake_idx)
+           lake_grids(ilake) = count(mask = lake_id == lake_idx)
          end do
+#endif
 
          ENDIF
  
