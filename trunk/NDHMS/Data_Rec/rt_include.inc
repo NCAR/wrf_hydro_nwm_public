@@ -229,9 +229,10 @@
   REAL, allocatable, DIMENSION(:)    :: LAKEMAXH   !maximum depth (m)
   REAL, allocatable, DIMENSION(:)    :: WEIRC      !coeff of overtop weir
   REAL, allocatable, DIMENSION(:)    :: WEIRH      !depth of Lake coef
-
-
-
+  REAL, allocatable, DIMENSION(:)    :: LAKEMAXDEPTH      !max depth (m) based on actual depth
+  REAL, allocatable, DIMENSION(:)    :: LAKEVOL      	  !volume of lake based on bathymetry (km^3)
+  REAL, allocatable, DIMENSION(:)    :: LAKEPOLYA         !coefficient a in polynomial function V=a*h^b
+  REAL, allocatable, DIMENSION(:)    :: LAKEPOLYB         !coefficient b in polynomial function V=a*h^b
 
 !DJG Modified namelist for routing and agg. variables
   real Z_tmp

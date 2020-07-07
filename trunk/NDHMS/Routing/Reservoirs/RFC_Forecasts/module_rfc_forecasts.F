@@ -80,6 +80,10 @@ contains
         integer                        :: update_offset_seconds
         character(len=15)              :: lake_number_string
         character(len=15)              :: reservoir_type_string
+        real    :: max_depth_full_lake      ! max depth of reservoir before overtop (meters) based on full lake depth
+        real    :: lake_vol                 ! volume of lake based on bathymetry (km^3)
+        real    :: lake_polya               ! coefficient a in polynomial function V=a*h^b
+        real    :: lake_polyb               ! coefficient b in polynomial function V=a*h^b
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
@@ -155,7 +159,9 @@ contains
         ! Initialize level pool reservoir
         call this%state%levelpool_ptr%init(water_elevation, lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
-        orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
+        orifice_coefficient, orifice_area, lake_max_water_elevation, &
+        max_depth_full_lake, lake_vol, lake_polya, lake_polyb, &
+        lake_number)
 
         ! Call to initialize time series data object
         call time_series_data%init(start_date, time_series_path, forecast_lookback_hours, &

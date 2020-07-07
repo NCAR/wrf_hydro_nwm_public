@@ -46,7 +46,8 @@ CONTAINS
                     GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
                     sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
                     gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-                    UDMP_OPT, io_form_outputs, bucket_loss
+                    UDMP_OPT, io_form_outputs, bucket_loss, &
+                    lake_shape_option
           real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
           character(len=256) :: route_topo_f=""
           character(len=256) :: route_chan_f=""
@@ -138,8 +139,8 @@ CONTAINS
                     CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
                     RTOUT_DOMAIN, output_gw, outlake, &
                     frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-                    io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
-
+                    io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, &
+                    lake_shape_option
 #ifdef WRF_HYDRO_NUDGING
    namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
                             readTimesliceParallel,  temporalPersistence,    &
@@ -359,6 +360,7 @@ CONTAINS
   call mpp_land_bcast_int1(RTOUT_DOMAIN)
   call mpp_land_bcast_int1(UDMP_OPT)
   call mpp_land_bcast_int1(reservoir_data_ingest)
+  !call mpp_land_bcast_int1(lake_shape_option)
 #ifdef WRF_HYDRO_NUDGING
   call mpp_land_bcast_char(256, nudgingParamFile  )
   call mpp_land_bcast_char(256, netwkReExFile     )
@@ -401,6 +403,7 @@ CONTAINS
     nlst%DTRT_TER   = DTRT_TER
     nlst%DTRT_CH   = DTRT_CH
     nlst%DTCT      = DTRT_CH   ! small time step for grid based channel routing
+    nlst%lake_shape_option = lake_shape_option
 
 #ifdef MPP_LAND
   if(my_id .eq. IO_id) then
@@ -519,6 +522,7 @@ CONTAINS
     write(6,*) " nlst%compound_channel ", compound_channel
     write(6,*) " nlst%route_lake_f ",route_lake_f
     write(6,*) " nlst%reservoir_parameter_file ", reservoir_parameter_file
+    write(6,*) " nlst%lake_shape_option ", lake_shape_option
     write(6,*) " nlst%reservoir_usgs_timeslice_path ", reservoir_usgs_timeslice_path
     write(6,*) " nlst%reservoir_usace_timeslice_path ", reservoir_usace_timeslice_path
     write(6,*) " nlst%reservoir_observation_lookback_hours ", nlst%reservoir_observation_lookback_hours
@@ -803,7 +807,9 @@ subroutine rt_nlst_check(nlst)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
    end if
-
+   if( (nlst%lake_shape_option .lt. 0 ) .or. (nlst%lake_shape_option .gt. 5) ) then
+         call hydro_stop('hydro.namelist ERROR: Invalid lake_shape_option specified')
+   endif
    if(nlst%reservoir_persistence_usgs) then
       if(len(trim(nlst%reservoir_usgs_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usgs timeslice_path for reservoir USGS persistence capability.')

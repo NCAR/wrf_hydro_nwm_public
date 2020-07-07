@@ -383,6 +383,11 @@ CONTAINS
         allocate( rt_domain(did)%ORIFICEC(NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
+        allocate( rt_domain(did)%LAKEMAXDEPTH(NLAKES) )
+        allocate( rt_domain(did)%LAKEVOL(NLAKES) )
+        allocate( rt_domain(did)%LAKEPOLYA(NLAKES) )
+        allocate( rt_domain(did)%LAKEPOLYB(NLAKES) )
+
 
          rt_domain(did)%HRZAREA = 0.0
          rt_domain(did)%WEIRH = 0.0
@@ -394,6 +399,10 @@ CONTAINS
          rt_domain(did)%ORIFICEC = 0.0
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
+         rt_domain(did)%LAKEMAXDEPTH = 0.0
+         rt_domain(did)%LAKEVOL = 0.0
+         rt_domain(did)%LAKEPOLYA = 0.0
+         rt_domain(did)%LAKEPOLYB = 0.0
          rt_domain(did)%reservoir_type = 1
          rt_domain(did)%final_reservoir_type = 1
          rt_domain(did)%reservoir_assimilated_value = -9999.0
@@ -834,6 +843,10 @@ subroutine LandRT_ini(did)
                      rt_domain(did)%ORIFICEC(lake_index),         &
                      rt_domain(did)%ORIFICEA(lake_index),         &
                      rt_domain(did)%LAKEMAXH(lake_index),         &
+                     rt_domain(did)%LAKEMAXDEPTH(lake_index),     &
+                     rt_domain(did)%LAKEVOL(lake_index),          &
+                     rt_domain(did)%LAKEPOLYA(lake_index),        &
+                     rt_domain(did)%LAKEPOLYB(lake_index),        &
                      rt_domain(did)%LAKEIDM(lake_index)            )
 
           type is (persistence_levelpool_hybrid)
@@ -1656,6 +1669,10 @@ subroutine LandRT_ini(did)
    if(allocated(rt_domain(did)%ORIFICEC)) deallocate(rt_domain(did)%ORIFICEC)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
+   if(allocated(rt_domain(did)%LAKEMAXDEPTH)) deallocate(rt_domain(did)%LAKEMAXDEPTH)
+   if(allocated(rt_domain(did)%LAKEVOL)) deallocate(rt_domain(did)%LAKEVOL)
+   if(allocated(rt_domain(did)%LAKEPOLYA)) deallocate(rt_domain(did)%LAKEPOLYA)
+   if(allocated(rt_domain(did)%LAKEPOLYB)) deallocate(rt_domain(did)%LAKEPOLYB)
 
 end subroutine LandRT_ini
 

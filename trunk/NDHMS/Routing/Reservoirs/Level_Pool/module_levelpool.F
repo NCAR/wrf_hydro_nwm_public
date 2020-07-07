@@ -22,7 +22,7 @@ module module_levelpool
     use module_reservoir, only: reservoir, reservoir_input, &
                                      reservoir_output
     use module_hydro_stop, only: HYDRO_stop
-
+    use config_base, only: nlst
 #ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
                                           log_levelpool_diagnostic_data
@@ -55,7 +55,9 @@ contains
     subroutine levelpool_init(this, water_elevation,  &
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
-        orifice_area, max_depth, lake_number)
+        orifice_area, max_depth, &
+        max_depth_full_lake, lake_vol, lake_polya, lake_polyb, &
+        lake_number)
         implicit none
         class(levelpool), intent(inout) :: this ! object being initialized
         real, intent(inout) :: water_elevation           ! meters AMSL
@@ -67,7 +69,11 @@ contains
         real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
         real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
-        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
+        real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters) based on active reservoir depth
+        real, intent(in)    :: max_depth_full_lake       ! max depth of reservoir before overtop (meters) based on full lake depth
+        real, intent(in)    :: lake_vol                  ! volume of lake based on bathymetry (km^3)
+        real, intent(in)    :: lake_polya                ! coefficient a in polynomial function V=a*h^b
+        real, intent(in)    :: lake_polyb                ! coefficient b in polynomial function V=a*h^b
         integer, intent(in) :: lake_number               ! lake number
         character(len=15)   :: lake_number_string
 
@@ -113,7 +119,9 @@ contains
                 call this%properties%init( lake_area,  &
                     weir_elevation, weir_coeffecient, weir_length, dam_length, &
                     orifice_elevation, orifice_coefficient, &
-                    orifice_area, max_depth, lake_number )
+                    orifice_area, max_depth, &
+                    max_depth_full_lake, lake_vol, lake_polya, lake_polyb, &
+                    lake_number )
             end if
             this%pointer_allocation_guard = .true.
 
@@ -182,8 +190,11 @@ contains
                                this%properties%dam_length,                   &
                                this%properties%orifice_elevation,            &
                                this%properties%orifice_coefficient,          &
-                               this%properties%orifice_area                  &
-        )
+                               this%properties%orifice_area,                 &
+                               this%properties%max_depth_full_lake,          &
+                               this%properties%lake_vol,                     &
+                               this%properties%lake_polya,                   &
+                               this%properties%lake_polyb)
 
         ! Update output variable returned from this subroutine
         outflow = this%output%outflow
@@ -216,7 +227,8 @@ contains
     !   SUBROUTINE LEVELPOOL
     ! ------------------------------------------------
 
-    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,dl,oe,oc,oa)
+    subroutine LEVELPOOL_PHYSICS(ln,qi0,qi1,qo1,ql,dt,H,ar,we,maxh,wc,wl,dl,oe,oc,oa, &
+	                             maxdepth,vol,polya,polyb)
 
         !! ----------------------------  argument variables
         !! All elevations should be relative to a common base (often belev(k))
@@ -235,15 +247,28 @@ contains
         real, intent(IN)    :: oe      ! orifice elevation
         real, intent(IN)    :: oc      ! orifice coeff.
         real, intent(IN)    :: oa      ! orifice area (m^2)
-        real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m)
+        real, intent(IN)    :: maxh    ! max depth of reservoir before overtop (m) based on active reservoir depth
+        real, intent(IN)    :: maxdepth ! max depth of reservoir before overtop (m) based on full lake depth
+        real, intent(IN)    :: vol     ! volume of lake based on bathymetry (km^3)
+        real, intent(IN)    :: polya   ! coefficient a in polynomial function V=a*h^b
+        real, intent(IN)    :: polyb   ! coefficient b in polynomial function V=a*h^b
         integer, intent(IN) :: ln      ! lake number
 
-        !!DJG Add lake option switch here...move up to namelist in future versions...
-        integer :: LAKE_OPT            ! Lake model option (move to namelist later)
-        real    :: Htmp                ! Temporary assign of incoming lake el. (m)
+        integer, parameter :: did = 1
+        integer :: lake_shape_option   ! Lake model option
+                                       ! lake_shape_option options:
+									   ! -1 	---> Simple pass through scheme
+									   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
+									   ! 1		---> BOX shape with depth based on full lake depth
+									   ! 2		---> CONIC shape with depth based on full lake depth
+									   ! 3		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+									   ! 4		---> ELLIPSOID shape with depth based on full lake depth
+									   ! 5		---> H-A-V RELATIONSHIP depth based on full lake depth
 
         !! ----------------------------  local variables
-        real :: sap                    ! local surface area values
+        real :: Htmp                   ! Temporary assign of incoming lake el. (m)
+        real :: sap                    ! local surface area values in m2
+        real :: vtp                    ! local total volume values in m3
         real :: discharge              ! storage discharge m^3/s
         real :: tmp1, tmp2
         real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
@@ -253,31 +278,38 @@ contains
         !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
         !! -- determine from inflow hydrograph
 
+        ! read lake shape function from hydro.namelist:
+        lake_shape_option = nlst(did)%lake_shape_option
+        !print *, "lake_shape_option is:", lake_shape_option
 
-        !!DJG Set hardwire for LAKE_OPT...move specification of this to namelist in
-        !future versions...
-        LAKE_OPT = 2
         Htmp = H   !temporary set of incoming lake water elevation...
         !hdiff_vol = 0.0
         !qdiff_vol = 0.0
 
-        !!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
-        !pool, .....
-        if (LAKE_OPT == 1) then     ! If-block for simple pass through scheme....
+        !IF-block for lake shape option:
+        if (lake_shape_option == -1) then     ! If-block for simple pass through scheme....
 
            qo1 = qi1                 ! Set outflow equal to inflow at current time
            H = Htmp                  ! Set new lake water elevation to incoming lake el.
 
-        else if (LAKE_OPT == 2) then   ! If-block for Chow et al level pool scheme
+        else   ! If-block for Chow et al level pool scheme
+
+           ! Define reservoir max depth and rescale orifice and weir elevation
+           ! if using lake_shape_option >= 1:
+           if (lake_shape_option == 0) then		! define max depth based on active reservoir depth (NWM v1.x - v2.1)
+           ! ADD ADJUSTENTS FOR LAKE_SHAPE_OPT = 0 HERE!  
+           else                        ! define max depth based on full lake depth
+           ! ADD ADJUSTENTS FOR LAKE_SHAPE_OPT > 0 HERE!
+           endif
 
            It = qi0
            Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
            Itdt_2_3 = qi0 + ((qi1 + ql - qi0) * 0.67)
            maxWeirDepth =  maxh - we
 
-           !assume vertically walled reservoir
-           !remove this when moving to a variable head area volume
+           !convert area and volume to m2 and m3
            sap = ar * 1.0E6
+           vtp = vol * 1.0E9
 
            !-- determine Q(dh) from elevation-discharge relationship
            !-- and dh1
@@ -301,7 +333,8 @@ contains
            endif
 
            if (sap > 0) then
-              dh1 = ((It - discharge)/sap)*dt
+              !dh1 = ((It - discharge)/sap)*dt
+              call STAGE_STORAGE(dh1,maxdepth,H,It,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
            else
               dh1 = 0.0
            endif
@@ -329,7 +362,8 @@ contains
 
 
            if (sap > 0.0) then
-              dh2 = ((Itdt_3 - discharge)/sap)*dt
+              !dh2 = ((Itdt_3 - discharge)/sap)*dt
+              call STAGE_STORAGE(dh2,maxdepth,H,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
            else
               dh2 = 0.0
            endif
@@ -356,7 +390,8 @@ contains
            endif
 
            if (sap > 0.0) then
-              dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+              !dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+              call STAGE_STORAGE(dh3,maxdepth,H,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
            else
               dh3 = 0.0
            endif
@@ -403,14 +438,86 @@ contains
         !23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
         !24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
 
-
-        else   ! ELSE for LAKE_OPT....
-        endif  ! ENDIF for LAKE_OPT....
-
+		endif  ! ENDIF for lake_shape_option....
+		!print *, "TEST STAGE_STORAGE..."
+		!print *, dh, dh1, dh2, dh3
+		!print *, dh, dh1_test, dh2_test, dh3_test
         return
 
     ! ----------------------------------------------------------------
     end subroutine LEVELPOOL_PHYSICS
     ! ----------------------------------------------------------------
 
+    ! ------------------------------------------------
+    !   SUBROUTINE STAGE-STORAGE
+    ! ------------------------------------------------
+    ! This subroutine calculates change in sotrage water level (Deltah) given the initial water level (h1),
+    ! reservoir shape option (lake_shape_option), inflow (Inflow_dt), and discharge (res_discharge), and surface area (surf_area)
+    subroutine STAGE_STORAGE(Deltah,Dmax,h1,Inflow_dt,res_discharge,surf_area,total_vol, &
+                            Deltat,LAKE_SHAPE_OPT, polyhV_a, polyhV_b)
+
+        !! ----------------------------  argument variables
+        !! All elevations should be relative to a common base (often belev(k))
+
+        real, intent(OUT)   :: Deltah              ! change in sotrage water level (m)
+        real, intent(IN)    :: Dmax                ! Maximum depth of reservoir (m)
+        real, intent(IN)    :: h1                  ! initial water level (m)
+        real, intent(IN)    :: Inflow_dt           ! inflow (m^3/s)
+        real, intent(IN)    :: res_discharge       ! storage discharge (m^3/s)
+        real, intent(IN)    :: surf_area           ! surface area (m2)
+        real, intent(IN)    :: total_vol           ! total volume (m3)
+        real, intent(IN)    :: Deltat              ! routing period (s)
+        real, intent(IN)    :: polyhV_a            ! coefficient a in polynomial function V=a*h^b
+        real, intent(IN)    :: polyhV_b            ! coefficient b in polynomial function V=a*h^b
+        integer, intent(IN) :: LAKE_SHAPE_OPT      ! LAKE_SHAPE_OPT (lake_shape_option) options from namelist:
+												   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
+												   ! 1		---> BOX shape with depth based on full lake depth
+												   ! 2		---> CONIC shape with depth based on full lake depth
+												   ! 3		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+												   ! 4		---> ELLIPSOID shape with depth based on full lake depth
+												   ! 5		---> H-A-V RELATIONSHIP depth based on full lake depth
+
+        !! ----------------------------  local variables
+        real, parameter :: pi = 3.14159265
+        real :: R_cone             ! cone base radius (m)
+        real :: S1                 ! initial reservoir storage (m3)
+        real :: S2                 ! reservoir storage after change (m3)
+        real :: dS                 ! change in reservoir storage (m3)
+        real :: h2                 ! cone base radius (m)
+        !! ----------------------------
+
+        ! change in storage (m3)
+        dS = (Inflow_dt - res_discharge)*Deltat
+
+        if ( (LAKE_SHAPE_OPT == 0) .OR. (LAKE_SHAPE_OPT == 1) ) then     ! BOX shape
+          h2 = (dS / surf_area) + h1
+
+        elseif (LAKE_SHAPE_OPT == 2) then     ! CONIC shape
+          R_cone = (surf_area/pi)**0.5                ! cone base radius (m)
+          S1 = (pi/3.) * (R_cone/Dmax)**2. * (h1**3.)   ! storage before change in volume (m3)
+          S2 = MAX(S1 + dS, 0.0)                               ! storage after change in volume (m3)
+          h2 = (3.*S2/pi*(Dmax/R_cone)**2.)**(1./3.)     ! elevation after change in storage in (m)
+
+        elseif (LAKE_SHAPE_OPT == 3) then     ! RECTANGLUAR PRISM shape
+          S1 = (surf_area/2./Dmax)*(h1**2.)     ! storage before change in volume (m3)
+          S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
+          h2 = (2.*S2*Dmax/surf_area)**0.5     ! elevation after change in storage in (m)
+
+        elseif (LAKE_SHAPE_OPT == 4) then     ! ELLIPSOID shape
+          !S1 = (surf_area/2/Dmax)*(h1**2)     ! storage before change in volume (m3)
+          !S2 = S1 + dS                        ! storage after change in volume (m3)
+          !h2 = (2*S2*Dmax/surf_area)**0.5     ! elevation after change in storage in (m)
+
+        elseif (LAKE_SHAPE_OPT == 5) then     ! H-A-V RELATIONSHIP
+          S1 = polyhV_a*(h1**polyhV_b) * 1.0E9    ! storage before change in volume (m3)
+          S2 = MAX(S1 + dS, 0.0)                        ! storage after change in volume (m3)
+          h2 = (S2/1.0E9/polyhV_a)**(1./polyhV_a)     ! elevation after change in storage in (m)
+        endif
+
+        Deltah = h2-h1     ! change in sotrage water level (m)
+        return
+
+    ! ----------------------------------------------------------------
+    end subroutine STAGE_STORAGE
+    ! ----------------------------------------------------------------
 end module module_levelpool
