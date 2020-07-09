@@ -1,0 +1,18 @@
+all:
+	(make -f Makefile.comm BASIC)
+	(cd CPL/NoahMP_cpl; make) 
+	(make -C Land_models/NoahMP -f Makefile.NoahMP.nuopc nuopc)
+	@echo ""
+	(make -C CPL/NUOPC_cpl -f Makefile.mainApp DEBUG=on)
+	@echo ""
+
+nuopcinstall:
+	(make -C CPL/NUOPC_cpl -f Makefile.mainApp nuopcinstall) # to compile in nuopc mode with main
+
+nuopcclean:
+	(make -f Makefile.comm clean)
+	(make -C CPL/NoahMP_cpl clean)
+	(make -C Land_models/NoahMP -f Makefile.NoahMP.nuopc clean)
+	(make -C CPL/NUOPC_cpl -f Makefile.mainApp nuopcclean)
+	(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
+

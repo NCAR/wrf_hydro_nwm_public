@@ -1,0 +1,86 @@
+# ---
+#  # --- NWM ESMF/NUOPC makefile
+# --- Requires ESMV V8+
+#  # --- NWM ESMF component.
+#
+
+ifneq ($(origin ESMFMKFILE), environment)
+  $(warning Environment variable ESMFMKFILE was not set.)
+  export ESMFMKFILE=/scratch1/NCEPDEV/nems/emc.nemspara/soft/esmf/8.0.0bs48g-intel18.0.5.274-impi2018.0.4-netcdf4.6.1/lib/esmf.mk
+  $(info Setting to $(ESMFMKFILE))
+endif
+include $(ESMFMKFILE)
+
+# #########################
+# # Determine Build Precision
+# # #########################
+
+ifeq ($(BUILD_PREC),r4)
+override ESMF_F90COMPILECPPFLAGS += -DREAL4
+else ifeq ($(BUILD_PREC),r8)
+override ESMF_F90COMPILECPPFLAGS += -DREAL8
+else
+override ESMF_F90COMPILECPPFLAGS += -DREAL4
+endif
+
+# #################################
+# Compile with Debugging Directives
+# #################################
+
+ifeq ($(DEBUG),on)
+override ESMF_F90COMPILECPPFLAGS += -DDEBUG
+override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
+endif
+
+
+.SUFFIXES:
+.SUFFIXES: .c .C .f90 .F90 .F .f
+
+%.o : %.f90
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREENOCPP) $<
+
+%.o : %.f
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREENOCPP) $<
+
+%.o : %.F90
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) -I ../../mod -I. -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -I ../../Land_models/NoahMP/Utility_routines -I ../../Land_models/NoahMP/IO_code -I ../../Land_models/NoahMP/phys -I ../../MPP $(ESMF_F90COMPILECPPFLAGS) $<
+
+%.o : %.F
+	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) -I ../../mod -I. -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) -I ../../Land_models/NoahMP/Utility_routines -I ../../Land_models/NoahMP/IO_code -I ../../Land_models/NoahMP/phys -I ../../MPP $(ESMF_F90COMPILECPPFLAGS) $<
+
+%.o : %.c
+	$(ESMF_CXXCOMPILER) -c $(ESMF_CXXCOMPILEOPTS) $(ESMF_CXXCOMPILEPATHSLOCAL) $(ESMF_CXXCOMPILEPATHS) $(ESMF_CXXCOMPILECPPFLAGS) $<
+
+%.o : %.C
+	$(ESMF_CXXCOMPILER) -c $(ESMF_CXXCOMPILEOPTS) $(ESMF_CXXCOMPILEPATHSLOCAL) $(ESMF_CXXCOMPILEPATHS) $(ESMF_CXXCOMPILECPPFLAGS) $<
+
+
+MODEL_LIB := ../../lib/libHYDRO.a
+
+MODEL_OBJS := ../../MPP/mpp_land.o ../../Land_models/NoahMP/IO_code/module_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.o ../../Land_models/NoahMP/Utility_routines/module_date_utilities.o ../../Land_models/NoahMP/Utility_routines/kwm_string_utilities.o ../../Land_models/NoahMP/phys/module_sf_noahmpdrv.o ../../Land_models/NoahMP/phys/module_sf_noahmplsm.o ../../Land_models/NoahMP/phys/module_sf_noahmp_groundwater.o ../../Land_models/NoahMP/phys/module_sf_noahmp_glacier.o ../../Land_models/NoahMP/Utility_routines/module_wrf_utilities.o ../../Land_models/NoahMP/data_structures/state.o ../../Land_models/NoahMP/data_structures/forcing.o ../../Land_models/NoahMP/data_structures/geometry.o ../../Land_models/NoahMP/data_structures/parameters.o ../../OrchestratorLayer/config.o ../../OrchestratorLayer/io_manager.o ../../OrchestratorLayer/orchestrator.o 
+
+CAP_OBJS  := NWM_ESMF_Extensions.o Utility.o OCN.o ATM.o Driver.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o mainApp.o
+
+mainApp: $(MODEL_OBJS) $(CAP_OBJS)
+	@echo ""
+	$(ESMF_F90LINKER) $(ESMF_F90LINKOPTS) $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) -o $@ $^ $(MODEL_LIB) $(ESMF_F90ESMFLINKLIBS)
+
+
+# ############
+# Dependencies
+# ############
+mainApp.o: Driver.o
+Driver.o: NWM_NUOPC_Macros.h NWM_NUOPC_Cap.o 
+NWM_NUOPC_Cap.o: NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o NWM_NUOPC_Macros.h
+Utility.o: NWM_NUOPC_Macros.h
+NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o 
+
+# ---------------------------------------------------------------
+
+.PHONY: dust clean distclean info edit
+dust:
+	rm -f PET*.ESMF_LogFile *.nc
+nuopcclean:
+	rm -f mainApp *.o *.mod
+distclean: dust clean
+
