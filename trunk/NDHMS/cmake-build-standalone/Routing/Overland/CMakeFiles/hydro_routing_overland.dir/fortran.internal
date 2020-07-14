@@ -1,7 +1,7 @@
 # The fortran modules provided by this target.
 provides
- overland_control
- overland_data
- overland_mass_balance
- overland_routing_properties
- overland_stream_and_lake_interface
+ overland_control.mod
+ overland_data.mod
+ overland_mass_balance.mod
+ overland_routing_properties.mod
+ overland_stream_and_lake_interface.mod

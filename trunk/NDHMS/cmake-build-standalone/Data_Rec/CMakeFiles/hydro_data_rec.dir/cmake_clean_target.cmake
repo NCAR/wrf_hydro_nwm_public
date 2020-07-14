@@ -1,3 +1,3 @@
-FILE(REMOVE_RECURSE
+file(REMOVE_RECURSE
   "../lib/libhydro_data_rec.a"
 )

@@ -1,4 +1,4 @@
 # The fortran modules provided by this target.
 provides
- module_hrldas_netcdf_io
- module_noahmp_hrldas_driver
+ module_hrldas_netcdf_io.mod
+ module_noahmp_hrldas_driver.mod

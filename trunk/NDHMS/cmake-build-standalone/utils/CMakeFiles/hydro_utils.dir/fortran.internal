@@ -1,4 +1,4 @@
 # The fortran modules provided by this target.
 provides
- module_hydro_stop
- module_version
+ module_hydro_stop.mod
+ module_version.mod

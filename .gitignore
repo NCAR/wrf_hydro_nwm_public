@@ -2,7 +2,9 @@
 *.mod
 *~
 *.swp
-Makefile.comm
+trunk/NDHMS/cmake-build-standalone/
+trunk/NDHMS/cmake-build-nuopc/
+trunk/NDHMS/Makefile.comm
 trunk/NDHMS/lib/*
 trunk/NDHMS/macros
 trunk/NDHMS/HRLDAS/user_build_options
@@ -21,4 +23,3 @@ README.md
 *.log
 compile_options.sh
 .DS_Store
-.gitignore

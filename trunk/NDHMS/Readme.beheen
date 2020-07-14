@@ -39,13 +39,13 @@ b) To compile in nuopc mode for running with NEMS:
     Also see  CPL/NUOPC_cpl/Readme.nuopc
 
 ========================================= updated on 5/21/2020 left unfinished !! =================
-c) To compile in nuopc mode for running in standalone mode with a mainApp
-    1) make sure item b) applies
-    2) make sure CPL/NUOPC/TEST/(ATM.F90, Driver.F90, Makefile.mainApp, Makefile.nuopc_with_main, Readme.mainApp, mainApp.F90) exist
+c) To compile in nuopc mode for running in nuopc mode with a mainApp
+    1) goto HOMEDIR = trunk/NDHMS/
+    2) make sure CPL/NUOPC/(ATM.F90, Driver.F90, Makefile.mainApp, Makefile.nuopc_with_main, Readme.mainApp, mainApp.F90) exist
     Then ready to compile as follow:
     export MAINAPP=ON
     ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
-    Also see CPL/NUOPC_cpl/TEST/Readme.mainApp
+    Also see CPL/NUOPC_cpl/Readme.mainApp
 
 ==========================================
 To compile in stand alone mode with cmake:

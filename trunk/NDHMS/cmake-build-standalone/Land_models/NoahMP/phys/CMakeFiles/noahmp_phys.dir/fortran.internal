@@ -1,9 +1,9 @@
 # The fortran modules provided by this target.
 provides
- module_sf_noahmp_glacier
- module_sf_noahmp_groundwater
- module_sf_noahmpdrv
- module_sf_noahmplsm
- noahmp_glacier_globals
- noahmp_glacier_routines
- noahmp_tables
+ module_sf_noahmp_glacier.mod
+ module_sf_noahmp_groundwater.mod
+ module_sf_noahmpdrv.mod
+ module_sf_noahmplsm.mod
+ noahmp_glacier_globals.mod
+ noahmp_glacier_routines.mod
+ noahmp_tables.mod

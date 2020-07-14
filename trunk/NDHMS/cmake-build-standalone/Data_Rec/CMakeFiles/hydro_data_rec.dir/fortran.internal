@@ -1,5 +1,5 @@
 # The fortran modules provided by this target.
 provides
- module_gw_gw2d_data
- module_namelist
- module_rt_data
+ module_gw_gw2d_data.mod
+ module_namelist.mod
+ module_rt_data.mod

@@ -1,6 +1,6 @@
 # The fortran modules provided by this target.
 provides
- forcing
- geometry
- parameters
- state_module
+ forcing.mod
+ geometry.mod
+ parameters.mod
+ state_module.mod

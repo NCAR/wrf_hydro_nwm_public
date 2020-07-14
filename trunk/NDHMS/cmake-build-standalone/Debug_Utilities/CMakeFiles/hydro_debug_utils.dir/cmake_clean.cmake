@@ -1,10 +1,10 @@
-FILE(REMOVE_RECURSE
-  "CMakeFiles/hydro_debug_utils.dir/debug_dump_variable.F.o"
-  "../lib/libhydro_debug_utils.pdb"
+file(REMOVE_RECURSE
   "../lib/libhydro_debug_utils.a"
+  "../lib/libhydro_debug_utils.pdb"
+  "CMakeFiles/hydro_debug_utils.dir/debug_dump_variable.F.o"
 )
 
 # Per-language clean rules from dependency scanning.
-FOREACH(lang Fortran)
-  INCLUDE(CMakeFiles/hydro_debug_utils.dir/cmake_clean_${lang}.cmake OPTIONAL)
-ENDFOREACH(lang)
+foreach(lang Fortran)
+  include(CMakeFiles/hydro_debug_utils.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

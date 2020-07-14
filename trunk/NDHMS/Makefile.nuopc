@@ -3,16 +3,16 @@ all:
 	(cd CPL/NoahMP_cpl; make) 
 	(make -C Land_models/NoahMP -f Makefile.NoahMP.nuopc nuopc)
 	@echo ""
-	(make -C CPL/NUOPC_cpl -f Makefile.mainApp DEBUG=on)
+	(make -C CPL/NUOPC_cpl -f Makefile DEBUG=on)
 	@echo ""
 
 nuopcinstall:
-	(make -C CPL/NUOPC_cpl -f Makefile.mainApp nuopcinstall) # to compile in nuopc mode with main
+	(make -C CPL/NUOPC_cpl -f Makefile nuopcinstall) # to compile in nuopc mode with lib locally
 
 nuopcclean:
 	(make -f Makefile.comm clean)
 	(make -C CPL/NoahMP_cpl clean)
 	(make -C Land_models/NoahMP -f Makefile.NoahMP.nuopc clean)
-	(make -C CPL/NUOPC_cpl -f Makefile.mainApp nuopcclean)
+	(make -C CPL/NUOPC_cpl -f Makefile nuopcclean)
 	(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
 
