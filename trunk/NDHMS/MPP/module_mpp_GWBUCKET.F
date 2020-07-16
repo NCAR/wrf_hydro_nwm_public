@@ -79,10 +79,10 @@ MODULE MODULE_mpp_GWBUCKET
      integer, intent(in) :: numbasns
      integer :: i, ierr, tag, tag2,k
      real,intent(in), dimension(numbasns) :: inV
-     integer,intent(in), dimension(numbasns) :: ind
+     integer(kind=8), intent(in), dimension(numbasns) :: ind
      real, dimension(:) :: outV
      real, allocatable,dimension(:) :: vbuff
-     integer, allocatable,dimension(:) :: ibuff
+     integer(kind=8), allocatable,dimension(:) :: ibuff
 
      if(gw_ini .ne. 99) then
         stop "FATAL ERROR: mpp_GWBUCKET not initialized."        
@@ -103,7 +103,7 @@ MODULE MODULE_mpp_GWBUCKET
           call mpi_send(inV,numbasns,MPI_REAL, IO_id,     &
                 tag,HYDRO_COMM_WORLD,ierr)
           tag2 = 63
-          call mpi_send(ind,numbasns,MPI_INTEGER, IO_id,     &
+          call mpi_send(ind,numbasns,MPI_INTEGER8, IO_id,     &
                 tag2,HYDRO_COMM_WORLD,ierr)
         endif
       else
@@ -120,7 +120,7 @@ MODULE MODULE_mpp_GWBUCKET
                       MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                   tag2 = 63
                   call mpi_recv(ibuff(1:sizeInd(i+1)),sizeInd(i+1),&
-                      MPI_INTEGER,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
+                      MPI_INTEGER8,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
    
                   do k = 1, sizeInd(i+1)
                      outV(ibuff(k)) = vbuff(k) 
@@ -137,9 +137,9 @@ MODULE MODULE_mpp_GWBUCKET
       implicit none
       integer, intent(in) :: numbasns
       integer :: i, ierr, tag, tag2,k
-      integer,intent(in), dimension(numbasns) :: inV
-      integer,intent(in), dimension(numbasns) :: ind
-      integer, dimension(:) :: outV
+      integer(kind=8),intent(in), dimension(numbasns) :: inV
+      integer(kind=8),intent(in), dimension(numbasns) :: ind
+      integer(kind=8), dimension(:) :: outV
       integer, allocatable,dimension(:) :: vbuff
       integer, allocatable,dimension(:) :: ibuff
  
@@ -159,10 +159,10 @@ MODULE MODULE_mpp_GWBUCKET
       if(my_id .ne. IO_id) then
          if(numbasns .gt. 0) then
            tag = 62
-           call mpi_send(inV,numbasns,MPI_INTEGER, IO_id,     &
+           call mpi_send(inV,numbasns,MPI_INTEGER8, IO_id,     &
                  tag,HYDRO_COMM_WORLD,ierr)
            tag2 = 63
-           call mpi_send(ind,numbasns,MPI_INTEGER, IO_id,     &
+           call mpi_send(ind,numbasns,MPI_INTEGER8, IO_id,     &
                  tag2,HYDRO_COMM_WORLD,ierr)
          endif
        else
@@ -176,10 +176,10 @@ MODULE MODULE_mpp_GWBUCKET
                 if(sizeInd(i+1) .gt. 0) then
                    tag = 62
                    call mpi_recv(vbuff(1:sizeInd(i+1)),sizeInd(i+1),&
-                       MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                       MPI_INTEGER8,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                    tag2 = 63
                    call mpi_recv(ibuff(1:sizeInd(i+1)),sizeInd(i+1),&
-                       MPI_INTEGER,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
+                       MPI_INTEGER8,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
     
                    do k = 1, sizeInd(i+1)
                       outV(ibuff(k)) = vbuff(k) 
@@ -197,7 +197,7 @@ MODULE MODULE_mpp_GWBUCKET
      integer, intent(in) :: numbasns, gnumbasns
      integer :: i, ierr, tag, bas
      real,intent(in), dimension(:) :: inV
-     integer,intent(in), dimension(:) :: ind
+     integer(kind=8),intent(in), dimension(:) :: ind
      real, dimension(:) :: outV
      real, dimension(gnumbasns) :: buff
 
@@ -217,7 +217,7 @@ MODULE MODULE_mpp_GWBUCKET
        implicit none
        integer nsize,i,j,tag,ierr,gsize, k
        real*8, dimension(nsize):: vinout
-       integer, dimension(nsize) :: ind
+       integer(kind=8), dimension(nsize) :: ind
        real*8, dimension(gsize) :: vbuff
 
        vbuff = 0

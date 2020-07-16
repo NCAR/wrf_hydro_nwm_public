@@ -81,7 +81,7 @@
 !DJG   VARIABLES FOR GW/Baseflow
   INTEGER :: numbasns
   INTEGER :: gnumbasns
-  INTEGER, allocatable, DIMENSION(:)     :: basnsInd ! basin index for tile
+  integer(kind=8), allocatable, dimension(:)     :: basnsInd ! basin index for tile
   INTEGER, allocatable, DIMENSION(:,:)   :: GWSUBBASMSK  !GW basin mask grid
   REAL,    allocatable, DIMENSION(:,:)   :: qinflowbase  !strm inflow/baseflow from GW
   REAL,    allocatable, DIMENSION(:,:)   :: SOLDRAIN     !time-step drainage
@@ -116,8 +116,8 @@
 !DJG,DNY   VARIABLES FOR CHANNEL ROUTING
 !-- channel params
   INTEGER, allocatable, DIMENSION(:)   :: LINK       !channel link
-  INTEGER, allocatable, DIMENSION(:)   :: TO_NODE    !link's to node
-  INTEGER, allocatable, DIMENSION(:)   :: FROM_NODE  !link's from node
+  INTEGER(kind=8), allocatable, DIMENSION(:)   :: TO_NODE    !link's to node
+  INTEGER(kind=8), allocatable, DIMENSION(:)   :: FROM_NODE  !link's from node
   INTEGER, allocatable, DIMENSION(:)   :: ORDER      !link's order
   INTEGER, allocatable, DIMENSION(:)   :: STRMFRXSTPTS      !frxst point flag
   CHARACTER(len=15), allocatable, DIMENSION(:) :: gages
@@ -131,7 +131,7 @@
   REAL, allocatable, DIMENSION(:)      :: QLAKEI      !lake inflow in difussion scheme
   REAL, allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
   INTEGER, allocatable, DIMENSION(:)   :: LAKENODE   !which nodes flow into which lakes
-  INTEGER, allocatable, DIMENSION(:)   :: LINKID     ! id of links on linked routing
+  integer(kind=8), allocatable, dimension(:)   :: LINKID     ! id of links on linked routing
   REAL, allocatable, DIMENSION(:)      :: CVOL       ! channel volume
   INTEGER, allocatable, DIMENSION(:,:)   :: pnode    !parent nodes : start from 2
   integer :: maxv_p              ! array size for  second column of the pnode
@@ -160,8 +160,8 @@
   ! VARIABLES FOR  RESERVOIRS
   REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
-  INTEGER, allocatable, DIMENSION(:) :: LAKEIDA     !id of lakes in routlink file
-  INTEGER, allocatable, DIMENSION(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
+  integer(kind=8), allocatable, dimension(:) :: LAKEIDA     !id of lakes in routlink file
+  integer(kind=8), allocatable, dimension(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
   REAL, allocatable, DIMENSION(:)    :: DAML      !overtop weir length (m)
@@ -182,7 +182,7 @@
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
   INTEGER, allocatable, DIMENSION(:,:)  :: Link_location
-  INTEGER, allocatable, DIMENSION(:)  :: LLINKID
+  integer(kind=8), allocatable, dimension(:)  :: LLINKID
   integer mpp_nlinks, yw_mpp_nlinks, LNLINKSL
 #endif
   INTEGER, allocatable, DIMENSION(:,:)      :: CH_LNKRT_SL !-- reach based links used for mapping

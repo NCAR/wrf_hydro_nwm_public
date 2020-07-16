@@ -918,6 +918,27 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_int
 
+  subroutine mpp_land_bcast_int8(size,inout)
+      integer size
+      integer(kind=8) inout(size)
+      integer ierr
+      call mpi_bcast(inout,size,MPI_INTEGER8,   &
+              IO_id,HYDRO_COMM_WORLD,ierr)
+      call mpp_land_sync()
+      return
+  end subroutine mpp_land_bcast_int8
+
+  subroutine mpp_land_bcast_int8_1d(inout)
+      integer len
+      integer(kind=8) inout(:)
+      integer ierr
+      len = size(inout,1)
+      call mpi_bcast(inout,len,MPI_INTEGER8,   &
+              IO_id,HYDRO_COMM_WORLD,ierr)
+      call mpp_land_sync()
+      return
+  end subroutine mpp_land_bcast_int8_1d
+
   subroutine mpp_land_bcast_int1d(inout)
       integer len
       integer inout(:)
@@ -1906,8 +1927,81 @@ MODULE MODULE_MPP_LAND
            if(allocated(tmp_v)) deallocate(tmp_v)
      end subroutine write_chanel_int
 
+     subroutine write_chanel_int8(v,map_l2g,gnlinks,nlinks,g_v)
+          implicit none
+          integer gnlinks,nlinks, map_l2g(nlinks)
+          integer(kind=8) ::  recv(nlinks), v(nlinks)
+          integer(kind=8), allocatable, dimension(:) :: tmp_map , tmp_v
+          integer(kind=8), dimension(:) :: g_v
+          integer i, ierr, tag, k
+          integer length, node, message_len
 
-     subroutine write_lake_real(v,nodelist_in,nlakes)
+          if(my_id .eq. io_id) then
+              allocate(tmp_map(gnlinks))
+              allocate(tmp_v(gnlinks))
+              if(nlinks .le. 0) then
+                  tmp_map = -999
+              else
+                  tmp_map(1:nlinks) = map_l2g(1:nlinks)
+              endif
+          else
+              allocate(tmp_map(1))
+              allocate(tmp_v(1))
+          endif
+
+
+          if(my_id .eq. IO_id) then
+              do i = 0, numprocs - 1
+                  message_len = mpp_nlinks(i+1)
+                  if(i .ne. my_id) then
+                      !block receive  from other node.
+
+                      tag = 109
+                      call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER8,i, &
+                              tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                      tag = 119
+
+                      call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER8,i,  &
+                              tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+
+                      do k = 1,message_len
+                          if(tmp_map(k) .gt. 0) then
+                              node = tmp_map(k)
+                              g_v(node) = tmp_v(k)
+                          else
+#ifdef HYDRO_D
+                      write(6,*) "Maping infor k=",k," node=",tmp_v(k)
+#endif
+                          endif
+                      enddo
+                  else
+                      do k = 1,nlinks
+                          if(map_l2g(k) .gt. 0) then
+                              node = map_l2g(k)
+                              g_v(node) = v(k)
+                          else
+#ifdef HYDRO_D
+                      write(6,*) "Maping infor k=",k," node=",map_l2g(k)
+#endif
+                          endif
+                      enddo
+                  end if
+
+              end do
+          else
+              tag =  109
+              call mpi_send(map_l2g,nlinks,MPI_INTEGER8, IO_id,     &
+                      tag,HYDRO_COMM_WORLD,ierr)
+              tag = 119
+              call mpi_send(v,nlinks,MPI_INTEGER8,IO_id,   &
+                      tag,HYDRO_COMM_WORLD,ierr)
+          end if
+          if(allocated(tmp_map)) deallocate(tmp_map)
+          if(allocated(tmp_v)) deallocate(tmp_v)
+      end subroutine write_chanel_int8
+
+
+      subroutine write_lake_real(v,nodelist_in,nlakes)
         implicit none
         real recv(nlakes), v(nlakes)
         integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
@@ -2058,6 +2152,31 @@ MODULE MODULE_MPP_LAND
        return
     end subroutine combine_int1d
 
+  subroutine combine_int8_1d(vin,nsize, flag)
+      implicit none
+      integer nsize,i,j,tag,ierr, flag, k
+      integer(kind=8), dimension(nsize):: vin,recv
+      tag = 319
+      if(nsize .le. 0) return
+      if(my_id .eq. IO_id) then
+          do i = 0, numprocs - 1
+              if(i .ne. my_id) then
+                  call mpi_recv(recv,nsize,MPI_INTEGER8,i,  &
+                          tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                  do k = 1, nsize
+                      if(recv(k) .ne. flag) then
+                          vin(k) = recv(k)
+                      endif
+                  enddo
+              endif
+          end do
+      else
+          call mpi_send(vin,nsize,MPI_INTEGER8,IO_id,   &
+                  tag,HYDRO_COMM_WORLD,ierr)
+      endif
+      call mpp_land_bcast_int8_1d(vin)
+      return
+  end subroutine combine_int8_1d
 
     subroutine sum_real1d(vin,nsize)
        implicit none
@@ -2362,7 +2481,36 @@ MODULE MODULE_MPP_LAND
 
      end subroutine updateLake_seqInt
 
-     subroutine updateLake_seq(in,nsize,in0)
+      subroutine updateLake_seqInt8(in,nsize,in0)
+          implicit none
+          integer :: nsize
+          integer(kind=8), dimension(nsize) :: in
+          integer(kind=8), dimension(nsize) :: tmp
+          integer(kind=8), dimension(:) :: in0
+          integer tag, i, status, ierr, k
+          if(nsize .le. 0) return
+
+          tag = 29
+          if(my_id .ne. IO_id) then
+              call mpi_send(in,nsize,MPI_INTEGER8, IO_id,     &
+                      tag,HYDRO_COMM_WORLD,ierr)
+          else
+              do i = 0, numprocs - 1
+                  if(i .ne. IO_id) then
+                      call mpi_recv(tmp,nsize,&
+                              MPI_INTEGER8,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                      do k = 1, nsize
+                          if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
+                      end do
+                  end if
+              end do
+          end if
+          call mpp_land_bcast_int8_1d(in)
+
+      end subroutine updateLake_seqInt8
+
+
+      subroutine updateLake_seq(in,nsize,in0)
        implicit none
        integer :: nsize
        real, dimension(nsize) :: in

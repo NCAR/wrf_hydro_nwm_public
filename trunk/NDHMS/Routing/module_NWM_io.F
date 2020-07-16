@@ -110,14 +110,16 @@ subroutine output_chrt_NWM(domainId)
    ! sorting has taken place by ascending feature_id value.
    real, allocatable, dimension(:) :: strFlowLocal,velocityLocal,qlossLocal
    real, allocatable, dimension(:,:) :: g_qlink
-   integer, allocatable, dimension(:) :: g_linkid,g_order
+   integer, allocatable, dimension(:) :: g_order
+   integer(kind=8), allocatable, dimension(:) :: g_linkid
    real, allocatable, dimension(:) :: g_chlat,g_chlon,g_hlink,g_zelev
    real, allocatable, dimension(:) :: g_QLateral,g_velocity,g_qloss
    real, allocatable, dimension(:) :: g_nudge,g_qSfcLatRunoff
    real, allocatable, dimension(:) :: g_qBucket,g_qBtmVertRunoff,g_accBucket
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoff
    real, allocatable, dimension(:,:) :: g_qlinkOut
-   integer, allocatable, dimension(:) :: g_orderOut,g_linkidOut
+   integer, allocatable, dimension(:) :: g_orderOut
+   integer(kind=8), allocatable, dimension(:) :: g_linkidOut
    real, allocatable, dimension(:) :: g_chlatOut,g_chlonOut,g_hlinkOut,g_zelevOut
    real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut,g_qlossOut
    real, allocatable, dimension(:) :: g_nudgeOut,g_qSfcLatRunoffOut
@@ -407,7 +409,7 @@ subroutine output_chrt_NWM(domainId)
          call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
          call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
          call write_chanel_int(RT_DOMAIN(domainId)%ORDER,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_order)
-         call write_chanel_int(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
+         call write_chanel_int8(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
          call write_chanel_real(RT_DOMAIN(domainId)%ZELEV,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_zelev)
          call write_chanel_real(RT_DOMAIN(domainId)%QLateral,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_QLateral)
          call write_chanel_real(velocityLocal,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_velocity)
@@ -2394,10 +2396,10 @@ subroutine output_lakes_NWM(domainId,iGrid)
    real, allocatable, dimension(:) :: g_lakeType
    real, allocatable, dimension(:) :: g_lake_assimilated_value
    character(len=256), allocatable, dimension(:) :: g_lake_assimilated_source_file
-   integer, allocatable, dimension(:) :: g_lakeid
+   integer(kind=8), allocatable, dimension(:) :: g_lakeid
    real, allocatable, dimension(:) :: g_lakeLatOut,g_lakeLonOut,g_lakeElevOut
    real, allocatable, dimension(:) :: g_lakeInflowOut,g_lakeOutflowOut
-   integer, allocatable, dimension(:) :: g_lakeTypeOut, g_lakeidOut
+   integer(kind=8), allocatable, dimension(:) :: g_lakeTypeOut, g_lakeidOut
    real, allocatable, dimension(:) :: g_lake_assimilated_valueOut
    character(len=256), allocatable, dimension(:) :: g_lake_assimilated_source_fileOut
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
@@ -4112,7 +4114,7 @@ implicit none
    real, allocatable, dimension(:) :: g_chlat, g_chlon, g_hlink, strFlowLocal
    integer, allocatable, dimension(:) :: frxstPtsLocal, g_STRMFRXSTPTSOut
    real, allocatable, dimension(:) :: g_chlatOut, g_chlonOut, g_hlinkOut
-   integer, allocatable, dimension(:) :: g_linkid, g_linkidOut
+   integer(kind=8), allocatable, dimension(:) :: g_linkid, g_linkidOut
 
 #ifdef MPP_LAND
    mppFlag = 1
@@ -4414,10 +4416,12 @@ subroutine output_chanObs_NWM(domainId)
    ! sorting has taken place by ascending feature_id value.
    real, allocatable, dimension(:) :: strFlowLocal,velocityLocal
    real, allocatable, dimension(:,:) :: g_qlink
-   integer, allocatable, dimension(:) :: g_linkid,g_order
+   integer, allocatable, dimension(:) :: g_order
+   integer(kind=8), allocatable, dimension(:) :: g_linkid
    real, allocatable, dimension(:) :: g_chlat,g_chlon,g_hlink,g_zelev
    real, allocatable, dimension(:,:) :: g_qlinkOut
-   integer, allocatable, dimension(:) :: g_orderOut,g_linkidOut
+   integer, allocatable, dimension(:) :: g_orderOut
+   integer(kind=8), allocatable, dimension(:) :: g_linkidOut
    real, allocatable, dimension(:) :: g_chlatOut,g_chlonOut,g_hlinkOut,g_zelevOut
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after
@@ -4602,7 +4606,7 @@ subroutine output_chanObs_NWM(domainId)
          call write_chanel_real(RT_DOMAIN(domainId)%CHLAT,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlat)
          call write_chanel_real(RT_DOMAIN(domainId)%CHLON,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_chlon)
          call write_chanel_real(RT_DOMAIN(domainId)%HLINK,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_hlink)
-         call write_chanel_int(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
+         call write_chanel_int8(RT_DOMAIN(domainId)%linkid,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_linkid)
          call write_chanel_int(RT_DOMAIN(domainId)%ORDER,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_order)
          call write_chanel_real(RT_DOMAIN(domainId)%ZELEV,rt_domain(domainId)%map_l2g,gSize,rt_domain(domainId)%nlinks,g_zelev)
       else
@@ -5159,7 +5163,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: gnbasns
    ! Allocatable arrays to hold output variables.
    real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_qloss_gwsubbas,g_z_gwsubbas
-   integer, allocatable, dimension(:) :: g_basnsInd
+   integer(kind=8), allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after
                                                      ! scale_factor/add_offset
@@ -5438,7 +5442,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reference_time variable')
 
       ! Create feature_id variable
-      iret = nf90_def_var(ftn,"feature_id",nf90_int,dimId(1),featureVarId)
+      iret = nf90_def_var(ftn,"feature_id",nf90_int64,dimId(1),featureVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create feature_id variable.')
       iret = nf90_put_att(ftn,featureVarId,'long_name',trim(fileMeta%featureIdLName))
       call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into feature_id variable')

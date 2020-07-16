@@ -68,7 +68,7 @@ contains
         real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
-        integer, intent(in) :: lake_number               ! lake number
+        integer(kind=8), intent(in) :: lake_number               ! lake number
         character(len=15)   :: lake_number_string
 
 #ifdef RESERVOIR_D

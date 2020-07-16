@@ -168,10 +168,10 @@ contains
     subroutine read_reservoir_type(reservoir_parameter_file, lake_parameter_lake_ids, number_of_lake_parameter_lakes, &
         reservoir_types)
         character(len=*), intent(in) :: reservoir_parameter_file
-        integer, dimension(:), intent(in) :: lake_parameter_lake_ids
+        integer(kind=8), dimension(:), intent(in) :: lake_parameter_lake_ids
         integer, intent(in) :: number_of_lake_parameter_lakes
         integer, dimension(:), intent(inout) :: reservoir_types
-        integer, allocatable, dimension(:) :: reservoir_parameter_lake_ids
+        integer(kind=8), allocatable, dimension(:) :: reservoir_parameter_lake_ids
 
         integer, dimension(nf90_max_var_dims) :: dim_ids
         integer :: ncid, var_id, lake_index, number_of_reservoirs, number_of_reservoir_types
@@ -358,7 +358,8 @@ contains
     ! Read lake id from reservoir parameter file and determine the lake_id_index, which
     ! is the index of the particular reservoir's values in all of the parameter arrays.
     subroutine read_netcdf_lake_id(ncid, lake_number, netcdf_array_name, reservoir_parameter_file, lake_id_index)
-        integer, intent(in) :: ncid, lake_number
+        integer, intent(in)          :: ncid
+        integer(kind=8), intent(in)  :: lake_number
         character(len=*), intent(in) :: netcdf_array_name
         character(len=*), intent(in) :: reservoir_parameter_file
         integer, intent(out) :: lake_id_index
