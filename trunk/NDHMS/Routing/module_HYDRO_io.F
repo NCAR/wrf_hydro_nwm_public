@@ -4788,7 +4788,7 @@ end subroutine mpp_output_chrt
      real, dimension(NLAKES),                  intent(inout) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(inout) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
-     integer(kind=int64), dimension(NLAKES),       intent(in) :: LAKEIDM     ! lake id
+     integer(kind=int64), dimension(NLAKES),   intent(in) :: LAKEIDM     ! lake id
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -9110,7 +9110,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
        if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
     endif
 
-    call get_1d_netcdf_int64(ncid,  'lake_id',   LAKEIDM,'read_route_lake_netcdf', .TRUE.)
+    call get_1d_netcdf_int64(ncid,  'lake_id',  LAKEIDM, 'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
     !rename the LAKEPARM input vars for Elev instead of Ht, 08/23/17 LKR/DY
     call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
@@ -9194,7 +9194,6 @@ end subroutine get_1d_netcdf_int
     subroutine get_1d_netcdf_int64(ncid, varName, var, callingRoutine, fatal_if_error)
         integer,                       intent(in)  :: ncid !! the file identifier
         character(len=*),              intent(in)  :: varName
-        integer(kind=int64), dimension(:), intent(out) :: var
         character(len=*),              intent(in)  :: callingRoutine
         logical,                       intent(in)  :: fatal_if_error
         integer :: varid, iret
@@ -10762,7 +10761,7 @@ end subroutine output_chrt2
     subroutine nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
         !--- get the lake configuration here.
         implicit none
-        integer(kind=int64), dimension(:), intent(in) :: TO_NODE
+     integer(kind=int64), dimension(:), intent(in) :: TO_NODE
         integer(kind=int64), dimension(NLAKES) :: LAKELINKID
         integer(kind=int64), dimension(:),   intent(in) :: LINKID, LAKEIDA
         integer(kind=int64), dimension(:),   intent(inout) :: LAKEIDM
