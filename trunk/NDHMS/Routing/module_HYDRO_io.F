@@ -8975,7 +8975,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
        if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
     endif
 
-    call get_1d_netcdf_int64(ncid,  'lake_id',     LAKEIDM,'read_route_lake_netcdf', .TRUE.)
+    call get_1d_netcdf_int64(ncid,  'lake_id',   LAKEIDM,'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
     !rename the LAKEPARM input vars for Elev instead of Ht, 08/23/17 LKR/DY
     call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
@@ -8983,14 +8983,14 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .TRUE.)
-    call get_1d_netcdf_real(ncid, 'Dam_Length', DAML,      'read_route_lake_netcdf', .TRUE.)
+    call get_1d_netcdf_real(ncid, 'Dam_Length', DAML,    'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
     !remove the alt var. and add initial fractional depth var. LKR/DY
-    call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,         'read_route_lake_netcdf', .FALSE.)
+    call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,       'read_route_lake_netcdf', .FALSE.)
 
     iRet = nf90_close(ncId)
     if (iRet /= nf90_noErr) then
@@ -10843,7 +10843,8 @@ end subroutine output_chrt2
 
     implicit none
 
-    integer, dimension(:),  intent(in) :: inLINKID, inTYPEL
+    integer, dimension(:),  intent(in) :: inTYPEL
+    integer(kind=8), dimension(:), intent(in) :: inLINKID
     integer, intent(in) :: inNLINKS
 
     integer            :: iret
@@ -10851,7 +10852,8 @@ end subroutine output_chrt2
     integer            :: linkdim
     character(len=256), parameter :: output_flnm = "LAKE_TYPES.nc"
 
-    integer, allocatable, dimension(:) :: linkId, typeL
+    integer, allocatable, dimension(:) :: typeL
+    integer(kind=8), allocatable, dimension(:) :: linkId
 
 #ifdef MPP_LAND
 
