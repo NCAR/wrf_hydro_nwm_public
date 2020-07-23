@@ -4,6 +4,8 @@
 
 #define DEBUG=on
 
+!export ESMF_RUNTIME_COMPLIANCECHECK=ON
+
 module NWM_NUOPC_Cap
   use ESMF
   use NUOPC
@@ -196,7 +198,7 @@ module NWM_NUOPC_Cap
     ! Check gcomp for config - where this is coming from -- driver??
     call ESMF_GridCompGet(gcomp, configIsPresent=configIsPresent, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-!
+
     if (configIsPresent) then
 
       ! Read and ingest free format component attributes
@@ -234,6 +236,7 @@ module NWM_NUOPC_Cap
     
     !! at this time time step is set to 0, clock is not changed
     read (value,*,iostat=stat) is%wrap%timeStepInt    !nwm timestep - 1hr=3600s
+
     if (stat /= 0) then
       call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Cannot convert "//trim(value)//" to integer.", &
@@ -279,11 +282,11 @@ module NWM_NUOPC_Cap
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! Determine yaml models field filename - to be implemented
-    call ESMF_AttributeGet(gcomp, name="yaml_field_file", value=value, &
-                 defaultValue="fd.yaml", &
-                 convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    is%wrap%fdYamlFile = trim(value)
+    !call ESMF_AttributeGet(gcomp, name="yaml_field_file", value=value, &
+    !             defaultValue="fd.yaml", &
+    !             convention="NUOPC", purpose="Instance", rc=rc)
+    !if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    !is%wrap%fdYamlFile = trim(value)
 
 
     ! Write coupled grid files
@@ -300,12 +303,11 @@ module NWM_NUOPC_Cap
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     is%wrap%llog_memory = (trim(value)=="true")
 
-
     ! Switch to IPDv03 by filtering all other phaseMap entries
     call NUOPC_CompFilterPhaseMap(gcomp, ESMF_METHOD_INITIALIZE, &
                acceptStringList=(/"IPDv03p"/), rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-
+    
     if (is%wrap%verbosity >= VERBOSITY_LV1) &
       call LogAttributes(trim(cname),gcomp)
 
@@ -367,7 +369,7 @@ module NWM_NUOPC_Cap
     call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    !! Beheen -  at this time timeStep=3600 comes from reading nems.configure - how?? 
+    !! Beheen -  at this time timeStep=3600 comes from reading nems.configure  
     !! EARTH_GRID_COMP SetRunSequence happens prior to P1
 
     ! Initialize NWM LSM grid, routing grid, get data needed for nuopc
@@ -403,6 +405,7 @@ module NWM_NUOPC_Cap
           rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
+
       if (NWM_FieldList(fIndex)%adExport) then
         call NUOPC_Advertise(is%wrap%NStateExp(1), &
           standardName=trim(NWM_FieldList(fIndex)%stdname), & 
@@ -411,6 +414,7 @@ module NWM_NUOPC_Cap
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
     enddo
+
 
     if (is%wrap%verbosity >= VERBOSITY_LV1) &
       call LogAdvertised(trim(cname))

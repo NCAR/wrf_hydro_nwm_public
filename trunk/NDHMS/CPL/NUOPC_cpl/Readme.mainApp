@@ -1,13 +1,47 @@
-======================== Beheen - 6/26/2020
+======================== Beheen - 7/21/2020 ===================
+This is an independent nuopc testing between NWM and a dummy 
+ocn and atm with a simple main and nuopc driver, independent of NEMS. 
+ 
+/scratch2/COASTAL/coastal/save/NAMED_STORMS/NEMS_APP/NWM/ 
+ocn.F90, atm.F90, esm.F90, esmApp.F90
+Makefile.mainApp
+Makefile.nuopc_with_main  ==> Makefile.nuopc
+export MAINAPP=ON 
+Makefile.NoahMP.nuopc
+IO_code/Makefile.IO_code.nuopc
+make -f Makefile.nuopc nuopcclean
+
+To compile:
+export MAINAPP=ON 
+make clean & make nuopcclean
+./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
+   see produced results:
+   nwm_esmf_extensions.mod
+   NWM_ESMF_Extensions.o
+   nwm_nuopc_gluecode.mod
+   NWM_NUOPC_Gluecode.o
+   nwm_nuopc_cap.mod
+   nwm.mk
+   libnwm_nuopc.a
+   NWM_NUOPC_Cap.o
+   esm.o ocn.o atm.o esmApp.o
+
+To run:
+cd CPL/NUOPC
+ssh -X localhost
+salloc --x11=first -t 02:30:00 --nodes=2 -A coastal
+make -f Makefile.mainApp run
+
+======================== Beheen - 6/26/2020: left unfinished  ===================
 This is to do an independent nuopc testing between NWM and ADCIRC
 with a simple main and nuopc driver, independent of NEMS. To do
 this, needed to extract the components needed from adcirc and then
 to see how I can have a senssible mainApp and Drive. Not finished...
- 
+
 Testing NWM cap with ADC cap without using NEMS in this directory:
 /scratch2/COASTAL/coastal/save/NAMED_STORMS/NEMS_TEST with softlink to ADCIRC and NWM
 located at this directory: /scratch2/COASTAL/coastal/save/NAMED_STORMS/z_code_sharing/ADC-WW3-NWM-NEMS
- 
+
 1) git clone https://github.com/moghimis/ADC-WW3-NWM-NEMS --recursive
 2) softlink to ADCIRC located at ADC-WW3-NWM-NEMS into NEMS_TEST
 3) softlink to NWM located at ADC-WW3-NWM-NEMS into NEMS_TEST
@@ -20,9 +54,9 @@ located at this directory: /scratch2/COASTAL/coastal/save/NAMED_STORMS/z_code_sh
 8) make -f makefile.hwrf.nuopc nuopc
 9) cd NEMS_TEST/ADCIRC/work
 10) ./make_nuopc.sh esmf-impi-env.sh intel
-   see produced results: 
-   work/libadc.a, work/adcprep, util/tidefac, 
-   cpl/nuopc/libadc_cap.a cpl/nuopc/libatmesh_cap.a 
+   see produced results:
+   work/libadc.a, work/adcprep, util/tidefac,
+   cpl/nuopc/libadc_cap.a cpl/nuopc/libatmesh_cap.a
    cpl/nuopc/libww3data_cap.a cpl/nuopc/libatm_cap.a
 11)goto NWM directory ADC-WW3-NWM-NEMS/NWM/trunk/NDHMS
 12)make clean & make clean nuopc
@@ -40,10 +74,9 @@ located at this directory: /scratch2/COASTAL/coastal/save/NAMED_STORMS/z_code_sh
 11) cd NEMS_TEST
 12) make esm1
 
-To clean both nuopc and adcirc: goto work dir and invoke 
+To clean both nuopc and adcirc: goto work dir and invoke
   a) make clean
   b) make clobber
-
 
 ===================   To test NWM with atm_cap: Unfinished
 copied Saeed's codes, hwrf_cap.F90  hwrf_mod.F90  makefile.hwrfdata.nuopc
@@ -66,8 +99,6 @@ Description: To test NWM in NUOPC coupled mode, we need a main and a nuopc drive
 The above source codes are to be compiled and then to be tested with NWM input files (parameters & forcing)
  	
 Dependencies: 
-  - ESMF v8.0.0 beta
-  - module load intel/18.0.5.274
   - module load impi/2018.0.4
   - module load szip/2.1
   - module load hdf5/1.10.4

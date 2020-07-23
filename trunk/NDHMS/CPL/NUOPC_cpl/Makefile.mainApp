@@ -59,9 +59,9 @@ MODEL_LIB := ../../lib/libHYDRO.a
 
 MODEL_OBJS := ../../MPP/mpp_land.o ../../Land_models/NoahMP/IO_code/module_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.o ../../Land_models/NoahMP/Utility_routines/module_date_utilities.o ../../Land_models/NoahMP/Utility_routines/kwm_string_utilities.o ../../Land_models/NoahMP/phys/module_sf_noahmpdrv.o ../../Land_models/NoahMP/phys/module_sf_noahmplsm.o ../../Land_models/NoahMP/phys/module_sf_noahmp_groundwater.o ../../Land_models/NoahMP/phys/module_sf_noahmp_glacier.o ../../Land_models/NoahMP/Utility_routines/module_wrf_utilities.o ../../Land_models/NoahMP/data_structures/state.o ../../Land_models/NoahMP/data_structures/forcing.o ../../Land_models/NoahMP/data_structures/geometry.o ../../Land_models/NoahMP/data_structures/parameters.o ../../OrchestratorLayer/config.o ../../OrchestratorLayer/io_manager.o ../../OrchestratorLayer/orchestrator.o 
 
-CAP_OBJS  := NWM_ESMF_Extensions.o Utility.o ATM.o Driver.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o mainApp.o
+CAP_OBJS  := NWM_ESMF_Extensions.o Utility.o atm.o ocn.o esm.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o esmApp.o
 
-mainApp: $(MODEL_OBJS) $(CAP_OBJS)
+esmApp: $(MODEL_OBJS) $(CAP_OBJS)
 	@echo ""
 	$(ESMF_F90LINKER) $(ESMF_F90LINKOPTS) $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) -o $@ $^ $(MODEL_LIB) $(ESMF_F90ESMFLINKLIBS)
 
@@ -69,8 +69,12 @@ mainApp: $(MODEL_OBJS) $(CAP_OBJS)
 # ############
 # Dependencies
 # ############
-mainApp.o: Driver.o
-Driver.o: NWM_NUOPC_Macros.h NWM_NUOPC_Cap.o ATM.o
+# module dependencies:
+# esmApp.o: esm.o
+# esm.o: atm.o ocn.o
+#
+esmApp.o: esm.o
+esm.o: atm.o ocn.o NWM_NUOPC_Macros.h NWM_NUOPC_Cap.o
 NWM_NUOPC_Cap.o: NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o NWM_NUOPC_Macros.h
 Utility.o: NWM_NUOPC_Macros.h
 NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o 
@@ -79,8 +83,16 @@ NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o
 
 .PHONY: dust clean distclean info edit
 dust:
-	rm -f PET*.ESMF_LogFile *.nc
+	rm -f PET*.ESMF_LogFile *.nc traceout *.stdout
 nuopcclean:
-	rm -f mainApp *.o *.mod
+	rm -f esmApp *.o *.mod
 distclean: dust clean
+info:
+	@echo ==================================================================
+	@echo ESMFMKFILE=$(ESMFMKFILE)
+	@echo ==================================================================
+	@cat $(ESMFMKFILE)
+	@echo ==================================================================
+run:
+	mpirun -np 4 ./esmApp
 

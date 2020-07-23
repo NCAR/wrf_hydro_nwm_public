@@ -119,8 +119,9 @@ module NWM_NUOPC_Gluecode
       desc='VGRD, 10-m northward wind', shortname='V2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
     NWM_Field( & !(7) 
-      stdname='surface_pressure', units='Pa', &
-      desc='surface pressure.', shortname='PSFC', &
+      stdname='air_pressure_at_sea_level', units='Pa', &   !atm pmsl
+      !stdname='surface_pressure', units='Pa', &
+      desc='surface pressure.', shortname='PSFC', &    
       adImport=.TRUE.,adExport=.FALSE.), &
     NWM_Field( & !(8) T_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D atmospheric temperature valid at mid-levels [K]- TSK, (XSTART:XEND,YSTART:YEND) )  ! surface radiative temperature [K]
       stdname='air_temperature', units='K', &
@@ -131,8 +132,9 @@ module NWM_NUOPC_Gluecode
       desc='2-m specific humidity.', shortname='Q2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
     NWM_Field( & !(10) SWDOWN    (XSTART:XEND,YSTART:YEND) )    ! solar down at surface [W m-2]
-      stdname='shortwave_height', units='w m-2', &
-      desc='surface downward shortwave radiation flux', shortname='SWDOWN', & 
+      stdname='surface_net_downward_shortwave_flux', units='w m-2', &    !atm rsns
+      !stdname='shortwave_height', units='w m-2', &
+      desc='surface downward shortwave radiation flux', shortname='SWDOWN', &    
       adImport=.TRUE.,adExport=.FALSE.), &
     NWM_Field( & !(11) GLW       (XSTART:XEND,YSTART:YEND) )    ! longwave down at surface [W m-2]
       stdname='longwave_height', units='w m-2', & 
