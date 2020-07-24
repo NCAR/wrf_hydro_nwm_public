@@ -506,6 +506,8 @@ contains
           h2 = (S2/1.0E9/polyhV_a)**(1./polyhV_b)    ! elevation after change in storage in (m)
         endif
 
+        Deltah = h2-h1     ! change in sotrage water level (m)
+
         return
 
     ! ----------------------------------------------------------------
