@@ -83,7 +83,7 @@ NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o
 
 .PHONY: dust clean distclean info edit
 dust:
-	rm -f PET*.ESMF_LogFile *.nc traceout *.stdout
+	rm -f PET*.ESMF_LogFile *.nc traceout *.stdout diag*
 nuopcclean:
 	rm -f esmApp *.o *.mod
 distclean: dust clean
@@ -94,5 +94,5 @@ info:
 	@cat $(ESMFMKFILE)
 	@echo ==================================================================
 run:
-	mpirun -np 4 ./esmApp
+	mpirun -np 8 ./esmApp
 

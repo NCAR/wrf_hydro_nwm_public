@@ -288,6 +288,13 @@ module NWM_NUOPC_Cap
     !if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     !is%wrap%fdYamlFile = trim(value)
 
+    ! Read in import/export field file - TO DO
+    ! call NUOPC_FieldDictionarySetup(is%wrap%fdYamlFile, rc
+
+    ! Add the import/export fields into global field dict.
+    call NWM_FieldDictionaryAdd(rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
 
     ! Write coupled grid files
     call ESMF_AttributeGet(gcomp, name="write_grid", value=value, &
@@ -389,13 +396,7 @@ module NWM_NUOPC_Cap
     is%wrap%NStateImp(1) = importState
     is%wrap%NStateExp(1) = exportState
 
-    ! Read in import/export field file - TO DO
-    ! call NUOPC_FieldDictionarySetup(is%wrap%fdYamlFile, rc)
 
-    ! Add the import/export fields into global field dict.
-    call NWM_FieldDictionaryAdd(rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
- 
     ! Advertise import and export fields
     do fIndex = 1, size(NWM_FieldList)
       if (NWM_FieldList(fIndex)%adImport) then
@@ -495,9 +496,9 @@ module NWM_NUOPC_Cap
 
       if (importConnected) then 
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
-            field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
-                        grid=NWM_LSMGrid, locstream=NWM_LocStream, &
-                                            did=is%wrap%did,rc=rc)
+        field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
+                    grid=NWM_LSMGrid, locstream=NWM_LocStream, &
+                                          did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return

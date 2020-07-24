@@ -291,9 +291,9 @@ contains
     ! compare to make sure nems config and nwm config files are in sync
     ! Currently, nwm lsm only works with 3600 sec. timestep, so the value
     ! of timesteps in nems.configure file must be same as in nwm config
-    if( (startTimeStr .ne. starttime_str) .or. &
-        (nlst(did)%dt .ne. 3600) .or. &
-        (int(run_duration) .ne. int(ntime * 3600)) ) then 
+    if (startTimeStr .ne. starttime_str) then 
+        !(nlst(did)%dt .ne. 3600) .or. &
+        !(int(run_duration) .ne. int(ntime * 3600)) ) then 
       rc = ESMF_FAILURE
       call hydro_stop("ERROR: Start Time or Noah Timestep or NTIME Comparison Between NEMS And NWM Config Failed.")
       call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
@@ -419,8 +419,17 @@ contains
     type(ESMF_Grid), intent(in)             :: grid
     type(ESMF_LocStream), intent(in)        :: locstream
     integer, intent(in)                     :: did
-    integer,          intent(out)           :: rc
+    integer, intent(out)                    :: rc
     ! LOCAL VARIABLES
+    integer                                 :: keyCount
+    integer                                 :: localDECount
+    real, allocatable                       :: farray(:)
+    character(len=32)                       :: item
+    character(len=15), allocatable          :: keyNames(:) 
+    character(len=15)                       :: keyName 
+    type(ESMF_Array)                        :: keyArray
+    type(ESMF_DistGrid)                     :: distgrid
+    type(ESMF_Index_Flag)                   :: indexflag
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -430,29 +439,44 @@ contains
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
+
+        call ESMF_LocStreamGet(locstream=locstream, distgrid=distgrid, &
+                         keyCount=keyCount, localDECount=localDECount, &
+                                  indexflag=indexflag, name=item, rc=rc)
+        call ESMF_LocStreamGetKey(locstream, keyName, keyArray, rc=rc)
+        print *, keyCount, localDECount
+        !print *, keyNames
+        print *, indexflag, rc
+        print *, item
+        print *, keyName
+        !print *, keyArray
+
+        allocate(farray(localDECount))
+        farray = rt_domain(did)%qlink(:,1)
+
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                              farray=rt_domain(did)%qlink(:,1), &
+                                                 farray=farray, &
                                   indexflag=ESMF_INDEX_DELOCAL, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                          name=stdName, rc=rc) 
+                                             name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
                                farray=rt_domain(did)%qSfcLatRunoff, &
-                               indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('river_velocity')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
                                     farray=rt_domain(did)%velocity, &
-                               indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
           msg=METHOD//": Field hookup missing: "//trim(stdName), &
-                                    file=FILENAME,rcToReturn=rc)
+                                      file=FILENAME,rcToReturn=rc)
         return  ! bail out
     END SELECT
 
