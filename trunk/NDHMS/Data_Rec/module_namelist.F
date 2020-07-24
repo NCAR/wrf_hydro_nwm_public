@@ -807,7 +807,7 @@ subroutine rt_nlst_check(nlst)
          if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
    end if
-   if( (nlst%lake_shape_option .lt. 0 ) .or. (nlst%lake_shape_option .gt. 5) ) then
+   if( (nlst%lake_shape_option .lt. 0 ) .or. (nlst%lake_shape_option .gt. 3) ) then
          call hydro_stop('hydro.namelist ERROR: Invalid lake_shape_option specified')
    endif
    if(nlst%reservoir_persistence_usgs) then

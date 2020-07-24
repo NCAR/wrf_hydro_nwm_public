@@ -787,6 +787,8 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
+           rt_domain(did)%LAKEMAXDEPTH,  rt_domain(did)%LAKEVOL,    &
+           rt_domain(did)%LAKEPOLYA,     rt_domain(did)%LAKEPOLYB,  &
            nlst(did)%reservoir_type_specified,                      &
            rt_domain(did)%reservoir_type,                           &
            nlst(did)%reservoir_parameter_file,                      &

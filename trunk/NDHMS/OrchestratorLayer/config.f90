@@ -414,7 +414,7 @@ contains
         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
    end if
-   if( (self%lake_shape_option .lt. 0 ) .or. (self%lake_shape_option .gt. 5) ) then
+   if( (self%lake_shape_option .lt. 0 ) .or. (self%lake_shape_option .gt. 3) ) then
       call hydro_stop('hydro.namelist ERROR: Invalid lake_shape_option specified')
    endif
    if(self%reservoir_persistence_usgs) then

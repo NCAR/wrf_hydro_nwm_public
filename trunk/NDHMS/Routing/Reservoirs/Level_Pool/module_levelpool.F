@@ -259,11 +259,9 @@ contains
                                        ! lake_shape_option options:
 									   ! -1 	---> Simple pass through scheme
 									   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
-									   ! 1		---> BOX shape with depth based on full lake depth
-									   ! 2		---> CONIC shape with depth based on full lake depth
-									   ! 3		---> RECTANGLUAR PRISM shape with depth based on full lake depth
-									   ! 4		---> ELLIPSOID shape with depth based on full lake depth
-									   ! 5		---> H-A-V RELATIONSHIP depth based on full lake depth
+									   ! 1		---> CONIC shape with depth based on full lake depth
+									   ! 2		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+									   ! 3		---> H-A-V RELATIONSHIP based on full lake depth
 
         !! ----------------------------  local variables
         real :: Htmp                   ! Temporary assign of incoming lake el. (m)
@@ -273,8 +271,11 @@ contains
         real :: tmp1, tmp2
         real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
         real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs
-        real :: maxWeirDepth           !maximum capacity of weir
-        !real :: hdiff_vol, qdiff_vol   ! water balance check variables
+        real :: maxWeirDepth           ! maximum capacity of weir
+        real :: hin                    ! initial depth in storage from lake bottom (m)
+        real :: Dactivepool            ! active depth in storage (m)
+        real :: LkBottom               ! lake bottom elevation ASL (m)
+        !real :: hdiff_vol, qdiff_vol  ! water balance check variables
         !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
         !! -- determine from inflow hydrograph
 
@@ -294,14 +295,12 @@ contains
 
         else   ! If-block for Chow et al level pool scheme
 
-           ! Define reservoir max depth and rescale orifice and weir elevation
-           ! if using lake_shape_option >= 1:
-           if (lake_shape_option == 0) then		! define max depth based on active reservoir depth (NWM v1.x - v2.1)
-           ! ADD ADJUSTENTS FOR LAKE_SHAPE_OPT = 0 HERE!  
-           else                        ! define max depth based on full lake depth
-           ! ADD ADJUSTENTS FOR LAKE_SHAPE_OPT > 0 HERE!
-           endif
+           ! Water depth in reservoir from lake bottom:
+           Dactivepool = (maxh - oe) * 3.
+           LkBottom = maxh - Dactivepool
+           hin = maxdepth - Dactivepool + (H - LkBottom)
 
+           ! Inflow calculations:
            It = qi0
            Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
            Itdt_2_3 = qi0 + ((qi1 + ql - qi0) * 0.67)
@@ -334,7 +333,7 @@ contains
 
            if (sap > 0) then
               !dh1 = ((It - discharge)/sap)*dt
-              call STAGE_STORAGE(dh1,maxdepth,H,It,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
+              call STAGE_STORAGE(dh1,maxdepth,hin,It,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh1 = 0.0
            endif
@@ -363,7 +362,7 @@ contains
 
            if (sap > 0.0) then
               !dh2 = ((Itdt_3 - discharge)/sap)*dt
-              call STAGE_STORAGE(dh2,maxdepth,H,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
+              call STAGE_STORAGE(dh2,maxdepth,hin,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh2 = 0.0
            endif
@@ -391,7 +390,7 @@ contains
 
            if (sap > 0.0) then
               !dh3 = ((Itdt_2_3 - discharge)/sap)*dt
-              call STAGE_STORAGE(dh3,maxdepth,H,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polya)
+              call STAGE_STORAGE(dh3,maxdepth,hin,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh3 = 0.0
            endif
@@ -439,9 +438,7 @@ contains
         !24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
 
 		endif  ! ENDIF for lake_shape_option....
-		!print *, "TEST STAGE_STORAGE..."
-		!print *, dh, dh1, dh2, dh3
-		!print *, dh, dh1_test, dh2_test, dh3_test
+
         return
 
     ! ----------------------------------------------------------------
@@ -453,7 +450,7 @@ contains
     ! ------------------------------------------------
     ! This subroutine calculates change in sotrage water level (Deltah) given the initial water level (h1),
     ! reservoir shape option (lake_shape_option), inflow (Inflow_dt), and discharge (res_discharge), and surface area (surf_area)
-    subroutine STAGE_STORAGE(Deltah,Dmax,h1,Inflow_dt,res_discharge,surf_area,total_vol, &
+    subroutine STAGE_STORAGE(Deltah,Dmax, h1,Inflow_dt,res_discharge,surf_area,total_vol, &
                             Deltat,LAKE_SHAPE_OPT, polyhV_a, polyhV_b)
 
         !! ----------------------------  argument variables
@@ -461,7 +458,6 @@ contains
 
         real, intent(OUT)   :: Deltah              ! change in sotrage water level (m)
         real, intent(IN)    :: Dmax                ! Maximum depth of reservoir (m)
-        real, intent(IN)    :: h1                  ! initial water level (m)
         real, intent(IN)    :: Inflow_dt           ! inflow (m^3/s)
         real, intent(IN)    :: res_discharge       ! storage discharge (m^3/s)
         real, intent(IN)    :: surf_area           ! surface area (m2)
@@ -471,11 +467,9 @@ contains
         real, intent(IN)    :: polyhV_b            ! coefficient b in polynomial function V=a*h^b
         integer, intent(IN) :: LAKE_SHAPE_OPT      ! LAKE_SHAPE_OPT (lake_shape_option) options from namelist:
 												   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
-												   ! 1		---> BOX shape with depth based on full lake depth
-												   ! 2		---> CONIC shape with depth based on full lake depth
-												   ! 3		---> RECTANGLUAR PRISM shape with depth based on full lake depth
-												   ! 4		---> ELLIPSOID shape with depth based on full lake depth
-												   ! 5		---> H-A-V RELATIONSHIP depth based on full lake depth
+												   ! 1		---> CONIC shape with depth based on full lake depth
+												   ! 2		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+												   ! 3		---> H-A-V RELATIONSHIP based on full lake depth
 
         !! ----------------------------  local variables
         real, parameter :: pi = 3.14159265
@@ -483,38 +477,35 @@ contains
         real :: S1                 ! initial reservoir storage (m3)
         real :: S2                 ! reservoir storage after change (m3)
         real :: dS                 ! change in reservoir storage (m3)
-        real :: h2                 ! cone base radius (m)
+        real :: h1                 ! initial depth in storage (m)
+        real :: h2                 ! final depth in storage (m)
         !! ----------------------------
 
         ! change in storage (m3)
         dS = (Inflow_dt - res_discharge)*Deltat
 
-        if ( (LAKE_SHAPE_OPT == 0) .OR. (LAKE_SHAPE_OPT == 1) ) then     ! BOX shape
+        if (LAKE_SHAPE_OPT == 0) then     ! BOX shape
           h2 = (dS / surf_area) + h1
 
-        elseif (LAKE_SHAPE_OPT == 2) then     ! CONIC shape
-          R_cone = (surf_area/pi)**0.5                ! cone base radius (m)
-          S1 = (pi/3.) * (R_cone/Dmax)**2. * (h1**3.)   ! storage before change in volume (m3)
-          S2 = MAX(S1 + dS, 0.0)                               ! storage after change in volume (m3)
-          h2 = (3.*S2/pi*(Dmax/R_cone)**2.)**(1./3.)     ! elevation after change in storage in (m)
-
-        elseif (LAKE_SHAPE_OPT == 3) then     ! RECTANGLUAR PRISM shape
-          S1 = (surf_area/2./Dmax)*(h1**2.)     ! storage before change in volume (m3)
+        elseif (LAKE_SHAPE_OPT == 1) then           ! CONIC shape
+          !R_cone = (surf_area/pi)**0.5                ! cone base radius (m)
+          R_cone = (3.*total_vol/(pi*Dmax))**0.5       ! cone base radius (m)
+          S1 = (pi/3.) * (h1**3.) * (R_cone/Dmax)**2.  ! storage before change in volume (m3)
           S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
-          h2 = (2.*S2*Dmax/surf_area)**0.5     ! elevation after change in storage in (m)
+          h2 = (3.*S2/pi*(Dmax/R_cone)**2.)**(1./3.)   ! elevation after change in storage in (m)
 
-        elseif (LAKE_SHAPE_OPT == 4) then     ! ELLIPSOID shape
-          !S1 = (surf_area/2/Dmax)*(h1**2)     ! storage before change in volume (m3)
-          !S2 = S1 + dS                        ! storage after change in volume (m3)
-          !h2 = (2*S2*Dmax/surf_area)**0.5     ! elevation after change in storage in (m)
+        elseif (LAKE_SHAPE_OPT == 2) then           ! RECTANGLUAR PRISM shape
+          S1 = (surf_area/2./Dmax)*(h1**2.)            ! storage before change in volume (m3)
+          S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
+          h2 = (2.*S2*Dmax/surf_area)**0.5             ! elevation after change in storage in (m)
 
-        elseif (LAKE_SHAPE_OPT == 5) then     ! H-A-V RELATIONSHIP
-          S1 = polyhV_a*(h1**polyhV_b) * 1.0E9    ! storage before change in volume (m3)
-          S2 = MAX(S1 + dS, 0.0)                        ! storage after change in volume (m3)
-          h2 = (S2/1.0E9/polyhV_a)**(1./polyhV_a)     ! elevation after change in storage in (m)
+        elseif (LAKE_SHAPE_OPT == 3) then           ! H-A-V RELATIONSHIP
+          !S1 = 1000000000.0*(1.5175592E-08)*(h1**3.516952)         ! storage before change in volume (m3)
+          S1 = 1.0E9*polyhV_a*(h1**polyhV_b)
+          S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
+          h2 = (S2/1.0E9/polyhV_a)**(1./polyhV_b)    ! elevation after change in storage in (m)
         endif
 
-        Deltah = h2-h1     ! change in sotrage water level (m)
         return
 
     ! ----------------------------------------------------------------
