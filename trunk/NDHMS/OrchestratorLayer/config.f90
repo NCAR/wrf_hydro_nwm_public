@@ -465,8 +465,8 @@ contains
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-         UDMP_OPT, io_form_outputs, bucket_loss, &
-         lake_shape_option
+         UDMP_OPT, io_form_outputs, bucket_loss
+    integer            :: lake_shape_option = 0
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -592,6 +592,7 @@ contains
     reservoir_rfc_forecasts = .FALSE.
     reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
+    lake_shape_option = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
