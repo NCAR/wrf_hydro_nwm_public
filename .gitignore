@@ -1,4 +1,5 @@
 *.o
+*.obj
 *.mod
 *~
 *.swp
@@ -8,7 +9,7 @@ trunk/NDHMS/Makefile.comm
 trunk/NDHMS/lib/*
 trunk/NDHMS/macros
 trunk/NDHMS/HRLDAS/user_build_options
-*exe
+*.exe
 /.project
 trunk/NDHMS/Run/
 trunk/NDHMS/Makefile.comm
@@ -16,6 +17,7 @@ trunk/NDHMS/LandModel
 trunk/NDHMS/LandModel_cpl
 trunk/NDHMS/Land_models/NoahMP/MPP
 trunk/NDHMS/CPL/NUOPC_cpl/BACKUP/
+trunk/NDHMS/CPL/NUOPC_cpl/NWM_TEST
 README.md
 /.idea
 *__pycache__*
