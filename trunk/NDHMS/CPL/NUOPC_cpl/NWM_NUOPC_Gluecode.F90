@@ -421,12 +421,12 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
     ! LOCAL VARIABLES
-    integer                                 :: keyCount
-    integer                                 :: localDECount
-    real, allocatable                       :: farray(:)
+    integer                                 :: keycount
+    integer                                 :: localcount
+    real, allocatable                       :: ffarray(:)
     character(len=32)                       :: item
     character(len=15), allocatable          :: keyNames(:) 
-    character(len=15)                       :: keyName 
+    character(len=15)                       :: keyname 
     type(ESMF_Array)                        :: keyArray
     type(ESMF_DistGrid)                     :: distgrid
     type(ESMF_Index_Flag)                   :: indexflag
@@ -439,28 +439,21 @@ contains
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-
-        call ESMF_LocStreamGet(locstream=locstream, distgrid=distgrid, &
-                         keyCount=keyCount, localDECount=localDECount, &
-                                  indexflag=indexflag, name=item, rc=rc)
         call ESMF_LocStreamGetKey(locstream, keyName, keyArray, rc=rc)
-        print *, keyCount, localDECount
-        !print *, keyNames
-        print *, indexflag, rc
-        print *, item
         print *, keyName
-        !print *, keyArray
+        call ESMF_ArrayPrint(keyArray, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
-        allocate(farray(localDECount))
-        farray = rt_domain(did)%qlink(:,1)
+        allocate(ffarray(size(keyArray)))
+        !farray = rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                                                 farray=farray, &
+                                                 farray=ffarray, &
                                   indexflag=ESMF_INDEX_DELOCAL, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                              name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
+      print *, "PPPPPPPPPPPPPPPPPPPPPPPPP"
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
                                farray=rt_domain(did)%qSfcLatRunoff, &
@@ -532,12 +525,12 @@ contains
     real, allocatable    :: lat(:),lon(:),qi(:) ! initial flow in stream
     real, allocatable    :: chlat(:),chlon(:),qlink(:,:) 
     integer, allocatable :: fid(:), link(:)
-    type(ESMF_Field)     :: field_streamflow, field_velocity
+    type(ESMF_Field)     :: field_streamflow, field_velocity, field
     type(ESMF_LocStream) :: locStream
     type(ESMF_LocStream) :: locStreamOut
 
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
-    real, allocatable, dimension(:) :: streamflow, velocity
+    real, allocatable, dimension(:) :: values, streamflow, velocity
         
     integer, allocatable    :: deBlockList(:)
     integer, allocatable    :: arbSeqIndexList(:)
@@ -648,7 +641,7 @@ contains
     ! ii=2776738, CHLON(ii)=-74.54775, CHLAT(ii)=44.99520, ZELEV(ii)=46.81000
     !-------------------------------------------------------------------
     gsize = locElmCnt          !rt_domain(did)%gnlinksl      ! get_netcdf_dim()
-
+    print*, gsize, locElmCnt
     !-------------------------------------------------------------------
     ! allocate space for the  lon/lat/feature_id/streamflow(QI) attribute of 
     ! each element for the current PET
@@ -656,7 +649,7 @@ contains
     allocate(lon(gsize))
     allocate(lat(gsize))
     allocate(fid(gsize))
-    !allocate(streamflow(gsize))
+    allocate(values(gsize))
    
     do i = 1, gsize 
         lon(i) = rt_domain(did)%chlon(i)
@@ -665,16 +658,17 @@ contains
         !streamflow(i)=rt_domain(did)%qlink(i,1)
     enddo
 
-    print *, "Beheen gzie ", localPet, fid(1), fid(gsize), &
+    print *, "Beheen gzie ", localPet, fid(1), fid(gsize), gsize, &
                              lon(1),lon(gsize),lat(1),lat(gsize)
 
 
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
-    ! define the number and distribution of the locations. 
+    ! define the number and distribution of the locations (i.e. 
+    ! Employing User Allocated Memory)
     !-------------------------------------------------------------------
-    locStream=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
-                                   localCount=locElmCnt,         &
+    NWM_LocStreamCreate=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
+                                   localCount=locElmCnt,           &
                                    coordSys=ESMF_COORDSYS_SPH_DEG, &
                                    rc=rc)
 
@@ -683,14 +677,14 @@ contains
     ! datacopyflag to ESMF_DATACOPY_VALUE an internally allocated copy  
     ! of the user data may also be set. 
     !-------------------------------------------------------------------
-    call ESMF_LocStreamAddKey(locStream,             &
+    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
                              keyName="ESMF:Lat",     &
                              farray=lat,             &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyUnits="Degrees",     &
                              keyLongName="Latitude", rc=rc)
 
-    call ESMF_LocStreamAddKey(locStream,             &
+    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
                              keyName="ESMF:Lon",     &
                              farray=lon,             &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
@@ -702,14 +696,14 @@ contains
     ! Field is created from a user array, but any of the other
     ! Field create methods (e.g. from ArraySpec) would also apply.
     !-------------------------------------------------------------------       
-    !field_streamflow = ESMF_FieldCreate(locstream=locStream, &
-    !                                    farray=streamflow, &
-    !                                    indexflag=ESMF_INDEX_DELOCAL, &
-    !                                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
-    !                                    name="flow_rate", rc=rc)   ! standard name
+    field = ESMF_FieldCreate(locstream=locStream, &
+                                        farray=values, &
+                                        indexflag=ESMF_INDEX_DELOCAL, &
+                                        datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                        name="TBD", rc=rc)   ! standard name
 
-     
 #ifdef DEBUG
+    call ESMF_LocStreamPrint(NWM_LocStreamCreate)
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 

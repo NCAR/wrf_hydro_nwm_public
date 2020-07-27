@@ -480,8 +480,7 @@ module NWM_NUOPC_Cap
 
     NWM_LocStream = NWM_LocStreamCreate(is%wrap%did,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
-
+    
     do fIndex = 1, size(NWM_FieldList)
      
       !! the model checks to see if fields are connected via NUOPC_IsConnected.

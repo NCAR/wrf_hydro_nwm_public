@@ -1,20 +1,24 @@
 #!/bin/bash
 
-## This script takes three optional arguments:
-## a file which sets the environment variables
-## to use in the compile (clearning any inherited
-## from the calling envionrment first). The template
-## for this file is trunk/NDHMS/setEnvar.sh. Please
-## copy that file to trunk/NDHMS, make copies
-## for your favorite compile configurations, and
-## pass the appropriate file name to this script
-## as desired.
-## a file, esmf-impi-env.sh, which sets the esmf 
-## environment variables.
-## copy this file from CPL/NUOPC_cpl if doesn't exists
-## in NDHMS directory.
-## compiler option for configure script
-## ------------------- TO RUN
+## This script is used in two cases: 
+## a) compiling NWM in NUOPC mode using NEMS
+## b) compiling NWM in NUOPC mode using dummy components (ocn, atm)
+##
+## The script takes three optional arguments:
+## 1) a file, setEnvar.sh, which sets the NWM environment variables
+## 2) a file, esmf-impi-env.sh, which sets the esmf environment variables
+## 3) an integer, 3, corresponding to the intel compiler number, see file configure
+##
+## A copy of esmf-impi-env.sh is available in trunk/NDHMS/CPL/NUOPC_cpl
+## A copy of setEnvar.sh is available in trunk/NDHMS/template
+## to clean:
+## make -f Makefile.nuopc nuopcclean
+## To compile in b) case:
+echo "export MAINAPP=ON ==> then type" 
+echo "./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3"
+##
+## To compile in a) case:
+## export MAINAPP=  ==> this is to make sure MAINAPP environment variable is not set then type
 ## ./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3
 ## ------------------
 

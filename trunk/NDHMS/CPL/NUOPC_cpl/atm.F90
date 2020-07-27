@@ -142,7 +142,7 @@ module ATM
     real, allocatable   :: pmslarray(:)
     real, allocatable   :: sstarray(:)
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
-    
+    integer :: localcount    
 
     rc = ESMF_SUCCESS
 
@@ -181,7 +181,7 @@ module ATM
     enddo
     farrayPtr = arbSeqIndexList
 
-    print *,"ATM: ",localPet,"arbSeqIndices=", &
+    print *,"ATM: ",localPet,"arbSeqIndices=", locElementCnt, &
       arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
 
     ! create DistGrid
@@ -209,7 +209,9 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
-    
+    call ESMF_LocStreamGet(locstream=locStreamIn,localDECount=localcount)
+    print*, "Beeeeeeeeeeeeeeeeeeeeee ", localcount
+
 #ifdef WITHIMPORTFIELDS
     ! importable field: sea_surface_temperature
     sstField = ESMF_FieldCreate(locStreamIn, &
