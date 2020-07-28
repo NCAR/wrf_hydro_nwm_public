@@ -487,13 +487,17 @@ module NWM_NUOPC_Cap
       !! If the field is connected then the field is realized.  
       !! The model doesn't realize all fields because it's wasteful
       if (NWM_FieldList(fIndex)%adImport) then
+        print *, "adImport ............."
         importConnected = NUOPC_IsConnected(is%wrap%NStateImp(1), &
                          fieldName=NWM_FieldList(fIndex)%stdname)
       else
         importConnected = .FALSE.
+        print *, "adImport FALSE"
       endif
 
       if (importConnected) then 
+        print *, "Import connected, going to FieldCreate for ", &
+                  NWM_FieldList(fIndex)%stdname
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
                     grid=NWM_LSMGrid, locstream=NWM_LocStream, &
@@ -501,7 +505,6 @@ module NWM_NUOPC_Cap
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-
 
       elseif(NWM_FieldList(fIndex)%adImport) then
         call ESMF_StateRemove(is%wrap%NStateImp(1), &
@@ -511,14 +514,18 @@ module NWM_NUOPC_Cap
       endif
 
       if (NWM_FieldList(fIndex)%adExport) then
+        print *, "adImport ............."
         exportConnected = NUOPC_IsConnected(is%wrap%NStateExp(1), &
                          fieldName=NWM_FieldList(fIndex)%stdname)   
       else
         exportConnected = .FALSE.
+        print *, "adExport FLASE."
       endif
 
       if (exportConnected) then
         NWM_FieldList(fIndex)%realizedExport = .TRUE.
+        print *, "Export connected, going to FieldCreate for ", &
+                  NWM_FieldList(fIndex)%stdname
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
                              grid=NWM_LSMGrid,locstream=NWM_LocStream, &
                                                 did=is%wrap%did,rc=rc)

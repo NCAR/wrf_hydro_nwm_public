@@ -421,39 +421,31 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
     ! LOCAL VARIABLES
-    integer                                 :: keycount
-    integer                                 :: localcount
-    real, allocatable                       :: ffarray(:)
-    character(len=32)                       :: item
-    character(len=15), allocatable          :: keyNames(:) 
-    character(len=15)                       :: keyname 
-    type(ESMF_Array)                        :: keyArray
-    type(ESMF_DistGrid)                     :: distgrid
-    type(ESMF_Index_Flag)                   :: indexflag
-
+    real, allocatable                       :: dataArr(:)
+    integer                                 :: loccnt
+      
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
     rc = ESMF_SUCCESS
 
+    
+    call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
+    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+   
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-        call ESMF_LocStreamGetKey(locstream, keyName, keyArray, rc=rc)
-        print *, keyName
-        call ESMF_ArrayPrint(keyArray, rc=rc)
-        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-
-        allocate(ffarray(size(keyArray)))
+        allocate(dataArray(loccnt))
         !farray = rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                                                 farray=ffarray, &
+                                                 farray=dataArray, &
                                   indexflag=ESMF_INDEX_DELOCAL, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                              name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      print *, "PPPPPPPPPPPPPPPPPPPPPPPPP"
+      
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
                                farray=rt_domain(did)%qSfcLatRunoff, &
@@ -465,6 +457,14 @@ contains
                                     farray=rt_domain(did)%velocity, &
                                  indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+      CASE ('air_pressure_at_sea_level')
+        allocate(dataArray(loccnt))
+        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
+                                    farray=dataArray, &
+                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
@@ -655,7 +655,7 @@ contains
         lon(i) = rt_domain(did)%chlon(i)
         lat(i) = rt_domain(did)%chlat(i)
         fid(i) = rt_domain(did)%linkid(i)
-        !streamflow(i)=rt_domain(did)%qlink(i,1)
+        values(i)=-9.99
     enddo
 
     print *, "Beheen gzie ", localPet, fid(1), fid(gsize), gsize, &
@@ -696,11 +696,11 @@ contains
     ! Field is created from a user array, but any of the other
     ! Field create methods (e.g. from ArraySpec) would also apply.
     !-------------------------------------------------------------------       
-    field = ESMF_FieldCreate(locstream=locStream, &
-                                        farray=values, &
-                                        indexflag=ESMF_INDEX_DELOCAL, &
-                                        datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                        name="TBD", rc=rc)   ! standard name
+    !field = ESMF_FieldCreate(locstream=locStream, &
+    !                                    farray=values, &
+    !                                    indexflag=ESMF_INDEX_DELOCAL, &
+    !                                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
+    !                                    name="TBD", rc=rc)   ! standard name
 
 #ifdef DEBUG
     call ESMF_LocStreamPrint(NWM_LocStreamCreate)
