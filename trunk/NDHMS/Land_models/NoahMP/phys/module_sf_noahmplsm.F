@@ -5844,7 +5844,7 @@ ENDIF   ! CROPTYPE == 0
           RUNSUB       = QDIS          !mm/s
        END IF
 
-       IF(OPT_RUN == 3 .or. OPT_RUN == 4) THEN 
+       IF(OPT_RUN == 3 .or. OPT_RUN == 4 .or. OPT_RUN == 7) THEN 
           RUNSUB       = RUNSUB + QDRAIN        !mm/s
        END IF
 
@@ -7549,14 +7549,16 @@ ENDIF   ! CROPTYPE == 0
     RUNSRF  = 0.0
 
     DO IZ=1,NSOIL-2
-      WM     = WM + (SMC(IZ)*-1*ZSOIL(IZ)) ! m
-      WM_MAX = WM_MAX + (parameters%SMCREF(IZ)*-1*ZSOIL(IZ)) ! m  
-      
-      IF ((SMC(IZ)-parameters%SMCREF(IZ)) .GT. 0.) THEN ! soil moisture greater than field capacity
-         SM  = SM + (SMC(IZ) - parameters%SMCREF(IZ) )*-1*ZSOIL(IZ)
-      END IF
-      SM_MAX  = SM_MAX + ( parameters%SMCMAX(IZ) - parameters%SMCREF(IZ) )*-1*ZSOIL(IZ)
+       IF ((SMC(IZ)-parameters%SMCREF(IZ)) .GT. 0.) THEN ! soil moisture greater than field capacity
+          SM     = SM + (SMC(IZ) - parameters%SMCREF(IZ) )*-1*ZSOIL(IZ) !m
+          WM     = WM + (parameters%SMCREF(IZ)*-1*ZSOIL(IZ))            !m  
+       ELSE
+          WM     = WM + (SMC(IZ)*-1*ZSOIL(IZ))
+       END IF
+       WM_MAX = WM_MAX + (parameters%SMCREF(IZ)*-1*ZSOIL(IZ))
+       SM_MAX = SM_MAX + (parameters%SMCMAX(IZ) - parameters%SMCREF(IZ))*-1*ZSOIL(IZ)
     END DO
+
     WM = MIN(WM,WM_MAX) ! tension water (m) 
     SM = MIN(SM,SM_MAX) ! free water (m)
 
