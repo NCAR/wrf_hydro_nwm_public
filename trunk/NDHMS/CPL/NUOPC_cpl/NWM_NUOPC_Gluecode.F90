@@ -474,6 +474,12 @@ contains
                                  indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+      CASE ('surface_net_downward_shortwave_flux')
+        allocate(dataArray(loccnt))
+        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
+                                    farray=dataArray, &
+                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_net_downward_shortwave_flux')
         allocate(dataArray(loccnt))
