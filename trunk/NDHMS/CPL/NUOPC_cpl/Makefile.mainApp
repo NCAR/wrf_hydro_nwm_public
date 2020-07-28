@@ -94,5 +94,5 @@ info:
 	@cat $(ESMFMKFILE)
 	@echo ==================================================================
 run:
-	mpirun -np 8 ./esmApp
+	mpirun -np 8 ./esmApp | tee esmApp.stdout
 
