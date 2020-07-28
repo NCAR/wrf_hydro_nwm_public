@@ -421,7 +421,7 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
     ! LOCAL VARIABLES
-    real, allocatable                       :: dataArr(:)
+    real, allocatable                       :: dataArray(:)
     integer                                 :: loccnt
       
 #ifdef DEBUG
