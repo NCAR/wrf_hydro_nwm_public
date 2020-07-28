@@ -25,3 +25,5 @@ README.md
 *.log
 compile_options.sh
 .DS_Store
+esmApp
+
