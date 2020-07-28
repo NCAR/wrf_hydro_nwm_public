@@ -420,9 +420,16 @@ contains
     type(ESMF_LocStream), intent(in)        :: locstream
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
+
     ! LOCAL VARIABLES
     real, allocatable                       :: dataArray(:)
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+
     integer                                 :: loccnt
+    type(ESMF_Field)     :: field_streamflow, field_velocity
+    type(ESMF_LocStream) :: locStream
+    type(ESMF_LocStream) :: locStreamOut
+    real, allocatable, dimension(:) :: streamflow, velocity
       
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -437,7 +444,9 @@ contains
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
         allocate(dataArray(loccnt))
-        !farray = rt_domain(did)%qlink(:,1)
+        ! compile, run
+        ! if this variable is defined, if not where is defined
+        print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                                  farray=dataArray, &
@@ -465,6 +474,13 @@ contains
                                  indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+
+      CASE ('surface_net_downward_shortwave_flux')
+        allocate(dataArray(loccnt))
+        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
+                                    farray=dataArray, &
+                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
@@ -514,26 +530,12 @@ contains
     integer              :: localPet
     integer              :: petCount
     integer              :: gblElmCnt     ! total number of reaches elements
-    integer              :: gblElmDiv     ! integer part of a division
-    integer              :: gblElmExt     ! remainder part of a division
     integer              :: linkls_start  ! current pet start id (i.e reach fid) 
     integer              :: linkls_end    ! current pet end id (i.e reach fid) 
     integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
-    integer              :: locElmCnt1
-    integer              :: locElmBeg
-    integer              :: gsize, i, ii, last_index
-    real, allocatable    :: lat(:),lon(:),qi(:) ! initial flow in stream
-    real, allocatable    :: chlat(:),chlon(:),qlink(:,:) 
-    integer, allocatable :: fid(:), link(:)
-    type(ESMF_Field)     :: field_streamflow, field_velocity, field
-    type(ESMF_LocStream) :: locStream
-    type(ESMF_LocStream) :: locStreamOut
-
-    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
-    real, allocatable, dimension(:) :: values, streamflow, velocity
-        
-    integer, allocatable    :: deBlockList(:)
-    integer, allocatable    :: arbSeqIndexList(:)
+    integer              :: gsize, i
+    integer, allocatable :: fid(:), link(:), deBlockList(:)
+    real, allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
 
 #ifdef DEBUG
     character(ESMF_MAXSTR)  :: logMsg
@@ -586,31 +588,6 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return
     endif
 
-    ! checking on the differences between equal 
-    ! distribution of points per PET using this
-    ! code below versus the same distribution
-    ! done within the NWM code. They are not the
-    ! same!! 
-    ! equal count of points per localpet
-    !gblElmCnt = rt_domain(did)%gnlinksl
-    !gblElmDiv = gblElmCnt/petCount
-    !gblElmExt = MOD(gblElmCnt,petCount)
-
-    !if (localPet .eq. (petCount-1)) then
-    !  locElmCnt1 = gblElmDiv + gblElmExt
-    !else
-    !  locElmCnt1 = gblElmDiv
-    !endif
-    
-    !locElmBeg = 1 + (gblElmDiv*localPet)
-        
-    ! create local element list
-    !allocate(arbSeqIndexList(locElmCnt1))
-    !do i=1, locElmCnt1
-    !    arbSeqIndexList(i) = locElmBeg + (i - 1)
-    !enddo
-
-
 
     !-------------------------------------------------------------------
     ! NWM implementation - ReachLS_ini()
@@ -628,9 +605,7 @@ contains
     end do
     
     !do i = 1, locElmCnt
-    !    print *, "Beheen ", my_id, linkls_start, linkls_end, &
-    !                        deBlockList(i), arbSeqIndexList(i), &
-    !                        locElmCnt,locElmCnt1
+    !    print *, "Beheen ", my_id, linkls_start, linkls_end, locElmCnt
     !enddo
    
 
@@ -641,7 +616,6 @@ contains
     ! ii=2776738, CHLON(ii)=-74.54775, CHLAT(ii)=44.99520, ZELEV(ii)=46.81000
     !-------------------------------------------------------------------
     gsize = locElmCnt          !rt_domain(did)%gnlinksl      ! get_netcdf_dim()
-    print*, gsize, locElmCnt
     !-------------------------------------------------------------------
     ! allocate space for the  lon/lat/feature_id/streamflow(QI) attribute of 
     ! each element for the current PET
@@ -649,17 +623,15 @@ contains
     allocate(lon(gsize))
     allocate(lat(gsize))
     allocate(fid(gsize))
-    allocate(values(gsize))
    
     do i = 1, gsize 
         lon(i) = rt_domain(did)%chlon(i)
         lat(i) = rt_domain(did)%chlat(i)
         fid(i) = rt_domain(did)%linkid(i)
-        values(i)=-9.99
     enddo
 
-    print *, "Beheen gzie ", localPet, fid(1), fid(gsize), gsize, &
-                             lon(1),lon(gsize),lat(1),lat(gsize)
+    !print *, "Beheen gzie ", localPet, my_id, fid(1), fid(gsize), gsize, &
+    !                         lon(1),lon(gsize),lat(1),lat(gsize)
 
 
     !-------------------------------------------------------------------
@@ -690,17 +662,6 @@ contains
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyUnits="Degrees",     &
                              keyLongName="Longitude", rc=rc)
-
-    !-------------------------------------------------------------------
-    ! Create a Field on the Location Stream. In this case the 
-    ! Field is created from a user array, but any of the other
-    ! Field create methods (e.g. from ArraySpec) would also apply.
-    !-------------------------------------------------------------------       
-    !field = ESMF_FieldCreate(locstream=locStream, &
-    !                                    farray=values, &
-    !                                    indexflag=ESMF_INDEX_DELOCAL, &
-    !                                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
-    !                                    name="TBD", rc=rc)   ! standard name
 
 #ifdef DEBUG
     call ESMF_LocStreamPrint(NWM_LocStreamCreate)

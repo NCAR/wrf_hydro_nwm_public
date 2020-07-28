@@ -174,6 +174,8 @@ module ATM
     allocate(pmslarray(locElementCnt))
     allocate(sstarray(locElementCnt))
     allocate(farrayPtr(locElementCnt))
+    print*, "ATM LocElemCnt ", locElementCnt
+
     do i=1, locElementCnt
       arbSeqIndexList(i) = locElementBeg + (i - 1)
       rsnsarray(i) = 1.0 * arbSeqIndexList(i)
@@ -210,7 +212,6 @@ module ATM
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
     call ESMF_LocStreamGet(locstream=locStreamIn,localDECount=localcount)
-    print*, "Beeeeeeeeeeeeeeeeeeeeee ", localcount
 
 #ifdef WITHIMPORTFIELDS
     ! importable field: sea_surface_temperature
