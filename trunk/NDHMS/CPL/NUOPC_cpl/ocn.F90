@@ -137,7 +137,7 @@ module OCN
     type(ESMF_VM)        :: vm
     integer              :: localPet
     integer              :: petCount
-    integer,parameter    :: gblElementCnt = 111
+    integer,parameter    :: gblElementCnt = 185
     integer              :: gblElementExt
     integer              :: gblElementDiv
     integer              :: locElementBeg

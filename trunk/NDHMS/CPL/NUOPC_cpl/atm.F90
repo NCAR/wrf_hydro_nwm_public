@@ -354,6 +354,7 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
     
+    
     call ESMF_ClockPrint(clock, options="stopTime", &
       preString="---------------------> to: ", unit=msgString, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
