@@ -862,6 +862,11 @@ subroutine CheckImport(gcomp, rc)
     
     integer :: itime, dt
 
+    integer :: itemCnt, i
+    character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
+    type(ESMF_Field) :: itemField
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
@@ -944,10 +949,45 @@ subroutine CheckImport(gcomp, rc)
                          is%wrap%NStateImp(1),is%wrap%NStateExp(1),rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
     
-      call ESMF_StatePrint(is%wrap%NStateImp(1), rc=rc)
+      call ESMF_StateGet(is%wrap%NStateImp(1), itemCount=itemCnt, rc=rc)
       if (rc /= ESMF_SUCCESS) return
-      call ESMF_StatePrint(is%wrap%NStateExp(1), rc=rc)
+      print *, "NWM Import State Item Count: ", itemCnt
+      allocate(itemNames(itemCnt))
+      call ESMF_StateGet(is%wrap%NStateImp(1), itemNameList=itemNames, rc=rc)
+      if (rc/=ESMF_SUCCESS) return
+      print *, "NWM Import Fields:"
+      do i=1, itemCnt
+        print *, trim(itemNames(i))
+        
+        call ESMF_StateGet(is%wrap%NStateImp(1), trim(itemNames(i)), itemField, rc=rc)
+        if (rc/=ESMF_SUCCESS) return
+        print *, "Field retreived"
+        call ESMF_FieldValidate(itemField, rc=rc)
+        if (rc/=ESMF_SUCCESS) then
+            print *, "Invalid Field: ", rc
+            return
+        end if
+        call ESMF_FieldGet(field=itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
+        if (rc/=ESMF_SUCCESS) then
+            print *, "ESMF_FieldGet Failed: ", rc
+            return
+        end if
+        print *, "Array size: ", size(farrayPtr)
+      end do
+      deallocate(itemNames)
+
+      call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
       if (rc /= ESMF_SUCCESS) return
+      print *, "NWM Export State Item Count: ", itemCnt
+    
+      allocate(itemNames(itemCnt))
+      call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
+      if (rc/=ESMF_SUCCESS) return
+      print *, "NWM Export Fields: "
+      do i=1, itemCnt
+        print *, trim(itemNames(i))
+      end do
+      deallocate(itemNames)
 
       call ESMF_ClockAdvance(is%wrap%clock(1),rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
