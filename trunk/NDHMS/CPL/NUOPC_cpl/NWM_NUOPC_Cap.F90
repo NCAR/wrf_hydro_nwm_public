@@ -943,6 +943,11 @@ subroutine CheckImport(gcomp, rc)
                          is%wrap%clock(1), is%wrap%hydroState, is%wrap%timeStepInt, &
                          is%wrap%NStateImp(1),is%wrap%NStateExp(1),rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    
+      call ESMF_StatePrint(is%wrap%NStateImp(1), rc=rc)
+      if (rc /= ESMF_SUCCESS) return
+      call ESMF_StatePrint(is%wrap%NStateExp(1), rc=rc)
+      if (rc /= ESMF_SUCCESS) return
 
       call ESMF_ClockAdvance(is%wrap%clock(1),rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out

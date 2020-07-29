@@ -389,7 +389,10 @@ module OCN
    
     ! Beheen - I think we need to see what is the contents of the import/export
     ! in order to exchange - TODO
-    
+    call ESMF_StatePrint(importState, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
+    call ESMF_StatePrint(exportState, rc=rc)
+    if (rc /= ESMF_SUCCESS) return  
     
     call ESMF_TimePrint(currTime + timeStep, &
       preString="---------------------> to: ", unit=msgString, rc=rc)

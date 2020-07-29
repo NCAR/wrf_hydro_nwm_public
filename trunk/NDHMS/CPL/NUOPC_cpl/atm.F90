@@ -319,6 +319,9 @@ module ATM
     type(ESMF_Clock)            :: clock
     type(ESMF_State)            :: importState, exportState
     character(len=160)          :: msgString
+    
+    !character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
+    integer :: itemCnt
 
 #define NUOPC_TRACE__OFF
 #ifdef NUOPC_TRACE
@@ -353,8 +356,29 @@ module ATM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+  
+    call ESMF_StatePrint(importState, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
     
+    call ESMF_StateGet(importState, itemCount=itemCnt, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
+    !allocate(itemNames(itemCnt))
+    !call ESMF_StateGet(importState, itemNameList=itemNames, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return
+    print *, "ATM Import State Item Count: ", itemCnt
+    !deallocate(itemNames)
+
+    call ESMF_StatePrint(exportState, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
     
+    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
+    !allocate(itemNames(itemCnt))
+    !call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return
+    print *, "ATM Export State Item Count: ", itemCnt
+    !deallocate(itemNames)
+
     call ESMF_ClockPrint(clock, options="stopTime", &
       preString="---------------------> to: ", unit=msgString, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
