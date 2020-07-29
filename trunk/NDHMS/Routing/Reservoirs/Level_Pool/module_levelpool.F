@@ -332,8 +332,8 @@ contains
            endif
 
            if (sap > 0) then
-              !dh1 = ((It - discharge)/sap)*dt
-              call STAGE_STORAGE(dh1,maxdepth,hin,It,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              dh1 = ((It - discharge)/sap)*dt
+              !call STAGE_STORAGE(dh1,maxdepth,hin,It,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh1 = 0.0
            endif
@@ -361,8 +361,8 @@ contains
 
 
            if (sap > 0.0) then
-              !dh2 = ((Itdt_3 - discharge)/sap)*dt
-              call STAGE_STORAGE(dh2,maxdepth,hin,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              dh2 = ((Itdt_3 - discharge)/sap)*dt
+              !call STAGE_STORAGE(dh2,maxdepth,hin,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh2 = 0.0
            endif
@@ -389,8 +389,8 @@ contains
            endif
 
            if (sap > 0.0) then
-              !dh3 = ((Itdt_2_3 - discharge)/sap)*dt
-              call STAGE_STORAGE(dh3,maxdepth,hin,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+              !call STAGE_STORAGE(dh3,maxdepth,hin,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
            else
               dh3 = 0.0
            endif
