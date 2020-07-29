@@ -425,11 +425,9 @@ contains
     real, allocatable                       :: dataArray(:)
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
 
-    integer                                 :: loccnt
-    type(ESMF_Field)     :: field_streamflow, field_velocity
-    type(ESMF_LocStream) :: locStream
-    type(ESMF_LocStream) :: locStreamOut
+    integer                         :: loccnt
     real, allocatable, dimension(:) :: streamflow, velocity
+    type(ESMF_Field)                :: field_streamflow, field_velocity
       
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -446,10 +444,11 @@ contains
         allocate(dataArray(loccnt))
         ! compile, run
         ! if this variable is defined, if not where is defined
+        print*, "shape of qlink ", size(rt_domain(did)%qlink)
         print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                                                 farray=dataArray, &
+                              farray=dataArray, &
                                   indexflag=ESMF_INDEX_DELOCAL, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                              name=stdName, rc=rc) 
@@ -481,12 +480,6 @@ contains
                                  indexflag=ESMF_INDEX_DELOCAL, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-      CASE ('surface_net_downward_shortwave_flux')
-        allocate(dataArray(loccnt))
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
-                                    farray=dataArray, &
-                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
