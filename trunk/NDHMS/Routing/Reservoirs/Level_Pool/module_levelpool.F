@@ -332,9 +332,12 @@ contains
            endif
 
            if (sap > 0) then
-              dh1 = ((It - discharge)/sap)*dt
-              !call STAGE_STORAGE(dh1,maxdepth,hin,It,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
-           else
+              if (lake_shape_option == 0) then
+                 dh1 = ((It - discharge)/sap)*dt
+              else
+                 call STAGE_STORAGE(dh1,maxdepth,hin,It,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              endif
+		   else
               dh1 = 0.0
            endif
 
@@ -361,8 +364,11 @@ contains
 
 
            if (sap > 0.0) then
-              dh2 = ((Itdt_3 - discharge)/sap)*dt
-              !call STAGE_STORAGE(dh2,maxdepth,hin,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              if (lake_shape_option == 0) then
+                 dh2 = ((Itdt_3 - discharge)/sap)*dt
+              else
+                 call STAGE_STORAGE(dh2,maxdepth,hin,Itdt_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              endif
            else
               dh2 = 0.0
            endif
@@ -389,8 +395,11 @@ contains
            endif
 
            if (sap > 0.0) then
-              dh3 = ((Itdt_2_3 - discharge)/sap)*dt
-              !call STAGE_STORAGE(dh3,maxdepth,hin,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              if (lake_shape_option == 0) then
+                 dh3 = ((Itdt_2_3 - discharge)/sap)*dt
+              else
+                 call STAGE_STORAGE(dh3,maxdepth,hin,Itdt_2_3,discharge,sap,vtp,dt,lake_shape_option,polya,polyb)
+              endif
            else
               dh3 = 0.0
            endif
@@ -484,10 +493,10 @@ contains
         ! change in storage (m3)
         dS = (Inflow_dt - res_discharge)*Deltat
 
-        if (LAKE_SHAPE_OPT == 0) then     ! BOX shape
-          h2 = (dS / surf_area) + h1
+        !if (LAKE_SHAPE_OPT == 0) then     ! BOX shape
+        !  h2 = (dS / surf_area) + h1
 
-        elseif (LAKE_SHAPE_OPT == 1) then           ! CONIC shape
+        if (LAKE_SHAPE_OPT == 1) then           ! CONIC shape
           !R_cone = (surf_area/pi)**0.5                ! cone base radius (m)
           R_cone = (3.*total_vol/(pi*Dmax))**0.5       ! cone base radius (m)
           S1 = (pi/3.) * (h1**3.) * (R_cone/Dmax)**2.  ! storage before change in volume (m3)
