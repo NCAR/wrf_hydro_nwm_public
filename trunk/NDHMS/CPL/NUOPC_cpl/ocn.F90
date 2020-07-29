@@ -345,6 +345,8 @@ module OCN
     type(ESMF_TimeInterval)     :: timeStep
     character(len=160)          :: msgString
 
+    integer :: itemCnt
+
 #define NUOPC_TRACE__OFF
 #ifdef NUOPC_TRACE
     call ESMF_TraceRegionEnter("OCN:ModelAdvance")
@@ -389,10 +391,16 @@ module OCN
    
     ! Beheen - I think we need to see what is the contents of the import/export
     ! in order to exchange - TODO
-    call ESMF_StatePrint(importState, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    call ESMF_StatePrint(exportState, rc=rc)
-    if (rc /= ESMF_SUCCESS) return  
+    !call ESMF_StatePrint(importState, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return
+    call ESMF_StateGet(importState, itemCount=itemCnt, rc=rc)
+    if (rc/=ESMF_SUCCESS) return
+    print *, "OCN Import State Item Count: ", itemCnt
+    !call ESMF_StatePrint(exportState, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return  
+    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    if (rc/=ESMF_SUCCESS) return
+    print *, "OCN Export State Item Count: ", itemCnt
     
     call ESMF_TimePrint(currTime + timeStep, &
       preString="---------------------> to: ", unit=msgString, rc=rc)
