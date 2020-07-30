@@ -7282,6 +7282,7 @@ subroutine READ_CHROUTING1( &
      Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        DAML,     &
      ORIFICEC,     ORIFICEA,          ORIFICEE,               &
+     LAKEMAXDEPTH, LAKEVOL, LAKEPOLYA,    LAKEPOLYB,          &
      reservoir_type_specified,        reservoir_type,         &
      reservoir_parameter_file,        LATLAKE,      LONLAKE,  &
      ELEVLAKE,     dist,              ZELEV,        LAKENODE, &
@@ -7354,7 +7355,7 @@ real, intent(INOUT),  dimension(:)      :: ORIFICEE
 integer, intent(INOUT), dimension(:)    :: reservoir_type
 character(len=*), intent(in)            :: reservoir_parameter_file
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
-real,  allocatable, dimension(:)        :: LAKEMAXDEPTH, LAKEVOL, LAKEPOLYA, LAKEPOLYB
+real, intent(INOUT),  dimension(:)      :: LAKEMAXDEPTH, LAKEVOL, LAKEPOLYA, LAKEPOLYB
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
 real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
 
@@ -8551,6 +8552,7 @@ subroutine MPP_READ_CHROUTING_new(&
      n_CC,         HRZAREA,           LAKEMAXH,                  &
      WEIRH,        WEIRC,             WEIRL,          DAML,      &
      ORIFICEC,     ORIFICEA,          ORIFICEE,                  &
+     LAKEMAXDEPTH, LAKEVOL,           LAKEPOLYA, LAKEPOLYB,      &
      reservoir_type_specified,        reservoir_type,            &
      reservoir_parameter_file,        LATLAKE,        LONLAKE,   &
      ELEVLAKE,     dist,              ZELEV,          LAKENODE,  &
@@ -8600,6 +8602,7 @@ character(len=*), intent(in)                 :: reservoir_parameter_file
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
 real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
+real, intent(INOUT),  dimension(:)           :: LAKEMAXDEPTH, LAKEVOL, LAKEPOLYA, LAKEPOLYB
 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
@@ -8627,6 +8630,7 @@ call READ_CHROUTING1( &
      n_CC,         HRZAREA,           LAKEMAXH,           &
      WEIRH,        WEIRC,             WEIRL,     DAML,    &
      ORIFICEC,     ORIFICEA,          ORIFICEE,           &
+     LAKEMAXDEPTH, LAKEVOL, LAKEPOLYA,    LAKEPOLYB,      &
      reservoir_type_specified,        reservoir_type,     &
      reservoir_parameter_file,        LATLAKE,   LONLAKE, &
      ELEVLAKE,     dist,              ZELEV,     LAKENODE,&
