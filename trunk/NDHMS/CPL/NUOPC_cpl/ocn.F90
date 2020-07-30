@@ -194,8 +194,8 @@ module OCN
       sstarray(i) = 3.0 * arbSeqIndexList(i)
     enddo
 
-    print *,"OCN: ",localPet,"arbSeqIndices=", &
-      arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
+    !print *,"OCN: ",localPet,"arbSeqIndices=", &
+    !  arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
 
     ! create DistGrid
     distgrid = ESMF_DistGridCreate(arbSeqIndexList=arbSeqIndexList, rc=rc)
@@ -203,8 +203,6 @@ module OCN
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
-    !deallocate(arbSeqIndexList)
 
     ! create a LocationObject object for Fields
     locStreamIn = ESMF_LocStreamCreate(distgrid=distgrid, &
@@ -290,9 +288,9 @@ module OCN
 
     ! Beheen
     deallocate(arbSeqIndexList)
-    deallocate(rsnsarray)
-    deallocate(pmslarray)
-    deallocate(sstarray)
+    !deallocate(rsnsarray)
+    !deallocate(pmslarray)
+    !deallocate(sstarray)
 
   end subroutine
   
@@ -389,18 +387,9 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
    
-    ! Beheen - I think we need to see what is the contents of the import/export
-    ! in order to exchange - TODO
-    !call ESMF_StatePrint(importState, rc=rc)
-    !if (rc /= ESMF_SUCCESS) return
-    call ESMF_StateGet(importState, itemCount=itemCnt, rc=rc)
-    if (rc/=ESMF_SUCCESS) return
-    print *, "OCN Import State Item Count: ", itemCnt
-    !call ESMF_StatePrint(exportState, rc=rc)
-    !if (rc /= ESMF_SUCCESS) return  
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (rc/=ESMF_SUCCESS) return
-    print *, "OCN Export State Item Count: ", itemCnt
+    !print *, "OCN Export State Item Count: ", itemCnt
     
     call ESMF_TimePrint(currTime + timeStep, &
       preString="---------------------> to: ", unit=msgString, rc=rc)

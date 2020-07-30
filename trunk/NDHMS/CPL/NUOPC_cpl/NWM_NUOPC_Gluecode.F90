@@ -424,6 +424,7 @@ contains
     ! LOCAL VARIABLES
     real, allocatable                       :: dataArray(:)
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: arrayPtr => null()
 
     integer                         :: loccnt
     real, allocatable, dimension(:) :: streamflow, velocity
@@ -442,18 +443,18 @@ contains
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
         allocate(dataArray(loccnt))
+        allocate(farrayPtr(loccnt))     
         ! compile, run
         ! if this variable is defined, if not where is defined
         print*, "shape of qlink ", size(rt_domain(did)%qlink)
         print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                              farray=dataArray, &
-                                  indexflag=ESMF_INDEX_DELOCAL, &
+                                           farrayPtr=farrayPtr, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                              name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      
+
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
                                farray=rt_domain(did)%qSfcLatRunoff, &

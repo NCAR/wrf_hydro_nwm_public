@@ -134,14 +134,11 @@ module ATM
     type(ESMF_LocStream) :: locStreamOut
 
 
-    ! Beheen
-    type(ESMF_Field)    :: sstField
-    type(ESMF_Field)    :: rsnsField
-    type(ESMF_Field)    :: pmslField
-    real, allocatable   :: rsnsarray(:)
-    real, allocatable   :: pmslarray(:)
-    real, allocatable   :: sstarray(:)
+    ! Beheen - fill Ptrs for testing
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: rsnsPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: pmslPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: sstPtr => null()
     integer :: localcount    
 
     rc = ESMF_SUCCESS
@@ -170,21 +167,19 @@ module ATM
 
     ! create local element list
     allocate(arbSeqIndexList(locElementCnt))
-    allocate(rsnsarray(locElementCnt))
-    allocate(pmslarray(locElementCnt))
-    allocate(sstarray(locElementCnt))
+    allocate(rsnsPtr(locElementCnt))
+    allocate(pmslPtr(locElementCnt))
+    allocate(sstPtr(locElementCnt))
     allocate(farrayPtr(locElementCnt))
-    print*, "ATM LocElemCnt ", locElementCnt
 
     do i=1, locElementCnt
       arbSeqIndexList(i) = locElementBeg + (i - 1)
-      rsnsarray(i) = 1.0 * arbSeqIndexList(i)
-      pmslarray(i) = 2.0 * arbSeqIndexList(i)
+      rsnsPtr(i) = 1.0 * arbSeqIndexList(i)
+      pmslPtr(i) = 2.0 * arbSeqIndexList(i)
     enddo
-    farrayPtr = arbSeqIndexList
 
-    print *,"ATM: ",localPet,"arbSeqIndices=", locElementCnt, &
-      arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
+    !print *,"ATM: ",localPet,"arbSeqIndices=", locElementCnt, &
+    !  arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
 
     ! create DistGrid
 !    distgrid = ESMF_DistGridCreate(minIndex=(/1/), &
@@ -201,8 +196,6 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
 
-    !deallocate(arbSeqIndexList)
-
     ! create a LocationObject object for Fields
     locStreamIn = ESMF_LocStreamCreate(distgrid=distgrid, &
       coordSys=ESMF_COORDSYS_CART, rc=rc)
@@ -211,20 +204,20 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
-    call ESMF_LocStreamGet(locstream=locStreamIn,localDECount=localcount)
+
 
 #ifdef WITHIMPORTFIELDS
     ! importable field: sea_surface_temperature
-    sstField = ESMF_FieldCreate(locStreamIn, &
-                                   sstarray, &
-                         ESMF_INDEX_DELOCAL, &
-                                 name="sst", &
-                                        rc=rc)
+    field = ESMF_FieldCreate(locstream=locStreamIn, &
+                                  farrayPtr=sstPtr, &
+              datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                        name="sst", &
+                                               rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_Realize(importState, field=sstField, rc=rc)
+    call NUOPC_Realize(importState, field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -237,16 +230,17 @@ module ATM
     ! with Grid and memory allocation, and then calling Realize() for it.
     !pmslField = ESMF_FieldCreate(name="pmsl", locStream=locStreamOut, &
     !  typekind=ESMF_TYPEKIND_R8, rc=rc)
-    pmslField = ESMF_FieldCreate(locStreamOut, &
-                                   pmslarray, &
-                           ESMF_INDEX_DELOCAL, &
-                                  name="pmsl", &
-                                          rc=rc)
+   
+    field = ESMF_FieldCreate(locstream=locStreamOut, &
+                                  farrayPtr=pmslPtr, &
+               datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                        name="pmsl", &
+                                                rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_Realize(exportState, field=pmslField, rc=rc)
+    call NUOPC_Realize(exportState, field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -286,25 +280,25 @@ module ATM
     ! exportable field: surface_net_downward_shortwave_flux
     !rsnsField = ESMF_FieldCreate(name="rsns", locStream=locStreamOut, &
                                       !typekind=ESMF_TYPEKIND_R8, rc=rc)
-    rsnsField = ESMF_FieldCreate(locStreamOut, &
-                                    rsnsarray, &
-                           ESMF_INDEX_DELOCAL, &
-                                  name="rsns", &
-                                          rc=rc)
+    field = ESMF_FieldCreate(locstream=locStreamOut, &
+                                  farrayPtr=rsnsPtr, &
+               datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                        name="rsns", &
+                                                rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_Realize(exportState, field=rsnsField, rc=rc)
+    call NUOPC_Realize(exportState, field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
     deallocate(arbSeqIndexList)
-    deallocate(rsnsarray)
-    deallocate(pmslarray)
-    deallocate(sstarray)
+    deallocate(rsnsPtr)
+    deallocate(pmslPtr)
+    deallocate(sstPtr)
 
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
   end subroutine
@@ -320,8 +314,11 @@ module ATM
     type(ESMF_State)            :: importState, exportState
     character(len=160)          :: msgString
     
-    !character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
-    integer :: itemCnt
+    integer :: itemCnt, i, stat
+    character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
+    type(ESMF_Field) :: itemField
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+
 
 #define NUOPC_TRACE__OFF
 #ifdef NUOPC_TRACE
@@ -357,27 +354,28 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
   
-    call ESMF_StatePrint(importState, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    
-    call ESMF_StateGet(importState, itemCount=itemCnt, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    !allocate(itemNames(itemCnt))
-    !call ESMF_StateGet(importState, itemNameList=itemNames, rc=rc)
-    !if (rc /= ESMF_SUCCESS) return
-    print *, "ATM Import State Item Count: ", itemCnt
-    !deallocate(itemNames)
-
-    call ESMF_StatePrint(exportState, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    
+    ! testing field values..................
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (rc /= ESMF_SUCCESS) return
-    !allocate(itemNames(itemCnt))
-    !call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
-    !if (rc /= ESMF_SUCCESS) return
-    print *, "ATM Export State Item Count: ", itemCnt
-    !deallocate(itemNames)
+
+    allocate(itemNames(itemCnt))
+    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    if (rc /= ESMF_SUCCESS) return
+
+    do i=1, itemCnt
+        print *, "ATM Field Item Name: ", trim(itemNames(i))
+
+        call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
+        if (rc /= ESMF_SUCCESS) return
+        
+        call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
+        if (rc /= ESMF_SUCCESS) return
+        print '(28A,F7.1,F7.1)', "ATM value of export field: ", real(farrayPtr(1)), real(farrayPtr(2))
+      end do
+      deallocate(itemNames)
+
+    ! end of test
+    
 
     call ESMF_ClockPrint(clock, options="stopTime", &
       preString="---------------------> to: ", unit=msgString, rc=rc)
