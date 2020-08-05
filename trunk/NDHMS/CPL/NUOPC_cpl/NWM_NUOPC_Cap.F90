@@ -36,7 +36,15 @@ module NWM_NUOPC_Cap
     integer                  :: nfields       = size(NWM_FieldList)
     integer                  :: timeSlice     = 0 ! total timesteps in unit of hours, calc. based on KDAY/KHOUR [RUNDURATION in NEMS]    
     integer                  :: timeStepInt   = 0 ! 1 timestep per hour
-    type(state_type)         :: hydroState         ! state passed in init, exec, finish
+    type(state_type)         :: hydroState        ! state passed in init, exec, finish
+
+    type (ESMF_Clock)        :: clock(1)          ! same as model clock 
+    type (ESMF_TimeInterval) :: stepTimer(1)      ! for displying timestep 
+    type(ESMF_State)         :: NStateImp(1)
+    type(ESMF_State)         :: NStateExp(1)
+    integer                  :: mode(1) = 1    ! NWM in NUOPC mode
+    ! added to track the driver clock
+    character(len=19)        :: startTimeStr = "0000-00-00_00:00:00"
 
     logical                  :: lwrite_grid   = .TRUE.
     integer                  :: verbosity     = VERBOSITY_LV1
@@ -48,17 +56,6 @@ module NWM_NUOPC_Cap
     type(ESMF_TimeInterval)  :: debugExpAccum
     integer                  :: debugImpSlice = 1
     integer                  :: debugExpSlice = 1
-
-    type (ESMF_Clock)        :: clock(1)          ! same as model clock 
-    type (ESMF_TimeInterval) :: stepTimer(1)      ! for displying timestep 
-
-    type(ESMF_State)         :: NStateImp(1)
-    type(ESMF_State)         :: NStateExp(1)
-    integer                  :: mode(1) = 1    ! NWM in NUOPC mode
-    type(state_type)         :: hydro_state    ! state passed in init, exec, finish
-    ! added to track the driver clock
-    character(len=19)        :: startTimeStr = "0000-00-00_00:00:00"
-
 
   end type
 
@@ -109,7 +106,7 @@ module NWM_NUOPC_Cap
 !
     ! switching to IPD versions
     call ESMF_GridCompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
-      userRoutine=InitializeP0, phase=0, rc=rc)
+                           userRoutine=InitializeP0, phase=0, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
     ! Set entry point for methods that require specific implementation
@@ -123,27 +120,26 @@ module NWM_NUOPC_Cap
 !
     ! Attach specializing method(s)
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_DataInitialize, &
-       specRoutine=DataInitialize, rc=rc)
+                                          specRoutine=DataInitialize, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
     call NUOPC_CompSpecialize(gcomp, speclabel=model_label_SetClock, &
-      specRoutine=SetClock, rc=rc)
+                                          specRoutine=SetClock, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
-    ! check why is removed??
     call ESMF_MethodRemove(gcomp, label=model_label_CheckImport, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_CheckImport, &
-       specRoutine=CheckImport, rc=rc)
+                                          specRoutine=CheckImport, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
     call NUOPC_CompSpecialize(gcomp, speclabel=model_label_Advance, &
-      specRoutine=ModelAdvance, rc=rc)
+                                     specRoutine=ModelAdvance, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 !
     call NUOPC_CompSpecialize(gcomp, specLabel=model_label_Finalize, &
-      specRoutine=ModelFinalize, rc=rc)
+                                     specRoutine=ModelFinalize, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
 #ifdef DEBUG
@@ -235,7 +231,7 @@ module NWM_NUOPC_Cap
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     
     !! at this time time step is set to 0, clock is not changed
-    read (value,*,iostat=stat) is%wrap%timeStepInt    !nwm timestep - 1hr=3600s
+    read (value,*,iostat=stat) is%wrap%timeStepInt    !keeps track of nwm ntime
 
     if (stat /= 0) then
       call ESMF_LogSetError(ESMF_FAILURE, &
@@ -378,7 +374,6 @@ module NWM_NUOPC_Cap
 
     !! Beheen -  at this time timeStep=3600 comes from reading nems.configure  
     !! EARTH_GRID_COMP SetRunSequence happens prior to P1
-
     ! Initialize NWM LSM grid, routing grid, get data needed for nuopc
     ! from initialization and save it in internal state variable
     call NWM_NUOPC_Init(is%wrap%did, vm, clock, hydstate, rc=rc)
@@ -487,17 +482,13 @@ module NWM_NUOPC_Cap
       !! If the field is connected then the field is realized.  
       !! The model doesn't realize all fields because it's wasteful
       if (NWM_FieldList(fIndex)%adImport) then
-        print *, "adImport ............."
         importConnected = NUOPC_IsConnected(is%wrap%NStateImp(1), &
                          fieldName=NWM_FieldList(fIndex)%stdname)
       else
         importConnected = .FALSE.
-        print *, "adImport FALSE"
       endif
 
       if (importConnected) then 
-        print *, "Import connected, going to FieldCreate for ", &
-                  NWM_FieldList(fIndex)%stdname
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
                     grid=NWM_LSMGrid, locstream=NWM_LocStream, &
@@ -514,18 +505,14 @@ module NWM_NUOPC_Cap
       endif
 
       if (NWM_FieldList(fIndex)%adExport) then
-        print *, "adImport ............."
         exportConnected = NUOPC_IsConnected(is%wrap%NStateExp(1), &
                          fieldName=NWM_FieldList(fIndex)%stdname)   
       else
         exportConnected = .FALSE.
-        print *, "adExport FLASE."
       endif
 
       if (exportConnected) then
         NWM_FieldList(fIndex)%realizedExport = .TRUE.
-        print *, "Export connected, going to FieldCreate for ", &
-                  NWM_FieldList(fIndex)%stdname
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
                              grid=NWM_LSMGrid,locstream=NWM_LocStream, &
                                                 did=is%wrap%did,rc=rc)
@@ -605,8 +592,6 @@ module NWM_NUOPC_Cap
     call ESMF_UserCompGetInternalState(gcomp, label_InternalState, is, rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     
-    ! Beheen - why is this here?
-    !is%wrap%timeSlice = is%wrap%timeSlice + 1
 
     ! Query the Component for its clock
     call NUOPC_ModelGet(gcomp, modelClock=modelClock, rc=rc)
@@ -629,7 +614,7 @@ module NWM_NUOPC_Cap
       return  ! bail out
 
     call ESMF_StateGet(is%wrap%NStateExp(1),itemNameList=itemNameList, &
-      itemTypeList=itemTypeList,rc=rc)
+                                        itemTypeList=itemTypeList,rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
     do iIndex=1, itemCount
@@ -661,6 +646,7 @@ module NWM_NUOPC_Cap
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       is%wrap%debugImpSlice = is%wrap%debugImpSlice + 1
       is%wrap%debugExpSlice = is%wrap%debugExpSlice + 1
+      print*, "debugImp_ExpSlice: ", is%wrap%debugImpSlice, is%wrap%debugExpSlice
     endif
 
     ! set InitializeDataComplete Attribute to "true", indicating to the
@@ -717,7 +703,7 @@ module NWM_NUOPC_Cap
     call ESMF_UserCompGetInternalState(gcomp, label_InternalState, is, rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    ! Query component for its clock - check where modelClock is set! TODO
+    ! Query component for its clock
     call NUOPC_ModelGet(gcomp, modelClock=modelclock, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
@@ -725,26 +711,25 @@ module NWM_NUOPC_Cap
     call ESMF_ClockGet(modelclock, timeStep=timestep, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    ! Query timestep for seconds 
-    !call ESMF_TimeIntervalGet(timestep,s=dt,rc=rc)
-    !if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-
+    ! Query driver timestep for seconds 
+    call ESMF_TimeIntervalGet(timestep,s=dt,rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    
     ! override timestep
-    !if (is%wrap%timeStepInt /= 0) then
-    !  call ESMF_TimeIntervalSet(timestep, s=is%wrap%timeStepInt, rc=rc)
-    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    if (is%wrap%timeStepInt /= 0) then
+      call ESMF_TimeIntervalSet(timestep, s=is%wrap%timeStepInt, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       
-    !  call NWM_SetTimestep(is%wrap%did,real(is%wrap%timeStepInt),rc)
-    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      call NWM_SetTimestep(is%wrap%did,real(is%wrap%timeStepInt),rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    !  call ESMF_ClockSet(modelClock, timeStep=timestep, rc=rc)
-    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      call ESMF_ClockSet(modelClock, timeStep=timestep, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
-    !else
-    !  print *, "Beheen in else ......."
-    !  call NWM_SetTimestep(is%wrap%did,real(dt),rc)
-    !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    !endif
+    else
+      call NWM_SetTimestep(is%wrap%did,real(dt),rc)
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    endif
 
     ! Initialize and set the internal Clock of a GridComp,
     ! could be any external clock as well.
@@ -756,16 +741,16 @@ module NWM_NUOPC_Cap
 
     ! Reset Timer
     call ESMF_TimeIntervalSet(is%wrap%stepTimer(1), &
-      s_r8=0._ESMF_KIND_R8, rc=rc)
+                         s_r8=0._ESMF_KIND_R8, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     if (is%wrap%lwrite_debug) then
       call ESMF_TimeIntervalSet(is%wrap%debugImpAccum, &
-        s_r8=0._ESMF_KIND_R8, rc=rc)
+                            s_r8=0._ESMF_KIND_R8, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
       call ESMF_TimeIntervalSet(is%wrap%debugExpAccum, &
-        s_r8=0._ESMF_KIND_R8, rc=rc)
+                            s_r8=0._ESMF_KIND_R8, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     endif
 
@@ -889,8 +874,6 @@ subroutine CheckImport(gcomp, rc)
       write (sStr,"(I0)") is%wrap%timeSlice
     endif
 
-    ! Beheen - I am not sure what is difference between modelClock and 
-    ! clock(1) yet!!
     ! Query the component for its clock, importState, and exportState
     call NUOPC_ModelGet(gcomp,modelClock=modelClock, &
          importState=importState, exportState=exportState, rc=rc)
@@ -924,7 +907,6 @@ subroutine CheckImport(gcomp, rc)
     endif
 
     is%wrap%stepTimer(1) = is%wrap%stepTimer(1) + timeStep
-    ! above upto here used timeStep of modelClock
 
     ! below from here using timeStep of clock(1)
     call ESMF_ClockGet(is%wrap%clock(1),timeStep=timeStep, &
@@ -949,25 +931,22 @@ subroutine CheckImport(gcomp, rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
     
       ! Testing the exported field values ..................
-      call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return
+      !call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
+      !if (ESMF_STDERRORCHECK(rc)) return
      
-      allocate(itemNames(itemCnt))
-      call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return
+      !allocate(itemNames(itemCnt))
+      !call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
+      !if (ESMF_STDERRORCHECK(rc)) return
      
-      do i=1, itemCnt
-        print *, "Field Item Name: ", trim(itemNames(i))
-        
-        call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-        
-        call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-        
-        print *, "Value of first: ", farrayPtr(1), farrayPtr(3)
-      end do
-      deallocate(itemNames)
+      !do i=1, itemCnt
+      !  print *, "Field Item Name: ", trim(itemNames(i))
+      !  call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField, rc=rc)
+      !  if (ESMF_STDERRORCHECK(rc)) return
+      !  call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
+      !  if (ESMF_STDERRORCHECK(rc)) return
+      !  print *, "Value of first: ", farrayPtr(1), farrayPtr(3)
+      !end do
+      !deallocate(itemNames)
       ! End of filed test
 
       call ESMF_ClockAdvance(is%wrap%clock(1),rc=rc)
@@ -1323,11 +1302,11 @@ subroutine CheckImport(gcomp, rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
       call ESMF_TimeGet(currTime, &
-                        timeString=currTimeStr,rc=rc)
+                     timeString=currTimeStr,rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
       call ESMF_TimeIntervalGet(timestep, &
-                                timeString=timestepStr,rc=rc)
+                     timeString=timestepStr,rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     else

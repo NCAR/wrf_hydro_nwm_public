@@ -77,11 +77,6 @@ module ATM
     
     rc = ESMF_SUCCESS
     
-    ! Disabling the following macro, e.g. renaming to WITHIMPORTFIELDS_disable,
-    ! will result in a model component that does not advertise any importable
-    ! Fields. Use this if you want to drive the model independently.
-#define WITHIMPORTFIELDS
-#ifdef WITHIMPORTFIELDS
     ! importable field: sea_surface_temperature
     call NUOPC_Advertise(importState, &
       StandardName="sea_surface_temperature", name="sst", rc=rc)
@@ -89,7 +84,6 @@ module ATM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#endif
     
     ! exportable field: air_pressure_at_sea_level
     call NUOPC_Advertise(exportState, &
@@ -134,8 +128,6 @@ module ATM
     type(ESMF_LocStream) :: locStreamOut
 
 
-    ! Beheen - fill Ptrs for testing
-    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: rsnsPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: pmslPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: sstPtr => null()
@@ -170,24 +162,15 @@ module ATM
     allocate(rsnsPtr(locElementCnt))
     allocate(pmslPtr(locElementCnt))
     allocate(sstPtr(locElementCnt))
-    allocate(farrayPtr(locElementCnt))
 
     do i=1, locElementCnt
       arbSeqIndexList(i) = locElementBeg + (i - 1)
-      rsnsPtr(i) = 1.0 * arbSeqIndexList(i)
-      pmslPtr(i) = 2.0 * arbSeqIndexList(i)
+      rsnsPtr(i) = -8.0 * arbSeqIndexList(i)
+      pmslPtr(i) = -9.0 * arbSeqIndexList(i)
     enddo
 
     !print *,"ATM: ",localPet,"arbSeqIndices=", locElementCnt, &
     !  arbSeqIndexList(1),arbSeqIndexList(locElementCnt)
-
-    ! create DistGrid
-!    distgrid = ESMF_DistGridCreate(minIndex=(/1/), &
-!      maxIndex=(/gblElementCnt/), rc=rc)
-!    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-!      line=__LINE__, &
-!      file=__FILE__)) &
-!      return  ! bail out
 
     ! create DistGrid
     distgrid = ESMF_DistGridCreate(arbSeqIndexList=arbSeqIndexList, rc=rc)
@@ -198,15 +181,13 @@ module ATM
 
     ! create a LocationObject object for Fields
     locStreamIn = ESMF_LocStreamCreate(distgrid=distgrid, &
-      coordSys=ESMF_COORDSYS_CART, rc=rc)
+                        coordSys=ESMF_COORDSYS_CART, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
 
-
-#ifdef WITHIMPORTFIELDS
     ! importable field: sea_surface_temperature
     field = ESMF_FieldCreate(locstream=locStreamIn, &
                                   farrayPtr=sstPtr, &
@@ -222,15 +203,8 @@ module ATM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#endif
 
     ! exportable field: air_pressure_at_sea_level
-#ifdef CREATE_AND_REALIZE
-    ! This branch shows the standard procedure of creating a complete field
-    ! with Grid and memory allocation, and then calling Realize() for it.
-    !pmslField = ESMF_FieldCreate(name="pmsl", locStream=locStreamOut, &
-    !  typekind=ESMF_TYPEKIND_R8, rc=rc)
-   
     field = ESMF_FieldCreate(locstream=locStreamOut, &
                                   farrayPtr=pmslPtr, &
                datacopyflag=ESMF_DATACOPY_REFERENCE, &
@@ -245,41 +219,9 @@ module ATM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#else
-    ! This branch shows the alternative way of "realizing" an advertised field.
-    ! It accesses the empty field that was created during advertise, and
-    ! finishes it, setting a Grid on it, and then calling FieldEmptyComplete().
-    ! No formal Realize() is then needed.
-    call ESMF_StateGet(exportState, field=field, itemName="pmsl", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_FieldEmptySet(field, locStream=locStreamOut, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_FieldEmptyComplete(field, typekind=ESMF_TYPEKIND_R8, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#define WITH_FORMAL_REALIZE
-#ifdef WITH_FORMAL_REALIZE
-    ! There is not need to formally call Realize() when completing the 
-    ! adverised field directly. However, calling Realize() also works.
-    call NUOPC_Realize(exportState, field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#endif
-#endif
+
 
     ! exportable field: surface_net_downward_shortwave_flux
-    !rsnsField = ESMF_FieldCreate(name="rsns", locStream=locStreamOut, &
-                                      !typekind=ESMF_TYPEKIND_R8, rc=rc)
     field = ESMF_FieldCreate(locstream=locStreamOut, &
                                   farrayPtr=rsnsPtr, &
                datacopyflag=ESMF_DATACOPY_REFERENCE, &
@@ -296,9 +238,9 @@ module ATM
       return  ! bail out
 
     deallocate(arbSeqIndexList)
-    deallocate(rsnsPtr)
-    deallocate(pmslPtr)
-    deallocate(sstPtr)
+    !deallocate(rsnsPtr)
+    !deallocate(pmslPtr)
+    !deallocate(sstPtr)
 
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
   end subroutine
@@ -314,7 +256,8 @@ module ATM
     type(ESMF_State)            :: importState, exportState
     character(len=160)          :: msgString
     
-    integer :: itemCnt, i, stat
+    ! for testing field values
+    integer :: itemCnt, i
     character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
     type(ESMF_Field) :: itemField
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
@@ -329,7 +272,7 @@ module ATM
     
     ! query the Component for its clock, importState and exportState
     call NUOPC_ModelGet(model, modelClock=clock, importState=importState, &
-      exportState=exportState, rc=rc)
+                        exportState=exportState, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -354,26 +297,21 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
   
-    ! testing field values..................
+    ! get field values from the exportState - testing
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (rc /= ESMF_SUCCESS) return
-
     allocate(itemNames(itemCnt))
     call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
     if (rc /= ESMF_SUCCESS) return
-
     do i=1, itemCnt
         print *, "ATM Field Item Name: ", trim(itemNames(i))
-
         call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
         if (rc /= ESMF_SUCCESS) return
-        
         call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
         if (rc /= ESMF_SUCCESS) return
-        print '(28A,F7.1,F7.1)', "ATM value of export field: ", real(farrayPtr(1)), real(farrayPtr(2))
-      end do
-      deallocate(itemNames)
-
+        print*, "ATM value of export field: ", farrayPtr
+    end do
+    deallocate(itemNames)
     ! end of test
     
 

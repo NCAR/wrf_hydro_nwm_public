@@ -484,6 +484,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
        depth = 0.0
      endif
 
+     print*, "Beheen qdc, ql "
+     print*, qdc, ql
+
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE
 ! ----------------------------------------------------------------
@@ -781,8 +784,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
                        Km = MUSK(k)
                        X = MUSX(k)
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow
-                   elseif (channel_option .eq. 2) then ! muskingum cunge
 
+                   elseif (channel_option .eq. 2) then ! muskingum cunge
                    call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
                     CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),Tw_CC(k), n_CC(k), HLINK(k) )

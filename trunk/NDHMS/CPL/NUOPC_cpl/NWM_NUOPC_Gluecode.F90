@@ -219,7 +219,7 @@ contains
     ! arguments
     type(ESMF_VM),intent(in)       :: vm
     type(ESMF_Clock),intent(in)    :: clock
-    integer                        :: rc, itime, ntime
+    integer                        :: rc, itime, ntime  !ntime is runDuration in hour
     type(state_type), intent(out)  :: hydstate
     integer                        :: did  
 
@@ -232,7 +232,7 @@ contains
     ! clock coming from NEMS
     type(ESMF_Time)             :: startTime        ! comes in sec. from NEMS
     type(ESMF_TimeInterval)     :: runDuration      ! comes in sec. from NEMS
-    real(ESMF_KIND_R8)          :: run_duration        
+    real(ESMF_KIND_R8)          :: runDuration_int
     character(20)               :: startTimeStr="2222"
    
 
@@ -259,7 +259,8 @@ contains
 
 
     ! Initialize NWM before setting up fields
-    ! getting back ntime and state from NWM here
+    ! getting back ntime and state from NWM 
+    ! ntime = khour*3600./nint(dtbl)   !dtbl = real(noah_lsm%noah_timestep)
     call noahMP_init(ntime, hydstate, nuopc_comm=esmf_comm)
     ! Beheen add an error dete. here
 
@@ -285,17 +286,19 @@ contains
     ! Check with NWM configs values, exit if not the same!
     call NWM_TimeToString(startTime,timestr=startTimeStr,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    call ESMF_TimeIntervalGet(runDuration, s_r8=run_duration, rc=rc)
+    call ESMF_TimeIntervalGet(runDuration, s_r8=runDuration_int, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    ! compare to make sure nems config and nwm config files are in sync
+    ! compare to make sure nems config and nwm config files are in sync.
+    ! Note: if driver timestep is not set to one hour, this program fails.
+    !  
     ! Currently, nwm lsm only works with 3600 sec. timestep, so the value
     ! of timesteps in nems.configure file must be same as in nwm config
-    if (startTimeStr .ne. starttime_str) then 
-        !(nlst(did)%dt .ne. 3600) .or. &
-        !(int(run_duration) .ne. int(ntime * 3600)) ) then 
+    ! TODO - must find the method where model timestep > driver timestep 
+    if ((startTimeStr .ne. starttime_str) .or.  &
+        (int(runDuration_int) .ne. int(ntime * (real(noah_lsm%noah_timestep))))) then
       rc = ESMF_FAILURE
-      call hydro_stop("ERROR: Start Time or Noah Timestep or NTIME Comparison Between NEMS And NWM Config Failed.")
+      call hydro_stop("ERROR: Start Time or NTIME Comparison Between NEMS And NWM Config Failed.")
       call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
                             msg=METHOD//": Comparison Between NEMS And NWM Config Failed!", &
                             file=FILENAME,rcToReturn=rc)
@@ -422,13 +425,8 @@ contains
     integer, intent(out)                    :: rc
 
     ! LOCAL VARIABLES
-    real, allocatable                       :: dataArray(:)
-    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer :: arrayPtr => null()
-
-    integer                         :: loccnt
-    real, allocatable, dimension(:) :: streamflow, velocity
-    type(ESMF_Field)                :: field_streamflow, field_velocity
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
+    integer                                   :: loccnt
       
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -439,46 +437,46 @@ contains
     
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    allocate(farrayPtr_loc(loccnt))     ! allocate for locstream
    
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-        allocate(dataArray(loccnt))
-        allocate(farrayPtr(loccnt))     
-        ! compile, run
         ! if this variable is defined, if not where is defined
-        print*, "shape of qlink ", size(rt_domain(did)%qlink)
-        print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
+        !print*, "shape of qlink ", size(rt_domain(did)%qlink)
+        !print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                                           farrayPtr=farrayPtr, &
+                                       farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                              name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_runoff')
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-                               farray=rt_domain(did)%qSfcLatRunoff, &
-                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+                 farray=rt_domain(did)%qSfcLatRunoff, &
+                        indexflag=ESMF_INDEX_DELOCAL, &
+                                   name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('river_velocity')
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, grid=grid, &
-                                    farray=rt_domain(did)%velocity, &
-                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+                      farray=rt_domain(did)%velocity, &
+                        indexflag=ESMF_INDEX_DELOCAL, &
+                                   name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('air_pressure_at_sea_level')
-        allocate(dataArray(loccnt))
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
-                                    farray=dataArray, &
-                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
+                                       farrayPtr=farrayPtr_loc, &
+                          datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                             name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_net_downward_shortwave_flux')
-        allocate(dataArray(loccnt))
-        NWM_FieldCreate = ESMF_FieldCreate(name=stdName, locstream=locstream, &
-                                    farray=dataArray, &
-                                 indexflag=ESMF_INDEX_DELOCAL, rc=rc)
+        NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
+                                       farrayPtr=farrayPtr_loc, &
+                          datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                             name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -534,7 +532,7 @@ contains
     integer              :: linkls_end    ! current pet end id (i.e reach fid) 
     integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
     integer              :: gsize, i
-    integer, allocatable :: fid(:), link(:), deBlockList(:)
+    integer, allocatable :: link(:), deBlockList(:)
     real, allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
 
 #ifdef DEBUG
@@ -558,7 +556,7 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     !-------------------------------------------------------------------
-    ! Allocate and set equal number of points the destination LocStream 
+    ! Allocate and set equal number of points to destination LocStream 
     ! will have on each PET. This is consistance with the way NWM has
     ! distributed the stream location reaches. NWM reads the input data
     ! from the file "RouteLink_NHDPLUS.nc" and processes streamflow and
@@ -569,10 +567,11 @@ contains
     ! channel_option=1, GWBASESWCRT=0, UDMP_OPT=1 AND
     ! channel_only=0, channelBucket_only=0, forc_typ=1
     !
-    !interface read_rst_crt_reach_nc
+    ! interface read_rst_crt_reach_nc
     ! module_RT.F call MPP_READ_ROUTEDIM(did, rt_domain(did)%g_IXRT,rt_domain(did)%g_JXRT, &
-    !                      GCH_NETLNK, rt_domain(did)%GNLINKS, &
-    ! localPet =  my_id rt_domain(did)%linklsS, rt_domain(did)%linklsE
+    ! GCH_NETLNK, rt_domain(did)%GNLINKS, & ...
+    !
+    ! localPet =  my_id    rt_domain(did)%linklsS, rt_domain(did)%linklsE
     !-------------------------------------------------------------------
 
     ! total number of point locations = rt_domain(did)%gnlinksl = 2,776,738
@@ -622,15 +621,15 @@ contains
     !-------------------------------------------------------------------
     allocate(lon(gsize))
     allocate(lat(gsize))
-    allocate(fid(gsize))
+    allocate(link(gsize))
    
     do i = 1, gsize 
         lon(i) = rt_domain(did)%chlon(i)
         lat(i) = rt_domain(did)%chlat(i)
-        fid(i) = rt_domain(did)%linkid(i)
+        link(i) = rt_domain(did)%linkid(i)
     enddo
 
-    !print *, "Beheen gzie ", localPet, my_id, fid(1), fid(gsize), gsize, &
+    !print *, "Beheen gzie ", localPet, my_id, link(1), link(gsize), gsize &
     !                         lon(1),lon(gsize),lat(1),lat(gsize)
 
 
@@ -648,6 +647,9 @@ contains
     ! Add key data, referencing a user data pointer. By changing the 
     ! datacopyflag to ESMF_DATACOPY_VALUE an internally allocated copy  
     ! of the user data may also be set. 
+    ! Note: the ESMF_DATACOPY_REFERENCE option may be unsafe when specifying
+    ! an array slice for farraay. Not the case here, since we are allocating
+    ! slices per locElmtCnt
     !-------------------------------------------------------------------
     call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
                              keyName="ESMF:Lat",     &
@@ -663,6 +665,12 @@ contains
                              keyUnits="Degrees",     &
                              keyLongName="Longitude", rc=rc)
 
+    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
+                             keyName="ESMF:link",    &
+                             farray=link,            &
+                             datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                             keyLongName="Link ID (NHDFlowline_network COMID)", rc=rc)
+
 #ifdef DEBUG
     call ESMF_LocStreamPrint(NWM_LocStreamCreate)
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
@@ -671,7 +679,7 @@ contains
   end function
 
 
-  !-----------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Creates NWM Land Surface grid locally for the purpose of
   ! importing/exporting data between models.  
   !
@@ -1333,7 +1341,7 @@ contains
 
     rc = ESMF_SUCCESS
 
-    print *, "Beheen in NWM_SetTimestep expeted 3600 ",dt,nlst(did)%dt
+    !print *, "Beheen in NWM_SetTimestep expeted 3600 ",dt, nlst(did)%dt
     nlst(did)%dt = dt
 
 #ifdef DEBUG

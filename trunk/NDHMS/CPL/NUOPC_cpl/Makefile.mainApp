@@ -32,6 +32,8 @@ override ESMF_F90COMPILECPPFLAGS += -DDEBUG
 override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
 endif
 
+override ESMF_F90COMPILECPPFLAGS += -check noarg_temp_created
+override ESMF_CXXCOMPILECPPFLAGS += -check noarg_temp_created
 
 .SUFFIXES:
 .SUFFIXES: .c .C .f90 .F90 .F .f

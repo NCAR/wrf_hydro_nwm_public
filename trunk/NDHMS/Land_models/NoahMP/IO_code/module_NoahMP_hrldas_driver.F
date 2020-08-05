@@ -465,7 +465,7 @@ module module_NoahMP_hrldas_driver
         write(*, '("WARNING: In land_driver_ini() - Check Namelist: KHOUR and KDAY both defined.")')
         stop
      endif
-     NTIME = khour*3600./nint(dtbl)
+     NTIME = khour*3600./nint(dtbl)   !dtbl = real(noah_lsm%noah_timestep)
      NTIME_out = NTIME
 
      if(.not. RT_DOMAIN(did)%initialized) then

@@ -3065,6 +3065,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    ! to missing as this causes the model to crash.
    allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
    strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+
    ! Loop through all the local links on this processor. For lake_type
    ! of 2, we need to manually set the streamflow values
    ! to the model NDV value.
