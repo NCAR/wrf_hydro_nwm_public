@@ -484,9 +484,6 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
        depth = 0.0
      endif
 
-     print*, "Beheen qdc, ql "
-     print*, qdc, ql
-
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE
 ! ----------------------------------------------------------------

@@ -357,15 +357,44 @@ contains
 
     rc = ESMF_SUCCESS
 
-    !call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
-    !if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    ! Testing
+    call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
     
-    !dt = NWM_TimeIntervalGetReal(timeInterval=timeStep,rc=rc)
-    !if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    
+    dt = NWM_TimeIntervalGetReal(timeInterval=timeStep,rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    print*, "dt is: ", dt, itime
+    ! end testing
+
     call noahMp_exe(itime, state)
 
+    ! fill fields for export after physic calculations
+   
+      !call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
+      !if (ESMF_STDERRORCHECK(rc)) return
+
+      !allocate(itemNames(itemCnt))
+      !call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
+      !if (ESMF_STDERRORCHECK(rc)) return
+
+      !do i=1, itemCnt
+      !  print *, "Field Item Name: ", trim(itemNames(i))
+      !  call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField,
+      !  rc=rc)
+      !  if (ESMF_STDERRORCHECK(rc)) return
+
+      !  call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
+      !  if (ESMF_STDERRORCHECK(rc)) return
+      !  print *, "Value of first: ", farrayPtr(1), farrayPtr(3)
+      !end do
+      !deallocate(itemNames)
+
+    print*, "Flow rate 1 - after exe: ", rt_domain(did)%qlink(:,1)
+    print*, "Flow rate 2 - after exe: ", rt_domain(did)%qlink(:,2)
+
 #ifdef DEBUG
+    call NWM_nlstLog(did,rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
@@ -441,9 +470,6 @@ contains
    
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-        ! if this variable is defined, if not where is defined
-        !print*, "shape of qlink ", size(rt_domain(did)%qlink)
-        !print*, "Flow rate : ", rt_domain(did)%qlink(:,1)
 
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &

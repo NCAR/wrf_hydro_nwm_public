@@ -331,7 +331,10 @@ subroutine output_chrt_NWM(domainId)
       if(nlst(domainId)%channel_option .ne. 3) then
          ! Reach-based routing collection
 #ifdef MPP_LAND
+         print*, "Beheen point of interception for QLINK "
          call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
+         print*, strFlowLocal
+         print*, "============================"        
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
          call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
          call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)

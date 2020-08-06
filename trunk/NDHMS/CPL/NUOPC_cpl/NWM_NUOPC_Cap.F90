@@ -942,6 +942,7 @@ subroutine CheckImport(gcomp, rc)
       !  print *, "Field Item Name: ", trim(itemNames(i))
       !  call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField, rc=rc)
       !  if (ESMF_STDERRORCHECK(rc)) return
+        
       !  call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
       !  if (ESMF_STDERRORCHECK(rc)) return
       !  print *, "Value of first: ", farrayPtr(1), farrayPtr(3)

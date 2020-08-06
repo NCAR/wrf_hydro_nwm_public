@@ -15,6 +15,7 @@
 ## make -f Makefile.nuopc nuopcclean
 ## To compile in b) case:
 echo "export MAINAPP=ON ==> then type" 
+echo "make -f Makefile.nuopc nuopcclean"
 echo "./compile_nuopc_NoahMP.sh setEnvar.sh esmf-impi-env.sh 3"
 ##
 ## To compile in a) case:
