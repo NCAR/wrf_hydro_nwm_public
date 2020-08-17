@@ -36,6 +36,7 @@ module module_reservoir
         real :: inflow                      ! cubic meters per second (cms)
         real :: lateral_inflow              ! cubic meters per second (cms)
         real :: previous_timestep_inflow    ! cubic meters per second (cms)
+        real :: lake_evap, lake_precip		! kg/m2/s and mm
 
     contains
 
@@ -92,7 +93,7 @@ module module_reservoir
     ! inputs and outputs.
     abstract interface
         subroutine run_reservoir_interface(this, previous_timestep_inflow, inflow, &
-            lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
+            lateral_inflow, water_elevation, outflow, lake_evap, lake_precip, routing_period, dynamic_reservoir_type, &
             assimilated_value, assimilated_source_file)
             import reservoir
             class(reservoir), intent(inout) :: this
@@ -101,6 +102,7 @@ module module_reservoir
             real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
             real, intent(inout) :: water_elevation          ! meters AMSL
             real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+            real, intent(in)    :: lake_evap, lake_precip   ! kg/m2/s and mm
             real, intent(in)    :: routing_period           ! seconds
             integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
             real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
@@ -119,6 +121,8 @@ contains
         this%inflow = 0.0
         this%lateral_inflow = 0.0
         this%previous_timestep_inflow = 0.0
+        this%lake_evap = 0.0
+        this%lake_precip = 0.0
 
     end subroutine reservoir_input_init
 

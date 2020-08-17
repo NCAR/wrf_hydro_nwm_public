@@ -13,8 +13,6 @@ module module_levelpool_properties
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: levelpool_properties_interface
         real :: lake_area                ! area of lake (km^2)
-        real :: lake_precip              ! lake precipitation rate
-        real :: lake_evap                ! lake evaporation rate
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real :: weir_coeffecient         ! weir coefficient
         real :: weir_length              ! weir length (meters)
@@ -35,14 +33,12 @@ module module_levelpool_properties
 contains
 
     !Level Pool Properties Constructor
-    subroutine levelpool_properties_init(this, lake_area, lake_precip, lake_evap, &
+    subroutine levelpool_properties_init(this, lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
         orifice_coefficient, orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool_properties_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area      	        ! area of lake (km^2)
-        real, intent(in)    :: lake_precip              ! lake precipitation rate (mm/hr)
-        real, intent(in)    :: lake_evap                ! lake evaporation rate (mm/hr)
         real, intent(in)    :: weir_elevation           ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient         ! weir coefficient
         real, intent(in)    :: weir_length              ! weir length (meters)
@@ -56,8 +52,6 @@ contains
         ! Assign the values passed in to a particular level pool reservoir
         ! properties object's variables.
         this%lake_area = lake_area
-        this%lake_precip = lake_precip
-        this%lake_evap = lake_evap
         this%weir_elevation = weir_elevation
         this%weir_coeffecient = weir_coeffecient
         this%weir_length = weir_length

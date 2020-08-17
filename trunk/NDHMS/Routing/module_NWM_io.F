@@ -2477,7 +2477,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeInflow = RT_DOMAIN(domainID)%QLAKEI
       g_lakeOutflow = RT_DOMAIN(domainID)%QLAKEO
       g_lakePrcp = RT_DOMAIN(domainID)%LAKE_PRECIP
-      g_lakeEvap = RT_DOMAIN(domainID)%LAKE_EVAP
+      g_lakeEvap = RT_DOMAIN(domainID)%LAKE_EVAP*3600.0    ! converted from kg/m2/s to mm before writing to output file
       g_lakeid = RT_DOMAIN(domainId)%LAKEIDM
       g_lakeType = RT_DOMAIN(domainID)%final_reservoir_type
       g_lake_assimilated_value = RT_DOMAIN(domainID)%reservoir_assimilated_value
@@ -2534,7 +2534,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeInflow = RT_DOMAIN(domainID)%QLAKEI
       g_lakeOutflow = RT_DOMAIN(domainID)%QLAKEO
       g_lakePrcp = RT_DOMAIN(domainID)%LAKE_PRECIP
-      g_lakeEvap = RT_DOMAIN(domainID)%LAKE_EVAP
+      g_lakeEvap = RT_DOMAIN(domainID)%LAKE_EVAP*3600.0    ! converted from kg/m2/s to mm before writing to output file
       g_lakeid = RT_DOMAIN(domainId)%LAKEIDM
       g_lakeType = RT_DOMAIN(domainId)%final_reservoir_type
       g_lake_assimilated_value = RT_DOMAIN(domainID)%reservoir_assimilated_value
