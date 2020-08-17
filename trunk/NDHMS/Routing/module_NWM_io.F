@@ -137,6 +137,11 @@ subroutine output_chrt_NWM(domainId)
 
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
+
+   ! Beheen for test
+   integer :: ii,jj
+
+
    ! Initialize the ascFlag to 1
    ascFlag = 1
 
@@ -331,11 +336,29 @@ subroutine output_chrt_NWM(domainId)
       if(nlst(domainId)%channel_option .ne. 3) then
          ! Reach-based routing collection
 #ifdef MPP_LAND
-         print*, "Beheen point of interception for QLINK "
          call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
-         print*, strFlowLocal
-         print*, "============================"        
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
+
+         ! for testing Beheen
+         !do ii=0,7 
+         ! if(ii==myId) then
+         !   print*, "my_id"
+         !   print*, myId
+         !   print*, "qlink flow_rate"
+         !   do jj=1, size(g_qlink(:,1))
+         !     print*, g_qlink(jj,1)
+         !   enddo
+         !   print*,"==========q2"
+         !   do jj=1, size(g_qlink(:,2))
+         !     print*, rt_domain(domainId)%QLINK(jj,2)
+         !   enddo
+         ! endif
+         ! call MPI_Barrier(HYDRO_COMM_WORLD, ierr)
+         ! if (ierr .eq. 0) return
+         !enddo
+
+         ! end testing
+
          call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
          call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
@@ -600,6 +623,9 @@ subroutine output_chrt_NWM(domainId)
          g_orderOut = g_order
          g_zelevOut = g_zelev
       endif
+      print*, "Beheen ascFlag"
+      print*, g_qlinkOut(:,1)
+
 
       ! Calculate index values based on minimum strahler order to write.
       ! Initialize the index array to 0
@@ -630,6 +656,9 @@ subroutine output_chrt_NWM(domainId)
       allocate(varMetaInt(2,numPtsOut))
 
       varOutReal(1,:) = PACK(g_qlinkOut(:,1),g_outInd == 1)
+      print*, "Beheen varOutReal"
+      print*, varOutReal(1,:)
+
       varOutReal(2,:) = PACK(g_nudgeOut,g_outInd == 1)
       varOutReal(3,:) = PACK(g_QLateralOut,g_outInd == 1)
       varOutReal(4,:) = PACK(g_velocityOut,g_outInd == 1)
@@ -4105,6 +4134,7 @@ implicit none
       else
          call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
+
          call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)

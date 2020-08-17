@@ -187,6 +187,22 @@ module ESM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    ! Beheen waterlevel mockup
+    ! SetServices for ocn2lnd
+    !call NUOPC_DriverAddComp(driver, srcCompLabel="OCN", dstCompLabel="NWM", &
+    !  compSetServicesRoutine=cplSS, comp=connector, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+
+
 #endif
       
     ! set the driver clock

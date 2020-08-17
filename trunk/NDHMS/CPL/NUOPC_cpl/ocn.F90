@@ -82,6 +82,10 @@ module OCN
     type(ESMF_Clock)     :: clock
     integer, intent(out) :: rc
     
+    ! Beheen
+    logical                    :: isPresent
+
+
     rc = ESMF_SUCCESS
 
     ! importable field: air_pressure_at_sea_level
@@ -115,6 +119,28 @@ module OCN
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    ! Beheen waterlevel mockup
+    ! exportable field: waterlevel
+    !isPresent = NUOPC_FieldDictionaryHasEntry( "water_level", rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !if (.not.isPresent) then
+    !    call NUOPC_FieldDictionaryAddEntry("water_level", "m", rc=rc)
+    !    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !        line=__LINE__, &
+    !        file=__FILE__)) &
+    !        return  ! bail out
+    !endif
+
+    !call NUOPC_Advertise(exportState, &
+    !  StandardName="water_level", name="wl", rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
 
   end subroutine
   
@@ -153,7 +179,38 @@ module OCN
     real, allocatable   :: sstarray(:)
     real, allocatable   :: streamflowarray(:)
 
+    ! Beheen added for water level mockup
+    ! local variables
+    integer              :: gblGridExt
+    integer              :: gblGridDiv
+    integer              :: locGridBeg
+    integer              :: locGridCnt
+    integer,parameter    :: gblGridCnt = 1000
+    type(ESMF_Grid)      :: gridIn
+    type(ESMF_Grid)      :: gridOut
+    real, allocatable    :: wlarray(:,:)
+    integer              :: j
+    ! test for GridGet
+    integer          :: dimCnt
+    integer          :: tileCount
+    integer          :: staggerlocCount
+    integer          :: localDECount
+    !integer, target  :: distgridToGridMap(:)
+    !integer, target  :: coordDimCount(:)
+    !integer, target  :: coordDimMap(:,:)
+    integer          :: arbDim
+    integer          :: rank
+    integer          :: arbDimCount
+    !integer, target  :: gridEdgeLWidth(:)
+    !integer, target  :: gridEdgeUWidth(:)
+    !integer, target  :: gridAlign(:)
+    type(ESMF_Index_Flag)      :: indexflag
+    type(ESMF_CoordSys_Flag)   :: coordSys
+    type(ESMF_GridStatus_Flag) :: status
+    character (len=15)         :: name
+
     rc = ESMF_SUCCESS
+
 
     call ESMF_VMGetCurrent(vm=vm, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -166,6 +223,56 @@ module OCN
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+
+    ! Beheen for waterlevel mockup
+    ! create a Grid object for Fields
+    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/100, 10/), &
+         minCornerCoord=(/10._ESMF_KIND_R8, 20._ESMF_KIND_R8/), &
+       maxCornerCoord=(/100._ESMF_KIND_R8, 200._ESMF_KIND_R8/), &
+      coordSys=ESMF_COORDSYS_CART, staggerLocList=(/ESMF_STAGGERLOC_CENTER/), &
+      rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    gridOut = gridIn ! for now out same as in
+
+    ! testing the grid
+    !ESMF_GridGet(gridOut, dimCount=dimCnt, tileCount=tileCount, rank=rank,
+    !rc=rc )
+    !print*, "Beheen OCN: " ,dimCount,tileCount,rank
+
+    ! fill with random values
+    gblGridDiv = gblGridCnt/petCount
+    gblGridExt = MOD(gblGridCnt,petCount)
+    if (localPet.eq.(petCount-1)) then
+      locGridCnt = gblGridDiv + gblGridExt
+    else
+      locGridCnt = gblGridDiv
+    endif
+    locGridBeg = 1 + (gblGridDiv*localPet)
+
+    allocate(wlarray(10,100))
+    do i = 1, 10
+        do j = 1, 100
+            wlarray(i,j) = i*j*0.2
+        enddo
+    end do
+
+    ! exportable field: waterlevel
+    !field = ESMF_FieldCreate(name="water_level", grid=gridOut, &
+    !                  farray=wlarray, indexflag=ESMF_INDEX_GLOBAL, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call NUOPC_Realize(exportState, field=field, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+
 
     ! calculate local element count and first local element
     gblElementDiv = gblElementCnt/petCount
@@ -275,11 +382,7 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
 
-    ! Beheen
     deallocate(arbSeqIndexList)
-    !deallocate(rsnsarray)
-    !deallocate(pmslarray)
-    !deallocate(sstarray)
 
   end subroutine
   

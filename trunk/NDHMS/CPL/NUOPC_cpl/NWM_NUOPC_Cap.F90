@@ -844,7 +844,8 @@ subroutine CheckImport(gcomp, rc)
     character(len=32)           :: currTimeStr, advEndTimeStr
     type(ESMF_TimeInterval)     :: timeStep
     integer(ESMF_KIND_I8)       :: advanceCount
-    
+    type(ESMF_VM)               :: vm
+
     integer :: itime, dt, itemCnt, i
     character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
     type(ESMF_Field) :: itemField
@@ -860,6 +861,10 @@ subroutine CheckImport(gcomp, rc)
     ! Query component for name
     call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+    
+    ! for testing and good to have
+    call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
+    if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     ! Query component for its internal State
     nullify(is%wrap)
@@ -925,7 +930,7 @@ subroutine CheckImport(gcomp, rc)
         ESMF_LOGMSG_INFO)
 
       ! Call nwm exe
-      call NWM_NUOPC_Run(is%wrap%did,is%wrap%mode(1), &
+      call NWM_NUOPC_Run(is%wrap%did,is%wrap%mode(1), vm, &
                          is%wrap%clock(1), is%wrap%hydroState, is%wrap%timeStepInt, &
                          is%wrap%NStateImp(1),is%wrap%NStateExp(1),rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out

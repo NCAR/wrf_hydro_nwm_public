@@ -355,8 +355,6 @@ module module_HYDRO_drv
                         endif
                     end do
                 endif
-                print*, "Beheen QLINK 1 ", str_out(:,1)
-                print*, "Beheen QLINK 2 ", str_out(:,2)
                 !ADCHANGE: End
 
                 if(nlst(did)%io_form_outputs .ne. 0) then

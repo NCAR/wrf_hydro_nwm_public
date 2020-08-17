@@ -140,7 +140,6 @@ module NWM_NUOPC_Gluecode
       stdname='longwave_height', units='w m-2', & 
       desc='surface downward longwave radiation flux', shortname='LWDOWN', &
       adImport=.TRUE.,adExport=.FALSE.), &
-
     NWM_Field( & !(12 file: ??)
       stdname='precipitation_rate', units='kg/m2s', & 
       desc='15-min surface precipitation rate', shortname='PRATE', &
@@ -149,7 +148,6 @@ module NWM_NUOPC_Gluecode
       stdname='cloud_cover', units='??', & 
       desc='total cloud cover, fraction: 0-1', shortname='TCC', &
       adImport=.TRUE.,adExport=.FALSE.), &
-    
     NWM_Field( & !(14 file: ???) 
       stdname='mean_sea_level', units='Pa', &
       desc='PRMSL, Pressure Reduced to MSL, atm. pressure', shortname='PMSL', &
@@ -172,9 +170,9 @@ module NWM_NUOPC_Gluecode
       adImport=.TRUE.,adExport=.FALSE.), &
     ! what is next
     NWM_Field( & !(19)
-      stdname='next', units='??', &
-      desc='what is next', shortname='nxt', &
-      adImport=.FALSE.,adExport=.FALSE.) /)
+      stdname='water_level', units='m', &
+      desc='what is next', shortname='wl', &
+      adImport=.TRUE.,adExport=.FALSE.) /)
 
   ! Local version variables from NWM LSM grid
   type(ESMF_DistGrid)        :: NWM_DistGrid
@@ -333,12 +331,13 @@ contains
 #undef METHOD
 #define METHOD "NWM_NUOPC_Run"
 
-  subroutine NWM_NUOPC_Run(did,mode,clock,state,itime,importState,exportState,rc)
+  subroutine NWM_NUOPC_Run(did,mode,vm,clock,state,itime,importState,exportState,rc)
     use module_hrldas_driver, only: noahMP_exe
     use state_module, only: state_type
 
     integer, intent(in)                     :: did
     integer, intent(in)                     :: mode
+    type(ESMF_VM), intent(in)               :: vm
     type(ESMF_Clock),intent(in)             :: clock
     type(ESMF_State),intent(inout)          :: importState
     type(ESMF_State),intent(inout)          :: exportState
@@ -350,6 +349,15 @@ contains
     type(ESMF_TimeInterval)     :: timeStep
     character(32)               :: startdate_str
     integer                     :: dt
+
+    ! for test
+    integer :: i, j, esmf_comm, localPet, petCount, itemCnt, localDECnt, elmCnt
+    character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
+    integer, allocatable :: localElementCount(:)
+    type(ESMF_Field) :: itemField
+    type(ESMF_LocStream) ::locstream
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -363,34 +371,42 @@ contains
     
     dt = NWM_TimeIntervalGetReal(timeInterval=timeStep,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    print*, "dt is: ", dt, itime
     ! end testing
 
     call noahMp_exe(itime, state)
 
+    call NWM_SetFieldData(exportState, did, vm)
+
+    ! testing
     ! fill fields for export after physic calculations
-   
-      !call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
-      !if (ESMF_STDERRORCHECK(rc)) return
+    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    allocate(itemNames(itemCnt))
+    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    do i=1, itemCnt
+      print *, "Field Item Name: ", trim(itemNames(i))
+      call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return
+      call ESMF_FieldGet(itemField, locstream=locstream, rc=rc)
+      call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return
+      print*, "elmCnt ", elmCnt, my_id
+      call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, &
+                                 mpiCommunicator=esmf_comm, rc=rc)
+      if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      do j=0,petCount
+        if(j == my_id) then
+          print *, "Beheen NUOPC_Run "
+          print*, my_id, IO_id, j
+          print*, rt_domain(did)%qlink(:elmCnt,1)
+        endif
+        call MPI_Barrier(esmf_comm, rc)
+        if(ESMF_STDERRORCHECK(rc)) return
+      enddo
+    end do
+    deallocate(itemNames)
 
-      !allocate(itemNames(itemCnt))
-      !call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
-      !if (ESMF_STDERRORCHECK(rc)) return
-
-      !do i=1, itemCnt
-      !  print *, "Field Item Name: ", trim(itemNames(i))
-      !  call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField,
-      !  rc=rc)
-      !  if (ESMF_STDERRORCHECK(rc)) return
-
-      !  call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
-      !  if (ESMF_STDERRORCHECK(rc)) return
-      !  print *, "Value of first: ", farrayPtr(1), farrayPtr(3)
-      !end do
-      !deallocate(itemNames)
-
-    print*, "Flow rate 1 - after exe: ", rt_domain(did)%qlink(:,1)
-    print*, "Flow rate 2 - after exe: ", rt_domain(did)%qlink(:,2)
 
 #ifdef DEBUG
     call NWM_nlstLog(did,rc=rc)
@@ -467,7 +483,9 @@ contains
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
     allocate(farrayPtr_loc(loccnt))     ! allocate for locstream
-   
+    farrayPtr_loc = -9.9
+
+
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
@@ -490,6 +508,14 @@ contains
                         indexflag=ESMF_INDEX_DELOCAL, &
                                    name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+      !CASE ('water_level')
+      !  NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+      !                farray=rt_domain(did)%velocity, &
+      !                  indexflag=ESMF_INDEX_DELOCAL, &
+      !                             name=stdName, rc=rc)
+      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+       
 
       CASE ('air_pressure_at_sea_level')
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
@@ -557,9 +583,10 @@ contains
     integer              :: linkls_start  ! current pet start id (i.e reach fid) 
     integer              :: linkls_end    ! current pet end id (i.e reach fid) 
     integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
-    integer              :: gsize, i
+    integer              :: gsize, i, j
+    integer              :: esmf_comm
     integer, allocatable :: link(:), deBlockList(:)
-    real, allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
+    real(ESMF_KIND_R8), allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
 
 #ifdef DEBUG
     character(ESMF_MAXSTR)  :: logMsg
@@ -578,7 +605,8 @@ contains
     call ESMF_VMGetCurrent(vm=vm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-    call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, rc=rc)
+    call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, &
+                    mpiCommunicator=esmf_comm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     !-------------------------------------------------------------------
@@ -629,10 +657,6 @@ contains
         deBlockList(i) = linkls_start + (i - 1)
     end do
     
-    !do i = 1, locElmCnt
-    !    print *, "Beheen ", my_id, linkls_start, linkls_end, locElmCnt
-    !enddo
-   
 
     !-------------------------------------------------------------------
     ! extract the attibute values from the NWM model variables
@@ -648,17 +672,26 @@ contains
     allocate(lon(gsize))
     allocate(lat(gsize))
     allocate(link(gsize))
-   
-    do i = 1, gsize 
-        lon(i) = rt_domain(did)%chlon(i)
-        lat(i) = rt_domain(did)%chlat(i)
-        link(i) = rt_domain(did)%linkid(i)
+    lon = rt_domain(did)%chlon
+    lat = rt_domain(did)%chlat
+    link = rt_domain(did)%linkid
+                   
+    do i=0, petCount
+      if(i==localPet) then
+        print *, "Beheen Locstream_create "
+        print*, "my_id  local pet  locElmCnt"
+        print*, my_id, localPet, locElmCnt
+        print*, "link start    link end"              
+        print*, linkls_start, linkls_end
+        print*, "link      lon        lat" 
+        do j=1,gsize
+          print*, link(j),lon(j),lat(j)
+        enddo
+      endif
+      call MPI_Barrier(esmf_comm, rc)
+      if(ESMF_STDERRORCHECK(rc)) return
     enddo
-
-    !print *, "Beheen gzie ", localPet, my_id, link(1), link(gsize), gsize &
-    !                         lon(1),lon(gsize),lat(1),lat(gsize)
-
-
+ 
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
     ! define the number and distribution of the locations (i.e. 
@@ -1377,6 +1410,150 @@ contains
   end subroutine
 
   !-----------------------------------------------------------------------------
+
+#undef METHOD
+#define METHOD "NWM_SetFieldData"
+
+  subroutine NWM_SetFieldData(exportState, did, vm)
+    type(ESMF_State),intent(inout)     :: exportState
+    type(ESMF_VM), intent(in)          :: vm
+    integer, intent(in)                :: did
+
+    ! local variables
+    integer :: i, j, k, esmf_comm, localPet, petCnt, &
+               itemCnt, localDECnt, elmCnt, rc
+    character (len=30)   :: itemName
+    type(ESMF_Field)     :: itemField
+    type(ESMF_LocStream) ::locstream
+    character(len=ESMF_MAXSTR), allocatable   :: itemNames(:)
+    real(ESMF_KIND_R8), dimension(:), pointer :: latArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: lonArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: linkArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer :: flowRatePtr => null()
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+    rc = ESMF_SUCCESS
+   
+    ! fill fields with values for export after physic calculations
+
+    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    allocate(itemNames(itemCnt))
+
+    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    do i=1, itemCnt
+
+      itemName = trim(itemNames(i))
+      print *, "Processing ", itemName
+
+      call ESMF_StateGet(exportState, itemName, itemField, rc=rc)
+      if (ESMF_STDERRORCHECK(rc)) return
+
+      print*, "my_id ",  my_id
+      call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                                   mpiCommunicator=esmf_comm, rc=rc)
+
+      SELECT CASE (itemName)
+        CASE ('flow_rate')
+      
+              print *, "Beheen 1"
+          call ESMF_FieldGet(itemField, locstream=locstream, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+              print *, "Beheen 2"
+          call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+              print *, "Beheen 3"
+          flowratePtr = rt_domain(did)%qlink(:elmCnt,1)
+           
+              print *, "Beheen 4"
+          call ESMF_FieldGet(itemField, farrayPtr=flowRatePtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+              print *, "Beheen 5"
+          call ESMF_LocStreamGetKey(locstream, "ESMF:Lat", farray=latArrayPtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+                   
+              print *, "Beheen 6"
+          call ESMF_LocStreamGetKey(locstream, "ESMF:Lon", farray=lonArrayPtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+              print *, "Beheen 7"
+          call ESMF_LocStreamGetKey(locstream, "ESMF:link", farray=linkArrayPtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+                   
+          do j=0,numprocs
+            if(j == my_id) then
+              print *, "Beheen SetField"
+              print*, my_id, j
+              do k=1,elmCnt
+                 print*, linkArrayPtr(k),flowratePtr(k)
+                 print*, lonArrayPtr(k),latArrayPtr(k)
+              enddo
+            endif
+            call MPI_Barrier(esmf_comm, rc)
+            if(ESMF_STDERRORCHECK(rc)) return
+          enddo
+
+
+       ! CASE ('surface_runoff')
+       !   NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+       !            farray=rt_domain(did)%qSfcLatRunoff, &
+       !                   indexflag=ESMF_INDEX_DELOCAL, &
+       !                              name=stdName, rc=rc)
+       !   if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+       ! CASE ('river_velocity')
+       !   NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+       !                 farray=rt_domain(did)%velocity, &
+       !                   indexflag=ESMF_INDEX_DELOCAL, &
+       !                              name=stdName, rc=rc)
+       ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+      !CASE ('water_level')
+      !  NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+      !                farray=rt_domain(did)%velocity, &
+      !                  indexflag=ESMF_INDEX_DELOCAL, &
+      !                             name=stdName, rc=rc)
+      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+
+      !CASE ('air_pressure_at_sea_level')
+      !  NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
+      !                                 farrayPtr=/0.0/, &
+      !                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
+      !                                       name=stdName, rc=rc)
+      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+      !CASE ('surface_net_downward_shortwave_flux')
+      !  NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
+      !                                 farrayPtr=/0.0/, &
+      !                    datacopyflag=ESMF_DATACOPY_REFERENCE, &
+      !                                       name=stdName, rc=rc)
+      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+
+      CASE DEFAULT
+                   call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+          msg=METHOD//": Field hookup missing: "//itemName, &
+                                      file=FILENAME,rcToReturn=rc)
+        return  ! bail out
+      END SELECT
+    enddo
+    deallocate(itemNames)
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
+
 
   !-----------------------------------------------------------------------------
   ! Dictionary Utility
