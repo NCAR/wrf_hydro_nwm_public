@@ -57,7 +57,7 @@ contains
 
     ! Hybrid Constructor
     subroutine hybrid_init(this, water_elevation,  &
-        lake_area, lake_precip, lake_evap, &
+        lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, &
         orifice_elevation, orifice_coefficient, orifice_area, &
         lake_max_water_elevation, initial_fractional_depth, &
@@ -68,8 +68,6 @@ contains
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
-        real,    intent(in)    :: lake_precip               ! lake precipitation rate (mm/hr)
-        real,    intent(in)    :: lake_evap                 ! lake evaporation rate (mm/hr)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
@@ -201,7 +199,7 @@ contains
             allocate(levelpool :: this%state%levelpool_ptr)
 
             ! Initialize level pool reservoir
-            call this%state%levelpool_ptr%init(water_elevation, lake_area, lake_precip, lake_evap, &
+            call this%state%levelpool_ptr%init(water_elevation, lake_area, &
                     weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
                     orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
@@ -218,14 +216,15 @@ contains
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
-        assimilated_value, assimilated_source_file)
+        lateral_inflow, water_elevation, outflow, lake_evap, lake_precip, &
+        routing_period, dynamic_reservoir_type, assimilated_value, assimilated_source_file)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
         real, intent(inout) :: water_elevation          ! meters
+        real, intent(in)    :: lake_evap, lake_precip   ! kg/m2/s and mm
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
@@ -245,6 +244,8 @@ contains
         ! Update input variables
         this%input%inflow = inflow
         this%input%lateral_inflow = lateral_inflow
+        this%input%lake_evap = lake_evap
+        this%input%lake_precip = lake_precip
 
         ! The initialization and management of water elevation might diverge between the global state of the model
         ! and the internal state. The global state water elevation is passed to/from this subroutine at every
@@ -360,7 +361,8 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
+        lateral_inflow, local_water_elevation, levelpool_outflow, lake_evap, lake_precip, &
+        routing_period, this%state%levelpool_reservoir_type, &
         this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
 
         ! If the levelpool weight is within epsilon of 1.0
@@ -409,7 +411,7 @@ contains
         end if
 
         ! Calculate change in storage
-        delta_storage = (this%input%inflow - this%output%outflow) * routing_period
+        delta_storage = (this%input%inflow - this%output%outflow) * routing_period !!!! bkhazaei: update with P-E
 
         ! Update storage from the most recent model states
         this%state%current_storage = this%state%current_storage + delta_storage

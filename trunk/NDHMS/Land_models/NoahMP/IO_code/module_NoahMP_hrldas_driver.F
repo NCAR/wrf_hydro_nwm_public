@@ -1867,8 +1867,9 @@ end subroutine land_driver_ini
                      hfx          ,lh             ,grdflx       ,tsk             ,&  !o
                      qfx          ,t2             ,th2          ,q2 )
 
-         where(ivgtyp == islake) rainbl  = 20.0/3600.0  ! fake test for conservation
-         where(ivgtyp == islake) qfx = 10.0/3600.0  ! fake test for conservation
+         ! fake values for testing:
+         !where(ivgtyp == islake) rainbl  = 2.0
+         !where(ivgtyp == islake) qfx = 1.0
 
 #ifdef WRF_HYDRO
          do ilake = 1, nlakes

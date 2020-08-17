@@ -52,7 +52,7 @@ contains
 
     ! RFC Forecasts Constructor
     subroutine rfc_forecasts_init(this, water_elevation,  &
-        lake_area, lake_precip, lake_evap, &
+        lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, &
         orifice_elevation, orifice_coefficient, orifice_area, &
         lake_max_water_elevation, initial_fractional_depth, &
@@ -63,8 +63,6 @@ contains
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
-        real,    intent(in)    :: lake_precip               ! lake precipitation rate (mm/hr)
-        real,    intent(in)    :: lake_evap                 ! lake evaporation rate (mm/hr)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
@@ -156,7 +154,7 @@ contains
         allocate(levelpool :: this%state%levelpool_ptr)
 
         ! Initialize level pool reservoir
-        call this%state%levelpool_ptr%init(water_elevation, lake_area, lake_precip, lake_evap, &
+        call this%state%levelpool_ptr%init(water_elevation, lake_area, &
                 weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
                 orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
@@ -204,8 +202,8 @@ contains
 
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
-        assimilated_value, assimilated_source_file)
+        lateral_inflow, water_elevation, outflow, lake_evap, lake_precip, &
+        routing_period, dynamic_reservoir_type, assimilated_value, assimilated_source_file)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -213,6 +211,7 @@ contains
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+        real, intent(in)    :: lake_evap, lake_precip   ! kg/m2/s and mm
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
@@ -275,14 +274,16 @@ contains
         ! Update input variables
         this%input%inflow = inflow
         this%input%lateral_inflow = lateral_inflow
+        this%input%lake_evap = lake_evap
+        this%input%lake_precip = lake_precip
 
         ! Update state water elevation
         this%state%water_elevation = water_elevation
 
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
-        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
+        lateral_inflow, this%state%water_elevation, levelpool_outflow, lake_evap, lake_precip, routing_period, &
+        this%state%levelpool_reservoir_type, this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
 
         ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
         if (routing_period .gt. 3600) then
