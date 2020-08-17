@@ -1425,10 +1425,12 @@ contains
     character (len=30)   :: itemName
     type(ESMF_Field)     :: itemField
     type(ESMF_LocStream) ::locstream
+    character(len=ESMF_MAXSTR) :: locName
+    type(ESMF_TypeKind_Flag) :: locTypeKind
     character(len=ESMF_MAXSTR), allocatable   :: itemNames(:)
     real(ESMF_KIND_R8), dimension(:), pointer :: latArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: lonArrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer :: linkArrayPtr => null()
+    integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: flowRatePtr => null()
 
 #ifdef DEBUG
@@ -1465,6 +1467,10 @@ contains
           call ESMF_FieldGet(itemField, locstream=locstream, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
+          call ESMF_LocStreamGet(locstream, name=locName, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          print *, "LocStream Name: ", trim(locName)
+
               print *, "Beheen 2"
           call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
@@ -1479,15 +1485,15 @@ contains
               print *, "Beheen 5"
           call ESMF_LocStreamGetKey(locstream, "ESMF:Lat", farray=latArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-                   
+          
               print *, "Beheen 6"
           call ESMF_LocStreamGetKey(locstream, "ESMF:Lon", farray=lonArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-
+          
               print *, "Beheen 7"
           call ESMF_LocStreamGetKey(locstream, "ESMF:link", farray=linkArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-                   
+          
           do j=0,numprocs
             if(j == my_id) then
               print *, "Beheen SetField"
