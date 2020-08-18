@@ -583,7 +583,7 @@ contains
     integer              :: linkls_start  ! current pet start id (i.e reach fid) 
     integer              :: linkls_end    ! current pet end id (i.e reach fid) 
     integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
-    integer              :: gsize, i, j
+    integer              :: i, j
     integer              :: esmf_comm
     integer, allocatable :: link(:), deBlockList(:)
     real(ESMF_KIND_R8), allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
@@ -666,14 +666,13 @@ contains
     ! total number of point locations = rt_domain(did)%gnlinksl = ! 2,776,738
     ! ii=2776738, CHLON(ii)=-74.54775, CHLAT(ii)=44.99520, ZELEV(ii)=46.81000
     !-------------------------------------------------------------------
-    gsize = locElmCnt          !rt_domain(did)%gnlinksl      ! get_netcdf_dim()
     !-------------------------------------------------------------------
     ! allocate space for the  lon/lat/feature_id/streamflow(QI) attribute of 
     ! each element for the current PET
     !-------------------------------------------------------------------
-    allocate(lon(gsize))
-    allocate(lat(gsize))
-    allocate(link(gsize))
+    allocate(lon(locElmCnt))
+    allocate(lat(locElmCnt))
+    allocate(link(locElmCnt))
     lon = rt_domain(did)%chlon
     lat = rt_domain(did)%chlat
     link = rt_domain(did)%linkid
@@ -720,11 +719,15 @@ contains
                              keyLongName="Link ID (NHDFlowline_network COMID)", rc=rc)
 
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:Lon", farray=lonPtr, rc=rc)
+
+    allocate(lonPtr(locElmCnt))
+    allocate(latPtr(locElmCnt))
+    allocate(linkPtr(locElmCnt))
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:Lon", farray=lonPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:Lat", farray=latPtr, rc=rc)
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:Lat", farray=latPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:link", farray=linkPtr, rc=rc)
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:link", farray=linkPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
     do i=0, petCount
       if(i==localPet) then
@@ -734,9 +737,9 @@ contains
         print*, "link start    link end"              
         print*, linkls_start, linkls_end
         print*, "link      lon        lat" 
-        do j=1,gsize
-          print*, linkPtr(j),lonPtr(j),latPtr(j)
-        enddo
+        print*, linkPtr
+        print*, lonPtr
+        print*, latPtr
       endif
       call MPI_Barrier(esmf_comm, rc)
       if(ESMF_STDERRORCHECK(rc)) return
@@ -1509,10 +1512,10 @@ contains
           do j=0,numprocs
             if(j == my_id) then
               print *, "Beheen SetField", my_id, "proc=", j
-              do k=1,elmCnt
-                 print*, "link=",linkArrayPtr(k),"flow=",flowratePtr(k)
-                 print*, "lon=",lonArrayPtr(k),"lat=",latArrayPtr(k)
-              enddo
+              print*, "link ", linkArrayPtr
+              print*, "flow ",flowratePtr
+              print*, "lon ",lonArrayPtr
+              print*, "lat ",latArrayPtr
             endif
             call MPI_Barrier(esmf_comm, rc)
             if(ESMF_STDERRORCHECK(rc)) return
