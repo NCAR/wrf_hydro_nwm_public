@@ -742,7 +742,6 @@ contains
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
 
-    print *, "Lake Shape Option is:", nlst(did)%lake_shape_option
 
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT

@@ -8981,14 +8981,11 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
 
     ! read variables for lake_shape_option not equal to 0 (default Box shape)
     if(nlst(did)%lake_shape_option /= 0) then
-       print*, "Different Lake Shape Option (rather than Default Box Shape) is defined in hydro.namelist."
-       print*, "Variables are all required in LAKEPARM file: LkVol, LkMxDepth, poly_a, poly_b!"
        call get_1d_netcdf_real(ncid, 'LkVol', LAKEVOL,      'read_route_lake_netcdf', .TRUE.)
        call get_1d_netcdf_real(ncid, 'LkMxDepth', LAKEMAXDEPTH, 'read_route_lake_netcdf', .TRUE.)
        call get_1d_netcdf_real(ncid, 'poly_a', LAKEPOLYA,  'read_route_lake_netcdf', .TRUE.)
        call get_1d_netcdf_real(ncid, 'poly_b', LAKEPOLYB,  'read_route_lake_netcdf', .TRUE.)
     else
-       print*, "Default Lake Shape Option (Box Shape) is defined in hydro.namelist"
        LAKEVOL = 0.0
        LAKEMAXDEPTH = 0.0
        LAKEPOLYA = 0.0
