@@ -588,6 +588,8 @@ contains
     integer, allocatable :: link(:), deBlockList(:)
     real(ESMF_KIND_R8), allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
 
+    integer, pointer :: linkPtr(:)
+    real(ESMF_KIND_R8), pointer :: latPtr(:), lonPtr(:)
 #ifdef DEBUG
     character(ESMF_MAXSTR)  :: logMsg
 #endif
@@ -676,21 +678,6 @@ contains
     lat = rt_domain(did)%chlat
     link = rt_domain(did)%linkid
                    
-    do i=0, petCount
-      if(i==localPet) then
-        print *, "Beheen Locstream_create "
-        print*, "my_id  local pet  locElmCnt"
-        print*, my_id, localPet, locElmCnt
-        print*, "link start    link end"              
-        print*, linkls_start, linkls_end
-        print*, "link      lon        lat" 
-        do j=1,gsize
-          print*, link(j),lon(j),lat(j)
-        enddo
-      endif
-      call MPI_Barrier(esmf_comm, rc)
-      if(ESMF_STDERRORCHECK(rc)) return
-    enddo
  
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
@@ -701,7 +688,7 @@ contains
                                    localCount=locElmCnt,           &
                                    coordSys=ESMF_COORDSYS_SPH_DEG, &
                                    rc=rc)
-
+    if (ESMF_STDERRORCHECK(rc)) return
     !-------------------------------------------------------------------
     ! Add key data, referencing a user data pointer. By changing the 
     ! datacopyflag to ESMF_DATACOPY_VALUE an internally allocated copy  
@@ -717,6 +704,7 @@ contains
                              keyUnits="Degrees",     &
                              keyLongName="Latitude", rc=rc)
 
+    if (ESMF_STDERRORCHECK(rc)) return
     call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
                              keyName="ESMF:Lon",     &
                              farray=lon,             &
@@ -724,11 +712,35 @@ contains
                              keyUnits="Degrees",     &
                              keyLongName="Longitude", rc=rc)
 
+    if (ESMF_STDERRORCHECK(rc)) return
     call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
                              keyName="ESMF:link",    &
                              farray=link,            &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyLongName="Link ID (NHDFlowline_network COMID)", rc=rc)
+
+    if (ESMF_STDERRORCHECK(rc)) return
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:Lon", farray=lonPtr, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:Lat", farray=latPtr, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, "ESMF:link", farray=linkPtr, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    do i=0, petCount
+      if(i==localPet) then
+        print *, "Beheen LocStream_create "
+        print*, "my_id  local pet  locElmCnt"
+        print*, my_id, localPet, locElmCnt
+        print*, "link start    link end"              
+        print*, linkls_start, linkls_end
+        print*, "link      lon        lat" 
+        do j=1,gsize
+          print*, linkPtr(j),lonPtr(j),latPtr(j)
+        enddo
+      endif
+      call MPI_Barrier(esmf_comm, rc)
+      if(ESMF_STDERRORCHECK(rc)) return
+    enddo
 
 #ifdef DEBUG
     call ESMF_LocStreamPrint(NWM_LocStreamCreate)
@@ -1496,11 +1508,10 @@ contains
           
           do j=0,numprocs
             if(j == my_id) then
-              print *, "Beheen SetField"
-              print*, my_id, j
+              print *, "Beheen SetField", my_id, "proc=", j
               do k=1,elmCnt
-                 print*, linkArrayPtr(k),flowratePtr(k)
-                 print*, lonArrayPtr(k),latArrayPtr(k)
+                 print*, "link=",linkArrayPtr(k),"flow=",flowratePtr(k)
+                 print*, "lon=",lonArrayPtr(k),"lat=",latArrayPtr(k)
               enddo
             endif
             call MPI_Barrier(esmf_comm, rc)
