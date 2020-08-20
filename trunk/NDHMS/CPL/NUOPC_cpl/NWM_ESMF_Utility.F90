@@ -1,4 +1,9 @@
+#define FILENAME "NWM_ESMF_Utility.F90"
+#define MODNAME "NWM_ESMF_Utility.F90"
 #include "NWM_NUOPC_Macros.h"
+
+#define DEBUG=on
+
 !-------------------------------------------------------------------------------
 ! A test coupled application utility module
 !
@@ -6,9 +11,10 @@
 !   Tim Campbell
 !   Naval Research Laboratory
 !   November 2014
+!   Beheen M. Trimble, Lynker Tech, NOAA, 8/19/2020
 !-------------------------------------------------------------------------------
 
-module UTILITY
+module NWM_ESMF_Utility
 
   use ESMF
   use NUOPC
@@ -23,6 +29,88 @@ module UTILITY
   !-----------------------------------------------------------------------------
   contains
   !-----------------------------------------------------------------------------
+#undef METHOD
+#define METHOD "NWM_Template"
+  
+  subroutine NWM_Template()
+    ! Return object-wide information from a LocStream
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+    !rc = ESMF_SUCCESS
+
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
+
+
+
+#undef METHOD
+#define METHOD "NWM_ReachStreamGet"
+  
+  subroutine NWM_ReachStreamGet(locstream, vm) 
+    ! Return object-wide information from a LocStream
+
+    ! ARGUMENTS:
+    type(ESMF_Locstream),  intent(in)  :: locstream
+    type(ESMF_VM),         intent(in)  :: vm
+
+    ! The following arguments require argument keyword syntax (e.g. rc=rc). --
+    type(ESMF_DistGrid)         :: distgrid
+    integer                     :: keyCount
+    character(len=ESMF_MAXSTR), allocatable  :: keyNames(:) 
+    integer                     :: localDECount
+    type(ESMF_Index_Flag)       :: indexflag
+    type(ESMF_CoordSys_Flag)    :: coordSys
+    character(len=ESMF_MAXSTR)  :: name
+    integer                     :: rc
+
+    integer :: itemCnt, localDECnt, elmCnt
+    integer :: i, j, k, esmf_comm, localPet, petCnt
+
+    integer(ESMF_KIND_I4), pointer  :: linkPtr(:)
+    real(ESMF_KIND_R8), pointer     :: latPtr(:), lonPtr(:)
+
+    character(ESMF_MAXSTR)  :: logMsg
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+    rc = ESMF_SUCCESS
+
+    call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                     mpiCommunicator=esmf_comm, rc=rc)
+
+
+    call ESMF_LocStreamGet(locstream, distgrid=distgrid, keyCount=keyCount, &
+                           keyNames=keyNames, localDECount=localDECount, &
+                           indexflag=indexflag, coordSys=coordSys, name=name, rc=rc)
+    
+    !call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
+
+    do i=0, petCnt
+      if(i==localPet) then
+        print*, METHOD, " localPet: ",localPet,"petCnt:",petCnt
+        print*, METHOD, " keyCount:", keyCount
+        print*, METHOD, " keyNames: ",keyNames, "localDECount: ",localDECount
+        print*, METHOD, " indexflag: ",indexflag,"coordSys: ",coordSys,"name: ",name
+      endif
+      call MPI_Barrier(esmf_comm, rc)
+      if(ESMF_STDERRORCHECK(rc)) return
+    enddo
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
+
 
   subroutine InitFieldDictionary(rc)
     integer, intent(out) :: rc

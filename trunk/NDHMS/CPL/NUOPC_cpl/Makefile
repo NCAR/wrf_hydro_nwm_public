@@ -106,8 +106,9 @@ CAP_MK        := nwm.mk           # for NEMS must be same as in components_NWM.m
 CAP_OBJS      := NWM_NUOPC_Cap.o
 CAP_OBJS      += NWM_NUOPC_Gluecode.o
 CAP_OBJS      += NWM_ESMF_Extensions.o
+CAP_OBJS      += NWM_ESMF_Utility.o
 
-CAP_MODS      := nwm_esmf_extensions.mod  nwm_nuopc_cap.mod  nwm_nuopc_gluecode.mod
+CAP_MODS      := nwm_esmf_extensions.mod  nwm_nuopc_cap.mod  nwm_nuopc_gluecode.mod nwm_esmf_utility.mod
 
 CAP_FILES     := $(CAP_OBJS) $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) $(CAP_MK)
 
@@ -133,7 +134,7 @@ nuopcinstall: $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) \
 NWM_NUOPC_Cap.o: NWM_NUOPC_Macros.h \
  NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o
 NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h \
- NWM_ESMF_Extensions.o 
+ NWM_ESMF_Extensions.o NWM_ESMF_Utility.o 
 
 
 # ##############

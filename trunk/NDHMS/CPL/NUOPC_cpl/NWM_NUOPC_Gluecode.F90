@@ -19,6 +19,7 @@ module NWM_NUOPC_Gluecode
   use ESMF
   use NUOPC
   use NWM_ESMF_Extensions
+  use NWM_ESMF_Utility
 
   use module_mpp_land, only: &
     numprocs, &        ! total number of requested process to run the model 
@@ -58,7 +59,7 @@ module NWM_NUOPC_Gluecode
   public :: NWM_GetHgrid
   public :: NWM_LSMGridCreate
   ! public :: NWM_RTGridCreate
-  public :: NWM_LocStreamCreate
+  public :: NWM_ReachStreamCreate
   public :: NWM_NUOPC_Run
   public :: NWM_NUOPC_Fin
   public :: NWM_GetTimestep
@@ -68,6 +69,7 @@ module NWM_NUOPC_Gluecode
   public :: NWM_FieldList
   public :: NWM_FieldDictionaryAdd
   public :: NWM_FieldCreate
+  public :: NWM_SetFieldData
 
 
   type NWM_Field
@@ -337,7 +339,7 @@ contains
 
     integer, intent(in)                     :: did
     integer, intent(in)                     :: mode
-    type(ESMF_VM), intent(in)               :: vm
+    type(ESMF_VM), intent(in)               :: vm      ! see if we need this
     type(ESMF_Clock),intent(in)             :: clock
     type(ESMF_State),intent(inout)          :: importState
     type(ESMF_State),intent(inout)          :: exportState
@@ -375,37 +377,7 @@ contains
 
     call noahMp_exe(itime, state)
 
-    call NWM_SetFieldData(exportState, did, vm)
-
-    ! testing
-    ! fill fields for export after physic calculations
-    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return
-    allocate(itemNames(itemCnt))
-    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return
-    do i=1, itemCnt
-      print *, "Field Item Name: ", trim(itemNames(i))
-      call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return
-      call ESMF_FieldGet(itemField, locstream=locstream, rc=rc)
-      call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return
-      print*, "elmCnt ", elmCnt, my_id
-      call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, &
-                                 mpiCommunicator=esmf_comm, rc=rc)
-      if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      do j=0,petCount
-        if(j == my_id) then
-          print *, "Beheen NUOPC_Run "
-          print*, my_id, IO_id, j
-          print*, rt_domain(did)%qlink(:elmCnt,1)
-        endif
-        call MPI_Barrier(esmf_comm, rc)
-        if(ESMF_STDERRORCHECK(rc)) return
-      enddo
-    end do
-    deallocate(itemNames)
+    call NWM_SetFieldData(exportState, did)
 
 
 #ifdef DEBUG
@@ -470,6 +442,7 @@ contains
     integer, intent(out)                    :: rc
 
     ! LOCAL VARIABLES
+    type(ESMF_TypeKind_Flag)                  :: typekind
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
       
@@ -479,7 +452,8 @@ contains
 
     rc = ESMF_SUCCESS
 
-    
+    !call NWM_ReachStreamGet(locstream, vm)
+
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
     allocate(farrayPtr_loc(loccnt))     ! allocate for locstream
@@ -489,10 +463,10 @@ contains
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
-        NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
-                                       farrayPtr=farrayPtr_loc, &
-                          datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=stdName, rc=rc) 
+        NWM_FieldCreate = ESMF_FieldCreate(locstream, &
+                                           ESMF_TYPEKIND_R8,    &         !farrayPtr=farrayPtr_loc, &
+                                                                          !datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                           name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_runoff')
@@ -564,37 +538,35 @@ contains
   ! Create a LocStream with user allocated memory, as defined in NWM code.
   !-----------------------------------------------------------------------------
 #undef METHOD
-#define METHOD "NWM_LocStreamCreate"
+#define METHOD "NWM_ReachStreamCreate"
 
-  function NWM_LocStreamCreate(did,rc)
+  function NWM_ReachStreamCreate(did,vm,rc)
     ! Return value
-    type(ESMF_LocStream)       :: NWM_LocStreamCreate
+    type(ESMF_LocStream)       :: NWM_ReachStreamCreate
 
     ! Aguments
     integer, intent(in)   :: did
     integer, intent(out)  :: rc
+    type(ESMF_VM)         :: vm           ! used in print, esmf_comm
 
     ! Local variables  
-    type(ESMF_TimeInterval) :: stabilityTimeStep
-    type(ESMF_VM)        :: vm
-    integer              :: localPet
-    integer              :: petCount
     integer              :: gblElmCnt     ! total number of reaches elements
     integer              :: linkls_start  ! current pet start id (i.e reach fid) 
     integer              :: linkls_end    ! current pet end id (i.e reach fid) 
     integer              :: locElmCnt     ! number of points (i.e. reaches) on each pet
+    integer              :: localPet, petCount,esmf_comm
     integer              :: i, j
-    integer              :: esmf_comm
-    integer, allocatable :: link(:), deBlockList(:)
+    integer, allocatable :: arbSeqIndexList(:)
+    type(ESMF_DistGrid)  :: distgrid
     real(ESMF_KIND_R8), allocatable    :: lat(:),lon(:), chlat(:),chlon(:) 
+    integer(ESMF_KIND_I4), allocatable :: link(:)
 
-    integer, pointer :: linkPtr(:)
-    real(ESMF_KIND_R8), pointer :: latPtr(:), lonPtr(:)
+
 #ifdef DEBUG
     character(ESMF_MAXSTR)  :: logMsg
-#endif
+    integer(ESMF_KIND_I4), pointer     :: linkPtr(:)
+    real(ESMF_KIND_R8), pointer        :: latPtr(:), lonPtr(:)
  
-#ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
@@ -604,9 +576,6 @@ contains
     ! Get parallel information. Here petCount is the total number of 
     ! running PETs, and localPet is the number of this particular PET.
     !-------------------------------------------------------------------
-    call ESMF_VMGetCurrent(vm=vm, rc=rc)
-    if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
     call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, &
                     mpiCommunicator=esmf_comm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -643,7 +612,6 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return
     endif
 
-
     !-------------------------------------------------------------------
     ! NWM implementation - ReachLS_ini()
     ! how many elements (i.e. reaches) are on this PET (localPet) 
@@ -653,12 +621,14 @@ contains
     linkls_end   = rt_domain(did)%linklsE
     locElmCnt = linkls_end - linkls_start + 1   ! to include the end - TODO chek on this
 
-    ! save the local elements in a list for future access
-    allocate(deBlockList(locElmCnt))
+    ! create local element list
+    allocate(arbSeqIndexList(locElmCnt))
     do i = 1, locElmCnt
-        deBlockList(i) = linkls_start + (i - 1)
+        arbSeqIndexList(i) = linkls_start + (i - 1)
     end do
     
+    ! create DistGrid
+    distgrid = ESMF_DistGridCreate(arbSeqIndexList=arbSeqIndexList, rc=rc)
 
     !-------------------------------------------------------------------
     ! extract the attibute values from the NWM model variables
@@ -670,21 +640,24 @@ contains
     ! allocate space for the  lon/lat/feature_id/streamflow(QI) attribute of 
     ! each element for the current PET
     !-------------------------------------------------------------------
+    ! create local element list
     allocate(lon(locElmCnt))
     allocate(lat(locElmCnt))
     allocate(link(locElmCnt))
-    lon = rt_domain(did)%chlon
-    lat = rt_domain(did)%chlat
-    link = rt_domain(did)%linkid
-                   
- 
+
+    do i=1,locElmCnt
+      link(i) = rt_domain(did)%linkid(i)     ! don't use pointer here
+      lon(i) = rt_domain(did)%chlon(i)
+      lat(i) = rt_domain(did)%chlat(i)
+    enddo
+
     !-------------------------------------------------------------------
     ! Create the LocStream:  Allocate space for the LocStream object, 
     ! define the number and distribution of the locations (i.e. 
     ! Employing User Allocated Memory)
     !-------------------------------------------------------------------
-    NWM_LocStreamCreate=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
-                                   localCount=locElmCnt,           &
+    NWM_ReachStreamCreate=ESMF_LocStreamCreate(name='NWM_RouteLink_D'//trim(nlst(did)%hgrid), &
+                                   distgrid=distgrid, &
                                    coordSys=ESMF_COORDSYS_SPH_DEG, &
                                    rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
@@ -693,50 +666,49 @@ contains
     ! datacopyflag to ESMF_DATACOPY_VALUE an internally allocated copy  
     ! of the user data may also be set. 
     ! Note: the ESMF_DATACOPY_REFERENCE option may be unsafe when specifying
-    ! an array slice for farraay. Not the case here, since we are allocating
+    ! an array slice for farray. Not the case here, since we are allocating
     ! slices per locElmtCnt
     !-------------------------------------------------------------------
-    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
-                             keyName="ESMF:Lat",     &
+    call ESMF_LocStreamAddKey(NWM_ReachStreamCreate,   &
+                             keyName="Lat",          &
                              farray=lat,             &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyUnits="Degrees",     &
                              keyLongName="Latitude", rc=rc)
-
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
-                             keyName="ESMF:Lon",     &
+
+    call ESMF_LocStreamAddKey(NWM_ReachStreamCreate,   &
+                             keyName="Lon",          &
                              farray=lon,             &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyUnits="Degrees",     &
                              keyLongName="Longitude", rc=rc)
-
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamAddKey(NWM_LocStreamCreate,   &
-                             keyName="ESMF:link",    &
+
+    call ESMF_LocStreamAddKey(NWM_ReachStreamCreate,   &
+                             keyName="link",         &
                              farray=link,            &
                              datacopyflag=ESMF_DATACOPY_REFERENCE, &
                              keyLongName="Link ID (NHDFlowline_network COMID)", rc=rc)
-
     if (ESMF_STDERRORCHECK(rc)) return
 
+#ifdef DEBUG
     allocate(lonPtr(locElmCnt))
     allocate(latPtr(locElmCnt))
     allocate(linkPtr(locElmCnt))
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:Lon", farray=lonPtr, rc=rc)
+
+    call ESMF_LocStreamGetKey(NWM_ReachStreamCreate, keyName="Lon", farray=lonPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:Lat", farray=latPtr, rc=rc)
+
+    call ESMF_LocStreamGetKey(NWM_ReachStreamCreate, keyName="Lat", farray=latPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    call ESMF_LocStreamGetKey(NWM_LocStreamCreate, keyName="ESMF:link", farray=linkPtr, rc=rc)
+
+    call ESMF_LocStreamGetKey(NWM_ReachStreamCreate, keyName="link", farray=linkPtr, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    do i=0, petCount
-      if(i==localPet) then
-        print *, "Beheen LocStream_create "
-        print*, "my_id  local pet  locElmCnt"
-        print*, my_id, localPet, locElmCnt
-        print*, "link start    link end"              
-        print*, linkls_start, linkls_end
-        print*, "link      lon        lat" 
+
+    do i=0, numprocs
+      if(i==my_id) then
+        print*, "arbSeqIndexList ", my_id, locElmCnt, arbSeqIndexList(1), arbSeqIndexList(locElmCnt)
         print*, linkPtr
         print*, lonPtr
         print*, latPtr
@@ -745,10 +717,12 @@ contains
       if(ESMF_STDERRORCHECK(rc)) return
     enddo
 
-#ifdef DEBUG
-    call ESMF_LocStreamPrint(NWM_LocStreamCreate)
+    !call ESMF_LocStreamPrint(NWM_ReachStreamCreate)  this is not working why?
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
 #endif
+
+    deallocate(arbSeqIndexList)
+    ! when to deallocate the rest of variables
 
   end function
 
@@ -1429,9 +1403,8 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
-  subroutine NWM_SetFieldData(exportState, did, vm)
+  subroutine NWM_SetFieldData(exportState, did)
     type(ESMF_State),intent(inout)     :: exportState
-    type(ESMF_VM), intent(in)          :: vm
     integer, intent(in)                :: did
 
     ! local variables
@@ -1439,14 +1412,15 @@ contains
                itemCnt, localDECnt, elmCnt, rc
     character (len=30)   :: itemName
     type(ESMF_Field)     :: itemField
+    type(ESMF_VM)        :: vm  ! vm that field was created on
     type(ESMF_LocStream) ::locstream
+    type(ESMF_TypeKind_Flag)   :: locTypeKind
     character(len=ESMF_MAXSTR) :: locName
-    type(ESMF_TypeKind_Flag) :: locTypeKind
-    character(len=ESMF_MAXSTR), allocatable   :: itemNames(:)
-    real(ESMF_KIND_R8), dimension(:), pointer :: latArrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer :: lonArrayPtr => null()
+    character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
+    real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
     integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer :: flowRatePtr => null()
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -1455,6 +1429,9 @@ contains
     rc = ESMF_SUCCESS
    
     ! fill fields with values for export after physic calculations
+
+    !call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+    !                 mpiCommunicator=esmf_comm, rc=rc)
 
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
@@ -1466,56 +1443,55 @@ contains
     do i=1, itemCnt
 
       itemName = trim(itemNames(i))
-      print *, "Processing ", itemName
-
+      
       call ESMF_StateGet(exportState, itemName, itemField, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
-      print*, "my_id ",  my_id
-      call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
-                                   mpiCommunicator=esmf_comm, rc=rc)
 
       SELECT CASE (itemName)
         CASE ('flow_rate')
-      
-              print *, "Beheen 1"
-          call ESMF_FieldGet(itemField, locstream=locstream, rc=rc)
+
+          !print*, my_id,rt_domain(did)%qlink(:,1)
+
+
+          call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          call ESMF_LocStreamGet(locstream, name=locName, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
-          print *, "LocStream Name: ", trim(locName)
+          ! get the vm of this field
+          call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                                   mpiCommunicator=esmf_comm, rc=rc)
 
-              print *, "Beheen 2"
-          call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+          do j=0,petCnt
+            if(j == localPet) then
+            print*, "my_id: ", my_id, localPet
+            call ESMF_LocStreamGet(locstream, name=locName, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
 
-              print *, "Beheen 3"
-          flowratePtr = rt_domain(did)%qlink(:elmCnt,1)
+            call ESMF_LocStreamGetBounds(locstream, computationalCount=elmCnt, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
+
+            !flowRatePtr = rt_domain(did)%qlink(:elmCnt,1)
            
-              print *, "Beheen 4"
-          call ESMF_FieldGet(itemField, farrayPtr=flowRatePtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+            !call ESMF_FieldGet(itemField, farrayPtr=flowRatePtr, rc=rc)
+            !if (ESMF_STDERRORCHECK(rc)) return
 
-              print *, "Beheen 5"
-          call ESMF_LocStreamGetKey(locstream, "ESMF:Lat", farray=latArrayPtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+            call ESMF_LocStreamGetKey(locstream, "Lat", farray=latArrayPtr, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
           
-              print *, "Beheen 6"
-          call ESMF_LocStreamGetKey(locstream, "ESMF:Lon", farray=lonArrayPtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+            call ESMF_LocStreamGetKey(locstream, "Lon", farray=lonArrayPtr, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
           
-              print *, "Beheen 7"
-          call ESMF_LocStreamGetKey(locstream, "ESMF:link", farray=linkArrayPtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+            call ESMF_LocStreamGetKey(locstream, "link", farray=linkArrayPtr, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
           
-          do j=0,numprocs
-            if(j == my_id) then
-              print *, "Beheen SetField", my_id, "proc=", j
-              print*, "link ", linkArrayPtr
-              print*, "flow ",flowratePtr
-              print*, "lon ",lonArrayPtr
-              print*, "lat ",latArrayPtr
+          !do j=0,numprocs
+          !  if(j == my_id) then
+              print*, "SetFieldData"
+              print*, my_id, "localPet:",localPet,"petCnt:",petCnt
+              print*, "link: ", linkArrayPtr
+              !print*, "flowrate: ", flowRatePtr
+              print*, "lon: ", lonArrayPtr
+              print*, "lat: ", latArrayPtr
             endif
             call MPI_Barrier(esmf_comm, rc)
             if(ESMF_STDERRORCHECK(rc)) return

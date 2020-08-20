@@ -443,8 +443,9 @@ module NWM_NUOPC_Cap
     character(32)              :: cname
     type(type_InternalState)   :: is
     type(ESMF_Grid)            :: NWM_LSMGrid, NWM_RTGrid
-    type(ESMF_LocStream)       :: NWM_LocStream 
+    type(ESMF_LocStream)       :: NWM_ReachStream 
     type(ESMF_Field)           :: field
+    type(ESMF_VM)              :: vm
     logical                    :: importConnected, exportConnected
     integer                    :: fIndex
 
@@ -456,7 +457,7 @@ module NWM_NUOPC_Cap
     rc = ESMF_SUCCESS
 
     ! Query component for name
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
+    call ESMF_GridCompGet(gcomp, name=cname, vm=vm, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! Query Component for its internal State
@@ -473,9 +474,9 @@ module NWM_NUOPC_Cap
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     endif
 
-    NWM_LocStream = NWM_LocStreamCreate(is%wrap%did,rc=rc)
+    NWM_ReachStream = NWM_ReachStreamCreate(is%wrap%did,vm,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-    
+   
     do fIndex = 1, size(NWM_FieldList)
      
       !! the model checks to see if fields are connected via NUOPC_IsConnected.
@@ -491,7 +492,7 @@ module NWM_NUOPC_Cap
       if (importConnected) then 
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
-                    grid=NWM_LSMGrid, locstream=NWM_LocStream, &
+                    grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
                                           did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
@@ -514,8 +515,8 @@ module NWM_NUOPC_Cap
       if (exportConnected) then
         NWM_FieldList(fIndex)%realizedExport = .TRUE.
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
-                             grid=NWM_LSMGrid,locstream=NWM_LocStream, &
-                                                did=is%wrap%did,rc=rc)
+                             grid=NWM_LSMGrid,locstream=NWM_ReachStream, &
+                                                  did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateExp(1), field=field,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
@@ -862,7 +863,6 @@ subroutine CheckImport(gcomp, rc)
     call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     
-    ! for testing and good to have
     call ESMF_GridCompGet(gcomp, vm=vm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -930,11 +930,14 @@ subroutine CheckImport(gcomp, rc)
         ESMF_LOGMSG_INFO)
 
       ! Call nwm exe
+      print*, "Testing NUOPC_Run"
       call NWM_NUOPC_Run(is%wrap%did,is%wrap%mode(1), vm, &
                          is%wrap%clock(1), is%wrap%hydroState, is%wrap%timeStepInt, &
                          is%wrap%NStateImp(1),is%wrap%NStateExp(1),rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      print*, "End Testing NUOPC_Run"
     
+      
       ! Testing the exported field values ..................
       !call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
       !if (ESMF_STDERRORCHECK(rc)) return

@@ -623,8 +623,8 @@ subroutine output_chrt_NWM(domainId)
          g_orderOut = g_order
          g_zelevOut = g_zelev
       endif
-      print*, "Beheen ascFlag"
-      print*, g_qlinkOut(:,1)
+
+
 
 
       ! Calculate index values based on minimum strahler order to write.
@@ -656,9 +656,6 @@ subroutine output_chrt_NWM(domainId)
       allocate(varMetaInt(2,numPtsOut))
 
       varOutReal(1,:) = PACK(g_qlinkOut(:,1),g_outInd == 1)
-      print*, "Beheen varOutReal"
-      print*, varOutReal(1,:)
-
       varOutReal(2,:) = PACK(g_nudgeOut,g_outInd == 1)
       varOutReal(3,:) = PACK(g_QLateralOut,g_outInd == 1)
       varOutReal(4,:) = PACK(g_velocityOut,g_outInd == 1)

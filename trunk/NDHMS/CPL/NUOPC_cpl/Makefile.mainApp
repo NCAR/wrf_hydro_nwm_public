@@ -61,7 +61,7 @@ MODEL_LIB := ../../lib/libHYDRO.a
 
 MODEL_OBJS := ../../MPP/mpp_land.o ../../Land_models/NoahMP/IO_code/module_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.o ../../Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.o ../../Land_models/NoahMP/Utility_routines/module_date_utilities.o ../../Land_models/NoahMP/Utility_routines/kwm_string_utilities.o ../../Land_models/NoahMP/phys/module_sf_noahmpdrv.o ../../Land_models/NoahMP/phys/module_sf_noahmplsm.o ../../Land_models/NoahMP/phys/module_sf_noahmp_groundwater.o ../../Land_models/NoahMP/phys/module_sf_noahmp_glacier.o ../../Land_models/NoahMP/Utility_routines/module_wrf_utilities.o ../../Land_models/NoahMP/data_structures/state.o ../../Land_models/NoahMP/data_structures/forcing.o ../../Land_models/NoahMP/data_structures/geometry.o ../../Land_models/NoahMP/data_structures/parameters.o ../../OrchestratorLayer/config.o ../../OrchestratorLayer/io_manager.o ../../OrchestratorLayer/orchestrator.o 
 
-CAP_OBJS  := NWM_ESMF_Extensions.o Utility.o atm.o ocn.o esm.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o esmApp.o
+CAP_OBJS  := NWM_ESMF_Extensions.o NWM_ESMF_Utility.o atm.o ocn.o esm.o NWM_NUOPC_Cap.o NWM_NUOPC_Gluecode.o esmApp.o
 
 esmApp: $(MODEL_OBJS) $(CAP_OBJS)
 	@echo ""
@@ -78,8 +78,8 @@ esmApp: $(MODEL_OBJS) $(CAP_OBJS)
 esmApp.o: esm.o
 esm.o: atm.o ocn.o NWM_NUOPC_Macros.h NWM_NUOPC_Cap.o
 NWM_NUOPC_Cap.o: NWM_NUOPC_Gluecode.o NWM_ESMF_Extensions.o NWM_NUOPC_Macros.h
-Utility.o: NWM_NUOPC_Macros.h
-NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o 
+NWM_ESMF_Utility.o: NWM_NUOPC_Macros.h
+NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o NWM_ESMF_Utility.o
 
 # ---------------------------------------------------------------
 

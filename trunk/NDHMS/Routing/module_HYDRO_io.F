@@ -5938,6 +5938,8 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
 #endif
               )
       endif
+      print*,"Beheen my_id: ",my_id, "ncid: ", ncid
+      print*, "Beheen qlink1: ", rt_domain(did)%QLINK(:,1) 
 
       if(nlst(did)%channel_option .eq. 3) then
          call w_rst_crt_nc1(ncid,rt_domain(did)%nlinks,rt_domain(did)%QLINK(:,2),"qlink2" &
