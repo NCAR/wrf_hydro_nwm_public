@@ -108,11 +108,17 @@ module config_base
      character(len=256) :: route_chan_f=""
      character(len=256) :: route_link_f=""
      character(len=256) :: route_lake_f=""
-     logical            :: reservoir_persistence
+     logical            :: reservoir_persistence_usgs
+     logical            :: reservoir_persistence_usace
      character(len=256) :: reservoir_parameter_file=""
-     character(len=256) :: reservoir_timeslice_path=""
+     character(len=256) :: reservoir_usgs_timeslice_path=""
+     character(len=256) :: reservoir_usace_timeslice_path=""
      integer            :: reservoir_observation_lookback_hours = 18
      integer            :: reservoir_observation_update_time_interval_seconds = 86400
+     logical            :: reservoir_rfc_forecasts
+     character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
+     integer            :: reservoir_rfc_forecasts_lookback_hours
+     logical            :: reservoir_type_specified
      character(len=256) :: route_direction_f=""
      character(len=256) :: route_order_f=""
      character(len=256) :: gwbasmskfil =""
@@ -397,20 +403,52 @@ contains
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
-   if(self%reservoir_persistence) then
+   if(self%reservoir_type_specified) then
       if(len(trim(self%reservoir_parameter_file)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_parameter_file for &
-         inputs to persistence type reservoirs.')
+         inputs to reservoirs that are not level pool type.')
       endif
-      if(len(trim(self%reservoir_timeslice_path)) .eq. 0) then
-         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_timeslice_path for &
-         reservoir persistence capability.')
+      if(len(trim(self%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(self%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
+      endif
+   end if
+
+   if(self%reservoir_persistence_usgs) then
+      if(len(trim(self%reservoir_usgs_timeslice_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usgs_timeslice_path for &
+         reservoir USGS persistence capability.')
       endif
       if(len(trim(self%reservoir_parameter_file)) .ne. 0) then
         inquire(file=trim(self%reservoir_parameter_file),exist=fileExists)
         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
     end if
+
+   if(self%reservoir_persistence_usace) then
+      if(len(trim(self%reservoir_usace_timeslice_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usace_timeslice_path for &
+         reservoir USACE persistence capability.')
+      endif
+      if(len(trim(self%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(self%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
+      endif
+    end if
+
+   if(self%reservoir_rfc_forecasts) then
+      if(len(trim(self%reservoir_parameter_file)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_parameter_file for inputs to rfc forecast type reservoirs.')
+      endif
+      if(len(trim(self%reservoir_rfc_forecasts_time_series_path)) .eq. 0) then
+         call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_rfc_forecasts_time_series_path for reservoir rfc forecast capability.')
+      endif
+      if(len(trim(self%reservoir_parameter_file)) .ne. 0) then
+        inquire(file=trim(self%reservoir_parameter_file),exist=fileExists)
+        if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
+      endif
+   end if
+
   end subroutine rt_nlst_check
 
   subroutine init_namelist_rt_field(did)
@@ -431,11 +469,17 @@ contains
     character(len=256) :: route_link_f=""
     logical            :: compound_channel
     character(len=256) :: route_lake_f=""
-    logical            :: reservoir_persistence
+    logical            :: reservoir_persistence_usgs
+    logical            :: reservoir_persistence_usace
     character(len=256) :: reservoir_parameter_file=""
-    character(len=256) :: reservoir_timeslice_path=""
-    integer            :: reservoir_observation_lookback_hours = 18
+    character(len=256) :: reservoir_usgs_timeslice_path=""
+    character(len=256) :: reservoir_usace_timeslice_path=""
+    integer            :: reservoir_observation_lookback_hours = 24
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
+    logical            :: reservoir_rfc_forecasts
+    character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
+    integer            :: reservoir_rfc_forecasts_lookback_hours = 28
+    logical            :: reservoir_type_specified
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
     character(len=256) :: gwbasmskfil =""
@@ -499,10 +543,11 @@ contains
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
          route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
-         reservoir_persistence, reservoir_parameter_file, reservoir_timeslice_path, &
-         reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
-         route_direction_f,route_order_f,gwbasmskfil, geo_finegrid_flnm,&
-         gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
+         reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_usgs_timeslice_path, &
+         reservoir_usace_timeslice_path, reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
+         reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, &
+         reservoir_type_specified, route_direction_f,route_order_f,gwbasmskfil, &
+         geo_finegrid_flnm, gwstrmfil,GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, sys_cpl, &
          order_to_write , rst_typ, rst_bi_in, rst_bi_out, gwsoilcpl, &
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
@@ -535,9 +580,13 @@ contains
     reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
     compound_channel = .FALSE.
     bucket_loss = 0
-    reservoir_persistence = .FALSE.
+    reservoir_persistence_usgs = .FALSE.
+    reservoir_persistence_usace = .FALSE.
     reservoir_observation_lookback_hours = 18
     reservoir_observation_update_time_interval_seconds = 86400
+    reservoir_rfc_forecasts = .FALSE.
+    reservoir_rfc_forecasts_lookback_hours = 24
+    reservoir_type_specified = .FALSE.
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -612,21 +661,22 @@ contains
     nlst(did)%SOLVEG_INITSWC = SOLVEG_INITSWC
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
-    nlst(did)%reservoir_persistence = reservoir_persistence
+    nlst(did)%reservoir_persistence_usgs = reservoir_persistence_usgs
+    nlst(did)%reservoir_persistence_usace = reservoir_persistence_usace
     nlst(did)%reservoir_parameter_file = reservoir_parameter_file
-    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
+    nlst(did)%reservoir_usgs_timeslice_path = reservoir_usgs_timeslice_path
+    nlst(did)%reservoir_usace_timeslice_path = reservoir_usace_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
+    nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+    nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
+    nlst(did)%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
+    nlst(did)%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
 
-  ! If in retrospective mode, set default reservoir_observation_update_time_interval_seconds to one day
-    if ( io_config_outputs .eq. 1 .or. io_config_outputs .eq. 5 ) then
-       nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
-    else
-       nlst(did)%reservoir_observation_update_time_interval_seconds = 1e9 ! default to very large value for forecast modes
-
-       if ( reservoir_observation_update_time_interval_seconds .ne. 1e9 .and. nlst(did)%reservoir_persistence) then
-          print *, "reservoir_observation_update_time_interval_seconds automatically set to 1e9 in all forecast modes."
-       end if
+    if (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts) then
+        reservoir_type_specified = .TRUE.
     end if
+
+    nlst(did)%reservoir_type_specified = reservoir_type_specified
 
     write(nlst(did)%hgrid,'(I1)') igrid
 
@@ -715,11 +765,16 @@ contains
     nlst(did)%route_link_f = route_link_f
     nlst(did)%route_lake_f = route_lake_f
 
-    nlst(did)%reservoir_persistence = reservoir_persistence
+    nlst(did)%reservoir_persistence_usgs = reservoir_persistence_usgs
+    nlst(did)%reservoir_persistence_usace = reservoir_persistence_usace
     nlst(did)%reservoir_parameter_file = reservoir_parameter_file
-    nlst(did)%reservoir_timeslice_path = reservoir_timeslice_path
+    nlst(did)%reservoir_usgs_timeslice_path = reservoir_usgs_timeslice_path
+    nlst(did)%reservoir_usace_timeslice_path = reservoir_usace_timeslice_path
     nlst(did)%reservoir_observation_lookback_hours = reservoir_observation_lookback_hours
     nlst(did)%reservoir_observation_update_time_interval_seconds = reservoir_observation_update_time_interval_seconds
+    nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
+    nlst(did)%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
+    nlst(did)%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
 
     nlst(did)%route_direction_f =  route_direction_f
     nlst(did)%route_order_f =  route_order_f
@@ -826,7 +881,7 @@ contains
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
      integer            :: split_output_count = 1
-     integer            :: khour
+     integer            :: khour = -999
      integer            :: kday = -999
      real               :: zlvl
      character(len=256) :: hrldas_setup_file = " "
@@ -958,8 +1013,19 @@ contains
     noah_lsm%crop_option = crop_option
 
     noah_lsm%split_output_count = split_output_count
+
+    if (kday > 0) then
+        if (khour > 0) then
+            write(*, '("WARNING: Check Namelist: KHOUR and KDAY both defined, KHOUR will take precedence.")')
+            kday = -999
+        else
+            write(*, '("WARNING: KDAY is deprecated and may be removed in a future version, please use KHOUR.")')
+            khour = -999
+        end if
+    end if
+    noah_lsm%kday = kday
     noah_lsm%khour = khour
-    noah_lsm%kday = -999!kday
+
     noah_lsm%zlvl = zlvl
     noah_lsm%hrldas_setup_file = hrldas_setup_file
     noah_lsm%mmf_runoff_file = " "!mmf_runoff_file

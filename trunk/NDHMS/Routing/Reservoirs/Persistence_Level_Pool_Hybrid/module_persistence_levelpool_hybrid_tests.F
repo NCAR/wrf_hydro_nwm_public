@@ -1,9 +1,12 @@
+! This module holds tests for initialization of
+! various attributes of a persistence levelpool
+! hybrid reservoir.
 module module_persistence_levelpool_hybrid_tests
     use module_persistence_levelpool_hybrid
 
 contains
 
-    !Testing
+    ! Testing
     function persistence_levelpool_hybrid_data_info(hybrid_data) result(rv)
         implicit none
         type (persistence_levelpool_hybrid) :: hybrid_data
@@ -156,7 +159,7 @@ contains
     end function persistence_levelpool_hybrid_data_info
 
 
-    ! test to see that each member of the input structure is correctly allocated and readable
+    ! Test to see that each member of the input structure is correctly allocated and readable
     function test_input_persistence_levelpool_hybrid(o) result(rv)
         type (reservoir_input), intent(in) :: o
         logical rv
@@ -193,7 +196,7 @@ contains
 
     end function test_input_persistence_levelpool_hybrid
 
-    ! test to see that each member of the output structure is correctly allocated and readable
+    ! Test to see that each member of the output structure is correctly allocated and readable
     function test_output_persistence_levelpool_hybrid(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
@@ -214,7 +217,7 @@ contains
 
     end function test_output_persistence_levelpool_hybrid
 
-    ! test to see that each member of the state structure is correctly allocated and readable
+    ! Test to see that each member of the state structure is correctly allocated and readable
     function test_persistence_levelpool_hybrid_state(o) result(rv)
         type (hybrid_state_interface), intent(in) :: o
         logical rv
@@ -308,7 +311,7 @@ contains
     end function test_persistence_levelpool_hybrid_state
 
 
-    ! test to see that each member of the properties structure is correctly allocated and readable
+    ! Test to see that each member of the properties structure is correctly allocated and readable
     function test_persistence_levelpool_hybrid_properties(o) result(rv)
         type (hybrid_properties_interface), intent(in) :: o
         logical rv
@@ -353,7 +356,7 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%lake_number
-        if ( o%lake_number .ne. 166758723) then
+        if ( o%lake_number .ne. 402142) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -361,7 +364,7 @@ contains
 
         print *, "Checking read on gage_id"
         print *, o%gage_id
-        if ( o%gage_id .ne. 23432415) then
+        if ( ADJUSTL(trim(o%gage_id)) .ne. '07198000') then
             rv = .false.
             print *, "FAILED"
         end if
@@ -403,7 +406,7 @@ contains
 
 
     ! Levelpool data tests
-    ! test to see that each member of the levelpool input structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool input structure is correctly allocated and readable
     function test_hybrid_levelpool_input(o) result(rv)
         type (reservoir_input), intent(in) :: o
         logical rv
@@ -440,7 +443,7 @@ contains
 
     end function test_hybrid_levelpool_input
 
-    ! test to see that each member of the levelpool output structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool output structure is correctly allocated and readable
     function test_hybrid_levelpool_output(o) result(rv)
         type (reservoir_output), intent(in) :: o
         logical rv
@@ -461,7 +464,7 @@ contains
 
     end function test_hybrid_levelpool_output
 
-    ! test to see that each member of the levelpool state structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool state structure is correctly allocated and readable
     function test_hybrid_levelpool_state(o) result(rv)
         type (hybrid_state_interface), intent(in) :: o
         logical rv
@@ -483,7 +486,7 @@ contains
     end function test_hybrid_levelpool_state
 
 
-    ! test to see that each member of the levelpool properties structure is correctly allocated and readable
+    ! Test to see that each member of the levelpool properties structure is correctly allocated and readable
     function test_hybrid_levelpool_properties(o) result(rv)
         type (hybrid_state_interface), intent(in) :: o
         logical rv
@@ -560,7 +563,7 @@ contains
 
         print *, "Checking read on lake_number"
         print *, o%levelpool_ptr%properties%lake_number
-        if ( o%levelpool_ptr%properties%lake_number .ne. 166758723) then
+        if ( o%levelpool_ptr%properties%lake_number .ne. 402142) then
             rv = .false.
             print *, "FAILED"
         end if

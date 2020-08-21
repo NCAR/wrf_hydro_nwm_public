@@ -19,7 +19,7 @@ implicit none
 
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 11
-integer, parameter :: numLdasVars = 97
+integer, parameter :: numLdasVars = 98
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
@@ -57,14 +57,14 @@ type chrtMeta
    character (len=64), dimension(numChVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChVars) :: units ! Units for each variable.
    character (len=64), dimension(numChVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                  ! the actual data. This was done because time 0
@@ -96,10 +96,12 @@ type chrtMeta
    character (len=64) :: elevLName ! long_name
    character (len=64) :: elevUnits ! units
    character (len=64) :: elevStName ! Standard Name
+
    ! Order variable attributes
    character (len=64) :: orderLName ! long_name
    character (len=64) :: orderStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -133,14 +135,14 @@ type ldasMeta
    character (len=128), dimension(numLdasVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLdasVars) :: units ! Units for each variable.
    integer, dimension(numLdasVars) :: numLev ! Number of levels for each variable.
-   integer*8, dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLdasVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLdasVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLdasVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLdasVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLdasVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLdasVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLdasVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was done because time 0
@@ -181,7 +183,7 @@ type ldasMeta
    integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
-   character (len=128) :: title ! File TITLE
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -206,14 +208,14 @@ type rtDomainMeta
    character (len=64), dimension(numRtDomainVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numRtDomainVars) :: units ! Units for each variable.
    character (len=64), dimension(numRtDomainVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numRtDomainVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numRtDomainVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numRtDomainVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numRtDomainVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numRtDomainVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numRtDomainVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numRtDomainVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                        ! the actual data. This was done because time 0
@@ -253,6 +255,7 @@ type rtDomainMeta
 
    ! Global attributes
    integer :: decimation ! Decimation factor
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -276,14 +279,14 @@ type lakeMeta
    character (len=64), dimension(numLakeVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLakeVars) :: units ! Units for each variable.
    character (len=64), dimension(numLakeVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLakeVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLakeVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLakeVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLakeVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLakeVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLakeVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLakeVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was done because time 0
@@ -306,6 +309,15 @@ type lakeMeta
    character (len=256) :: featureIdLName ! long_name - usually lake COMMON ID
    character (len=256) :: featureIdComment ! Comment attribute
    character (len=64) :: cfRole ! cf_role attribute
+   ! reservoir_type attributes
+   character (len=64) :: reservoirTypeLName ! long_name - usually "reservoir_type"
+   integer, dimension(4) :: reservoirTypeFlagValues ! valid flags attribute
+   character (len=64) :: reservoirTypeFlagMeanings ! flag meanings attribute
+   ! reservoir_assimilated_value attributes
+   character (len=64) :: reservoirAssimilatedValueLName ! long_name - usually "reservoir_assimilated_value, m3 s-1"
+   character (len=64) :: reservoirAssimilatedValueUnits ! units
+   ! reservoir_assimilated_source_file attributes
+   character (len=64) :: reservoirAssimilatedSourceFileLName ! long_name - usually "reservoir_assimilated_source_file"
    ! latitude variable attributes
    character (len=64) :: latLName ! long_name
    character (len=64) :: latUnits ! units
@@ -318,7 +330,9 @@ type lakeMeta
    character (len=64) :: elevLName ! long_name
    character (len=64) :: elevUnits ! units
    character (len=64) :: elevStName ! Standard Name
+   character (len=256) :: elevComment ! Comment
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -346,14 +360,14 @@ type chrtGrdMeta
    character (len=64), dimension(numChGrdVars) :: longName ! longname for each variable
    character (len=64), dimension(numChGrdVars) :: units ! Units for each variable.
    character (len=64), dimension(numChGrdVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChGrdVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChGrdVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChGrdVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChGrdVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChGrdVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChGrdVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChGrdVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChGrdVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChGrdVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                        ! the actual data. This
@@ -395,6 +409,7 @@ type chrtGrdMeta
 
    ! Global attributes
    integer :: decimation ! Decimation factor
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -420,14 +435,14 @@ type lsmMeta
    character (len=64), dimension(numLsmVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numLsmVars) :: units ! Units for each variable.
    integer, dimension(numLsmVars) :: numLev ! Number of levels for each variable.
-   integer*8, dimension(numLsmVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numLsmVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numLsmVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numLsmVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numLsmVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numLsmVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numLsmVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numLsmVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numLsmVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numLsmVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numLsmVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
@@ -468,7 +483,7 @@ type lsmMeta
    integer :: nyRealAtts, nyCharAtts
 
    ! Global attributes
-   character (len=128) :: title ! File TITLE
+   character (len=128) :: title ! file title
    character (len=128) :: initTime ! model_initialization_time attribute
    character (len=128) :: validTime ! model_output_valid_time attribute
    character (len=128) :: conventions ! Conventions string
@@ -491,14 +506,14 @@ type chObsMeta
    character (len=64), dimension(numChObsVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numChObsVars) :: units ! Units for each variable.
    character (len=64), dimension(numChObsVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numChObsVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numChObsVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numChObsVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numChObsVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numChObsVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numChObsVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numChObsVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                  ! the actual data. This was
@@ -535,6 +550,7 @@ type chObsMeta
    character (len=64) :: orderLName ! long_name
    character (len=64) :: orderStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -564,14 +580,14 @@ type gwMeta
    character (len=64), dimension(numGwVars) :: longName  ! Long names for each variable.
    character (len=64), dimension(numGwVars) :: units ! Units for each variable.
    !character (len=64), dimension(numGwVars) :: coordNames ! Coordinate names for each variable.
-   integer*8, dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
-   integer*8, dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: validMinComp ! Valid min (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: validMaxComp ! Valid max (after conversion to integer)
    real*8, dimension(numGwVars) :: validMinDbl ! Valid minimum (before conversion to integer)
    real*8, dimension(numGwVars) :: validMaxDbl ! Valid maximum (before converstion to integer)
-   integer*8, dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: missingComp ! Missing value attribute (after conversion to integer)
    real, dimension(numGwVars) :: missingReal ! Missing value attribute (before conversion to integer)
    real, dimension(numGwVars) :: fillReal ! Fill value (before conversion to integer)
-   integer*8, dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
+   integer(kind=4), dimension(numGwVars) :: fillComp ! Fill value (after conversion to integer)
    integer, dimension(numGwVars) :: outFlag ! 0/1 flag to turn outputting off/on
    integer, dimension(numGwVars) :: timeZeroFlag ! 0/1 flag to either set variable to all NDV values or output
                                                    ! the actual data. This was
@@ -609,6 +625,7 @@ type gwMeta
    !character (len=64) :: elevUnits ! units
    !character (len=64) :: elevStName ! Standard Name
    ! Global attributes
+   character (len=128) :: title ! file title
    character (len=128) :: fType ! featureType attribute
    !character (len=128) :: proj4 ! proj4 attribute
    character (len=128) :: initTime ! model_initialization_time attribute
@@ -678,6 +695,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files
+   chrtOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    chrtOutDict%fType = 'timeSeries'
    chrtOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chrtOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1029,215 +1047,289 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
 
    ! Now establish metadata attributes for variables. ESRI string is defined
    ! above and applies to all gridded variables for LDASOUT.
-   ldasOutDict%varNames(:) = [character(len=64) :: "IVGTYP","ISLTYP","FVEG","LAI","SAI","SWFORC",&
-                               "COSZ","LWFORC","RAINRATE","EMISS","FSA","FIRA",&
-                               "GRDFLX","HFX","LH","ECAN","EDIR","ALBEDO","ETRAN",&
-                               "UGDRNOFF","SFCRNOFF","CANLIQ","CANICE","ZWT","WA",&
-                               "WT","ACCPRCP","ACCECAN","ACCEDIR","ACCETRAN","SAV",&
-                               "TR","EVC","IRC","SHC","IRG","SHG","EVG","GHV","SAG",&
-                               "IRB","SHB","EVB","GHB","TRAD","TG","TV","TAH","TGV",&
-                               "TGB","T2MV","T2MB","Q2MV","Q2MB","EAH","FWET",&
-                               "ZSNSO_SN","SNICE","SNLIQ","SOIL_T","SOIL_W","SNOW_T",&
-                               "SOIL_M","SNOWH","SNEQV","QSNOW","ISNOW","FSNO",&
-                               "ACSNOW","ACSNOM","CM","CH","CHV","CHB","CHLEAF",&
-                               "CHUC","CHV2","CHB2","LFMASS","RTMASS","STMASS",&
-                               "WOOD","STBLCP","FASTCP","NEE","GPP","NPP","PSN",&
-                               "APAR","ACCET","CANWAT","SOILICE","SOILSAT_TOP",&
-                               "SOILSAT","SNOWT_AVG","ALBSND","ALBSNI"]
-   ldasOutDict%longName(:) = [character(len=128) :: "Dominant vegetation category",&
-                              "Dominant soil category",&
-                              "Green Vegetation Fraction",&
-                              "Leaf area index",&
-                              "Stem area index",&
-                              "Shortwave forcing",&
-                              "Cosine of zenith angle",&
-                              "Longwave forcing",&
-                              "Precipitation rate",&
-                              "Grid emissivity",&
-                              "Total absorbed SW radiation",&
-                              "Total net LW radiation to atmosphere",&
-                              "Heat flux into the soil",&
-                              "Total sensible heat to the atmosphere",&
-                              "Total latent heat to the atmosphere",&
-                              "Canopy water evaporation rate",&
-                              "Direct from soil evaporation rate",&
-                              "Surface albedo",&
-                              "Transpiration rate",&
-                              "Accumulated underground runoff",&
-                              "Accumulated surface runoff",&
-                              "Canopy liquid water content",&
-                              "Canopy ice water content",&
-                              "Depth to water table",&
-                              "Water in aquifer",&
-                              "Water in aquifer and saturated soil",&
-                              "Accumulated precip",&
-                              "Accumulated canopy evap",&
-                              "Accumulated direct soil evap",&
-                              "Accumulated transpiration",&
-                              "Solar radiative heat flux absorbed by vegetation",&
-                              "Transpiration heat",&
-                              "Canopy evap heat",&
-                              "Canopy net LW rad",&
-                              "Canopy sensible heat",&
-                              "Ground net LW rad",&
-                              "Ground sensible heat",&
-                              "Ground evap heat",&
-                              "Ground heat flux + to soil vegetated",&
-                              "Solar radiative heat flux absorbed by ground",&
-                              "Net LW rad to atm bare",&
-                              "Sensible heat atm bare",&
-                              "Evaporation heat to atm bare",&
-                              "Ground heat flux + to soil bare",&
-                              "Surface radiative temperature",&
-                              "Ground temperature",&
-                              "Vegetation temperature",&
-                              "Canopy air temperature",&
-                              "Ground surface Temp vegetated",&
-                              "Ground surface Temp bare",&
-                              "2m Air Temp vegetated",&
-                              "2m Air Temp bare",&
-                              "2m mixing ratio vegetated",&
-                              "2m mixing ratio bare",&
-                              "Canopy air vapor pressure",&
-                              "Wetted or snowed fraction of canopy",&
-                              "Snow layer depths from snow surface",&
-                              "Snow layer ice",&
-                              "Snow layer liquid water",&
-                              "soil temperature",&
-                              "liquid volumetric soil moisture",&
-                              "snow temperature",&
-                              "volumetric soil moisture, the dimensionless ratio of water volume (m3) to soil volume (m3)",&
-                              "Snow depth",&
-                              "Snow water equivalent",&
-                              "Snowfall rate",&
-                              "Number of snow layers",&
-                              "Snow-cover fraction on the ground",&
-                              "accumulated snow fall",&
-                              "accumulated melting water out of snow bottom",&
-                              "Momentum drag coefficient",&
-                              "Sensible heat exchange coefficient",&
-                              "Exchange coefficient vegetated",&
-                              "Exchange coefficient bare",&
-                              "Exchange coefficient leaf",&
-                              "Exchange coefficient bare",&
-                              "Exchange coefficient 2-meter vegetated",&
-                              "Exchange coefficient 2-meter bare",&
-                              "Leaf mass",&
-                              "Mass of fine roots",&
-                              "Stem mass",&
-                              "Mass of wood and woody roots",&
-                              "Stable carbon in deep soil",&
-                              "Short-lived carbon in shallow soil",&
-                              "Net ecosystem exchange",&
-                              "Net instantaneous assimilation",&
-                              "Net primary productivity",&
-                              "Total photosynthesis",&
-                              "Photosynthesis active energy by canopy",&
-                              "Accumulated total ET",&
-                              "Total canopy water (liquid + ice)",&
-                              "fraction of soil moisture that is ice",&
-                              "fraction of soil saturation, top 2 layers",&
-                              "fraction of soil saturation, column integrated",&
-                              "average snow temperature (by layer mass)",&
-                              "snowpack albedo, direct", "snowpack albedo, diffuse"]
-   ldasOutDict%units(:) = [character(len=64) :: "category","category","-","-","-",&
-                            "W m-2","-","W m-2","kg m-2s-1",&
-                            "-","W m-2","W m-2","W m-2","W m-2","W m-2","kg m-2s-1","kg m-2s-1","-","kg m-2s-1",&
-                            "mm","mm","mm","mm","m","kg m-2","kg m-2",&
-                            "mm","mm","mm","mm",&
-                            "W m-2","W m-2","W m-2","W m-2","W m-2",&
-                            "W m-2","W m-2","W m-2","W m-2",&
-                            "W m-2","W m-2","W m-2","W m-2","W m-2",&
-                            "K","K","K","K","K","K","K","K",&
-                            "kg/kg","kg/kg","Pa","fraction",&
-                            "m","mm","mm","K","m3 m-3","K","m3 m-3",&
-                            "m","kg m-2","mm s-1","count","1","mm","mm",&
-                            "-","-","m s-1","m s-1","m s-1","m s-1","m s-1","m s-1",&
-                            "g m-2","g m-2","g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2",&
-                            "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2",&
-                            "mm","mm","1","1","1","K","-","-"]
-   ldasOutDict%scaleFactor(:) = [1.0,1.0,0.01,0.1,0.1,0.1,0.01,0.1,0.00001,0.01,&
-                                 0.1,0.1,0.1,0.1,0.1,0.00001,0.00001,0.01,&
-                                 0.00001,0.01,0.001,0.01,0.01,0.00001,0.01,&
-                                 0.01,0.01,0.01,0.01,0.01,0.1,0.1,0.1,0.1,&
-                                 0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,&
-                                 0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.0001,0.0001,&
-                                 0.1,0.01,0.00001,0.01,0.01,0.1,0.01,0.1,0.01,&
-                                 0.0001,0.1,0.00001,1.0,0.001,0.01,0.01,0.00001,&
-                                 0.00001,0.00001,0.00001,0.00001,0.00001,0.00001,&
-                                 0.00001,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,&
-                                 0.01,0.01,0.01,0.01,0.01,0.01,0.001,0.001,0.1,0.01,0.01]
-   ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+   ldasOutDict%varNames(:) = [character(len=64) :: &
+                               "IVGTYP","ISLTYP","FVEG","LAI","SAI", &                   !1-5
+                               "SWFORC","COSZ","LWFORC","RAINRATE","EMISS", &            !6-10
+                               "FSA","FIRA","GRDFLX","HFX","LH", &                       !11-15
+                               "ECAN","EDIR","ALBEDO","ETRAN","UGDRNOFF", &              !16-20
+                               "SFCRNOFF","CANLIQ","CANICE","ZWT","WA", &                !21-25
+                               "WT","ACCPRCP","ACCECAN","ACCEDIR","ACCETRAN", &          !26-30
+                               "SAV","TR","EVC","IRC","SHC", &                           !31-35
+                               "IRG","SHG","EVG","GHV","SAG", &                          !36-40
+                               "IRB","SHB","EVB","GHB","TRAD", &                         !41-45
+                               "TG","TV","TAH","TGV","TGB", &                            !46-50
+                               "T2MV","T2MB","Q2MV","Q2MB","EAH", &                      !51-55
+                               "FWET","ZSNSO_SN","SNICE","SNLIQ","SOIL_T", &             !56-60
+                               "SOIL_W","SNOW_T","SOIL_M","SNOWH","SNEQV", &             !60-65
+                               "QSNOW","ISNOW","FSNO","ACSNOW","ACSNOM", &               !66-70
+                               "CM","CH","CHV","CHB","CHLEAF", &                         !71-75
+                               "CHUC","CHV2","CHB2","LFMASS","RTMASS", &                 !76-80
+                               "STMASS","WOOD","STBLCP","FASTCP","NEE", &                !81-85
+                               "GPP","NPP","PSN","APAR","ACCET", &                       !86-90
+                               "CANWAT","SOILICE","SOILSAT_TOP","SOILSAT","SNOWT_AVG", & !91-95
+                               "ALBSND","ALBSNI","QRAIN"]                                !96-98
+   ldasOutDict%longName(:) = [character(len=128) :: &
+                              "Dominant vegetation category",&          !1
+                              "Dominant soil category",&                !2
+                              "Green Vegetation Fraction",&             !3
+                              "Leaf area index",&                       !4
+                              "Stem area index",&                       !5
+                              "Shortwave forcing",&                     !6
+                              "Cosine of zenith angle",&                !7
+                              "Longwave forcing",&                      !8
+                              "Precipitation rate",&                    !9
+                              "Grid emissivity",&                       !10
+                              "Total absorbed SW radiation",&           !11
+                              "Total net LW radiation to atmosphere",&  !12
+                              "Heat flux into the soil",&               !13
+                              "Total sensible heat to the atmosphere",& !14
+                              "Total latent heat to the atmosphere",&   !15
+                              "Canopy water evaporation rate",&         !16
+                              "Direct from soil evaporation rate",&     !17
+                              "Surface albedo",&                        !18
+                              "Transpiration rate",&                    !19
+                              "Accumulated underground runoff",&        !20
+                              "Accumulated surface runoff",&            !21
+                              "Canopy liquid water content",&           !22
+                              "Canopy ice water content",&              !23
+                              "Depth to water table",&                  !24
+                              "Water in aquifer",&                      !25
+                              "Water in aquifer and saturated soil",&   !26
+                              "Accumulated precip",&                    !27
+                              "Accumulated canopy evap",&               !28
+                              "Accumulated direct soil evap",&          !29
+                              "Accumulated transpiration",&             !30
+                              "Solar radiative heat flux absorbed by vegetation",& !31
+                              "Transpiration heat",&                    !32
+                              "Canopy evap heat",&                      !33
+                              "Canopy net LW rad",&                     !34
+                              "Canopy sensible heat",&                  !35
+                              "Ground net LW rad",&                     !36
+                              "Ground sensible heat",&                  !37
+                              "Ground evap heat",&                      !38
+                              "Ground heat flux + to soil vegetated",&  !39
+                              "Solar radiative heat flux absorbed by ground",& !40
+                              "Net LW rad to atm bare",&                !41
+                              "Sensible heat atm bare",&                !42
+                              "Evaporation heat to atm bare",&          !43
+                              "Ground heat flux + to soil bare",&       !44
+                              "Surface radiative temperature",&         !45
+                              "Ground temperature",&                    !46
+                              "Vegetation temperature",&                !47
+                              "Canopy air temperature",&                !48
+                              "Ground surface Temp vegetated",&         !49
+                              "Ground surface Temp bare",&              !50
+                              "2m Air Temp vegetated",&                 !51
+                              "2m Air Temp bare",&                      !52
+                              "2m mixing ratio vegetated",&             !53
+                              "2m mixing ratio bare",&                  !54
+                              "Canopy air vapor pressure",&             !55
+                              "Wetted or snowed fraction of canopy",&   !56
+                              "Snow layer depths from snow surface",&   !57
+                              "Snow layer ice",&                        !58
+                              "Snow layer liquid water",&               !59
+                              "soil temperature",&                      !60
+                              "liquid volumetric soil moisture",&       !61
+                              "snow temperature",&                      !62
+                              "volumetric soil moisture, the dimensionless ratio of water volume (m3) to soil volume (m3)",& !63
+                              "Snow depth",&                            !64
+                              "Snow water equivalent",&                 !65
+                              "Snowfall rate on the ground",&           !66
+                              "Number of snow layers",&                 !67
+                              "Snow-cover fraction on the ground",&     !68
+                              "accumulated snow fall",&                 !69
+                              "accumulated melting water out of snow bottom",& !70
+                              "Momentum drag coefficient",&             !71
+                              "Sensible heat exchange coefficient",&    !72
+                              "Exchange coefficient vegetated",&        !73
+                              "Exchange coefficient bare",&             !74
+                              "Exchange coefficient leaf",&             !75
+                              "Exchange coefficient bare",&             !76
+                              "Exchange coefficient 2-meter vegetated",&!77
+                              "Exchange coefficient 2-meter bare",&     !78
+                              "Leaf mass",&                             !79
+                              "Mass of fine roots",&                    !80
+                              "Stem mass",&                             !81
+                              "Mass of wood and woody roots",&          !82
+                              "Stable carbon in deep soil",&            !83
+                              "Short-lived carbon in shallow soil",&    !84
+                              "Net ecosystem exchange",&                !85
+                              "Net instantaneous assimilation",&        !86
+                              "Net primary productivity",&              !87
+                              "Total photosynthesis",&                  !88
+                              "Photosynthesis active energy by canopy",&!89
+                              "Accumulated total ET",&                  !90
+                              "Total canopy water (liquid + ice)",&     !91
+                              "fraction of soil moisture that is ice",& !92
+                              "fraction of soil saturation, top 2 layers",& !93
+                              "fraction of soil saturation, column integrated",& !94
+                              "average snow temperature (by layer mass)",& !95
+                              "snowpack albedo, direct",&               !96
+                              "snowpack albedo, diffuse",&              !97
+                              "Rainfall rate on the ground"]            !98
+   ldasOutDict%units(:) = [character(len=64) :: &
+                            "category","category","-","-","-", &               !1-5
+                            "W m-2","-","W m-2","kg m-2 s-1","-", &            !6-10
+                            "W m-2","W m-2","W m-2","W m-2","W m-2", &         !11-15
+                            "kg m-2 s-1","kg m-2 s-1","-","kg m-2 s-1","mm", & !16-20
+                            "mm","mm","mm","m","kg m-2", &                     !21-25
+                            "kg m-2","mm","mm","mm","mm", &                    !26-30
+                            "W m-2","W m-2","W m-2","W m-2","W m-2", &         !31-35
+                            "W m-2","W m-2","W m-2","W m-2","W m-2", &         !36-40
+                            "W m-2","W m-2","W m-2","W m-2","K", &             !41-45
+                            "K","K","K","K","K", &                             !46-50
+                            "K","K","kg/kg","kg/kg","Pa", &                    !51-55
+                            "fraction","m","mm","mm","K", &                    !56-60
+                            "m3 m-3","K","m3 m-3","m","kg m-2", &              !61-65
+                            "mm s-1","count","1","mm","mm", &                  !66-70
+                            "-","-","m s-1","m s-1","m s-1", &                 !71-75
+                            "m s-1","m s-1","m s-1","g m-2","g m-2", &         !76-80
+                            "g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2", &  !81-85
+                            "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2","mm", & !86-90
+                            "mm","1","1","1","K", &                            !91-95
+                            "-","-","mm s-1"]                                  !96-98
+   ldasOutDict%scaleFactor(:) = [1.0, 1.0, 0.01, 0.1, 0.1, &                   !1-5
+                                 0.1, 0.01, 0.1, 0.00001, 0.01, &              !6-10
+                                 0.1, 0.1, 0.1, 0.1, 0.1, &                    !11-15
+                                 0.00001, 0.00001, 0.01, 0.00001, 0.01, &      !16-20
+                                 0.001, 0.01, 0.01, 0.00001, 0.01, &           !21-25
+                                 0.01, 0.01, 0.01, 0.01, 0.01, &               !26-30
+                                 0.1, 0.1, 0.1, 0.1, 0.1, &                    !31-35
+                                 0.1, 0.1, 0.1, 0.1, 0.1, &                    !36-40
+                                 0.1, 0.1, 0.1, 0.1, 0.1, &                    !41-45
+                                 0.1, 0.1, 0.1, 0.1, 0.1, &                    !46-50
+                                 0.1, 0.1, 0.0001, 0.0001, 0.1, &              !51-55
+                                 0.01, 0.00001, 0.01, 0.01, 0.1, &             !56-60
+                                 0.01, 0.1, 0.01, 0.0001, 0.1, &               !61-65
+                                 0.00001, 1.0, 0.001, 0.01, 0.01, &            !66-70
+                                 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, &!71-75
+                                 0.00001, 0.00001, 0.00001, 0.01, 0.01, &      !76-80
+                                 0.01, 0.01, 0.01, 0.01, 0.01, &               !81-85
+                                 0.01, 0.01, 0.01, 0.01, 0.01, &               !86-90
+                                 0.01, 0.01, 0.001, 0.001, 0.1, &              !91-95
+                                 0.01, 0.01, 0.00001]                          !96-98
+   ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !1-10
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !11-20
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !21-30
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !31-40
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !41-50
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !51-60
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !61-70
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !71-80
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !81-90
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]           !91-98
    ! Note that output flags will be set in the the output routine, and will vary
    ! by the IOC flag specified in hydro.namelist.
-   ldasOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,&
-                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-   ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-   ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,4,&
-                            4,3,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,&
-                            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2]
-   ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   ldasOutDict%validMinDbl(:) = [ &
-        0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, -1.0d0, -1500.0d0, 0.0d0, 0.0d0, &
-        -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -100.0d0, -100.0d0, 0.0d0, &
-        -100.0d0, -100.0d0, 0.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -100.0d0, &
-        -100.0d0, -100.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, &
-        -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, &
-        -1500.0d0, -1500.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
-        0.0d0, -1000.0d0, 0.0d0, -100.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
-        0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, -5.0d0, -5.0d0, -5.0d0, -5.0d0, -5.0d0, &
-        -5.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &
-        0.0d0, 0.0d0, 0.0d0, -1000.0d0, -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0 &
-   ]
-   ldasOutDict%validMaxDbl(:) = [ &
-        100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, 3000.0d0, 1.0d0, 1500.0d0, 100.0d0, 1.0d0, &
-        1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 100.0d0, 100.0d0, 1.0d0, 100.0d0, &
-        100000.0d0, 100000.0d0, 30000.0d0, 30000.0d0, 10.0d0, 10000.0d0, 10000.0d0, 1.0D+6, &
-        1.0D+6, 1.0D+6, 1.0D+6, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &
-        1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 400.0d0, &
-        400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, 1.0d0, 1.0d0, 100000.0d0, &
-        1.0d0, 100.0d0, 100000.0d0, 100000.0d0, 400.0d0, 1.0d0, 400.0d0, 1.0d0, 100.0d0, 100000.0d0, &
-        100.0d0, 10.0d0, 1.0d0, 100000.0d0, 100000.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, &
-        5.0d0, 5.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 5000.0d0, 5000.0d0, 1000.0d0, 1000.0d0, &
-        1000.0d0, 1000.0d0, 1000.0d0, 1.0D+6, 30000.0d0, 1.0d0, 1.0d0, 1.0d0, 400.0d0, 1.0d0, 1.0d0 &
-   ]
+   ldasOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0, & !1-10
+                             1,0,0,0,0,0,0,0,0,0, & !11-20
+                             0,0,0,0,0,0,0,0,0,0, & !21-30
+                             0,0,0,0,0,0,0,0,0,0, & !31-40
+                             0,0,0,0,0,0,0,0,0,0, & !41-50
+                             0,0,0,0,0,0,0,0,0,0, & !51-60
+                             0,0,0,0,0,0,0,0,0,0, & !61-70
+                             0,0,0,0,0,0,0,0,0,0, & !71-80
+                             0,0,0,0,0,0,0,0,0,0, & !81-90
+                             0,0,0,0,0,0,0,0]       !91-98
+   ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1, & !1-10
+                                  1,1,1,1,1,1,1,1,1,1, & !11-20
+                                  1,1,1,1,1,1,1,1,1,1, & !21-30
+                                  1,1,1,1,1,1,1,1,1,1, & !31-40
+                                  1,1,1,1,1,1,1,1,1,1, & !41-50
+                                  1,1,1,1,1,1,1,1,1,1, & !51-60
+                                  1,1,1,1,1,1,1,1,1,1, & !61-70
+                                  1,1,1,1,1,1,1,1,1,1, & !71-80
+                                  1,1,1,1,1,1,1,1,1,1, & !81-90
+                                  1,1,1,1,1,1,1,1]       !91-98
+   ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1, &  !1-10
+                            1,1,1,1,1,1,1,1,1,1, &  !11-20
+                            1,1,1,1,1,1,1,1,1,1, &  !21-30
+                            1,1,1,1,1,1,1,1,1,1, &  !31-40
+                            1,1,1,1,1,1,1,1,1,1, &  !41-50
+                            1,1,1,1,1,1,3,3,3,4, &  !51-60
+                            4,3,4,1,1,1,1,1,1,1, &  !61-70
+                            1,1,1,1,1,1,1,1,1,1, &  !71-80
+                            1,1,1,1,1,1,1,1,1,1, &  !81-90
+                            1,1,1,1,1,2,2,1]        !91-98
+   ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !11-15
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !16-20
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !21-25
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !26-30
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !31-35
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !36-40
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !41-45
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !46-50
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !51-55
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !56-60
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !61-65
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !66-70
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !71-75
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !76-80
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
+                                 -9999.0,-9999.0,-9999.0]                  !96-98
+   ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !11-15
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !16-20
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !21-25
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !26-30
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !31-35
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !36-40
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !41-45
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !46-50
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !51-55
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !56-60
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !61-65
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !66-70
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !71-75
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !76-80
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
+                              -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
+                              -9999.0,-9999.0,-9999.0]                   !96-98
+   ldasOutDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !1-5
+                                 -1000.0d0, -1.0d0, -1500.0d0, 0.0d0, 0.0d0, &            !6-10
+                                 -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, & !11-15
+                                 -100.0d0, -100.0d0, 0.0d0, -100.0d0, -100.0d0, &         !16-20
+                                 0.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, &                   !21-25
+                                 0.0d0, 0.0d0, -100.0d0, -100.0d0, -100.0d0, &            !26-30
+                                 -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, & !31-35
+                                 -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, & !36-40
+                                 -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, 0.0d0, &     !41-45
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !46-50
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, &                 !51-55
+                                 0.0d0, -100.0d0, 0.0d0, 0.0d0, 0.0d0, &                  !56-60
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !61-65
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !66-70
+                                 -5.0d0, -5.0d0, -5.0d0, -5.0d0, -5.0d0, &                !71-75
+                                 -5.0d0, -5.0d0, -5.0d0, 0.0d0, 0.0d0, &                  !76-80
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !81-85
+                                 0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, &                 !86-90
+                                 -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                    !91-95
+                                 0.0d0, 0.0d0, 0.0d0]                                     !96-98
+   ldasOutDict%validMaxDbl(:) = [100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, &             !1-5
+                                 3000.0d0, 1.0d0, 1500.0d0, 100.0d0, 1.0d0, &           !6-10
+                                 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &    !11-15
+                                 100.0d0, 100.0d0, 1.0d0, 100.0d0, 100000.0d0, &        !16-20
+                                 100000.0d0, 30000.0d0, 30000.0d0, 10.0d0, 10000.0d0, & !21-25
+                                 10000.0d0, 1.0D+6, 1.0D+6, 1.0D+6, 1.0D+6, &           !26-30
+                                 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &    !31-35
+                                 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &    !36-40
+                                 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 400.0d0, &     !41-45
+                                 400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, &         !46-50
+                                 400.0d0, 400.0d0, 1.0d0, 1.0d0, 100000.0d0, &          !51-55
+                                 1.0d0, 100.0d0, 100000.0d0, 100000.0d0, 400.0d0, &     !56-60
+                                 1.0d0, 400.0d0, 1.0d0, 100.0d0, 100000.0d0, &          !61-65
+                                 100.0d0, 10.0d0, 1.0d0, 100000.0d0, 100000.0d0, &      !66-70
+                                 5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, &                   !71-76
+                                 5.0d0, 5.0d0, 5.0d0, 1000.0d0, 1000.0d0, &             !76-80
+                                 1000.0d0, 1000.0d0, 5000.0d0, 5000.0d0, 1000.0d0, &    !81-85
+                                 1000.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 1.0D+6, &      !86-90
+                                 30000.0d0, 1.0d0, 1.0d0, 1.0d0, 400.0d0, &             !91-95
+                                 1.0d0, 1.0d0, 100.0d0]                                 !96-98
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
@@ -1283,6 +1375,7 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    rtDomainDict%modelNdv = -9.E15
 
    ! First establish global attributes.
+   rtDomainDict%title = "OUTPUT FROM " // trim(get_model_version())
    rtDomainDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    rtDomainDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    rtDomainDict%decimation = 1
@@ -1555,8 +1648,8 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
 
    rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
                                "QBDRYRT","SOIL_M"]
-   rtDomainDict%longName(:) = [character(len=64) :: "water table depth","surface head",&
-                               "channel inflow",&
+   rtDomainDict%longName(:) = [character(len=64) :: "depth to saturation, rounded to highest saturated layer",&
+                               "surface head","channel inflow",&
                                "accumulated value of the boundary flux, + into domain - out of domain",&
                                "volumetric soil moisture"]
    rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm","m3 m-3"]
@@ -1607,6 +1700,7 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    !            which means meta-data standards have yet to be determined
    !            for these variables. Fill in if it's desired to output....
    ! First establish global attributes for the channel output files
+   lakeOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    lakeOutDict%fType = 'timeSeries'
    lakeOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    lakeOutDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -1660,13 +1754,27 @@ subroutine initLakeDict(lakeOutDict,procId,diagFlag)
    ! Establish elevation variable attributes
    lakeOutDict%elevLName = "Water Surface Elevation"
    lakeOutDict%elevUnits = "m" ! meters
+   lakeOutDict%elevComment = "If reservoir_type = 4, " &
+       // "water_sfc_elev is invalid because this value corresponds only to level pool"
 
    ! Establish feature_id attributes
    lakeOutDict%featureIdLName = "Lake ComID"
    lakeOutDict%featureIdComment = "ComID from NHDPlusV2 waterbody layer"
    lakeOutDict%cfRole = 'timeseries_id'
 
-   ! Esatablish lat/lon attributes
+   ! Establish reservoir_type attributes
+   lakeOutDict%reservoirTypeLName = "reservoir_type"
+   lakeOutDict%reservoirTypeFlagValues = [1,2,3,4]
+   lakeOutDict%reservoirTypeFlagMeanings = "Level_pool USGS-persistence USACE-persistence RFC-forecasts"
+
+   ! Establish reservoir_assimilated_value attributes
+   lakeOutDict%reservoirAssimilatedValueLName = "reservoir_assimilated_value"
+   lakeOutDict%reservoirAssimilatedValueUnits = "m3 s-1"
+
+   ! Establish reservoir_assimilated_source_file attributes
+   lakeOutDict%reservoirAssimilatedSourceFileLName= "reservoir_assimilated_source_file"
+
+  ! Esatablish lat/lon attributes
    lakeOutDict%latLName = "Lake latitude"
    lakeOutDict%latUnits = "degrees_north"
    lakeOutDict%latStName = "latitude"
@@ -1730,6 +1838,7 @@ subroutine initChrtGrdDict(chrtGrdDict,procId,diagFlag)
    chrtGrdDict%modelNdv = -9.E15
 
    ! First establish global attributes.
+   chrtGrdDict%title = "OUTPUT FROM " // trim(get_model_version())
    chrtGrdDict%initTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    chrtGrdDict%validTime = "1970-01-01_00:00:00" ! This will be calculated in I/O code.
    chrtGrdDict%decimation = 1
@@ -2385,6 +2494,7 @@ subroutine initChanObsDict(chObsDict,diagFlag,procId)
       endif
    endif
 
+   chObsDict%title = "OUTPUT FROM " // trim(get_model_version())
    chObsDict%fType = 'timeSeries'
    chObsDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
    chObsDict%validTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code
@@ -2464,6 +2574,7 @@ subroutine initGwDict(gwOutDict)
 
    gwOutDict%modelNdv = -9.E15
 
+   gwOutDict%title = "OUTPUT FROM " // trim(get_model_version())
    gwOutDict%fType = 'timeSeries'
    !gwOutDict%proj4 = '+proj=longlat +datum=NAD83 +no_defs'
    gwOutDict%initTime = '1970-01-01_00:00:00' ! This will be calculated in I/O code

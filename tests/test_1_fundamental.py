@@ -8,6 +8,7 @@ import warnings
 import pandas as pd
 import pytest
 import wrfhydropy
+import xarray as xr
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import wait_job, print_diffs
@@ -292,7 +293,10 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
         # Hydro: Use actual time listed in meta data, not filename or positional list index
         # JLM: seems like these loops can be replaced with a pathlib.Path.glob(), the loop is confusing.
         for restart_file in candidate_sim_expected.output.restart_hydro:
-            restart_time = restart_file.open().Restart_Time
+            if isinstance(restart_file, pathlib.Path):
+                restart_time = xr.open_dataset(restart_file).Restart_Time
+            else:
+                restart_time = restart_file.open().Restart_Time  # backwards compatible wrfhydropy
             restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
             if restart_time == restart_job.model_start_time:
                 candidate_hydro_restart_file = pathlib.Path(restart_file.name)
@@ -303,7 +307,10 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
 
         # LSM: Use actual time listed in meta data, not filename or positional list index
         for restart_file in candidate_sim_expected.output.restart_lsm:
-            restart_time = restart_file.open().Times[0]
+            if isinstance(restart_file, pathlib.Path):
+                restart_time = xr.open_dataset(restart_file).Times[0]
+            else:
+                restart_time = restart_file.open().Times[0]  # backwards compatible wrfhydropy
             restart_time = restart_time.astype(str).item(0)
             restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
             if restart_time == restart_job.model_start_time:
@@ -316,7 +323,10 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
         # Nudging: Use actual time listed in meta data, not filename or positional list index
         if candidate_sim_expected.output.restart_nudging is not None:
             for restart_file in candidate_sim_expected.output.restart_nudging:
-                restart_time = restart_file.open().modelTimeAtOutput
+                if isinstance(restart_file, pathlib.Path):
+                    restart_time = xr.open_dataset(restart_file).modelTimeAtOutput
+                else:
+                    restart_time = restart_file.open().modelTimeAtOutput  # backwards compatible wrfhydropy
                 restart_time = pd.to_datetime(restart_time, format='%Y-%m-%d_%H:%M:%S')
                 if restart_time == restart_job.model_start_time:
                     candidate_nudging_restart_file = pathlib.Path(restart_file.name)

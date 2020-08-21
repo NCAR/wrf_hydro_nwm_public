@@ -23,7 +23,8 @@ module module_persistence_levelpool_hybrid
                                           create_hybrid_diagnostic_log_file, &
                                           log_hybrid_diagnostic_data
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
-    use module_reservoir_read_timeslice_data, only: timeslice_data
+    use module_reservoir_read_timeslice_data, only: usgs_timeslice_data, usace_timeslice_data, timeslice_data_type
+    use module_hydro_stop, only: HYDRO_stop
     implicit none
 
     ! Extend/derive hybrid type from the abstract base
@@ -34,6 +35,7 @@ module module_persistence_levelpool_hybrid
         ! held by a level pool reservoir object.
         type (hybrid_properties_interface), pointer :: properties => null()
         type (hybrid_state_interface), pointer :: state => null()
+        type (timeslice_data_type), pointer :: timeslice_data => null()
 
         logical :: pointer_allocation_guard = .false.
 
@@ -58,8 +60,8 @@ contains
         lake_area, weir_elevation, weir_coeffecient, &
         weir_length, dam_length, orifice_elevation, orifice_coefficient, &
         orifice_area, lake_max_water_elevation, initial_fractional_depth, &
-        lake_number, persistence_parameter_file, start_date, &
-        timeslice_path, observation_lookback_hours, &
+        lake_number, reservoir_type, reservoir_parameter_file, start_date, &
+        usgs_timeslice_path, usace_timeslice_path, observation_lookback_hours, &
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
@@ -75,30 +77,59 @@ contains
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
         integer, intent(in)    :: lake_number               ! lake number
-        character(len=*),   intent(in) :: persistence_parameter_file
+        integer, intent(in)    :: reservoir_type            ! reservoir type
+        character(len=*),   intent(in) :: reservoir_parameter_file
         character(len=19),  intent(in) :: start_date
-        character(len=256), intent(in) :: timeslice_path
+        character(len=256), intent(in) :: usgs_timeslice_path
+        character(len=256), intent(in) :: usace_timeslice_path
         integer,            intent(in) :: observation_lookback_hours
         integer,            intent(in) :: observation_update_time_interval_seconds
         character(len=15)              :: lake_number_string
+        character(len=15)              :: reservoir_type_string
+
 
 #ifdef RESERVOIR_D
         ! Create diagnostic log file only for development/debugging purposes
         call create_hybrid_diagnostic_log_file(lake_number)
 #endif
 
-        ! Call to initialize read timeslice data object. This object is a singleton,
-        ! so if another reservoir has already initialized the object, it will return
-        ! immediately.
-        call timeslice_data%init(start_date, &
-            timeslice_path, persistence_parameter_file, observation_lookback_hours)
-
         if (this%pointer_allocation_guard .eqv. .false. ) then
+
+            ! Call to initialize timeslice data object. This object is a singleton for either
+            ! USGS (U.S. Geological Survey) or USACE (U.S. Army Corps of Engineers) data source,
+            ! so if another reservoir has already initialized the object of a particular data
+            ! source, it will return immediately.
+            if (reservoir_type == 2) then
+                call usgs_timeslice_data%init(start_date, usgs_timeslice_path, &
+                reservoir_parameter_file, "usgs", observation_lookback_hours)
+
+                ! Assign pointer to usgs_timeslice_data object
+                this%timeslice_data=>usgs_timeslice_data
+
+            else if (reservoir_type == 3) then
+                call usace_timeslice_data%init(start_date, usace_timeslice_path, &
+                reservoir_parameter_file, "usace", observation_lookback_hours)
+
+                ! Assign pointer to usace_timeslice_data object
+                this%timeslice_data=>usace_timeslice_data
+
+            else
+                ! Call hydro_stop if reservoir_type is not USGS or USACE because the
+                ! data source is not available.
+                write(lake_number_string, "(I15)") lake_number
+                write(reservoir_type_string, "(I15)") reservoir_type
+                call hydro_stop("ERROR: Incorrect reservoir type for reservoir " // trim(ADJUSTL(lake_number_string)) // &
+                ". Expected reservoir type 2 or 3 and instead received reservoir type "  &
+                // trim(ADJUSTL(reservoir_type_string)) // "." )
+            end if
+
             ! try to allocate input
             allocate ( this%input )
             if ( .not. associated(this%input) ) then
-                ! if the input structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid input structure"
+                ! if the input structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid input structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the input structure
                 call this%input%init()
@@ -107,8 +138,10 @@ contains
             ! try to allocate output
             allocate ( this%output )
             if ( .not. associated(this%output) ) then
-                ! if the output structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid output structure"
+                ! if the output structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid output structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize the output structure
                 call this%output%init()
@@ -117,40 +150,46 @@ contains
             ! try to allocate properties
             allocate ( this%properties )
             if ( .not. associated(this%properties) ) then
-                ! if the properties structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid properties structure"
+                ! if the properties structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid properties structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid properties
                 call this%properties%init(lake_area, lake_max_water_elevation, orifice_elevation, lake_number, &
-                observation_lookback_hours, observation_update_time_interval_seconds, persistence_parameter_file)
+                reservoir_type, observation_lookback_hours, observation_update_time_interval_seconds, &
+                reservoir_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 
             ! try to allocate state
             allocate ( this%state )
             if ( .not. associated(this%state) ) then
-                ! if the state structure could not be created write an error
-                write(0,*) "Failure to allocate hybrid state structure"
+                ! if the state structure could not be created, call hydro_stop.
+                write(lake_number_string, "(I15)") lake_number
+                call hydro_stop("ERROR: Failure to allocate hybrid state structure for reservoir " &
+                // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize hybrid state
-                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
+                call this%state%init(water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, &
+                initial_fractional_depth, reservoir_type)
             end if
             this%pointer_allocation_guard = .true.
 
             ! Initialize persistence weight index to be out of bounds of the persistence weights array
             this%state%persistence_weight_index = SIZE(this%properties%persistence_weighted_coefficients) + 1
 
-            ! Call hydro stop if the initial storage is greater than max storage or less than zero.
+            ! Output warning if the initial storage is greater than max storage or less than zero.
             if (this%state%current_storage > this%properties%max_storage) then
                 this%state%current_storage = this%properties%max_storage
                 write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, initial storage exceeds max storage for reservoir ", lake_number_string, &
+                write(log_warning,*) "WARNING: initial storage exceeds max storage for reservoir ", lake_number_string, &
                 ". Setting initial storage to max storage."
 
             else if (this%state%current_storage < this%properties%min_storage) then
                 this%state%current_storage = this%properties%min_storage
                 write(lake_number_string, "(I15)") lake_number
-                write(log_warning,*) "Warning, initial storage is less than zero for reservoir ", lake_number_string, &
+                write(log_warning,*) "WARNING: initial storage is less than zero for reservoir ", lake_number_string, &
                 ". Setting initial storage to zero."
 
             end if
@@ -164,7 +203,6 @@ contains
             orifice_coefficient, orifice_area, lake_max_water_elevation, lake_number)
 
         end if
-
     end subroutine hybrid_init
 
 
@@ -177,7 +215,8 @@ contains
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
+        assimilated_value, assimilated_source_file)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -186,6 +225,9 @@ contains
         real, intent(inout) :: water_elevation          ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
+        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+        real, intent(out)   :: assimilated_value        ! value assimilated from observation
+        character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
         real                :: delta_storage            ! timestep change in storage (cubic meters)
         real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
@@ -221,23 +263,26 @@ contains
 
         local_water_elevation = this%state%water_elevation
 
-        ! If update time to read new timeslice gage discharges. In forecast modes, the update time automatically is set to 1,000,000
-        ! to ensure that gage discharges are only read at the first timestep. For analysis runs, a timeslice update time is set as a
-        ! namelist parameter. A typical update time for an analysis run would be 3600 seconds (1 hour), at which time new observations would
-        ! be retrieved. The first reservoir for each processor to reach an update time will call the function to read a new timeslice file,
-        ! and these timeslice discharges will be held in memory for the subsequent reservoirs to use at that timestep.
+        ! If update time to read new timeslice gage discharges. In forecast modes, the update time automatically is set to
+        ! 1,000,000 to ensure that gage discharges are only read at the first timestep. For analysis runs, a timeslice
+        ! update time is set as a namelist parameter. A typical update time for an analysis run would be 3600 seconds
+        ! (1 hour), at which time new observations would be retrieved. The first reservoir for each processor to reach an
+        ! update time will call the function to read a new timeslice file, and these timeslice discharges will be held in
+        ! memory for the subsequent reservoirs to use at that timestep.
         if (this%state%current_time >= this%state%timeslice_update_time) then
 
             ! Read new timeslice gage discharges
-            call timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
-            this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
+            call this%timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
+            this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge, &
+            this%state%assimilated_source_file)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
             ! the weight update logic to set the persistence weight to 0.0. Therefore, only levelpool calculations will be used.
             if (this%state%gage_discharge < 0.0) then
 
-                ! If at weight update time, then increment persistence weight index. Otherwise, continue using previous persistence weight index
+                ! If at weight update time, then increment persistence weight index.
+                ! Otherwise, continue using previous persistence weight index.
                 if (this%state%current_time >= this%state%weight_update_time) then
                     ! Increment weight index
                     this%state%persistence_weight_index = this%state%persistence_weight_index + 1
@@ -259,14 +304,17 @@ contains
                 ! Set persisted outflow to gage discharge
                 this%state%persisted_outflow = this%state%gage_discharge
 
+                ! Set assimilated value to gage discharge
+                this%state%assimilated_value = this%state%gage_discharge
+
                 ! Start persistence weight index at 1
                 this%state%persistence_weight_index = 1
 
                 ! Grab first persistence weight at index 1 from array
                 this%state%persistence_current_weight = this%properties%persistence_weighted_coefficients(this%state%persistence_weight_index)
 
-                ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is 24 hours, and the gage
-                ! discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
+                ! Set weight update time offset by how long back a timeslice discharge was read. For instance, if the weight update interval is
+                ! 24 hours, and the gage discharge was read 2 hours back, then the weight update time will be set to 22 hours after the current time.
                 this%state%weight_update_time = this%state%current_time + this%properties%weight_update_time_interval - gage_lookback_seconds
 
             end if
@@ -309,7 +357,25 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period)
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
+        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
+
+        ! If the levelpool weight is within epsilon of 1.0
+        if (this%state%levelpool_current_weight .ge. 1.0 - epsilon(1.0)) then
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+            ! Set the assimilated_value to sentinel, -9999.0
+            this%state%assimilated_value = -9999.0
+
+            ! Set the assimilated_source_file to empty string
+            this%state%assimilated_source_file = ""
+        else
+
+            ! Set dynamic_reservoir_type to given USGS or USACE type
+            this%state%dynamic_reservoir_type = this%properties%reservoir_type
+        end if
 
         ! Calculate outflow weighted between persistence and levelpool
         this%output%outflow = this%state%persistence_current_weight &
@@ -328,6 +394,15 @@ contains
         ! If max storage has been reached, release greater of persistence or levelpool
         if (max_storage_reached .and. this%output%outflow < levelpool_outflow) then
             this%output%outflow = levelpool_outflow
+
+            ! Set dynamic_reservoir_type to levelpool type
+            this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+            ! Set the assimilated_value to sentinel, -9999.0
+            this%state%assimilated_value = -9999.0
+
+            ! Set the assimilated_source_file to empty string
+            this%state%assimilated_source_file = ""
         end if
 
         ! Calculate change in storage
@@ -348,6 +423,15 @@ contains
 
         ! Update water_elevation variable returned from this subroutine
         water_elevation = this%state%water_elevation
+
+        ! Update the dynamic_reservoir_type returned from this subroutine
+        dynamic_reservoir_type = this%state%dynamic_reservoir_type
+
+        ! Update the assimilated_value returned from this subroutine
+        assimilated_value = this%state%assimilated_value
+
+        ! Update the assimilated_source_file returned from this subroutine
+        assimilated_source_file = this%state%assimilated_source_file
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)

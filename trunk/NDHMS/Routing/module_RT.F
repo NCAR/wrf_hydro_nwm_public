@@ -38,6 +38,7 @@ MODULE module_Routing
    use module_UDMAP, only: LNUMRSL, LUDRSL, UDMP_ini
    use module_levelpool, only: levelpool
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
+   use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
 
    IMPLICIT NONE
@@ -369,6 +370,9 @@ CONTAINS
 
         allocate ( rt_domain(did)%reservoirs(NLAKES) )    ! allocate array of pointers to reservoirs
         allocate ( rt_domain(did)%reservoir_type(NLAKES) )        ! allocate array to specify type of reservoir
+        allocate ( rt_domain(did)%final_reservoir_type(NLAKES) )  ! allocate array to specify final type of reservoir
+        allocate ( rt_domain(did)%reservoir_assimilated_value(NLAKES) )  ! allocate array to specify assimilated value to reservoir discharge
+        allocate ( rt_domain(did)%reservoir_assimilated_source_file(NLAKES) )  ! allocate array to specify assimilated source file
         allocate( rt_domain(did)%LAKEIDM(NLAKES) )
         allocate( rt_domain(did)%HRZAREA(NLAKES) )
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
@@ -392,6 +396,9 @@ CONTAINS
          rt_domain(did)%ORIFICEA = 0.0
          rt_domain(did)%ORIFICEE = 0.0
          rt_domain(did)%reservoir_type = 1
+         rt_domain(did)%final_reservoir_type = 1
+         rt_domain(did)%reservoir_assimilated_value = -9999.0
+         rt_domain(did)%reservoir_assimilated_source_file = repeat(char(0), 256)
      endif
 
 
@@ -734,7 +741,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
              rt_domain(did)%ORIFICEC,     rt_domain(did)%ORIFICEA, &
              rt_domain(did)%ORIFICEE,                           &
-             nlst(did)%reservoir_persistence, rt_domain(did)%reservoir_type, &
+             nlst(did)%reservoir_type_specified, rt_domain(did)%reservoir_type, &
              nlst(did)%reservoir_parameter_file,    &
              rt_domain(did)%LATLAKE,      rt_domain(did)%LONLAKE, &
              rt_domain(did)%ELEVLAKE,     rt_domain(did)%overland%properties%distance_to_neighbor, &
@@ -779,9 +786,9 @@ subroutine LandRT_ini(did)
            rt_domain(did)%DAML,                                     &
            rt_domain(did)%ORIFICEC,      rt_domain(did)%ORIFICEA,   &
            rt_domain(did)%ORIFICEE,                                 &
-           nlst(did)%reservoir_persistence,                         &
+           nlst(did)%reservoir_type_specified,                      &
            rt_domain(did)%reservoir_type,                           &
-           nlst(did)%reservoir_parameter_file,          &
+           nlst(did)%reservoir_parameter_file,                      &
            rt_domain(did)%LATLAKE,                                  &
            rt_domain(did)%LONLAKE,       rt_domain(did)%ELEVLAKE,   &
            rt_domain(did)%LAKEIDM,       rt_domain(did)%LAKEIDX,    &
@@ -803,11 +810,20 @@ subroutine LandRT_ini(did)
    ! For loop to cycle array of pointers to reservoirs
    do lake_index = 1, NLAKES_total
 
-       if (rt_domain(did)%reservoir_type(lake_index) == 1 .or. rt_domain(did)%reservoir_type(lake_index) == 3 .or. rt_domain(did)%reservoir_type(lake_index) == 4) then
-           allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
+       if (rt_domain(did)%reservoir_type(lake_index) == 1) then
+          allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
-       else if (rt_domain(did)%reservoir_type(lake_index) == 2) then
+       else if (rt_domain(did)%reservoir_type(lake_index) == 2 .and. nlst(did)%reservoir_persistence_usgs) then
           allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 3 .and. nlst(did)%reservoir_persistence_usace) then
+          allocate(persistence_levelpool_hybrid :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then
+          allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
+       else
+          allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
        end if
 
@@ -842,11 +858,33 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%LAKEMAXH(lake_index),               &
                     rt_domain(did)%ELEVLAKE(lake_index),               &
                     rt_domain(did)%LAKEIDM(lake_index),                &
-                    nlst(did)%reservoir_parameter_file, &
-                    nlst(did)%startdate(1:19),                      &
-                    nlst(did)%reservoir_timeslice_path,             &
-                    nlst(did)%reservoir_observation_lookback_hours, &
+                    rt_domain(did)%reservoir_type(lake_index),         &
+                    nlst(did)%reservoir_parameter_file,                &
+                    nlst(did)%startdate(1:19),                         &
+                    nlst(did)%reservoir_usgs_timeslice_path,           &
+                    nlst(did)%reservoir_usace_timeslice_path,          &
+                    nlst(did)%reservoir_observation_lookback_hours,    &
                     nlst(did)%reservoir_observation_update_time_interval_seconds)
+
+          type is (rfc_forecasts)
+              call reservoir%init(                                      &
+                    rt_domain(did)%RESHT(lake_index),                   &
+                    rt_domain(did)%HRZAREA(lake_index),                 &
+                    rt_domain(did)%WEIRH(lake_index),                   &
+                    rt_domain(did)%WEIRC(lake_index),                   &
+                    rt_domain(did)%WEIRL(lake_index),                   &
+                    rt_domain(did)%DAML(lake_index),                    &
+                    rt_domain(did)%ORIFICEE(lake_index),                &
+                    rt_domain(did)%ORIFICEC(lake_index),                &
+                    rt_domain(did)%ORIFICEA(lake_index),                &
+                    rt_domain(did)%LAKEMAXH(lake_index),                &
+                    rt_domain(did)%ELEVLAKE(lake_index),                &
+                    rt_domain(did)%LAKEIDM(lake_index),                 &
+                    rt_domain(did)%reservoir_type(lake_index),          &
+                    nlst(did)%reservoir_parameter_file,                 &
+                    nlst(did)%startdate(1:19),                          &
+                    nlst(did)%reservoir_rfc_forecasts_time_series_path, &
+                    nlst(did)%reservoir_rfc_forecasts_lookback_hours)
 
            end select
 
