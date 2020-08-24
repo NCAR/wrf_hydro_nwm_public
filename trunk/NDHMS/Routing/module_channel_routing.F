@@ -705,6 +705,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !       QLateral = QLateral / nsteps
 
    do nt = 1, nsteps
+     print*, "Beheen nt to nsteps", nsteps
 
 !Per Yates, this check is not needed. Commenting out for now.
 !----------  route order 1 reaches which have no upstream inflow
@@ -749,6 +750,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
 #ifdef MPP_LAND
 !using mapping index
                do n = 1, gtoNODE(k,1)
+                 print*, "Beheen gtonode"
+
                   m = gtoNODE(k,n+1)
 !yw                  if (LINKID(k) .eq. m) then
                     Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
@@ -764,6 +767,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 #else
                do m = 1, NLINKSL
+                  print*, "Beheen nlinksl"
+
                   if (LINKID(k) .eq. TO_NODE(m)) then
                     Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                     Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
@@ -1928,6 +1933,8 @@ do nt = 1, nsteps
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
               MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k) )
+         print*,tmpQLINK(k,2)
+         print*, "Beheen finished SUBMUSK", k
 
       else
 #ifdef HYDRO_D

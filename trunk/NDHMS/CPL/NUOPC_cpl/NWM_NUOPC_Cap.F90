@@ -474,7 +474,7 @@ module NWM_NUOPC_Cap
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     endif
 
-    NWM_ReachStream = NWM_ReachStreamCreate(is%wrap%did,vm,rc=rc)
+    NWM_ReachStream = NWM_ReachStreamCreate(is%wrap%did,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
    
     do fIndex = 1, size(NWM_FieldList)
@@ -503,7 +503,7 @@ module NWM_NUOPC_Cap
            (/trim(NWM_FieldList(fIndex)%stdname)/), &
                           relaxedflag=.true.,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-      endif
+      endif 
 
       if (NWM_FieldList(fIndex)%adExport) then
         exportConnected = NUOPC_IsConnected(is%wrap%NStateExp(1), &
@@ -840,17 +840,17 @@ subroutine CheckImport(gcomp, rc)
     type(type_InternalState)    :: is
     character(len=10)           :: sStr
     type(ESMF_Clock)            :: modelClock
-    type(ESMF_State)            :: importState, exportState
+    !type(ESMF_State)            :: importState, exportState
     type(ESMF_Time)             :: currTime, advEndTime
     character(len=32)           :: currTimeStr, advEndTimeStr
     type(ESMF_TimeInterval)     :: timeStep
     integer(ESMF_KIND_I8)       :: advanceCount
     type(ESMF_VM)               :: vm
 
-    integer :: itime, dt, itemCnt, i
-    character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
-    type(ESMF_Field) :: itemField
-    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+    !integer :: itime, dt, itemCnt, i
+    !character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
+    !type(ESMF_Field) :: itemField
+    !real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
 
 
 #ifdef DEBUG
@@ -879,9 +879,9 @@ subroutine CheckImport(gcomp, rc)
       write (sStr,"(I0)") is%wrap%timeSlice
     endif
 
-    ! Query the component for its clock, importState, and exportState
-    call NUOPC_ModelGet(gcomp,modelClock=modelClock, &
-         importState=importState, exportState=exportState, rc=rc)
+    ! Query the component for its clock
+    call NUOPC_ModelGet(gcomp,modelClock=modelClock, rc=rc)
+         !importState=importState, exportState=exportState, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! Query the clock for its current time and timestep
@@ -930,34 +930,11 @@ subroutine CheckImport(gcomp, rc)
         ESMF_LOGMSG_INFO)
 
       ! Call nwm exe
-      print*, "Testing NUOPC_Run"
       call NWM_NUOPC_Run(is%wrap%did,is%wrap%mode(1), vm, &
                          is%wrap%clock(1), is%wrap%hydroState, is%wrap%timeStepInt, &
                          is%wrap%NStateImp(1),is%wrap%NStateExp(1),rc)
       if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      print*, "End Testing NUOPC_Run"
     
-      
-      ! Testing the exported field values ..................
-      !call ESMF_StateGet(is%wrap%NStateExp(1), itemCount=itemCnt, rc=rc)
-      !if (ESMF_STDERRORCHECK(rc)) return
-     
-      !allocate(itemNames(itemCnt))
-      !call ESMF_StateGet(is%wrap%NStateExp(1), itemNameList=itemNames, rc=rc)
-      !if (ESMF_STDERRORCHECK(rc)) return
-     
-      !do i=1, itemCnt
-      !  print *, "Field Item Name: ", trim(itemNames(i))
-      !  call ESMF_StateGet(is%wrap%NStateExp(1), trim(itemNames(i)), itemField, rc=rc)
-      !  if (ESMF_STDERRORCHECK(rc)) return
-        
-      !  call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
-      !  if (ESMF_STDERRORCHECK(rc)) return
-      !  print *, "Value of first: ", farrayPtr(1), farrayPtr(3)
-      !end do
-      !deallocate(itemNames)
-      ! End of filed test
-
       call ESMF_ClockAdvance(is%wrap%clock(1),rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 

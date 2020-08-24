@@ -23,6 +23,9 @@ module NWM_ESMF_Utility
   save
   private
 
+  public NWM_ReachStreamGet
+  public NWM_FieldGetBounds
+  public NWM_FieldGet
   public InitFieldDictionary
   public PrintTimers
 
@@ -49,32 +52,143 @@ module NWM_ESMF_Utility
   end subroutine
 
 
+#undef METHOD
+#define METHOD "NWM_FieldGet"
+  
+  subroutine NWM_FieldGet(field)
+    ! Get a DE-local Fortran array pointer from a Field
+
+    ! ARGUMENTS:
+    type(ESMF_Field), intent(in) :: field 
+    ! -- The following arguments require argument keyword syntax (e.g. rc=rc). --
+    integer :: localDe=0 
+    real(ESMF_KIND_R8), pointer :: farrayPtr(:) 
+    integer, allocatable :: exclusiveLBound(:) 
+    integer, allocatable :: exclusiveUBound(:) 
+    integer, allocatable :: exclusiveCount(:) 
+    integer, allocatable :: computationalLBound(:) 
+    integer, allocatable :: computationalUBound(:) 
+    integer, allocatable :: computationalCount(:) 
+    integer, allocatable :: totalLBound(:) 
+    integer, allocatable :: totalUBound(:) 
+    integer, allocatable :: totalCount(:) 
+    integer :: rc
+
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+    rc = ESMF_SUCCESS
+
+    allocate(exclusiveLBound(2))
+    allocate(exclusiveUBound(2))
+    allocate(exclusiveCount(2))
+    allocate(computationalLBound(2))
+    allocate(computationalUBound(2))
+    allocate(computationalCount(2))
+    allocate(totalLBound(2))
+    allocate(totalUBound(2))
+    allocate(totalCount(2))
+
+    !call ESMF_FieldGet(field, localDe=localDe, & 
+    !     farrayPtr, exclusiveLBound, exclusiveUBound, exclusiveCount, & 
+    !     computationalLBound, computationalUBound, computationalCount, & 
+    !     totalLBound, totalUBound, totalCount, rc)
+
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
+
+
+#undef METHOD
+#define METHOD "NWM_FieldGetBounds"
+  
+#undef METHOD
+#define METHOD "NWM_FieldiGetBounds"
+  
+  subroutine NWM_FieldGetBounds(field)
+     ! Get DE-local Field data bounds
+
+     ! ARGUMENTS:
+     type(ESMF_Field), intent(in) :: field
+     ! -- The following arguments require argument keyword syntax (e.g. rc=rc). --
+     integer :: localDe
+     integer, allocatable :: exclusiveLBound(:)
+     integer, allocatable :: exclusiveUBound(:)
+     integer, allocatable :: exclusiveCount(:)
+     integer, allocatable :: computationalLBound(:)
+     integer, allocatable :: computationalUBound(:)
+     integer, allocatable :: computationalCount(:)
+     integer, allocatable :: totalLBound(:)
+     integer, allocatable :: totalUBound(:)
+     integer, allocatable :: totalCount(:)
+     integer :: rc
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+     rc = ESMF_SUCCESS
+
+     !call ESMF_FieldGetBounds(field, localDe=0, &
+     !      exclusiveLBound=exclusiveLBound, &
+     !      exclusiveUBound=exclusiveUBound, &
+     !      exclusiveCount=exclusiveCount, &
+     !      computationalLBound=computationalLBound , &
+     !      computationalUBound=computationalUBound, &
+     !      computationalCount=computationalCount, &
+     !      totalLBound=totalLBound, totalUBound=totalUBound, &
+     !      totalCount=totalCount, rc=rc)
+      
+
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
+
+
 
 #undef METHOD
 #define METHOD "NWM_ReachStreamGet"
   
   subroutine NWM_ReachStreamGet(locstream, vm) 
-    ! Return object-wide information from a LocStream
 
     ! ARGUMENTS:
     type(ESMF_Locstream),  intent(in)  :: locstream
     type(ESMF_VM),         intent(in)  :: vm
 
     ! The following arguments require argument keyword syntax (e.g. rc=rc). --
-    type(ESMF_DistGrid)         :: distgrid
-    integer                     :: keyCount
-    character(len=ESMF_MAXSTR), allocatable  :: keyNames(:) 
-    integer                     :: localDECount
-    type(ESMF_Index_Flag)       :: indexflag
-    type(ESMF_CoordSys_Flag)    :: coordSys
-    character(len=ESMF_MAXSTR)  :: name
-    integer                     :: rc
+    integer :: excLBnd
+    integer :: excUBnd
+    integer :: excCnt
+    integer :: compLBnd
+    integer :: compUBnd
+    integer :: compCnt
+    integer :: totLBnd
+    integer :: totUBnd
+    integer :: totCnt
+    integer :: rc
+    !type(ESMF_DataCopy_Flag), intent(in) :: datacopyflag
 
-    integer :: itemCnt, localDECnt, elmCnt
+    ! The following arguments require argument keyword syntax (e.g. rc=rc). --
+    character (len=10)          :: cname
+    type(ESMF_DistGrid)         :: distgrid
+    integer                     :: keyCnt
+    character(len=ESMF_MAXSTR), allocatable  :: keyNames(:) 
+    integer                     :: localDECnt
+    type(ESMF_Index_Flag)       :: indexflg
+    type(ESMF_CoordSys_Flag)    :: coordSys
+
     integer :: i, j, k, esmf_comm, localPet, petCnt
 
-    integer(ESMF_KIND_I4), pointer  :: linkPtr(:)
-    real(ESMF_KIND_R8), pointer     :: latPtr(:), lonPtr(:)
+    integer(ESMF_KIND_I4), pointer  :: linkPtr(:) => null()
+    real(ESMF_KIND_R8), pointer     :: latPtr(:) => null()
+    real(ESMF_KIND_R8), pointer     :: lonPtr(:) => null()
 
     character(ESMF_MAXSTR)  :: logMsg
 
@@ -85,25 +199,53 @@ module NWM_ESMF_Utility
     rc = ESMF_SUCCESS
 
     call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
-                     mpiCommunicator=esmf_comm, rc=rc)
+                               mpiCommunicator=esmf_comm, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
+    ! Return object-wide information from a LocStream
+    call ESMF_LocStreamGet(locstream, distgrid=distgrid, keyCount=keyCnt, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
-    call ESMF_LocStreamGet(locstream, distgrid=distgrid, keyCount=keyCount, &
-                           keyNames=keyNames, localDECount=localDECount, &
-                           indexflag=indexflag, coordSys=coordSys, name=name, rc=rc)
+    print*, "Beheen Printing LocStream NWM_ReachStreamGet"
+    call ESMF_LocStreamPrint(locstream)
+    print*, "Beheen Printing LocStream NWM_ReachStreamGet"
+
+    allocate(keyNames(keyCnt))
+    call ESMF_LocStreamGet(locstream, keyNames=keyNames, coordSys=coordSys, &
+             name=cname, localDECount=localDECnt, indexflag=indexflg, rc=rc)
+
+    ! Get a DE-local Fortran array pointer to key values
+    call ESMF_LocStreamGetKey(locstream, "Lon", &
+            localDE=0, exclusiveLBound=excLBnd, exclusiveUBound=excUBnd, &
+            exclusiveCount=excCnt, computationalLBound=compLBnd,         &
+            computationalUBound=compUBnd, computationalCount=compCnt,    &
+            totalLBound=totLBnd, totalUBound=totUBnd, totalCount=totCnt, &
+            datacopyflag=ESMF_DATACOPY_VALUE, farray=lonPtr, rc=rc)
+
+    !allocate(lonPtr(compCnt))
     
     !call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
 
-    do i=0, petCnt
+    do i=0, petCnt-1
       if(i==localPet) then
-        print*, METHOD, " localPet: ",localPet,"petCnt:",petCnt
-        print*, METHOD, " keyCount:", keyCount
-        print*, METHOD, " keyNames: ",keyNames, "localDECount: ",localDECount
-        print*, METHOD, " indexflag: ",indexflag,"coordSys: ",coordSys,"name: ",name
+        print*, "Beheen .........."
+        print*, "localPet:",localPet,"petCount:",petCnt
+        print*, "LocStream:", cname, "keyCount:", keyCnt
+        do j=1, keyCnt
+          print*, "keyName:", trim(keyNames(j))
+        enddo
+        print*, "localDECount:",localDECnt,"coordSys:",coordSys,"indexflag:",indexflg
+        print*, "exclusiveLBound:",excLBnd, "exclusiveUBound:",excUBnd
+        print*, "exclusiveCount:",excCnt, "computationalLBound:", compLBnd
+        print*, "computationalUBound:",compUBnd, "computationalCount:",compCnt
+        print*, "totalLBound:",totLBnd, "totalUBound:",totUBnd, "totalCount:",totCnt 
       endif
       call MPI_Barrier(esmf_comm, rc)
       if(ESMF_STDERRORCHECK(rc)) return
     enddo
+
+    deallocate(keyNames)
+    !deallocate(lonPtr)
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)

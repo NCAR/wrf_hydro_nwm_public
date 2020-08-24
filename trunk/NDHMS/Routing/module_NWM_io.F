@@ -139,7 +139,7 @@ subroutine output_chrt_NWM(domainId)
 
 
    ! Beheen for test
-   integer :: ii,jj
+   integer :: ii,jj,kk
 
 
    ! Initialize the ascFlag to 1
@@ -338,27 +338,6 @@ subroutine output_chrt_NWM(domainId)
 #ifdef MPP_LAND
          call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
-
-         ! for testing Beheen
-         !do ii=0,7 
-         ! if(ii==myId) then
-         !   print*, "my_id"
-         !   print*, myId
-         !   print*, "qlink flow_rate"
-         !   do jj=1, size(g_qlink(:,1))
-         !     print*, g_qlink(jj,1)
-         !   enddo
-         !   print*,"==========q2"
-         !   do jj=1, size(g_qlink(:,2))
-         !     print*, rt_domain(domainId)%QLINK(jj,2)
-         !   enddo
-         ! endif
-         ! call MPI_Barrier(HYDRO_COMM_WORLD, ierr)
-         ! if (ierr .eq. 0) return
-         !enddo
-
-         ! end testing
-
          call ReachLS_write_io(RT_DOMAIN(domainId)%ORDER,g_order)
          call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
@@ -4131,7 +4110,6 @@ implicit none
       else
          call ReachLS_write_io(strFlowLocal,g_qlink(:,1))
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
-
          call ReachLS_write_io(RT_DOMAIN(domainId)%linkid,g_linkid)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLAT,g_chlat)
          call ReachLS_write_io(RT_DOMAIN(domainId)%CHLON,g_chlon)
