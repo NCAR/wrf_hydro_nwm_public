@@ -291,6 +291,9 @@ CONTAINS
   allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
             rt_domain(did)%SOLDRAIN    = 0.0
 
+  allocate( rt_domain(did)%NEXP   (IX,JX) )
+            rt_domain(did)%NEXP    = 1.0
+
   end if ! neither channel_only nor channelBucket_only
 
 
