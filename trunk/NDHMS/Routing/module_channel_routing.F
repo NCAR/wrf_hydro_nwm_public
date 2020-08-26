@@ -509,7 +509,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !   SUBROUTINE drive_CHANNEL
 ! ------------------------------------------------
 ! ------------------------------------------------
-     Subroutine drive_CHANNEL(did, latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
+Subroutine drive_CHANNEL(did, latval,lonval,KT, IXRT,JXRT, SUBRTSWCRT, &
        QSUBRT, LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
        TYPEL, ORDER, MAXORDER, NLINKS, CH_NETLNK, CH_NETRT, CH_LNKRT, &
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
@@ -705,7 +705,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !       QLateral = QLateral / nsteps
 
    do nt = 1, nsteps
-     print*, "Beheen nt to nsteps", nsteps
 
 !Per Yates, this check is not needed. Commenting out for now.
 !----------  route order 1 reaches which have no upstream inflow
@@ -750,7 +749,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
 #ifdef MPP_LAND
 !using mapping index
                do n = 1, gtoNODE(k,1)
-                 print*, "Beheen gtonode"
 
                   m = gtoNODE(k,n+1)
 !yw                  if (LINKID(k) .eq. m) then
@@ -767,7 +765,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 #else
                do m = 1, NLINKSL
-                  print*, "Beheen nlinksl"
 
                   if (LINKID(k) .eq. TO_NODE(m)) then
                     Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
@@ -1468,7 +1465,7 @@ end subroutine drive_CHANNEL
      END FUNCTION fnDXCDT
 ! ----------------------------------------------------------------------
 
-    subroutine check_lake(unit,cd,lake_index,nlakes)
+subroutine check_lake(unit,cd,lake_index,nlakes)
          use module_RT_data, only: rt_domain
          implicit none
          integer :: unit,nlakes,i,lake_index(nlakes)
@@ -1479,9 +1476,9 @@ end subroutine drive_CHANNEL
          write(unit,*) cd
           call flush(unit)
          return
-    end subroutine check_lake
+end subroutine check_lake
 
-    subroutine check_channel(unit,cd,did,nlinks)
+subroutine check_channel(unit,cd,did,nlinks)
          use module_RT_data, only: rt_domain
 #ifdef MPP_LAND
   USE module_mpp_land
@@ -1502,8 +1499,9 @@ end subroutine drive_CHANNEL
           call flush(unit)
           close(unit)
          return
-    end subroutine check_channel
-    subroutine smoth121(var,nlinks,maxv_p,from_node,to_node)
+end subroutine check_channel
+
+subroutine smoth121(var,nlinks,maxv_p,from_node,to_node)
         implicit none
         integer,intent(in) ::  nlinks, maxv_p
         integer, intent(in), dimension(nlinks):: to_node
@@ -1536,12 +1534,12 @@ end subroutine drive_CHANNEL
               end do
               var = vartmp
         return
-    end subroutine smoth121
+end subroutine smoth121
 
 !   SUBROUTINE drive_CHANNEL for NHDPLUS
 ! ------------------------------------------------
 
-     subroutine drive_CHANNEL_RSL(did, UDMP_OPT,KT, IXRT,JXRT,  &
+subroutine drive_CHANNEL_RSL(did, UDMP_OPT,KT, IXRT,JXRT,  &
         LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
@@ -1735,7 +1733,7 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
         accSfcLatRunoff(1:NLINKSL) = qSfcLatRunoff * DT
 
 else
-
+   
    QLateral = 0 !! the variable solved in this section. Channel only knows this already.
    LQLateral = 0          !-- initial lateral flow to 0 for this reach
 
@@ -1836,7 +1834,7 @@ if(nlst(1)%output_channelBucket_influx .eq. 3) &
 !---------------------------------------------
 !       QLateral = QLateral / nsteps
 do nt = 1, nsteps
-
+  
 #ifdef MPP_LAND
    gQLINK = 0
    call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
@@ -1858,7 +1856,6 @@ do nt = 1, nsteps
 
 
    do k = 1,NLINKSL
-
       Quc  = 0
       Qup  = 0
 
@@ -1928,13 +1925,12 @@ do nt = 1, nsteps
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
 #endif
-
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
               MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k) )
-         print*,tmpQLINK(k,2)
-         print*, "Beheen finished SUBMUSK", k
+         !print*,tmpQLINK(k,2)
+         !print*, "Beheen SUBMUSK", k, nt, my_id, NLINKSL, nsteps
 
       else
 #ifdef HYDRO_D
@@ -1944,7 +1940,6 @@ do nt = 1, nsteps
       endif
 
    end do  !--k links
-
 
 #ifdef MPP_LAND
    call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
@@ -1969,7 +1964,7 @@ do nt = 1, nsteps
 !#ifdef HYDRO_D
 !   print *, "END OF ALL REACHES...",KRT,DT_STEPS
 !#endif
-
+  
 end do  ! nsteps
 
 if (KT .eq. 1) KT = KT + 1

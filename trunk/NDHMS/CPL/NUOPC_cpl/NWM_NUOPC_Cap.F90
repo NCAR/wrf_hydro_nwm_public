@@ -474,8 +474,9 @@ module NWM_NUOPC_Cap
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out
     endif
 
-    NWM_ReachStream = NWM_ReachStreamCreate(is%wrap%did,rc=rc)
+    NWM_ReachStream = NWM_ReachStreamCreate(is%wrap%did, vm=vm, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
+    !print*, "Beheen 479 locstream created"
    
     do fIndex = 1, size(NWM_FieldList)
      
@@ -517,6 +518,7 @@ module NWM_NUOPC_Cap
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
                              grid=NWM_LSMGrid,locstream=NWM_ReachStream, &
                                                   did=is%wrap%did,rc=rc)
+        !print*, "Beheen 520 field created" 
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateExp(1), field=field,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return

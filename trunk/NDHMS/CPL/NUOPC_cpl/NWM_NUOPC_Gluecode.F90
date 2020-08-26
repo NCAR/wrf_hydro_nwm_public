@@ -462,9 +462,10 @@ contains
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
+        print*, "Beheen size of farrayPtr_loc", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_loc, &
-                                           datacopyflag=ESMF_DATACOPY_VALUE, &
+                                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                            name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
@@ -539,13 +540,14 @@ contains
 #undef METHOD
 #define METHOD "NWM_ReachStreamCreate"
 
-  function NWM_ReachStreamCreate(did,rc)
+  function NWM_ReachStreamCreate(did,vm, rc)
     ! Return value
     type(ESMF_LocStream)       :: NWM_ReachStreamCreate
 
     ! Aguments
     integer, intent(in)   :: did
     integer, intent(out)  :: rc
+    type(ESMF_VM)         :: vm
 
     ! Local variables  
     integer              :: gblElmCnt     ! total number of reaches elements
@@ -557,6 +559,7 @@ contains
     type(ESMF_DistGrid)  :: distgrid
     real(ESMF_KIND_R8), allocatable    :: lat(:),lon(:) 
     integer(ESMF_KIND_I4), allocatable :: link(:)
+    integer :: esmf_comm, localPet, petCnt
 
 
 #ifdef DEBUG
@@ -630,12 +633,14 @@ contains
     allocate(lat(locElmCnt))
     allocate(link(locElmCnt))
     
+    call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                               mpiCommunicator=esmf_comm, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
     do i=1,locElmCnt
-      if(i == my_id+1) then
-        link(i) = rt_domain(did)%linkid(i)     ! don't use pointer here
-        lon(i) = rt_domain(did)%chlon(i)
-        lat(i) = rt_domain(did)%chlat(i)
-      endif
+      link(i) = rt_domain(did)%linkid(i)     ! don't use pointer here
+      lon(i) = rt_domain(did)%chlon(i)
+      lat(i) = rt_domain(did)%chlat(i)
     enddo
 
     !-------------------------------------------------------------------
@@ -685,9 +690,6 @@ contains
 #endif
 
     deallocate(arbSeqIndexList)
-    deallocate(lon)
-    deallocate(lat)
-    deallocate(link)
     !call ESMF_LocStreamPrint(NWM_ReachStreamCreate)
   
 
@@ -1375,7 +1377,7 @@ contains
     integer, intent(in)                :: did
 
     ! local variables
-    integer :: i,j, esmf_comm, localPet, petCnt, itemCnt, rc
+    integer :: i,j, esmf_comm, localPet, petCnt, itemCnt, rc, localElmCnt
     character (len=30)   :: itemName
     type(ESMF_Field)     :: itemField
     type(ESMF_VM)        :: vm  ! vm that field was created on
@@ -1416,16 +1418,18 @@ contains
           call ESMF_FieldGet(itemField,farrayPtr=flowRatePtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          ! fill fields with values for export after physic calculations
-          !flowRatePtr = rt_domain(did)%qlink(:elmCnt,1)
-          flowRatePtr = 2.0
-          
           call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
 
           ! get the vm of this field
           call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
                                      mpiCommunicator=esmf_comm, rc=rc)
-         
+
+          ! fill fields with values for export after physic calculations
+          localElmCnt = size(flowRatePtr)
+          !print*, "Beheen myid ", my_id, localElmCnt
+
+          flowRatePtr = rt_domain(did)%qlink(1:localElmCnt,2)
+
           call ESMF_LocStreamGetKey(locstream, "Lat", farray=latArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
           
@@ -1435,11 +1439,12 @@ contains
           call ESMF_LocStreamGetKey(locstream, "link", farray=linkArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
           
-          do j=1,numprocs
-            if(j == my_id+1) then
-              print*, "Beheen my_id:", my_id, localPet, petCnt 
+
+          do j=0,numprocs
+            if (my_id == j) then
+              print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
               print*, "link:     ", linkArrayPtr
-              !print*, "flowrate: ", flowRatePtr
+              print*, "flowrate: ", flowRatePtr
               print*, "lon:      ", lonArrayPtr
               print*, "lat:      ", latArrayPtr
             endif

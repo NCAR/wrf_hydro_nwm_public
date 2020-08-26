@@ -553,7 +553,7 @@ module module_HYDRO_drv
   endif
  end subroutine HYDRO_rst_in
 
-     subroutine HYDRO_time_adv(did)
+ subroutine HYDRO_time_adv(did)
         implicit none
         character(len = 19) :: newdate
         integer did
@@ -573,11 +573,9 @@ module module_HYDRO_drv
 #ifdef MPP_LAND
    endif
 #endif
-     end subroutine HYDRO_time_adv
+end subroutine HYDRO_time_adv
 
-     subroutine HYDRO_exe(did)
-
-
+subroutine HYDRO_exe(did)
         implicit none
         integer:: did
         integer:: rst_out
@@ -637,7 +635,7 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_2, count_rate=clock_rate)
       timeSr = timeSr     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-      write(6,*) "Timing: Subsurface Routing  accumulated time--", timeSr
+      write(6,*) "Timing: Subsurface Routing  accumulated time------", timeSr
 #else
       write(78,*) "Timing: Subsurface Routing  accumulated time--", timeSr
 #endif
@@ -682,7 +680,7 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_2, count_rate=clock_rate)
       timeOr = timeOr     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-      write(6,*) "Timing: Overland Routing  accumulated time--", timeOr
+      write(6,*) "Timing: Overland Routing  accumulated time------", timeOr
 #else
       write(78,*) "Timing: Overland Routing  accumulated time--", timeOr
 #endif
@@ -709,7 +707,7 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_2, count_rate=clock_rate)
       timeGw = timeGw     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-      write(6,*) "Timing: GwBaseflow  accumulated time--", timeGw
+      write(6,*) "Timing: GwBaseflow  accumulated time------", timeGw
 #else
       write(78,*) "Timing: GwBaseflow  accumulated time--", timeGw
 #endif
@@ -725,7 +723,7 @@ if (nlst(did)%GWBASESWCRT        .ne. 0 .or. &
    call system_clock(count=clock_count_2, count_rate=clock_rate)
    timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
 #ifndef NCEP_WCOSS
-   write(6,*) "Timing: Channel Routing  accumulated time--", timeCr
+   write(6,*) "Timing: Channel Routing  accumulated time------", timeCr
 #else
    write(78,*) "Timing: Channel Routing  accumulated time--", timeCr
 #endif
@@ -911,7 +909,7 @@ end subroutine driveGwBaseflow
 
 
 !-------------------------------------------
-      subroutine driveChannelRouting(did)
+subroutine driveChannelRouting(did)
 
        implicit none
        integer, intent(in) :: did
@@ -925,7 +923,6 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
 
  if(nlst(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
-
     call drive_CHANNEL_RSL(did, nlst(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
@@ -957,9 +954,7 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
        ,                                     nlst(did)%SUBRTSWCRT &
        , nlst(did)%channel_only , nlst(did)%channelBucket_only &
        )
-
 else
-
     call drive_CHANNEL(did, RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
        RT_DOMAIN(did)%timestep_flag,RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT, &
        nlst(did)%SUBRTSWCRT, rt_domain(did)%subsurface%state%qsubrt, &
@@ -1008,13 +1003,18 @@ endif
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-           write(6,*) "*****yw******end drive_CHANNEL "
+    print*, "Beheen - drive_CHANNEL result??"
+    print*, my_id, RT_DOMAIN(did)%NLINKSL
+    print*, RT_DOMAIN(did)%LINKID
+    print*, "qlink2: ", RT_DOMAIN(did)%QLINK(:,2)
+           
+    write(6,*) "*****yw******end drive_CHANNEL "
 #else
-           write(78,*) "*****yw******end drive_CHANNEL "
+    write(78,*) "*****yw******end drive_CHANNEL "
 #endif
 #endif
 
-      end subroutine driveChannelRouting
+end subroutine driveChannelRouting
 
 
 
