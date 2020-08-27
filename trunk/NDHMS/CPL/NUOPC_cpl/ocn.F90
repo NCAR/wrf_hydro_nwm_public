@@ -261,17 +261,17 @@ module OCN
     end do
 
     ! exportable field: waterlevel
-    !field = ESMF_FieldCreate(name="water_level", grid=gridOut, &
-    !                  farray=wlarray, indexflag=ESMF_INDEX_GLOBAL, rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
-    !call NUOPC_Realize(exportState, field=field, rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
+    field = ESMF_FieldCreate(name="water_level", grid=gridOut, &
+                      farray=wlarray, indexflag=ESMF_INDEX_GLOBAL, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    call NUOPC_Realize(exportState, field=field, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
 
     ! calculate local element count and first local element
