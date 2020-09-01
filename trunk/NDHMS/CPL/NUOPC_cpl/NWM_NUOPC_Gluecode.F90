@@ -484,12 +484,12 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
-      CASE ('water_level')
-        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-                      farray=rt_domain(did)%velocity, &
-                        indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      !CASE ('water_level')
+      !  NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+      !                farray=rt_domain(did)%velocity, &
+      !                  indexflag=ESMF_INDEX_DELOCAL, &
+      !                             name=stdName, rc=rc)
+      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
        
 
       CASE ('air_pressure_at_sea_level')
