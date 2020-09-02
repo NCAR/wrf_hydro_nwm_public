@@ -1257,11 +1257,50 @@ contains
     type(ESMF_Field), intent(inout) :: dstField
     integer, intent(out)        :: rc
 
+    type(ESMF_RouteHandle) :: rh
+    type(ESMF_Field) :: tmpField
+    type(ESMF_GeomType_Flag) :: fieldgeom
+
+    type(ESMF_ArraySpec) :: fas
+    type(ESMF_Mesh) :: fmesh
+    type(ESMF_Grid) :: fgrid
+    type(ESMF_LocStream) :: fls
+    type(ESMF_TypeKind_Flag) :: ftk
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
     rc = ESMF_SUCCESS
+
+    call ESMF_FieldGet(dstField, geomtype=fieldgeom, grid=fgrid, mesh=fmesh, &
+        locstream=fls, arrayspec=fas, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    if (fieldgeom == ESMF_GEOMTYPE_GRID) then
+        tmpField = ESMF_FieldCreate(fgrid, fas, rc=rc)
+    else if (fieldgeom == ESMF_GEOMTYPE_MESH) then
+        tmpField = ESMF_FieldCreate(fmesh, fas, rc=rc)
+    else if (fieldgeom == ESMF_GEOMTYPE_LOCSTREAM) then
+        tmpField = ESMF_FieldCreate(fls, fas, rc=rc)
+    end if
+    if (ESMF_STDERRORCHECK(rc)) return
+    
+    ! Need to figure out how to store the routehandle somewhere
+    ! so it can be reused.
+    call ESMF_FieldRegridStore(srcField, tmpField, routehandle=rh, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+   
+    ! When testing is completed, set checkflag=.FALSE.
+    call ESMF_FieldRegrid(srcField, dstField, rh, checkflag=.TRUE., rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    call ESMF_FieldDestroy(tmpField, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    call ESMF_FieldRegridRelease(rh, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
   ! Grids used in climate research fall into several categories: regular,
   ! rectilinear, curvilinear and unstructured. For our purposes, grids described
