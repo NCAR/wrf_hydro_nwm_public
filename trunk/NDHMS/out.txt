@@ -1,0 +1,505 @@
+configure: Sourcing setEnvar.sh for the compile options.
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+rm -f *.o *.mod *.stb *~ Noah_hrldas_beta
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+(make -f Makefile.comm clean)
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS'
+(cd IO; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/IO'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/IO'
+(cd OrchestratorLayer; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/OrchestratorLayer'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/OrchestratorLayer'
+(cd utils     ; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+make -C Routing/Overland clean
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+rm -f *.o 
+rm -f *.mod
+rm -f overland_tests
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+make -C Routing/Subsurface clean
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Subsurface'
+rm -f *.o
+rm -f *.mod
+rm -f subsurface_tests
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Subsurface'
+make -C Routing/Reservoirs clean
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+rm -f *.o
+rm -f *.mod
+rm -f reservoir_tests
+make -C Level_Pool clean
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+rm -f *.o
+rm -f *.mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+make -C Persistence_Level_Pool_Hybrid clean
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Persistence_Level_Pool_Hybrid'
+rm -f *.o
+rm -f *.mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Persistence_Level_Pool_Hybrid'
+make -C RFC_Forecasts clean
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/RFC_Forecasts'
+rm -f *.o
+rm -f *.mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/RFC_Forecasts'
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+(cd Data_Rec; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+(cd HYDRO_drv; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+(cd MPP; make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+make -C Debug_Utilities/ clean
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+(cd Routing;    make -f Makefile clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS'
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd phys;			make clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+(cd data_structures;		make clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/data_structures'
+rm -f *.o *.mod *.stb *~ *.f
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/data_structures'
+(cd IO_code;			make clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+rm -f *.o *.mod *.stb *~
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd run;			make clean)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+rm -f *~ hrldas.exe
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+if [ 0 -eq 1 ]; then \
+	(cd Rapid_routing; make -f makefile.cpl clean); \
+fi
+(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
+(rm -f Run/wrf_hydro.exe   )
+(make -f Makefile.comm BASIC)
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS'
+make -C MPP
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+
+rm -f CPL_WRF.o CPL_WRF.mod CPL_WRF.stb *~
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -o CPL_WRF.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod CPL_WRF.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -c CPL_WRF.F
+ar -r ../lib/libHYDRO.a CPL_WRF.o
+ar: creating ../lib/libHYDRO.a
+
+rm -f mpp_land.o mpp_land.mod mpp_land.stb *~
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -c mpp_land.F
+ar -r ../lib/libHYDRO.a mpp_land.o
+
+rm -f module_mpp_ReachLS.o module_mpp_ReachLS.mod module_mpp_ReachLS.stb *~
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -c module_mpp_ReachLS.F
+ar -r ../lib/libHYDRO.a module_mpp_ReachLS.o
+
+rm -f module_mpp_GWBUCKET.o module_mpp_GWBUCKET.mod module_mpp_GWBUCKET.stb *~
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -c module_mpp_GWBUCKET.F
+ar -r ../lib/libHYDRO.a module_mpp_GWBUCKET.o
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/MPP'
+make -C IO
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/IO'
+
+mpif90 -o netcdf_layer.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../mod netcdf_layer.f90
+
+ar -r ../lib/libHYDRO.a netcdf_layer.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/IO'
+make -C utils
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+Utils Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_version.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian -DNWM_VERSION=\"none\" -DWRF_HYDRO_VERSION=\"v5.1.0-beta2\"  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_version.F
+
+ar -r ../lib/libHYDRO.a module_version.o
+cp *.mod ../mod
+Utils Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_hydro_stop.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian -DNWM_VERSION=\"none\" -DWRF_HYDRO_VERSION=\"v5.1.0-beta2\"  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_hydro_stop.F
+
+ar -r ../lib/libHYDRO.a module_hydro_stop.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/utils'
+make -C OrchestratorLayer
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/OrchestratorLayer'
+Orchestrator Makefile:
+mpif90 -fpp -o io_manager.o -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL       -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include io_manager.f90
+
+ar -r ../lib/libHYDRO.a io_manager.o
+cp *.mod ../mod
+Orchestrator Makefile:
+mpif90 -fpp -o config.o -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL       -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include config.f90
+
+ar -r ../lib/libHYDRO.a config.o
+cp *.mod ../mod
+Orchestrator Makefile:
+mpif90 -fpp -o orchestrator.o -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL       -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include orchestrator.f90
+
+ar -r ../lib/libHYDRO.a orchestrator.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/OrchestratorLayer'
+make -C Routing/Overland
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+#Build each sub module then build the module that depends on all sub modules	
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_overland_control.F
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_overland_streams_and_lakes.F
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_overland_routing_properties.F
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_overland_mass_balance.F
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_overland.F
+ar -r ../../lib/libHYDRO.a module_overland_control.o
+ar -r ../../lib/libHYDRO.a module_overland_streams_and_lakes.o
+ar -r ../../lib/libHYDRO.a module_overland_routing_properties.o
+ar -r ../../lib/libHYDRO.a module_overland_mass_balance.o
+ar -r ../../lib/libHYDRO.a module_overland.o
+cp *.mod ../../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Overland'
+make -C Routing/Subsurface
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Subsurface'
+#Build each sub module then build the module that depends on all sub modules
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_grid_transform.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_properties.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_state.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_static_data.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_output.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_subsurface_input.F
+ar -r ../../lib/libHYDRO.a module_subsurface_grid_transform.o
+ar -r ../../lib/libHYDRO.a module_subsurface_properties.o
+ar -r ../../lib/libHYDRO.a module_subsurface_state.o
+ar -r ../../lib/libHYDRO.a module_subsurface.o
+ar -r ../../lib/libHYDRO.a module_subsurface_static_data.o
+ar -r ../../lib/libHYDRO.a module_subsurface_output.o
+ar -r ../../lib/libHYDRO.a module_subsurface_input.o
+cp *.mod ../../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Subsurface'
+make -C Routing/Reservoirs
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+#Build each sub module then build the module that depends on all sub modules
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_reservoir_utilities.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_reservoir.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_reservoir_read_timeslice_data.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_reservoir_read_rfc_time_series_data.F
+ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
+ar -r ../../lib/libHYDRO.a module_reservoir.o
+ar -r ../../lib/libHYDRO.a module_reservoir_read_timeslice_data.o
+ar -r ../../lib/libHYDRO.a module_reservoir_read_rfc_time_series_data.o
+cp *.mod ../../mod
+#Build the modules
+make -C Level_Pool
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+#Build each sub module then build the module that depends on all sub modules
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_levelpool_properties.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_levelpool_state.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_levelpool.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_levelpool_tests.F
+ar -r ../../../lib/libHYDRO.a module_levelpool_properties.o
+ar -r ../../../lib/libHYDRO.a module_levelpool_state.o
+ar -r ../../../lib/libHYDRO.a module_levelpool.o
+ar -r ../../../lib/libHYDRO.a module_levelpool_tests.o
+cp *.mod ../../../mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Level_Pool'
+make -C Persistence_Level_Pool_Hybrid
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Persistence_Level_Pool_Hybrid'
+#Build each sub module then build the module that depends on all sub modules
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_persistence_levelpool_hybrid_properties.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_persistence_levelpool_hybrid_state.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_persistence_levelpool_hybrid.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_persistence_levelpool_hybrid_tests.F
+ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_properties.o
+ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_state.o
+ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid.o
+ar -r ../../../lib/libHYDRO.a module_persistence_levelpool_hybrid_tests.o
+cp *.mod ../../../mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/Persistence_Level_Pool_Hybrid'
+make -C RFC_Forecasts
+make[3]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/RFC_Forecasts'
+#Build each sub module then build the module that depends on all sub modules
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_rfc_forecasts_properties.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_rfc_forecasts_state.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_rfc_forecasts.F
+mpif90 -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../../../MPP -I ../../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_rfc_forecasts_tests.F
+ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_properties.o
+ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_state.o
+ar -r ../../../lib/libHYDRO.a module_rfc_forecasts.o
+ar -r ../../../lib/libHYDRO.a module_rfc_forecasts_tests.o
+cp *.mod ../../../mod
+make[3]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs/RFC_Forecasts'
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing/Reservoirs'
+make -C Data_Rec
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -o module_namelist.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I../mod module_namelist.F
+
+ar -r ../lib/libHYDRO.a module_namelist.o
+cp *.mod ../mod
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -o module_RT_data.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I../mod module_RT_data.F
+
+ar -r ../lib/libHYDRO.a module_RT_data.o
+cp *.mod ../mod
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -o module_gw_gw2d_data.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I../mod module_gw_gw2d_data.F
+
+ar -r ../lib/libHYDRO.a module_gw_gw2d_data.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Data_Rec'
+make -C Debug_Utilities
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -o debug_dump_variable.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I../mod debug_dump_variable.F
+
+ar -r ../lib/libHYDRO.a debug_dump_variable.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Debug_Utilities'
+make -C Routing
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_date_utilities_rt.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_date_utilities_rt.F
+
+ar -r ../lib/libHYDRO.a module_date_utilities_rt.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_UDMAP.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_UDMAP.F
+
+ar -r ../lib/libHYDRO.a module_UDMAP.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_HYDRO_utils.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_HYDRO_utils.F
+
+ar -r ../lib/libHYDRO.a module_HYDRO_utils.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_noah_chan_param_init_rt.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_noah_chan_param_init_rt.F
+
+ar -r ../lib/libHYDRO.a module_noah_chan_param_init_rt.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_GW_baseflow.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_GW_baseflow.F
+
+ar -r ../lib/libHYDRO.a module_GW_baseflow.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_HYDRO_io.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_HYDRO_io.F
+
+ar -r ../lib/libHYDRO.a module_HYDRO_io.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_gw_gw2d.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_gw_gw2d.F
+
+ar -r ../lib/libHYDRO.a module_gw_gw2d.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_RT.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_RT.F
+
+ar -r ../lib/libHYDRO.a module_RT.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o Noah_distr_routing.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include Noah_distr_routing.F
+
+ar -r ../lib/libHYDRO.a Noah_distr_routing.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o Noah_distr_routing_overland.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include Noah_distr_routing_overland.F
+
+ar -r ../lib/libHYDRO.a Noah_distr_routing_overland.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o Noah_distr_routing_subsurface.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include Noah_distr_routing_subsurface.F
+
+ar -r ../lib/libHYDRO.a Noah_distr_routing_subsurface.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_channel_routing.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_channel_routing.F
+
+ar -r ../lib/libHYDRO.a module_channel_routing.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_lsm_forcing.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_lsm_forcing.F
+
+ar -r ../lib/libHYDRO.a module_lsm_forcing.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_NWM_io_dict.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_NWM_io_dict.F
+
+ar -r ../lib/libHYDRO.a module_NWM_io_dict.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_NWM_io.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_NWM_io.F
+
+ar -r ../lib/libHYDRO.a module_NWM_io.o
+cp *.mod ../mod
+Routing Makefile:
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_reservoir_routing.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_reservoir_routing.F
+
+ar -r ../lib/libHYDRO.a module_reservoir_routing.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Routing'
+make -C HYDRO_drv
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_HYDRO_drv.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../mod module_HYDRO_drv.F
+
+ar -r ../lib/libHYDRO.a module_HYDRO_drv.o
+cp *.mod ../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/HYDRO_drv'
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS'
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o module_hrldas_HYDRO.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_hrldas_HYDRO.F
+
+ar -r ../../lib/libHYDRO.a module_hrldas_HYDRO.o
+cp *.mod ../../mod
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -o hrldas_drv_HYDRO.o -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include hrldas_drv_HYDRO.F
+
+ar -r ../../lib/libHYDRO.a hrldas_drv_HYDRO.o
+cp *.mod ../../mod
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/CPL/NoahMP_cpl'
+if [ 0 -eq 1 ]; then \
+	(cd lib;rm -f librapid.a); \
+fi
+if [ 0 -eq 1 ]; then \
+	(cd Rapid_routing; make -f makefile.cpl rapid); \
+fi
+make[1]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+(cd Utility_routines;		make)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_date_utilities.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_date_utilities.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_model_constants.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_model_constants.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_wrf_utilities.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_wrf_utilities.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o kwm_string_utilities.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   kwm_string_utilities.F
+
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/Utility_routines'
+(cd phys;			make)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_sf_noahmplsm.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_sf_noahmplsm.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_sf_noahmp_glacier.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_sf_noahmp_glacier.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_sf_noahmp_groundwater.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_sf_noahmp_groundwater.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o tridiag_ground_snowcro.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   tridiag_ground_snowcro.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o modd_csts.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   modd_csts.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o modd_snow_par.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   modd_snow_par.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o mode_thermos.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   mode_thermos.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o modd_surf_atm.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   modd_surf_atm.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o mode_surf_coefs.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   mode_surf_coefs.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o modd_snow_metamo.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   modd_snow_metamo.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o mode_snow3l.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   mode_snow3l.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_snowcro.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_snowcro.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o module_sf_noahmpdrv.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   module_sf_noahmpdrv.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_ -o ini_csts.o -c -I../Utility_routines -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   ini_csts.F
+
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/phys'
+(cd data_structures;		make)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/data_structures'
+Data structures Makefile:
+mpif90  -o state.o  -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../../../OrchestratorLayer state.f90
+
+ar -r ../../../lib/libHYDRO.a state.o
+cp *.mod ../../../mod
+Data structures Makefile:
+mpif90  -o forcing.o  -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../../../OrchestratorLayer forcing.f90
+
+ar -r ../../../lib/libHYDRO.a forcing.o
+cp *.mod ../../../mod
+Data structures Makefile:
+mpif90  -o parameters.o  -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../../../OrchestratorLayer parameters.f90
+
+ar -r ../../../lib/libHYDRO.a parameters.o
+cp *.mod ../../../mod
+Data structures Makefile:
+mpif90  -o geometry.o  -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include -I../../../OrchestratorLayer geometry.f90
+
+ar -r ../../../lib/libHYDRO.a geometry.o
+cp *.mod ../../../mod
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/data_structures'
+(cd IO_code;			make)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_  -o module_hrldas_netcdf_io.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I ../MPP -I ../../../mod -I../Utility_routines -I./ -I ../../MPP -I ../MPP -I ../mod -I /glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_hrldas_netcdf_io.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_  -o module_NoahMP_hrldas_driver.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian  -I./ -I ../../MPP -I ../MPP -I ../mod -I. \
+-I../phys -I../Utility_routines -I../../../mod -I /glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include module_NoahMP_hrldas_driver.F
+
+
+mpif90 -fpp -DMPP_LAND -I ../Data_Rec -DHYDRO_D -DWRF_HYDRO  -DSPATIAL_SOIL      -D_HRLDAS_OFFLINE_  -o main_hrldas_driver.o -c -O2 -g -w -c -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian   -I ../MPP -I. \
+-I../phys -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures -I /glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/include main_hrldas_driver.F
+
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/IO_code'
+(cd run;			make)
+make[2]: Entering directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+
+echo "    -Wl,-rpath, -L -lhdf5 -lz"
+    -Wl,-rpath, -L -lhdf5 -lz
+mpif90 -o hrldas.exe -I../IO_code -I../phys ../IO_code/main_hrldas_driver.o ../IO_code/module_hrldas_netcdf_io.o ../phys/module_sf_noahmpdrv.o ../phys/module_sf_noahmplsm.o ../phys/module_sf_noahmp_glacier.o ../phys/module_sf_noahmp_groundwater.o ../Utility_routines/module_wrf_utilities.o ../Utility_routines/module_model_constants.o ../Utility_routines/module_date_utilities.o ../Utility_routines/kwm_string_utilities.o ../phys/modd_csts.o ../phys/tridiag_ground_snowcro.o ../phys/mode_surf_coefs.o ../phys/mode_snow3l.o ../phys/modd_snow_par.o ../phys/ini_csts.o ../phys/module_snowcro.o ../phys/mode_thermos.o ../phys/modd_surf_atm.o ../phys/modd_snow_metamo.o ../IO_code/module_NoahMP_hrldas_driver.o  -L../../../lib  -lHYDRO  -L/glade/u/apps/ch/opt/netcdf/4.4.1.1/intel/16.0.3/lib -lnetcdff -lnetcdf   
+
+make[2]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP/run'
+make[1]: Leaving directory '/glade/u/home/trude/src/WRF_hydroV5_alaska_reachfix/wrf_hydro_nwm_public/trunk/NDHMS/Land_models/NoahMP'
+
+*****************************************************************
+Make was successful
+
+*****************************************************************
+The environment variables used in the compile:
+HYDRO_D=1
+NCEP_WCOSS=0
+NETCDF=/glade/u/apps/ch/opt/netcdf/4.7.3/intel/19.0.5/
+SPATIAL_SOIL=1
+WRF_HYDRO=1
+WRF_HYDRO_NUDGING=0
+WRF_HYDRO_RAPID=0

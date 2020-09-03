@@ -29,17 +29,7 @@ OBJS = \
 	../Utility_routines/module_wrf_utilities.o \
 	../Utility_routines/module_model_constants.o \
 	../Utility_routines/module_date_utilities.o \
-	../Utility_routines/kwm_string_utilities.o\
-	../phys/modd_csts.o\
-	../phys/tridiag_ground_snowcro.o\
-	../phys/mode_surf_coefs.o\
-	../phys/mode_snow3l.o\
-	../phys/modd_snow_par.o\
-	../phys/ini_csts.o\
-	../phys/module_snowcro.o\
-	../phys/mode_thermos.o\
-	../phys/modd_surf_atm.o\
-	../phys/modd_snow_metamo.o
+	../Utility_routines/kwm_string_utilities.o
 
 CMD = hrldas.exe
 all:	$(CMD)
