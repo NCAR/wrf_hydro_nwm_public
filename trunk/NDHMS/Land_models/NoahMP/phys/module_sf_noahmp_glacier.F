@@ -63,7 +63,7 @@ MODULE NOAHMP_GLACIER_GLOBALS
 
   INTEGER :: OPT_TBOT != 2   !(suggested 2)
 
-! options for snow/soil temperature time scheme (only layer 1)
+! options for snow/soil teperature time scheme (only layer 1)
 ! 1 -> semi-implicit; 2 -> full implicit (original Noah)
 
   INTEGER :: OPT_STC != 1    !(suggested 1)
@@ -583,7 +583,10 @@ contains
   INTEGER :: IZ, IZ2
   REAL, DIMENSION(-NSNOW+1:    0)              :: CVSNO   !volumetric specific heat (j/m3/k)
   REAL, DIMENSION(-NSNOW+1:    0)              :: TKSNO   !snow thermal conductivity (j/m3/k)
-  REAL                                         :: ZMID    !mid-point soil depth
+
+!++ T.EI Model crashed (divided by zero) with REAL instead of REAL*8
+  REAL*8                                         :: ZMID    !mid-point soil depth
+
 ! --------------------------------------------------------------------------------------------------
 
 ! compute snow thermal conductivity and heat capacity

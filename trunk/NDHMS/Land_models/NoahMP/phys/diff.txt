@@ -1,0 +1,321 @@
+31a32
+> 
+60c61
+<               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
+---
+>               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only              
+94a96
+> 
+484,485d485
+<     type(noahmp_parameters) :: parameters
+< 
+487a488
+>       INTEGER                         :: foo = 0
+489c490
+<       REAL, DIMENSION(ims:ime,    jms:jme ), INTENT(INOUT)                   :: PSNOWALBXY    ! Prognostic surface snow albedo
+---
+>       REAL, DIMENSION(ims:ime,    jms:jme ), INTENT(INOUT)   :: PSNOWALBXY    ! Prognostic surface snow albedo
+498,510c499,511
+<       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWLIQXY
+<       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWTEMPXY
+<       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWDZXY
+<       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
+<       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
+<       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
+< 
+<       INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                :: GLACINFO  
+<       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                      :: GLACT
+< 
+<       INTEGER                              :: GLACINFOH,GLACR ! glacier info
+<       CHARACTER(LEN=11)         :: HSNOWRES
+<       CHARACTER(LEN=3)           :: HIMPLICIT_WIND
+---
+>       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)   :: PSNOWLIQXY
+>       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)   :: PSNOWTEMPXY
+>       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)   :: PSNOWDZXY
+>       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)  :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
+>       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)  :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
+>       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)  :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
+> 
+>       INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)  :: GLACINFO  
+>       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)  :: GLACT
+> 
+>       INTEGER                             :: GLACINFOH,GLACR ! glacier info
+>       CHARACTER(LEN=11)        :: HSNOWRES
+>       CHARACTER(LEN=3)          :: HIMPLICIT_WIND
+517,519c518,522
+<       REAL, PARAMETER              :: ZTFRZ   = 273.16 !freezing/melting point (k) 
+<       REAL                                   :: ZFPICE ! snow fraction of precip
+<       REAL, DIMENSION(1)           :: FOO1, FOO2
+---
+> 
+>       REAL, PARAMETER          :: ZTFRZ   = 273.16 !freezing/melting point (k) 
+> 
+>       REAL                                :: ZFPICE ! snow fraction of precip
+>       REAL, DIMENSION(1)      :: FOO1, FOO2
+537,560c540,566
+<       REAL, DIMENSION(1)    ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
+<       REAL, DIMENSION(1)    ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT) 
+<       REAL, DIMENSION(1)    ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
+<       REAL, DIMENSION(1)    ::   ZP_SNOWHMASS                                                                !(OUT)
+<       REAL, DIMENSION(1)    ::   ZP_USTARSNOW                                                               !(OUT)
+< 
+<       REAL,DIMENSION(1)     ::   ZP_VEGTYPE, ZP_ZENITH                                   !(IN)
+<       REAL,DIMENSION(1)     ::    ZP_LAT, ZP_LON                                                 !(IN)
+< 
+<       REAL,DIMENSION(1)     :: ZP_PS               !PSFC
+<       REAL,DIMENSION(1)     ::  ZP_SRSNOW    !QSNOW
+<       REAL,DIMENSION(1)     ::  ZP_TA               ! T_ML 
+<       REAL,DIMENSION(1)     ::  ZP_TG               !TG? 
+<       REAL,DIMENSION(1)     ::  ZP_SW_RAD      ! SWDN
+<       REAL,DIMENSION(1)     ::  ZP_LW_RAD      !  LWDN 
+<       REAL,DIMENSION(1)     ::  ZP_ZREF            !  Z_ML
+<       REAL,DIMENSION(1)     ::  ZP_HSNOW       !  FSH
+<       REAL,DIMENSION(1)     ::  ZP_LES3L          ! FGEV
+<       REAL,DIMENSION(1)     ::  ZP_EVAP            ! ESOIL
+<       REAL,DIMENSION(1)     ::  ZP_EMISNOW   ! EMISSI
+<       REAL,DIMENSION(1)     ::  ZP_CDSNOW     ! CM
+<       REAL,DIMENSION(1)     ::  ZP_CHSNOW     ! CH
+<       REAL,DIMENSION(1)     ::  ZP_QS                 ! QSFC1D
+<       REAL,DIMENSION(1)     ::  ZP_Z0EFF           ! effective roughness.       
+---
+> 
+>       REAL, DIMENSION(1)       ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
+>       REAL, DIMENSION(1)       ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT) 
+>       REAL, DIMENSION(1)       ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
+>       REAL, DIMENSION(1)       ::   ZP_SNOWHMASS                                                                !(OUT)
+>       REAL, DIMENSION(1)       ::   ZP_USTARSNOW                                                               !(OUT)
+> 
+> 
+>       REAL,DIMENSION(1)       ::   ZP_VEGTYPE, ZP_ZENITH                                   !(IN)
+>       REAL,DIMENSION(1)       ::    ZP_LAT, ZP_LON                                                 !(IN)
+> 
+> 
+>       REAL,DIMENSION(1)   :: ZP_PS               !PSFC
+>       REAL,DIMENSION(1)  ::  ZP_SRSNOW    !QSNOW
+>       REAL,DIMENSION(1)  ::  ZP_TA               ! T_ML 
+>       REAL,DIMENSION(1)  ::  ZP_TG               !TG? 
+>       REAL,DIMENSION(1) ::  ZP_SW_RAD      ! SWDN
+>       REAL,DIMENSION(1) ::  ZP_LW_RAD      !  LWDN 
+>       REAL,DIMENSION(1) ::  ZP_ZREF            !  Z_ML
+>       REAL,DIMENSION(1) ::  ZP_HSNOW       !  FSH
+>       REAL,DIMENSION(1) ::  ZP_LES3L          ! FGEV
+>       REAL,DIMENSION(1) ::  ZP_EVAP            ! ESOIL
+>       REAL,DIMENSION(1) ::  ZP_EMISNOW   ! EMISSI
+>       REAL,DIMENSION(1) ::  ZP_CDSNOW     ! CM
+>       REAL,DIMENSION(1) ::  ZP_CHSNOW     ! CH
+>       REAL,DIMENSION(1) ::  ZP_QS                 ! QSFC1D
+>       REAL,DIMENSION(1) ::  ZP_Z0EFF           ! effective roughness.       
+575a582,586
+> ! -- T.EI crocus
+> 
+> 
+>     type(noahmp_parameters) :: parameters
+> 
+594c605
+< ! -- T.EI crocus
+---
+> ! -- T.EI  crocus
+649c660,662
+< 
+---
+> ! ++ T.EI
+>       GLACR= 0
+> ! -- T.EI
+818a832,833
+> 
+> 
+929a945,946
+>  !     PSNOWTHRUFALXY(:,:)=0.
+>  !     PSNOWHEIGHTXY(:,:)=0.
+931a949
+> 
+940a959,962
+> !       IF FOO == 0 then 
+>           IF ( VEGTYP == ISICE_TABLE ) THEN
+>              ICE = -1                           ! Land-ice point
+>              GLACR= 1
+942,957c964,976
+<        IF ( VEGTYP == ISICE_TABLE ) THEN
+<          ICE = -1                           ! Land-ice point
+<          GLACR = 1                      ! ++ T.EI
+<          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
+<       
+<          TBOT = MIN(TBOT,263.15)                      ! set deep temp to at most -10C
+<          CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
+<                                T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
+<                                PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+<                               QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
+<                                 SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
+<                                  TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
+<                                 FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
+<                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
+<                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
+< 			      EMISSI,  FPICE,    CHB2 &                             ! OUT :
+---
+>              CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
+> 
+>              TBOT = MIN(TBOT,263.15)                      ! set deep temp to at most -10C
+>              CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
+>                   T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
+>                   PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+>                   QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
+>                   SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
+>                   TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
+>                   FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
+>                   TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
+>                   QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
+>                   EMISSI,  FPICE,    CHB2 &                             ! OUT :
+959c978
+<                               , sfcheadrt(i,j)                                      &
+---
+>              , sfcheadrt(i,j)                                      &
+961,964c980,984
+<                               )
+< !++ T.EI
+<          ENDIF
+<          
+---
+>              )
+> 
+>           ENDIF
+> !
+> !       else if (foo ==1 ) then  ! if running crocus glaicer
+1089a1110,1114
+> 
+> 
+> 
+> 
+>        
+1091,1145c1116,1170
+<          FSNO   = 1.0       
+<          TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
+<          TGB    = TG 
+<          CANICE = undefined_value 
+<          CANLIQ = undefined_value 
+<          EAH    = undefined_value 
+<          TAH    = undefined_value
+<          FWET   = undefined_value 
+<          WSLAKE = undefined_value 
+<          ZWT    = undefined_value 
+<          WA     = undefined_value 
+<          WT     = undefined_value 
+<          LFMASS = undefined_value 
+<          RTMASS = undefined_value 
+<          STMASS = undefined_value 
+<          WOOD   = undefined_value 
+<          STBLCP = undefined_value 
+<          FASTCP = undefined_value 
+<          PLAI   = undefined_value 
+<          PSAI   = undefined_value 
+<          T2MV   = undefined_value 
+<          Q2MV   = undefined_value 
+<          NEE    = undefined_value 
+<          GPP    = undefined_value 
+<          NPP    = undefined_value 
+<          FVEGMP = 0.0 
+<          ECAN   = undefined_value 
+<          ETRAN  = undefined_value 
+<          APAR   = undefined_value 
+<          PSN    = undefined_value 
+<          SAV    = undefined_value 
+<          RSSUN  = undefined_value 
+<          RSSHA  = undefined_value 
+<          BGAP   = undefined_value 
+<          WGAP   = undefined_value 
+<          TGV    = undefined_value
+<          CHV    = undefined_value 
+<          CHB    = CH 
+<          IRC    = undefined_value 
+<          IRG    = undefined_value 
+<          SHC    = undefined_value 
+<          SHG    = undefined_value 
+<          EVG    = undefined_value 
+<          GHV    = undefined_value 
+<          IRB    = FIRA
+<          SHB    = FSH
+<          EVB    = FGEV
+<          GHB    = SSOIL
+<          TR     = undefined_value 
+<          EVC    = undefined_value 
+<          CHLEAF = undefined_value 
+<          CHUC   = undefined_value 
+<          CHV2   = undefined_value 
+<          FCEV   = undefined_value 
+<          FCTR   = undefined_value        
+---
+>           FSNO   = 1.0       
+>           TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
+>           TGB    = TG 
+>           CANICE = undefined_value 
+>           CANLIQ = undefined_value 
+>           EAH    = undefined_value 
+>           TAH    = undefined_value
+>           FWET   = undefined_value 
+>           WSLAKE = undefined_value 
+>           ZWT    = undefined_value 
+>           WA     = undefined_value 
+>           WT     = undefined_value 
+>           LFMASS = undefined_value 
+>           RTMASS = undefined_value 
+>           STMASS = undefined_value 
+>           WOOD   = undefined_value 
+>           STBLCP = undefined_value 
+>           FASTCP = undefined_value 
+>           PLAI   = undefined_value 
+>           PSAI   = undefined_value 
+>           T2MV   = undefined_value 
+>           Q2MV   = undefined_value 
+>           NEE    = undefined_value 
+>           GPP    = undefined_value 
+>           NPP    = undefined_value 
+>           FVEGMP = 0.0 
+>           ECAN   = undefined_value 
+>           ETRAN  = undefined_value 
+>           APAR   = undefined_value 
+>           PSN    = undefined_value 
+>           SAV    = undefined_value 
+>           RSSUN  = undefined_value 
+>           RSSHA  = undefined_value 
+>           BGAP   = undefined_value 
+>           WGAP   = undefined_value 
+>           TGV    = undefined_value
+>           CHV    = undefined_value 
+>           CHB    = CH 
+>           IRC    = undefined_value 
+>           IRG    = undefined_value 
+>           SHC    = undefined_value 
+>           SHG    = undefined_value 
+>           EVG    = undefined_value 
+>           GHV    = undefined_value 
+>           IRB    = FIRA
+>           SHB    = FSH
+>           EVB    = FGEV
+>           GHB    = SSOIL
+>           TR     = undefined_value 
+>           EVC    = undefined_value 
+>           CHLEAF = undefined_value 
+>           CHUC   = undefined_value 
+>           CHV2   = undefined_value 
+>           FCEV   = undefined_value 
+>           FCTR   = undefined_value        
+1149c1174,1175
+< 
+---
+>          
+>          
+1216,1217c1242
+< 
+<          CALL NOAHMP_SFLX (parameters, &
+---
+>         CALL NOAHMP_SFLX (parameters, &
+1255a1281
+> 
+1421a1448
+> 
+1444a1472
+>           
+1812c1840
+<        fdepthxy ,ht     ,riverbedxy ,eqzwt     ,rivercondxy ,pexpxy            )    ! Optional groundwater
+---
+>        fdepthxy ,ht     ,riverbedxy ,eqzwt     ,rivercondxy ,pexpxy  )    ! Optional groundwater
