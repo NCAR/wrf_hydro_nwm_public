@@ -19,7 +19,10 @@ implicit none
 
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 11
-integer, parameter :: numLdasVars = 98
+!++T.EI crocus
+!integer, parameter :: numLdasVars = 98
+integer, parameter :: numLdasVars = 114
+!-- T.EI
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
@@ -122,6 +125,9 @@ type ldasMeta
    integer :: numVars = numLdasVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers                       ! Fill from Namelist
+! ++ T.EI crocus
+   integer :: act_lev
+! -- T.EI
    integer :: numSpectrumBands = 2
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
@@ -423,6 +429,9 @@ type lsmMeta
    integer :: numVars = numLsmVars
    integer :: numSnowLayers = 3
    integer :: numSoilLayers                       ! Fill from Namelist
+! ++ T.EI crocus
+   integer :: act_lev
+! -- T.EI
    character (len=512) :: modelOutputType = "land"
    character (len=64) :: modelConfigType
 
@@ -816,6 +825,10 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ! LDASOUT FILES
 
    ldasOutDict%numSoilLayers = nlst(1)%nsoil
+!++T.Ei crocus
+   ldasOutDict%act_lev = nlst(1)%act_lev
+! -- T.Ei
+
 
    ldasOutDict%modelNdv = 9.9692099683868690E36
    ldasOutDict%modelNdv2 = -1.E33
@@ -1067,8 +1080,20 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "STMASS","WOOD","STBLCP","FASTCP","NEE", &                !81-85
                                "GPP","NPP","PSN","APAR","ACCET", &                       !86-90
                                "CANWAT","SOILICE","SOILSAT_TOP","SOILSAT","SNOWT_AVG", & !91-95
-                               "ALBSND","ALBSNI","QRAIN"]                                !96-98
-   ldasOutDict%longName(:) = [character(len=128) :: &
+                               "ALBSND","ALBSNI","QRAIN",&                               !96-98
+   !++ T.EI , crocus             
+                                "glacier", "PSNOWLIQ", "glacier_thickness" , &    !99-101
+                                "PSNOWHEATXY" ,"PSNOWRHOXY" ,"PSNOWSWEXY" ,& ! 102-104
+                                "PSNOWGRAN1XY","PSNOWGRAN2XY","PSNOWAGEXY",& !105-107
+                                "PSNOWTEMPXY","PSNOWDZXY","PSNOWHISTXY",&  !108-110
+                                "PSNOWTHRUFALXY","PSNOWALBXY","PSNOWHEIGHTXY",& !111-113
+                                "PSNOWTOTSWEXY"]  !114
+
+!                                "glacier", "glacier_thickness", &    !99-100
+!                                "PSNOWLIQ" ] ! 101
+
+!-- T.EI
+  ldasOutDict%longName(:) = [character(len=128) :: &
                               "Dominant vegetation category",&          !1
                               "Dominant soil category",&                !2
                               "Green Vegetation Fraction",&             !3
@@ -1166,7 +1191,26 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "average snow temperature (by layer mass)",& !95
                               "snowpack albedo, direct",&               !96
                               "snowpack albedo, diffuse",&              !97
-                              "Rainfall rate on the ground"]            !98
+                              "Rainfall rate on the ground",&            !98
+! ++ T.EI for crocus
+                              "Glacier grid point", &    !99
+                               "Liquid in snow",& ! 100
+                               "Glacier height",&   ! 101
+                               "Snow heat",&   !102
+                               "Snow density",&   !103
+                               "Snow water equivalent",&   !104
+                               "Snow grain 1",&   !105
+                               "Snow grain2",&   !106
+                               "Snow age",&   !107
+                               "Snow temperature",&   !108
+                               "Snow thickness",&   !109
+                               "Snow history",&   !110
+                               "Runoff from glacier",&   !111
+                               "Snow albedo",&   !112
+                               "Total snow height",&   !113
+                               "Total snow swe"]  !114
+
+!-- T.EI
    ldasOutDict%units(:) = [character(len=64) :: &
                             "category","category","-","-","-", &               !1-5
                             "W m-2","-","W m-2","kg m-2 s-1","-", &            !6-10
@@ -1187,7 +1231,17 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2", &  !81-85
                             "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2","mm", & !86-90
                             "mm","1","1","1","K", &                            !91-95
-                            "-","-","mm s-1"]                                  !96-98
+                            "-","-","mm s-1",&                                  !96-98
+! ++ T.EI for crocus
+                            "-","kg/m3","m", &  ! 99-101
+                            "TBD","TBD","kg m-2",& !102-104
+                            "TBD","TBD","TBD",& !105-107
+                            "K","TBD","TBD",& !108-110
+                            "kg/(m2 s)","TBD","m",& !111-113
+                            "TBD"] !114
+
+   
+! -- T.EI
    ldasOutDict%scaleFactor(:) = [1.0, 1.0, 0.01, 0.1, 0.1, &                   !1-5
                                  0.1, 0.01, 0.1, 0.00001, 0.01, &              !6-10
                                  0.1, 0.1, 0.1, 0.1, 0.1, &                    !11-15
@@ -1207,7 +1261,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.01, 0.01, 0.01, 0.01, 0.01, &               !81-85
                                  0.01, 0.01, 0.01, 0.01, 0.01, &               !86-90
                                  0.01, 0.01, 0.001, 0.001, 0.1, &              !91-95
-                                 0.01, 0.01, 0.00001]                          !96-98
+                                 0.01, 0.01, 0.00001,&                          !96-98
+! ++ T.EI for crocus! 
+!!! Rember to do the correct scaling factor
+                                 1.0, 0.0001, 1.0,&   !99-101
+                                 0.000001,0.001,0.000001, & ! 102-104
+                                 0.01,0.01,0.0001, & ! 105-107
+                                 0.01,1.0,1.0, & ! 108-110
+                                 1.0,1.0,1.0, & ! 111-1113
+                                 0.01 ]   ! 114
+! -- .T.EI
    ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !1-10
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !11-20
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !21-30
@@ -1217,7 +1280,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !61-70
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !71-80
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !81-90
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]           !91-98
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&           !91-98
+! ++ T.EI for crocus
+                               0.0,0.0,0.0, &    !99-101
+                               0.0,0.0,0.0, &    !102-104
+                               0.0,0.0,0.0, &    !105-107
+                               0.0,0.0,0.0, &    !108-110
+                               0.0,0.0,0.0, &    !111-103
+                               0.0] ! 114
+! -- T.EI
    ! Note that output flags will be set in the the output routine, and will vary
    ! by the IOC flag specified in hydro.namelist.
    ldasOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0, & !1-10
@@ -1229,7 +1300,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                              0,0,0,0,0,0,0,0,0,0, & !61-70
                              0,0,0,0,0,0,0,0,0,0, & !71-80
                              0,0,0,0,0,0,0,0,0,0, & !81-90
-                             0,0,0,0,0,0,0,0]       !91-98
+                             0,0,0,0,0,0,0,0,&       !91-98
+! ++ T.EI for crocus
+                               0,0,0, &    !99-101
+                               0,0,0, &    !102-104
+                               0,0,0, &    !105-107
+                               0,0,0, &    !108-110
+                               0,0,0, &    !111-103
+                               0] ! 114
+! -- T.EI
    ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1, & !1-10
                                   1,1,1,1,1,1,1,1,1,1, & !11-20
                                   1,1,1,1,1,1,1,1,1,1, & !21-30
@@ -1239,7 +1318,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   1,1,1,1,1,1,1,1,1,1, & !61-70
                                   1,1,1,1,1,1,1,1,1,1, & !71-80
                                   1,1,1,1,1,1,1,1,1,1, & !81-90
-                                  1,1,1,1,1,1,1,1]       !91-98
+                                  1,1,1,1,1,1,1,1,&       !91-98
+! ++ T.EI for crocus
+                                  1,1,1, &   !99-101
+                                  1,1,1, &   !102-104
+                                  1,1,1, &   !105-107
+                                  1,1,1, &   !108-110
+                                  1,1,1, &   !111-113
+                                  1] ! 114
+! -- T.EI
    ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1, &  !1-10
                             1,1,1,1,1,1,1,1,1,1, &  !11-20
                             1,1,1,1,1,1,1,1,1,1, &  !21-30
@@ -1249,7 +1336,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             4,3,4,1,1,1,1,1,1,1, &  !61-70
                             1,1,1,1,1,1,1,1,1,1, &  !71-80
                             1,1,1,1,1,1,1,1,1,1, &  !81-90
-                            1,1,1,1,1,2,2,1]        !91-98
+                            1,1,1,1,1,2,2,1,&        !91-98
+! ++ T.EI for crocus
+                                  1,40,1,&   !99-101
+                                  40,40,40, & !102-104
+                                  40,40,40, & !105-107
+                                  40,40,40, & !108-110
+                                  1,1,1, & !111-113
+                                  1] ! 114
+! -- T.EI
+
    ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !11-15
@@ -1269,7 +1365,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                                 -9999.0,-9999.0, -999.0]                   !96-98
+                                 -9999.0,-9999.0,-999.0,&                  !96-98
+! ++ T.EI for crocus
+                                  -9999.0,-9999.0,-9999.0, &   !99-101
+                                  -9999.0,-9999.0,-9999.0, &   !102-104
+                                  -9999.0,-9999.0,-9999.0, &   !105-107
+                                  -9999.0,-9999.0,-9999.0, &   !108-110
+                                  -9999.0,-9999.0,-9999.0, &   !111-113
+                                  -9999.0 ] ! 114
+! -- T.EI
+
    ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !11-15
@@ -1289,7 +1394,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                              -9999.0,-9999.0, -999.0]                   !96-98
+                              -9999.0,-9999.0,-999.0,&                   !96-98
+! ++ T.EI for crocus
+                                  -9999.0,-9999.0,-9999.0, &   !99-101
+                                  -9999.0,-9999.0,-9999.0, &   !102-104
+                                  -9999.0,-9999.0,-9999.0, &   !105-107
+                                  -9999.0,-9999.0,-9999.0, &   !108-110
+                                  -9999.0,-9999.0,-9999.0, &   !111-113
+                                  -9999.0 ] ! 114
+! -- T.EI
+
    ldasOutDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !1-5
                                  -1000.0d0, -1.0d0, -1500.0d0, 0.0d0, 0.0d0, &            !6-10
                                  -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, -1500.0d0, & !11-15
@@ -1309,7 +1423,17 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !81-85
                                  0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, &                 !86-90
                                  -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                    !91-95
-                                 0.0d0, 0.0d0, 0.0d0]                                     !96-98
+                                 0.0d0, 0.0d0, 0.0d0,&                                    !96-98
+! ++ T.EI for crocus
+!! NBNB Check these values
+                                  0.0d0,0.0d0,0.0d0, &   !99-101
+                                  -1.0D+7,0.0d0,0.0d0, &   !102-104
+                                  -1.0D+3,0.0d0,0.0d0, &   !105-107
+                                  0.0d0,0.0d0,0.0d0, &   !108-110
+                                  0.0d0,0.0d0,0.0d0, &   !111-113
+                                  0.0d0 ]   ! 114
+! -- T.EI
+
    ldasOutDict%validMaxDbl(:) = [100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, &             !1-5
                                  3000.0d0, 1.0d0, 1500.0d0, 100.0d0, 1.0d0, &           !6-10
                                  1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, 1500.0d0, &    !11-15
@@ -1322,14 +1446,24 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  400.0d0, 400.0d0, 400.0d0, 400.0d0, 400.0d0, &         !46-50
                                  400.0d0, 400.0d0, 1.0d0, 1.0d0, 100000.0d0, &          !51-55
                                  1.0d0, 100.0d0, 100000.0d0, 100000.0d0, 400.0d0, &     !56-60
-                                 1.0d0, 400.0d0, 1.0d0, 100.0d0, 1000000.0d0, &          !61-65
+                                 1.0d0, 400.0d0, 1.0d0, 100.0d0, 100000.0d0, &          !61-65
                                  100.0d0, 10.0d0, 1.0d0, 100000.0d0, 100000.0d0, &      !66-70
                                  5.0d0, 5.0d0, 5.0d0, 5.0d0, 5.0d0, &                   !71-76
                                  5.0d0, 5.0d0, 5.0d0, 1000.0d0, 1000.0d0, &             !76-80
                                  1000.0d0, 1000.0d0, 5000.0d0, 5000.0d0, 1000.0d0, &    !81-85
                                  1000.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 1.0D+6, &      !86-90
                                  30000.0d0, 1.0d0, 1.0d0, 1.0d0, 400.0d0, &             !91-95
-                                 1.0d0, 1.0d0, 100.0d0]                                 !96-98
+                                 1.0d0, 1.0d0, 100.0d0,&                                !96-98
+! ++ T.EI for crocus
+! NBNB Check these values
+                                  1.0d0,1.0d0,10000.0d0, &   !99-101
+                                  0.0d0, 1.0D+3, 1.0D+9, &    !102-104
+                                  1.0D+3, 1.0D+3, 1.0D+6, &    !105-107
+                                  300.0d0, 1.0D+4, 1.0D+4, &    !108-110
+                                  100.0d0, 1.0d0, 1.0D+5, &    !111-113
+                                  1.0D+7] ! 104
+! -- T.EI
+
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
@@ -2160,6 +2294,9 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
    !LSMOUT files
 
    lsmOutDict%numSoilLayers = nlst(1)%nsoil
+!++T.Ei crocus
+   lsmOutDict%act_lev = nlst(1)%act_lev
+! -- T.Ei
 
    lsmOutDict%modelNdv = 9.9692099683868690E36
    lsmOutDict%modelNdvInt = -2147483647
