@@ -135,7 +135,9 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWNCV   ! non-covective snow forcing (subset of rainncv) [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GRAUPELNCV! non-convective graupel forcing (subset of rainncv) [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  HAILNCV   ! non-convective hail forcing (subset of rainncv) [mm]
-
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAKERAINOUT  ! precipitation over lakes [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAKEEVAPOUT  ! evaporation from lakes [mm]
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAKEDEPTHOUT ! lake depth [m]
 ! New spatially varying fields
 
   CHARACTER(LEN = 256)                    ::  spatial_filename
@@ -770,6 +772,9 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( SNOWNCV   (XSTART:XEND,YSTART:YEND) )    ! non-covective snow forcing (subset of rainncv) [mm]
   ALLOCATE ( GRAUPELNCV(XSTART:XEND,YSTART:YEND) )    ! non-convective graupel forcing (subset of rainncv) [mm]
   ALLOCATE ( HAILNCV   (XSTART:XEND,YSTART:YEND) )    ! non-convective hail forcing (subset of rainncv) [mm]
+  ALLOCATE ( LAKERAINOUT  (XSTART:XEND,YSTART:YEND) )    ! precipitation over lakes [mm]
+  ALLOCATE ( LAKEEVAPOUT  (XSTART:XEND,YSTART:YEND) )    ! evaporation from lakes [mm]
+  ALLOCATE ( LAKEDEPTHOUT (XSTART:XEND,YSTART:YEND) )    ! lake depth [m]
 
 #ifdef SPATIAL_SOIL
   ALLOCATE ( bexp_3d    (XSTART:XEND,1:NSOIL,YSTART:YEND) )    ! C-H B exponent
@@ -1157,6 +1162,10 @@ module module_NoahMP_hrldas_driver
   SOILICE     = undefined_real
   SNOWT_AVG   = undefined_real
 #endif
+
+  LAKERAINOUT    = undefined_real
+  LAKEEVAPOUT    = undefined_real
+  LAKEDEPTHOUT   = undefined_real
 
   XLAND          = 1.0   ! water = 2.0, land = 1.0
   XICE           = 0.0   ! fraction of grid that is seaice
@@ -1552,10 +1561,13 @@ endif
                   'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
                   'SNLIQ,SOIL_T,SOIL_W,SNOW_T,SOIL_M,SNOWH,SNEQV,QSNOW,ISNOW,FSNO,ACSNOW,ACSNOM,CM,CH,CHV,CHB,CHLEAF,CHUC,' // &
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
-                  'SOILSAT,SNOWT_AVG,QRAIN'
+                  'SOILSAT,SNOWT_AVG,QRAIN,'// &
+                  'LAKE_PRECIP2D,LAKE_EVAP2D,LAKE_DEPTH2D,LAKE_T3D,LAKE_ICE3D'
    endif
    if (io_config_outputs .eq. 1) then
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
+        ! bkhazaei: this doesn't match with the io_config ==1 in module_NWM_io.F (before adding new vars 99-103). 
+        ! For example, "EDIR" flag var number =17 is on but not listed here! Similar to vars 59 and 60 (SNLIQ and SOIL_T).
    endif
    if (io_config_outputs .eq. 2) then
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
@@ -1871,6 +1883,13 @@ end subroutine land_driver_ini
          !where(ivgtyp == islake) rainbl  = 2.0
          !where(ivgtyp == islake) qfx = 1.0
 
+         ! mask lake output variables:
+         LAKERAINOUT = -9999.0
+         where(IVGTYP == 28) LAKERAINOUT = RAINBL
+         LAKEEVAPOUT = -9999.0
+         where(IVGTYP == 28) LAKEEVAPOUT = QFX * 3600.0 ! to convert from kg/m2/s to mm in the LDASOUT file
+         LAKEDEPTHOUT = -9999.0
+         where(IVGTYP == 28) LAKEDEPTHOUT = lakedepth2d
 #ifdef WRF_HYDRO
          do ilake = 1, nlakes
            ! find this ID for this lake
@@ -2222,6 +2241,11 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNDXY,IVGTYP,96)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QRAINXY,IVGTYP,98)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LAKERAINOUT,IVGTYP,99)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LAKEEVAPOUT,IVGTYP,100)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LAKEDEPTHOUT,IVGTYP,101)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,nlevlake,t_lake3d,IVGTYP,102)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,nlevlake,lake_icefrac3d,IVGTYP,103)
 #endif /* WRF_HYDRO */
 
 !#ifdef WRF_HYDRO
