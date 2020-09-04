@@ -4976,7 +4976,7 @@ end subroutine LakeDebug
 
   real(r8)                 :: scalez  = 0.025_r8   ! Soil layer thickness discretization (m)
   logical,parameter        :: arbinit = .true.
-  real,parameter           :: defval  = -999.0
+  real,parameter           :: defval  = -9999.0
   integer                  :: isl
   integer                  :: numb_lak    ! for debug
   character*256 :: message
