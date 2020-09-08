@@ -129,8 +129,8 @@
   INTEGER, allocatable, DIMENSION(:)   :: TYPEL       !type of link Muskingum: 0 strm 1 lake
                                                       !-- Diffusion: 0 edge or pour; 1 interior; 2 lake
   INTEGER, allocatable, DIMENSION(:)   :: TYPEN      !type of link 0 strm 1 lake
-  REAL, allocatable, DIMENSION(:)      :: QLAKEI      !lake inflow in difussion scheme
-  REAL, allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
+  REAL(kind=real64), allocatable, DIMENSION(:)      :: QLAKEI      !lake inflow in difussion scheme
+  REAL(kind=real64), allocatable, DIMENSION(:)      :: QLAKEO      !lake outflow in difussion scheme
   INTEGER(kind=int64), allocatable, DIMENSION(:)   :: LAKENODE   !which nodes flow into which lakes
   integer(kind=int64), allocatable, dimension(:)   :: LINKID     ! id of links on linked routing
   REAL, allocatable, DIMENSION(:)      :: CVOL       ! channel volume
@@ -159,7 +159,7 @@
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
   ! VARIABLES FOR  RESERVOIRS
-  REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
+  REAL*8, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
 !-- lake params
   integer(kind=int64), allocatable, dimension(:) :: LAKEIDA     !id of lakes in routlink file
   integer(kind=int64), allocatable, dimension(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl

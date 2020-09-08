@@ -2092,9 +2092,52 @@ MODULE MODULE_MPP_LAND
       end subroutine write_chanel_int8
 
 
-      subroutine write_lake_real(v,nodelist_in,nlakes)
+     subroutine write_lake_real8(v,nodelist_in,nlakes)   
         implicit none
-        real recv(nlakes), v(nlakes)
+        real*8 recv(nlakes)
+        !real recv(nlakes)
+        real*8 v(nlakes)
+        integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
+        integer i, ierr, tag, k
+        integer length, node
+
+        nodelist = nodelist_in
+        if(my_id .eq. IO_id) then
+           do i = 0, numprocs - 1
+              if(i .ne. my_id) then
+                 !block receive  from other node.
+                 tag = 129
+                 call mpi_recv(nodelist,nlakes,MPI_INTEGER,i, &
+                      tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                   tag = 139
+                 !call mpi_recv(recv(:),nlakes,MPI_REAL,i,  &
+                 call mpi_recv(recv(:),nlakes,MPI_DOUBLE_PRECISION,i,  &
+                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+
+                 do k = 1,nlakes
+                    if(nodelist(k) .gt. -99) then
+                       node = nodelist(k) 
+                       v(node) = recv(node)
+                    endif
+                 enddo
+              end if            
+           end do
+        else
+           tag =  129
+           call mpi_send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
+               tag,HYDRO_COMM_WORLD,ierr)
+           tag = 139
+           !call mpi_send(v,nlakes,MPI_REAL,IO_id,   &
+           call mpi_send(v,nlakes,MPI_DOUBLE_PRECISION,IO_id,   &
+               tag,HYDRO_COMM_WORLD,ierr)
+        end if
+     end subroutine write_lake_real8
+
+
+     subroutine write_lake_real(v,nodelist_in,nlakes)   
+        implicit none
+        real recv(nlakes)
+        real v(nlakes)
         integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
         integer i, ierr, tag, k
         integer length, node
@@ -2604,29 +2647,38 @@ MODULE MODULE_MPP_LAND
       subroutine updateLake_seq(in,nsize,in0)
        implicit none
        integer :: nsize
-       real, dimension(nsize) :: in
-       real, dimension(nsize) :: tmp
-       real, dimension(:) :: in0
+       real*8, dimension(nsize) :: in
+       real*8, dimension(nsize) :: tmp
+       real*8, dimension(:) :: in0
        integer tag, i, status, ierr, k
        if(nsize .le. 0) return
 
        tag = 29
        if(my_id .ne. IO_id) then
-          call mpi_send(in,nsize,MPI_REAL, IO_id,     &
+
+         ! call mpi_send(in,nsize,MPI_REAL, IO_id,     &
+         !       tag,HYDRO_COMM_WORLD,ierr)
+          call mpi_send(in,nsize,MPI_double, IO_id,     &
                 tag,HYDRO_COMM_WORLD,ierr)
        else
           do i = 0, numprocs - 1
             if(i .ne. IO_id) then
+
+             ! call mpi_recv(tmp,nsize,&
+             !     MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                call mpi_recv(tmp,nsize,&
-                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-               do k = 1, nsize
+                   MPI_double,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+
+               do k = 1, nsize 
                   if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
                end do
             end if
           end do
        end if
-       call mpp_land_bcast_real_1d(in)
+       !call mpp_land_bcast_real_1d(in)
+       call mpp_land_bcast_real8_1d(in)
 
+     
      end subroutine updateLake_seq
 
 
@@ -2664,7 +2716,8 @@ MODULE MODULE_MPP_LAND
      subroutine updateLake_grid(in,nsize,lake_index)
        implicit none
        integer :: nsize
-       real, dimension(nsize) :: in
+       !real, dimension(nsize) :: in
+       real*8, dimension(nsize) :: in
        integer, dimension(nsize) :: lake_index
        real, dimension(nsize) :: tmp
        integer tag, i, status, ierr, k
@@ -2692,8 +2745,11 @@ MODULE MODULE_MPP_LAND
             end if
           end do
        end if
-       call mpp_land_bcast_real_1d(in)
 
+       !call mpp_land_bcast_real_1d(in)
+       call mpp_land_bcast_real8_1d(in)
+     
+     
      end subroutine updateLake_grid
 
 
