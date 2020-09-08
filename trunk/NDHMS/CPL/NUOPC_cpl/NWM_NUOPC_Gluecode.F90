@@ -378,7 +378,7 @@ contains
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
-    call NWM_SetFieldData(exportState, did)
+    call NWM_SetFieldData(exportState, importState, did)
 
 
 #ifdef DEBUG
@@ -444,8 +444,11 @@ contains
 
     ! LOCAL VARIABLES
     type(ESMF_TypeKind_Flag)                  :: typekind
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_streamflow => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
+
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_waterlevel => null()
       
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -455,16 +458,17 @@ contains
 
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    allocate(farrayPtr_loc(loccnt))     ! allocate for locstream
-    farrayPtr_loc = -9.9
+    allocate(farrayPtr_istreamflow(loccnt))     ! allocate for locstream
+    farrayPtr_streamflow = -9.9
 
+    
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
         print*, "Beheen size of farrayPtr_loc", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
-                                           farrayPtr=farrayPtr_loc, &
+                                           farrayPtr=farrayPtr_streamflow, &
                                            datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                            name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -484,12 +488,12 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
-      !CASE ('water_level')
-      !  NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-      !                farray=rt_domain(did)%velocity, &
-      !                  indexflag=ESMF_INDEX_DELOCAL, &
-      !                             name=stdName, rc=rc)
-      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      CASE ('water_level')
+        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+                         farray=farrayPtr_waterlevel, &
+                        indexflag=ESMF_INDEX_DELOCAL, &
+                                   name=stdName, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
        
 
       CASE ('air_pressure_at_sea_level')
@@ -1277,47 +1281,48 @@ contains
   ! For discontinuous variables (eg, 3 hourly precipitation) - conservative
   ! interpolation would be a good approach. Preceipitation has a little or no 
   ! spatial correlation at high frequency sampling (eg., 3-hourly) but on
-  ! monthly, 
-  ! seasonal or annual mean time scales may be 'reasonably' smooth is space.
+  ! monthly, seasonal or annual mean time scales may be 'reasonably' smooth is space.
   !
   ! Computing the curl of the wind stress requires that highly accurate
-  ! derivatives 
-  ! be computed. In this case, patch interpolation would be appropriate. 
+  ! derivatives be computed. In this case, patch interpolation would be appropriate. 
   !
   ! In other instances, there may be physical requirements (e.g., conservation
-  ! of
-  ! energy) that require a specific interpolation method.
+  ! of energy) that require a specific interpolation method.
   !
   ! There are data for which no interpolation method should be used. An example
   ! would be categorical data for land (eg., desert, rain forest, ...).
   ! Deriving a new grid for categorical data (eg, land surface type) would be
-  ! best 
-  ! accomplished with a nearest neighbor algorithm because interpolating
-  ! different 
-  ! categories may result in a totally bogus result.
+  ! best accomplished with a nearest neighbor algorithm because interpolating
+  ! different categories may result in a totally bogus result.
   !
   ! Non-linear quantities should always be computed on the original grid and,
   ! subsequently, interpolated to the destination grid. Note that the results
-    ! The basic steps of NCL/ESMF regridding involve:
-    !
-    ! Reading or generating the "source" grid.
-    ! Reading or generating the "destination" grid.
-    ! Creating special NetCDF files that describe these two grids.
-    ! *Generating a NetCDF file that contains the weights.
-    ! Applying the weights to data on the source grid, to interpolate the data to the
-    ! destination grid.
-    ! Copying over any metadata to the newly regridded data.
-    !
-    ! ESMF_regrid_18.ncl:
-    ! This example shows how to regrid two variables (PSL and T) on a HOMME
-    ! cubed-sphere (unstructured) finite volume grid (48602 cells) to a 96 x 144
-    ! finite volume (FV) rectilinear grid.
-    !
-    ! Once the first variable has been regridded using ESMF_regrid, you will have a
-    ! NetCDF weights file. You can then use this weights file to regrid the second
-    ! variable using ESMF_regrid_with_weights. This can be much faster than using
-    ! ESMF_regrid again.
-    !
+  ! will be different than if the original variables on the source grid were
+  ! interpolated to the destination grid and then the non-linear computations
+  ! performed.
+  !
+  ! Vector interpolation (eg, U, V) should be performed on the vector pair
+  ! simultaneously. Interpolating U, then separately, interpolating V may be
+  ! adequate for some purposes, but not if the interpolated vector components
+  ! were subsequently used to derive (say) divergence. An indirect approach
+  ! would be to (a) calculate the scalar quantities vorticity and divergence on
+  ! the source grid; (b) interpolate these scalar quantities to the destination
+  ! grid using standard methods; and then, (c) derive the U and V from the
+  ! rotational and divergent wind components.
+  !
+  ! Extrapolation: In some cases, a regridding algorithm may extrapolate rather
+  ! than interpolate. A common example is extrapolating vertical profiles in mountain
+  ! regions to (say) 1000hPa. In some cases, the extrapolation can be guided by
+  ! physical principles. For example, using the standard lapse rate may be
+  ! acceptable when extrapolating temperature or geopotential via the
+  ! hydrostatic equation. However, generally, any extrapolated values should be used
+  ! and interpreted with the utmost caution.
+  !
+  ! Occassionally, someone might say, "I have a 5x5 grid containing precipitation
+  ! but I need a 0.1x0.1 grid so I'll interpolate to the 0.1x0.1 resolution. Of
+  ! course, this interpolation can be performed but this provides no additional
+  ! information than the original 5x5 grid.
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
 #endif
@@ -1512,8 +1517,9 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
-  subroutine NWM_SetFieldData(exportState, did)
+  subroutine NWM_SetFieldData(exportState, importState, did)
     type(ESMF_State),intent(inout)     :: exportState
+    type(ESMF_State),intent(inout)     :: importState
     integer, intent(in)                :: did
 
     ! local variables
@@ -1607,12 +1613,12 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-      !CASE ('water_level')
-      !  NWM_SetFieldData = ESMF_FieldCreate(grid=grid, &
-      !                farray=rt_domain(did)%velocity, &
-      !                  indexflag=ESMF_INDEX_DELOCAL, &
-      !                             name=stdName, rc=rc)
-      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      CASE ('water_level')
+        NWM_SetFieldData = ESMF_FieldCreate(grid=grid, &
+                      farray=rt_domain(did)%velocity, &
+                        indexflag=ESMF_INDEX_DELOCAL, &
+                                   name=stdName, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
       !CASE ('air_pressure_at_sea_level')
