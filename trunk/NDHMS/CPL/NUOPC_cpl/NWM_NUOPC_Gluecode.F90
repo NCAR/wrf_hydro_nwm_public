@@ -378,7 +378,11 @@ contains
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
+<<<<<<< HEAD
     call NWM_SetFieldData(exportState, importState, did)
+=======
+    call NWM_SetFieldData(importState, exportState, did)
+>>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
 
 
 #ifdef DEBUG
@@ -490,7 +494,11 @@ contains
 
       CASE ('water_level')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+<<<<<<< HEAD
                          farray=farrayPtr_waterlevel, &
+=======
+                      farray=rt_domain(did)%velocity, &
+>>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
                         indexflag=ESMF_INDEX_DELOCAL, &
                                    name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -1261,11 +1269,50 @@ contains
     type(ESMF_Field), intent(inout) :: dstField
     integer, intent(out)        :: rc
 
+    type(ESMF_RouteHandle) :: rh
+    type(ESMF_Field) :: tmpField
+    type(ESMF_GeomType_Flag) :: fieldgeom
+
+    type(ESMF_ArraySpec) :: fas
+    type(ESMF_Mesh) :: fmesh
+    type(ESMF_Grid) :: fgrid
+    type(ESMF_LocStream) :: fls
+    type(ESMF_TypeKind_Flag) :: ftk
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
     rc = ESMF_SUCCESS
+
+    call ESMF_FieldGet(dstField, geomtype=fieldgeom, grid=fgrid, mesh=fmesh, &
+        locstream=fls, arrayspec=fas, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    if (fieldgeom == ESMF_GEOMTYPE_GRID) then
+        tmpField = ESMF_FieldCreate(fgrid, fas, rc=rc)
+    else if (fieldgeom == ESMF_GEOMTYPE_MESH) then
+        tmpField = ESMF_FieldCreate(fmesh, fas, rc=rc)
+    else if (fieldgeom == ESMF_GEOMTYPE_LOCSTREAM) then
+        tmpField = ESMF_FieldCreate(fls, fas, rc=rc)
+    end if
+    if (ESMF_STDERRORCHECK(rc)) return
+    
+    ! Need to figure out how to store the routehandle somewhere
+    ! so it can be reused.
+    call ESMF_FieldRegridStore(srcField, tmpField, routehandle=rh, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+   
+    ! When testing is completed, set checkflag=.FALSE.
+    call ESMF_FieldRegrid(srcField, dstField, rh, checkflag=.TRUE., rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    call ESMF_FieldDestroy(tmpField, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+
+    call ESMF_FieldRegridRelease(rh, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
   ! Grids used in climate research fall into several categories: regular,
   ! rectilinear, curvilinear and unstructured. For our purposes, grids described
@@ -1517,20 +1564,30 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
+<<<<<<< HEAD
   subroutine NWM_SetFieldData(exportState, importState, did)
     type(ESMF_State),intent(inout)     :: exportState
     type(ESMF_State),intent(inout)     :: importState
+=======
+  subroutine NWM_SetFieldData(importState, exportState, did)
+    type(ESMF_State), intent(inout) :: importState
+    type(ESMF_State), intent(inout) :: exportState
+>>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
     integer, intent(in)                :: did
 
     ! local variables
-    integer :: i,j, esmf_comm, localPet, petCnt, itemCnt, rc, localElmCnt
-    character (len=30)   :: itemName
-    type(ESMF_Field)     :: itemField
+    integer :: i,j, esmf_comm, localPet, petCnt, rc, localElmCnt
+    integer :: exitemCnt, imitemCnt
+    character (len=ESMF_MAXSTR)   :: expitemName
+    character (len=ESMF_MAXSTR)   :: impitemName
+    type(ESMF_Field)     :: expitemField
+    type(ESMF_Field)     :: impitemField
     type(ESMF_VM)        :: vm  ! vm that field was created on
     type(ESMF_LocStream) ::locstream
 
     character(len=ESMF_MAXSTR)                   :: locName
-    character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
+    character(len=ESMF_MAXSTR), allocatable      :: expitemNames(:)
+    character(len=ESMF_MAXSTR), allocatable      :: impitemNames(:)
     real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
@@ -1543,28 +1600,38 @@ contains
     rc = ESMF_SUCCESS
    
     ! fill fields with values for export after physic calculations
-    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    call ESMF_StateGet(exportState, itemCount=exitemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    allocate(itemNames(itemCnt))
+    allocate(expitemNames(exitemCnt))
 
-    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    call ESMF_StateGet(importState, itemCount=imitemCnt, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    allocate(impitemNames(imitemCnt))
+
+    call ESMF_StateGet(exportState, itemNameList=expitemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    do i=1, itemCnt
+    call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
-      itemName = trim(itemNames(i))
+    print*, "Export Fields: ", expitemNames
+    print*, "Import Fields: ", impitemNames
+    do i=1, exitemCnt
+
+      expitemName = trim(expitemNames(i))
        
-      call ESMF_StateGet(exportState, itemName, itemField, rc=rc)
+      call ESMF_StateGet(exportState, expitemName, expitemField, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
-      SELECT CASE (itemName)
+      print*, trim(expitemName), "SetFieldData"
+      SELECT CASE (trim(expitemName))
         CASE ('flow_rate')
 
           ! Get a DE-local Fortran array pointer from a Field
-          call ESMF_FieldGet(itemField,farrayPtr=flowRatePtr, rc=rc)
+          call ESMF_FieldGet(expitemField, farrayPtr=flowRatePtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
+          call ESMF_FieldGet(expitemField, locstream=locstream, vm=vm, rc=rc)
 
           ! get the vm of this field
           call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
@@ -1613,12 +1680,13 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-      CASE ('water_level')
-        NWM_SetFieldData = ESMF_FieldCreate(grid=grid, &
-                      farray=rt_domain(did)%velocity, &
-                        indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('water_level')
+            call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
+            
+            call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
+            print*, "Regridded water_level"
 
 
       !CASE ('air_pressure_at_sea_level')
@@ -1638,12 +1706,13 @@ contains
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-          msg=METHOD//": Field hookup missing: "//itemName, &
+          msg=METHOD//": Field hookup missing: "//expitemName, &
                                       file=FILENAME,rcToReturn=rc)
         return  ! bail out
       END SELECT
     enddo
-    deallocate(itemNames)
+    deallocate(expitemNames)
+    deallocate(impitemNames)
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
