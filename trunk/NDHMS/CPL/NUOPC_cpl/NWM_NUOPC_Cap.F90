@@ -339,6 +339,7 @@ module NWM_NUOPC_Cap
     
     ! Local variables
     character(32)               :: cname
+    character(32) :: tmpName
     type(type_InternalState)    :: is
     type(ESMF_VM)               :: vm
     integer                     :: fIndex
@@ -394,11 +395,13 @@ module NWM_NUOPC_Cap
 
     ! Advertise import and export fields
     do fIndex = 1, size(NWM_FieldList)
+      tmpName = trim(NWM_FieldList(fIndex)%stdname)
       if (NWM_FieldList(fIndex)%adImport) then
         call NUOPC_Advertise(is%wrap%NStateImp(1), &
           standardName=trim(NWM_FieldList(fIndex)%stdname), &
           name=trim(NWM_FieldList(fIndex)%stdname), &
           rc=rc)
+        print *, "Adding import: ", tmpName, fIndex
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
 
@@ -407,6 +410,7 @@ module NWM_NUOPC_Cap
           standardName=trim(NWM_FieldList(fIndex)%stdname), & 
           name=trim(NWM_FieldList(fIndex)%stdname), &
           rc=rc)
+        print *, "Adding export: ", tmpName, fIndex
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
     enddo

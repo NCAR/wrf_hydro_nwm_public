@@ -378,7 +378,7 @@ contains
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
-    call NWM_SetFieldData(exportState, did)
+    call NWM_SetFieldData(importState, exportState, did)
 
 
 #ifdef DEBUG
@@ -484,12 +484,12 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
-      !CASE ('water_level')
-      !  NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-      !                farray=rt_domain(did)%velocity, &
-      !                  indexflag=ESMF_INDEX_DELOCAL, &
-      !                             name=stdName, rc=rc)
-      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+      CASE ('water_level')
+        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+                      farray=rt_domain(did)%velocity, &
+                        indexflag=ESMF_INDEX_DELOCAL, &
+                                   name=stdName, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
        
 
       CASE ('air_pressure_at_sea_level')
@@ -1551,19 +1551,24 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
-  subroutine NWM_SetFieldData(exportState, did)
-    type(ESMF_State),intent(inout)     :: exportState
+  subroutine NWM_SetFieldData(importState, exportState, did)
+    type(ESMF_State), intent(inout) :: importState
+    type(ESMF_State), intent(inout) :: exportState
     integer, intent(in)                :: did
 
     ! local variables
-    integer :: i,j, esmf_comm, localPet, petCnt, itemCnt, rc, localElmCnt
-    character (len=30)   :: itemName
-    type(ESMF_Field)     :: itemField
+    integer :: i,j, esmf_comm, localPet, petCnt, rc, localElmCnt
+    integer :: exitemCnt, imitemCnt
+    character (len=ESMF_MAXSTR)   :: expitemName
+    character (len=ESMF_MAXSTR)   :: impitemName
+    type(ESMF_Field)     :: expitemField
+    type(ESMF_Field)     :: impitemField
     type(ESMF_VM)        :: vm  ! vm that field was created on
     type(ESMF_LocStream) ::locstream
 
     character(len=ESMF_MAXSTR)                   :: locName
-    character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
+    character(len=ESMF_MAXSTR), allocatable      :: expitemNames(:)
+    character(len=ESMF_MAXSTR), allocatable      :: impitemNames(:)
     real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
@@ -1576,28 +1581,38 @@ contains
     rc = ESMF_SUCCESS
    
     ! fill fields with values for export after physic calculations
-    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    call ESMF_StateGet(exportState, itemCount=exitemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    allocate(itemNames(itemCnt))
+    allocate(expitemNames(exitemCnt))
 
-    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    call ESMF_StateGet(importState, itemCount=imitemCnt, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
+    allocate(impitemNames(imitemCnt))
+
+    call ESMF_StateGet(exportState, itemNameList=expitemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    do i=1, itemCnt
+    call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
+    if (ESMF_STDERRORCHECK(rc)) return
 
-      itemName = trim(itemNames(i))
+    print*, "Export Fields: ", expitemNames
+    print*, "Import Fields: ", impitemNames
+    do i=1, exitemCnt
+
+      expitemName = trim(expitemNames(i))
        
-      call ESMF_StateGet(exportState, itemName, itemField, rc=rc)
+      call ESMF_StateGet(exportState, expitemName, expitemField, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
-      SELECT CASE (itemName)
+      print*, trim(expitemName), "SetFieldData"
+      SELECT CASE (trim(expitemName))
         CASE ('flow_rate')
 
           ! Get a DE-local Fortran array pointer from a Field
-          call ESMF_FieldGet(itemField,farrayPtr=flowRatePtr, rc=rc)
+          call ESMF_FieldGet(expitemField, farrayPtr=flowRatePtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
+          call ESMF_FieldGet(expitemField, locstream=locstream, vm=vm, rc=rc)
 
           ! get the vm of this field
           call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
@@ -1646,12 +1661,13 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-      !CASE ('water_level')
-      !  NWM_SetFieldData = ESMF_FieldCreate(grid=grid, &
-      !                farray=rt_domain(did)%velocity, &
-      !                  indexflag=ESMF_INDEX_DELOCAL, &
-      !                             name=stdName, rc=rc)
-      !  if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        CASE ('water_level')
+            call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
+            
+            call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
+            if (ESMF_STDERRORCHECK(rc)) return
+            print*, "Regridded water_level"
 
 
       !CASE ('air_pressure_at_sea_level')
@@ -1671,12 +1687,13 @@ contains
 
       CASE DEFAULT
                    call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-          msg=METHOD//": Field hookup missing: "//itemName, &
+          msg=METHOD//": Field hookup missing: "//expitemName, &
                                       file=FILENAME,rcToReturn=rc)
         return  ! bail out
       END SELECT
     enddo
-    deallocate(itemNames)
+    deallocate(expitemNames)
+    deallocate(impitemNames)
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
