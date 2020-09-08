@@ -65,7 +65,7 @@ contains
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
-        real,    intent(inout) :: water_elevation           ! meters AMSL
+        real*8,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -218,16 +218,16 @@ contains
         lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
-        real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
-        real, intent(in)    :: inflow                   ! cubic meters per second (cms)
+        real*8, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
+        real*8, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
-        real, intent(out)   :: outflow                  ! cubic meters per second (cms)
+        real*8, intent(inout) :: water_elevation          ! meters
+        real*8, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real                :: delta_storage            ! timestep change in storage (cubic meters)
-        real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
-        real                :: levelpool_outflow        ! cubic meters per second (cms)
+        real*8              :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
+        real*8              :: levelpool_outflow        ! cubic meters per second (cms)
         logical             :: max_storage_reached      ! flag for when max storage is reached
         integer             :: gage_lookback_seconds    ! seconds between current model
                                                         ! time and the time a gage

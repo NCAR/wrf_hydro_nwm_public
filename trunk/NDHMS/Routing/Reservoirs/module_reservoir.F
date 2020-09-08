@@ -33,9 +33,9 @@ module module_reservoir
     ! object's methods/subroutines at runtime.
     type :: reservoir_input
 
-        real :: inflow                      ! cubic meters per second (cms)
-        real :: lateral_inflow              ! cubic meters per second (cms)
-        real :: previous_timestep_inflow    ! cubic meters per second (cms)
+        real*8 :: inflow                      ! cubic meters per second (cms)
+        real   :: lateral_inflow              ! cubic meters per second (cms)
+        real*8 :: previous_timestep_inflow    ! cubic meters per second (cms)
 
     contains
 
@@ -51,7 +51,7 @@ module module_reservoir
     ! object's methods/subroutines at runtime.
     type :: reservoir_output
 
-        real :: outflow                     ! cubic meters per second (cms)
+        real*8 :: outflow                     ! cubic meters per second (cms)
 
     contains
 
@@ -95,13 +95,13 @@ module module_reservoir
             lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
             import reservoir
             class(reservoir), intent(inout) :: this
-            real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
-            real, intent(in)    :: inflow                   ! cubic meters per second (cms)
-            real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-            real, intent(inout) :: water_elevation          ! meters AMSL
-            real, intent(out)   :: outflow                  ! cubic meters per second (cms)
-            real, intent(in)    :: routing_period           ! seconds
-            integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+            real*8, intent(in)      :: previous_timestep_inflow ! cubic meters per second (cms)
+            real*8, intent(in)      :: inflow                   ! cubic meters per second (cms)
+            real, intent(in)      :: lateral_inflow           ! cubic meters per second (cms)
+            real*8, intent(inout) :: water_elevation          ! meters AMSL
+            real*8, intent(out)     :: outflow                  ! cubic meters per second (cms)
+            real, intent(in)      :: routing_period           ! seconds
+            integer, intent(out)  :: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
 
         end subroutine run_reservoir_interface
 

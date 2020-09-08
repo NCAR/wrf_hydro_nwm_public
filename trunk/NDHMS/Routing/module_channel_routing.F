@@ -161,7 +161,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: qup        ! flow upstream previous timestep
         REAL, intent(IN)       :: quc        ! flow upstream current timestep
         REAL, intent(IN)       :: qdp        ! flow downstream previous timestep
-        REAL, intent(INOUT)    :: qdc        ! flow downstream current timestep
+        REAL*8, intent(INOUT)    :: qdc        ! flow downstream current timestep
         REAL, intent(IN)       :: ql         ! lateral inflow through reach (m^3/sec)
         REAL, intent(IN)       :: Bw         ! bottom width (meters)
         REAL, intent(IN)       :: Tw         ! top width before bankfull (meters)
@@ -562,7 +562,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
         REAL                                      :: Km, X
         REAL , INTENT(INOUT), DIMENSION(:,:) :: QLINK
-        REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
+        REAL*8,  DIMENSION(NLINKS,2) :: tmpQLINK
+
         REAL , INTENT(INOUT), DIMENSION(NLINKS)   :: HLINK
         REAL, dimension(NLINKS), intent(inout)    :: QLateral !--lateral flow
         REAL, INTENT(IN)                          :: DT    !-- model timestep
@@ -588,11 +589,11 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 
         !-- lake params
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
+        REAL*8, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
-        REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
+        REAL*8, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
+        REAL*8,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
+        REAL*8, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
         !REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
@@ -634,15 +635,15 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
         integer :: n, kk2, nt, nsteps  ! tmp
 
-        QLAKEIP = 0
-        QLAKEI8 = 0
-        HLINKTMP = 0
-        CVOLTMP = 0
-        CD = 0
+        QLAKEIP = 0.
+        QLAKEI8 = 0.
+        HLINKTMP = 0.
+        CVOLTMP = 0.
+        CD = 0.
         node = 1
-        QLateral = 0
-        QSUM     = 0
-        QLLAKE   = 0
+        QLateral = 0.
+        QSUM     = 0.
+        QLLAKE   = 0.
 
 
 !yw      print *, "DRIVE_channel,option,nlinkl,nlinks!!", channel_option,NLINKSL,NLINKS
@@ -751,22 +752,21 @@ END SUBROUTINE SUBMUSKINGCUNGE
                do n = 1, gtoNODE(k,1)
                   m = gtoNODE(k,n+1)
 !yw                  if (LINKID(k) .eq. m) then
-                    Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                    Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
 
-                      !     if(LINKID(k) .eq. 3259 .or. LINKID(k) .eq. 3316 .or. LINKID(k) .eq. 3219) then
-                      !       write(6,*) "id,Uc,Up",LINKID(k),Quc,Qup
-                      !       call flush(6)
-                      !     endif
-
+                    !Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                    !Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                    Quc = Quc + gQLINK(m,1)  !--accum of upstream inflow of current timestep (2)
+                    Qup = Qup + gQLINK(m,2)  !--accum of upstream inflow of previous timestep (1)
 !yw                  endif
                 end do ! do i
 
 #else
                do m = 1, NLINKSL
                   if (LINKID(k) .eq. TO_NODE(m)) then
-                    Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
-                    Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                  ! Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
+                  ! Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+                    Quc = Quc + QLINK(m,1)  !--accum of upstream inflow of current timestep (2)
+                    Qup = Qup + QLINK(m,2)  !--accum of upstream inflow of previous timestep (1)
                   endif
                end do ! do m
 #endif
@@ -780,7 +780,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                    elseif (channel_option .eq. 1) then  !muskingum routing
                        Km = MUSK(k)
                        X = MUSX(k)
-                       tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow
+                       tmpQLINK(k,2) = dble(MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X)) !upstream plust lateral inflow
                    elseif (channel_option .eq. 2) then ! muskingum cunge
 
                    call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
@@ -1171,6 +1171,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               ! in whether it uses level pool, machine learning, or persistence.
               ! Inflow, lateral inflow, water elevation, and the routing period
               ! are passed in. Updated outflow and water elevation are returned.
+
               call rt_domain(did)%reservoirs(i)%ptr%run(QLAKEIP(i), QLAKEI(i), &
                    QLLAKE(i), RESHT(i), QLAKEO(i), DTCT, rt_domain(did)%final_reservoir_type(i))
 
@@ -1195,11 +1196,11 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
          ! TODO: Change updateLake_grid calls below to updated distributed reservoir
          !       objects and not arrays as currently implemented.
-         call updateLake_grid(QLLAKE, nlakes,lake_index)
-         call updateLake_grid(RESHT,  nlakes,lake_index)
-         call updateLake_grid(QLAKEO, nlakes,lake_index)
-         call updateLake_grid(QLAKEI, nlakes,lake_index)
-         call updateLake_grid(QLAKEIP,nlakes,lake_index)
+         call updateLake_grid(dble(QLLAKE), nlakes,lake_index)
+         call updateLake_grid(dble(RESHT),  nlakes,lake_index)
+         call updateLake_grid(dble(QLAKEO), nlakes,lake_index)
+         call updateLake_grid(dble(QLAKEI), nlakes,lake_index)
+         call updateLake_grid(dble(QLAKEIP),nlakes,lake_index)
     endif
 #endif
 
@@ -1595,7 +1596,7 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(:)        :: So, MannN
        real, intent(IN), dimension(:)        :: ChSSlp,Bw,Tw  !--properties of nodes or links
        real, intent(IN), dimension(:)        :: Tw_CC, n_CC   ! properties of compound channel
-       real                                      :: Km, X
+       real                                  :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK
        real , intent(INOUT), dimension(:)    :: HLINK
 
@@ -1606,29 +1607,29 @@ end subroutine drive_CHANNEL
 
        real, dimension(:), intent(inout)     :: QLateral !--lateral flow
        real, dimension(:), intent(out)       :: velocity
-       real*8, dimension(:), intent(inout)     :: accSfcLatRunoff, accBucket
+       real*8, dimension(:), intent(inout)   :: accSfcLatRunoff, accBucket
        real  , dimension(:), intent(out)     :: qSfcLatRunoff  ,   qBucket
+       real*8,  dimension(NLINKSL,2)          :: tmpQLINK
 
-       real ,  dimension(NLINKSL,2) :: tmpQLINK
-       real, intent(IN)                          :: DT    !-- model timestep
-       real, intent(IN)                          :: DTRT_CH  !-- routing timestep
-       real, intent(INOUT)                       :: DTCT
-       real                                      :: minDTCT !BF minimum routing timestep
-       integer, intent(IN)                       :: MAXORDER
-       real , intent(IN), dimension(:)   :: node_area
+       real, intent(IN)                      :: DT    !-- model timestep
+       real, intent(IN)                      :: DTRT_CH  !-- routing timestep
+       real, intent(INOUT)                   :: DTCT
+       real                                  :: minDTCT !BF minimum routing timestep
+       integer, intent(IN)                   :: MAXORDER
+       real , intent(IN), dimension(:)       :: node_area
 
        !DJG GW-chan coupling variables...
-       real, dimension(NLINKS)                   :: dzGwChanHead
-       real, dimension(NLINKS)                   :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
-       real, dimension(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
+       real, dimension(NLINKS)               :: dzGwChanHead
+       real, dimension(NLINKS)               :: Q_GW_CHAN_FLUX     !DJG !!! Change 'INTENT' to 'OUT' when ready to update groundwater state...
+       real, dimension(IXRT,JXRT)            :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
 
        !-- lake params
-       integer, intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
+       integer, intent(IN), dimension(:)     :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
-       real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
-       real, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
-       real,                dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
-       real, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
+       real*8, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
+       real*8, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
+       real*8,           dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
+       real*8, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
 
        integer, intent(IN), dimension(:)    :: LAKENODE !-- outflow from lake used in diffusion scheme
        integer, intent(IN), dimension(:)   :: LINKID   !--  id of channel elements for linked scheme
@@ -1673,7 +1674,8 @@ end subroutine drive_CHANNEL
 
        integer :: n, kk2, nt, nsteps  ! tmp
        real, intent(in), dimension(:) :: qout_gwsubbas
-       real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+       real*8, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
+       real*8, allocatable,dimension(:) :: tmpRESHT
        integer, allocatable, dimension(:) :: tmpFinalResType
 
 #ifdef MPP_LAND
@@ -1687,11 +1689,11 @@ end subroutine drive_CHANNEL
         endif
 #endif
 
-        QLAKEIP = 0
-        CD = 0
+        QLAKEIP = 0.
+        CD = 0.
         node = 1
-        QSUM     = 0
-        QLLAKE   = 0
+        QSUM     = 0.
+        QLLAKE   = 0.
         dzGwChanHead = 0.
         nsteps = (DT+0.5)/DTRT_CH
 
@@ -1731,11 +1733,11 @@ if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 
 else
 
-   QLateral = 0 !! the variable solved in this section. Channel only knows this already.
-   LQLateral = 0          !-- initial lateral flow to 0 for this reach
+   QLateral = 0. !! the variable solved in this section. Channel only knows this already.
+   LQLateral = 0.          !-- initial lateral flow to 0 for this reach
 
-   tmpQLateral = 0  !! WHY DOES THIS tmp variable EXIST?? Only for accumulations??
-   tmpLQLateral = 0
+   tmpQLateral = 0.  !! WHY DOES THIS tmp variable EXIST?? Only for accumulations??
+   tmpLQLateral = 0.
 
    ! NHDPLUS maping
    if(OVRTSWCRT .eq. 0)      then
@@ -1833,7 +1835,8 @@ if(nlst(1)%output_channelBucket_influx .eq. 3) &
 do nt = 1, nsteps
 
 #ifdef MPP_LAND
-   gQLINK = 0
+
+!  gQLINK = 0
    call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
    call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1))
    !---------- route other reaches, with upstream inflow
@@ -1854,8 +1857,8 @@ do nt = 1, nsteps
 
    do k = 1,NLINKSL
 
-      Quc  = 0
-      Qup  = 0
+      Quc  = 0.
+      Qup  = 0.
 
       !process as standard link or a lake inflow link, or lake outflow link
       ! link flowing out of lake, accumulate all the inflows with the revised TO_NODEs
@@ -1871,8 +1874,10 @@ do nt = 1, nsteps
             !! current would require global communication at the end of each loop through k
             !! (=kth reach). Additionally, how do you synchronize to make sure the upstream are all
             !! done before doing the downstream?
+
             if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)
             if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+
          end do ! do i
 #else
          do m = 1, NLINKSL
@@ -1892,12 +1897,15 @@ do nt = 1, nsteps
 
          lakeid = LAKEIDX(k)
          if(lakeid .ge. 0) then
+            
+            Qup = QLAKEI(lakeid)
 
             ! Calls run for a single reservoir depending on its type as
             ! in whether it uses level pool, machine learning, or persistence.
             ! Inflow, lateral inflow, water elevation, and the routing period
             ! are passed in. Updated outflow and water elevation are returned.
-            call rt_domain(did)%reservoirs(lakeid)%ptr%run(Qup, Quc, 0.0, &
+
+            call rt_domain(did)%reservoirs(lakeid)%ptr%run(dble(Qup), dble(Quc), 0.0, &
                  RESHT(lakeid), tmpQLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(lakeid))
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
@@ -1905,7 +1913,10 @@ do nt = 1, nsteps
             !       MPI communication model.
 
             QLAKEO(lakeid)  = tmpQLINK(k,2) !save outflow to lake
-            QLAKEI(lakeid)  = Quc           !save inflow to lake
+            QLAKEI(lakeid)  = dble(Quc)          !save inflow to lake
+
+            !print *, "QLAKEOI", QLAKEO(lakeid),Quc 
+
          endif
 105      continue
 
@@ -1913,7 +1924,7 @@ do nt = 1, nsteps
       elseif (channel_option .eq. 1) then  !muskingum routing
          Km = MUSK(k)
          X = MUSX(k)
-         tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow
+         tmpQLINK(k,2) = dble(MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X)) !upstream plust lateral inflow
 
       elseif (channel_option .eq. 2) then ! muskingum cunge, don't process internal lake nodes TYP=2
          !              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
@@ -1940,15 +1951,15 @@ do nt = 1, nsteps
 
 
 #ifdef MPP_LAND
-   call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
-   call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
+   call updateLake_seq(dble(QLAKEO),nlakes,dble(tmpQLAKEO))
+   call updateLake_seq(dble(QLAKEI),nlakes,dble(tmpQLAKEI))
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?
       if(TYPEL(k) .ne. 2) then   !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
-         QLINK(k,2) = tmpQLINK(k,2)
+         QLINK(k,2) = real(tmpQLINK(k,2))
       endif
       QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
    end do

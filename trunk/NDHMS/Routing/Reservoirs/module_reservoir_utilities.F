@@ -16,7 +16,7 @@ contains
 
     ! Checks and warns for boundary conditions of negative inflow
     subroutine warn_negative_inflow(inflow, lake_number, current_time)
-        real, intent(in)    :: inflow
+        real*8, intent(in)    :: inflow
         integer, intent(in) :: lake_number, current_time
 
         if (inflow < 0.0) then
@@ -30,7 +30,8 @@ contains
 
     ! Checks and warns for boundary conditions of exceeding max or min storage
     subroutine warn_storage_boundaries(inflow, end_time_storage, min_storage, max_storage, lake_number, current_time)
-        real, intent(in)    :: inflow, end_time_storage, min_storage, max_storage
+        real, intent(in)    :: end_time_storage, min_storage, max_storage
+        real*8, intent(in)  :: inflow
         integer, intent(in) :: lake_number, current_time
 
         ! Also have option to set the end_time_storage to the max_storage and change the outflow accordingly.
@@ -57,9 +58,12 @@ contains
     ! Checks and modifies for boundary conditions of negative storage
     subroutine modify_negative_storage(inflow, previous_time_storage, routing_period, lake_number, current_time, &
         update_time, end_time_storage, outflow)
-        real, intent(in)    :: inflow, previous_time_storage, routing_period
+        real, intent(in)    :: previous_time_storage, routing_period
+        real*8, intent(in)  :: inflow
+
         integer, intent(in) :: lake_number, current_time, update_time
-        real, intent(inout) :: end_time_storage, outflow
+        real, intent(inout) :: end_time_storage
+        real*8, intent(inout) :: outflow
 
         ! Note to user:
         ! In order to conserve mass, when a reservoir's storage would become 0.0 or less, the release
@@ -106,7 +110,7 @@ contains
 
     ! Checks and modifies for boundary conditions of negative inflow
     subroutine modify_negative_inflow(inflow)
-        real, intent(inout) :: inflow
+        real*8, intent(inout) :: inflow
 
         if (inflow < 0.0) inflow = 0.0
 
@@ -116,9 +120,11 @@ contains
     ! Checks and modifies for boundary conditions of negative outflow or exceeding min or max storage
     subroutine modify_for_projected_storage(inflow, previous_time_storage, min_storage, max_storage, &
         lake_number, current_time, time_interval, outflow, max_storage_reached)
-        real, intent(in)        :: inflow, previous_time_storage, min_storage, max_storage
+        real, intent(in)        :: previous_time_storage, min_storage, max_storage
+        real*8, intent(in)        :: inflow
+
         integer, intent(in)     :: lake_number, current_time, time_interval
-        real, intent(inout)     :: outflow
+        real*8, intent(inout)     :: outflow
         logical, intent(inout)  :: max_storage_reached
         real                    :: excess, projected_next_time_interval_storage
 

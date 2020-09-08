@@ -668,7 +668,7 @@ subroutine LandRT_ini(did)
   integer, allocatable, dimension(:) :: tmp_int
   real, allocatable, dimension(:) :: tmp_real
   integer, allocatable, dimension(:) :: buf
-  real, allocatable, dimension(:) :: tmpRESHT
+  real*8, allocatable, dimension(:) :: tmpRESHT
   integer :: new_start_i, new_start_j, new_end_i, new_end_j
   integer :: cache_block, cache_block_begin_i, cache_block_end_i
   integer :: cache_idx, num_blocks, cache_idx_k, cache_block_begin_k, cache_block_end_k
