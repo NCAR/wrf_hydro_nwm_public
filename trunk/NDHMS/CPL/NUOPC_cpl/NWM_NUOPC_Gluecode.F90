@@ -442,26 +442,76 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
 
-    ! LOCAL VARIABLES
+    ! LOCAL VARIABLES for LOC
     type(ESMF_TypeKind_Flag)                  :: typekind
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_streamflow => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
 
+    ! LOCAL VARIABLES for GRID
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_waterlevel => null()
-      
+    type(ESMF_TypeKind_Flag)                  :: coordTypeKind
+    integer                                   :: dimcnt
+    integer                                   :: tileCount
+    integer                                   :: staggerlocCount
+    integer                                   :: localDECount
+    type(ESMF_DistGrid)                       :: distgrid
+    !integer, target                           :: distgridToGridMap(:)
+    type(ESMF_CoordSys_Flag)                  :: coordSys
+    !integer, target                           :: coordDimCount(:)
+    !integer, target                           :: coordDimMap(:,:)
+    integer                                   :: arbDim
+    integer                                   :: rank
+    integer                                   :: arbDimCount
+    !integer, target                           :: gridEdgeLWidth(:)
+    !integer, target                           :: gridEdgeUWidth(:)
+    !integer, target                           :: gridAlign(:)
+    type(ESMF_Index_Flag)                     :: indexflag
+    type(ESMF_GridStatus_Flag)                :: status
+    character (len=20)                        :: name
+
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
     rc = ESMF_SUCCESS
 
+    ! initialize farrayPtr_streamflow
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    allocate(farrayPtr_streamflow(loccnt))     ! allocate for locstream
+    allocate(farrayPtr_streamflow(loccnt))
     farrayPtr_streamflow = -9.9
 
-    
+    ! initialize farrayPtr_waterlevel
+    ! The Field dimension (dimCount) will be the same as 
+    ! the dimCount for the farrayPtr
+    call ESMF_GridGet(grid, rc=rc, &
+            coordTypeKind=coordTypeKind, dimCount=dimcnt, tileCount=tileCount, &
+                   staggerlocCount=staggerlocCount, localDECount=localDECount, &
+               coordSys=coordSys, indexflag=indexflag, status=status, name=name)
+    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    ! for testing
+    print*, "Beheen grid info ", "coordTypeKind:", coordTypeKind, &
+            "dimCount:", dimcnt, &
+            "tileCount:", tileCount, &
+            "staggerlocCount:", staggerlocCount, &
+            "localDECount:", localDECount, &
+            "coordSys:", coordSys, &
+            "indexflag:", indexflag, &
+            "status:", status, &
+            "name:", name
+
+    allocate(farrayPtr_waterlevel(dimcnt))
+    farrayPtr_waterlevel = -1.1
+ 
+
+    ! let's print these information about our grid 
+    !call ESMF_GridGet(grid, localDE, &
+    !     isLBound,isUBound, arbIndexCount, arbIndexList, tile, rc)
+
+
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
@@ -489,6 +539,8 @@ contains
 
 
       CASE ('water_level')
+        ! The Field dimension (dimCount) will be the same as the 
+        ! dimCount for the farrayPtr
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                          farray=farrayPtr_waterlevel, &
                         indexflag=ESMF_INDEX_DELOCAL, &
