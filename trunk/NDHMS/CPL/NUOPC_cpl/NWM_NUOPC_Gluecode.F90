@@ -378,11 +378,7 @@ contains
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
-<<<<<<< HEAD
-    call NWM_SetFieldData(exportState, importState, did)
-=======
     call NWM_SetFieldData(importState, exportState, did)
->>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
 
 
 #ifdef DEBUG
@@ -462,7 +458,7 @@ contains
 
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    allocate(farrayPtr_istreamflow(loccnt))     ! allocate for locstream
+    allocate(farrayPtr_streamflow(loccnt))     ! allocate for locstream
     farrayPtr_streamflow = -9.9
 
     
@@ -470,7 +466,7 @@ contains
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
-        print*, "Beheen size of farrayPtr_loc", loccnt, my_id
+        print*, "Beheen size of farrayPtr_streamflow", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_streamflow, &
                                            datacopyflag=ESMF_DATACOPY_REFERENCE, &
@@ -494,11 +490,7 @@ contains
 
       CASE ('water_level')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-<<<<<<< HEAD
                          farray=farrayPtr_waterlevel, &
-=======
-                      farray=rt_domain(did)%velocity, &
->>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
                         indexflag=ESMF_INDEX_DELOCAL, &
                                    name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -1564,15 +1556,9 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
-<<<<<<< HEAD
-  subroutine NWM_SetFieldData(exportState, importState, did)
-    type(ESMF_State),intent(inout)     :: exportState
-    type(ESMF_State),intent(inout)     :: importState
-=======
   subroutine NWM_SetFieldData(importState, exportState, did)
     type(ESMF_State), intent(inout) :: importState
     type(ESMF_State), intent(inout) :: exportState
->>>>>>> 3f69f9d893c842ea2673890254448c36b5095d3f
     integer, intent(in)                :: did
 
     ! local variables
