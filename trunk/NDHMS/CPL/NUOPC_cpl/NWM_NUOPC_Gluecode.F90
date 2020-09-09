@@ -103,7 +103,7 @@ module NWM_NUOPC_Gluecode
       desc='vector filed of river or flow velocity.', shortname='velocity', &
       adImport=.FALSE.,adExport=.TRUE.), &
     NWM_Field( & !(4 - file from dflow)
-      stdname='waterlevel', units='m', &
+      stdname='water_level', units='m', &
       desc='water level from dflow to check on this', shortname='wl', &
       adImport=.FALSE.,adExport=.TRUE.), &
     NWM_Field( & !(test with ADCIRC)
@@ -366,7 +366,7 @@ contains
 #endif
 
     rc = ESMF_SUCCESS
-
+    print *, "NWM NUOPC Run Started"
     ! Testing
     call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -377,7 +377,7 @@ contains
 
     call noahMp_exe(itime, state)
 
-    !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
+    !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2)
     call NWM_SetFieldData(importState, exportState, did)
 
 
@@ -461,7 +461,7 @@ contains
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-
+        
         print*, "Beheen size of farrayPtr_loc", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_loc, &
@@ -886,10 +886,10 @@ contains
     if (ESMF_STDERRORCHECK(rc)) return
 
     do j = lbnd(2),ubnd(2)
-    do i = lbnd(1),ubnd(1)
-      coordXcenter(i,j) = longitude(i,j)
-      coordYcenter(i,j) = latitude(i,j)
-    enddo
+        do i = lbnd(1),ubnd(1)
+            coordXcenter(i,j) = longitude(i,j)
+            coordYcenter(i,j) = latitude(i,j)
+        enddo
     enddo
 
     deallocate(latitude,longitude,stat=stat)
@@ -907,7 +907,6 @@ contains
       (/startx(my_id+1),starty(my_id+1)/),mask,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-
     ! Add Grid Mask
     call ESMF_GridAddItem(NWM_LSMGridCreate, itemFlag=ESMF_GRIDITEM_MASK, &
       staggerLoc=ESMF_STAGGERLOC_CENTER, rc=rc)
@@ -920,10 +919,10 @@ contains
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     do j = lbnd(2),ubnd(2)
-    do i = lbnd(1),ubnd(1)
-      gridmask(i,j) = mask(i,j)
-      gridmask(i,j) = mask(i,j)
-    enddo
+        do i = lbnd(1),ubnd(1)
+            gridmask(i,j) = mask(i,j)
+            gridmask(i,j) = mask(i,j)
+        enddo
     enddo
 
     deallocate(mask,stat=stat)
@@ -996,10 +995,10 @@ contains
       if (ESMF_STDERRORCHECK(rc)) return
 
       do j = lbnd(2),ubnd(2)
-      do i = lbnd(1),ubnd(1)
-        coordXcorner(i,j) = longitude(i,j)
-        coordYcorner(i,j) = latitude(i,j)
-      enddo
+        do i = lbnd(1),ubnd(1)
+            coordXcorner(i,j) = longitude(i,j)
+            coordYcorner(i,j) = latitude(i,j)
+        enddo
       enddo
 
       deallocate(latitude,longitude,stat=stat)
@@ -1068,9 +1067,9 @@ contains
     if (ESMF_STDERRORCHECK(rc)) return
 
      do j = lbnd(2),ubnd(2)
-     do i = lbnd(1),ubnd(1)
-       gridarea(i,j) = radianarea(i,j) * R * R
-     enddo
+        do i = lbnd(1),ubnd(1)
+            gridarea(i,j) = radianarea(i,j) * R * R
+        enddo
      enddo
 
 #ifdef DEBUG
@@ -1661,12 +1660,12 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-        CASE ('water_level')
-            call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
-            if (ESMF_STDERRORCHECK(rc)) return
-            
-            call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
-            if (ESMF_STDERRORCHECK(rc)) return
+       CASE ('water_level')
+       !     call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+       !     if (ESMF_STDERRORCHECK(rc)) return
+       !     print *, "water_level acquired from importState"       
+       !     !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
+       !     if (ESMF_STDERRORCHECK(rc)) return
             print*, "Regridded water_level"
 
 

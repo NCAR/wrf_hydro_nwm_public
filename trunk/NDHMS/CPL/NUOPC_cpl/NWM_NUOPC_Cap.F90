@@ -401,7 +401,6 @@ module NWM_NUOPC_Cap
           standardName=trim(NWM_FieldList(fIndex)%stdname), &
           name=trim(NWM_FieldList(fIndex)%stdname), &
           rc=rc)
-        print *, "Adding import: ", tmpName, fIndex
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
 
@@ -410,7 +409,6 @@ module NWM_NUOPC_Cap
           standardName=trim(NWM_FieldList(fIndex)%stdname), & 
           name=trim(NWM_FieldList(fIndex)%stdname), &
           rc=rc)
-        print *, "Adding export: ", tmpName, fIndex
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       endif
     enddo
