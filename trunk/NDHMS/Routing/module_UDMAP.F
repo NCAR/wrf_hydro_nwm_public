@@ -33,7 +33,7 @@ module module_UDMAP
   use MODULE_mpp_ReachLS, only : updatelinkv, ReachLS_write_io, com_write1dInt, &
        com_decomp1dInt, pack_decomp_int, pack_decomp_real8
   use module_hydro_stop, only:HYDRO_stop
-
+  use hashtable
 #endif
 
   implicit none
@@ -89,7 +89,6 @@ contains
         integer :: ix_bufid, ii, ixrt,jxrt
         integer, allocatable, dimension(:) :: gbufi,gbufj,bufsize
         real*8 , allocatable, dimension(:) :: gbufw
-        integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
         
         did = 1
         call get_dimension(trim(nlst(did)%UDMAP_FILE), ndata, npid) 
@@ -169,19 +168,32 @@ contains
           bufidflag = -999
        endif
 
-       cache_block = 256
-       do cache_idx = 0, nlinksl - 1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, nlinksl)
-          do i = 1, ix_bufid
-             if(bufidflag(i) /= -999) cycle
-             do j = cache_block_begin, cache_block_end
-                if(bufid_tmp(i) .eq. linkid(j)) then
-                   bufidflag(i) = bufid_tmp(i)
-                endif
-             end do
-          enddo
-       enddo
+       ! The following loops are replaced by a hashtable-based algorithm
+       !  do i = 1, ix_bufid
+       !           do j = 1, nlinksl
+       !                if(bufid_tmp(i) .eq. linkid(j)) then
+       !                   bufidflag(i) = bufid_tmp(i)
+       !                   goto 102
+       !                endif
+       !           end do
+       ! 102       continue
+       !        end do
+
+       block
+         type(hash_t) :: hash_table
+         integer :: val,it
+         logical :: found
+         
+         call hash_table%set_all_idx(bufid_tmp, ix_bufid)
+         do it = 1, nlinksl
+            call hash_table%get(linkid(it), val, found)
+            if(found .eqv. .true.) then
+               bufidflag(val) = bufid_tmp(val)
+            end if
+         end do
+         call hash_table%clear()
+       end block
+
 #ifdef MPP_LAND
       call com_write1dInt(bufidflag,ix_bufid,gbufid,npid)
 #endif
