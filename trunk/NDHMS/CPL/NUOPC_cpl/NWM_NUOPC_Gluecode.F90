@@ -538,7 +538,7 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_streamflow, &
                                            datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                           name=stdName, rc=rc) 
+                                           name=trim(stdName), rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_runoff')
@@ -562,7 +562,7 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                          farray=farrayPtr_waterlevel, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
+                                   name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
        
 

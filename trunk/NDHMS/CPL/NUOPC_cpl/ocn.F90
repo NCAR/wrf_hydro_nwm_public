@@ -162,7 +162,7 @@ module OCN
     integer              :: locElementBeg
     integer              :: locElementCnt
     integer,allocatable  :: arbSeqIndexList(:)
-    integer              :: i
+    integer              :: i,j
     type(ESMF_DistGrid)  :: distgrid
     type(ESMF_Field)     :: field
     type(ESMF_LocStream) :: locStreamIn
@@ -182,7 +182,7 @@ module OCN
     type(ESMF_Grid)     :: gridIn
     type(ESMF_Grid)     :: gridOut
     type(ESMF_Field)    :: waterlevelField
-    real, allocatable   :: waterlevelarray(:)
+    real, allocatable   :: waterlevelarray(:,:)
 
     rc = ESMF_SUCCESS
 
@@ -324,7 +324,12 @@ module OCN
     gridOut = gridIn ! for now out same as in
 
     ! allocate and initialize waterlevelarray here
-
+    !do i=1,10
+    !  do j=1,100
+    !    waterlevelarray(i,j) = -0.1
+    !  enddo
+    !enddo
+    waterlevelarray = -0.1
     ! exportable field: waterlevel
     !waterlevelField = ESMF_FieldCreate(gridOut, &
     !                           waterlevelarray, &
