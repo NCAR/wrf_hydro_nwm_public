@@ -178,6 +178,11 @@ module OCN
     real, allocatable   :: sstarray(:)
     real, allocatable   :: streamflowarray(:)
 
+    ! test for waterlevel
+    type(ESMF_Grid)     :: gridIn
+    type(ESMF_Grid)     :: gridOut
+    type(ESMF_Field)    :: waterlevelField
+    real, allocatable   :: waterlevelarray(:)
 
     rc = ESMF_SUCCESS
 
@@ -225,6 +230,7 @@ module OCN
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
 
     ! create a LocationObject object for Fields
     locStreamIn = ESMF_LocStreamCreate(distgrid=distgrid, &
@@ -285,6 +291,7 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
 
+
     ! exportable field: sea_surface_temperature
     !field = ESMF_FieldCreate(name="sst", locStream=locStreamOut, &
     !  typekind=ESMF_TYPEKIND_R8, rc=rc)
@@ -302,6 +309,37 @@ module OCN
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+
+    ! create a Grid object for Fields
+    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/100, 10/), &
+      minCornerCoord=(/10._ESMF_KIND_R8, 20._ESMF_KIND_R8/), &
+      maxCornerCoord=(/100._ESMF_KIND_R8, 200._ESMF_KIND_R8/), &
+      coordSys=ESMF_COORDSYS_CART, staggerLocList=(/ESMF_STAGGERLOC_CENTER/), &
+      rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    gridOut = gridIn ! for now out same as in
+
+    ! allocate and initialize waterlevelarray here
+
+    ! exportable field: waterlevel
+    !waterlevelField = ESMF_FieldCreate(gridOut, &
+    !                           waterlevelarray, &
+    !                        ESMF_INDEX_DELOCAL, &
+    !                        name="water_level", &
+    !                                       rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call NUOPC_Realize(exportState, field=waterlevelField, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
 
     deallocate(arbSeqIndexList)
 
@@ -403,6 +441,9 @@ module OCN
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (rc/=ESMF_SUCCESS) return
     !print *, "OCN Export State Item Count: ", itemCnt
+
+    ! print streamflow and waterlevel here to compare with values received in
+    ! NWM
     
     call ESMF_TimePrint(currTime + timeStep, &
       preString="---------------------> to: ", unit=msgString, rc=rc)

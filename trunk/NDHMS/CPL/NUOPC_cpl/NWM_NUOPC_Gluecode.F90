@@ -885,8 +885,7 @@ contains
 
     allocate(deBlockList(2,2,numprocs))
     ! Dimension one is each dimension of the element
-    ! Dimension 2 is always the lower and upper indices per 
-    ! dimension per deBlock
+    ! Dimension 2 is always the lower and upper indices per dimension per deBlock
     ! Dimension 3 is each deBlock (1 to deCount)
     do i = 1, numprocs
  
@@ -941,7 +940,7 @@ contains
     write(logMsg,"(A,4(F0.3,A))") MODNAME//": Center Coordinates = (", &
       longitude(1,1),":",longitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),",", &
       latitude(1,1),":",latitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),")"
-    !call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
+    call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
 #endif
 
     ! Add Center Coordinates to Grid
@@ -1649,6 +1648,9 @@ contains
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
     integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
 
+    real(ESMF_KIND_R8), dimension(:,:), pointer  :: waterlevelPtr => null()
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
@@ -1670,8 +1672,6 @@ contains
     call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    print*, "Export Fields: ", expitemNames
-    print*, "Import Fields: ", impitemNames
     do i=1, exitemCnt
 
       expitemName = trim(expitemNames(i))
@@ -1709,17 +1709,17 @@ contains
           if (ESMF_STDERRORCHECK(rc)) return
           
 
-          do j=0,numprocs
-            if (my_id == j) then
-              print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
-              print*, "link:     ", linkArrayPtr
-              print*, "flowrate: ", flowRatePtr
-              print*, "lon:      ", lonArrayPtr
-              print*, "lat:      ", latArrayPtr
-            endif
-            call MPI_Barrier(esmf_comm, rc)
-            if(ESMF_STDERRORCHECK(rc)) return
-          enddo
+          !do j=0,numprocs
+          !  if (my_id == j) then
+          !    print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
+          !    print*, "link:     ", linkArrayPtr
+          !    print*, "flowrate: ", flowRatePtr
+          !    print*, "lon:      ", lonArrayPtr
+          !    print*, "lat:      ", latArrayPtr
+          !  endif
+          !  call MPI_Barrier(esmf_comm, rc)
+          !  if(ESMF_STDERRORCHECK(rc)) return
+          !enddo
 
 
        ! CASE ('surface_runoff')
@@ -1736,13 +1736,22 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+        print*, trim(impitemName), "SetFieldData"
         CASE ('water_level')
-            call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
-            if (ESMF_STDERRORCHECK(rc)) return
-            
-            call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
-            if (ESMF_STDERRORCHECK(rc)) return
-            print*, "Regridded water_level"
+          call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+          ! Beheen - allocate space for waterlevelPtr here
+
+          ! Get a DE-local Fortran array pointer from ADCIRC Field
+          call ESMF_FieldGet(impitemField, farrayPtr=waterlevelPtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          print*, "Beheen waterlevelPtr", waterlevelPtr
+  
+          ! Beheen - now regrid from ADCIRC to NWM
+          !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
+          !print*, "Regridded water_level"
 
 
       !CASE ('air_pressure_at_sea_level')
