@@ -86,7 +86,7 @@ module NWM_NUOPC_Gluecode
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
   end type NWM_Field
 
-  type(NWM_Field),dimension(20) :: NWM_FieldList = (/ & 
+  type(NWM_Field),dimension(19) :: NWM_FieldList = (/ & 
     ! NWM output - file: 201905160600.CHRTOUT_DOMAIN1
     ! Routing/module_NWM_io.F: 3415       iret = nf90_inq_varid(ftn,'streamflow',varId) 
     ! Routing/module_NWM_io.F: 335 call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK(:,2),g_qlink(:,2))
@@ -94,86 +94,99 @@ module NWM_NUOPC_Gluecode
       stdname='flow_rate', units='m3 s-1', &
       desc='volume of fluid passing by some location through an area during a period of time.', shortname='streamflow', &
       adImport=.FALSE.,adExport=.TRUE.), &
+
     NWM_Field( & !(2) 
       stdname='surface_runoff', units='m3 s-1', &
       desc='water, from rain, snowmelt, or other sources, that flows over the land surface.', shortname='qSfcLatRunoff', &
       adImport=.FALSE.,adExport=.TRUE.), &
+
     NWM_Field( & !(3)
       stdname='river_velocity', units='m s-1', &
       desc='vector filed of river or flow velocity.', shortname='velocity', &
       adImport=.FALSE.,adExport=.TRUE.), &
-    NWM_Field( & !(4 - file from dflow)
-      stdname='water_level', units='m', &
-      desc='water level from dflow to check on this', shortname='wl', &
-      adImport=.FALSE.,adExport=.TRUE.), &
-    NWM_Field( & !(test with ADCIRC)
-      stdname="sea_surface_height_above_sea_level",  shortname= "zeta", &
-      adImport=.FALSE.,adExport=.TRUE.), &
-    
 
     ! Atmospheric Forcing, HWRF - file: 2011082720.LDASIN_DOMAIN1, func: READFORC_HRLDAS
     NWM_Field( & !(5) U_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D U wind component [m/s]
       stdname='wind_velocity_u', units='m s-1', &
       desc='UGRD, 10-m eastward wind', shortname='U2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(6) V_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D V wind component [m/s]
       stdname='wind_velocity_v', units='m s-1', &
       desc='VGRD, 10-m northward wind', shortname='V2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(7) 
       stdname='air_pressure_at_sea_level', units='Pa', &   !atm pmsl
-      !stdname='surface_pressure', units='Pa', &
+                              !stdname='surface_pressure', units='Pa', &
       desc='surface pressure.', shortname='PSFC', &    
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(8) T_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D atmospheric temperature valid at mid-levels [K]- TSK, (XSTART:XEND,YSTART:YEND) )  ! surface radiative temperature [K]
       stdname='air_temperature', units='K', &
       desc='2-m air temperature.', shortname='T2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(9) 
       stdname='specific_humidity', units='kg kg-1', &
       desc='2-m specific humidity.', shortname='Q2D', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(10) SWDOWN    (XSTART:XEND,YSTART:YEND) )    ! solar down at surface [W m-2]
       stdname='surface_net_downward_shortwave_flux', units='w m-2', &    !atm rsns
       !stdname='shortwave_height', units='w m-2', &
       desc='surface downward shortwave radiation flux', shortname='SWDOWN', &    
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(11) GLW       (XSTART:XEND,YSTART:YEND) )    ! longwave down at surface [W m-2]
       stdname='longwave_height', units='w m-2', & 
       desc='surface downward longwave radiation flux', shortname='LWDOWN', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(12 file: ??)
       stdname='precipitation_rate', units='kg/m2s', & 
       desc='15-min surface precipitation rate', shortname='PRATE', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(13)
       stdname='cloud_cover', units='??', & 
       desc='total cloud cover, fraction: 0-1', shortname='TCC', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(14 file: ???) 
       stdname='mean_sea_level', units='Pa', &
       desc='PRMSL, Pressure Reduced to MSL, atm. pressure', shortname='PMSL', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(15) 
       stdname='rediation_stress_xy', units='m s-1', &
       desc='Rediation stress Instantanous fields', shortname='SXY', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(16)
       stdname='rediation_stress_xx', units='m s-1', &
       desc='Rediation stress Instantanous fields', shortname='SXX', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(17)
       stdname='rediation_stress_yy', units='m s-1', &
       desc='Rediation stress Instantanous fields', shortname='SYY', &
       adImport=.TRUE.,adExport=.FALSE.), &
+
     NWM_Field( & !(18)
       stdname='wave_peak_mean_dir', units='degree', &
       desc='Peak/Mean wave direction', shortname='??', &
       adImport=.TRUE.,adExport=.FALSE.), &
-    ! what is next
+
+    NWM_Field( & !(ADCIRC waterlevel advertized name)
+      stdname="sea_surface_height_above_sea_level",  units='m', &
+      desc='waterlevel', shortname='zeta', &
+      adImport=.TRUE.,adExport=.FALSE.), &
+ 
+    ! For testing waterlevel for now we use this
     NWM_Field( & !(19)
       stdname='water_level', units='m', &
-      desc='what is next', shortname='wl', &
+      desc='For testing waterlevel for now we use this', shortname='wl', &
       adImport=.TRUE.,adExport=.FALSE.) /)
 
   ! Local version variables from NWM LSM grid
@@ -442,29 +455,86 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
 
-    ! LOCAL VARIABLES
+    ! LOCAL VARIABLES for LOC
     type(ESMF_TypeKind_Flag)                  :: typekind
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_streamflow => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
-      
+
+    ! LOCAL VARIABLES for GRID
+    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_waterlevel => null()
+    type(ESMF_TypeKind_Flag)                  :: coordTypeKind
+    integer                                   :: dimcnt
+    integer                                   :: tileCount
+    integer                                   :: staggerlocCount
+    integer                                   :: localDECount
+    type(ESMF_DistGrid)                       :: distgrid
+    !integer, target                           :: distgridToGridMap(:)
+    type(ESMF_CoordSys_Flag)                  :: coordSys
+    !integer, target                           :: coordDimCount(:)
+    !integer, target                           :: coordDimMap(:,:)
+    integer                                   :: arbDim
+    integer                                   :: rank
+    integer                                   :: arbDimCount
+    !integer, target                           :: gridEdgeLWidth(:)
+    !integer, target                           :: gridEdgeUWidth(:)
+    !integer, target                           :: gridAlign(:)
+    type(ESMF_Index_Flag)                     :: indexflag
+    type(ESMF_GridStatus_Flag)                :: status
+    character (len=20)                        :: name
+
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
     rc = ESMF_SUCCESS
 
+    ! initialize farrayPtr_streamflow
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    allocate(farrayPtr_loc(loccnt))     ! allocate for locstream
+    allocate(farrayPtr_streamflow(loccnt))
+    farrayPtr_streamflow = -9.9
+
+    ! temp
+    allocate(farrayPtr_loc(loccnt))
     farrayPtr_loc = -9.9
+
+    ! initialize farrayPtr_waterlevel
+    ! The Field dimension (dimCount) will be the same as 
+    ! the dimCount for the farrayPtr
+    call ESMF_GridGet(grid, rc=rc, &
+            coordTypeKind=coordTypeKind, dimCount=dimcnt, tileCount=tileCount, &
+                   staggerlocCount=staggerlocCount, localDECount=localDECount, &
+               coordSys=coordSys, indexflag=indexflag, status=status, name=name)
+    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    ! for testing
+    print*, "Beheen grid info ", "coordTypeKind:", coordTypeKind, &
+            "dimCount:", dimcnt, &
+            "tileCount:", tileCount, &
+            "staggerlocCount:", staggerlocCount, &
+            "localDECount:", localDECount, &
+            "coordSys:", coordSys, &
+            "indexflag:", indexflag, &
+            "status:", status, &
+            "name:", name
+
+    allocate(farrayPtr_waterlevel(dimcnt))
+    farrayPtr_waterlevel = -1.1
+ 
+
+    ! let's print these information about our grid 
+    !call ESMF_GridGet(grid, localDE, &
+    !     isLBound,isUBound, arbIndexCount, arbIndexList, tile, rc)
+
 
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
-        
-        print*, "Beheen size of farrayPtr_loc", loccnt, my_id
+        print*, "Beheen size of farrayPtr_streamflow", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
-                                           farrayPtr=farrayPtr_loc, &
+                                           farrayPtr=farrayPtr_streamflow, &
                                            datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                            name=stdName, rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -485,8 +555,10 @@ contains
 
 
       CASE ('water_level')
+        ! The Field dimension (dimCount) will be the same as the 
+        ! dimCount for the farrayPtr
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-                      farray=rt_domain(did)%velocity, &
+                         farray=farrayPtr_waterlevel, &
                         indexflag=ESMF_INDEX_DELOCAL, &
                                    name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -811,8 +883,7 @@ contains
 
     allocate(deBlockList(2,2,numprocs))
     ! Dimension one is each dimension of the element
-    ! Dimension 2 is always the lower and upper indices per 
-    ! dimension per deBlock
+    ! Dimension 2 is always the lower and upper indices per dimension per deBlock
     ! Dimension 3 is each deBlock (1 to deCount)
     do i = 1, numprocs
  
@@ -867,7 +938,7 @@ contains
     write(logMsg,"(A,4(F0.3,A))") MODNAME//": Center Coordinates = (", &
       longitude(1,1),":",longitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),",", &
       latitude(1,1),":",latitude(local_nx_size(my_id+1),local_ny_size(my_id+1)),")"
-    !call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
+    call ESMF_LogWrite(trim(logMsg), ESMF_LOGMSG_INFO)
 #endif
 
     ! Add Center Coordinates to Grid
@@ -1315,47 +1386,48 @@ contains
   ! For discontinuous variables (eg, 3 hourly precipitation) - conservative
   ! interpolation would be a good approach. Preceipitation has a little or no 
   ! spatial correlation at high frequency sampling (eg., 3-hourly) but on
-  ! monthly, 
-  ! seasonal or annual mean time scales may be 'reasonably' smooth is space.
+  ! monthly, seasonal or annual mean time scales may be 'reasonably' smooth is space.
   !
   ! Computing the curl of the wind stress requires that highly accurate
-  ! derivatives 
-  ! be computed. In this case, patch interpolation would be appropriate. 
+  ! derivatives be computed. In this case, patch interpolation would be appropriate. 
   !
   ! In other instances, there may be physical requirements (e.g., conservation
-  ! of
-  ! energy) that require a specific interpolation method.
+  ! of energy) that require a specific interpolation method.
   !
   ! There are data for which no interpolation method should be used. An example
   ! would be categorical data for land (eg., desert, rain forest, ...).
   ! Deriving a new grid for categorical data (eg, land surface type) would be
-  ! best 
-  ! accomplished with a nearest neighbor algorithm because interpolating
-  ! different 
-  ! categories may result in a totally bogus result.
+  ! best accomplished with a nearest neighbor algorithm because interpolating
+  ! different categories may result in a totally bogus result.
   !
   ! Non-linear quantities should always be computed on the original grid and,
   ! subsequently, interpolated to the destination grid. Note that the results
-    ! The basic steps of NCL/ESMF regridding involve:
-    !
-    ! Reading or generating the "source" grid.
-    ! Reading or generating the "destination" grid.
-    ! Creating special NetCDF files that describe these two grids.
-    ! *Generating a NetCDF file that contains the weights.
-    ! Applying the weights to data on the source grid, to interpolate the data to the
-    ! destination grid.
-    ! Copying over any metadata to the newly regridded data.
-    !
-    ! ESMF_regrid_18.ncl:
-    ! This example shows how to regrid two variables (PSL and T) on a HOMME
-    ! cubed-sphere (unstructured) finite volume grid (48602 cells) to a 96 x 144
-    ! finite volume (FV) rectilinear grid.
-    !
-    ! Once the first variable has been regridded using ESMF_regrid, you will have a
-    ! NetCDF weights file. You can then use this weights file to regrid the second
-    ! variable using ESMF_regrid_with_weights. This can be much faster than using
-    ! ESMF_regrid again.
-    !
+  ! will be different than if the original variables on the source grid were
+  ! interpolated to the destination grid and then the non-linear computations
+  ! performed.
+  !
+  ! Vector interpolation (eg, U, V) should be performed on the vector pair
+  ! simultaneously. Interpolating U, then separately, interpolating V may be
+  ! adequate for some purposes, but not if the interpolated vector components
+  ! were subsequently used to derive (say) divergence. An indirect approach
+  ! would be to (a) calculate the scalar quantities vorticity and divergence on
+  ! the source grid; (b) interpolate these scalar quantities to the destination
+  ! grid using standard methods; and then, (c) derive the U and V from the
+  ! rotational and divergent wind components.
+  !
+  ! Extrapolation: In some cases, a regridding algorithm may extrapolate rather
+  ! than interpolate. A common example is extrapolating vertical profiles in mountain
+  ! regions to (say) 1000hPa. In some cases, the extrapolation can be guided by
+  ! physical principles. For example, using the standard lapse rate may be
+  ! acceptable when extrapolating temperature or geopotential via the
+  ! hydrostatic equation. However, generally, any extrapolated values should be used
+  ! and interpreted with the utmost caution.
+  !
+  ! Occassionally, someone might say, "I have a 5x5 grid containing precipitation
+  ! but I need a 0.1x0.1 grid so I'll interpolate to the 0.1x0.1 resolution. Of
+  ! course, this interpolation can be performed but this provides no additional
+  ! information than the original 5x5 grid.
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
 #endif
@@ -1573,6 +1645,9 @@ contains
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
     integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
 
+    real(ESMF_KIND_R8), dimension(:,:), pointer  :: waterlevelPtr => null()
+
+
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
@@ -1594,8 +1669,6 @@ contains
     call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    print*, "Export Fields: ", expitemNames
-    print*, "Import Fields: ", impitemNames
     do i=1, exitemCnt
 
       expitemName = trim(expitemNames(i))
@@ -1633,17 +1706,17 @@ contains
           if (ESMF_STDERRORCHECK(rc)) return
           
 
-          do j=0,numprocs
-            if (my_id == j) then
-              print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
-              print*, "link:     ", linkArrayPtr
-              print*, "flowrate: ", flowRatePtr
-              print*, "lon:      ", lonArrayPtr
-              print*, "lat:      ", latArrayPtr
-            endif
-            call MPI_Barrier(esmf_comm, rc)
-            if(ESMF_STDERRORCHECK(rc)) return
-          enddo
+          !do j=0,numprocs
+          !  if (my_id == j) then
+          !    print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
+          !    print*, "link:     ", linkArrayPtr
+          !    print*, "flowrate: ", flowRatePtr
+          !    print*, "lon:      ", lonArrayPtr
+          !    print*, "lat:      ", latArrayPtr
+          !  endif
+          !  call MPI_Barrier(esmf_comm, rc)
+          !  if(ESMF_STDERRORCHECK(rc)) return
+          !enddo
 
 
        ! CASE ('surface_runoff')
@@ -1660,13 +1733,21 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-       CASE ('water_level')
-       !     call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
-       !     if (ESMF_STDERRORCHECK(rc)) return
-       !     print *, "water_level acquired from importState"       
-       !     !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
-       !     if (ESMF_STDERRORCHECK(rc)) return
-            print*, "Regridded water_level"
+        CASE ('water_level')
+          call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+          ! Beheen - allocate space for waterlevelPtr here
+
+          ! Get a DE-local Fortran array pointer from ADCIRC Field
+          call ESMF_FieldGet(impitemField, farrayPtr=waterlevelPtr, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+          print*, "Beheen waterlevelPtr", waterlevelPtr
+  
+          ! Beheen - now regrid from ADCIRC to NWM
+          !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
+          !print*, "Regridded water_level"
 
 
       !CASE ('air_pressure_at_sea_level')
