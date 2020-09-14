@@ -40,6 +40,7 @@ MODULE module_Routing
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
    use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
+   use hashtable
 
    IMPLICIT NONE
 
@@ -674,8 +675,6 @@ subroutine LandRT_ini(did)
   integer, allocatable, dimension(:) :: buf
   real, allocatable, dimension(:) :: tmpRESHT
   integer :: new_start_i, new_start_j, new_end_i, new_end_j
-  integer :: cache_block, cache_block_begin_i, cache_block_end_i
-  integer :: cache_idx, num_blocks, cache_idx_k, cache_block_begin_k, cache_block_end_k
 
 #ifdef OUTPUT_CHAN_CONN
   real :: connCalcTimeStart, connCalcTimeEnd
@@ -998,28 +997,33 @@ subroutine LandRT_ini(did)
         if(down_id .ge. 0) new_start_j = 2
         if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
 
-        cache_block = 256
-        num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
-        !$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
-        !$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
-        do j = new_start_j, new_end_j
-           do cache_idx = 0, num_blocks - 1
-              cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
-              cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
-              do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
-                 cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
-                 cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
-                 do i = cache_block_begin_i, cache_block_end_i
-                    do k = cache_block_begin_k, cache_block_end_k
-                       if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                          rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                       endif
-                    end do
-                 end do
-              end do
-           end do
-        end do
-        !$omp end parallel do
+                ! The following loops are replaced by a hashtable-based algorithm
+        ! do k = 1, rt_domain(did)%LNLINKSL
+        !    do j = new_start_j, new_end_j
+        !       do i = new_start_i, new_end_i
+        !          if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+        !             rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+        !          endif
+        !       end  do
+        !    end do
+        ! end do
+
+        block
+          type(hash_t) :: hash_table
+          integer :: val,ii,jj
+          logical :: found
+          
+          call hash_table%set_all_idx(rt_domain(did)%LLINKID, rt_domain(did)%LNLINKSL)
+          do jj = new_start_j, new_end_j
+             do ii = new_start_i, new_end_i
+                call hash_table%get(rt_domain(did)%CH_LNKRT(ii,jj), val, found)
+                if(found .eqv. .true.) then
+                   rt_domain(did)%CH_LNKRT_SL(ii,jj) = val
+                end if
+             end do
+          end do
+          call hash_table%clear()
+        end block
 
         call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 

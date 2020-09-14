@@ -22,6 +22,7 @@
 MODULE MODULE_mpp_ReachLS
 
   use module_mpp_land, only:  io_id, my_id, mpp_status, mpp_land_max_int1, mpp_land_sync, HYDRO_COMM_WORLD
+  use hashtable
   implicit none
 
 
@@ -346,8 +347,6 @@ MODULE MODULE_mpp_ReachLS
        integer, dimension(:) :: LINKID, LLINKID
        integer :: i,k, glinksl, ierr
        integer :: gLinkId(glinksl)
-       integer :: cache_idx, cache_block
-       integer :: cache_block_begin, cache_block_end
 
        LLINKLEN = size(LLINKID,1)
        allocate(LLINKIDINDX(LLINKLEN))
@@ -359,19 +358,31 @@ MODULE MODULE_mpp_ReachLS
        call mpi_bcast(gLinkId(1:glinksl),glinksl,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
 
-       cache_block = 256
-       do cache_idx = 0, glinksl - 1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, glinksl)
-          do i = 1, LLINKLEN
-             if(LLINKIDINDX(i) /= 0) cycle
-             do k = cache_block_begin, cache_block_end
-                if(LLINKID(i) .eq. gLinkId(k)) then
-                   LLINKIDINDX(i) = k
-                endif
-             end do
-          end do
-       end do
+       ! The following loops are replaced by a hashtable-based algorithm
+       !        do i = 1, LLINKLEN
+       !           do k = 1, glinksl
+       !              if(LLINKID(i) .eq. gLinkId(k)) then
+       !                 LLINKIDINDX(i) = k
+       !                 goto 1001
+       !              endif
+       !           end do
+       ! 1001      continue
+       !     end do
+
+       block
+         type(hash_t) :: hash_table
+         integer :: val,it
+         logical :: found
+         
+         call hash_table%set_all_idx(LLINKID,LLINKLEN)
+         do it=1, glinksl
+            call hash_table%get(gLinkId(it), val, found)
+            if(found .eqv. .true.) then
+               llinkidindx(val) = it
+            end if
+         end do
+         call hash_table%clear()
+       end block
 
        call mpp_land_sync()
   end subroutine getLocalIndx
@@ -825,42 +836,53 @@ MODULE MODULE_mpp_ReachLS
   end subroutine getFromInd
 
   subroutine getToInd(from,to,ind,indLen,gToNodeOut)
-      integer,dimension(:) :: from, to
-      integer, allocatable, dimension(:) ::ind
-      integer, allocatable, dimension(:,:) :: gToNodeOut
-      integer :: k, m, kk, mm,indLen, i, ierr
-      integer, dimension(gnlinksl) :: gto
-      integer :: maxNum, num, tmp_num
-      integer :: cache_block_begin, cache_block_end, cache_idx, cache_block
+    integer,dimension(:) :: from, to
+    integer, allocatable, dimension(:) ::ind
+    integer, allocatable, dimension(:,:) :: gToNodeOut
+    integer :: k, m, kk, mm,indLen, i, ierr
+    integer, dimension(gnlinksl) :: gto
+    integer :: maxNum, num
+
+    call gBcastValue(to,gto)
+
+    !      mm = size(from,1)
+    mm = l_nlinksl
+
+    kk = 0
+    maxNum = 0
+
+    ! The following loops are replaced by a hashtable-based algorithm
+    ! do m = 1, mm
+    !    num = 0
+    !    do k = 1, gnlinksl
+    !       if(gto(k) .eq. from(m) ) then
+    !          kk = kk +1
+    !          num = num + 1
+    !       endif
+    !    end do
+    !    if(num .gt. maxNum) maxNum = num
+    ! end do
+
+    block
+      type(hash_t) :: hash_table
+      integer :: val,it
       integer, allocatable :: num_a(:)
-
-      call gBcastValue(to,gto)
-
-!      mm = size(from,1)
-       mm = l_nlinksl
+      logical :: found
 
       allocate(num_a(mm))
-      cache_block = 256
       num_a = 0
-      tmp_num = 0
       kk = 0
-      maxNum = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, mm
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. from(m) ) then
-                  kk = kk + 1
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-            num = tmp_num
-            if(num .gt. maxNum) maxNum = num
-         end do
-      enddo
+
+      call hash_table%set_all_idx(from, mm)
+      do it=1, gnlinksl
+         call hash_table%get(gto(it), val, found)
+         if(found .eqv. .true.) then
+            kk = kk + 1
+            num_a(val) = num_a(val) + 1
+         end if
+      end do
+      maxNum = maxval(num_a)
+
 
       allocate(ind(kk))
       allocate(gToNodeOut(mm,maxNum+1))
@@ -870,33 +892,44 @@ MODULE MODULE_mpp_ReachLS
 
       kk = 0
       num_a = 1
-      tmp_num = 1
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, mm
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. from(m) ) then
-                  kk = kk +1
-                  !yw ind(kk) = gto(k)
-                  ind(kk) = k
-                  !! gToNodeOut(m,num+1) = gto(k)
-                  gToNodeOut(m,tmp_num+1) = kk
-                  gToNodeOut(m,1) = tmp_num
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-         end do
-      enddo
-      deallocate(num_a)
 
-      ToInd(my_id+1) = kk
-      do i = 0, numprocs - 1
-         call mpi_bcast(ToInd(i+1),1,MPI_INTEGER,   &
-            i,HYDRO_COMM_WORLD,ierr)
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, mm
+      !    num = 1
+      !    do k = 1, gnlinksl
+      !        if(gto(k) .eq. from(m) ) then
+      !            kk = kk +1
+      !            !yw ind(kk) = gto(k)
+      !            ind(kk) = k
+      !            !! gToNodeOut(m,num+1) = gto(k)
+      !            gToNodeOut(m,num+1) = kk
+      !            gToNodeOut(m,1) = num
+      !            num = num + 1
+      !        endif
+      !     end do
+      ! end do
+
+      do it=1, gnlinksl
+         call hash_table%get(gto(it), val, found)
+         if(found .eqv. .true.) then
+            kk = kk + 1
+            ind(kk) = it
+            gToNodeOut(val,num_a(val)+1) = kk
+            gToNodeOut(val,1) = num_a(val)
+            num_a(val) = num_a(val) + 1
+         end if
       end do
+
+      deallocate(num_a)
+      call hash_table%clear()
+
+    end block
+
+    ToInd(my_id+1) = kk
+    do i = 0, numprocs - 1
+       call mpi_bcast(ToInd(i+1),1,MPI_INTEGER,   &
+            i,HYDRO_COMM_WORLD,ierr)
+    end do
 
   end subroutine getToInd
 
