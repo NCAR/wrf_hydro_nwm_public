@@ -516,7 +516,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
        RESHT, &
-       ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
+       ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKE_PRECIP, LAKE_EVAP, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
 #ifdef MPP_LAND
@@ -593,7 +593,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
-        REAL,                DIMENSION(NLAKES)    :: LAKE_EVAP, LAKE_PRECIP  !-- lake evaporation and precipitation
+        REAL, INTENT(IN),    DIMENSION(NLAKES)    :: LAKE_EVAP, LAKE_PRECIP  !-- lake evaporation and precipitation
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
         !REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
@@ -1176,7 +1176,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                    QLLAKE(i), RESHT(i), QLAKEO(i), &
                    LAKE_EVAP(i), LAKE_PRECIP(i), &
                    DTCT, rt_domain(did)%final_reservoir_type(i), &
-                   rt_domain(did)%reservoir_assimilated_value(i), rt_domain(did)%reservoir_assimilated_source_file(i)))
+                   rt_domain(did)%reservoir_assimilated_value(i), rt_domain(did)%reservoir_assimilated_source_file(i))
 
               ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
               !       inside the reservoir module, but it requires a redesign of the lake
@@ -1547,7 +1547,7 @@ end subroutine drive_CHANNEL
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
-        RESHT, CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        RESHT, CVOL, QLAKEI, QLAKEO, LAKE_PRECIP, LAKE_EVAP, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
         LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
@@ -1634,7 +1634,7 @@ end subroutine drive_CHANNEL
        real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
        real, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
        real,                dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
-       real,                dimension(NLAKES)    :: LAKE_EVAP, LAKE_PRECIP  !-- lake evap and precipitaion
+       real, intent(IN), dimension(:)    :: LAKE_EVAP, LAKE_PRECIP  !-- lake evap and precipitaion
        real, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
 
        integer, intent(IN), dimension(:)    :: LAKENODE !-- outflow from lake used in diffusion scheme
