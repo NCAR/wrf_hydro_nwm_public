@@ -389,7 +389,7 @@ contains
     ! end testing
 
     call noahMp_exe(itime, state)
-
+    
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2)
     call NWM_SetFieldData(importState, exportState, did)
 
@@ -543,14 +543,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                  farray=rt_domain(did)%qSfcLatRunoff, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
+                                   name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('river_velocity')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                       farray=rt_domain(did)%velocity, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
+                                   name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -568,14 +568,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=stdName, rc=rc)
+                                             name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_net_downward_shortwave_flux')
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=stdName, rc=rc)
+                                             name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -991,7 +991,6 @@ contains
 
     do j = lbnd(2),ubnd(2)
         do i = lbnd(1),ubnd(1)
-            gridmask(i,j) = mask(i,j)
             gridmask(i,j) = mask(i,j)
         enddo
     enddo
@@ -1669,6 +1668,8 @@ contains
     call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
+    print *, "[NWM_SetFieldData] Import State", impitemNames
+    print *, "[NWM_SetFieldData] Export State", expitemNames
     do i=1, exitemCnt
 
       expitemName = trim(expitemNames(i))

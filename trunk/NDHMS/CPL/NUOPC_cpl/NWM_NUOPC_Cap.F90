@@ -495,14 +495,13 @@ module NWM_NUOPC_Cap
       endif
 
       if (importConnected) then 
-        NWM_FieldList(fIndex)%realizedImport = .TRUE.
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
                     grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
                                           did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-
+        NWM_FieldList(fIndex)%realizedImport = .TRUE.
       elseif(NWM_FieldList(fIndex)%adImport) then
         call ESMF_StateRemove(is%wrap%NStateImp(1), &
            (/trim(NWM_FieldList(fIndex)%stdname)/), &
@@ -518,7 +517,6 @@ module NWM_NUOPC_Cap
       endif
 
       if (exportConnected) then
-        NWM_FieldList(fIndex)%realizedExport = .TRUE.
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
                              grid=NWM_LSMGrid,locstream=NWM_ReachStream, &
                                                   did=is%wrap%did,rc=rc)
@@ -526,7 +524,7 @@ module NWM_NUOPC_Cap
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateExp(1), field=field,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return
-
+        NWM_FieldList(fIndex)%realizedExport = .TRUE.
       elseif(NWM_FieldList(fIndex)%adExport) then
         call ESMF_StateRemove(is%wrap%NStateExp(1), &
            (/trim(NWM_FieldList(fIndex)%stdname)/), &
