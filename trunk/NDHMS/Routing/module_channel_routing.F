@@ -1949,10 +1949,9 @@ do nt = 1, nsteps
 
    end do  !--k links
 
-
 #ifdef MPP_LAND
-   call updateLake_seq(dble(QLAKEO),nlakes,dble(tmpQLAKEO))
-   call updateLake_seq(dble(QLAKEI),nlakes,dble(tmpQLAKEI))
+   call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
+   call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
 #endif
