@@ -260,7 +260,7 @@ contains
 									   ! -1 	---> Simple pass through scheme
 									   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
 									   ! 1		---> CONIC shape with depth based on full lake depth
-									   ! 2		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+									   ! 2		---> TRIANGULAR PRISM shape with depth based on full lake depth
 									   ! 3		---> H-A-V RELATIONSHIP based on full lake depth
 
         !! ----------------------------  local variables
@@ -477,7 +477,7 @@ contains
         integer, intent(IN) :: LAKE_SHAPE_OPT      ! LAKE_SHAPE_OPT (lake_shape_option) options from namelist:
 												   ! 0		---> BOX shape with depth based on active reservoir depth (NWM v1.x - v2.1)
 												   ! 1		---> CONIC shape with depth based on full lake depth
-												   ! 2		---> RECTANGLUAR PRISM shape with depth based on full lake depth
+												   ! 2		---> TRIANGULAR PRISM shape with depth based on full lake depth
 												   ! 3		---> H-A-V RELATIONSHIP based on full lake depth
 
         !! ----------------------------  local variables
@@ -503,7 +503,7 @@ contains
           S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
           h2 = (3.*S2/pi*(Dmax/R_cone)**2.)**(1./3.)   ! elevation after change in storage in (m)
 
-        elseif (LAKE_SHAPE_OPT == 2) then           ! RECTANGLUAR PRISM shape
+        elseif (LAKE_SHAPE_OPT == 2) then              ! TRIANGULAR PRISM shape
           S1 = (surf_area/2./Dmax)*(h1**2.)            ! storage before change in volume (m3)
           S2 = MAX(S1 + dS, 0.0)                       ! storage after change in volume (m3)
           h2 = (2.*S2*Dmax/surf_area)**0.5             ! elevation after change in storage in (m)
