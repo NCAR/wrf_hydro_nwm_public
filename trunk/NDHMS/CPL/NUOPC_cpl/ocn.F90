@@ -44,6 +44,12 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
     
+    ! Beheen - added for water_level
+    !call ESMF_GridCompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
+    !                       userRoutine=InitializeP0, phase=0, rc=rc)
+    !if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+
     ! set entry point for methods that require specific implementation
     call NUOPC_CompSetEntryPoint(model, ESMF_METHOD_INITIALIZE, &
       phaseLabelList=(/"IPDv00p1"/), userRoutine=InitializeP1, rc=rc)
@@ -76,6 +82,22 @@ module OCN
   
   !-----------------------------------------------------------------------------
 
+
+  !! Beheen - added this to set the addDictionary for water level at the global
+  !! level
+  !subroutine InitializeP0(gcomp, importState, exportState, clock, rc)
+  !  type(ESMF_GridComp)   :: gcomp
+  !  type(ESMF_State)      :: importState, exportState
+  !  type(ESMF_Clock)      :: clock
+  !  integer, intent(out)  :: rc
+
+
+    ! Add the import/export fields into global field dict.
+  !  call NWM_FieldDictionaryAdd(rc=rc)
+  !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+
+  !--------------------------------------------
+
   subroutine InitializeP1(model, importState, exportState, clock, rc)
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState, exportState
@@ -87,6 +109,7 @@ module OCN
 
 
     rc = ESMF_SUCCESS
+
 
     ! importable field: air_pressure_at_sea_level
     call NUOPC_Advertise(importState, &
@@ -179,12 +202,27 @@ module OCN
     real, allocatable   :: streamflowarray(:)
 
     ! test for waterlevel
-    type(ESMF_Grid)     :: gridIn
-    type(ESMF_Grid)     :: gridOut
+    type(ESMF_Grid)     :: gridIn, gridOut
+    type(ESMF_Mesh)     :: meshIn, meshOut
     type(ESMF_Field)    :: waterlevelField
-    real, allocatable   :: waterlevelarray(:,:)
+    real, allocatable   :: waterlevelarray(:)
+    character(160)      :: msgString
+    integer            :: dimCount, numOwnedElements, numOwnedNodes
+    character(*), parameter   :: rName="InitializeRealize"
+    character(ESMF_MAXSTR)    :: name
+    integer                   :: verbosity
 
     rc = ESMF_SUCCESS
+
+    ! query the component for info
+    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
+
+    ! intro
+    call NUOPC_LogIntro(name, rName, verbosity, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
 
 
     call ESMF_VMGetCurrent(vm=vm, rc=rc)
@@ -240,6 +278,7 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
+
 
     ! importable field: air_pressure_at_sea_level
     pmslField = ESMF_FieldCreate(locStreamIn, &
@@ -311,41 +350,85 @@ module OCN
       return  ! bail out
 
 
-    ! create a Grid object for Fields
-    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/100, 10/), &
-      minCornerCoord=(/10._ESMF_KIND_R8, 20._ESMF_KIND_R8/), &
-      maxCornerCoord=(/100._ESMF_KIND_R8, 200._ESMF_KIND_R8/), &
-      coordSys=ESMF_COORDSYS_CART, staggerLocList=(/ESMF_STAGGERLOC_CENTER/), &
-      rc=rc)
+    ! create a Grid object for export - waterlevel
+    ! The order of the coordinates is (longitude, latitude) in symmetry with
+    ! (x,y) for coordSys=ESMF_COORDSYS_CART.
+    ! Also, the longitude is measured in degrees in the eastward direction, so
+    ! the longitudes in your map should be -120 to -70.
+    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/10, 15/), &
+      minCornerCoord=(/-130._ESMF_KIND_R8, 25._ESMF_KIND_R8/), &
+      maxCornerCoord=(/-60._ESMF_KIND_R8, 50._ESMF_KIND_R8/), &
+      staggerLocList=(/ESMF_STAGGERLOC_CENTER, ESMF_STAGGERLOC_CORNER/), &
+      name="OCN-GridIn", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
     gridOut = gridIn ! for now out same as in
+    
+    ! convert the Grid into a Mesh
+    meshOut = ESMF_MeshCreate(grid=gridOut, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_MeshWrite(meshOut, filename="OCN-MeshOut", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    call ESMF_LogWrite("Done writing OCN-MeshOut VTK", &
+      ESMF_LOGMSG_INFO, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    ! analyze the Mesh and log some info
+    call ESMF_MeshGet(meshOut, spatialDim=dimCount, &
+      numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    write(msgString,*) "OCN meshOut:   numOwnedElements=", numOwnedElements, &
+      "numOwnedNodes=", numOwnedNodes, "dimCount=", dimCount
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! allocate and initialize waterlevelarray here
-    !do i=1,10
-    !  do j=1,100
-    !    waterlevelarray(i,j) = -0.1
-    !  enddo
-    !enddo
-    waterlevelarray = -0.1
-    ! exportable field: waterlevel
-    !waterlevelField = ESMF_FieldCreate(gridOut, &
-    !                           waterlevelarray, &
-    !                        ESMF_INDEX_DELOCAL, &
-    !                        name="water_level", &
-    !                                       rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
-    !call NUOPC_Realize(exportState, field=waterlevelField, rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
+    allocate(waterlevelarray(numOwnedNodes))
+    do i=1,numOwnedNodes
+          waterlevelarray(i) = -0.1
+    enddo
+      
+    ! exportable field - waterlevel
+    waterlevelField = ESMF_FieldCreate(meshOut, name="wl", &
+      !typekind=ESMF_TYPEKIND_R8, &
+      farray=waterlevelarray, &
+      indexflag=ESMF_INDEX_DELOCAL, &
+      !ungriddedLbound=(/1/), ungriddedUbound=(/4/), rc=rc)
+      rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    call NUOPC_Realize(exportState, field=waterlevelField, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
+    ! extro
+    call NUOPC_LogExtro(name, rName, verbosity, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
+
+ 
     deallocate(arbSeqIndexList)
 
   end subroutine

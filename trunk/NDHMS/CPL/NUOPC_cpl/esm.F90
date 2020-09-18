@@ -163,17 +163,17 @@ module ESM
       return  ! bail out
       
     ! SetServices for atm2nwm
-    call NUOPC_DriverAddComp(driver, srcCompLabel="ATM", dstCompLabel="NWM", &
-      compSetServicesRoutine=cplSS, comp=connector, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    !call NUOPC_DriverAddComp(driver, srcCompLabel="ATM", dstCompLabel="NWM", &
+    !  compSetServicesRoutine=cplSS, comp=connector, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
 
     ! SetServices for nwm2ocn
     call NUOPC_DriverAddComp(driver, srcCompLabel="NWM", dstCompLabel="OCN", &
@@ -190,17 +190,17 @@ module ESM
 
     ! Beheen waterlevel mockup
     ! SetServices for ocn2lnd
-    !call NUOPC_DriverAddComp(driver, srcCompLabel="OCN", dstCompLabel="NWM", &
-    !  compSetServicesRoutine=cplSS, comp=connector, rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
-    !call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
+    call NUOPC_DriverAddComp(driver, srcCompLabel="OCN", dstCompLabel="NWM", &
+      compSetServicesRoutine=cplSS, comp=connector, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
 
 #endif
@@ -296,7 +296,15 @@ module ESM
         ! go through all of the entries in the cplList and switch to redist
         do j=1, cplListSize
           ! switch remapping to redist
-          cplList(j) = trim(cplList(j))//":REMAPMETHOD=redist"
+          ! bilinear: Destination value is a linear combination of the source
+          ! values in the cell which contains the destination point. The weights
+          ! for the linear combination are based on the distance of destination
+          ! point from each source value.
+          if (trim(cplList(j))=="water_level") then
+            cplList(j) = trim(cplList(j))//":REMAPMETHOD=bilinear"          !redist"
+          else
+            cplList(j) = trim(cplList(j))//":REMAPMETHOD=redist"
+          endif
         enddo
         ! store the modified cplList in CplList attribute of connector i
         call NUOPC_CompAttributeSet(connectorList(i), &

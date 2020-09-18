@@ -85,7 +85,7 @@ NWM_NUOPC_Gluecode.o: NWM_NUOPC_Macros.h NWM_ESMF_Extensions.o NWM_ESMF_Utility.
 
 .PHONY: dust clean distclean info edit
 dust:
-	rm -f PET*.ESMF_LogFile *.nc traceout *.stdout diag*
+	rm -f PET*.ESMF_LogFile *.nc traceout *.stdout diag* *.vtk
 nuopcclean:
 	rm -f esmApp *.o *.mod
 distclean: dust clean

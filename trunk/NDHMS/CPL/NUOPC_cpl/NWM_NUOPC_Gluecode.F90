@@ -389,10 +389,13 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     ! end testing
 
+    !call NWM_SetFieldData(did, exportState)
+
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
-    call NWM_SetFieldData(importState, exportState, did)
+    call NWM_SetFieldData(did, exportState)
+    call NWM_SetFieldData(did, importState)
 
 
 #ifdef DEBUG
@@ -456,34 +459,22 @@ contains
     integer, intent(in)                     :: did
     integer, intent(out)                    :: rc
 
+
     ! LOCAL VARIABLES for LOC
     type(ESMF_TypeKind_Flag)                  :: typekind
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_streamflow => null()
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
 
-    ! LOCAL VARIABLES for GRID
-    real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_waterlevel => null()
-    type(ESMF_TypeKind_Flag)                  :: coordTypeKind
-    integer                                   :: dimcnt
-    integer                                   :: tileCount
-    integer                                   :: staggerlocCount
-    integer                                   :: localDECount
-    type(ESMF_DistGrid)                       :: distgrid
-    !integer, target                           :: distgridToGridMap(:)
-    type(ESMF_CoordSys_Flag)                  :: coordSys
-    !integer, target                           :: coordDimCount(:)
-    !integer, target                           :: coordDimMap(:,:)
-    integer                                   :: arbDim
-    integer                                   :: rank
-    integer                                   :: arbDimCount
-    !integer, target                           :: gridEdgeLWidth(:)
-    !integer, target                           :: gridEdgeUWidth(:)
-    !integer, target                           :: gridAlign(:)
-    type(ESMF_Index_Flag)                     :: indexflag
-    type(ESMF_GridStatus_Flag)                :: status
-    character (len=20)                        :: name
-
+    ! for testing
+    real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
+    real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
+    integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
+    type(ESMF_VM) :: vm
+    type(ESMF_LocStream)        :: locstream2
+    integer :: i, j, k, esmf_comm, localPet, petCnt, localElmCnt
+    ! end for testing
 
 
 #ifdef DEBUG
@@ -492,7 +483,7 @@ contains
 
     rc = ESMF_SUCCESS
 
-    ! initialize farrayPtr_streamflow
+    ! initialize farrayPtr_???? attached to locstream
     call ESMF_LocStreamGetBounds(locstream, computationalCount=loccnt, rc=rc)
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
     allocate(farrayPtr_streamflow(loccnt))
@@ -502,44 +493,48 @@ contains
     allocate(farrayPtr_loc(loccnt))
     farrayPtr_loc = -9.9
 
-    ! initialize farrayPtr_waterlevel
-    ! The Field dimension (dimCount) will be the same as 
-    ! the dimCount for the farrayPtr
-    call ESMF_GridGet(grid, rc=rc, &
-            coordTypeKind=coordTypeKind, dimCount=dimcnt, tileCount=tileCount, &
-                   staggerlocCount=staggerlocCount, localDECount=localDECount, &
-               coordSys=coordSys, indexflag=indexflag, status=status, name=name)
-    if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
-    ! for testing
-    print*, "Beheen grid info ", "coordTypeKind:", coordTypeKind, &
-            "dimCount:", dimcnt, &
-            "tileCount:", tileCount, &
-            "staggerlocCount:", staggerlocCount, &
-            "localDECount:", localDECount, &
-            "coordSys:", coordSys, &
-            "indexflag:", indexflag, &
-            "status:", status, &
-            "name:", name
-
-    allocate(farrayPtr_waterlevel(dimcnt))
-    farrayPtr_waterlevel = -1.1
- 
-
-    ! let's print these information about our grid 
-    !call ESMF_GridGet(grid, localDE, &
-    !     isLBound,isUBound, arbIndexCount, arbIndexList, tile, rc)
-
-
 
     SELECT CASE (trim(stdName))
       CASE ('flow_rate')
 
-        print*, "Beheen size of farrayPtr_streamflow", loccnt, my_id
+        !print*, "Beheen size of farrayPtr_streamflow", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_streamflow, &
                                            datacopyflag=ESMF_DATACOPY_REFERENCE, &
                                            name=trim(stdName), rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+        ! for testing
+        call ESMF_FieldGet(NWM_FieldCreate, farrayPtr=farrayPtr_streamflow, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
+
+        call ESMF_FieldGet(NWM_FieldCreate, locstream=locstream2, vm=vm, rc=rc)
+
+        ! get the vm of this field
+        call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                                   mpiCommunicator=esmf_comm, rc=rc)
+
+        ! fill fields with values for export after physic calculations
+        call ESMF_LocStreamGetKey(locstream2, "Lat", farray=latArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
+
+        call ESMF_LocStreamGetKey(locstream2, "Lon", farray=lonArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
+
+        call ESMF_LocStreamGetKey(locstream2, "link", farray=linkArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
+
+          do j=0,numprocs
+            if (my_id == j) then
+              print*, "link:     ", linkArrayPtr
+              print*, "lon:      ", lonArrayPtr
+              print*, "lat:      ", latArrayPtr
+            endif
+            call MPI_Barrier(esmf_comm, rc)
+            if(ESMF_STDERRORCHECK(rc)) return
+          enddo
+
+        ! end for testing
 
       CASE ('surface_runoff')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
@@ -557,12 +552,10 @@ contains
 
 
       CASE ('water_level')
-        ! The Field dimension (dimCount) will be the same as the 
-        ! dimCount for the farrayPtr
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-                         farray=farrayPtr_waterlevel, &
+                           typekind=ESMF_TYPEKIND_R8, & 
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=trim(stdName), rc=rc)
+                             name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
        
 
@@ -707,7 +700,7 @@ contains
     allocate(lon(locElmCnt))
     allocate(lat(locElmCnt))
     allocate(link(locElmCnt))
-    
+   
     call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
                                mpiCommunicator=esmf_comm, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
@@ -958,12 +951,16 @@ contains
       staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordYcenter, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    do j = lbnd(2),ubnd(2)
-    do i = lbnd(1),ubnd(1)
-      coordXcenter(i,j) = longitude(i,j)
-      coordYcenter(i,j) = latitude(i,j)
-    enddo
-    enddo
+    ! Testing the size of grid cells
+    !print*, "Beheen Grid", lbnd(2),ubnd(2),lbnd(1),ubnd(1)
+    !do j = lbnd(2),ubnd(2)
+    !do i = lbnd(1),ubnd(1)
+    !  coordXcenter(i,j) = longitude(i,j)
+    !  coordYcenter(i,j) = latitude(i,j)
+    !  print*, "Beheen coords",j,i,coordXcenter(i,j), coordYcenter(i,j)
+    !enddo
+    !enddo
+    !print*, "Beheen size", my_id, size(coordXcenter), size(coordYcenter)
 
     deallocate(latitude,longitude,stat=stat)
     if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
@@ -994,7 +991,6 @@ contains
 
     do j = lbnd(2),ubnd(2)
     do i = lbnd(1),ubnd(1)
-      gridmask(i,j) = mask(i,j)
       gridmask(i,j) = mask(i,j)
     enddo
     enddo
@@ -1130,6 +1126,15 @@ contains
       farrayPtr=radianarea, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
+    ! NOTE: One important thing to consider when setting areas in the Grid using
+    ! ESMF_GRIDITEM_AREA, ESMF doesn't currently do unit conversion on areas. If
+    ! these areas are going to be used in a process that also involves the areas
+    ! of another Grid or Mesh (e.g. conservative regridding), then it is the
+    ! user's responsibility to make sure that the area units are consistent
+    ! between the two sides. If ESMF calculates an area on the surface of a
+    ! sphere, then it is in units of square radians. If it calculates the area
+    ! for a Cartesian grid, then it is in the same units as the coordinates, but
+    ! squared.
     call ESMF_GridAddItem(grid, itemFlag=ESMF_GRIDITEM_AREA, itemTypeKind=ESMF_TYPEKIND_R8, &
       staggerLoc=ESMF_STAGGERLOC_CENTER, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
@@ -1625,30 +1630,42 @@ contains
 #undef METHOD
 #define METHOD "NWM_SetFieldData"
 
-  subroutine NWM_SetFieldData(importState, exportState, did)
-    type(ESMF_State), intent(inout) :: importState
-    type(ESMF_State), intent(inout) :: exportState
-    integer, intent(in)                :: did
+  subroutine NWM_SetFieldData(did, importState, exportState)
+    type(ESMF_State), intent(inout), optional :: importState
+    type(ESMF_State), intent(inout), optional :: exportState
+    integer, intent(in)                       :: did
 
     ! local variables
-    integer :: i,j, esmf_comm, localPet, petCnt, rc, localElmCnt
-    integer :: exitemCnt, imitemCnt
-    character (len=ESMF_MAXSTR)   :: expitemName
-    character (len=ESMF_MAXSTR)   :: impitemName
-    type(ESMF_Field)     :: expitemField
-    type(ESMF_Field)     :: impitemField
-    type(ESMF_VM)        :: vm  ! vm that field was created on
-    type(ESMF_LocStream) ::locstream
+    integer :: i, j, k, esmf_comm, localPet, petCnt, rc, localElmCnt
 
+    type(ESMF_State)                             :: activeState
+
+    integer                                      :: itemCnt
+    character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
+    character (len=ESMF_MAXSTR)                  :: itemName
+    type(ESMF_Field)                             :: itemField
+    type(ESMF_VM)                                :: vm  ! vm that field was created on
+
+
+    type(ESMF_LocStream)                         :: locstream
     character(len=ESMF_MAXSTR)                   :: locName
-    character(len=ESMF_MAXSTR), allocatable      :: expitemNames(:)
-    character(len=ESMF_MAXSTR), allocatable      :: impitemNames(:)
+
+    type(ESMF_Grid)                              :: lsmgrid
+    character(len=ESMF_MAXSTR)                   :: lsmgridName
+
+    ! LOCAL VARIABLES for LOC
     real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
     integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
 
-    real(ESMF_KIND_R8), dimension(:,:), pointer  :: waterlevelPtr => null()
+    ! LOCAL VARIABLES for GRID
+    real(ESMF_KIND_R8), dimension(:,:), pointer      :: waterlevelPtr => null()
+    real(ESMF_KIND_R8), dimension(:,:), allocatable  :: farray_waterlevel
+    real(ESMF_KIND_COORD), pointer                   :: coordXcenter(:,:)
+    real(ESMF_KIND_COORD), pointer                   :: coordYcenter(:,:)
+    integer :: excCnt(2),totCnt(2),cmpCnt(2),lbnd(2),ubnd(2)
+    
 
 
 #ifdef DEBUG
@@ -1657,37 +1674,40 @@ contains
 
     rc = ESMF_SUCCESS
    
+    if(present(importState)) then
+        activeState = importState
+    else if (present(exportState)) then
+        activeState = exportState
+    else
+        ! todo
+        print*, "Error - must provide one state at least"
+    endif
+
     ! fill fields with values for export after physic calculations
-    call ESMF_StateGet(exportState, itemCount=exitemCnt, rc=rc)
+    call ESMF_StateGet(activeState, itemCount=itemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-    allocate(expitemNames(exitemCnt))
+    allocate(itemNames(itemCnt))
 
-    call ESMF_StateGet(importState, itemCount=imitemCnt, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return
-    allocate(impitemNames(imitemCnt))
-
-    call ESMF_StateGet(exportState, itemNameList=expitemNames, rc=rc)
+    call ESMF_StateGet(activeState, itemNameList=itemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
 
-    call ESMF_StateGet(importState, itemNameList=impitemNames, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return
 
-    do i=1, exitemCnt
+   
+    do i=1, itemCnt
 
-      expitemName = trim(expitemNames(i))
+      itemName = trim(itemNames(i))
        
-      call ESMF_StateGet(exportState, expitemName, expitemField, rc=rc)
+      call ESMF_StateGet(activeState, itemName, itemField, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
-      print*, trim(expitemName), "SetFieldData"
-      SELECT CASE (trim(expitemName))
+      SELECT CASE (trim(itemName))
         CASE ('flow_rate')
 
           ! Get a DE-local Fortran array pointer from a Field
-          call ESMF_FieldGet(expitemField, farrayPtr=flowRatePtr, rc=rc)
+          call ESMF_FieldGet(itemField, farrayPtr=flowRatePtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          call ESMF_FieldGet(expitemField, locstream=locstream, vm=vm, rc=rc)
+          call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
 
           ! get the vm of this field
           call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
@@ -1708,7 +1728,7 @@ contains
           call ESMF_LocStreamGetKey(locstream, "link", farray=linkArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
           
-
+         
           !do j=0,numprocs
           !  if (my_id == j) then
           !    print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
@@ -1736,17 +1756,41 @@ contains
        !                              name=stdName, rc=rc)
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
-        print*, trim(impitemName), "SetFieldData"
         CASE ('water_level')
-          call ESMF_StateGet(importState, "water_level", impitemField, rc=rc)
+          call ESMF_StateGet(activeState, "water_level", itemField, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          ! Beheen - allocate space for waterlevelPtr here
+          call ESMF_FieldGet(itemField, grid=lsmgrid, vm=vm, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+          ! allocate and initialize  attached to grid
+          call ESMF_GridGetCoord(lsmgrid, coordDim=2, localDE=0,           &
+                staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordYcenter, &
+                       computationalLBound=lbnd, computationalUBound=ubnd, &
+                         exclusiveCount=excCnt, computationalCount=cmpCnt, &
+                                                    totalCount=totCnt,rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+          call ESMF_GridGetCoord(lsmgrid, coordDim=1, localDE=0,           &
+            staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordXcenter,rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
+          print*, "Beheen ", my_id,cmpCnt(1),cmpCnt(2),excCnt(1),excCnt(2)
+          print*, "Beheen ", totCnt(1),totCnt(2),lbnd(1),lbnd(2),ubnd(1),ubnd(2)
+
+          allocate(waterlevelPtr(cmpCnt(1),cmpCnt(2)))
+
+          do j = lbnd(2),ubnd(2)
+            do k = lbnd(1),ubnd(1)
+              waterlevelPtr(k,j) = -0.1
+            enddo
+          enddo
+
+          print*, "Beheen water level init ", waterlevelPtr
 
           ! Get a DE-local Fortran array pointer from ADCIRC Field
-          call ESMF_FieldGet(impitemField, farrayPtr=waterlevelPtr, rc=rc)
+          call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-          print*, "Beheen waterlevelPtr", waterlevelPtr
   
           ! Beheen - now regrid from ADCIRC to NWM
           !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
@@ -1770,14 +1814,13 @@ contains
 
 
       CASE DEFAULT
-                   call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-          msg=METHOD//": Field hookup missing: "//expitemName, &
-                                      file=FILENAME,rcToReturn=rc)
+                call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+            msg=METHOD//": Field hookup missing: "//itemName, &
+                                   file=FILENAME,rcToReturn=rc)
         return  ! bail out
       END SELECT
     enddo
-    deallocate(expitemNames)
-    deallocate(impitemNames)
+    deallocate(itemNames)
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)

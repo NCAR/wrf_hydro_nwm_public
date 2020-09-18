@@ -497,7 +497,7 @@ module NWM_NUOPC_Cap
       if (importConnected) then 
         NWM_FieldList(fIndex)%realizedImport = .TRUE.
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
-                    grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
+                  grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
                                           did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
@@ -520,7 +520,7 @@ module NWM_NUOPC_Cap
       if (exportConnected) then
         NWM_FieldList(fIndex)%realizedExport = .TRUE.
         field = NWM_FieldCreate(stdName=NWM_FieldList(fIndex)%stdname, &
-                             grid=NWM_LSMGrid,locstream=NWM_ReachStream, &
+                           grid=NWM_LSMGrid,locstream=NWM_ReachStream, &
                                                   did=is%wrap%did,rc=rc)
         !print*, "Beheen 520 field created" 
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
@@ -916,6 +916,7 @@ subroutine CheckImport(gcomp, rc)
         is%wrap%debugImpSlice = is%wrap%debugImpSlice + 1
       endif
     endif
+
 
     is%wrap%stepTimer(1) = is%wrap%stepTimer(1) + timeStep
 

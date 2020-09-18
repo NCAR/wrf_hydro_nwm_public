@@ -76,6 +76,9 @@ module ATM
     integer, intent(out) :: rc
     
     rc = ESMF_SUCCESS
+    ! Disabling the following macro, e.g. renaming to WITHIMPORTFIELDS_disable,
+    ! will result in a model component that does not advertise any importable
+    ! Fields. Use this if you want to drive the model independently.
     
     ! importable field: sea_surface_temperature
     call NUOPC_Advertise(importState, &
@@ -84,7 +87,7 @@ module ATM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+   
     ! exportable field: air_pressure_at_sea_level
     call NUOPC_Advertise(exportState, &
       StandardName="air_pressure_at_sea_level", name="pmsl", rc=rc)
@@ -187,6 +190,7 @@ module ATM
       file=__FILE__)) &
       return  ! bail out
     locStreamOut = locStreamIn ! for now out same as in
+
 
     ! importable field: sea_surface_temperature
     field = ESMF_FieldCreate(locstream=locStreamIn, &
