@@ -104,7 +104,6 @@ module NWM_NUOPC_Gluecode
       stdname='river_velocity', units='m s-1', &
       desc='vector filed of river or flow velocity.', shortname='velocity', &
       adImport=.FALSE.,adExport=.TRUE.), &
-    
 
     ! Atmospheric Forcing, HWRF - file: 2011082720.LDASIN_DOMAIN1, func: READFORC_HRLDAS
     NWM_Field( & !(5) U_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D U wind component [m/s]
@@ -380,7 +379,7 @@ contains
 #endif
 
     rc = ESMF_SUCCESS
-
+    print *, "NWM NUOPC Run Started"
     ! Testing
     call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -540,14 +539,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                  farray=rt_domain(did)%qSfcLatRunoff, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
+                                   name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('river_velocity')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                       farray=rt_domain(did)%velocity, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=stdName, rc=rc)
+                                   name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -563,14 +562,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=stdName, rc=rc)
+                                             name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_net_downward_shortwave_flux')
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=stdName, rc=rc)
+                                             name=trim(stdName), rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -961,8 +960,6 @@ contains
     !enddo
     !enddo
     !print*, "Beheen size", my_id, size(coordXcenter), size(coordYcenter)
-
-    deallocate(latitude,longitude,stat=stat)
     if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
       msg=METHOD//': Deallocation of longitude and latitude memory failed.', &
       file=FILENAME,rcToReturn=rc)) return ! bail out
@@ -976,7 +973,6 @@ contains
     call NWM_ESMF_NetcdfReadIXJX("LANDMASK",nlst(did)%geo_static_flnm, &
       (/startx(my_id+1),starty(my_id+1)/),mask,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
 
     ! Add Grid Mask
     call ESMF_GridAddItem(NWM_LSMGridCreate, itemFlag=ESMF_GRIDITEM_MASK, &
@@ -1065,10 +1061,10 @@ contains
       if (ESMF_STDERRORCHECK(rc)) return
 
       do j = lbnd(2),ubnd(2)
-      do i = lbnd(1),ubnd(1)
-        coordXcorner(i,j) = longitude(i,j)
-        coordYcorner(i,j) = latitude(i,j)
-      enddo
+        do i = lbnd(1),ubnd(1)
+            coordXcorner(i,j) = longitude(i,j)
+            coordYcorner(i,j) = latitude(i,j)
+        enddo
       enddo
 
       deallocate(latitude,longitude,stat=stat)
@@ -1146,9 +1142,9 @@ contains
     if (ESMF_STDERRORCHECK(rc)) return
 
      do j = lbnd(2),ubnd(2)
-     do i = lbnd(1),ubnd(1)
-       gridarea(i,j) = radianarea(i,j) * R * R
-     enddo
+        do i = lbnd(1),ubnd(1)
+            gridarea(i,j) = radianarea(i,j) * R * R
+        enddo
      enddo
 
 #ifdef DEBUG

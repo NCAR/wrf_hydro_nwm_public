@@ -110,7 +110,28 @@ module OCN
 
     rc = ESMF_SUCCESS
 
-
+=======
+    call NUOPC_FieldDictionarySetup(rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+   
+    ! Beheen waterlevel mockup
+    ! exportable field: waterlevel
+    isPresent = NUOPC_FieldDictionaryHasEntry( "water_level", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    if (.not.isPresent) then
+        call NUOPC_FieldDictionaryAddEntry("water_level", "m", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+    endif
+    
     ! importable field: air_pressure_at_sea_level
     call NUOPC_Advertise(importState, &
       StandardName="air_pressure_at_sea_level", name="pmsl", rc=rc)
@@ -143,20 +164,6 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
 
-    ! Beheen waterlevel mockup
-    ! exportable field: waterlevel
-    isPresent = NUOPC_FieldDictionaryHasEntry( "water_level", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    if (.not.isPresent) then
-        call NUOPC_FieldDictionaryAddEntry("water_level", "m", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-            line=__LINE__, &
-            file=__FILE__)) &
-            return  ! bail out
-    endif
 
     call NUOPC_Advertise(exportState, &
       StandardName="water_level", name="wl", rc=rc)
