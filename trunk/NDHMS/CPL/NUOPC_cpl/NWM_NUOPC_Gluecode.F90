@@ -897,6 +897,7 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     deallocate(deBlockList)
 
+
     ! Create a esmf grid per domain 
     NWM_LSMGridCreate = ESMF_GridCreate(name='NWM_LSMGrid_D'//trim(nlst(did)%hgrid), &
       distgrid=NWM_DistGrid, coordSys = ESMF_COORDSYS_SPH_DEG, &
@@ -988,6 +989,7 @@ contains
     do j = lbnd(2),ubnd(2)
     do i = lbnd(1),ubnd(1)
       gridmask(i,j) = mask(i,j)
+      gridmask(i,j) = mask(i,j)
     enddo
     enddo
 
@@ -1019,6 +1021,9 @@ contains
 
     if (trim(xlat_corner_name) /= "") then
       ! Get Local Latitude (lat)
+      print*,"Beheen xlat_corner size:", local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1
+
+
       allocate(latitude(local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1),stat=stat)
       if (ESMF_LogFoundAllocError(statusToCheck=stat, &
         msg=METHOD//': Allocation of corner latitude memory failed.', &
@@ -1672,8 +1677,10 @@ contains
    
     if(present(importState)) then
         activeState = importState
+        print*, "Beheen improt state is active"
     else if (present(exportState)) then
         activeState = exportState
+        print*, "Beheen exprot state is active"
     else
         ! todo
         print*, "Error - must provide one state at least"
@@ -1682,11 +1689,16 @@ contains
     ! fill fields with values for export after physic calculations
     call ESMF_StateGet(activeState, itemCount=itemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
+
+    print*,"Beheen itemCnt", itemCnt
+
+
+
+
     allocate(itemNames(itemCnt))
 
     call ESMF_StateGet(activeState, itemNameList=itemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-
 
    
     do i=1, itemCnt
@@ -1756,37 +1768,42 @@ contains
           call ESMF_StateGet(activeState, "water_level", itemField, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
-          call ESMF_FieldGet(itemField, grid=lsmgrid, vm=vm, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
-
-          ! allocate and initialize  attached to grid
-          call ESMF_GridGetCoord(lsmgrid, coordDim=2, localDE=0,           &
-                staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordYcenter, &
-                       computationalLBound=lbnd, computationalUBound=ubnd, &
-                         exclusiveCount=excCnt, computationalCount=cmpCnt, &
-                                                    totalCount=totCnt,rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
-
-          call ESMF_GridGetCoord(lsmgrid, coordDim=1, localDE=0,           &
-            staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordXcenter,rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
-
-          print*, "Beheen ", my_id,cmpCnt(1),cmpCnt(2),excCnt(1),excCnt(2)
-          print*, "Beheen ", totCnt(1),totCnt(2),lbnd(1),lbnd(2),ubnd(1),ubnd(2)
-
-          allocate(waterlevelPtr(cmpCnt(1),cmpCnt(2)))
-
-          do j = lbnd(2),ubnd(2)
-            do k = lbnd(1),ubnd(1)
-              waterlevelPtr(k,j) = -0.1
-            enddo
-          enddo
-
-          print*, "Beheen water level init ", waterlevelPtr
-
-          ! Get a DE-local Fortran array pointer from ADCIRC Field
           call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
+          print*, "Please work...........", waterlevelPtr
+
+
+          !call ESMF_FieldGet(itemField, grid=lsmgrid, vm=vm, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
+
+          ! allocate and initialize  attached to grid
+          !call ESMF_GridGetCoord(lsmgrid, coordDim=2, localDE=0,           &
+          !      staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordYcenter, &
+          !             computationalLBound=lbnd, computationalUBound=ubnd, &
+          !               exclusiveCount=excCnt, computationalCount=cmpCnt, &
+          !                                          totalCount=totCnt,rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
+
+          !call ESMF_GridGetCoord(lsmgrid, coordDim=1, localDE=0,           &
+          !  staggerloc=ESMF_STAGGERLOC_CENTER, farrayPtr=coordXcenter,rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
+
+          !print*, "Beheen ", my_id,cmpCnt(1),cmpCnt(2),excCnt(1),excCnt(2)
+          !print*, "Beheen ", totCnt(1),totCnt(2),lbnd(1),lbnd(2),ubnd(1),ubnd(2)
+
+          !allocate(waterlevelPtr(cmpCnt(1),cmpCnt(2)))
+
+          !do j = lbnd(2),ubnd(2)
+          !  do k = lbnd(1),ubnd(1)
+          !    waterlevelPtr(k,j) = -0.1
+          !  enddo
+          !enddo
+
+          !print*, "Beheen water level init ", waterlevelPtr
+
+          ! Get a DE-local Fortran array pointer from ADCIRC Field
+          !call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
   
           ! Beheen - now regrid from ADCIRC to NWM
           !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)

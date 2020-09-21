@@ -495,6 +495,7 @@ module NWM_NUOPC_Cap
       endif
 
       if (importConnected) then 
+        print*, "Beheen import field",NWM_FieldList(fIndex)%stdname
         field = NWM_FieldCreate(NWM_FieldList(fIndex)%stdname, &
                   grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
                                           did=is%wrap%did,rc=rc)

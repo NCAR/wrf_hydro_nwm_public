@@ -44,11 +44,6 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
     
-    ! Beheen - added for water_level
-    !call ESMF_GridCompSetEntryPoint(gcomp, ESMF_METHOD_INITIALIZE, &
-    !                       userRoutine=InitializeP0, phase=0, rc=rc)
-    !if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-
 
     ! set entry point for methods that require specific implementation
     call NUOPC_CompSetEntryPoint(model, ESMF_METHOD_INITIALIZE, &
@@ -83,21 +78,6 @@ module OCN
   !-----------------------------------------------------------------------------
 
 
-  !! Beheen - added this to set the addDictionary for water level at the global
-  !! level
-  !subroutine InitializeP0(gcomp, importState, exportState, clock, rc)
-  !  type(ESMF_GridComp)   :: gcomp
-  !  type(ESMF_State)      :: importState, exportState
-  !  type(ESMF_Clock)      :: clock
-  !  integer, intent(out)  :: rc
-
-
-    ! Add the import/export fields into global field dict.
-  !  call NWM_FieldDictionaryAdd(rc=rc)
-  !  if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-
-  !--------------------------------------------
-
   subroutine InitializeP1(model, importState, exportState, clock, rc)
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState, exportState
@@ -110,7 +90,6 @@ module OCN
 
     rc = ESMF_SUCCESS
 
-=======
     call NUOPC_FieldDictionarySetup(rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -362,7 +341,7 @@ module OCN
     ! (x,y) for coordSys=ESMF_COORDSYS_CART.
     ! Also, the longitude is measured in degrees in the eastward direction, so
     ! the longitudes in your map should be -120 to -70.
-    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/10, 15/), &
+    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/15, 16/), &
       minCornerCoord=(/-130._ESMF_KIND_R8, 25._ESMF_KIND_R8/), &
       maxCornerCoord=(/-60._ESMF_KIND_R8, 50._ESMF_KIND_R8/), &
       staggerLocList=(/ESMF_STAGGERLOC_CENTER, ESMF_STAGGERLOC_CORNER/), &
@@ -410,7 +389,7 @@ module OCN
     ! allocate and initialize waterlevelarray here
     allocate(waterlevelarray(numOwnedNodes))
     do i=1,numOwnedNodes
-          waterlevelarray(i) = -0.1
+          waterlevelarray(i) = -999.0
     enddo
       
     ! exportable field - waterlevel
