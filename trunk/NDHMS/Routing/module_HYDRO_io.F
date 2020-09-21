@@ -5820,9 +5820,9 @@ end subroutine mpp_output_chrt
          if(nlst(did)%channel_option .eq. 3) &
               iret = nf90_def_var(ncid, "cvol", NF90_FLOAT, (/dimid_links/), varid)
          if(rt_domain(did)%nlakes .gt. 0) then
-            iret = nf90_def_var(ncid, "resht", NF90_FLOAT, (/dimid_lakes/), varid)
-            iret = nf90_def_var(ncid, "qlakeo", NF90_FLOAT, (/dimid_lakes/), varid)
-            iret = nf90_def_var(ncid, "qlakei", NF90_FLOAT, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "resht", NF90_DOUBLE, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "qlakeo", NF90_DOUBLE, (/dimid_lakes/), varid)
+            iret = nf90_def_var(ncid, "qlakei", NF90_DOUBLE, (/dimid_lakes/), varid)
          endif
 
          if( nlst(did)%channel_only       .eq. 0 .and. &
@@ -6734,7 +6734,7 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
       endif
 
       if(rt_domain(did)%NLAKES .gt. 0) then
-       !  call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+         call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
          call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
       endif
@@ -7038,7 +7038,7 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          endif
          if(n .gt. 0) then
-             call mpp_land_bcast_real(n,real(var))
+             call mpp_land_bcast(var)
              !call mpp_land_bcast_real(n,var)
 
          endif
