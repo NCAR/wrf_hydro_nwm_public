@@ -77,7 +77,6 @@ module OCN
   
   !-----------------------------------------------------------------------------
 
-
   subroutine InitializeP1(model, importState, exportState, clock, rc)
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState, exportState
@@ -90,27 +89,7 @@ module OCN
 
     rc = ESMF_SUCCESS
 
-    call NUOPC_FieldDictionarySetup(rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-   
-    ! Beheen waterlevel mockup
-    ! exportable field: waterlevel
-    isPresent = NUOPC_FieldDictionaryHasEntry( "water_level", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    if (.not.isPresent) then
-        call NUOPC_FieldDictionaryAddEntry("water_level", "m", rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-            line=__LINE__, &
-            file=__FILE__)) &
-            return  ! bail out
-    endif
-    
+
     ! importable field: air_pressure_at_sea_level
     call NUOPC_Advertise(importState, &
       StandardName="air_pressure_at_sea_level", name="pmsl", rc=rc)
@@ -143,6 +122,20 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
 
+    ! Beheen waterlevel mockup
+    ! exportable field: waterlevel
+    isPresent = NUOPC_FieldDictionaryHasEntry( "water_level", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    if (.not.isPresent) then
+        call NUOPC_FieldDictionaryAddEntry("water_level", "m", rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+    endif
 
     call NUOPC_Advertise(exportState, &
       StandardName="water_level", name="wl", rc=rc)
@@ -341,7 +334,7 @@ module OCN
     ! (x,y) for coordSys=ESMF_COORDSYS_CART.
     ! Also, the longitude is measured in degrees in the eastward direction, so
     ! the longitudes in your map should be -120 to -70.
-    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/15, 16/), &
+    gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/10, 15/), &
       minCornerCoord=(/-130._ESMF_KIND_R8, 25._ESMF_KIND_R8/), &
       maxCornerCoord=(/-60._ESMF_KIND_R8, 50._ESMF_KIND_R8/), &
       staggerLocList=(/ESMF_STAGGERLOC_CENTER, ESMF_STAGGERLOC_CORNER/), &
@@ -389,7 +382,7 @@ module OCN
     ! allocate and initialize waterlevelarray here
     allocate(waterlevelarray(numOwnedNodes))
     do i=1,numOwnedNodes
-          waterlevelarray(i) = -999.0
+          waterlevelarray(i) = -99.0
     enddo
       
     ! exportable field - waterlevel
@@ -512,13 +505,13 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
    
-    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
-    if (rc/=ESMF_SUCCESS) return
+    !call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    !if (rc/=ESMF_SUCCESS) return
     !print *, "OCN Export State Item Count: ", itemCnt
 
     ! print streamflow and waterlevel here to compare with values received in
     ! NWM
-    
+      
     call ESMF_TimePrint(currTime + timeStep, &
       preString="---------------------> to: ", unit=msgString, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

@@ -302,20 +302,20 @@ module ATM
       return  ! bail out
   
     ! get field values from the exportState - testing
-    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    allocate(itemNames(itemCnt))
-    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
-    if (rc /= ESMF_SUCCESS) return
-    do i=1, itemCnt
-        print *, "ATM Field Item Name: ", trim(itemNames(i))
-        call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
-        if (rc /= ESMF_SUCCESS) return
-        call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
-        if (rc /= ESMF_SUCCESS) return
-        print*, "ATM value of export field: ", farrayPtr
-    end do
-    deallocate(itemNames)
+    !call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return
+    !allocate(itemNames(itemCnt))
+    !call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    !if (rc /= ESMF_SUCCESS) return
+    !do i=1, itemCnt
+    !    print *, "ATM Field Item Name: ", trim(itemNames(i))
+    !    call ESMF_StateGet(exportState, trim(itemNames(i)), itemField, rc=rc)
+    !    if (rc /= ESMF_SUCCESS) return
+    !    call ESMF_FieldGet(itemField, localDe=0, farrayPtr=farrayPtr, rc=rc)
+    !    if (rc /= ESMF_SUCCESS) return
+    !    print*, "ATM value of export field: ", farrayPtr
+    !end do
+    !deallocate(itemNames)
     ! end of test
     
 

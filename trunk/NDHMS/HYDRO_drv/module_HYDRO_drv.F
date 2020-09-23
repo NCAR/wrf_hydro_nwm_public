@@ -1003,10 +1003,10 @@ endif
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-    print*, "Beheen - drive_CHANNEL result??"
-    print*, my_id, RT_DOMAIN(did)%NLINKSL
-    print*, RT_DOMAIN(did)%LINKID
-    print*, "qlink2: ", RT_DOMAIN(did)%QLINK(:,2)
+    !print*, "Beheen - drive_CHANNEL result??"
+    !print*, my_id, RT_DOMAIN(did)%NLINKSL
+    !print*, RT_DOMAIN(did)%LINKID
+    !print*, "qlink2: ", RT_DOMAIN(did)%QLINK(:,2)
            
     write(6,*) "*****yw******end drive_CHANNEL "
 #else

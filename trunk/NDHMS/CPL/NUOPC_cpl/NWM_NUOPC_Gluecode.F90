@@ -104,6 +104,7 @@ module NWM_NUOPC_Gluecode
       stdname='river_velocity', units='m s-1', &
       desc='vector filed of river or flow velocity.', shortname='velocity', &
       adImport=.FALSE.,adExport=.TRUE.), &
+    
 
     ! Atmospheric Forcing, HWRF - file: 2011082720.LDASIN_DOMAIN1, func: READFORC_HRLDAS
     NWM_Field( & !(5) U_PHY     (XSTART:XEND,KDS:KDE,YSTART:YEND) )  ! 3D U wind component [m/s]
@@ -379,7 +380,7 @@ contains
 #endif
 
     rc = ESMF_SUCCESS
-    print *, "NWM NUOPC Run Started"
+
     ! Testing
     call ESMF_ClockGet(clock, timeStep=timeStep, rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
@@ -389,7 +390,7 @@ contains
     ! end testing
 
     !call NWM_SetFieldData(did, exportState)
-
+ 
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
@@ -504,34 +505,34 @@ contains
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
         ! for testing
-        call ESMF_FieldGet(NWM_FieldCreate, farrayPtr=farrayPtr_streamflow, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
+        !call ESMF_FieldGet(NWM_FieldCreate, farrayPtr=farrayPtr_streamflow, rc=rc)
+        !if (ESMF_STDERRORCHECK(rc)) return
 
-        call ESMF_FieldGet(NWM_FieldCreate, locstream=locstream2, vm=vm, rc=rc)
+        !call ESMF_FieldGet(NWM_FieldCreate, locstream=locstream2, vm=vm, rc=rc)
 
         ! get the vm of this field
-        call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
-                                   mpiCommunicator=esmf_comm, rc=rc)
+        !call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+        !                           mpiCommunicator=esmf_comm, rc=rc)
 
         ! fill fields with values for export after physic calculations
-        call ESMF_LocStreamGetKey(locstream2, "Lat", farray=latArrayPtr, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
+        !call ESMF_LocStreamGetKey(locstream2, "Lat", farray=latArrayPtr, rc=rc)
+        !if (ESMF_STDERRORCHECK(rc)) return
 
-        call ESMF_LocStreamGetKey(locstream2, "Lon", farray=lonArrayPtr, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
+        !call ESMF_LocStreamGetKey(locstream2, "Lon", farray=lonArrayPtr, rc=rc)
+        !if (ESMF_STDERRORCHECK(rc)) return
 
-        call ESMF_LocStreamGetKey(locstream2, "link", farray=linkArrayPtr, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
+        !call ESMF_LocStreamGetKey(locstream2, "link", farray=linkArrayPtr, rc=rc)
+        !if (ESMF_STDERRORCHECK(rc)) return
 
-          do j=0,numprocs
-            if (my_id == j) then
-              print*, "link:     ", linkArrayPtr
-              print*, "lon:      ", lonArrayPtr
-              print*, "lat:      ", latArrayPtr
-            endif
-            call MPI_Barrier(esmf_comm, rc)
-            if(ESMF_STDERRORCHECK(rc)) return
-          enddo
+        !  do j=0,numprocs
+        !    if (my_id == j) then
+        !      print*, "link:     ", linkArrayPtr
+        !      print*, "lon:      ", lonArrayPtr
+        !      print*, "lat:      ", latArrayPtr
+        !    endif
+        !    call MPI_Barrier(esmf_comm, rc)
+        !    if(ESMF_STDERRORCHECK(rc)) return
+        !  enddo
 
         ! end for testing
 
@@ -539,14 +540,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                  farray=rt_domain(did)%qSfcLatRunoff, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=trim(stdName), rc=rc)
+                                   name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('river_velocity')
         NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
                       farray=rt_domain(did)%velocity, &
                         indexflag=ESMF_INDEX_DELOCAL, &
-                                   name=trim(stdName), rc=rc)
+                                   name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -562,14 +563,14 @@ contains
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=trim(stdName), rc=rc)
+                                             name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
       CASE ('surface_net_downward_shortwave_flux')
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
                                        farrayPtr=farrayPtr_loc, &
                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
-                                             name=trim(stdName), rc=rc)
+                                             name=stdName, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
 
@@ -897,7 +898,6 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     deallocate(deBlockList)
 
-
     ! Create a esmf grid per domain 
     NWM_LSMGridCreate = ESMF_GridCreate(name='NWM_LSMGrid_D'//trim(nlst(did)%hgrid), &
       distgrid=NWM_DistGrid, coordSys = ESMF_COORDSYS_SPH_DEG, &
@@ -961,6 +961,8 @@ contains
     !enddo
     !enddo
     !print*, "Beheen size", my_id, size(coordXcenter), size(coordYcenter)
+
+    deallocate(latitude,longitude,stat=stat)
     if (ESMF_LogFoundDeallocError(statusToCheck=stat, &
       msg=METHOD//': Deallocation of longitude and latitude memory failed.', &
       file=FILENAME,rcToReturn=rc)) return ! bail out
@@ -975,6 +977,7 @@ contains
       (/startx(my_id+1),starty(my_id+1)/),mask,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+
     ! Add Grid Mask
     call ESMF_GridAddItem(NWM_LSMGridCreate, itemFlag=ESMF_GRIDITEM_MASK, &
       staggerLoc=ESMF_STAGGERLOC_CENTER, rc=rc)
@@ -988,7 +991,6 @@ contains
 
     do j = lbnd(2),ubnd(2)
     do i = lbnd(1),ubnd(1)
-      gridmask(i,j) = mask(i,j)
       gridmask(i,j) = mask(i,j)
     enddo
     enddo
@@ -1021,9 +1023,6 @@ contains
 
     if (trim(xlat_corner_name) /= "") then
       ! Get Local Latitude (lat)
-      print*,"Beheen xlat_corner size:", local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1
-
-
       allocate(latitude(local_nx_size(my_id+1)+1,local_ny_size(my_id+1)+1),stat=stat)
       if (ESMF_LogFoundAllocError(statusToCheck=stat, &
         msg=METHOD//': Allocation of corner latitude memory failed.', &
@@ -1066,10 +1065,10 @@ contains
       if (ESMF_STDERRORCHECK(rc)) return
 
       do j = lbnd(2),ubnd(2)
-        do i = lbnd(1),ubnd(1)
-            coordXcorner(i,j) = longitude(i,j)
-            coordYcorner(i,j) = latitude(i,j)
-        enddo
+      do i = lbnd(1),ubnd(1)
+        coordXcorner(i,j) = longitude(i,j)
+        coordYcorner(i,j) = latitude(i,j)
+      enddo
       enddo
 
       deallocate(latitude,longitude,stat=stat)
@@ -1147,9 +1146,9 @@ contains
     if (ESMF_STDERRORCHECK(rc)) return
 
      do j = lbnd(2),ubnd(2)
-        do i = lbnd(1),ubnd(1)
-            gridarea(i,j) = radianarea(i,j) * R * R
-        enddo
+     do i = lbnd(1),ubnd(1)
+       gridarea(i,j) = radianarea(i,j) * R * R
+     enddo
      enddo
 
 #ifdef DEBUG
@@ -1677,10 +1676,8 @@ contains
    
     if(present(importState)) then
         activeState = importState
-        print*, "Beheen improt state is active"
     else if (present(exportState)) then
         activeState = exportState
-        print*, "Beheen exprot state is active"
     else
         ! todo
         print*, "Error - must provide one state at least"
@@ -1689,16 +1686,11 @@ contains
     ! fill fields with values for export after physic calculations
     call ESMF_StateGet(activeState, itemCount=itemCnt, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-
-    print*,"Beheen itemCnt", itemCnt
-
-
-
-
     allocate(itemNames(itemCnt))
 
     call ESMF_StateGet(activeState, itemNameList=itemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
+
 
    
     do i=1, itemCnt
@@ -1768,10 +1760,11 @@ contains
           call ESMF_StateGet(activeState, "water_level", itemField, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
 
+          ! Get a DE-local Fortran array pointer from ADCIRC Field
           call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-          print*, "Please work...........", waterlevelPtr
 
+          print*,"Beheen waterlevelPtr ", waterlevelPtr
 
           !call ESMF_FieldGet(itemField, grid=lsmgrid, vm=vm, rc=rc)
           !if (ESMF_STDERRORCHECK(rc)) return
@@ -1799,11 +1792,6 @@ contains
           !  enddo
           !enddo
 
-          !print*, "Beheen water level init ", waterlevelPtr
-
-          ! Get a DE-local Fortran array pointer from ADCIRC Field
-          !call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
-          !if (ESMF_STDERRORCHECK(rc)) return
   
           ! Beheen - now regrid from ADCIRC to NWM
           !call NWM_ReGrid(did, expitemField, impitemField, rc=rc)
