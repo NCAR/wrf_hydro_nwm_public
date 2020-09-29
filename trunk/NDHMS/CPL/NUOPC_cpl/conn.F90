@@ -13,7 +13,7 @@ module CON
   !-----------------------------------------------------------------------------
   ! Connector Component.
   !-----------------------------------------------------------------------------
-  
+  ! 
   ! Enabling the followng macro, i.e. setting it to WITHSTATEUSE_on,
   ! will activate sections of code that demonstrate how
   ! the "state" member inside the NUOPC_Connector is used. The
@@ -90,17 +90,23 @@ module CON
     ! local variables
     type(ESMF_State)              :: state
     type(ESMF_FieldBundle)        :: dstFields, srcFields
+    
 #ifdef WITHSTATEUSE_on
     type(ESMF_FieldBundle)        :: interDstFields
     type(ESMF_Field), allocatable :: fields(:)
     integer                       :: fieldCount, i
     type(ESMF_Grid)               :: Grid
+    type(ESMF_Mesh)               :: mesh
     type(ESMF_TypeKind_Flag)      :: typekind    
     type(ESMF_Field)              :: field
     type(ESMF_RouteHandle)        :: rh1, rh2
 #else
     type(ESMF_RouteHandle)        :: rh
 #endif
+
+    ! test
+    real(ESMF_KIND_R8), dimension(:,:), pointer      :: waterlevelPtr => null()
+
 
     rc = ESMF_SUCCESS
     
@@ -111,6 +117,7 @@ module CON
       file=__FILE__)) &
       return  ! bail out
 
+
 #ifdef WITHSTATEUSE_on
     ! replicate dstFields FieldBundle in order to provide intermediate Fields
     ! - query number of fields in the FieldBundle
@@ -119,12 +126,36 @@ module CON
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    print*,"Beheen in connector"
+    call ESMF_FieldBundleGet(srcFields, fieldCount=fieldCount, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+
     ! - pull out fields in list form
     ! - !!!! MUST specify itemorderflag=ESMF_ITEMORDER_ADDORDER in order to
     !   !!!! preserve the same order as the original FieldBundle, or else the
     !   !!!! FieldBundle communication methods will incorrectly map from 
     !   !!!! src -> dst!
     allocate(fields(fieldCount))
+    ! test
+    call ESMF_FieldBundleGet(srcFields, fieldList=fields, &
+      itemorderflag=ESMF_ITEMORDER_ADDORDER, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    do i=1, fieldCount
+      call ESMF_FieldGet(fields(i), farrayPtr=waterlevelPtr, rc=rc)
+      print*,"Beheen waterlevelPtr_src ", waterlevelPtr
+    enddo
+
+
+
+    ! end test
     call ESMF_FieldBundleGet(dstFields, fieldList=fields, &
       itemorderflag=ESMF_ITEMORDER_ADDORDER, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -144,6 +175,10 @@ module CON
         line=__LINE__, &
         file=__FILE__)) &
         return  ! bail out
+
+      call ESMF_FieldGet(fields(i), farrayPtr=waterlevelPtr, rc=rc)
+       print*,"Beheen waterlevelPtr_dest ", waterlevelPtr
+
       field = ESMF_FieldCreate(grid, typekind, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
@@ -193,6 +228,7 @@ module CON
       file=__FILE__)) &
       return  ! bail out
 #else      
+   
     ! specialize with Redist, instead of the default Regrid
     call ESMF_FieldBundleRedistStore(srcFields, dstFields, &
       routehandle=rh, rc=rc)
@@ -254,6 +290,8 @@ module CON
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+
     ! retrieve rh1 from state member
     call ESMF_StateGet(state, "src2interDstRH", rh1, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -273,6 +311,7 @@ module CON
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
     ! apply rh2
     call ESMF_FieldBundleRedist(interDstFields, dstFields, &
       routehandle=rh2, rc=rc)

@@ -103,7 +103,7 @@ module ESM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_CompAttributeSet(child, name="Verbosity", value="low", rc=rc)
+    call NUOPC_CompAttributeSet(child, name="Verbosity", value="0", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -140,7 +140,7 @@ module ESM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
+    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="0", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -153,7 +153,7 @@ module ESM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="high", rc=rc)
+    call NUOPC_CompAttributeSet(connector, name="Verbosity", value="0", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -188,7 +188,7 @@ module ESM
     ! Beheen waterlevel mockup
     ! SetServices for ocn2lnd
     call NUOPC_DriverAddComp(driver, srcCompLabel="OCN", dstCompLabel="NWM", &
-      compSetServicesRoutine=concplSS, comp=conn, rc=rc)
+      compSetServicesRoutine=cplSS, comp=connector, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -234,86 +234,6 @@ module ESM
       file=__FILE__)) &
       return  ! bail out
       
-  end subroutine
-
-  !-----------------------------------------------------------------------------
-
-  subroutine ModifyCplLists_del(driver, rc)
-    type(ESMF_GridComp)  :: driver
-    integer, intent(out) :: rc
-    
-    ! local variables
-    character(len=160)              :: msg    
-    type(ESMF_CplComp), pointer     :: connectorList(:)
-    integer                         :: i, j, cplListSize
-    character(len=160), allocatable :: cplList(:)
-    character(len=160)              :: tempString
-    
-    rc = ESMF_SUCCESS
-    
-    call ESMF_LogWrite("Driver is in ModifyCplLists()", ESMF_LOGMSG_INFO, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    nullify(connectorList)
-    call NUOPC_DriverGetComp(driver, compList=connectorList, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    write (msg,*) "Found ", size(connectorList), " Connectors."// &
-      " Modifying CplList Attribute...."
-    call ESMF_LogWrite(trim(msg), ESMF_LOGMSG_INFO, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#if 1
-    do i=1, size(connectorList)
-      ! query the cplList for connector i
-      call NUOPC_CompAttributeGet(connectorList(i), name="CplList", &
-        itemCount=cplListSize, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
-      if (cplListSize>0) then
-        allocate(cplList(cplListSize))
-        call NUOPC_CompAttributeGet(connectorList(i), name="CplList", &
-          valueList=cplList, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, &
-          file=__FILE__)) &
-          return  ! bail out
-        ! go through all of the entries in the cplList and switch to redist
-        do j=1, cplListSize
-          ! switch remapping to redist
-          ! bilinear: Destination value is a linear combination of the source
-          ! values in the cell which contains the destination point. The weights
-          ! for the linear combination are based on the distance of destination
-          ! point from each source value.
-          if (trim(cplList(j))=="water_level") then
-            cplList(j) = trim(cplList(j))//":REMAPMETHOD=bilinear"          !redist"
-          else
-            cplList(j) = trim(cplList(j))//":REMAPMETHOD=redist"
-          endif
-        enddo
-        ! store the modified cplList in CplList attribute of connector i
-        call NUOPC_CompAttributeSet(connectorList(i), &
-          name="CplList", valueList=cplList, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, &
-          file=__FILE__)) &
-          return  ! bail out
-        deallocate(cplList)
-      endif
-    enddo
-#endif 
-    deallocate(connectorList)
-    
   end subroutine
 
   !-----------------------------------------------------------------------------
@@ -404,12 +324,12 @@ module ESM
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
-          !if (trim(cplList(j))=="water_level") then
-          !  tempString = trim(cplList(j))//":REMAPMETHOD=bilinear"// &
-          !  ":SrcTermProcessing=1:DUMPWEIGHTS=true:TermOrder=SrcSeq"
-          !else
+          if (trim(cplList(j))=="water_level") then
+            tempString = trim(cplList(j))//":REMAPMETHOD=bilinear"// &
+            ":SrcTermProcessing=1:DUMPWEIGHTS=true:TermOrder=SrcSeq"
+          else
             tempString = trim(cplList(j))//":REMAPMETHOD=redist"
-          !endif
+          endif
           cplList(j) = trim(tempString)
           write (msg,*) "Modified: "//trim(cplList(j))
           call ESMF_LogWrite(msg, ESMF_LOGMSG_INFO, rc=rc)

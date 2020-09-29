@@ -242,9 +242,6 @@ module ATM
       return  ! bail out
 
     deallocate(arbSeqIndexList)
-    !deallocate(rsnsPtr)
-    !deallocate(pmslPtr)
-    !deallocate(sstPtr)
 
     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
   end subroutine

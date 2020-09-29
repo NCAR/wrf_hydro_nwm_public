@@ -453,6 +453,13 @@ module NWM_NUOPC_Cap
     logical                    :: importConnected, exportConnected
     integer                    :: fIndex
 
+    ! test
+    real(ESMF_KIND_R8),pointer :: dataWL(:)
+    real(ESMF_KIND_R8),pointer :: dataCoord(:)
+    type(ESMF_Mesh)            :: mesh     
+    ! end test
+
+
 #ifdef DEBUG
     ! number of entrance is pet PE (i.e 767 for NWM)
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
@@ -500,8 +507,9 @@ module NWM_NUOPC_Cap
                   grid=NWM_LSMGrid, locstream=NWM_ReachStream, &
                                           did=is%wrap%did,rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-        call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
+          call NUOPC_Realize(is%wrap%NStateImp(1), field=field, rc=rc)
+          if (ESMF_STDERRORCHECK(rc)) return
+
 
       elseif(NWM_FieldList(fIndex)%adImport) then
         call ESMF_StateRemove(is%wrap%NStateImp(1), &
@@ -846,17 +854,21 @@ subroutine CheckImport(gcomp, rc)
     type(type_InternalState)    :: is
     character(len=10)           :: sStr
     type(ESMF_Clock)            :: modelClock
-    !type(ESMF_State)            :: importState, exportState
+    type(ESMF_State)            :: importState, exportState
     type(ESMF_Time)             :: currTime, advEndTime
     character(len=32)           :: currTimeStr, advEndTimeStr
     type(ESMF_TimeInterval)     :: timeStep
     integer(ESMF_KIND_I8)       :: advanceCount
     type(ESMF_VM)               :: vm
 
+    ! test
     !integer :: itime, dt, itemCnt, i
     !character(len=ESMF_MAXSTR), allocatable :: itemNames(:)
     !type(ESMF_Field) :: itemField
     !real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr => null()
+    type(ESMF_Field)            :: wlField
+    real(ESMF_KIND_R8),pointer  :: dataWL(:)
+    ! end test
 
 
 #ifdef DEBUG

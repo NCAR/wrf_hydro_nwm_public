@@ -184,12 +184,46 @@ module OCN
     type(ESMF_Grid)     :: gridIn, gridOut
     type(ESMF_Mesh)     :: meshIn, meshOut
     type(ESMF_Field)    :: waterlevelField
-    real, allocatable   :: waterlevelarray(:)
+    real(ESMF_KIND_R8),pointer :: dataWL(:)
+
+    real(ESMF_KIND_R8), allocatable   :: waterlevelarray(:)
+    real(ESMF_KIND_R8), dimension(:), pointer  :: wlPtr => null()
     character(160)      :: msgString
-    integer            :: dimCount, numOwnedElements, numOwnedNodes
+    integer             :: dimCount, numOwnedElements, numOwnedNodes
     character(*), parameter   :: rName="InitializeRealize"
     character(ESMF_MAXSTR)    :: name
     integer                   :: verbosity
+    integer :: parametricDim
+    integer :: spatialDim
+    integer :: nodeCount
+    integer, allocatable :: nodeIds(:)
+    real(ESMF_KIND_R8), allocatable :: nodeCoords(:)
+    integer, allocatable :: nodeOwners(:)
+    logical :: nodeMaskIsPresent
+    integer, allocatable :: nodeMask(:)
+    integer :: elementCount
+    integer, allocatable :: elementIds(:)
+    integer, allocatable :: elementTypes(:)
+    integer :: elementConnCount
+    integer, allocatable :: elementConn(:)
+    logical :: elementMaskIsPresent
+    integer, allocatable :: elementMask(:)
+    logical :: elementAreaIsPresent
+    real(ESMF_KIND_R8), allocatable :: elementArea(:)
+    logical :: elementCoordsIsPresent
+    real(ESMF_KIND_R8), allocatable :: elementCoords(:)
+    logical :: nodalDistgridIsPresent
+    type(ESMF_DistGrid) :: nodalDistgrid
+    logical :: elementDistgridIsPresent
+    type(ESMF_DistGrid) :: elementDistgrid
+    real(ESMF_KIND_R8), allocatable :: ownedNodeCoords(:)
+    real(ESMF_KIND_R8), allocatable :: ownedElemCoords(:)
+    logical :: isMemFreed
+    type(ESMF_Array) :: elemMaskArray
+    type(ESMF_Array) :: elemAreaArray
+    type(ESMF_CoordSys_Flag):: coordSys
+    type(ESMF_MeshStatus_Flag) :: status
+    ! end test
 
     rc = ESMF_SUCCESS
 
@@ -334,9 +368,59 @@ module OCN
     ! (x,y) for coordSys=ESMF_COORDSYS_CART.
     ! Also, the longitude is measured in degrees in the eastward direction, so
     ! the longitudes in your map should be -120 to -70.
+  !        -------------------------------------------------
+  ! 50.0 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 48.4 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 46.8 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 45.2 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 44.2 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 42.6 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 41.0 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 39.4 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 37.8 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 36.2 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 34.6 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 33.0 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 31.4 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 29.8 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 28.2 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 26.6 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! 25.0 |   |    |    |    |    |    |    |    |    |       
+  !      -------------------------------------------------
+  ! -130.0 -123 -116 -109 -102  -95  -88  -81  -74  -67   -60
+
+      ! create a Grid object for Fields
+      !gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/5, 5/), &
+      !minCornerCoord=(/60._ESMF_KIND_R8, 20._ESMF_KIND_R8/), &
+      !maxCornerCoord=(/150._ESMF_KIND_R8, 200._ESMF_KIND_R8/), &
+      !coordSys=ESMF_COORDSYS_CART,
+      !staggerLocList=(/ESMF_STAGGERLOC_CENTER,ESMF_STAGGERLOC_CORNER/), &
+      !rc=rc)
+      !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      !    line=__LINE__, &
+      !    file=__FILE__)) &
+      !    return  ! bail out
+      !gridOut = gridIn ! for now out same as in
+
     gridIn = ESMF_GridCreateNoPeriDimUfrm(maxIndex=(/10, 15/), &
-      minCornerCoord=(/-130._ESMF_KIND_R8, 25._ESMF_KIND_R8/), &
-      maxCornerCoord=(/-60._ESMF_KIND_R8, 50._ESMF_KIND_R8/), &
+      minCornerCoord=(/-96.0_ESMF_KIND_R8, 6.2_ESMF_KIND_R8/), &
+      maxCornerCoord=(/-53.0_ESMF_KIND_R8, 47.2_ESMF_KIND_R8/), &
       staggerLocList=(/ESMF_STAGGERLOC_CENTER, ESMF_STAGGERLOC_CORNER/), &
       name="OCN-GridIn", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -352,60 +436,109 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
 
-    call ESMF_MeshWrite(meshOut, filename="OCN-MeshOut", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_LogWrite("Done writing OCN-MeshOut VTK", &
-      ESMF_LOGMSG_INFO, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    !call ESMF_MeshWrite(meshOut, filename="OCN-MeshOut", rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call ESMF_LogWrite("Done writing OCN-MeshOut VTK", &
+    !  ESMF_LOGMSG_INFO, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
 
     ! analyze the Mesh and log some info
-    call ESMF_MeshGet(meshOut, spatialDim=dimCount, &
-      numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
+    !call ESMF_MeshGet(meshOut, spatialDim=dimCount, parametricDim=parametricDim, &
+      ! nodeCount=nodeCount, elementCount=elementCount, &
+    !  numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !write(msgString,*) "OCN meshOut:   numOwnedElements=", numOwnedElements, &
+    !  "numOwnedNodes=", numOwnedNodes, "dimCount=", dimCount, "pet", localPet
+    !call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+
+    !allocate(nodeOwners(nodeCount))
+    !allocate(nodeCoords(2*nodeOwners))
+    !allocate(elementCount())
+    !call ESMF_MeshGet(meshOut, nodeOwners=nodeOwners, &
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !print*,"Beheen in ocn:", "spatialDim=",dimCount, &
+    !  "parametricDim=", parametricDim, &
+      ! "nodeCount=", nodeCount, "elementCount=", elementCount, &
+    !   "numOwnedElements=", numOwnedElements, "numOwnedNodes=", numOwnedNodes
+
+
+    ! test
+    ! exportable field: water level
+    field = ESMF_FieldCreate(name="wl", mesh=meshOut, &
+      typekind=ESMF_TYPEKIND_R8, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    write(msgString,*) "OCN meshOut:   numOwnedElements=", numOwnedElements, &
-      "numOwnedNodes=", numOwnedNodes, "dimCount=", dimCount
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call NUOPC_Realize(exportState, field=field, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
+    nullify(dataWL)
+    call ESMF_FieldGet(field,farrayPtr=dataWL,rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    dataWL = 30.0
+    print *,"WL data initialized in OCN"
+    print *,dataWL
+    print *,""
+
+    ! end test
+
+    
     ! allocate and initialize waterlevelarray here
-    allocate(waterlevelarray(numOwnedNodes))
-    do i=1,numOwnedNodes
-          waterlevelarray(i) = -99.0
-    enddo
+    !allocate(wlPtr(numOwnedNodes))
+    !wlPtr=4.0
+
+    !allocate(waterlevelarray(numOwnedNodes))
+    !do i=1,numOwnedNodes
+    !      waterlevelarray(i) = 4.0
+    !enddo
       
     ! exportable field - waterlevel
-    waterlevelField = ESMF_FieldCreate(meshOut, name="wl", &
+    !waterlevelField = ESMF_FieldCreate(meshOut, name="wl", &
       !typekind=ESMF_TYPEKIND_R8, &
-      farray=waterlevelarray, &
-      indexflag=ESMF_INDEX_DELOCAL, &
+    !  farray=waterlevelarray, &
+    !  indexflag=ESMF_INDEX_DELOCAL, &
       !ungriddedLbound=(/1/), ungriddedUbound=(/4/), rc=rc)
-      rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_Realize(exportState, field=waterlevelField, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    !  datacopyflag=ESMF_DATACOPY_REFERENCE, &
+    !  meshloc=ESMF_MESHLOC_NODE, &
+    !  rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
+    !call NUOPC_Realize(exportState, field=waterlevelField, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, &
+    !  file=__FILE__)) &
+    !  return  ! bail out
 
     ! extro
-    call NUOPC_LogExtro(name, rName, verbosity, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
+    !call NUOPC_LogExtro(name, rName, verbosity, rc=rc)
+    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    !  line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
 
  
     deallocate(arbSeqIndexList)
@@ -463,6 +596,15 @@ module OCN
 
     integer :: itemCnt
 
+    ! test
+    character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
+    character (len=ESMF_MAXSTR)                  :: itemName
+    type(ESMF_Field)                             :: itemField
+    integer :: i 
+    real(ESMF_KIND_R8), dimension(:), pointer  :: wlPtr => null()
+    ! end test
+                             
+
 #define NUOPC_TRACE__OFF
 #ifdef NUOPC_TRACE
     call ESMF_TraceRegionEnter("OCN:ModelAdvance")
@@ -505,9 +647,25 @@ module OCN
       file=__FILE__)) &
       return  ! bail out
    
-    !call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
-    !if (rc/=ESMF_SUCCESS) return
-    !print *, "OCN Export State Item Count: ", itemCnt
+    ! test
+    call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
+    if (rc/=ESMF_SUCCESS) return
+    allocate(itemNames(itemCnt))
+    call ESMF_StateGet(exportState, itemNameList=itemNames, rc=rc)
+    do i=1, itemCnt
+      itemName = trim(itemNames(i))
+      !print *, "OCN Export State Item Name: ", itemName
+      call ESMF_StateGet(exportState, itemName, itemField, rc=rc)
+      SELECT CASE (trim(itemName))
+        CASE ('wl')
+          ! Get a DE-local Fortran array pointer from a Field
+          call ESMF_FieldGet(itemField, farrayPtr=wlPtr, rc=rc)
+          print*, "Water level data in export state for OCN ", wlPtr
+      END SELECT
+    enddo
+    deallocate(itemNames)
+    ! end test
+ 
 
     ! print streamflow and waterlevel here to compare with values received in
     ! NWM

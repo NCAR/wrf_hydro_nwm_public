@@ -389,12 +389,11 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     ! end testing
 
-    !call NWM_SetFieldData(did, exportState)
+    call NWM_SetFieldData(did, exportState)
  
     call noahMp_exe(itime, state)
 
     !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
-    call NWM_SetFieldData(did, exportState)
     call NWM_SetFieldData(did, importState)
 
 
@@ -474,6 +473,11 @@ contains
     type(ESMF_VM) :: vm
     type(ESMF_LocStream)        :: locstream2
     integer :: i, j, k, esmf_comm, localPet, petCnt, localElmCnt
+
+    ! for water level
+    type(ESMF_Mesh)                 :: mesh
+    real(ESMF_KIND_R8),pointer      :: dataWL(:)
+    real(ESMF_KIND_R8),pointer      :: dataCoord(:)
     ! end for testing
 
 
@@ -552,12 +556,30 @@ contains
 
 
       CASE ('water_level')
-        NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
-                           typekind=ESMF_TYPEKIND_R8, & 
-                        indexflag=ESMF_INDEX_DELOCAL, &
-                             name=trim(stdName), rc=rc)
+
+        !NWM_FieldCreate = ESMF_FieldCreate(grid=grid, &
+        !                   typekind=ESMF_TYPEKIND_R8, & 
+        !                indexflag=ESMF_INDEX_DELOCAL, &
+        !                     name=trim(stdName), rc=rc)
+        !if(ESMF_STDERRORCHECK(rc)) return ! bail out
+  
+        ! test     
+        mesh = ESMF_MeshCreate(grid=grid, rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-       
+
+        ! importable field: water level 
+        NWM_FieldCreate = ESMF_FieldCreate(name="water_level", mesh=mesh, &
+                                           typekind=ESMF_TYPEKIND_R8, rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
+
+        nullify(dataWL)
+        call ESMF_FieldGet(NWM_FieldCreate,farrayPtr=dataWL,rc=rc)
+        if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        dataWL = -9.0
+        print *,"Water level data initialized in NWM"
+        print *,dataWL
+        print *,""
+        ! end test
 
       CASE ('air_pressure_at_sea_level')
         NWM_FieldCreate = ESMF_FieldCreate(locstream=locstream, &
@@ -1666,6 +1688,9 @@ contains
     real(ESMF_KIND_COORD), pointer                   :: coordYcenter(:,:)
     integer :: excCnt(2),totCnt(2),cmpCnt(2),lbnd(2),ubnd(2)
     
+    !test water level
+    real(ESMF_KIND_R8),pointer  :: dataWL(:)
+    ! end test
 
 
 #ifdef DEBUG
@@ -1757,14 +1782,49 @@ contains
        ! if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
         CASE ('water_level')
-          call ESMF_StateGet(activeState, "water_level", itemField, rc=rc)
+          call ESMF_StateGet(activeState, itemName="water_level", field=itemField, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
+
+          ! test
+          !call ESMF_StateGet(importState,itemName="water_level",field=wlField, rc=rc)
+          !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+          !line=__LINE__, &
+          !file=__FILE__)) &
+          !return  ! bail out
+          nullify(dataWL)
+          call ESMF_FieldGet(itemField,farrayPtr=dataWL,rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail out
+
+          print *,"Water level data in import state for NWM"
+          print *,dataWL
+          print *,""
+          ! end test
 
           ! Get a DE-local Fortran array pointer from ADCIRC Field
-          call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+          !
+          ! Note: The range of Meshes supported by ESMF are defined by several
+          ! factors: dimension, element types, and distribution.
+          ! Number of coordinate dimensions (spatial dimension) is 2 or 3. 
+          ! The dimension of the elements in a Mesh (parametric dimension) must 
+          ! be less than or equal to the spatial dimension, either 2 or 3. 
+          ! parametric dims of 2: triangles and quadrilaterals, 2D polygons with any number of sides.
+          ! parametric dims of 3: element types are tetrahedrons and hexahedrons.
+          !
+          ! check that the water level is initialized in the ocean component
+          ! check that the ocean to nwm connector (OCN-TO-HYD) contains water level in the cplList
+          ! check that the mesh and grid overlap enough for a reasonable interpolation
+          ! calculation, if points don't overlap they will be zero'd (a.k.a unmapped)
+          ! turn on Diagnostic for the HYD model to see that the incoming import field
+          ! contains the water level field and dump the values.
+          ! you can also initialize the imported data on the HYD side to see if new values
+          ! are calculated during the run phase.
+          !call ESMF_FieldGet(itemField, farrayPtr=waterlevelPtr, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
 
-          print*,"Beheen waterlevelPtr ", waterlevelPtr
+          !print*,"Beheen waterlevelPtr ", waterlevelPtr
 
           !call ESMF_FieldGet(itemField, grid=lsmgrid, vm=vm, rc=rc)
           !if (ESMF_STDERRORCHECK(rc)) return
