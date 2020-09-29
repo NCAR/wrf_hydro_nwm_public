@@ -58,7 +58,7 @@ module config_base
      CHARACTER(LEN = 256) :: spatial_filename
 
       ! lake components
-     integer             :: sf_lake_physics    = 1
+     integer             :: sf_lake_physics    = 0
      real                :: lakedepth_default  = 6.0
      real                :: lake_min_elev      = 5.0
      integer             :: use_lakedepth      = 0
@@ -898,7 +898,7 @@ contains
      integer            :: ystart = 1
      integer            :: xend = 0
      integer            :: yend = 0
-     integer            :: sf_lake_physics    = 1
+     integer            :: sf_lake_physics    = 0
      real               :: lakedepth_default  = 6.0
      real               :: lake_min_elev      = 5.0
      integer            :: use_lakedepth      = 0
