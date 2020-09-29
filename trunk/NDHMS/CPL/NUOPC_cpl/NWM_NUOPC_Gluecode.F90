@@ -389,12 +389,13 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
     ! end testing
 
+    print*, "Time Step:", itime
     call NWM_SetFieldData(did, exportState)
- 
     call noahMp_exe(itime, state)
-
-    !print*, "my_id:", my_id, rt_domain(did)%qlink(itime,2) 
+    print*, "Time Step:", itime
     call NWM_SetFieldData(did, importState)
+
+    !print*, "BBBBBBBBBBBBBmy_id:", my_id, rt_domain(did)%qlink(itime,2) 
 
 
 #ifdef DEBUG
@@ -465,10 +466,12 @@ contains
     real(ESMF_KIND_R8), dimension(:), pointer :: farrayPtr_loc => null()
     integer                                   :: loccnt
 
-    ! for testing
+    ! testing
+    ! for streamflow
     real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
     real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
+    real(ESMF_KIND_R8),pointer      :: dataSF(:)
     integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
     type(ESMF_VM) :: vm
     type(ESMF_LocStream)        :: locstream2
@@ -478,6 +481,7 @@ contains
     type(ESMF_Mesh)                 :: mesh
     real(ESMF_KIND_R8),pointer      :: dataWL(:)
     real(ESMF_KIND_R8),pointer      :: dataCoord(:)
+    integer :: numOwnedElements, numOwnedNodes, dimCount
     ! end for testing
 
 
@@ -504,39 +508,37 @@ contains
         !print*, "Beheen size of farrayPtr_streamflow", loccnt, my_id
         NWM_FieldCreate = ESMF_FieldCreate(locstream, &
                                            farrayPtr=farrayPtr_streamflow, &
-                                           datacopyflag=ESMF_DATACOPY_REFERENCE, &
+                                           !typekind=ESMF_TYPEKIND_R8, &
+                                           datacopyflag=ESMF_DATACOPY_REFERENCE,&                   
                                            name=trim(stdName), rc=rc) 
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
-
+        
         ! for testing
-        !call ESMF_FieldGet(NWM_FieldCreate, farrayPtr=farrayPtr_streamflow, rc=rc)
-        !if (ESMF_STDERRORCHECK(rc)) return
-
-        !call ESMF_FieldGet(NWM_FieldCreate, locstream=locstream2, vm=vm, rc=rc)
+        call ESMF_FieldGet(NWM_FieldCreate, locstream=locstream2, vm=vm, rc=rc)
 
         ! get the vm of this field
-        !call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
-        !                           mpiCommunicator=esmf_comm, rc=rc)
+        call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
+                                   mpiCommunicator=esmf_comm, rc=rc)
 
         ! fill fields with values for export after physic calculations
-        !call ESMF_LocStreamGetKey(locstream2, "Lat", farray=latArrayPtr, rc=rc)
-        !if (ESMF_STDERRORCHECK(rc)) return
+        call ESMF_LocStreamGetKey(locstream2, "Lat", farray=latArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
 
-        !call ESMF_LocStreamGetKey(locstream2, "Lon", farray=lonArrayPtr, rc=rc)
-        !if (ESMF_STDERRORCHECK(rc)) return
+        call ESMF_LocStreamGetKey(locstream2, "Lon", farray=lonArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
 
-        !call ESMF_LocStreamGetKey(locstream2, "link", farray=linkArrayPtr, rc=rc)
-        !if (ESMF_STDERRORCHECK(rc)) return
+        call ESMF_LocStreamGetKey(locstream2, "link", farray=linkArrayPtr, rc=rc)
+        if (ESMF_STDERRORCHECK(rc)) return
 
-        !  do j=0,numprocs
-        !    if (my_id == j) then
-        !      print*, "link:     ", linkArrayPtr
-        !      print*, "lon:      ", lonArrayPtr
-        !      print*, "lat:      ", latArrayPtr
-        !    endif
-        !    call MPI_Barrier(esmf_comm, rc)
-        !    if(ESMF_STDERRORCHECK(rc)) return
-        !  enddo
+          do j=0,numprocs
+            if (my_id == j) then
+              print*, "link:     ", linkArrayPtr
+              print*, "lon:      ", lonArrayPtr
+              print*, "lat:      ", latArrayPtr
+            endif
+            call MPI_Barrier(esmf_comm, rc)
+            if(ESMF_STDERRORCHECK(rc)) return
+          enddo
 
         ! end for testing
 
@@ -576,9 +578,25 @@ contains
         call ESMF_FieldGet(NWM_FieldCreate,farrayPtr=dataWL,rc=rc)
         if(ESMF_STDERRORCHECK(rc)) return ! bail out
         dataWL = -9.0
-        print *,"Water level data initialized in NWM"
-        print *,dataWL
-        print *,""
+        
+        call ESMF_VMGetCurrent(vm, rc=rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        call ESMF_VMGet(vm, localPet=localPet, petCount=petCnt, &
+                                mpiCommunicator=esmf_comm, rc=rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+        call ESMF_MeshGet(mesh, spatialDim=dimCount, &
+             numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
+        do i=0,petCnt
+          if(i==localPet) then
+               print *,"Water level data initialized in NWM Pet:",localPet
+               print*,"numOwnedNodes   :",numOwnedNodes
+               print*,"numOwnedElements:",numOwnedElements
+               print *,dataWL
+               print *,""
+               call MPI_Barrier(esmf_comm, rc)
+               if(ESMF_STDERRORCHECK(rc)) return
+            endif
+          enddo
         ! end test
 
       CASE ('air_pressure_at_sea_level')
@@ -1676,10 +1694,10 @@ contains
     character(len=ESMF_MAXSTR)                   :: lsmgridName
 
     ! LOCAL VARIABLES for LOC
-    real(ESMF_KIND_R8), dimension(:), pointer    :: latArrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer    :: lonArrayPtr => null()
-    real(ESMF_KIND_R8), dimension(:), pointer    :: flowRatePtr => null()
-    integer(ESMF_KIND_I4), dimension(:), pointer :: linkArrayPtr => null()
+    real(ESMF_KIND_R8), pointer    :: latArrayPtr(:)
+    real(ESMF_KIND_R8), pointer    :: lonArrayPtr(:)
+    real(ESMF_KIND_R8), pointer    :: flowRatePtr(:)
+    integer(ESMF_KIND_I4), pointer :: linkArrayPtr(:)
 
     ! LOCAL VARIABLES for GRID
     real(ESMF_KIND_R8), dimension(:,:), pointer      :: waterlevelPtr => null()
@@ -1715,13 +1733,9 @@ contains
 
     call ESMF_StateGet(activeState, itemNameList=itemNames, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return
-
-
-   
+    
     do i=1, itemCnt
-
       itemName = trim(itemNames(i))
-       
       call ESMF_StateGet(activeState, itemName, itemField, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
 
@@ -1733,38 +1747,36 @@ contains
           if (ESMF_STDERRORCHECK(rc)) return
 
           call ESMF_FieldGet(itemField, locstream=locstream, vm=vm, rc=rc)
-
           ! get the vm of this field
           call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCnt, &
                                      mpiCommunicator=esmf_comm, rc=rc)
+          
+          !call ESMF_LocStreamGetBounds(locstream, localDE=0,  &
+          !                   computationalCount=localElmCnt, rc=rc)
 
           ! fill fields with values for export after physic calculations
           localElmCnt = size(flowRatePtr)
-          !print*, "Beheen myid ", my_id, localElmCnt
-
           flowRatePtr = rt_domain(did)%qlink(1:localElmCnt,2)
-
           call ESMF_LocStreamGetKey(locstream, "Lat", farray=latArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-          
           call ESMF_LocStreamGetKey(locstream, "Lon", farray=lonArrayPtr, rc=rc)
           if (ESMF_STDERRORCHECK(rc)) return
-
-          call ESMF_LocStreamGetKey(locstream, "link", farray=linkArrayPtr, rc=rc)
-          if (ESMF_STDERRORCHECK(rc)) return
+          !call ESMF_LocStreamGetKey(locstream, "link", farray=linkArrayPtr, rc=rc)
+          !if (ESMF_STDERRORCHECK(rc)) return
           
          
-          !do j=0,numprocs
-          !  if (my_id == j) then
-          !    print*, "Beheen my_id:", my_id, localPet, petCnt, localElmCnt, numprocs  
-          !    print*, "link:     ", linkArrayPtr
-          !    print*, "flowrate: ", flowRatePtr
-          !    print*, "lon:      ", lonArrayPtr
-          !    print*, "lat:      ", latArrayPtr
-          !  endif
-          !  call MPI_Barrier(esmf_comm, rc)
-          !  if(ESMF_STDERRORCHECK(rc)) return
-          !enddo
+          do j=0,numprocs
+            if (my_id == j) then
+              print*, "flowrate: ", flowRatePtr
+              print*, "process ID:", my_id
+              print*, "element count:", localElmCnt  
+              !print*, "link:     ", linkArrayPtr
+              print*, "lon:      ", lonArrayPtr
+              print*, "lat:      ", latArrayPtr
+            endif
+            call MPI_Barrier(esmf_comm, rc)
+            if(ESMF_STDERRORCHECK(rc)) return
+          enddo
 
 
        ! CASE ('surface_runoff')
@@ -1786,11 +1798,6 @@ contains
           if (ESMF_STDERRORCHECK(rc)) return
 
           ! test
-          !call ESMF_StateGet(importState,itemName="water_level",field=wlField, rc=rc)
-          !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-          !line=__LINE__, &
-          !file=__FILE__)) &
-          !return  ! bail out
           nullify(dataWL)
           call ESMF_FieldGet(itemField,farrayPtr=dataWL,rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1798,9 +1805,20 @@ contains
               file=__FILE__)) &
               return  ! bail out
 
-          print *,"Water level data in import state for NWM"
-          print *,dataWL
-          print *,""
+          call ESMF_VMGetCurrent(vm, rc=rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+          call ESMF_VMGet(vm, localPet=localPet, petCount=petCnt, &
+                          mpiCommunicator=esmf_comm, rc=rc)
+          if(ESMF_STDERRORCHECK(rc)) return ! bail out
+          do j=0,petCnt
+            if(j==localPet) then
+               print *,"Water level data in import state for NWM Pet:", localPet
+               print *,dataWL
+               print *,""
+               call MPI_Barrier(esmf_comm, rc)
+               if(ESMF_STDERRORCHECK(rc)) return
+            endif
+          enddo
           ! end test
 
           ! Get a DE-local Fortran array pointer from ADCIRC Field

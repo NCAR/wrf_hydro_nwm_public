@@ -190,18 +190,16 @@ module OCN
     real(ESMF_KIND_R8), dimension(:), pointer  :: wlPtr => null()
     character(160)      :: msgString
     integer             :: dimCount, numOwnedElements, numOwnedNodes
-    character(*), parameter   :: rName="InitializeRealize"
-    character(ESMF_MAXSTR)    :: name
     integer                   :: verbosity
     integer :: parametricDim
     integer :: spatialDim
-    integer :: nodeCount
+    integer :: nodeCnt
     integer, allocatable :: nodeIds(:)
     real(ESMF_KIND_R8), allocatable :: nodeCoords(:)
     integer, allocatable :: nodeOwners(:)
     logical :: nodeMaskIsPresent
     integer, allocatable :: nodeMask(:)
-    integer :: elementCount
+    integer :: elementCnt
     integer, allocatable :: elementIds(:)
     integer, allocatable :: elementTypes(:)
     integer :: elementConnCount
@@ -226,16 +224,6 @@ module OCN
     ! end test
 
     rc = ESMF_SUCCESS
-
-    ! query the component for info
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
-
-    ! intro
-    call NUOPC_LogIntro(name, rName, verbosity, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=trim(name)//":"//__FILE__)) return  ! bail out
 
 
     call ESMF_VMGetCurrent(vm=vm, rc=rc)
@@ -423,6 +411,7 @@ module OCN
       maxCornerCoord=(/-53.0_ESMF_KIND_R8, 47.2_ESMF_KIND_R8/), &
       staggerLocList=(/ESMF_STAGGERLOC_CENTER, ESMF_STAGGERLOC_CORNER/), &
       name="OCN-GridIn", rc=rc)
+
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -449,13 +438,12 @@ module OCN
     !  return  ! bail out
 
     ! analyze the Mesh and log some info
-    !call ESMF_MeshGet(meshOut, spatialDim=dimCount, parametricDim=parametricDim, &
-      ! nodeCount=nodeCount, elementCount=elementCount, &
-    !  numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
-    !if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    !  line=__LINE__, &
-    !  file=__FILE__)) &
-    !  return  ! bail out
+    call ESMF_MeshGet(meshOut, spatialDim=dimCount, &
+      numOwnedElements=numOwnedElements, numOwnedNodes=numOwnedNodes, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+         return  ! bail out
     !write(msgString,*) "OCN meshOut:   numOwnedElements=", numOwnedElements, &
     !  "numOwnedNodes=", numOwnedNodes, "dimCount=", dimCount, "pet", localPet
     !call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
@@ -500,10 +488,15 @@ module OCN
       return  ! bail out
 
     dataWL = 30.0
-    print *,"WL data initialized in OCN"
-    print *,dataWL
-    print *,""
-
+    do i=1, petCount
+      if(localPet == i) then
+        print *,"Water level data initialized in OCN Pet:", localPet
+        print*, "numOwnedNodes   :",numOwnedNodes
+        print*, "numOwnedElements:",numOwnedElements
+        print *,dataWL
+        print *,""
+      endif
+    enddo
     ! end test
 
     
@@ -600,7 +593,8 @@ module OCN
     character(len=ESMF_MAXSTR), allocatable      :: itemNames(:)
     character (len=ESMF_MAXSTR)                  :: itemName
     type(ESMF_Field)                             :: itemField
-    integer :: i 
+    integer :: i, localPet, petCount, j, esmf_comm, k
+    type(ESMF_VM) :: vm 
     real(ESMF_KIND_R8), dimension(:), pointer  :: wlPtr => null()
     ! end test
                              
@@ -648,6 +642,19 @@ module OCN
       return  ! bail out
    
     ! test
+    call ESMF_VMGetCurrent(vm=vm, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_VMGet(vm=vm, localPet=localPet, petCount=petCount, &
+                    mpiCommunicator=esmf_comm, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
     call ESMF_StateGet(exportState, itemCount=itemCnt, rc=rc)
     if (rc/=ESMF_SUCCESS) return
     allocate(itemNames(itemCnt))
@@ -660,7 +667,18 @@ module OCN
         CASE ('wl')
           ! Get a DE-local Fortran array pointer from a Field
           call ESMF_FieldGet(itemField, farrayPtr=wlPtr, rc=rc)
-          print*, "Water level data in export state for OCN ", wlPtr
+          do j=0, petCount
+            if (localPet == j) then 
+              print*, "Water level data in export state for OCN Pet:", localPet
+              print*, wlPtr
+            endif
+            call MPI_Barrier(esmf_comm, rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__)) &
+                return  ! bail out
+          enddo
+
       END SELECT
     enddo
     deallocate(itemNames)

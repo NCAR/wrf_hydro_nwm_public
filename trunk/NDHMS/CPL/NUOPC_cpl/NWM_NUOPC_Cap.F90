@@ -454,6 +454,7 @@ module NWM_NUOPC_Cap
     integer                    :: fIndex
 
     ! test
+    real(ESMF_KIND_R8),pointer :: dataSF(:)
     real(ESMF_KIND_R8),pointer :: dataWL(:)
     real(ESMF_KIND_R8),pointer :: dataCoord(:)
     type(ESMF_Mesh)            :: mesh     
