@@ -153,12 +153,10 @@ MODULE MODULE_MPP_LAND
 
     call mpi_initialized( mpi_inited, ierr )
     if ( .not. mpi_inited ) then
-       call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
-       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
-    endif
-    if (HYDRO_COMM_WORLD == MPI_COMM_NULL) then
-       call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
-       if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
+      call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
+      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
+      call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
     endif
 
     call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
