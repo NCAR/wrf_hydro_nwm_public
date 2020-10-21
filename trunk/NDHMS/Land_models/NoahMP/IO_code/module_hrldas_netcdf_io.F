@@ -433,7 +433,7 @@ contains
     integer :: rank
 
 #ifdef _PARALLEL_
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
                                   "read_hrldas_hdrinfo() - MPI_COMM_RANK"
 #else
@@ -449,7 +449,7 @@ contains
     endif
 
 !KWM#ifdef _PARALLEL_
-!KWM    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+!KWM    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 !KWM#else
     ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
 !KWM#endif
@@ -607,7 +607,7 @@ contains
     integer :: rank
 
 #ifdef _PARALLEL_
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
                                   " - MPI_COMM_RANK"
 #else
@@ -622,7 +622,7 @@ contains
 #endif
     endif
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
 #endif
@@ -716,7 +716,7 @@ contains
     integer :: rank
 
 #ifdef _PARALLEL_
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
                                   " - MPI_COMM_RANK"
 #else
@@ -731,7 +731,7 @@ contains
 #endif
     endif
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(wrfinput_flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(wrfinput_flnm, NF90_NOWRITE, ncid)
 #endif
@@ -1304,11 +1304,11 @@ contains
 
 #ifdef _PARALLEL_
 
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F"// &
                                   " readinit_hrldas() - MPI_COMM_RANK"
 
-    ierr = nf90_open_par(netcdf_flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(netcdf_flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     rank = 0
     ierr = nf90_open(netcdf_flnm, NF90_NOWRITE, ncid)
@@ -1449,7 +1449,7 @@ contains
     integer :: rank
 
 #ifdef _PARALLEL_
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F init_interp()"// &
                                   " - MPI_COMM_RANK."
 #else
@@ -1599,7 +1599,7 @@ contains
     ! Open the NetCDF file.
 !KWM    write(*,'("flnm: ''", A, "''")') trim(flnm)
 #ifdef _PARALLEL_
-    iret = nf90_open_par(flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    iret = nf90_open_par(flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     iret = nf90_open(flnm, NF90_NOWRITE, ncid)
 #endif
@@ -1732,13 +1732,13 @@ contains
        !print*, 'read file:  ', trim(flnm)
        ! Open the NetCDF file.
 #ifdef _PARALLEL_
-       ierr = nf90_open_par(flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+       ierr = nf90_open_par(flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
        ierr = nf90_open(flnm, NF90_NOWRITE, ncid)
 #endif
        if (ierr /= 0) then
 #ifdef _PARALLEL_
-          call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+          call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
           if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In  module_hrldas_netcdf_io.F"// &
                                         " READFORC_HRLDAS() - MPI_COMM_RANK"
           if (rank == 0) then
@@ -2056,7 +2056,7 @@ contains
     ! Open the NetCDF file.
 
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(flnm, NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(flnm, NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(flnm, NF90_NOWRITE, ncid)
 #endif
@@ -2223,7 +2223,7 @@ contains
        endif
 #ifdef _PARALLEL_
        iret = nf90_create(trim(output_flnm), &
-            OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
+            OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=HYDRO_COMM_WORLD, info=MPI_INFO_NULL)
 #else
        iret = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 #endif
@@ -2836,7 +2836,7 @@ contains
 
 #ifdef _PARALLEL_
 
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F"// &
                                   " prepare_restart_file_seq() - MPI_COMM_RANK problem"
 
@@ -2863,7 +2863,7 @@ contains
 #ifdef _PARALLEL_
 
     ierr = nf90_create(trim(output_flnm), &
-         OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=MPI_COMM_WORLD, info=MPI_INFO_NULL)
+         OR(NF90_CLOBBER, NF90_NETCDF4), ncid, comm=HYDRO_COMM_WORLD, info=MPI_INFO_NULL)
 #else
     ierr = nf90_create(trim(output_flnm), OR(NF90_CLOBBER, NF90_NETCDF4), ncid)
 #endif
@@ -3168,11 +3168,11 @@ contains
     restart_filename_remember = restart_flnm
 
 #ifdef _PARALLEL_
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
                                   "read_restart() - MPI_COMM_RANK"
 
-    ierr = nf90_open_par(trim(restart_flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(trim(restart_flnm), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     rank = 0
     ierr = nf90_open(trim(restart_flnm), NF90_NOWRITE, ncid)
@@ -3350,11 +3350,11 @@ contains
 
 #ifdef _PARALLEL_
 
-    call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
+    call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
                                   "get_from_restart_2d_float() - MPI_COMM_RANK"
 
-    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 
 #else
     rank = 0
@@ -3414,7 +3414,7 @@ contains
     integer, dimension(4) :: ncount
 
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
 #endif
@@ -3473,7 +3473,7 @@ contains
     integer, dimension(4) :: ncount
 
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(trim(restart_filename_remember), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(trim(restart_filename_remember), NF90_NOWRITE, ncid)
 #endif
@@ -3588,7 +3588,7 @@ contains
 
 #endif
 #ifdef _PARALLEL_
-    ierr = nf90_open_par(trim(flnm), NF90_NOWRITE, MPI_COMM_WORLD, MPI_INFO_NULL, ncid)
+    ierr = nf90_open_par(trim(flnm), NF90_NOWRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
     ierr = nf90_open(trim(flnm), NF90_NOWRITE, ncid)
 #endif

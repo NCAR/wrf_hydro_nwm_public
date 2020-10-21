@@ -215,7 +215,8 @@ contains
 
     ! Subroutine for running reservoir for a hybrid reservoir
     subroutine run_hybrid_reservoir(this, previous_timestep_inflow, inflow, &
-        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type)
+        lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
+        assimilated_value, assimilated_source_file)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -225,6 +226,8 @@ contains
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
+        real, intent(out)   :: assimilated_value        ! value assimilated from observation
+        character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
         real                :: delta_storage            ! timestep change in storage (cubic meters)
         real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
@@ -270,7 +273,8 @@ contains
 
             ! Read new timeslice gage discharges
             call this%timeslice_data%setup_read_timeslice(this%properties%observation_update_time_interval_seconds, &
-            this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge)
+            this%state%current_time, this%properties%gage_id, gage_lookback_seconds, this%state%gage_discharge, &
+            this%state%assimilated_source_file)
 
             ! If no good quality gage discharge was found in the given lookback period, the gage discharge is returned
             ! as -1.0. The persistence weight index will be set out of bounds larger than the array. This causes the
@@ -299,6 +303,9 @@ contains
 
                 ! Set persisted outflow to gage discharge
                 this%state%persisted_outflow = this%state%gage_discharge
+
+                ! Set assimilated value to gage discharge
+                this%state%assimilated_value = this%state%gage_discharge
 
                 ! Start persistence weight index at 1
                 this%state%persistence_weight_index = 1
@@ -350,13 +357,20 @@ contains
         ! calculations.
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type)
+        lateral_inflow, local_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
+        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
 
         ! If the levelpool weight is within epsilon of 1.0
         if (this%state%levelpool_current_weight .ge. 1.0 - epsilon(1.0)) then
 
             ! Set dynamic_reservoir_type to levelpool type
             this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+            ! Set the assimilated_value to sentinel, -9999.0
+            this%state%assimilated_value = -9999.0
+
+            ! Set the assimilated_source_file to empty string
+            this%state%assimilated_source_file = ""
         else
 
             ! Set dynamic_reservoir_type to given USGS or USACE type
@@ -383,6 +397,12 @@ contains
 
             ! Set dynamic_reservoir_type to levelpool type
             this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
+
+            ! Set the assimilated_value to sentinel, -9999.0
+            this%state%assimilated_value = -9999.0
+
+            ! Set the assimilated_source_file to empty string
+            this%state%assimilated_source_file = ""
         end if
 
         ! Calculate change in storage
@@ -406,6 +426,12 @@ contains
 
         ! Update the dynamic_reservoir_type returned from this subroutine
         dynamic_reservoir_type = this%state%dynamic_reservoir_type
+
+        ! Update the assimilated_value returned from this subroutine
+        assimilated_value = this%state%assimilated_value
+
+        ! Update the assimilated_source_file returned from this subroutine
+        assimilated_source_file = this%state%assimilated_source_file
 
         ! Update the current time
         this%state%current_time = this%state%current_time + int(routing_period)

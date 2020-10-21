@@ -55,6 +55,7 @@ Options:
         and xrnan will use.
 
 
+
 Usage Examples: 
 # A CONUS test of nwm_ana
 ./model_test.sh -c /path/to/candidate_dir -r /path/to/reference_dir
@@ -176,6 +177,7 @@ module list
 # Python Env
 deactivate > /dev/null 2>&1
 source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate || exit 9
+
 #-------------------------------------------------------
 ## Candidates branch to tag the test directory and optionally update the reference.
 cd $candidate_dir

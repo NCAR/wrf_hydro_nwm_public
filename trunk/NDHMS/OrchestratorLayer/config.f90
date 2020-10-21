@@ -474,11 +474,11 @@ contains
     character(len=256) :: reservoir_parameter_file=""
     character(len=256) :: reservoir_usgs_timeslice_path=""
     character(len=256) :: reservoir_usace_timeslice_path=""
-    integer            :: reservoir_observation_lookback_hours = 18
+    integer            :: reservoir_observation_lookback_hours = 24
     integer            :: reservoir_observation_update_time_interval_seconds = 86400
     logical            :: reservoir_rfc_forecasts
     character(len=256) :: reservoir_rfc_forecasts_time_series_path=""
-    integer            :: reservoir_rfc_forecasts_lookback_hours
+    integer            :: reservoir_rfc_forecasts_lookback_hours = 28
     logical            :: reservoir_type_specified
     character(len=256) :: route_direction_f=""
     character(len=256) :: route_order_f=""
