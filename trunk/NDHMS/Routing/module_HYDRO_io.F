@@ -251,10 +251,10 @@ module module_HYDRO_io
 
      end subroutine get_file_dimension
 
-subroutine get_file_globalatts(fileName, iswater, isurban, isoilwater)
+subroutine get_file_globalatts(fileName, iswater, islake, isurban, isoilwater)
   implicit none
   character(len=*) fileName
-  integer iswater, isurban, isoilwater
+  integer iswater, islake, isurban, isoilwater
   integer ncid, iret, istmp
 #ifdef MPP_LAND
 #ifndef PARALLELIO
@@ -273,6 +273,13 @@ if (my_id .eq. IO_id) then
     else
       write(*,*) "Using default (USGS) values for water land use types."
       iswater = 16
+    endif
+    iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISLAKE', istmp)
+    if (iret .eq. NF90_NOERR) then
+      islake = istmp
+    else
+      write(*,*) "Using default (USGS) values for lake land use types."
+      islake = -1
     endif
     iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISURBAN', istmp)
     if (iret .eq. NF90_NOERR) then
@@ -293,7 +300,7 @@ if (my_id .eq. IO_id) then
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-  write(6, *) "get_file_globalatts: ISWATER ISURBAN ISOILWATER", iswater, isurban, isoilwater
+  write(6, *) "get_file_globalatts: ISWATER ISLAKE ISURBAN ISOILWATER", iswater, islake, isurban, isoilwater
 #endif
 #endif
 
@@ -301,6 +308,7 @@ if (my_id .eq. IO_id) then
 #ifndef PARALLELIO
 endif
 call mpp_land_bcast_int1(iswater)
+call mpp_land_bcast_int1(islake)
 call mpp_land_bcast_int1(isurban)
 call mpp_land_bcast_int1(isoilwater)
 #endif

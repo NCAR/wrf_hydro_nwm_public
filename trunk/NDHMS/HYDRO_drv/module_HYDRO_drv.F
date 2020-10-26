@@ -1471,12 +1471,12 @@ write(78,*) "finish getChanDim "
 ! ADCHANGE: get global attributes
 ! need to set these after getChanDim since it allocates rt_domain vals to 0
      call get_file_globalatts(trim(nlst(did)%geo_static_flnm), &
-           rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
+          rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
-      write(6,*) rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater
+      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
+      write(6,*) rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater
 #endif
 #endif
 
@@ -1678,15 +1678,15 @@ end subroutine HYDRO_ini
             if(nlst(did)%sys_cpl .eq. 2 ) then
               ! coupling with WRF
                 if(present(soltyp0) ) then
+                  where(VEGTYP0 == rt_domain(did)%iswater .or. VEGTYP0 == rt_domain(did)%islake) soltyp0 = rt_domain(did)%isoilwater
                   where(soltyp0 == rt_domain(did)%isoilwater) VEGTYP0 = rt_domain(did)%iswater
-                  where(VEGTYP0 == rt_domain(did)%iswater ) soltyp0 = rt_domain(did)%isoilwater
                    soltyp = soltyp0
                    RT_DOMAIN(did)%VEGTYP = VEGTYP0
                 endif
             endif
 
+         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater .or. RT_DOMAIN(did)%VEGTYP == rt_domain(did)%islake) soltyp = rt_domain(did)%isoilwater
          where(soltyp == rt_domain(did)%isoilwater) RT_DOMAIN(did)%VEGTYP = rt_domain(did)%iswater
-         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater ) soltyp = rt_domain(did)%isoilwater
 
 ! LKSAT,
 ! temporary set
