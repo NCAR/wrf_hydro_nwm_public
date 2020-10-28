@@ -2486,7 +2486,7 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call write_lake_real(g_lakeOutflow,RT_DOMAIN(domainId)%lake_index,gsize)
       call write_lake_real(g_lakeType,RT_DOMAIN(domainId)%lake_index,gsize)
       call write_lake_real(g_lake_assimilated_value,RT_DOMAIN(domainId)%lake_index,gsize)
-      call write_lake_char(g_lake_assimilated_source_file,RT_DOMAIN(domainId)%lake_index,gsize)
+      !call write_lake_char(g_lake_assimilated_source_file,RT_DOMAIN(domainId)%lake_index,gsize)
 
 #endif
    else
@@ -2668,8 +2668,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create time dimension')
       iret = nf90_def_dim(ftn,"reference_time",1,dimId(3))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create reference_time dimension')
-      iret = nf90_def_dim(ftn,"string_length",256,dimId(4))
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to create string length dimension')
+      !iret = nf90_def_dim(ftn,"string_length",256,dimId(4))
+      !call nwmCheck(diagFlag,iret,'ERROR: Unable to create string length dimension')
 
       ! Create and populate reference_time and time variables.
       iret = nf90_def_var(ftn,"time",nf90_int,dimId(2),timeId)
@@ -2754,12 +2754,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place units attribute into reservoir_assimilated_value variable')
 
       ! Create reservoir_assimilated_source_file variable
-      iret = nf90_def_var(ftn, "reservoir_assimilated_source_file", nf90_char, [dimId(4), dimId(1)], reservoirAssimilatedSourceFileVarId)
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_assimilated_source_file variable.')
-      iret = nf90_put_att(ftn, reservoirAssimilatedSourceFileVarId, 'long_name', trim(fileMeta%reservoirAssimilatedSourceFileLName))
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_assimilated_source_file variable')
-      iret = nf90_def_var_fill(ftn, reservoirAssimilatedSourceFileVarId, 0, 0);
-      call nwmCheck(diagFlag, iret, 'ERROR: Unable to place _FillValue attribute into reservoir_assimilated_source_file variable')
+      !iret = nf90_def_var(ftn, "reservoir_assimilated_source_file", nf90_char, [dimId(4), dimId(1)], reservoirAssimilatedSourceFileVarId)
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to create reservoir_assimilated_source_file variable.')
+      !iret = nf90_put_att(ftn, reservoirAssimilatedSourceFileVarId, 'long_name', trim(fileMeta%reservoirAssimilatedSourceFileLName))
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to place long_name attribute into reservoir_assimilated_source_file variable')
+      !iret = nf90_def_var_fill(ftn, reservoirAssimilatedSourceFileVarId, 0, 0);
+      !call nwmCheck(diagFlag, iret, 'ERROR: Unable to place _FillValue attribute into reservoir_assimilated_source_file variable')
 
       ! Create lake lat/lon variables
       iret = nf90_def_var(ftn,"latitude",nf90_float,dimId(1),latVarId)
@@ -2920,12 +2920,12 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into reservoir_assimilated_value output variable.')
 
       ! Place reservoir_assimilated_source_file values into the NetCDF file
-      iret = nf90_inq_varid(ftn,'reservoir_assimilated_source_file',varId)
-      call nwmCheck(diagFlag,iret,'ERROR: Unable to locate reservoir_assimilated_source_file in NetCDF file.')
-      do iTmp = 1, gSize
-         iret = nf90_put_var(ftn,varId,trim(g_lake_assimilated_source_fileOut(iTmp)), start=[1,iTmp])
-         call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into reservoir_assimilated_source_file output variable.')
-      end do
+      !iret = nf90_inq_varid(ftn,'reservoir_assimilated_source_file',varId)
+      !call nwmCheck(diagFlag,iret,'ERROR: Unable to locate reservoir_assimilated_source_file in NetCDF file.')
+      !do iTmp = 1, gSize
+      !   iret = nf90_put_var(ftn,varId,trim(g_lake_assimilated_source_fileOut(iTmp)), start=[1,iTmp])
+      !   call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into reservoir_assimilated_source_file output variable.')
+      !end do
 
       ! Place lake metadata into NetCDF file
       iret = nf90_inq_varid(ftn,'water_sfc_elev',varId)
