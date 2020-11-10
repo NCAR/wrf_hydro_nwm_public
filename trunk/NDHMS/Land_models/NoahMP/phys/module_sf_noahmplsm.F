@@ -1103,7 +1103,11 @@ ENDIF   ! CROPTYPE == 0
 
      IF(parameters%HVT> 0. .AND. parameters%HVT <= 1.0) THEN          !MB: change to 1.0 and 0.2 to reflect
        SNOWHC = parameters%HVT*EXP(-SNOWH/0.2)             !      changes to HVT in MPTABLE
+<<<<<<< HEAD
        if (SNOWHC .le. SNOWH) then
+=======
+       if (SNOWHC .le. SNOWH) then  ! AD: change this min to an if then since precision was leading to divide by 0s
+>>>>>>> 22c02927... Fix for energy NAs over large snowpacks due to very small numbers being rounded to 0, so number/number=NA instead of 1. Switched to an if statement.
           FB = 1.
        else 
           FB = SNOWH/SNOWHC
