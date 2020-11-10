@@ -2284,6 +2284,7 @@ END IF   ! OPT_GLA == 1
 !to obtain equilibrium state of snow in glacier region
        
 <<<<<<< HEAD
+<<<<<<< HEAD
 !   IF(SNEQV > 5000.) THEN   ! 5000 mm -> maximum water depth
 !      BDSNOW      = SNICE(0) / DZSNSO(0)
 !      SNOFLOW     = (SNEQV - 5000.)
@@ -2292,6 +2293,8 @@ END IF   ! OPT_GLA == 1
 !      SNOFLOW     = SNOFLOW / DT
 !   END IF
 =======
+=======
+>>>>>>> c6e33ba2... Move max SWE limit to a parameter in MPTABLE.
    IF(SNEQV > SWE_LIMIT) THEN   ! 2000 mm -> maximum water depth
       BDSNOW      = SNICE(0) / DZSNSO(0)
       SNOFLOW     = (SNEQV - SWE_LIMIT)
