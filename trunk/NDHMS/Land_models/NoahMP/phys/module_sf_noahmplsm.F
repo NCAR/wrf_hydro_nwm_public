@@ -1103,7 +1103,11 @@ ENDIF   ! CROPTYPE == 0
 
      IF(parameters%HVT> 0. .AND. parameters%HVT <= 1.0) THEN          !MB: change to 1.0 and 0.2 to reflect
        SNOWHC = parameters%HVT*EXP(-SNOWH/0.2)             !      changes to HVT in MPTABLE
-       FB     = MIN(SNOWH,SNOWHC)/SNOWHC
+       if (SNOWHC .le. SNOWH) then  ! AD: change this min to an if then since precision was leading to divide by 0s
+          FB = 1.
+       else 
+          FB = SNOWH/SNOWHC
+       endif
      ENDIF
 
      ELAI =  LAI*(1.-FB)
