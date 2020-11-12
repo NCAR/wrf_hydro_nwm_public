@@ -589,7 +589,8 @@ contains
        xstart, xend,                                                   &
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
-       longitude, xland, seaice, msftx, msfty)
+       longitude, xland, seaice, msftx, msfty, &
+       glacinfo,glact)  !!T.EI crocus
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
