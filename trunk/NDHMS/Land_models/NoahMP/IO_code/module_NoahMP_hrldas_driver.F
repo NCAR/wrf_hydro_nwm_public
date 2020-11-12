@@ -1135,7 +1135,8 @@ module module_NoahMP_hrldas_driver
 
   CALL READLAND_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
        ISWATER, ISLAKE, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND,   &
-       SEAICE, MSFTX, MSFTY)
+       SEAICE, MSFTX,MSFTY,                                                        &
+       GLACINFO,GLACT) !++ T.EI crocus
 
   WHERE(SEAICE > 0.0) XICE = 1.0
 
