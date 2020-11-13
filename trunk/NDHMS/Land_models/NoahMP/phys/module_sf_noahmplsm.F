@@ -7000,7 +7000,6 @@ ENDIF   ! CROPTYPE == 0
     END IF
     IF (OPT_RUN == 7) THEN
       CALL COMPUTE_XAJ_SURFRUNOFF(parameters,DT,FCR,NSOIL,SMC,ZSOIL,QINSUR,RUNSRF,PDDUM)
-      PRINT*,'-->',QINSUR,RUNSRF,PDDUM
     END IF
 ! determine iteration times and finer time step
 
@@ -7024,6 +7023,11 @@ ENDIF   ! CROPTYPE == 0
           CALL INFIL (parameters,NSOIL  ,DTFINE     ,ZSOIL  ,SH2O   ,SICE   , & !in
                       SICEMAX,QINSUR ,                         & !in
                       PDDUM  ,RUNSRF )                           !out
+       END IF
+
+       IF (QINSUR > 0. .AND. OPT_RUN == 7) THEN
+          CALL COMPUTE_XAJ_SURFRUNOFF(parameters,DTFINE,FCR,NSOIL,SMC,ZSOIL,QINSUR,& ! in
+                                      RUNSRF,PDDUM)                                  ! out
        END IF
 
        CALL SRT   (parameters,NSOIL  ,ZSOIL  ,DTFINE ,PDDUM  ,ETRANI , & !in
@@ -7520,7 +7524,14 @@ ENDIF   ! CROPTYPE == 0
 !== begin xinanjiag=================================================================================
   SUBROUTINE COMPUTE_XAJ_SURFRUNOFF(parameters,DT,FCR,NSOIL,SMC,ZSOIL,QINSUR,RUNSRF,PDDUM)
 ! ----------------------------------------------------------------------
-! Calculate the saturated area and runoff based on VIC runoff scheme.
+! Calculate the saturated area and runoff based on Xinanjiag runoff scheme.
+! Reference: Knoben, W. J., Freer, J. E., Fowler, K. J., Peel, M. C., & Woods, R. A. (2019). 
+! Modular Assessment of Rainfall-Runoff Models Toolbox (MARRMoT) v1. 2: 
+! an open-source, extendable framework providing implementations of 46 conceptual 
+! hydrologic models as continuous state-space formulations.
+! ----------------------------------------------------------------------
+! Author: Prasanth Valayamkunnath <prasanth@ucar.edu>
+! Date: August 03, 2020
 ! ----------------------------------------------------------------------
     IMPLICIT NONE
 ! ----------------------------------------------------------------------
@@ -7565,30 +7576,23 @@ ENDIF   ! CROPTYPE == 0
 ! impervious surface runoff R_IMP    
     IRUNOFF = FCR(1)*QINSUR*DT
 
-! solve pervious surface runoff (m)
+! solve pervious surface runoff (m) based on Eq. (310)
     IF ((WM/WM_MAX) .LE. (0.5-parameters%AXAJ))THEN
        PRUNOFF = (1-FCR(1))*QINSUR*DT*((0.5-parameters%AXAJ)**(1-parameters%BXAJ))*((WM/WM_MAX)**parameters%BXAJ)
     ELSE
        PRUNOFF = (1-FCR(1))*QINSUR*DT*(1-(((0.5+parameters%AXAJ)**(1-parameters%BXAJ))*((1-(WM/WM_MAX))**parameters%BXAJ)))
     END IF
 
-! estimate surface runoff
+! estimate surface runoff based on Eq. (313)
     IF(QINSUR .EQ. 0.0) THEN
       RUNSRF  = 0.0
     ELSE
       RUNSRF = PRUNOFF*(1-((1-(SM/SM_MAX))**parameters%XXAJ))+IRUNOFF
     END IF
     RUNSRF = RUNSRF/DT !m/s
+    RUNSRF = MAX(0.0,    RUNSRF)
+    RUNSRF = MIN(QINSUR, RUNSRF)
     PDDUM  = QINSUR - RUNSRF
-  
-    PRINT*,'QINSUR =',QINSUR
-    PRINT*,'PRUNOFF=',PRUNOFF    
-    PRINT*,'IRUNOFF=',IRUNOFF
-    PRINT*,'RUNSRF=',RUNSRF
-    PRINT*,'WM=',WM
-    PRINT*,'WM_MAX=',WM_MAX
-    PRINT*,'SM=',SM
-    PRINT*,'SM_MAX=',SM_MAX
 
   END SUBROUTINE COMPUTE_XAJ_SURFRUNOFF
 !== end xinanjiag ==================================================================================
