@@ -183,6 +183,10 @@ CONTAINS
      !rt_domain(did)%LKSATRT     = 0.0
      allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
      rt_domain(did)%LKSATFAC    = 0.0
+
+     allocate( rt_domain(did)%IMPERVFRAC    (IXRT,JXRT) )
+     rt_domain(did)%IMPERVFRAC    = 0.0
+
      !allocate( rt_domain(did)%subsurface%state%qsubrt      (IXRT,JXRT) )
      !rt_domain(did)%subsurface%state%qsubrt      = 0.0
      !allocate( rt_domain(did)%subsurface%properties%zwattablrt  (IXRT,JXRT) )
@@ -710,7 +714,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%CH_LNKRT, &
              rt_domain(did)%LKSATFAC,trim(nlst(did)%route_topo_f),&
              nlst(did)%route_chan_f,nlst(did)%geo_finegrid_flnm  ,  &
-             rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
+             rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, rt_domain(did)%IMPERVFRAC, &
              nlst(did)%channel_option, nlst(did)%udmp_opt)
 
 
