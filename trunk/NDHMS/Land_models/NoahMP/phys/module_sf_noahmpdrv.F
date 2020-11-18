@@ -1042,9 +1042,10 @@ CONTAINS
              CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
                   T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
                   PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+                  parameters%swe_limit                               , & ! IN : Forcing
                   QSNOW, QRAIN, SNEQVOH,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
 !                  SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
-!++ T.EI crocus
+                  !++ T.EI crocus
                   SWEH,     SMC,   ZSNSOTH,  SNDPTHH,   SNICEH,   SNLIQ, & ! IN/OUT :
 ! -- T.EI 
                   TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
@@ -1089,6 +1090,7 @@ CONTAINS
           CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
                T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
                PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+               parameters%swe_limit,                              &
                QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
                SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
                TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
