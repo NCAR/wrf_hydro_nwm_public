@@ -106,8 +106,8 @@ REAL, PARAMETER      ::  XVAGING_GLACIER  = 900.
 
 ! percentage of the total pore volume to compute the max liquid water holding capacity
 !REAL, SAVE      :: XPERCENTAGEPORE
-!REAL, PARAMETER      :: XPERCENTAGEPORE = 0.03   !   5   ! trude try 3 instead of 5.
-REAL, PARAMETER      :: XPERCENTAGEPORE = 0.05   !   5   ! trude try 3 instead of 5.
+REAL, PARAMETER      :: XPERCENTAGEPORE = 0.03   !   5   ! trude try 3 instead of 5.
+!REAL, PARAMETER      :: XPERCENTAGEPORE = 0.05   !   5   ! trude try 3 instead of 5.
 ! Height (m) of aged snow in glacier case (allows Pn=1)
 !
 REAL, SAVE       :: XHGLA
