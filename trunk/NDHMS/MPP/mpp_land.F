@@ -144,7 +144,7 @@ MODULE MODULE_MPP_LAND
 !    ### initialize the land model logically based on the two D method. 
 !    ### Call this function directly if it is nested with WRF.
     implicit none
-    integer in_global_nx, in_global_ny
+    integer, optional :: in_global_nx, in_global_ny
     integer :: ierr, provided
     integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
     logical mpi_inited
