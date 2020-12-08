@@ -42,6 +42,7 @@ module module_geo_em
      integer :: jdim
      character(len=256) :: landuse_dataset ! "MODIFIED_IGBP_MODIS_NOAH" or "USGS"
      integer :: iswater
+     integer :: islake
      integer :: isurban
      integer :: isice
      real, pointer, dimension(:,:)   :: lat    ! Grid point latitudes
@@ -127,6 +128,9 @@ contains
     iret = nf90_get_att(ncid, NF90_GLOBAL, "ISWATER" , geo_em%iswater)
     call error_handler(iret, "STOP:  nf90_get_att:  ISWATER")
 
+    iret = nf90_get_att(ncid, NF90_GLOBAL, "ISLAKE" , geo_em%islake)
+    call error_handler(iret, "STOP:  nf90_get_att:  ISLAKE")
+
     iret = nf90_get_att(ncid, NF90_GLOBAL, "ISURBAN" , geo_em%isurban)
     call error_handler(iret, "STOP:  nf90_get_att:  ISURBAN")
 
@@ -161,8 +165,8 @@ contains
 
 ! Create XLAND 
     allocate(geo_em%msk(geo_em%idim, geo_em%jdim))
-    where(geo_em%use .eq. geo_em%iswater) geo_em%msk = 2
-    where(geo_em%use .ne. geo_em%iswater) geo_em%msk = 1
+    where(geo_em%use .eq. geo_em%iswater .or.  geo_em%use .eq. geo_em%islake) geo_em%msk = 2
+    where(geo_em%use .ne. geo_em%iswater .and. geo_em%use .ne. geo_em%islake) geo_em%msk = 1
 
 ! Create SEAICE 
     allocate(geo_em%ice(geo_em%idim, geo_em%jdim))
@@ -197,8 +201,8 @@ contains
          END DO
       END DO
     
-    where(geo_em%use .eq. geo_em%iswater) geo_em%soi = 14
-    where(geo_em%use .ne. geo_em%iswater .and. geo_em%soi .eq. 14) geo_em%soi = 8
+    where(geo_em%use .eq. geo_em%iswater .or.  geo_em%use .eq. geo_em%islake) geo_em%soi = 14
+    where(geo_em%use .ne. geo_em%iswater .and. geo_em%use .ne. geo_em%islake .and. geo_em%soi .eq. 14) geo_em%soi = 8
 
 ! Get MAPFAC_MX (for MMF groundwater)
     allocate(geo_em%mmx(geo_em%idim, geo_em%jdim))

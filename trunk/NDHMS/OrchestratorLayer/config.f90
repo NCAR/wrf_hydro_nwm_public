@@ -41,7 +41,7 @@ module config_base
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
 
-     integer            :: split_output_count = 1
+     integer            :: split_output_count = 1 
      integer            :: khour
      integer            :: kday = -999
      real               :: zlvl
@@ -389,14 +389,6 @@ contains
    if(len(trim(self%route_lake_f)) .ne. 0) then
       inquire(file=trim(self%route_lake_f),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
-   endif
-   ! Only allow lakes to be ran with gridded routing or NWM routing
-   if(len(trim(self%route_lake_f)) .ne. 0) then
-      if(self%channel_option .ne. 3) then
-         if(self%UDMP_OPT .ne. 1) then
-            call hydro_stop('hydro.namelist ERROR: Currently lakes only work with gridded channel routing or UDMP=1. Please change your namelist settings.')
-         endif
-      endif
    endif
 
    if((self%channel_option .eq. 3) .and. (self%compound_channel)) then
@@ -911,6 +903,8 @@ contains
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
+         
+         soil_data_option, pedotransfer_option, crop_option, &
 
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &

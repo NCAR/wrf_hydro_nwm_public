@@ -1998,7 +1998,7 @@ do nt = 1, nsteps
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
    call updateLake_seq(rt_domain(did)%reservoir_assimilated_value, nlakes, tmpAssimilatedValue)
-   call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
+   !call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?
