@@ -1037,7 +1037,9 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_accBucket)
    deallocate(strFlowLocal)
    deallocate(velocityLocal)
-   deallocate(qlossLocal)
+   if (allocated(qlossLocal)) then
+      deallocate(qlossLocal)
+   end if
    deallocate(g_outInd)
 
 end subroutine output_chrt_NWM
