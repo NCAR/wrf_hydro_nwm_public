@@ -238,7 +238,6 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_linkid(gsize))
          allocate(g_QLateral(gsize))
          allocate(g_velocity(gsize))
-         allocate(g_qloss(gsize))
          allocate(g_nudge(gsize))
          allocate(g_qSfcLatRunoff(gsize))
          allocate(g_qBucket(gsize))
@@ -253,7 +252,6 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_orderOut(gsize))
          allocate(g_QLateralOut(gsize))
          allocate(g_velocityOut(gsize))
-         allocate(g_qlossOut(gsize))
          allocate(g_nudgeOut(gsize))
          allocate(g_qSfcLatRunoffOut(gsize))
          allocate(g_qBucketOut(gsize))
@@ -263,6 +261,10 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(gsize))
          allocate(g_linkidOut(gsize))
          allocate(g_outInd(gsize))
+         if (nlst(domainId)%channel_loss_option > 0) then
+            allocate(g_qloss(gsize))
+            allocate(g_qlossOut(gsize))
+         end if
       else
          allocate(g_chlon(1))
          allocate(g_chlat(1))
@@ -273,7 +275,6 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_linkid(1))
          allocate(g_QLateral(1))
          allocate(g_velocity(1))
-         allocate(g_qloss(1))
          allocate(g_nudge(1))
          allocate(g_qSfcLatRunoff(1))
          allocate(g_qBucket(1))
@@ -288,7 +289,6 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_orderOut(1))
          allocate(g_QLateralOut(1))
          allocate(g_velocityOut(1))
-         allocate(g_qlossOut(1))
          allocate(g_nudgeOut(1))
          allocate(g_qSfcLatRunoffOut(1))
          allocate(g_qBucketOut(1))
@@ -298,6 +298,10 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(1))
          allocate(g_linkidOut(1))
          allocate(g_outInd(1))
+         if (nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+            allocate(g_qloss(1))
+            allocate(g_qlossOut(1))
+         end if
       endif
 
       ! Allocate local streamflow and velocity arrays. We need to do a check to
@@ -309,7 +313,7 @@ subroutine output_chrt_NWM(domainId)
       velocityLocal = RT_DOMAIN(domainId)%velocity
       ! TML: Add qloss allocation and compute variable, only for channel 
       ! option #2, where qloss is active (muskingum-cunge).
-      if(nlst(domainId)%channel_option .eq. 2) then
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
          allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
          qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
       endif
@@ -329,7 +333,7 @@ subroutine output_chrt_NWM(domainId)
             if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
                strFlowLocal(iTmp) = fileMeta%modelNdv
                velocityLocal(iTmp) = fileMeta%modelNdv
-               if(nlst(domainId)%channel_option .eq. 2) then
+               if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
                   qlossLocal(iTmp) = fileMeta%modelNdv
                endif
             endif
@@ -361,7 +365,7 @@ subroutine output_chrt_NWM(domainId)
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
          endif
          ! TML: Only produce qloss output if routing option 2 is selected
-         if(nlst(domainId)%channel_option .eq. 2) then
+         if(nlst(domainId)%channel_option .eq. 2 .and. nlst(domainId)%channel_loss_option > 0) then
             fileMeta%outFlag(11) = 1
             call ReachLS_write_io(qlossLocal,g_qloss)
          endif
@@ -432,7 +436,6 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_linkid(gsize))
       allocate(g_QLateral(gsize))
       allocate(g_velocity(gsize))
-      allocate(g_qloss(gsize))
       allocate(g_nudge(gsize))
       allocate(g_qSfcLatRunoff(gsize))
       allocate(g_qBucket(gsize))
@@ -447,7 +450,6 @@ subroutine output_chrt_NWM(domainId)
       allocate(g_orderOut(gsize))
       allocate(g_QLateralOut(gsize))
       allocate(g_velocityOut(gsize))
-      allocate(g_qlossOut(gsize))
       allocate(g_nudgeOut(gsize))
       allocate(g_qSfcLatRunoffOut(gsize))
       allocate(g_qBucketOut(gsize))
@@ -474,7 +476,9 @@ subroutine output_chrt_NWM(domainId)
 #endif
       endif
       ! TML: Only produce qloss output if routing option 2 is selected
-      if(nlst(domainId)%channel_option .eq. 2) then
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+         allocate(g_qloss(gsize))
+         allocate(g_qlossOut(gsize))
          fileMeta%outFlag(11) = 1
          g_qloss = RT_DOMAIN(domainId)%qloss
       endif
@@ -595,11 +599,13 @@ subroutine output_chrt_NWM(domainId)
             g_qBtmVertRunoffOut(iTmp) = g_qBtmVertRunoff(indTmp)
             g_accSfcLatRunoffOut(iTmp) = g_accSfcLatRunoff(indTmp)
             g_accBucketOut(iTmp) = g_accBucket(indTmp)
-            g_qlossOut(iTmp) = g_qloss(indTmp)
             g_chlatOut(iTmp) = g_chlat(indTmp)
             g_chlonOut(iTmp) = g_chlon(indTmp)
             g_orderOut(iTmp) = g_order(indTmp)
             g_zelevOut(iTmp) = g_zelev(indTmp)
+            if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+               g_qlossOut(iTmp) = g_qloss(indTmp)
+            end if
          end do
       else
          g_linkidOut = g_linkid
@@ -613,11 +619,13 @@ subroutine output_chrt_NWM(domainId)
          g_qBtmVertRunoffOut = g_qBtmVertRunoff
          g_accSfcLatRunoffOut = g_accSfcLatRunoff
          g_accBucketOut = g_accBucket
-         g_qlossOut = g_qloss
          g_chlatOut = g_chlat
          g_chlonOut = g_chlon
          g_orderOut = g_order
          g_zelevOut = g_zelev
+         if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+            g_qlossOut = g_qloss
+         end if
       endif
 
       ! Calculate index values based on minimum strahler order to write.
@@ -658,7 +666,10 @@ subroutine output_chrt_NWM(domainId)
       varOutReal(8,:) = PACK(g_qBtmVertRunoffOut,g_outInd == 1)
       varOutReal(9,:) = PACK(g_accSfcLatRunoffOut,g_outInd == 1)
       varOutReal(10,:) = PACK(g_accBucketOut,g_outInd == 1)
-      varOutReal(11,:) = PACK(g_qlossOut,g_outInd == 1)
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+         varOutReal(11,:) = PACK(g_qlossOut,g_outInd == 1)
+      end if
+
       varMetaReal(1,:) = PACK(g_chlatOut,g_outInd == 1)
       varMetaReal(2,:) = PACK(g_chlonOut,g_outInd == 1)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
@@ -1012,7 +1023,6 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_orderOut)
    deallocate(g_QLateralOut)
    deallocate(g_velocityOut)
-   deallocate(g_qlossOut)
    deallocate(g_nudgeOut)
    deallocate(g_qSfcLatRunoffOut)
    deallocate(g_qBucketOut)
@@ -1040,6 +1050,10 @@ subroutine output_chrt_NWM(domainId)
    if (allocated(qlossLocal)) then
       deallocate(qlossLocal)
    end if
+   if (allocated(g_qlossOut)) then
+      deallocate(g_qlossOut)
+   end if
+
    deallocate(g_outInd)
 
 end subroutine output_chrt_NWM
