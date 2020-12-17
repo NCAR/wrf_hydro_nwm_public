@@ -108,18 +108,18 @@ subroutine output_chrt_NWM(domainId)
    ! Establish local, allocatable arrays
    ! These are used to hold global output arrays, and global output arrays after
    ! sorting has taken place by ascending feature_id value.
-   real, allocatable, dimension(:) :: strFlowLocal,velocityLocal
+   real, allocatable, dimension(:) :: strFlowLocal,velocityLocal,qlossLocal
    real, allocatable, dimension(:,:) :: g_qlink
    integer, allocatable, dimension(:) :: g_linkid,g_order
    real, allocatable, dimension(:) :: g_chlat,g_chlon,g_hlink,g_zelev
-   real, allocatable, dimension(:) :: g_QLateral,g_velocity
+   real, allocatable, dimension(:) :: g_QLateral,g_velocity,g_qloss
    real, allocatable, dimension(:) :: g_nudge,g_qSfcLatRunoff
    real, allocatable, dimension(:) :: g_qBucket,g_qBtmVertRunoff,g_accBucket
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoff
    real, allocatable, dimension(:,:) :: g_qlinkOut
    integer, allocatable, dimension(:) :: g_orderOut,g_linkidOut
    real, allocatable, dimension(:) :: g_chlatOut,g_chlonOut,g_hlinkOut,g_zelevOut
-   real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut
+   real, allocatable, dimension(:) :: g_QLateralOut,g_velocityOut,g_qlossOut
    real, allocatable, dimension(:) :: g_nudgeOut,g_qSfcLatRunoffOut
    real, allocatable, dimension(:) :: g_qBucketOut,g_qBtmVertRunoffOut,g_accBucketOut
    real*8, allocatable, dimension(:) :: g_accSfcLatRunoffOut
@@ -184,25 +184,25 @@ subroutine output_chrt_NWM(domainId)
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    if (nlst(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,0]
    else if (nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -261,6 +261,10 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(gsize))
          allocate(g_linkidOut(gsize))
          allocate(g_outInd(gsize))
+         if (nlst(domainId)%channel_loss_option > 0) then
+            allocate(g_qloss(gsize))
+            allocate(g_qlossOut(gsize))
+         end if
       else
          allocate(g_chlon(1))
          allocate(g_chlat(1))
@@ -294,6 +298,10 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(1))
          allocate(g_linkidOut(1))
          allocate(g_outInd(1))
+         if (nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+            allocate(g_qloss(1))
+            allocate(g_qlossOut(1))
+         end if
       endif
 
       ! Allocate local streamflow and velocity arrays. We need to do a check to
@@ -303,6 +311,12 @@ subroutine output_chrt_NWM(domainId)
       allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       velocityLocal = RT_DOMAIN(domainId)%velocity
+      ! TML: Add qloss allocation and compute variable, only for channel 
+      ! option #2, where qloss is active (muskingum-cunge).
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+         allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
+         qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
+      endif
 
       ! Sync everything up before the next step.
       if(mppFlag .eq. 1) then
@@ -319,6 +333,9 @@ subroutine output_chrt_NWM(domainId)
             if (RT_DOMAIN(domainId)%TYPEL(iTmp) .eq. 2) then
                strFlowLocal(iTmp) = fileMeta%modelNdv
                velocityLocal(iTmp) = fileMeta%modelNdv
+               if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+                  qlossLocal(iTmp) = fileMeta%modelNdv
+               endif
             endif
          end do
       endif
@@ -346,6 +363,11 @@ subroutine output_chrt_NWM(domainId)
 #endif
          else
             fileMeta%outFlag(2) = 0 ! Set output flag to off.
+         endif
+         ! TML: Only produce qloss output if routing option 2 is selected
+         if(nlst(domainId)%channel_option .eq. 2 .and. nlst(domainId)%channel_loss_option > 0) then
+            fileMeta%outFlag(11) = 1
+            call ReachLS_write_io(qlossLocal,g_qloss)
          endif
          if(nlst(domainId)%UDMP_OPT .eq. 1) then
             ! Currently, we only allow channel-only outputs to be produced for
@@ -452,6 +474,13 @@ subroutine output_chrt_NWM(domainId)
          fileMeta%outFlag(2) = 1 ! Set output flag to on.
          g_nudge = RT_DOMAIN(domainID)%nudge
 #endif
+      endif
+      ! TML: Only produce qloss output if routing option 2 is selected
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+         allocate(g_qloss(gsize))
+         allocate(g_qlossOut(gsize))
+         fileMeta%outFlag(11) = 1
+         g_qloss = RT_DOMAIN(domainId)%qloss
       endif
       if(nlst(domainId)%UDMP_OPT .eq. 1) then
          ! Currently, we only allow channel-only outputs to be produced for
@@ -574,6 +603,9 @@ subroutine output_chrt_NWM(domainId)
             g_chlonOut(iTmp) = g_chlon(indTmp)
             g_orderOut(iTmp) = g_order(indTmp)
             g_zelevOut(iTmp) = g_zelev(indTmp)
+            if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+               g_qlossOut(iTmp) = g_qloss(indTmp)
+            end if
          end do
       else
          g_linkidOut = g_linkid
@@ -591,6 +623,9 @@ subroutine output_chrt_NWM(domainId)
          g_chlonOut = g_chlon
          g_orderOut = g_order
          g_zelevOut = g_zelev
+         if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+            g_qlossOut = g_qloss
+         end if
       endif
 
       ! Calculate index values based on minimum strahler order to write.
@@ -631,6 +666,10 @@ subroutine output_chrt_NWM(domainId)
       varOutReal(8,:) = PACK(g_qBtmVertRunoffOut,g_outInd == 1)
       varOutReal(9,:) = PACK(g_accSfcLatRunoffOut,g_outInd == 1)
       varOutReal(10,:) = PACK(g_accBucketOut,g_outInd == 1)
+      if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
+         varOutReal(11,:) = PACK(g_qlossOut,g_outInd == 1)
+      end if
+
       varMetaReal(1,:) = PACK(g_chlatOut,g_outInd == 1)
       varMetaReal(2,:) = PACK(g_chlonOut,g_outInd == 1)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
@@ -1008,6 +1047,13 @@ subroutine output_chrt_NWM(domainId)
    deallocate(g_accBucket)
    deallocate(strFlowLocal)
    deallocate(velocityLocal)
+   if (allocated(qlossLocal)) then
+      deallocate(qlossLocal)
+   end if
+   if (allocated(g_qlossOut)) then
+      deallocate(g_qlossOut)
+   end if
+
    deallocate(g_outInd)
 
 end subroutine output_chrt_NWM
