@@ -1077,6 +1077,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    integer :: iTmp,jTmp,zTmp,jTmp2,iTmp2
    integer :: ftnGeo,geoXVarId,geoYVarId
    integer :: waterVal ! Value in HRLDAS in WRFINPUT file used to define water bodies for masking
+   integer :: sfcflag
    ! Allocatable arrays to hold global output arrays, and local arrays for
    ! conversion to integers.
    integer, allocatable, dimension(:,:) :: localCompTmp, globalCompTmp
@@ -1120,6 +1121,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    ! Initialize water type to 16.
    ! NOTE THIS MAY CHANGE IN THE FUTURE!!!!!
    waterVal = rt_domain(1)%iswater
+
+   ! Initialize overland routing flag for SFCRNOFF outputs
+   sfcflag = 1
+   if (nlst(1)%OVRTSWCRT > 0) then 
+     sfcflag = 0
+   endif
 
    ! Initialize NWM dictionary derived type containing all the necessary
    ! metadata for the output file.
@@ -1174,7 +1181,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! All
       fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,& !1-10
                              1,1,1,1,1,1,1,1,1,1,& !11-20
-                             1,1,1,1,1,1,1,1,1,1,& !21-30
+                             sfcflag,1,1,1,1,1,1,1,1,1,& !21-30
                              1,1,1,1,1,1,1,1,1,1,& !31-40
                              1,1,1,1,1,1,1,1,1,1,& !41-50
                              1,1,1,1,1,1,1,1,1,1,& !51-60
@@ -1222,7 +1229,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! Long Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
                              0,0,0,0,0,0,0,0,0,1,& !11-20
-                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             sfcflag,0,0,0,0,0,0,0,0,0,& !21-30
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,0,0,0,0,0,0,& !41-50
                              0,0,0,0,0,0,0,0,0,0,& !51-60
@@ -1234,7 +1241,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! Retrospective
       fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,& !1-10
                              1,1,0,1,1,0,1,1,0,1,& !11-20
-                             1,0,0,0,0,0,0,0,0,0,& !21-30
+                             sfcflag,0,0,0,0,0,0,0,0,0,& !21-30
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,1,0,0,0,0,0,& !41-50
                              0,0,0,0,0,0,0,0,0,0,& !51-60
@@ -1246,7 +1253,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! Diagnostics
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
                              1,1,1,1,1,0,1,0,0,1,& !11-20
-                             1,0,0,0,0,0,0,1,1,1,& !21-30
+                             sfcflag,0,0,0,0,0,0,1,1,1,& !21-30
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,1,0,0,0,0,0,& !41-50
                              0,0,0,0,0,0,0,0,1,1,& !51-60
