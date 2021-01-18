@@ -64,7 +64,7 @@ CONTAINS
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
                  AXAJ_2D,BXAJ_2D,XXAJ_2D,                                     &
-                 IMPERV_2D,                                                   &
+                 IMPERV_2D,IMPCONNA_2D,IMPCONNB_2D,                           &
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -167,6 +167,8 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  BXAJ_2D   ! Xinanjiang: Tension water distribution shape parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  XXAJ_2D   ! Xinanjiang: Free water distribution shape parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  IMPERV_2D ! impervious fraction
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  IMPCONNA_2D ! impervious connectivity A parameter from Sutherland 2000  
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  IMPCONNB_2D ! impervious connectivity B parameter from Sutherland 2000
 #endif
 
 ! INOUT (with generic LSM equivalent)
@@ -670,6 +672,8 @@ CONTAINS
        parameters%bxaj   = BXAJ_2D(I,J)           ! Xinanjiang: Tension water distribution shape parameter [-]
        parameters%xxaj   = XXAJ_2D(I,J)           ! Xinanjiang: Free water distribution shape parameter [-]
        parameters%imperv = IMPERV_2D(I,J)         ! impervious fraction
+       parameters%impconnA = IMPCONNA_2D(I,J)     ! impervious connectivity A parameter from Sutherland 2000
+       parameters%impconnB = IMPCONNB_2D(I,J)     ! impervious connectivity B parameter from Sutherland 2000
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
        
@@ -1209,8 +1213,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%XXAJ = XXAJ_TABLE(SOILTYPE)
     IF (parameters%URBAN_FLAG) THEN 
       parameters%IMPERV = IMPERV_URBAN_TABLE
+      parameters%IMPCONNA = IMPCONNA_TABLE
+      parameters%IMPCONNB = IMPCONNB_TABLE
     ELSE
       parameters%IMPERV = 0.0
+      parameters%IMPCONNA = 1.0
+      parameters%IMPCONNB = 1.0
     ENDIF
 #endif
 ! ----------------------------------------------------------------------

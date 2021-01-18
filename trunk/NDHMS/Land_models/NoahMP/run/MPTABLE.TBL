@@ -343,6 +343,8 @@
   RSURF_SNOW = 50.0     !surface resistence for snow [s/m]
   RSURF_EXP = 5.0       !exponent in the shape parameter for soil resistance option 1
   IMPERV_URBAN = 1.0    !impervious fraction to use for urban type [0-1]
+  IMPCONNA = 1.0        !impervious connectivity A parameter from Sutherland 2000 (low to high: 0.01, 0.04, 0.1, 0.4, 1.0) 
+  IMPCONNB = 1.0        !impervious connectivity A parameter from Sutherland 2000 (low to high: 2.0, 1.7, 1.5, 1.2, 1.0)
 /
 
 &noahmp_crop_parameters
