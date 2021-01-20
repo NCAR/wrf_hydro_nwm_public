@@ -695,7 +695,7 @@ module module_NoahMP_hrldas_driver
   xend = noah_lsm%xend
   yend = noah_lsm%yend
   nsoil = noah_lsm%nsoil
-
+  act_lev = noah_lsm%act_lev
   ids = xstart
   ide = xend
   jds = ystart
@@ -922,7 +922,6 @@ module module_NoahMP_hrldas_driver
 
   ALLOCATE ( CHSTARXY  (XSTART:XEND,YSTART:YEND) )  ! for consistency with MP_init; delete later
   ALLOCATE ( SEAICE    (XSTART:XEND,YSTART:YEND) )  ! seaice fraction
-
 ! ++ T.EI crocus
    ALLOCATE ( PSNOWTHRUFALXY   (XSTART:XEND,YSTART:YEND) )  ! 
    ALLOCATE ( PSNOWALBXY   (XSTART:XEND,YSTART:YEND) )  ! 
@@ -1174,7 +1173,7 @@ module module_NoahMP_hrldas_driver
       PSNOWTOTSWEXY = 0
       PSNOWAGEXY = 0
 
-
+        
       WHERE(GLACINFO > 0.0) PSNOWALBXY=0.35
 
       do kk = 1, act_lev
@@ -1531,13 +1530,11 @@ endif
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
                   'SOILSAT,SNOWT_AVG,QRAIN,'//&
 !++T.EI crocus
-!                  'glacier,glacier_thickness,'//&
-!                  'PSNOWLIQ,PSNOWTEMPXY,PSNOWDZXY,PSNOWHEATXY,PSNOWSWEXY,'//&
-                  'glacier,PSNOWLIQ,glacier_thickness,'//&
-                  'PSNOWTEMPXY,PSNOWDZXY,PSNOWHEATXY,PSNOWSWEXY,'//&
-                  'PSNOWHISTXY,PSNOWHISTXY,PSNOWGRAN1XY,PSNOWGRAN2XY,PSNOWAGEXY,'//&
-                  'PSNOWTHRUFALXY,PSNOWALBXY,PSNOWHEIGHTXY,PSNOWTOTSWEXY'
+                  'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
+                  'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'//&
+                  'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE'                                    
 !--T.EI crocus
+
    endif
    if (io_config_outputs .eq. 1) then
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
@@ -1560,6 +1557,7 @@ endif
 
    !!--- Parse into character array. Constructor not valid with uneven
    !!--- strings in f90 so using brute force.
+   
    do while (brkflag .eq. 0)
         if (index(VARLIST, ',') .eq. 0) then
                 IOCVARS(varind) = adjustl(VARLIST)
@@ -1567,8 +1565,8 @@ endif
         else
                 IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
                 VARLIST = VARLIST((index(VARLIST, ',')+1):)
-                varind = varind + 1
-        endif
+                varind = varind + 1                
+              endif
    end do
 
    if(wrf_hydro%finemesh .ne. 0 ) then
@@ -2063,7 +2061,7 @@ subroutine  ldas_output(itime, state)
 !else
 !#endif
 !#endif /* WRF_HYDRO */
-
+  
 #ifdef WRF_HYDRO
    ! Logan add begin
    ! Go through each variable. For the first time the NWM output routine is
@@ -2170,21 +2168,22 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QRAINXY,IVGTYP,98)
 ! ++ T.EI crocus
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(GLACINFO),IVGTYP,99)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWLIQXY,IVGTYP,100)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(GLACT),IVGTYP,101)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHEATXY,IVGTYP,102)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWRHOXY ,IVGTYP,103)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,104)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(GLACT),IVGTYP,100)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWALBXY,IVGTYP,101)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTHRUFALXY,IVGTYP,102)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWHEIGHTXY,IVGTYP,103)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTOTSWEXY,IVGTYP,104)
+   
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWGRAN1XY,IVGTYP,105)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWGRAN2XY,IVGTYP,106)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWAGEXY,IVGTYP,107)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWTEMPXY,IVGTYP,108)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWDZXY,IVGTYP,109)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHISTXY,IVGTYP,110)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTHRUFALXY,IVGTYP,111)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWALBXY,IVGTYP,112)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWHEIGHTXY,IVGTYP,113)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTOTSWEXY,IVGTYP,114)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,(PSNOWLIQXY),IVGTYP,111)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHEATXY,IVGTYP,112)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWRHOXY ,IVGTYP,113)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,144)
 ! -- T.EI
 #endif /* WRF_HYDRO */
 
@@ -2551,7 +2550,23 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) SFCRUNOFF
   read(iunit,ERR=101) UDRUNOFF
 ! ++ T.EI crocus
- read(iunit,ERR=101) PSNOWLIQXY
+  read(iunit,ERR=101) PSNOWAGEXY     
+  read(iunit,ERR=101) PSNOWDZXY     
+  read(iunit,ERR=101) PSNOWGRAN1XY     
+  read(iunit,ERR=101) PSNOWGRAN2XY     
+  read(iunit,ERR=101) PSNOWHEATXY     
+  read(iunit,ERR=101) PSNOWHISTXY     
+  read(iunit,ERR=101) PSNOWLIQXY     
+  read(iunit,ERR=101) PSNOWRHOXY     
+  read(iunit,ERR=101) PSNOWSWEXY     
+  read(iunit,ERR=101) PSNOWTEMPXY     
+  read(iunit,ERR=101) PSNOWALBXY     
+  read(iunit,ERR=101) PSNOWHEIGHTXY     
+  read(iunit,ERR=101) PSNOWTHRUFALXY     
+  read(iunit,ERR=101) PSNOWTOTSWEXY     
+! -- T.EI 
+
+  ! read(iunit,ERR=101) PSNOWLIQXY
 ! #ifndef REALTIME
 ! #ifdef WRF_HYDRO
 !   read(iunit,ERR=101) ACCPRCP
