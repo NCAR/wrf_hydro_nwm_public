@@ -946,7 +946,6 @@ subroutine output_chrt_NWM(domainId)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)
@@ -1784,8 +1783,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
       ! Write array out to NetCDF file.
       if(myId .eq. 0) then
+         write(*,*) 'trude foo1'
+         write(*,*) 'variable name : ', fileMeta%varNames(varInd)
+         write(*,*) 'varind :', varind
+         write(*,*) 'varid :', varid
+         write(*,*) 'ftnNoahMP :', ftnNoahMP
+         write(*,*) 'num lev :', fileMeta%numLev(varInd)
          iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
+         write(*,*) iret
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
+         write(*,*) 'trude foo2'
          if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
             if(fileMeta%numLev(varInd) .eq. 1) then
                iret = nf90_put_var(ftnNoahMP,varId,globalOutComp,(/1,1,1/),(/global_nx,global_ny,1/))
@@ -3022,7 +3029,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)
@@ -5084,7 +5090,6 @@ subroutine output_chanObs_NWM(domainId)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn, varId, &
@@ -5615,10 +5620,9 @@ subroutine output_gw_NWM(domainId,iGrid)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
-            ! Get NetCDF variable id.
+            ! Get NetCDF variable id.           
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)
