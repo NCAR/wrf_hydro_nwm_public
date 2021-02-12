@@ -168,7 +168,7 @@ type ldasMeta
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
-   real, dimension(20) :: crsRealAttLen
+   integer, dimension(20) :: crsRealAttLen
    integer :: nCrsRealAtts, nCrsCharAtts
    ! Establish x/y related variables.
    character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
@@ -239,7 +239,7 @@ type rtDomainMeta
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
-   real, dimension(20) :: crsRealAttLen
+   integer, dimension(20) :: crsRealAttLen
    integer :: nCrsRealAtts, nCrsCharAtts
    ! Establish x/y related variables.
    character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
@@ -393,7 +393,7 @@ type chrtGrdMeta
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
-   real, dimension(20) :: crsRealAttLen
+   integer, dimension(20) :: crsRealAttLen
    integer :: nCrsRealAtts, nCrsCharAtts
    ! Establish x/y related variables.
    character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
@@ -468,7 +468,7 @@ type lsmMeta
    character(len=1024), dimension(20) :: crsCharAttNames,crsFloatAttNames
    character(len=1024), dimension(20) :: crsCharAttVals
    real, dimension(20,20) :: crsRealAttVals
-   real, dimension(20) :: crsRealAttLen
+   integer, dimension(20) :: crsRealAttLen
    integer :: nCrsRealAtts, nCrsCharAtts
    ! Establish x/y related variables.
    character(len=1024), dimension(20) :: xCharAttNames,xFloatAttNames
