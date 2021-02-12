@@ -1,5 +1,6 @@
 *.o
 *.mod
+*.lst
 *~
 Makefile.comm
 trunk/NDHMS/lib/*
