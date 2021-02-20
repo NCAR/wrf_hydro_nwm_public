@@ -404,10 +404,10 @@ module module_NoahMP_hrldas_driver
      use module_hrldas_HYDRO, only: open_print_mpp
      use state_module, only: state_type
      implicit  none
-     integer:: NTIME_out
+     integer, intent(out) :: NTIME_out
      integer, parameter :: did=1
      integer :: khour
-     type(state_type) :: state
+     type(state_type), intent(out) :: state
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
