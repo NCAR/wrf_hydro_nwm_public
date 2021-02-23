@@ -223,7 +223,7 @@ contains
 
         call read_timeslice_netcdf_integer_1D_variables(ncid, 'synthetic_values', time_series_file, this%synthetic_values)
 
-        this%synthetic_values_logical = merge(.true., .false., this%synthetic_values /= 0)
+        this%synthetic_values_logical = (this%synthetic_values /= 0)
 
         this%forecast_found = .true.
 
