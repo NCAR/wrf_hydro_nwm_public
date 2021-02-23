@@ -1,8 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
 
-set (CMAKE_C_COMPILER "mpicc")
-set (CMAKE_CXX_COMPILER "mpicxx")
-set (CMAKE_Fortran_COMPILER "mpif90")
+if (NOT CMAKE_C_COMPILER)
+	set (CMAKE_C_COMPILER "mpicc")
+endif (NOT CMAKE_C_COMPILER)
+if (NOT CMAKE_CXX_COMPILER)
+	set (CMAKE_CXX_COMPILER "mpicxx")
+endif (NOT CMAKE_CXX_COMPILER)
+if (NOT CMAKE_Fortran_COMPILER)
+	set (CMAKE_Fortran_COMPILER "mpif90")
+endif (NOT CMAKE_Fortran_COMPILER)
 
 project (WRF_Hydro)
 
@@ -34,7 +40,7 @@ enable_language (Fortran)
 
 # netcdf does not have a built in package locator so add custom module directory
 # that contains FindNetCDF.cmake
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
+set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
 
 #try to find the installed NETCDF library
 set (NETCDF_F90 "YES")
@@ -180,7 +186,7 @@ message("=============================================================")
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     # set compile flags for gfortran
     message ( "-- Using gfortran")
-    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4")
+    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 -fallow-argument-mismatch")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
     message ( "Using ifort")
@@ -312,14 +318,14 @@ if (HYDRO_LSM MATCHES "NoahMP")
 	add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
+		COMMAND rm ${PROJECT_BINARY_DIR}/wrfhydro.exe
 	)
 
 elseif(HYDRO_LSM MATCHES "Noah")
@@ -367,14 +373,14 @@ elseif(HYDRO_LSM MATCHES "Noah")
         add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND ln -s wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
+		COMMAND rm ${PROJECT_BINARY_DIR}/wrfhydro.exe
         )
 
 

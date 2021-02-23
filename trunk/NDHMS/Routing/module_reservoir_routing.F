@@ -83,7 +83,7 @@ subroutine read_reservoir_obs(domainId)
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
-      call MPI_COMM_RANK( MPI_COMM_WORLD, myId, ierr )
+      call MPI_COMM_RANK( HYDRO_COMM_WORLD, myId, ierr )
       call nwmCheck(diagFlag,ierr,'ERROR: Unable to determine MPI process ID.')
 #endif
    else

@@ -98,6 +98,7 @@ module module_NoahMP_hrldas_driver
   REAL                                    ::  XICE_THRESHOLD! fraction of grid determining seaice
   INTEGER                                 ::  ISICE     ! land cover category for ice
   INTEGER                                 ::  ISURBAN   ! land cover category for urban
+  INTEGER                                 ::  ISLAKE    ! land cover category for lake
   INTEGER                                 ::  ISWATER   ! land cover category for water
   INTEGER                                 ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1
   INTEGER                                 ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
@@ -403,15 +404,17 @@ module module_NoahMP_hrldas_driver
      use module_hrldas_HYDRO, only: open_print_mpp
      use state_module, only: state_type
      implicit  none
-     integer:: NTIME_out
+     integer, intent(out) :: NTIME_out
      integer, parameter :: did=1
      integer :: khour
-     type(state_type) :: state
+     type(state_type), intent(out) :: state
 
     ! initilization for stand alone parallel code.
     integer, optional, intent(in) :: wrfits,wrfite,wrfjts,wrfjte
+
 #ifdef MPP_LAND
-    call  MPP_LAND_INIT()
+    call read_dim(noah_lsm%hrldas_setup_file,ix_tmp,jx_tmp)
+    call MPP_LAND_INIT(ix_tmp,jx_tmp)
 #endif
 
 #ifdef WRF_HYDRO
@@ -633,7 +636,7 @@ module module_NoahMP_hrldas_driver
 
     call read_hrldas_hdrinfo(noah_lsm%hrldas_setup_file, ix, jx, &
          noah_lsm%xstart, noah_lsm%xend, noah_lsm%ystart, noah_lsm%yend, &
-         iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
+         iswater, islake, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
          igrid, mapproj)
   write(hgrid,'(I1)') igrid
 
@@ -1070,7 +1073,8 @@ module module_NoahMP_hrldas_driver
 !----------------------------------------------------------------------
 
   CALL READLAND_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
-       ISWATER, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND, SEAICE,MSFTX,MSFTY)
+       ISWATER, ISLAKE, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND,   &
+       SEAICE, MSFTX, MSFTY)
 
   WHERE(SEAICE > 0.0) XICE = 1.0
 

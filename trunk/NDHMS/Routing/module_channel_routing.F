@@ -146,10 +146,10 @@ end function DIFFUSION
 ! ----------------------------------------------------------------
 
 subroutine SUBMUSKINGCUNGE(    &
-     qdc, vel, idx, qup,  quc, &
+     qdc, vel, qloss, idx, qup,  quc, &
      qdp, ql,   dt,  So,   dx, &
      n,   Cs,   Bw,  Tw, TwCC, &
-     nCC, depth                 )
+     nCC, depth, ChannK        )
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -167,11 +167,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: Tw         ! top width before bankfull (meters)
         REAL, intent(IN)       :: TwCC       ! top width of Compund (meters)
         REAL, intent(IN)       :: nCC        ! mannings of compund
+        REAL, intent(IN)       :: ChannK     ! Channel conductivity (m/s)
         REAL, intent(IN)       :: Cs         ! Channel side slope slope
         REAL, intent(IN)       :: So         ! Channel bottom slope %
         REAL, intent(IN)       :: dx         ! channel lngth (m)
         REAL, intent(IN)       :: n          ! mannings coefficient
-        REAL, intent(INOUT)    :: vel        ! mannings coefficient
+        REAL, intent(INOUT)    :: vel        ! velocity (m/s)
+        REAL, intent(INOUT)    :: qloss      ! channel infiltration (m^3/sec)
         INTEGER, intent(IN)    :: idx        ! channel id
         REAL, intent(INOUT)    :: depth      ! depth of flow in channel
 
@@ -198,12 +200,20 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL    :: hp             ! courant, previous height
         INTEGER :: iter, maxiter  ! maximum number of iterations
 
+!-- additional channel infiltration parameters
+        REAL    :: WPk        ! KINEROS2 modified wetted perimeter
+        REAL    :: modK       ! KINEROS2 constant (set to 0.15, line )
+
 !-- local variables.. needed if channel is sub-divded
         REAL    :: a,b,c,F
         REAL    :: mindepth   !  minimum depth in channel
         INTEGER :: i,tries    !-- channel segment counter
 
-        c = 0.52           !-- coefficients for finding dx/Ckdt
+        !TML-- Hard code KINEROS2 Modification Parameter
+        !TML-- Set to 0.15, consistent with USDA-ARS
+        modK = 0.15
+
+        c = 0.52           !-- coefficnets for finding dx/Ckdt
         b = 1.15
         a = 0.0
         maxiter  = 100
@@ -251,6 +261,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            AREAC  = 0.0
 
           !----- lower interval  --------------------
+
            Twl = Bw + 2.0*z*h_0      !--top surface water width of the channel inflow
 
             if(h_0 .gt. bfd) then !water outside of defined channel
@@ -258,11 +269,12 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
              AREAC = (TwCC * (h_0 -bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2.0 * bfd * sqrt(1.0 + z*z))
              WPC = TwCC + (2.0 * (h_0-bfd)) !WPC is 2 times the Tw
+             WPk = WP + WPC*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
              R   = (AREA + AREAC)/(WP +WPC)  ! hydraulic radius
             else
               AREA = (Bw + h_0 * z ) * h_0
               WP = (Bw + 2.0 * h_0 * sqrt(1.0 + z*z))
-
+              WPk = WP*MIN((h_0/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
               if(WP .gt. 0.0) then
                R = AREA/ WP
               else
@@ -306,19 +318,30 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             if(D .eq. 0.0) then
               print *, "FATAL ERROR: D is 0 in MUSKINGCUNGE", Km, X, dt,D
               call hydro_stop("In MUSKINGCUNGE() - D is 0.")
-           endif
+           endif 
+ 
 
            C1 =  (Km*X + dt/2.000000)/D
            C2 =  (dt/2.0000 - Km*X)/D
            C3 =  (Km*(1.00000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3))
-           C4 =  (ql*dt)/D
-!          C4 =  (ql*dt)/D - (ChannK * (WP + WPC) * dx)  !-- DY & LKR lat inflow + channel loss
+           if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
+             C4 =  (ql*dt)/D
+           else
+             !C4 =  (ql*dt)/D - (ChannK * dx * WPk)  !-- DY & LKR lat inflow + channel loss
+             C4 =  ((ql - (ChannK * dx * WPk))*dt)/D  !-- TML: Loss adjusted by dt/D, closes water balance
+           endif
 
            if((WP+WPC) .gt. 0.0) then  !avoid divide by zero
+! Another sanity check, prevent channel loss from exceeding flow
+             if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)) )  then
+              C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
+             endif
              Qj_0 =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f0(x)
            endif
+!           WPk = WP*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod. This shouldn't be HERE.
+
 
            !--upper interval -----------
            WPC    = 0.0
@@ -331,11 +354,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
              AREAC = (TwCC * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2.0 * bfd * sqrt(1.0 + z*z))
              WPC = TwCC + (2.0*(h-bfd)) !the additional wetted perimeter
+             WPk = WP + WPC*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
              R   = (AREA + AREAC)/(WP +WPC)
             ! RC  = AREAC/WPC
            else
               AREA = (Bw + h * z ) * h
               WP = (Bw + 2.0 * h * sqrt(1.000000 + z*z))
+              WPk = WP*MIN((h/(modK*SQRT(Bw))),1.0)  ! KINEROS2 Mod.
               if(WP .gt. 0.0) then
                R = AREA/WP
               else
@@ -383,14 +408,21 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            C2 =  (dt/2.000000 - Km*X)/D
            C3 =  (Km*(1.000000-X)-dt/2.000000)/D
 !          C1 =  max(0.0,min(1.0,1.0-C3)) !! eliminate influence of upstream current
-           C4 =  (ql*dt)/D
-!          C4 =  (ql*dt)/D  - (ChannK * dx * (WP+WPC))  !-- (loss units: m/s * m * m)
+           if(ChannK .le. 0.0) then ! Disable channel loss for zero ChannK
+             C4 =  (ql*dt)/D
+           else
+             !C4 =  (ql*dt)/D  - (ChannK * dx * WPk)  !-- (loss units: m/s * m * m)
+             C4 =  ((ql - (ChannK * dx * WPk))*dt)/D  !-- TML: Loss adjusted by dt/D, closes water balance
+           endif
 
            if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
             C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
            endif
 
            if((WP+WPC) .gt. 0.0) then
+            if( (C4 .lt. 0.0) .and. (abs(C4) .gt. (C1*qup)+(C2*quc)+(C3*qdp)))  then
+               C4 = -((C1*qup)+(C2*quc)+(C3*qdp))
+            endif
             Qj =  ((C1*qup)+(C2*quc)+(C3*qdp) + C4) - ((1.0000000/(((WP*n)+(WPC*nCC))/(WP+WPC))) * &
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So)) !f(x)
            endif
@@ -453,6 +485,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
                     (AREA+AREAC) * (R**(2./3.)) * sqrt(So))
          endif
 
+
 #ifdef HYDRO_D
       !! Getting information on c3.
       !if(rt_domain(1)%gages(idx + linkls_s(my_id+1) - 1) .ne. rt_domain(1)%gageMiss) then
@@ -488,6 +521,18 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
        depth = 0.0
      endif
 
+      qloss = (ChannK * dx * WPk) ! TML -- Compute qloss to pass
+
+      !TML:Added print statement to test qlos function; 
+      !comment out to prevent excessive file sizes when running model
+      !print*, "qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D", qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D
+      if((qloss*dt)/D > ((ql*dt)/D - C4)) then
+           qloss = ql - C4*(D/dt)
+           if (qloss < 0) then
+              print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
+           endif
+      endif
+
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE
 ! ----------------------------------------------------------------
@@ -519,7 +564,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
-       RESHT, &
+       ChannK, RESHT, &
        ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area  &
@@ -530,7 +575,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 #endif
        , CH_LNKRT_SL &
        ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
-       gwChanCondConstOut, velocity)
+       gwChanCondConstOut, velocity, qloss)
 
 
        IMPLICIT NONE
@@ -563,7 +608,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: So, MannN
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChSSlp,Bw,Tw  !--properties of nodes or links
         REAL, INTENT(IN), DIMENSION(NLINKS)       :: Tw_CC, n_CC  !properties of compund channel
-
+        REAL, INTENT(IN), DIMENSION(NLINKS)       :: ChannK  !--Channel Infiltration
         REAL                                      :: Km, X
         REAL , INTENT(INOUT), DIMENSION(:,:) :: QLINK
         REAL ,  DIMENSION(NLINKS,2) :: tmpQLINK
@@ -579,7 +624,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                                                      gwBaseSwCRT, gwChanCondSw
         real, intent(in)                          :: gwChanCondConstIn, gwChanCondConstOut ! aquifer-channel conductivity constant from namelist
         REAL , INTENT(IN), DIMENSION(NLINKS)      :: node_area
-        real, dimension(:), INTENT(inout)         :: velocity
+        real, dimension(:), INTENT(inout)         :: velocity, qloss
 
 
 !DJG GW-chan coupling variables...
@@ -787,9 +832,9 @@ END SUBROUTINE SUBMUSKINGCUNGE
                        tmpQLINK(k,2) = MUSKING(k,Qup,(Quc+QLateral(k)),QLINK(k,1),DTRT_CH,Km,X) !upstream plust lateral inflow
                    elseif (channel_option .eq. 2) then ! muskingum cunge
 
-                   call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), LINKID(k),  &
+                   call SUBMUSKINGCUNGE(tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),  &
                     Qup,Quc, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
-                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),Tw_CC(k), n_CC(k), HLINK(k) )
+                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k),Tw_CC(k), n_CC(k),  HLINK(k), ChannK(k) )
 
                    else
                     print *, "FATAL ERROR: no channel option selected"
@@ -1546,7 +1591,7 @@ end subroutine drive_CHANNEL
         TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
         LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
         CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
-        RESHT, CVOL, QLAKEI, QLAKEO, LAKENODE, &
+        ChannK, RESHT, CVOL, QLAKEI, QLAKEO, LAKENODE, &
         QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
         nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
         LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
@@ -1561,7 +1606,7 @@ end subroutine drive_CHANNEL
 #endif
        , accSfcLatRunoff, accBucket                  &
        , qSfcLatRunoff,     qBucket                  &
-       , QLateral, velocity                          &
+       , QLateral, velocity, qloss                   &
        , HLINK                                       &
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
 
@@ -1600,6 +1645,7 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(:)        :: So, MannN
        real, intent(IN), dimension(:)        :: ChSSlp,Bw,Tw  !--properties of nodes or links
        real, intent(IN), dimension(:)        :: Tw_CC, n_CC   ! properties of compound channel
+       real, intent(IN), dimension(:)        :: ChannK  !--channel infiltration
        real                                      :: Km, X
        real , intent(INOUT), dimension(:,:)  :: QLINK
        real , intent(INOUT), dimension(:)    :: HLINK
@@ -1610,7 +1656,7 @@ end subroutine drive_CHANNEL
 #endif
 
        real, dimension(:), intent(inout)     :: QLateral !--lateral flow
-       real, dimension(:), intent(out)       :: velocity
+       real, dimension(:), intent(out)       :: velocity, qloss
        real*8, dimension(:), intent(inout)     :: accSfcLatRunoff, accBucket
        real  , dimension(:), intent(out)     :: qSfcLatRunoff  ,   qBucket
 
@@ -1711,7 +1757,7 @@ end subroutine drive_CHANNEL
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 #ifdef HYDRO_D
-   write(6,*), "channel_only or channelBucket_only is not zero. Special flux calculations."
+   write(6,*)  "channel_only or channelBucket_only is not zero. Special flux calculations."
    call flush(6)
 #endif /* HYDRO_D */
 
@@ -1819,7 +1865,7 @@ endif !! (channel_only .eq. 1 .or. channelBucket_only .eq. 1) then; else; endif
 !! If not running channelOnly, here is where the bucket model is picked up
 if(channel_only .eq. 1) then
 #ifdef HYDRO_D
-   write(6,*), "channel_only is not zero. No bucket."
+   write(6,*)  "channel_only is not zero. No bucket."
    call flush(6)
 #endif /* HYDRO_D */
 else
@@ -1936,9 +1982,9 @@ do nt = 1, nsteps
 #endif
 
          call SUBMUSKINGCUNGE(&
-              tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
+              tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
-              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k) )
+              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k), ChannK(k) )
 
       else
 #ifdef HYDRO_D
@@ -1956,7 +2002,7 @@ do nt = 1, nsteps
    call updateLake_seq(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
    call updateLake_seq(rt_domain(did)%reservoir_assimilated_value, nlakes, tmpAssimilatedValue)
-   call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
+   !call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
 #endif
 
    do k = 1, NLINKSL !tmpQLINK?

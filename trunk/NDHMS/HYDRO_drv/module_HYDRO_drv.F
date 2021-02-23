@@ -935,6 +935,7 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
        RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
        RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
        RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
+       RT_DOMAIN(did)%ChannK,&
        RT_DOMAIN(did)%RESHT, &
        RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
        RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
@@ -954,6 +955,7 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
        , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
        , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     rt_domain(did)%qloss    &
        ,                                     RT_DOMAIN(did)%HLINK    &
        , rt_domain(did)%nlinksize,            nlst(did)%OVRTSWCRT &
        ,                                     nlst(did)%SUBRTSWCRT &
@@ -975,6 +977,7 @@ else
        RT_DOMAIN(did)%HLINK, RT_DOMAIN(did)%ELRT,RT_DOMAIN(did)%CHANLEN,&
        RT_DOMAIN(did)%MannN,RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp, &
        RT_DOMAIN(did)%Bw,RT_DOMAIN(did)%Tw,RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
+       RT_DOMAIN(did)%ChannK,& 
        RT_DOMAIN(did)%RESHT, &
        RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
        RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
@@ -993,7 +996,7 @@ else
        , rt_domain(did)%CH_LNKRT_SL   &
        ,nlst(did)%GwBaseSwCRT, gw2d(did)%ho, gw2d(did)%qgw_chanrt, &
        nlst(did)%gwChanCondSw, nlst(did)%gwChanCondConstIn, &
-       nlst(did)%gwChanCondConstOut, rt_domain(did)%velocity &
+       nlst(did)%gwChanCondConstOut, rt_domain(did)%velocity, rt_domain(did)%qloss &
        )
 endif
 
@@ -1369,9 +1372,6 @@ integer:: ix0,jx0
 integer, dimension(ix0,jx0),optional :: vegtyp, soltyp
 integer            :: iret, ncid, ascIndId
 
-#ifdef MPP_LAND
-call  MPP_LAND_INIT()
-#endif
 
 
 ! read the namelist
@@ -1471,12 +1471,12 @@ write(78,*) "finish getChanDim "
 ! ADCHANGE: get global attributes
 ! need to set these after getChanDim since it allocates rt_domain vals to 0
      call get_file_globalatts(trim(nlst(did)%geo_static_flnm), &
-           rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
+          rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater)
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
-      write(6,*) rt_domain(did)%iswater, rt_domain(did)%isurban, rt_domain(did)%isoilwater
+      write(6,*) "hydro_ini: rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater"
+      write(6,*) rt_domain(did)%iswater, rt_domain(did)%islake, rt_domain(did)%isurban, rt_domain(did)%isoilwater
 #endif
 #endif
 
@@ -1678,15 +1678,15 @@ end subroutine HYDRO_ini
             if(nlst(did)%sys_cpl .eq. 2 ) then
               ! coupling with WRF
                 if(present(soltyp0) ) then
+                  where(VEGTYP0 == rt_domain(did)%iswater .or. VEGTYP0 == rt_domain(did)%islake) soltyp0 = rt_domain(did)%isoilwater
                   where(soltyp0 == rt_domain(did)%isoilwater) VEGTYP0 = rt_domain(did)%iswater
-                  where(VEGTYP0 == rt_domain(did)%iswater ) soltyp0 = rt_domain(did)%isoilwater
                    soltyp = soltyp0
                    RT_DOMAIN(did)%VEGTYP = VEGTYP0
                 endif
             endif
 
+         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater .or. RT_DOMAIN(did)%VEGTYP == rt_domain(did)%islake) soltyp = rt_domain(did)%isoilwater
          where(soltyp == rt_domain(did)%isoilwater) RT_DOMAIN(did)%VEGTYP = rt_domain(did)%iswater
-         where(RT_DOMAIN(did)%VEGTYP == rt_domain(did)%iswater ) soltyp = rt_domain(did)%isoilwater
 
 ! LKSAT,
 ! temporary set
