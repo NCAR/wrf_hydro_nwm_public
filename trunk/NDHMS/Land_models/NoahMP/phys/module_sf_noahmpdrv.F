@@ -1444,7 +1444,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: RIVERCONDXY !river conductance
     REAL, DIMENSION(ims:ime,jms:jme), INTENT(IN) , OPTIONAL :: PEXPXY      !factor for river conductance
 
-    INTEGER,  INTENT(OUT) , OPTIONAL :: STEPWTD
+    INTEGER,  INTENT(INOUT) , OPTIONAL :: STEPWTD
     REAL, INTENT(IN) , OPTIONAL :: DT, WTDDT
 
 !jref:start

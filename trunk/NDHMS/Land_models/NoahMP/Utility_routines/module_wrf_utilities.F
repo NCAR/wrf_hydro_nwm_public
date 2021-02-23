@@ -37,7 +37,7 @@ SUBROUTINE wrf_error_fatal( str )
   call flush(78)
   close(78)
 #else 
-  write(6,*),'FATAL ERROR: ',trim(str)
+  write(6,*) 'FATAL ERROR: ',trim(str)
   call flush(6)
 #endif
 
