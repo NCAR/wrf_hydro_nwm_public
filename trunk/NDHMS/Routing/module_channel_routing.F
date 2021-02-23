@@ -1707,7 +1707,7 @@ end subroutine drive_CHANNEL
 !---------------------------------------------
 if(channel_only .eq. 1 .or. channelBucket_only .eq. 1) then
 #ifdef HYDRO_D
-   write(6,*), "channel_only or channelBucket_only is not zero. Special flux calculations."
+   write(6,*)  "channel_only or channelBucket_only is not zero. Special flux calculations."
    call flush(6)
 #endif /* HYDRO_D */
 
@@ -1815,7 +1815,7 @@ endif !! (channel_only .eq. 1 .or. channelBucket_only .eq. 1) then; else; endif
 !! If not running channelOnly, here is where the bucket model is picked up
 if(channel_only .eq. 1) then
 #ifdef HYDRO_D
-   write(6,*), "channel_only is not zero. No bucket."
+   write(6,*)  "channel_only is not zero. No bucket."
    call flush(6)
 #endif /* HYDRO_D */
 else

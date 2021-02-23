@@ -426,7 +426,7 @@ contains
 #ifdef _PARALLEL_
     real, pointer,   dimension(:,:)   :: dum2d_ptr
 #endif
-    integer :: ncid, dimid, varid, ierr
+    integer, volatile :: ncid, dimid, varid, ierr
     real, allocatable, dimension(:,:) :: dum2d
     character(len=256) :: units
     integer :: i
@@ -1105,16 +1105,16 @@ contains
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
     logical, intent(in) :: fatal_if_error
-    integer, intent(out) :: ierr
+    integer, intent(out), volatile :: ierr
 #ifdef MPP_LAND
     real:: g_array(global_nx,global_ny)
 #endif
-    units = " "
+
+    ierr = 0
 
 #ifdef MPP_LAND
     if(my_id .eq. 0) then
 #endif
-
     iret = nf90_inq_varid(ncid,  name,  varid)
     if (iret /= 0) then
        if (FATAL_IF_ERROR) then
