@@ -253,11 +253,12 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 110     continue
 
         Qj_0  = 0.0                       !- initial flow of lower interval
-        WPC    = 0.0
-        AREAC  = 0.0
         iter   = 0
 
         do while (rerror .gt. 0.01 .and. aerror .ge. mindepth .and. iter .le. maxiter)
+
+           WPC    = 0.0
+           AREAC  = 0.0
 
           !----- lower interval  --------------------
 
@@ -343,6 +344,9 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
 
            !--upper interval -----------
+           WPC    = 0.0
+           AREAC  = 0.0
+
            Twl = Bw + 2.0*z*h                    !--top width of the channel inflow
 
            if(h .gt. bfd) then !water outside of defined channel
