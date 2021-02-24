@@ -71,6 +71,7 @@ if [ "$NWM_META" != "1" ]; then
     cp ../template/NoahMP/namelist.hrldas .
     cp ../template/HYDRO/hydro.namelist .
     cp ../Land_models/NoahMP/run/*TBL .
+    cp ../Land_models/NoahMP/noahmp/parameters/*TBL .
     cp ../template/HYDRO/HYDRO.TBL .
     cp ../template/HYDRO/CHANPARM.TBL .
 else

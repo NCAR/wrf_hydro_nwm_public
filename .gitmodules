@@ -1,0 +1,4 @@
+[submodule "trunk/NDHMS/Land_models/NoahMP/noahmp"]
+	path = trunk/NDHMS/Land_models/NoahMP/noahmp
+	url = https://github.com/NCAR/noahmp
+	branch = nwm_v2.1
