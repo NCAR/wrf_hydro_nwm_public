@@ -21,6 +21,10 @@ module module_levelpool_properties
         real :: orifice_coefficient      ! orifice coefficient
         real :: orifice_area             ! orifice area (meters^2)
         real :: max_depth                ! max depth of reservoir before overtop (meters)
+        real :: max_depth_full_lake      ! max depth of reservoir before overtop (meters) based on full lake depth
+        real :: lake_vol                 ! volume of lake based on bathymetry (km^3)
+        real :: lake_polya               ! coefficient a in polynomial function V=a*h^b
+        real :: lake_polyb               ! coefficient b in polynomial function V=a*h^b
         integer :: lake_number           ! lake number
 
     contains
@@ -35,7 +39,9 @@ contains
     !Level Pool Properties Constructor
     subroutine levelpool_properties_init(this, lake_area, &
         weir_elevation, weir_coeffecient, weir_length, dam_length, orifice_elevation, &
-        orifice_coefficient, orifice_area, max_depth, lake_number)
+        orifice_coefficient, orifice_area, max_depth, &
+        max_depth_full_lake, lake_vol, lake_polya, lake_polyb, &
+        lake_number)
         implicit none
         class(levelpool_properties_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area      	        ! area of lake (km^2)
@@ -47,6 +53,10 @@ contains
         real, intent(in)    :: orifice_coefficient      ! orifice coefficient
         real, intent(in)    :: orifice_area             ! orifice area (meters^2)
         real, intent(in)    :: max_depth                ! max depth of reservoir before overtop (meters)
+        real, intent(in)    :: max_depth_full_lake      ! max depth of reservoir before overtop (meters) based on full lake depth
+        real, intent(in)    :: lake_vol                 ! volume of lake based on bathymetry (km^3)
+        real, intent(in)    :: lake_polya               ! coefficient a in polynomial function V=a*h^b
+        real, intent(in)    :: lake_polyb               ! coefficient b in polynomial function V=a*h^b
         integer, intent(in) :: lake_number              ! lake number
 
         ! Assign the values passed in to a particular level pool reservoir
@@ -59,6 +69,10 @@ contains
         this%orifice_coefficient = orifice_coefficient
         this%orifice_area = orifice_area
         this%max_depth = max_depth
+        this%max_depth_full_lake = max_depth_full_lake
+        this%lake_vol = lake_vol
+        this%lake_polya = lake_polya
+        this%lake_polyb = lake_polyb
         this%lake_number = lake_number
         this%dam_length = dam_length
 

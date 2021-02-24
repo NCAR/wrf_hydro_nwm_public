@@ -101,7 +101,8 @@ module config_base
           SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
           GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
           sys_cpl, gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, &
-          gwsoilcpl, UDMP_OPT
+          gwsoilcpl, UDMP_OPT, &
+          lake_shape_option
      logical:: GwPreDiag, GwSpinUp
      real:: DTRT_TER,DTRT_CH, DTCT, dxrt0,  gwChanCondConstIn, gwChanCondConstOut, gwIhShift
      character(len=256) :: route_topo_f=""
@@ -405,7 +406,9 @@ contains
         if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: reservoir_parameter_file not found.')
       endif
    end if
-
+   if( (self%lake_shape_option .lt. 0 ) .or. (self%lake_shape_option .gt. 3) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid lake_shape_option specified')
+   endif
    if(self%reservoir_persistence_usgs) then
       if(len(trim(self%reservoir_usgs_timeslice_path)) .eq. 0) then
          call hydro_stop('hydro.namelist ERROR: You MUST specify a reservoir_usgs_timeslice_path for &
@@ -455,6 +458,7 @@ contains
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
          UDMP_OPT, io_form_outputs, bucket_loss
+    integer            :: lake_shape_option = 0
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -544,7 +548,8 @@ contains
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
          frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, &
+         lake_shape_option
 
 #ifdef WRF_HYDRO_NUDGING
     namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -579,6 +584,7 @@ contains
     reservoir_rfc_forecasts = .FALSE.
     reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
+    lake_shape_option = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -705,6 +711,7 @@ contains
     nlst(did)%DTRT_TER   = DTRT_TER
     nlst(did)%DTRT_CH   = DTRT_CH
     nlst(did)%DTCT      = DTRT_CH   ! small time step for grid based channel routing
+    nlst(did)%lake_shape_option = lake_shape_option
 
     ! Some fields haven't been initialized yet (e.g. DT)
 
@@ -726,6 +733,7 @@ contains
          print*, "nlst(did)%DT,  DTRT_CH = ",nlst(did)%DT,  DTRT_CH
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
+
 
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
