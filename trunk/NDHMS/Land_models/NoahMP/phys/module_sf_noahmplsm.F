@@ -169,6 +169,12 @@ MODULE MODULE_SF_NOAHMPLSM
                       ! **0 -> No crop model, will run default dynamic vegetation
                       !   1 -> Liu, et al. 2016
 
+  INTEGER :: OPT_IMPERV  ! options for imperviousness infiltration adjustment
+                      ! **0 -> no imperviousness adjustment
+                      !   1 -> use total imperviousness
+                      !   2 -> use effective imperviousness from Alley & Veenhuis
+                      !   3 -> use effective imperviousness from Sutherland
+
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
 !------------------------------------------------------------------------------------------!
@@ -7252,8 +7258,21 @@ ENDIF   ! CROPTYPE == 0
        INFMAX = INFMAX * FCR
 
 ! imperviousness adjustment
-       ! Effective imperviousness from Sutherland 2000
-       imperv_eff = parameters%impconnA * ( (100. * parameters%imperv)**parameters%impconnB ) / 100.
+
+       IF (OPT_IMPERV == 1) THEN
+         ! Use total imperviousness
+         imperv_eff = parameters%imperv
+       ELSE IF (OPT_IMPERV == 2) THEN
+         ! Effective imperviousness from Alley & Veenhuis
+         imperv_eff = 0.0015 * ( (100. * parameters%imperv)**1.41 )
+       ELSE IF (OPT_IMPERV == 3) THEN
+         ! Effective imperviousness from Sutherland 2000
+         imperv_eff = parameters%impconnA * ( (100. * parameters%imperv)**parameters%impconnB ) / 100.
+       ELSE
+         ! No imperviousness adjustment
+         imperv_eff = 0.0
+       END IF
+
        RUNSRF = QINSUR * imperv_eff
 
        CALL WDFCND2 (parameters,WDF,WCND,SH2O(1),SICEMAX,1)
@@ -9080,7 +9099,7 @@ END SUBROUTINE PSN_CROP
 
   subroutine noahmp_options(idveg     ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz , & 
                              iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc, &
-			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop )
+			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop, iopt_imperv )
 
   implicit none
 
@@ -9102,6 +9121,8 @@ END SUBROUTINE PSN_CROP
   INTEGER,  INTENT(IN) :: iopt_soil !soil parameters set-up option
   INTEGER,  INTENT(IN) :: iopt_pedo !pedo-transfer function (1->Saxton and Rawls)
   INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.)
+  INTEGER,  INTENT(IN) :: iopt_imperv !imperviousness infiltration adjustment (0->none; 1->total imperviousness;
+                                           !2->Alley&Veenhuis;!3->Sutherland)
 
 ! -------------------------------------------------------------------------------------------------
 
@@ -9122,6 +9143,7 @@ END SUBROUTINE PSN_CROP
   opt_soil = iopt_soil
   opt_pedo = iopt_pedo
   opt_crop = iopt_crop
+  opt_imperv = iopt_imperv
   
   end subroutine noahmp_options
  

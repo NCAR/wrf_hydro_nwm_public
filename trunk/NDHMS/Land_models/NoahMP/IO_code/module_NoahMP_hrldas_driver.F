@@ -118,6 +118,8 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_SOIL ! soil configuration option
   INTEGER                                 ::  IOPT_PEDO ! soil pedotransfer function option
   INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
+  INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
+                                                                                        !2->Alley&Veenhuis; 3->Sutherland)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -446,6 +448,7 @@ module module_NoahMP_hrldas_driver
   IOPT_SOIL = noah_lsm%soil_data_option
   IOPT_PEDO = noah_lsm%pedotransfer_option
   IOPT_CROP = noah_lsm%crop_option
+  IOPT_IMPERV = noah_lsm%imperv_option
 
   khour = noah_lsm%khour
 
@@ -1648,7 +1651,8 @@ end subroutine land_driver_ini
 		  XLAND,     XICE,     XICE_THRESHOLD,                        &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
-	       IOPT_GLA, IOPT_RSF,IOPT_SOIL,IOPT_PEDO, IOPT_CROP,    IZ0TLND, &
+	       IOPT_GLA, IOPT_RSF,IOPT_SOIL,IOPT_PEDO, IOPT_CROP,             &
+               IOPT_IMPERV, IZ0TLND,                                          &
 		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
