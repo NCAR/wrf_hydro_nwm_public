@@ -40,7 +40,7 @@ module module_HYDRO_drv
    use module_gw_gw2d_data, only: gw2d
    use module_channel_routing, only: drive_channel, drive_channel_rsl
    use orchestrator_base
-   use config_base, only: nlst
+   use config_base, only: nlst, noah_lsm
    use module_routing, only: getChanDim, landrt_ini
    use module_HYDRO_utils
    use module_lsm_forcing, only: geth_newdate
@@ -1790,12 +1790,14 @@ end subroutine HYDRO_ini
        ! input from HYDRO.TBL.nc file
        print*, "reading from hydrotbl_f(HYDRO.TBL.nc)  file ...."
        call hdtbl_in_nc(did)
-       !ADCHANGE: For consistency, mirror urban and param value checks used in table read
-       where (rt_domain(did)%VEGTYP == rt_domain(did)%isurban)
-          rt_domain(did)%SMCMAX1 = 0.45
-          rt_domain(did)%SMCREF1 = 0.42
-          rt_domain(did)%SMCWLT1 = 0.40
-       endwhere
+       if (noah_lsm%imperv_option .eq. 0) then
+         !ADCHANGE: For consistency, mirror urban and param value checks used in table read
+         where (rt_domain(did)%VEGTYP == rt_domain(did)%isurban)
+           rt_domain(did)%SMCMAX1 = 0.45
+           rt_domain(did)%SMCREF1 = 0.42
+           rt_domain(did)%SMCWLT1 = 0.40
+         endwhere
+       endif
        where (rt_domain(did)%SMCMAX1 .gt. 1.0) rt_domain(did)%SMCMAX1 = 1.0
        rt_domain(did)%SMCREF1 = max(min(rt_domain(did)%SMCREF1, rt_domain(did)%SMCMAX1 - 0.01), 0.0)
        rt_domain(did)%SMCWLT1 = max(min(rt_domain(did)%SMCWLT1, rt_domain(did)%SMCREF1 - 0.01), 0.0)

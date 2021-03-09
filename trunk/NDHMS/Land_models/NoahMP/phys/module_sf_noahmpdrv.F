@@ -678,7 +678,7 @@ CONTAINS
        parameters%impconnA = IMPCONNA_2D(I,J)     ! impervious connectivity A parameter from Sutherland 2000
        parameters%impconnB = IMPCONNB_2D(I,J)     ! impervious connectivity B parameter from Sutherland 2000
 #endif
-       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
+       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters,iopt_imperv)
        
        GRAIN = 0.0                ! mass of grain [g/m2]
        GDD   = 0.0                ! growing degree days
@@ -1014,7 +1014,7 @@ CONTAINS
   END SUBROUTINE noahmplsm
 !------------------------------------------------------
 
-SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,parameters)
+SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,parameters,iopt_imperv)
 
   USE NOAHMP_TABLES
   USE MODULE_SF_NOAHMPLSM
@@ -1026,6 +1026,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   INTEGER, INTENT(IN)    :: SLOPETYPE
   INTEGER, INTENT(IN)    :: SOILCOLOR
   INTEGER, INTENT(IN)    :: CROPTYPE
+  INTEGER, INTENT(IN)    :: iopt_imperv
     
   type (noahmp_parameters), intent(inout) :: parameters
     
@@ -1235,6 +1236,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%KDT    = parameters%REFKDT * parameters%DKSAT(1) / parameters%REFDK
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
+       if (iopt_imperv .eq. 0) then
+         parameters%SMCMAX = 0.45 
+         parameters%SMCREF = 0.42 
+         parameters%SMCWLT = 0.40 
+         parameters%SMCDRY = 0.40 
+       endif
        parameters%CSOIL  = 3.E6
     ENDIF
 
