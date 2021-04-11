@@ -4706,13 +4706,8 @@ subroutine output_chanObs_NWM(domainId)
 
       ! Create NetCDF for output?
 
-      if(single_output_file) then
-         iret = nf90_create(trim(output_flnm), cmode=ior(nf90_noclobber,nf90_netcdf4), ncid=ftn)
-         single_output_file_exists = iret == nf90_eexist
-      endif
-
-      if((.not. single_output_file) .or. (.not. single_output_file_exists)) then
-
+      inquire(file=trim(output_flnm), exist=single_output_file_exists)
+      if ((.not. single_output_file) .or. (.not. single_output_file_exists)) then
          iret = nf90_create(trim(output_flnm), cmode=nf90_netcdf4, ncid=ftn)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create CHANOBS NetCDF file.')
 
