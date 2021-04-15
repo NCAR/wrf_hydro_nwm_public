@@ -1004,7 +1004,7 @@ subroutine LandRT_ini(did)
         endif  ! end if block for UDMP_OPT
 
         !-------------------------------------------
-        ! Z.Cui: Changedd new_start_i to 0, otherwise, it crashes with 
+        ! Z.Cui: Changed new_start_i to 0, otherwise, it crashes with 
         !        an out-of-bounds error when the '-check all' is enabled
         !        for the ifort compiler.
         !        The reason is that CH_LNKRT and CH_LNKRT_SL is defined as 
