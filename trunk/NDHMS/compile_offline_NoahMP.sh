@@ -51,8 +51,8 @@ ln -sf CPL/NoahMP_cpl LandModel_cpl
 make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
 #for debugging and testing
-make debug; make install; make test 
-#make; make install
+#make debug; make install; make test 
+make; make install
 
 if [[ $? -eq 0 ]]; then
     echo
