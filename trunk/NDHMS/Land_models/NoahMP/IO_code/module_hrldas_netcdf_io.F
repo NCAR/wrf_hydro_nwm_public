@@ -432,6 +432,9 @@ contains
     integer :: i
     integer :: rank
 
+#ifdef HYDRO_D
+    write(6, *) "Entering read_hrldas_hdrinfo!"
+#endif
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
@@ -575,6 +578,9 @@ contains
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        " Problems closing NetCDF file.")
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving read_hrldas_hdrinfo!"
+#endif
   end subroutine read_hrldas_hdrinfo
 
 !---------------------------------------------------------------------------------------------------------
@@ -605,6 +611,9 @@ contains
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
+#ifdef HYDRO_D
+       write(6, *) "Entering readland_hrldas!"
+#endif
 
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
@@ -691,6 +700,10 @@ contains
     where (vegtyp == ISWATER .or. vegtyp == ISLAKE) soltyp = 14
     where (soltyp == 14) vegtyp = ISWATER
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving readland_hrldas!"
+#endif
+
   end subroutine readland_hrldas
 
 !---------------------------------------------------------------------------------------------------------
@@ -715,6 +728,9 @@ contains
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
 
+#ifdef HYDRO_D
+    write(6, *) "Entering read_mmf_runoff!"
+#endif
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
@@ -769,6 +785,9 @@ contains
                         " - NF90_CLOSE problem."
 
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving read_mmf_runoff!"
+#endif
   end subroutine read_mmf_runoff
 
 !---------------------------------------------------------------------------------------------------------
@@ -1109,6 +1128,9 @@ contains
 #ifdef MPP_LAND
     real:: g_array(global_nx,global_ny)
 #endif
+#ifdef HYDRO_D
+    write(6,*) "Entering get_2d_netcdf! name=", name
+#endif
 
     ierr = 0
 
@@ -1164,14 +1186,32 @@ contains
 #ifdef MPP_LAND
 9991    continue
     endif
+#ifdef HYDRO_D
+    write(6,*) "call  mpp_land_bcast_int1(ierr), my_id=", my_id
+#endif
     call mpp_land_bcast_int1(ierr)
     !yyww call mpp_land_bcast(units)
+#ifdef HYDRO_D
+    write(6,*) "call mpp_land_bcast_char(256,units), my_id=", my_id
+#endif
     call mpp_land_bcast_char(256,units)
+#ifdef HYDRO_D
+    write(6,*) "done mpp_land_bcast_char(256,units), my_id=", my_id
+    write(6,*) "ierr=", ierr
+#endif
     if(ierr /= 0) return
 #ifdef HYDRO_D
-    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+    write(6,*) "my_id, xstart,xend, ystart, yend",my_id, xstart,xend, ystart, yend
+    write(6,*) "call decompose_data_real, my_id=", my_id
 #endif
     call decompose_data_real(g_array,array)
+#ifdef HYDRO_D
+    write(6,*) "done call decompose_data_real, my_id=", my_id
+#endif
+
+#endif
+#ifdef HYDRO_D
+    write(6,*) "Done get_2d_netcdf!"
 #endif
   end subroutine get_2d_netcdf
 
