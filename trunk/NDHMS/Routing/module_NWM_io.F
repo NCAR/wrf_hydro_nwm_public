@@ -1447,7 +1447,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
 !++ T.EI crocus
          iret = nf90_def_dim(ftnNoahMP,'glacier_levels',fileMeta%act_lev,dimId(8))
-         write(*,*) 'glacier levels ', fileMeta%act_lev, dimid(8)
+!         write(*,*) 'glacier levels ', fileMeta%act_lev, dimid(8)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define act_layers dimension')
 ! -- T.EI
          ! Only create vis_nir if we are outputting the two snow albedo variables.
@@ -1783,16 +1783,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
       ! Write array out to NetCDF file.
       if(myId .eq. 0) then
-         write(*,*) 'trude foo1'
-         write(*,*) 'variable name : ', fileMeta%varNames(varInd)
-         write(*,*) 'varind :', varind
-         write(*,*) 'varid :', varid
-         write(*,*) 'ftnNoahMP :', ftnNoahMP
-         write(*,*) 'num lev :', fileMeta%numLev(varInd)
+!         write(*,*) 'trude foo1'
+!         write(*,*) 'variable name : ', fileMeta%varNames(varInd)
+!         write(*,*) 'varind :', varind
+!         write(*,*) 'varid :', varid
+!         write(*,*) 'ftnNoahMP :', ftnNoahMP
+!         write(*,*) 'num lev :', fileMeta%numLev(varInd)
          iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
          write(*,*) iret
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
-         write(*,*) 'trude foo2'
+!         write(*,*) 'trude foo2'
          if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
             if(fileMeta%numLev(varInd) .eq. 1) then
                iret = nf90_put_var(ftnNoahMP,varId,globalOutComp,(/1,1,1/),(/global_nx,global_ny,1/))

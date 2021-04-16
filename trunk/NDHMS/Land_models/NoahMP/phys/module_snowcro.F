@@ -32,8 +32,8 @@ CONTAINS
                PEMISNOW,PCDSNOW,PUSTAR,PCHSNOW,PSNOWHMASS,PQS,           &
                PPERMSNOWFRAC,PZENITH,                        &
                OSNOWDRIFT,OSNOWDRIFT_SUBLIM,OSNOW_ABS_ZENITH,            &
-               HSNOWMETAMO,HSNOWRAD,                                                     &
-               act_level,                                                                                     &
+               HSNOWMETAMO,HSNOWRAD,                                     &
+               act_level, VIS_ICEALB,                                    &
                PFSA_CROCUS, PFSR_CROCUS, PFIRA_CROCUS,I,J)                  !(OUT)) 
 !     ##########################################################################
 !
@@ -190,8 +190,10 @@ LOGICAL, INTENT(IN)                 :: OGLACIER   ! True = Over permanent snow a
 !
 
 ! trude added
+    
 INTEGER, INTENT(IN)                  :: act_level
 INTEGER, INTENT(IN)                  :: I,J
+REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
 !end trude
 
 REAL, DIMENSION(:), INTENT(IN)      :: PPS, PTA, PSW_RAD, PQA, PVMOD, PLW_RAD, PSR, PRR 
@@ -856,7 +858,7 @@ SELECT CASE (HSNOWRAD)
                     PALB,ZRADSINK,ZRADXS,                 &
                     PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE,PPS, &
                     PZENITH, PPERMSNOWFRAC,INLVLS_USE,    &
-                    OSNOW_ABS_ZENITH,HSNOWMETAMO) 
+                    OSNOW_ABS_ZENITH,HSNOWMETAMO,VIS_ICEALB) 
   !
 !write(*,*) 'foo13 psnowdz', psnowdz
   CASE ("TAR","TA1","TA2")
@@ -1183,7 +1185,7 @@ IF ( HSNOWRAD=='B92' ) THEN
                   PSNOWALB,ZSPECTRALALBEDO,PSNOWDZ(:,1),PSNOWRHO(:,1:2),       &
                   PPERMSNOWFRAC,PSNOWGRAN1(:,1),PSNOWGRAN2(:,1),               &
                   PSNOWAGE(:,1),PSNOWGRAN1(:,2),PSNOWGRAN2(:,2),PSNOWAGE(:,2), &
-                  PPS, PZENITH, INLVLS_USE, HSNOWMETAMO) 
+                  PPS, PZENITH, INLVLS_USE, HSNOWMETAMO,VIS_ICEALB) 
 !write(*,*) 'foo32 psnowdz', psnowdz
   !the albedo is not updated in the case of TARTES scheme                 
 ENDIF
@@ -2083,7 +2085,7 @@ SUBROUTINE SNOWCROALB(OGLACIER,                            &
                       PSNOWRHO,PPERMSNOWFRAC,                     &
                       PSNOWGRAN1_TOP,PSNOWGRAN2_TOP,PSNOWAGE_TOP, &
                       PSNOWGRAN1_BOT,PSNOWGRAN2_BOT,PSNOWAGE_BOT, &
-                      PPS, PZENITH, KNLVLS_USE ,HSNOWMETAMO       ) 
+                      PPS, PZENITH, KNLVLS_USE ,HSNOWMETAMO,VIS_ICEALB  ) 
 !
 !!    PURPOSE
 !!    -------
@@ -2148,6 +2150,10 @@ REAL, DIMENSION(SIZE(PALBEDOSC))  :: ZVAGE1
 !REAL            :: ZAGE_NOW
 !
 INTEGER         :: JJ   ! looping indexes
+
+!++ trude, crocus
+REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
+!-- trude
 !
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
@@ -2200,14 +2206,14 @@ DO JJ=1, SIZE(PALBEDOSC)
   ELSE
     !
     CALL GET_ALB(JJ,PSNOWRHO(JJ,1),PPS(JJ),ZVAGE1(JJ),PSNOWGRAN1_TOP(JJ),&
-                 PSNOWGRAN2_TOP(JJ),PSNOWAGE_TOP(JJ),ZALB_TOP(JJ,:),HSNOWMETAMO)
+                 PSNOWGRAN2_TOP(JJ),PSNOWAGE_TOP(JJ),ZALB_TOP(JJ,:),HSNOWMETAMO,VIS_ICEALB)
      !                  
 !      IF (KNLVLS_USE(JJ)>=1) THEN
     IF ( KNLVLS_USE(JJ)>=2 ) THEN !modif ML
       ! second surface layer when it exists 
       !
       CALL GET_ALB(JJ,PSNOWRHO(JJ,2),PPS(JJ),ZVAGE1(JJ),PSNOWGRAN1_BOT(JJ),&
-                   PSNOWGRAN2_BOT(JJ),MIN(365.,PSNOWAGE_BOT(JJ)),ZALB_BOT(JJ,:),HSNOWMETAMO)
+                   PSNOWGRAN2_BOT(JJ),MIN(365.,PSNOWAGE_BOT(JJ)),ZALB_BOT(JJ,:),HSNOWMETAMO,VIS_ICEALB)
       !
     ELSE
       ! when it does not exist, the second surface layer gets top layer albedo   
@@ -2242,7 +2248,7 @@ ENDDO ! end loop grid points
 END SUBROUTINE SNOWCROALB
 !####################################################################
 SUBROUTINE GET_ALB(KJ,PSNOWRHO_IN,PPS_IN,PVAGE1,PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PALB,&
-                   HSNOWMETAMO)
+                   HSNOWMETAMO,VIS_ICEALB)
 !
 USE MODD_CSTS, ONLY :                           XRHOTHRESHOLD_ICE   ! trude, changed the location of this             
 USE MODD_SNOW_PAR, ONLY : XALBICE1, XALBICE2, XALBICE3,   &
@@ -2265,8 +2271,12 @@ REAL, INTENT(IN) :: PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE
 REAL, DIMENSION(3), INTENT(OUT) :: PALB
 !
  CHARACTER(3),INTENT(IN)::HSNOWMETAMO
-!
+ !
 REAL :: ZDIAM, ZDIAM_SQRT
+
+!++ trude, crocus
+REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
+!-- trude
 !
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !
@@ -2291,7 +2301,9 @@ IF ( PSNOWRHO_IN<XRHOTHRESHOLD_ICE ) THEN
                    XVALB10 * PSNOWAGE / PVAGE1 )
 ELSE
   ! Prescribed spectral albedo for surface ice
-  PALB(1) = XALBICE1
+  !! ++ trude, crocus
+  PALB(1) = VIS_ICEALB(1)
+  !PALB(1) = XALBICE1
   PALB(2) = XALBICE2
   PALB(3) = XALBICE3
 ENDIF
@@ -2308,7 +2320,7 @@ SUBROUTINE SNOWCRORAD(OGLACIER,                        &
                       PSNOWRHO, PALB, PRADSINK, PRADXS,        &
                       PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE,PPS,    &
                       PZENITH, PPERMSNOWFRAC,KNLVLS_USE,       &
-                      OSNOW_ABS_ZENITH,HSNOWMETAMO) 
+                      OSNOW_ABS_ZENITH,HSNOWMETAMO,VIS_ICEALB) 
 !
 !!    PURPOSE
 !!    -------
@@ -2366,7 +2378,10 @@ REAL, DIMENSION(3) :: ZOPTICALPATH, ZFACT
 REAL :: ZPROJLAT
 !
 INTEGER :: JJ,JST,JB   ! looping indexes
-!
+
+!++ trude, crocus
+
+REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   !-- trude!
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
 !IF (LHOOK) CALL DR_HOOK('SNOWCRORAD',0,ZHOOK_HANDLE)
@@ -2384,7 +2399,7 @@ CALL SNOWCROALB(OGLACIER,                                             &
                  ZALB_NEW,ZALB,PSNOWDZ(:,1),PSNOWRHO(:,1:2),                  &
                  PPERMSNOWFRAC,PSNOWGRAN1(:,1),PSNOWGRAN2(:,1),               &
                  PSNOWAGE(:,1),PSNOWGRAN1(:,2),PSNOWGRAN2(:,2),PSNOWAGE(:,2), &
-                 PPS, PZENITH, KNLVLS_USE, HSNOWMETAMO                        ) 
+                 PPS, PZENITH, KNLVLS_USE, HSNOWMETAMO, VIS_ICEALB     ) 
 !
 DO JJ = 1,SIZE(PSW_RAD)
 

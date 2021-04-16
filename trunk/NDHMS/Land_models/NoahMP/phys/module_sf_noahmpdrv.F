@@ -64,7 +64,7 @@ CONTAINS
               PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & !IN/OUT for crocus, T.EI
               PSNOWALBXY, PSNOWAGEXY, act_level,      & !IN/OUT  for crocus, T.EI
               PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY, & !OUT  for crocus   & out, T.EI
-              GLACINFO ,GLACT,& ! INOUT for crocus, T.EI
+              GLACINFO ,GLACT,VIS_ICEALB,& ! INOUT for crocus, T.EI
 ! -- T.EI
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
@@ -502,12 +502,13 @@ CONTAINS
       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWLIQXY
       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWTEMPXY
       REAL, DIMENSION(ims:ime, 1:act_level,   jms:jme ), INTENT(OUT)    :: PSNOWDZXY
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)                   :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
 
-      INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                :: GLACINFO  
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                      :: GLACT
+      INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)              :: GLACINFO  
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: GLACT
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: VIS_ICEALB
 
       INTEGER                              :: GLACINFOH,GLACR ! glacier info
       CHARACTER(LEN=11)         :: HSNOWRES
@@ -536,8 +537,8 @@ CONTAINS
       REAL, DIMENSION(1)    ::   ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW
       REAL, DIMENSION(1)    ::   ZP_Z0NAT
       REAL, DIMENSION(1)    ::   ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND
-      REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB                   
-
+      REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB, ZP_VIS_ICEALB                   
+      
       REAL, DIMENSION(1)    ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
       REAL, DIMENSION(1)    ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT) 
       REAL, DIMENSION(1)    ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
@@ -845,6 +846,8 @@ CONTAINS
       ZP_SNOWTEMP(1,1:act_level) = PSNOWTEMPXY(I,1:act_level,J)       
       ZP_SNOWDZ(1,1:act_level) = PSNOWDZXY(I,1:act_level,J)       
       ZP_SNOWALB(1) =  PSNOWALBXY(I,J)
+      
+      ZP_vis_icealb(1) = VIS_ICEALB(I,J)
 
       ZP_ZENITH    = ACOS(COSZIN(I,J)) 
 
@@ -1011,7 +1014,7 @@ CONTAINS
                   ZP_VEGTYPE, ZP_ZENITH,                                                                  & !(IN)
                   OSNOWDRIFT,OSNOWDRIFT_SUBLIM,                 & !(IN)
                   OSNOW_ABS_ZENITH, HSNOWMETAMO,HSNOWRAD,                      &
-                  act_level,                                                                           &
+                  act_level, ZP_VIS_ICEALB,                                    &
                   ZP_FSA_CROCUS, ZP_FSR_CROCUS, ZP_FIRA_CROCUS,I,J) !(OUT)
 
 

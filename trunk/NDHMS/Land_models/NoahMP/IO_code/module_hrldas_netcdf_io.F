@@ -66,6 +66,7 @@ module module_hrldas_netcdf_io
 ! ++ T.EI crocus
   integer, private, allocatable, dimension(:,:) :: glacinfo_remember   ! not sure if needed
   real, private, allocatable, dimension(:,:) :: glact_remember   ! not sure if needed
+  real, private, allocatable, dimension(:,:) :: vis_icealb_remember    
   integer, private :: dimid_glacier_layers_remember  
 ! -- T.EI 
 
@@ -590,7 +591,7 @@ contains
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
        longitude, xland, seaice, msftx, msfty, &
-       glacinfo,glact)  !!T.EI crocus
+       glacinfo,glact,vis_icealb)  !!T.EI crocus
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -600,7 +601,8 @@ contains
 ! ++ T.EI crocus
     integer, dimension(xstart:xend,ystart:yend), intent(out) :: glacinfo 
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: glact 
-! -- T.EI
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: vis_icealb 
+    ! -- T.EI
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: latitude
@@ -694,7 +696,13 @@ contains
 ! Get Glacier thickness (glact) 
     call get_2d_netcdf("glacier_thickness", ncid, glact,   units, xstart, xend, ystart, yend, FATAL, ierr)
     ! print*, 'glact(xstart,ystart) = ', glact(xstart,ystart)
+
+
+    ! Get visible ice albedo map (vis_icealb) 
+    call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, FATAL, ierr)
+    ! print*, 'vis_icealb(xstart,ystart) = ', vis_icealb(xstart,ystart)
 ! -- T.EI
+
 
     ! Get Dominant Soil Type categories in the top layer (stl)
     call get_soilcat_netcdf(ncid, xdum ,   units, xstart, xend, ystart, yend)
@@ -2260,13 +2268,15 @@ contains
 ! ++ T.EI crocus
     integer,          dimension(ixpar,jxpar), intent(in) :: glacinfo 
     real,          dimension(ixpar,jxpar), intent(in) :: glact 
+!    real,          dimension(ixpar,jxpar), intent(in) :: vis_icealb 
 ! -- T.EI
     integer,          dimension(global_nx,global_ny) :: g_vegtyp
     integer,          dimension(global_nx,global_ny) :: g_soltyp
 ! ++ T.EI crocus
     integer,          dimension(global_nx,global_ny) :: g_glacinfo  
     real,          dimension(global_nx,global_ny) :: g_glact  
-! -- T.EI
+    real,          dimension(global_nx,global_ny) :: g_vis_icealb  
+    ! -- T.EI
 
     call write_io_int(vegtyp, g_vegtyp)
     call write_io_int(soltyp, g_soltyp)
@@ -2335,7 +2345,8 @@ contains
 ! ++ T.EI crocus
    integer,          dimension(ixpar,jxpar), intent(in) :: glacinfo  
     real,          dimension(ixpar,jxpar), intent(in) :: glact 
-! -- T.EI 
+!    real,          dimension(ixpar,jxpar), intent(in) :: vis_icealb 
+    ! -- T.EI 
 
     integer :: ncid
 
@@ -2454,7 +2465,9 @@ contains
     glacinfo_remember = glacinfo 
     allocate(glact_remember(ixpar,jxpar))  
     glact_remember = glact  
-! -- T.EI
+  !  allocate(vis_icealb_remember(ixpar,jxpar))  
+  !  vis_icealb_remember = vis_icealb  
+    ! -- T.EI
 
 !
 ! While we're here, put the data for the "Times" variable to the NetCDF file.
@@ -2531,7 +2544,8 @@ contains
 ! ++ T.EI crocus
     if(allocated(glacinfo_remember)) deallocate(glacinfo_remember)
     if(allocated(glact_remember)) deallocate(glact_remember)
-! -- T.EI
+    if(allocated(vis_icealb_remember)) deallocate(vis_icealb_remember)
+    ! -- T.EI
   end subroutine finalize_output_file
 
 !---------------------------------------------------------------------------------------------------------
@@ -2920,7 +2934,7 @@ contains
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
        iswater, vegtyp,&
 ! ++ T.EI crocus
-       glacinfo,glact,act_level) 
+       glacinfo,glact,act_level,vis_icealb) 
 ! -- T.EI
 
     implicit none
@@ -2952,7 +2966,8 @@ contains
 ! ++ T.EI crocus
     integer, dimension(ixpar,jxpar),       intent(in) :: glacinfo  
     real, dimension(ixpar,jxpar),       intent(in) :: glact 
-!-- T.EI
+    real, dimension(ixpar,jxpar),       intent(in) :: vis_icealb 
+    !-- T.EI
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then

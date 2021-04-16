@@ -99,8 +99,9 @@ module module_NoahMP_hrldas_driver
   INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISLTYP    ! soil type
 ! ++ T.EI crocus 
  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  GLACINFO    ! location of  glacier 
-  REAL, ALLOCATABLE, DIMENSION(:,:)    ::  GLACT ! glacier thickness  
-! -- T.EI
+  REAL, ALLOCATABLE, DIMENSION(:,:)      ::  GLACT ! glacier thickness  
+  REAL, ALLOCATABLE, DIMENSION(:,:)      ::  VIS_ICEALB  ! map of visible ice albedo 
+  ! -- T.EI
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGFRA    ! vegetation fraction []
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TMN       ! deep soil temperature [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAND     ! =2 ocean; =1 land/seaice
@@ -741,9 +742,10 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( ISLTYP    (XSTART:XEND,YSTART:YEND) )    ! soil type
   ALLOCATE ( VEGFRA    (XSTART:XEND,YSTART:YEND) )    ! vegetation fraction []
 ! ++ T.EI crocus 
-  ALLOCATE ( GLACINFO    (XSTART:XEND,YSTART:YEND) )    ! loacation of glacier 
+  ALLOCATE ( GLACINFO (XSTART:XEND,YSTART:YEND) )    ! loacation of glacier 
   ALLOCATE ( GLACT    (XSTART:XEND,YSTART:YEND) )    ! glacier thickness [m]
-!-- T.EI
+  ALLOCATE ( VIS_ICEALB(XSTART:XEND,YSTART:YEND) ) 
+  !-- T.EI
   ALLOCATE ( TMN       (XSTART:XEND,YSTART:YEND) )    ! deep soil temperature [K]
   ALLOCATE ( XLAND     (XSTART:XEND,YSTART:YEND) )    ! =2 ocean; =1 land/seaice
   ALLOCATE ( XICE      (XSTART:XEND,YSTART:YEND) )    ! fraction of grid that is seaice
@@ -973,9 +975,10 @@ module module_NoahMP_hrldas_driver
   DZS        = undefined_real
   IVGTYP     = undefined_int
 ! ++ T.EI crocus
-  GLACINFO     = undefined_int 
-  GLACT     = undefined_real   
-! -- T.EI
+  GLACINFO   = undefined_int 
+  GLACT      = undefined_real   
+  VIS_ICEALB = undefined_real
+  ! -- T.EI
   ISLTYP     = undefined_int
   VEGFRA     = undefined_real
   GVFMAX     = undefined_real
@@ -1141,7 +1144,7 @@ module module_NoahMP_hrldas_driver
   CALL READLAND_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
        ISWATER, ISLAKE, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND,   &
        SEAICE, MSFTX,MSFTY,                                                        &
-       GLACINFO,GLACT) !++ T.EI crocus
+       GLACINFO,GLACT,VIS_ICEALB) !++ T.EI crocus
 
   WHERE(SEAICE > 0.0) XICE = 1.0
 
@@ -1813,7 +1816,7 @@ end subroutine land_driver_ini
                PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & 
                PSNOWALBXY, PSNOWAGEXY, act_lev,      & 
                PSNOWHEIGHTXY, PSNOWTOTSWEXY, PSNOWTHRUFALXY,&
-               GLACINFO, GLACT,& 
+               GLACINFO, GLACT,VIS_ICEALB,& 
 ! -- T.EI
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
@@ -2195,7 +2198,7 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,(PSNOWLIQXY),IVGTYP,111)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHEATXY,IVGTYP,112)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWRHOXY ,IVGTYP,113)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,144)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,114)
 ! -- T.EI
 #endif /* WRF_HYDRO */
 
@@ -2222,7 +2225,7 @@ subroutine lsm_restart(state)
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
        cen_lon, iswater, ivgtyp, &
 ! ++ T.EI
-       glacinfo, glact,act_lev)  
+       glacinfo, glact,act_lev,VIS_ICEALB)  
 ! -- T.EI
 
 
