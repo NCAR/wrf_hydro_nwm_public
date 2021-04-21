@@ -22,7 +22,7 @@ pandas==0.23.4
 partd==1.0.0
 pathlib==1.0.1
 pluggy==0.12.0
-py==1.8.0
+py==1.10.0
 pytest==3.9.1
 pytest-datadir-ng==1.1.0
 pytest-html==1.19.0
