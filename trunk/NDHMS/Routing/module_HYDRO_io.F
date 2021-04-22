@@ -35,6 +35,7 @@ module module_HYDRO_io
    use netcdf
    use module_hydro_stop, only:HYDRO_stop
    use hashtable
+   use iso_fortran_env, only: int64
 
    implicit none
 
@@ -1187,7 +1188,57 @@ end subroutine get_albedo12m_netcdf
         end do
 #endif
      end SUBROUTINE nreadRT2d_int
-!---------------------------------------------------------
+
+
+     subroutine nreadRT2d_int8(var_name, inv, ixrt, jxrt, fileName, fatalErr)
+         implicit none
+         INTEGER, INTENT(IN) :: ixrt,jxrt
+         INTEGER :: i, j, ii,jj, iret
+         CHARACTER(len=*):: var_name,fileName
+         integer(kind=int64), INTENT(OUT), dimension(ixrt,jxrt) :: inv
+         integer(kind=int64), dimension(ixrt,jxrt) :: inv_tmp
+         logical, optional, intent(in) :: fatalErr
+         logical :: fatalErr_local
+#ifdef MPP_LAND
+     integer(kind=int64), allocatable,dimension(:,:) :: g_inv_tmp, g_inv
+#endif
+         fatalErr_local = .FALSE.
+         if(present(fatalErr)) fatalErr_local=fatalErr
+
+#ifdef MPP_LAND
+     if(my_id .eq. io_id) then
+          allocate(g_inv_tmp(global_rt_nx,global_rt_ny))
+          allocate(g_inv(global_rt_nx,global_rt_ny))
+          g_inv_tmp = -9999.9
+          call  get2d_int8(var_name,g_inv_tmp,global_rt_nx,global_rt_ny,&
+                 trim(fileName), fatalErr=fatalErr_local)
+
+          jj = global_rt_ny
+          do j = 1, global_rt_ny
+             g_inv(:,j) = g_inv_tmp(:,jj)
+             jj = global_rt_ny - j
+          end do
+     else
+          allocate(g_inv_tmp(1,1))
+          allocate(g_inv(1,1))
+     endif
+     call decompose_RT_int8(g_inv,inv,global_rt_nx,global_rt_ny,IXRT,JXRT)
+     if(allocated(g_inv_tmp)) deallocate(g_inv_tmp)
+     if(allocated(g_inv)) deallocate(g_inv)
+#else
+         call  get2d_int(var_name,inv_tmp,ixrt,jxrt,&
+                 trim(fileName), fatalErr=fatalErr_local)
+         do i=1,ixrt
+             jj=jxrt
+             do j=1,jxrt
+                 inv(i,j)=inv_tmp(i,jj)
+                 jj=jxrt-j
+             end do
+         end do
+#endif
+     end SUBROUTINE nreadRT2d_int8
+
+         !---------------------------------------------------------
 !DJG -----------------------------------------------------
 
      subroutine readRT2d_real(var_name, inv, ixrt, jxrt, fileName, fatalErr)
@@ -5170,14 +5221,14 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
      real, dimension(:,:),                intent(in) :: qlink
-     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK_in
+     integer(kind=int64), dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK_in
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
 
      integer::  gnlinks , map_l2g(nlinks)
 
-     integer, allocatable,dimension(:,:)         :: CH_NETLNK
+     integer(kind=int64), allocatable,dimension(:,:)         :: CH_NETLNK
      real, allocatable,dimension(:,:)                :: g_qlink
 
      if(my_id .eq. io_id) then
@@ -5191,7 +5242,7 @@ end subroutine mpp_output_chrt
      call write_chanel_real(qlink(:,1),map_l2g,gnlinks,nlinks,g_qlink(:,1))
      call write_chanel_real(qlink(:,2),map_l2g,gnlinks,nlinks,g_qlink(:,2))
 
-     call write_IO_rt_int(CH_NETLNK_in, CH_NETLNK)
+     call write_IO_rt_int8(CH_NETLNK_in, CH_NETLNK)
 
     if(my_id.eq.IO_id) then
         call  output_chrtgrd(igrid, split_output_count, g_ixrt,g_jxrt, &
@@ -5215,7 +5266,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: NLINKS,ixrt,jxrt
      real,                                     intent(in) :: dt
      real, dimension(:,:),                intent(in) :: qlink
-     integer, dimension(IXRT,JXRT),            intent(in) :: CH_NETLNK
+     integer(kind=int64), dimension(IXRT,JXRT), intent(in) :: CH_NETLNK
      character(len=*),          intent(in)     :: geo_finegrid_flnm
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -5430,6 +5481,52 @@ end subroutine mpp_output_chrt
     return
   end subroutine get2d_int
 
+    subroutine get2d_int8(var_name,out_buff,ix,jx,fileName, fatalErr)
+        implicit none
+        integer :: iret,varid,ncid,ix,jx
+        integer(kind=int64) out_buff(ix,jx)
+        character(len=*), intent(in) :: var_name
+        character(len=*), intent(in) :: fileName
+        logical, optional, intent(in) :: fatalErr
+        logical :: fatalErr_local
+        character(len=256) :: errMsg
+
+        fatalErr_local = .false.
+        if(present(fatalErr)) fatalErr_local=fatalErr
+
+        iret = nf90_open(trim(fileName), NF90_NOWRITE, ncid)
+        if (iret .ne. 0) then
+            errMsg = "get2d_int: failed to open the netcdf file: " // trim(fileName)
+            print*, trim(errMsg)
+            if(fatalErr_local) call hydro_stop(trim(errMsg))
+        endif
+
+        iret = nf90_inq_varid(ncid,trim(var_name),  varid)
+        if(iret .ne. 0) then
+            errMsg = "get2d_int: failed to find the variable: " // &
+                    trim(var_name) // ' in ' // trim(fileName)
+            print*, trim(errMsg)
+            if(fatalErr_local) call hydro_stop(errMsg)
+        endif
+
+        iret = nf90_get_var(ncid, varid, out_buff)
+        if(iret .ne. 0) then
+            errMsg = "get2d_int: failed to read the variable: " // &
+                    trim(var_name) // " in " //trim(fileName)
+            print*,trim(errMsg)
+            if(fatalErr_local) call hydro_stop(trim(errMsg))
+        endif
+
+        iret = nf90_close(ncid)
+        if(iret .ne. 0) then
+            errMsg = "get2d_int: failed to close the file: " // &
+                    trim(fileName)
+            print*,trim(errMsg)
+            if(fatalErr_local) call hydro_stop(trim(errMsg))
+        endif
+
+        return
+    end subroutine get2d_int8
 
 #ifdef MPP_LAND
       SUBROUTINE MPP_READ_ROUTEDIM(did,g_IXRT,g_JXRT, GCH_NETLNK,GNLINKS,IXRT,JXRT, &
@@ -5527,7 +5624,8 @@ end subroutine mpp_output_chrt
 
         INTEGER, INTENT(IN) :: IXRT,JXRT
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: ELRT,LKSATFAC
-        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT,CH_LNKRT
+        INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_NETRT
+        INTEGER(kind=int64), INTENT(INOUT), DIMENSION(IXRT,JXRT) :: CH_LNKRT
 !Dummy inverted grids
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
@@ -5545,7 +5643,7 @@ end subroutine mpp_output_chrt
 
      IF(channel_option .ne. 3 .and. UDMP_OPT .ne. 1) then  !get maxnodes and links from grid
         var_name = "LINKID"
-        call nreadRT2d_int(var_name,CH_LNKRT,ixrt,jxrt,&
+        call nreadRT2d_int8(var_name,CH_LNKRT,ixrt,jxrt,&
                trim(geo_finegrid_flnm), fatalErr=.true.)
      endif
 
@@ -7311,7 +7409,8 @@ integer                                      :: CHANRTSWCRT, NLINKS, NLAKES
 real, intent(IN), dimension(IXRT,JXRT)       :: fgDEM
 integer, dimension(IXRT,JXRT)                :: DIRECTION
 integer, dimension(IXRT,JXRT)                :: GSTRMFRXSTPTS
-integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETRT, CH_LNKRT
+integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETRT
+integer(int64), intent(IN), dimension(IXRT,JXRT)    :: CH_LNKRT
 integer, intent(INOUT), dimension(IXRT,JXRT) :: LAKE_MSKRT
 integer,                dimension(IXRT,JXRT) :: GORDER  !-- gridded stream orderk
 #ifdef MPP_LAND
@@ -7325,11 +7424,11 @@ character(len=28)                            :: dir
 
 !----DJG,DNY New variables for channel and lake routing
 character(len=155)	 :: header
-integer(kind=8), intent(INOUT),  dimension(NLINKS)   :: FROM_NODE
+integer(kind=int64), intent(INOUT),  dimension(NLINKS)   :: FROM_NODE
 real, intent(INOUT),  dimension(NLINKS)      :: ZELEV
 real, intent(INOUT),  dimension(NLINKS)      :: CHLAT,CHLON
 
-integer(kind=8), intent(INOUT),  dimension(NLINKS)   :: TO_NODE
+integer(kind=int64), intent(INOUT),  dimension(NLINKS)   :: TO_NODE
 integer, intent(INOUT),  dimension(NLINKS)   :: TYPEL
 integer, intent(INOUT),  dimension(NLINKS)   :: ORDER
 integer, intent(INOUT),  dimension(NLINKS)   :: STRMFRXSTPTS
@@ -7340,7 +7439,7 @@ real, intent(INOUT),  dimension(NLINKS)      :: MannN, So !mannings N
 integer, intent(INOUT),  dimension(NLINKS)   :: LAKENODE !,LINKID   ! identifies which nodes pour into which lakes
 real, intent(IN)                             :: dist(ixrt,jxrt,9)
 
-integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK
+integer(kind=int64), intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK
 real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,TwG,MannNG  !channel properties
 real,  dimension(IXRT,JXRT)                  :: Tw_CCG,n_CCG            !channel properties of compound
 real,  dimension(IXRT,JXRT)                  :: ChannKG                 !Channel Infiltration
@@ -8221,7 +8320,6 @@ real,    intent(INOUT),  dimension(NLINKS) :: CHANLEN, MannN, So
 real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw !added Top Width LKR/DY
 real,    intent(INOUT),  dimension(:)      :: Tw_CC, n_CC !compound chnannel params
 real,    intent(INOUT),  dimension(:)      :: ChannK !added ChanLoss
-integer(kind=8), intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on full nlinks database
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML
 real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
@@ -8229,8 +8327,8 @@ logical, intent(IN)                        :: reservoir_type_specified
 integer, intent(INOUT),  dimension(:)      :: reservoir_type
 character(len=*), intent(in)               :: reservoir_parameter_file
 real,    intent(INOUT),  dimension(:)      :: LATLAKE, LONLAKE, ELEVLAKE
-integer(kind=8), intent(INOUT), dimension(:)  :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
-integer(kind=8), intent(INOUT), dimension(:)  :: LAKEIDA !lake COMid 4all link on full nlinks database
+integer(kind=int64), intent(INOUT), dimension(:)  :: LAKEIDM !lake id in LAKEPARM table (.nc or .tbl)
+integer(kind=int64), intent(INOUT), dimension(:)  :: LAKEIDA !lake COMid 4all link on full nlinks database
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
 character(len=256)                         :: route_link_f, route_lake_f
 real,    intent(INOUT),  dimension(NLINKS) :: ZELEV, CHLAT, CHLON
@@ -8582,11 +8680,11 @@ integer                                      :: I,J,channel_option
 character(len=28)                            :: dir
 
 character(len=155)	 :: header
-integer(kind=8), intent(INOUT),  dimension(NLINKS)   :: FROM_NODE
+integer(kind=int64), intent(INOUT),  dimension(NLINKS)   :: FROM_NODE
 real, intent(INOUT),  dimension(NLINKS)      :: ZELEV
 real, intent(INOUT),  dimension(NLINKS)      :: CHLAT,CHLON
 
-integer(kind=8), intent(INOUT),  dimension(NLINKS)   :: TO_NODE
+integer(kind=int64), intent(INOUT),  dimension(NLINKS)   :: TO_NODE
 integer, intent(INOUT),  dimension(NLINKS)   :: TYPEL
 integer, intent(INOUT),  dimension(NLINKS)   :: ORDER
 integer, intent(INOUT),  dimension(NLINKS)   :: STRMFRXSTPTS
@@ -8622,9 +8720,10 @@ character(len=256)                           :: var_name
 integer                                      :: tmp, cnt, ncid
 real                                         :: gc,n
 
-integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK,GCH_NETLNK
+integer(kind=int64), intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK,GCH_NETLNK
 real, intent(IN), dimension(IXRT,JXRT)       :: ELRT
-integer, intent(IN), dimension(IXRT,JXRT) :: CH_NETRT, CH_LNKRT
+integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETRT
+integer(kind=int64), intent(IN), dimension(IXRT,JXRT) :: CH_LNKRT
 integer, intent(OUT), dimension(IXRT,JXRT) :: LAKE_MSKRT, link_location
 real, intent(OUT), dimension(IXRT,JXRT)    :: latval,lonval
 integer :: k
@@ -9195,15 +9294,14 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
     integer :: numbasns
-    integer(kind=8), dimension(numbasns) :: LINKID
+    integer(kind=int64), dimension(numbasns) :: LINKID
     real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
     real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
     character(len=*) :: infile
 !   define temp array
     integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
-    integer, allocatable, dimension(:) :: tmpLinkid
-    integer(kind=8), allocatable, dimension(:) :: tmpLinkID8
+    integer(kind=int64), allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
 
@@ -9277,7 +9375,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                print * , "could not find ComID from ", infile
                call hydro_stop("Failed to read BUCKETPARM")
           endif
-          iret = nf90_get_var(ncid, varid, tmpLinkID8)
+          iret = nf90_get_var(ncid, varid, tmpLinkID)
 #ifdef MPP_LAND
     endif
        if(gnid .gt. 0) then
@@ -9288,7 +9386,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
           endif
           call mpp_land_bcast_real_1d(tmpz_max)
           call mpp_land_bcast_real_1d(tmpz_init)
-          call mpp_land_bcast_int(gnid ,tmpLinkid)
+          call mpp_land_bcast_int8(gnid ,tmpLinkid)
        endif
 #endif
 
@@ -9311,7 +9409,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 
        block
          type(hash_t) :: hash_table
-         integer :: val,it
+         integer(kind=int64) :: val,it
          logical :: found
 
          call hash_table%set_all_idx(LINKID,numbasns)
@@ -10380,7 +10478,7 @@ end subroutine output_chrt2
 
       block
         type(hash_t) :: hash_table
-        integer :: val,it
+        integer(kind=int64) :: val,it
         integer, allocatable :: num_a(:)
         logical :: found
 
@@ -10672,7 +10770,7 @@ end subroutine output_chrt2
 
       block
         type(hash_t) :: hash_table
-        integer :: val,it
+        integer(kind=int64) :: val,it
         integer, allocatable :: num_a(:)
         logical :: found
 

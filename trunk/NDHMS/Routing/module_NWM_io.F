@@ -9,6 +9,8 @@ use module_version, only: get_code_version, get_nwm_version
 use orchestrator_base
 use module_hydro_stop, only: HYDRO_stop
 
+use iso_fortran_env, only: int64
+
 implicit none
 
 ! Module-wide variables
@@ -3115,7 +3117,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
    ! Allocatable array to hold global qlink values
    real, allocatable, dimension(:,:) :: g_qlink
    ! Allocatable array to hold streamflow index values
-   integer, allocatable, dimension(:,:) :: CH_NETLNK
+   integer(kind=int64), allocatable, dimension(:,:) :: CH_NETLNK
    ! allocatable global array to hold grid of output streamflow values
    integer, allocatable, dimension(:,:) :: tmpFlow
    real, allocatable, dimension(:,:) :: tmpFlowReal
@@ -3201,7 +3203,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       call write_chanel_real(strFlowLocal,RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,1))
       call write_chanel_real(RT_DOMAIN(domainId)%qlink(:,2),RT_DOMAIN(domainId)%map_l2g,gNumLnks,lNumLnks,g_qlink(:,2))
    endif
-   call write_IO_rt_int(RT_DOMAIN(domainId)%GCH_NETLNK, CH_NETLNK)
+   call write_IO_rt_int8(RT_DOMAIN(domainId)%GCH_NETLNK, CH_NETLNK)
 
    ! Initialize NWM dictionary derived type containing all the necessary metadat
    ! for the output file.

@@ -182,7 +182,7 @@ contains
 
        block
          type(hash_t) :: hash_table
-         integer :: val,it
+         integer(kind=int64) :: val,it
          logical :: found
          
          call hash_table%set_all_idx(bufid_tmp, ix_bufid)

@@ -23,6 +23,7 @@ MODULE MODULE_MPP_LAND
 
   use MODULE_CPL_LAND
   use mpi
+  use iso_fortran_env, only: int64
 
   IMPLICIT NONE
   !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
@@ -898,6 +899,38 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine write_IO_RT_int
 
+  subroutine write_IO_RT_int8(in_buff,out_buff)
+      ! the IO node will receive the data from the rest process.
+      integer(kind=int64),intent(in),dimension(:,:) :: in_buff
+      integer(kind=int64),intent(out),dimension(:,:) ::  out_buff
+      integer tag, i, status, ierr,size
+      integer ibegin,iend,jbegin,jend
+      if(my_id .ne. IO_id) then
+          size = local_rt_nx*local_rt_ny
+          tag = 2
+          call mpi_send(in_buff,size,MPI_INTEGER, IO_id,     &
+                  tag,HYDRO_COMM_WORLD,ierr)
+      else
+          do i = 0, numprocs - 1
+              ibegin = startx(i+1)*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+              if(ibegin.gt.1) ibegin=ibegin - 1
+              iend   = ibegin + local_rt_nx_size(i+1) -1
+              jbegin = starty(i+1)*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+              if(jbegin.gt.1) jbegin=jbegin - 1
+              jend   = jbegin + local_rt_ny_size(i+1) -1
+              if(i .eq. IO_id) then
+                  out_buff(ibegin:iend,jbegin:jend) = in_buff
+              else
+                  size = local_rt_nx_size(i+1)*local_rt_ny_size(i+1)
+                  tag = 2
+                  call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+                          MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+              end if
+          end do
+      end if
+      return
+  end subroutine write_IO_RT_int8
+
   subroutine mpp_land_bcast_log1(inout)
       logical inout
       integer ierr
@@ -1381,6 +1414,43 @@ MODULE MODULE_MPP_LAND
       end if
       return
   end subroutine decompose_RT_int
+
+  subroutine decompose_RT_int8 (in_buff,out_buff,g_nx,g_ny,nx,ny)
+      ! usage: all of the cpu call this subroutine.
+      ! the IO node will distribute the data to rest of the node.
+      integer g_nx,g_ny,nx,ny
+      integer(kind=int64),intent(in),dimension(:,:) ::  in_buff
+      integer(kind=int64),intent(out),dimension(:,:) :: out_buff
+      integer tag, i, status, ierr,size
+      integer ibegin,iend,jbegin,jend
+
+      tag = 2
+      call mpp_land_sync()
+      if(my_id == IO_id) then
+          do i = 0, numprocs - 1
+              ibegin = startx(i+1)*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+              if(ibegin > 1) ibegin=ibegin - 1
+              iend   = ibegin + local_rt_nx_size(i+1) -1
+              jbegin = starty(i+1)*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+              if(jbegin > 1) jbegin=jbegin - 1
+              jend   = jbegin + local_rt_ny_size(i+1) -1
+
+              if(my_id == i) then
+                  out_buff=in_buff(ibegin:iend,jbegin:jend)
+              else
+                  ! send data to the rest process.
+                  size = (iend-ibegin+1)*(jend-jbegin+1)
+                  call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+                          MPI_INTEGER, i,tag,HYDRO_COMM_WORLD,ierr)
+              end if
+          end do
+      else
+          size = nx*ny
+          call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
+                  tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+      end if
+      return
+  end subroutine decompose_RT_int8
 
   subroutine getNX_NY(nprocs,nx,ny)
   ! calculate the nx and ny based on the total nprocs.

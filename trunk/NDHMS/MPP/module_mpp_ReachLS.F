@@ -383,7 +383,7 @@ MODULE MODULE_mpp_ReachLS
 
        block
          type(hash_t) :: hash_table
-         integer :: val,it
+         integer(kind=int64) :: val,it
          logical :: found
 
          call hash_table%set_all_idx(LLINKID,LLINKLEN)
@@ -940,7 +940,7 @@ MODULE MODULE_mpp_ReachLS
 
     block
       type(hash_t) :: hash_table
-      integer :: val,it
+      integer(kind=int64) :: val,it
       integer, allocatable :: num_a(:)
       logical :: found
 

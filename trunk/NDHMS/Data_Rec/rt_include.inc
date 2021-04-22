@@ -42,10 +42,10 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
   !INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETRT !-- keeps track of the 0-1 channel network ! moved to overland%streams_and_lakes
-  INTEGER, allocatable, DIMENSION(:,:)      :: CH_LNKRT !-- linked routing grid (should combine with CH_NETRT.. redundant Gochis!)
+  INTEGER(kind=int64), allocatable, DIMENSION(:,:)      :: CH_LNKRT !-- linked routing grid (should combine with CH_NETRT.. redundant Gochis!)
 
 
-  INTEGER, allocatable, DIMENSION(:,:)      :: CH_NETLNK, GCH_NETLNK !-- assigns a unique value to each channel gridpoint, called links
+  INTEGER(kind=int64), allocatable, DIMENSION(:,:)      :: CH_NETLNK, GCH_NETLNK !-- assigns a unique value to each channel gridpoint, called links
   REAL,    allocatable, DIMENSION(:,:)      :: LATVAL,LONVAL !-- lat lon
   REAL,    allocatable, DIMENSION(:,:)      :: TERRAIN
   REAL,    allocatable, DIMENSION(:,:)      :: landRunOff   ! used for NHDPLUS only
@@ -182,10 +182,10 @@
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index
   INTEGER, allocatable, DIMENSION(:,:)  :: Link_location
-  integer(kind=8), allocatable, dimension(:)  :: LLINKID
+  integer(kind=int64), allocatable, dimension(:)  :: LLINKID
   integer mpp_nlinks, yw_mpp_nlinks, LNLINKSL
 #endif
-  INTEGER, allocatable, DIMENSION(:,:)      :: CH_LNKRT_SL !-- reach based links used for mapping
+  INTEGER(kind=int64), allocatable, DIMENSION(:,:)      :: CH_LNKRT_SL !-- reach based links used for mapping
 
 
   REAL,    allocatable, DIMENSION(:,:)      :: OVROUGHRTFAC,RETDEPRTFAC

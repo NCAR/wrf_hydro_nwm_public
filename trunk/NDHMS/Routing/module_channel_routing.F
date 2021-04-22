@@ -30,6 +30,8 @@ use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
 
+use iso_fortran_env, only: int64
+
 #endif
 implicit none
 
@@ -589,11 +591,11 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LAKEINFLORT
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: ELRT
         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: QINFLOWBASE
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETLNK
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETLNK
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_NETRT
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_LNKRT
-        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_LNKRT_SL
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_LNKRT
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(IXRT,JXRT) :: CH_LNKRT_SL
 
        real , dimension(ixrt,jxrt):: latval,lonval
 
@@ -1633,12 +1635,12 @@ end subroutine drive_CHANNEL
        real, intent(IN), dimension(IXRT,JXRT)    :: QINFLOWBASE
        real, dimension(ixrt,jxrt) :: landRunOff
 
-       integer, intent(IN), dimension(IXRT,JXRT) :: CH_LNKRT
-       integer, intent(IN), dimension(IXRT,JXRT) :: CH_LNKRT_SL
+       integer(kind=int64), intent(IN), dimension(IXRT,JXRT) :: CH_LNKRT
+       integer(kind=int64), intent(IN), dimension(IXRT,JXRT) :: CH_LNKRT_SL
 
        integer, intent(IN), dimension(IXRT,JXRT) :: LAKE_MSKRT
        integer, intent(IN), dimension(:)         :: ORDER, TYPEL !--link
-       integer(kind=8), intent(in), dimension(:)     :: TO_NODE, FROM_NODE
+       integer(kind=int64), intent(in), dimension(:)     :: TO_NODE, FROM_NODE
        integer, intent(IN), dimension(:)     :: CHANXI, CHANYJ
        real, intent(IN), dimension(:)        :: MUSK, MUSX
        real, intent(IN), dimension(:)        :: CHANLEN

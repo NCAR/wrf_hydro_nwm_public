@@ -1,10 +1,10 @@
 module hashtable
-
+    use iso_fortran_env, only: int64
   implicit none
 
   type kv_type
-     integer :: key
-     integer :: value
+     integer(kind=int64) :: key
+     integer(kind=int64) :: value
   end type kv_type
 
   type node_type
@@ -66,7 +66,7 @@ contains
   function hash(this,key_value) result(bucket)
 
     class(hash_t), intent(inout) :: this
-    integer, intent(in) :: key_value
+    integer(kind=int64), intent(in) :: key_value
     integer :: bucket
 
     bucket = key_value
@@ -111,8 +111,8 @@ contains
 
   subroutine set(this, key, value)
     class(hash_t), intent(inout) :: this
-    integer, intent(in) :: key
-    integer, intent(in) :: value
+    integer(kind=int64), intent(in) :: key
+    integer(kind=int64), intent(in) :: value
     integer :: bucket_id
     logical :: is_new
 
@@ -125,9 +125,10 @@ contains
 
   subroutine set_all_idx(this, keys, length)
     class(hash_t), intent(inout) :: this
-    integer, intent(in) :: keys(:)
+    integer(kind=int64), intent(in) :: keys(:)
     integer, optional, intent(in) :: length
-    integer :: bucket_id, i, n
+    integer(kind=int64) :: i
+    integer :: bucket_id, n
 
     if(present(length)) then
        n = length
@@ -147,8 +148,8 @@ contains
 
   subroutine set_all(this, keys, values)
     class(hash_t), intent(inout) :: this
-    integer, intent(in) :: keys(:)
-    integer, intent(in) :: values(:)
+    integer(kind=int64), intent(in) :: keys(:)
+    integer(kind=int64), intent(in) :: values(:)
     integer :: bucket_id, i, n
 
     n = size(keys)
@@ -165,8 +166,8 @@ contains
 
   recursive subroutine node_set(this, key, value)
     class(node_type), intent(inout) :: this
-    integer, intent(in) :: key
-    integer, intent(in) :: value
+    integer(kind=int64), intent(in) :: key
+    integer(kind=int64), intent(in) :: value
 
     if (.not. allocated(this%kv)) then
        allocate(this%kv)
@@ -184,8 +185,8 @@ contains
 
   subroutine get(this, key, value, success)
     class(hash_t), intent(inout) :: this
-    integer, intent(in) :: key
-    integer, intent(out) :: value
+    integer(kind=int64), intent(in) :: key
+    integer(kind=int64), intent(out) :: value
     logical, intent(out) :: success
     integer :: bucket_id
 
@@ -197,8 +198,8 @@ contains
 
   recursive subroutine node_get(this, key, value, success)
     class(node_type), intent(inout) :: this
-    integer, intent(in) :: key
-    integer, intent(out) :: value
+    integer(kind=int64), intent(in) :: key
+    integer(kind=int64), intent(out) :: value
     logical, intent(out) :: success
 
     success = .false.
