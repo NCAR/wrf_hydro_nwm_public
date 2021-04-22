@@ -68,6 +68,7 @@ set (NWM_META $ENV{NWM_META} CACHE STRING "NWM output metadata 0=off 1=on")
 set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
 set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
+set (WRF_HYDRO_NUOPC $ENV{WRF_HYDRO_NUOPC} CACHE STRING "NUOPC library 0=off 1=on")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")
@@ -110,6 +111,9 @@ if (PRECIP_DOUBLE STREQUAL "")
 	set (PRECIP_DOUBLE "0" CACHE STRING "Precipitation as double" FORCE)
 endif (PRECIP_DOUBLE STREQUAL "")
 
+if (WRF_HYDRO_NUOPC STREQUAL "")
+        set (WRF_HYDRO_NUOPC "0" CACHE STRING "NUOPC library 0=off, 1=on" FORCE)
+endif (WRF_HYDRO_NUOPC STREQUAL "")
 
 # add preprocessor defines using env variables
 
@@ -179,6 +183,12 @@ if (PRECIP_DOUBLE STREQUAL "1" )
 	add_definitions(-DPRECIP_DOUBLE)
 endif (PRECIP_DOUBLE STREQUAL "1")
 
+#set -DWRF_HYDRO_NUOPC from env
+message ("WRF_HYDRO_NUOPC = " ${WRF_HYDRO_NUOPC} )
+if (WRF_HYDRO_NUOPC STREQUAL "1" )
+        add_definitions(-DWRF_HYDRO_NUOPC)
+endif (WRF_HYDRO_NUOPC STREQUAL "1")
+
 message("=============================================================")
 
 #set compile flags based on compiler id
@@ -229,6 +239,10 @@ if (WRF_HYDRO_NUDGING STREQUAL "1")
 	add_subdirectory("nudging")
 	add_dependencies(hydro_driver hydro_nudging)
 endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
+if (WRF_HYDRO_NUOPC STREQUAL "1")
+        add_subdirectory("CPL/NUOPC_cpl")
+endif (WRF_HYDRO_NUOPC STREQUAL "1")
 
 # add module dependencies
 add_dependencies(hydro_debug_utils hydro_mpp)
