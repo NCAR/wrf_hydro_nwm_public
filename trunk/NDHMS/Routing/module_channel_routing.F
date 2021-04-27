@@ -176,7 +176,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(IN)       :: n          ! mannings coefficient
         REAL, intent(INOUT)    :: vel        ! velocity (m/s)
         REAL, intent(INOUT)    :: qloss      ! channel infiltration (m^3/sec)
-        integer(kind=8), intent(IN)    :: idx        ! channel id
+        integer(kind=int64), intent(IN)    :: idx        ! channel id
         REAL, intent(INOUT)    :: depth      ! depth of flow in channel
 
 !--local variables
@@ -601,7 +601,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
         INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: ORDER, TYPEL !--link
-        INTEGER(kind=8), INTENT(IN), DIMENSION(NLINKS)    :: TO_NODE, FROM_NODE
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(NLINKS)    :: TO_NODE, FROM_NODE
         INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: CHANXI, CHANYJ
         REAL,    INTENT(IN), DIMENSION(NLINKS)    :: ZELEV  !--elevation of nodes
         REAL, INTENT(INOUT), DIMENSION(NLINKS)    :: CVOL
@@ -644,8 +644,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
-        INTEGER, INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
-        INTEGER(KIND=8), INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(NLINKS)    :: LAKENODE !-- outflow from lake used in diffusion scheme
+        INTEGER(kind=int64), INTENT(IN), DIMENSION(NLINKS)    :: LINKID   !--  id of channel elements for linked scheme
         !REAL, DIMENSION(NLINKS)                   :: QLateral !--lateral flow
         REAL, DIMENSION(NLINKS)                   :: QSUM     !--mass bal of node
         REAL*8, DIMENSION(NLINKS)                   :: QSUM8     !--mass bal of node
@@ -668,14 +668,14 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer lake_index(nlakes)
         integer nlinks_index(nlinks)
         integer mpp_nlinks, iyw, yw_mpp_nlinks
-        integer link_location(ixrt,jxrt)
+        integer(kind=int64) link_location(ixrt,jxrt)
         real     ywtmp(ixrt,jxrt)
         integer LNLINKSL
-        integer(kind=8), dimension(LNLINKSL) :: LLINKID
+        integer(kind=int64), dimension(LNLINKSL) :: LLINKID
         real*8,  dimension(LNLINKSL) :: LQLateral
 !        real*4,  dimension(LNLINKSL) :: LQLateral
         integer, dimension(:) ::  toNodeInd
-        integer, dimension(:,:) ::  gtoNode
+        integer(kind=int64), dimension(:,:) ::  gtoNode
         integer  :: nToNodeInd
         real, dimension(nToNodeInd,2) :: gQLINK
 #else
@@ -1676,16 +1676,16 @@ end subroutine drive_CHANNEL
        real, dimension(IXRT,JXRT)                :: ZWATTBLRT          !DJG !!! Match with subsfce/gw routing & Change 'INTENT' to 'INOUT' when ready to update groundwater state...
 
        !-- lake params
-       integer(kind=8), intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
+       integer(kind=int64), intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
        real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
        real, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
        real,                dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
        real, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
 
-       integer, intent(IN), dimension(:)    :: LAKENODE !-- outflow from lake used in diffusion scheme
-       integer(kind=8), intent(IN), dimension(:)   :: LINKID   !--  id of channel elements for linked scheme
-       integer(kind=8), intent(IN), dimension(:)   :: LAKEIDA  !--  (don't need) NHDPLUS lakeid for all lakes in domain
+       integer(kind=int64), intent(IN), dimension(:)    :: LAKENODE !-- outflow from lake used in diffusion scheme
+       integer(kind=int64), intent(IN), dimension(:)   :: LINKID   !--  id of channel elements for linked scheme
+       integer(kind=int64), intent(IN), dimension(:)   :: LAKEIDA  !--  (don't need) NHDPLUS lakeid for all lakes in domain
        integer, intent(IN), dimension(:)   :: LAKEIDX  !--  the sequential index of the lakes id by com id
 
        real, dimension(NLINKS)                   :: QSUM     !--mass bal of node
@@ -1713,7 +1713,7 @@ end subroutine drive_CHANNEL
        real     ywtmp(ixrt,jxrt)
        integer LNLINKSL
        integer, dimension(:)         ::  toNodeInd
-       integer, dimension(:,:)       ::  gtoNode
+       integer(kind=int64), dimension(:,:)       ::  gtoNode
        integer  :: nToNodeInd
        real, dimension(nToNodeInd,2) :: gQLINK
 #else

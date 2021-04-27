@@ -953,7 +953,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine mpp_land_bcast_int8(size,inout)
       integer size
-      integer(kind=8) inout(size)
+      integer(kind=int64) inout(size)
       integer ierr
       call mpi_bcast(inout,size,MPI_INTEGER8,   &
               IO_id,HYDRO_COMM_WORLD,ierr)
@@ -963,7 +963,7 @@ MODULE MODULE_MPP_LAND
 
   subroutine mpp_land_bcast_int8_1d(inout)
       integer len
-      integer(kind=8) inout(:)
+      integer(kind=int64) inout(:)
       integer ierr
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_INTEGER8,   &
@@ -1247,6 +1247,23 @@ MODULE MODULE_MPP_LAND
 
     return
   end subroutine MPP_LAND_COM_INTEGER
+
+
+      subroutine MPP_LAND_COM_INTEGER8(data,NX,NY,flag)
+          !   ### Communicate message on left right and up bottom directions.
+          integer NX,NY
+          integer flag != 99  test only for land model. (replace the boundary).
+          != 1   get the sum of the boundary value.
+          integer(kind=int64) data(nx,ny)
+          real in_out_data(nx,ny)
+
+          in_out_data = data + 0.0
+          call MPP_LAND_LR_COM(in_out_data,NX,NY,flag)
+          call MPP_LAND_UB_COM(in_out_data,NX,NY,flag)
+          data = in_out_data + 0
+
+          return
+      end subroutine MPP_LAND_COM_INTEGER8
 
      subroutine read_restart_3(unit,nz,out)
         integer unit,nz,i
@@ -1570,7 +1587,7 @@ MODULE MODULE_MPP_LAND
   ! communicate the data for channel routine.
       implicit none
       integer ix,jy,size
-      integer Link_location(ix,jy)
+      integer(kind=int64) Link_location(ix,jy)
       integer i,j, flag
       real Link_V(size), tmp_inout(ix,jy)
 
@@ -1635,7 +1652,7 @@ MODULE MODULE_MPP_LAND
   ! communicate the data for channel routine.
       implicit none
       integer ix,jy,size
-      integer Link_location(ix,jy)
+      integer(kind=int64) Link_location(ix,jy)
       integer i,j, flag
       real*8 ::  Link_V(size), tmp_inout(ix,jy)
 
@@ -1699,9 +1716,9 @@ MODULE MODULE_MPP_LAND
   ! communicate the data for channel routine.
       implicit none
       integer ix,jy,size
-      integer Link_location(ix,jy)
+      integer(kind=int64) Link_location(ix,jy)
       integer i,j, flag
-      integer Link_V(size), tmp_inout(ix,jy)
+      integer(kind=int64) Link_V(size), tmp_inout(ix,jy)
 
       if(size .eq. 0) then
            tmp_inout = -999
@@ -1730,8 +1747,10 @@ MODULE MODULE_MPP_LAND
          enddo
     endif
 
+
+
 !   commu nicate tmp_inout
-    call MPP_LAND_COM_INTEGER(tmp_inout, ix,jy,flag)
+    call MPP_LAND_COM_INTEGER8(tmp_inout, ix,jy,flag)
 
 !map the data back to Link_V
     if(size .eq. 0) return
@@ -1756,6 +1775,8 @@ MODULE MODULE_MPP_LAND
                Link_V(Link_location(i,jy)) = tmp_inout(i,jy)
       enddo
   end subroutine MPP_CHANNEL_COM_INT
+
+
      subroutine print_2(unit,in,fm)
         integer unit
         character(len=*) fm
@@ -2000,9 +2021,9 @@ MODULE MODULE_MPP_LAND
      subroutine write_chanel_int8(v,map_l2g,gnlinks,nlinks,g_v)
           implicit none
           integer gnlinks,nlinks, map_l2g(nlinks)
-          integer(kind=8) ::  recv(nlinks), v(nlinks)
-          integer(kind=8), allocatable, dimension(:) :: tmp_map , tmp_v
-          integer(kind=8), dimension(:) :: g_v
+          integer(kind=int64) ::  recv(nlinks), v(nlinks)
+          integer(kind=int64), allocatable, dimension(:) :: tmp_map , tmp_v
+          integer(kind=int64), dimension(:) :: g_v
           integer i, ierr, tag, k
           integer length, node, message_len
 
@@ -2225,7 +2246,7 @@ MODULE MODULE_MPP_LAND
   subroutine combine_int8_1d(vin,nsize, flag)
       implicit none
       integer nsize,i,j,tag,ierr, flag, k
-      integer(kind=8), dimension(nsize):: vin,recv
+      integer(kind=int64), dimension(nsize):: vin,recv
       tag = 319
       if(nsize .le. 0) return
       if(my_id .eq. IO_id) then
@@ -2554,9 +2575,9 @@ MODULE MODULE_MPP_LAND
       subroutine updateLake_seqInt8(in,nsize,in0)
           implicit none
           integer :: nsize
-          integer(kind=8), dimension(nsize) :: in
-          integer(kind=8), dimension(nsize) :: tmp
-          integer(kind=8), dimension(:) :: in0
+          integer(kind=int64), dimension(nsize) :: in
+          integer(kind=int64), dimension(nsize) :: tmp
+          integer(kind=int64), dimension(:) :: in0
           integer tag, i, status, ierr, k
           if(nsize .le. 0) return
 

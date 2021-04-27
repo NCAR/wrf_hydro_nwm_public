@@ -41,8 +41,8 @@ module hashtable
 
   public
   type hash_t
-     integer :: n_buckets = 0
-     integer :: n_keys = 0
+     integer(kind=int64) :: n_buckets = 0
+     integer(kind=int64) :: n_keys = 0
      type(node_type), allocatable :: buckets(:)
    contains
      procedure, public :: bucket_count
@@ -67,7 +67,7 @@ contains
 
     class(hash_t), intent(inout) :: this
     integer(kind=int64), intent(in) :: key_value
-    integer :: bucket
+    integer(kind=int64) bucket
 
     bucket = key_value
 
@@ -75,15 +75,15 @@ contains
 
   function bucket_count(this)
     class(hash_t), intent(inout) :: this
-    integer :: bucket_count
+    integer(kind=int64) bucket_count
 
     bucket_count = this%n_buckets
   end function bucket_count
 
   function n_collisions(this)
     class(hash_t), intent(inout) :: this
-    integer :: n_collisions
-    integer :: i
+    integer(kind=int64) n_collisions
+    integer(kind=int64) i
 
     n_collisions = 0
     do i = 1, this%n_buckets
@@ -93,7 +93,7 @@ contains
 
   recursive function node_depth(this) result(depth)
     class(node_type), intent(inout) :: this
-    integer :: depth
+    integer(kind=int64) depth
 
     if (.not. associated(this%next)) then
        depth = 1
@@ -104,7 +104,7 @@ contains
 
   pure function key_count(this)
     class(hash_t), intent(in) :: this
-    integer :: key_count
+    integer(kind=int64) key_count
 
     key_count = this%n_keys
   end function key_count
@@ -113,7 +113,7 @@ contains
     class(hash_t), intent(inout) :: this
     integer(kind=int64), intent(in) :: key
     integer(kind=int64), intent(in) :: value
-    integer :: bucket_id
+    integer(kind=int64) bucket_id
     logical :: is_new
 
     bucket_id = modulo(this%hash(key), this%n_buckets) + 1
@@ -128,7 +128,7 @@ contains
     integer(kind=int64), intent(in) :: keys(:)
     integer, optional, intent(in) :: length
     integer(kind=int64) :: i
-    integer :: bucket_id, n
+    integer(kind=int64) bucket_id, n
 
     if(present(length)) then
        n = length
@@ -150,7 +150,7 @@ contains
     class(hash_t), intent(inout) :: this
     integer(kind=int64), intent(in) :: keys(:)
     integer(kind=int64), intent(in) :: values(:)
-    integer :: bucket_id, i, n
+    integer(kind=int64) bucket_id, i, n
 
     n = size(keys)
 
@@ -188,7 +188,7 @@ contains
     integer(kind=int64), intent(in) :: key
     integer(kind=int64), intent(out) :: value
     logical, intent(out) :: success
-    integer :: bucket_id
+    integer(kind=int64) bucket_id
 
     success = .false.
     if(this%n_buckets == 0) return
@@ -219,7 +219,7 @@ contains
 
   subroutine clear(this)
     class(hash_t), intent(inout) :: this
-    integer :: i
+    integer(kind=int64) i
 
     if (.not. allocated(this%buckets)) return
 

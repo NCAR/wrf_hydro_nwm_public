@@ -24,6 +24,7 @@ MODULE MODULE_mpp_GWBUCKET
   use MODULE_CPL_LAND, only: HYDRO_COMM_WORLD
   use module_mpp_land, only:  io_id, my_id, mpp_status, mpp_land_max_int1, numprocs, &
                  mpp_land_bcast_real, sum_real8,  mpp_land_sync
+  use iso_fortran_env, only: int64
   implicit none
 
   
@@ -79,10 +80,10 @@ MODULE MODULE_mpp_GWBUCKET
      integer, intent(in) :: numbasns
      integer :: i, ierr, tag, tag2,k
      real,intent(in), dimension(numbasns) :: inV
-     integer(kind=8), intent(in), dimension(numbasns) :: ind
+     integer(kind=int64), intent(in), dimension(numbasns) :: ind
      real, dimension(:) :: outV
      real, allocatable,dimension(:) :: vbuff
-     integer(kind=8), allocatable,dimension(:) :: ibuff
+     integer(kind=int64), allocatable,dimension(:) :: ibuff
 
      if(gw_ini .ne. 99) then
         stop "FATAL ERROR: mpp_GWBUCKET not initialized."        
@@ -137,9 +138,9 @@ MODULE MODULE_mpp_GWBUCKET
       implicit none
       integer, intent(in) :: numbasns
       integer :: i, ierr, tag, tag2,k
-      integer(kind=8),intent(in), dimension(numbasns) :: inV
-      integer(kind=8),intent(in), dimension(numbasns) :: ind
-      integer(kind=8), dimension(:) :: outV
+      integer(kind=int64),intent(in), dimension(numbasns) :: inV
+      integer(kind=int64),intent(in), dimension(numbasns) :: ind
+      integer(kind=int64), dimension(:) :: outV
       integer, allocatable,dimension(:) :: vbuff
       integer, allocatable,dimension(:) :: ibuff
  
@@ -197,7 +198,7 @@ MODULE MODULE_mpp_GWBUCKET
      integer, intent(in) :: numbasns, gnumbasns
      integer :: i, ierr, tag, bas
      real,intent(in), dimension(:) :: inV
-     integer(kind=8),intent(in), dimension(:) :: ind
+     integer(kind=int64),intent(in), dimension(:) :: ind
      real, dimension(:) :: outV
      real, dimension(gnumbasns) :: buff
 
@@ -217,7 +218,7 @@ MODULE MODULE_mpp_GWBUCKET
        implicit none
        integer nsize,i,j,tag,ierr,gsize, k
        real*8, dimension(nsize):: vinout
-       integer(kind=8), dimension(nsize) :: ind
+       integer(kind=int64), dimension(nsize) :: ind
        real*8, dimension(gsize) :: vbuff
 
        vbuff = 0

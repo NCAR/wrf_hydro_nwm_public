@@ -35,6 +35,8 @@ module module_UDMAP
        com_decomp1dint8, pack_decomp_int8, com_write1dInt8
   use module_hydro_stop, only:HYDRO_stop
   use hashtable
+
+  use iso_fortran_env, only: int64
 #endif
 
   implicit none
@@ -58,7 +60,7 @@ end type userDefineMapping
 
 TYPE ( userDefineMapping ), allocatable, DIMENSION (:) :: LUDRSL
 
-integer(kind=8), allocatable, dimension(:) :: bufid
+integer(kind=int64), allocatable, dimension(:) :: bufid
 real*8 , allocatable, dimension(:) :: bufw
 integer :: LNUMRSL  ! number of local links
 integer :: ter_rt_flag
@@ -86,7 +88,7 @@ contains
         implicit none
         integer :: i,j,Ndata, did, Npid, nlinksl, k, m, kk
         integer,allocatable,dimension(:) ::  nprocs_map, lnsizes, istart
-        integer(kind=8), allocatable, dimension(:) :: g1bufid, gbufid, linkid, bufid_tmp, bufidflag
+        integer(kind=int64), allocatable, dimension(:) :: g1bufid, gbufid, linkid, bufid_tmp, bufidflag
         integer :: ix_bufid, ii, ixrt,jxrt
         integer, allocatable, dimension(:) :: gbufi,gbufj,bufsize
         real*8 , allocatable, dimension(:) :: gbufw
@@ -515,7 +517,7 @@ contains
     subroutine get1d_int64(fileName,var_name,out_buff)
         implicit none
         integer :: ivar, iret,varid,ncid
-        integer(kind=8) out_buff(:)
+        integer(kind=int64) out_buff(:)
         character(len=*), intent(in) :: var_name
         character(len=*), intent(in) :: fileName
 

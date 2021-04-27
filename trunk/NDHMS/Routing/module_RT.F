@@ -998,7 +998,7 @@ subroutine LandRT_ini(did)
 
         endif  ! end if block for UDMP_OPT
 
-        new_start_i = 0; new_start_j = 1
+        new_start_i = 1; new_start_j = 1
         new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
 
         if(left_id .ge. 0) new_start_i = 1

@@ -346,8 +346,8 @@ MODULE MODULE_mpp_ReachLS
 
   subroutine gbcastInt8(inV, outV)
       implicit none
-      integer(kind=8), dimension(:) :: outV
-      integer(kind=8), dimension(:) :: inV
+      integer(kind=int64), dimension(:) :: outV
+      integer(kind=int64), dimension(:) :: inV
       integer :: ierr
       call ReachLS_write_io(inV,outV)
       call mpi_bcast(outV(1:gnlinksl),gnlinksl,MPI_INTEGER8,   &
@@ -356,9 +356,9 @@ MODULE MODULE_mpp_ReachLS
 
   subroutine getLocalIndx(glinksl,LINKID, LLINKID)
        implicit none
-       integer(kind=8), dimension(:) :: LINKID, LLINKID
+       integer(kind=int64), dimension(:) :: LINKID, LLINKID
        integer :: i,k, glinksl, ierr
-       integer(kind=8) :: gLinkId(glinksl)
+       integer(kind=int64) :: gLinkId(glinksl)
 
        LLINKLEN = size(LLINKID,1)
        allocate(LLINKIDINDX(LLINKLEN))
@@ -575,8 +575,8 @@ MODULE MODULE_mpp_ReachLS
 
   subroutine ReachLS_decompInt8(inV,outV)
       implicit none
-      integer(kind=8), INTENT(in),  dimension(:) :: inV
-      integer(kind=8), INTENT(out), dimension(:) :: outV
+      integer(kind=int64), INTENT(in),  dimension(:) :: inV
+      integer(kind=int64), INTENT(out), dimension(:) :: outV
       integer ::  i, ierr, tag
       tag = 11
       if(my_id .eq. io_id) then
@@ -744,8 +744,8 @@ MODULE MODULE_mpp_ReachLS
 
   subroutine ReachLS_wInt8(inV,outV)
       implicit none
-      integer(kind=8), intent(in), dimension(:)  :: inV
-      integer(kind=8), intent(out), dimension(:) :: outV
+      integer(kind=int64), intent(in), dimension(:)  :: inV
+      integer(kind=int64), intent(out), dimension(:) :: outV
       integer :: i, ierr, tag
       outV = 0
       if(my_id .eq. io_id) then
@@ -911,11 +911,13 @@ MODULE MODULE_mpp_ReachLS
   end subroutine getFromInd
 
   subroutine getToInd(from,to,ind,indLen,gToNodeOut)
-    integer(kind=8),dimension(:) :: from, to
+      implicit none
+
+    integer(kind=int64),dimension(:) :: from, to
     integer, allocatable, dimension(:) ::ind
-    integer, allocatable, dimension(:,:) :: gToNodeOut
+    integer(kind=int64), allocatable, dimension(:,:) :: gToNodeOut
     integer :: k, m, kk, mm,indLen, i, ierr
-    integer(kind=8), dimension(gnlinksl) :: gto
+    integer(kind=int64), dimension(gnlinksl) :: gto
     integer :: maxNum, num
 
     call gBcastValue(to, gto)
@@ -941,7 +943,7 @@ MODULE MODULE_mpp_ReachLS
     block
       type(hash_t) :: hash_table
       integer(kind=int64) :: val,it
-      integer, allocatable :: num_a(:)
+      integer(kind=int64), allocatable :: num_a(:)
       logical :: found
 
       allocate(num_a(mm))
@@ -1068,8 +1070,8 @@ MODULE MODULE_mpp_ReachLS
   subroutine com_decomp1dInt8(inV,gsize,outV,lsize)
       !     output outV and lsize
       implicit none
-      integer(kind=8),intent(in),dimension(:) :: inV
-      integer(kind=8),allocatable,dimension(:) :: outV
+      integer(kind=int64),intent(in),dimension(:) :: inV
+      integer(kind=int64),allocatable,dimension(:) :: outV
       integer ::  i, ierr, tag, imod, ncomsize
       integer :: lsize, ssize,start, gsize, end
       tag = 19
@@ -1176,8 +1178,8 @@ MODULE MODULE_mpp_ReachLS
   subroutine com_write1dInt8(inV,lsize,outV,gsize)
       !     output outV and lsize
       implicit none
-      integer(kind=8), intent(in),dimension(:) :: inV
-      integer(kind=8), dimension(:) :: outV
+      integer(kind=int64), intent(in),dimension(:) :: inV
+      integer(kind=int64), dimension(:) :: outV
       integer ::  i, ierr, tag, imod, ncomsize
       integer :: lsize, rsize,start, gsize, end
       tag = 18
@@ -1285,7 +1287,7 @@ MODULE MODULE_mpp_ReachLS
       integer :: ndata
       integer, dimension(:) :: nprocs_map, lnsizes
       integer :: i,j,k, tag, ierr
-      integer(kind=8), allocatable,dimension(:) :: buf, bufid, g1bufid
+      integer(kind=int64), allocatable,dimension(:) :: buf, bufid, g1bufid
       integer, dimension(:) :: istart
       integer, dimension(numprocs) :: count
       ! pack data
@@ -1453,10 +1455,10 @@ MODULE MODULE_mpp_ReachLS
       implicit none
       integer, intent(in) :: size,gNLINKSL,NLINKSL  !
       integer, intent(in) , dimension(size) :: ind
-      integer(kind=8), intent(in) , dimension(size) ::inVar
-      integer(kind=8), intent(inout), dimension(nlinksl) :: ioVar
+      integer(kind=int64), intent(in) , dimension(size) ::inVar
+      integer(kind=int64), intent(inout), dimension(nlinksl) :: ioVar
       integer, allocatable, dimension(:) :: tmpInd
-      integer(kind=8), allocatable, dimension(:) :: gvar, buf
+      integer(kind=int64), allocatable, dimension(:) :: gvar, buf
       integer :: i,j,k, tag, ierr, tmpSize, flag
 
       if(gNLINKSL .le. 0) return
