@@ -113,11 +113,7 @@ contains
     class(hash_t), intent(inout) :: this
     integer(kind=int64), intent(in) :: key
     integer(kind=int64), intent(in) :: value
-<<<<<<< HEAD
     integer(kind=int64) bucket_id
-=======
-    integer :: bucket_id
->>>>>>> Update channel links to `int64` across Routing/MPP
     logical :: is_new
 
     bucket_id = modulo(this%hash(key), this%n_buckets) + 1
@@ -132,11 +128,7 @@ contains
     integer(kind=int64), intent(in) :: keys(:)
     integer, optional, intent(in) :: length
     integer(kind=int64) :: i
-<<<<<<< HEAD
     integer(kind=int64) bucket_id, n
-=======
-    integer :: bucket_id, n
->>>>>>> Update channel links to `int64` across Routing/MPP
 
     if(present(length)) then
        n = length
@@ -158,11 +150,7 @@ contains
     class(hash_t), intent(inout) :: this
     integer(kind=int64), intent(in) :: keys(:)
     integer(kind=int64), intent(in) :: values(:)
-<<<<<<< HEAD
     integer(kind=int64) bucket_id, i, n
-=======
-    integer :: bucket_id, i, n
->>>>>>> Update channel links to `int64` across Routing/MPP
 
     n = size(keys)
 

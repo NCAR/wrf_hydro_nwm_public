@@ -9194,6 +9194,7 @@ end subroutine get_1d_netcdf_int
     subroutine get_1d_netcdf_int64(ncid, varName, var, callingRoutine, fatal_if_error)
         integer,                       intent(in)  :: ncid !! the file identifier
         character(len=*),              intent(in)  :: varName
+        integer(kind=int64), dimension(:), intent(out) :: var
         character(len=*),              intent(in)  :: callingRoutine
         logical,                       intent(in)  :: fatal_if_error
         integer :: varid, iret
@@ -10761,7 +10762,7 @@ end subroutine output_chrt2
     subroutine nhdLakeMap_scan(NLAKES, NLINKSL, LAKELINKID, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
         !--- get the lake configuration here.
         implicit none
-     integer(kind=int64), dimension(:), intent(in) :: TO_NODE
+        integer(kind=int64), dimension(:), intent(in) :: TO_NODE
         integer(kind=int64), dimension(NLAKES) :: LAKELINKID
         integer(kind=int64), dimension(:),   intent(in) :: LINKID, LAKEIDA
         integer(kind=int64), dimension(:),   intent(inout) :: LAKEIDM
