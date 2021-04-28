@@ -6956,7 +6956,7 @@ ENDIF   ! CROPTYPE == 0
 !surface runoff and infiltration rate using different schemes
 
 !jref impermable surface at urban
-    IF ( parameters%urban_flag ) FCR(1)= 0.95
+    IF ( parameters%urban_flag ) FCR(1)= parameters%imperv
 
     IF(OPT_RUN == 1) THEN
        FFF = 6.0
