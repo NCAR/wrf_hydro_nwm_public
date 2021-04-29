@@ -324,6 +324,8 @@ module module_NoahMP_hrldas_driver
   REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWALBXY   
   REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWHEIGHTXY
   REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWTOTSWEXY
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  FLOW_SNOW
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  FLOW_ICE
   REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWHEATXY 
   REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWRHOXY  
   REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWSWEXY  
@@ -933,6 +935,8 @@ module module_NoahMP_hrldas_driver
    ALLOCATE ( PSNOWALBXY   (XSTART:XEND,YSTART:YEND) )  ! 
    ALLOCATE ( PSNOWHEIGHTXY   (XSTART:XEND,YSTART:YEND) )  ! 
    ALLOCATE ( PSNOWTOTSWEXY   (XSTART:XEND,YSTART:YEND) )  ! 
+   ALLOCATE ( FLOW_SNOW   (XSTART:XEND,YSTART:YEND) )  !
+   ALLOCATE ( FLOW_ICE    (XSTART:XEND,YSTART:YEND) )  !
    ALLOCATE ( PSNOWHEATXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
    ALLOCATE ( PSNOWRHOXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )     
    ALLOCATE ( PSNOWSWEXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
@@ -1162,6 +1166,8 @@ module module_NoahMP_hrldas_driver
       PSNOWTHRUFALXY = undefined_real
       PSNOWHEIGHTXY = undefined_real
       PSNOWTOTSWEXY = undefined_real
+      FLOW_SNOW = undefined_real
+      FLOW_ICE = undefined_real
       PSNOWAGEXY = undefined_real
 
       PSNOWLIQXY = 0
@@ -1177,6 +1183,8 @@ module module_NoahMP_hrldas_driver
       PSNOWTHRUFALXY = 0
       PSNOWHEIGHTXY = 0
       PSNOWTOTSWEXY = 0
+      FLOW_ICE = 0
+      FLOW_SNOW = 0
       PSNOWAGEXY = 0
 
         
@@ -1316,6 +1324,8 @@ module module_NoahMP_hrldas_driver
     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWHEIGHT" ,PSNOWHEIGHTXY    )
     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWTHRUFAL" ,PSNOWTHRUFALXY    )
     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWTOTSWE" ,PSNOWTOTSWEXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLOW_SNOW" ,FLOW_SNOW    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLOW_ICE" ,FLOW_ICE    )
 
 ! -- T.EI
 #ifdef WRF_HYDRO
@@ -1543,7 +1553,7 @@ endif
 !++T.EI crocus
                   'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
                   'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'//&
-                  'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE'                                    
+                  'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE,FLOW_ICE,FLOW_SNOW'                                    
 !--T.EI crocus
 
    endif
@@ -1808,13 +1818,14 @@ end subroutine land_driver_ini
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
 	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &
 ! ++ T.EI crocus
-               PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,               & 
+               PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,          & 
                PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,         & 
                PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & 
-               PSNOWALBXY, PSNOWAGEXY, act_lev,      & 
+               PSNOWALBXY, PSNOWAGEXY, act_lev,             & 
                PSNOWHEIGHTXY, PSNOWTOTSWEXY, PSNOWTHRUFALXY,&
-               GLACINFO, GLACT,& 
-! -- T.EI
+               GLACINFO, GLACT,                             & 
+               FLOW_ICE, FLOW_SNOW,                        &
+               ! -- T.EI
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
@@ -1836,6 +1847,7 @@ end subroutine land_driver_ini
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
                 )
+
 
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
@@ -2195,7 +2207,10 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,(PSNOWLIQXY),IVGTYP,111)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHEATXY,IVGTYP,112)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWRHOXY ,IVGTYP,113)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,144)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,114)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FLOW_ICE,IVGTYP,115)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FLOW_SNOW,IVGTYP,116)
+
 ! -- T.EI
 #endif /* WRF_HYDRO */
 
@@ -2296,7 +2311,9 @@ subroutine lsm_restart(state)
      call add_to_restart(ncid, PSNOWHEIGHTXY ,"PSNOWHEIGHT"    )
      call add_to_restart(ncid, PSNOWTHRUFALXY ,"PSNOWTHRUFAL"    )
      call add_to_restart(ncid, PSNOWTOTSWEXY ,"PSNOWTOTSWE"    )
-! -- T.EI
+     call add_to_restart(ncid, FLOW_ICE ,"FLOW_ICE"    )
+     call add_to_restart(ncid, FLOW_SNOW ,"FLOW_SNOW"    )
+     ! -- T.EI
 #ifdef WRF_HYDRO
   call add_to_restart(ncid,ACCPRCP   , "ACCPRCP" )
   call add_to_restart(ncid,ACCECAN   , "ACCECAN" )
@@ -2429,7 +2446,9 @@ subroutine lsm_rst_bi_out(state)
   write(iunit,ERR=101) PSNOWALBXY     
   write(iunit,ERR=101) PSNOWHEIGHTXY     
   write(iunit,ERR=101) PSNOWTHRUFALXY     
-  write(iunit,ERR=101) PSNOWTOTSWEXY     
+  write(iunit,ERR=101) PSNOWTOTSWEXY 
+  write(iunit,ERR=101) FLOW_SNOW 
+  write(iunit,ERR=101) FLOW_ICE     
 ! -- T.EI 
 ! #ifndef REALTIME
 ! #ifdef WRF_HYDRO
@@ -2575,7 +2594,9 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) PSNOWALBXY     
   read(iunit,ERR=101) PSNOWHEIGHTXY     
   read(iunit,ERR=101) PSNOWTHRUFALXY     
-  read(iunit,ERR=101) PSNOWTOTSWEXY     
+  read(iunit,ERR=101) PSNOWTOTSWEXY   
+  read(iunit,ERR=101) FLOW_SNOW   
+  read(iunit,ERR=101) FLOW_ICE     
 ! -- T.EI 
 
   ! read(iunit,ERR=101) PSNOWLIQXY
@@ -2699,7 +2720,9 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,PSNOWHEIGHTXY  , "PSNOWHEIGHT" )
   call define_rst_var(ncid,PSNOWTHRUFALXY  , "PSNOWTHRUFAL" )
   call define_rst_var(ncid,PSNOWTOTSWEXY  , "PSNOWTOTSWE" )
-! -- T.EI 
+  call define_rst_var(ncid,FLOW_SNOW  , "FLOW_SNOW" )
+  call define_rst_var(ncid,FLOW_ICE  , "FLOW_ICE" )
+  ! -- T.EI 
 #ifdef WRF_HYDRO
   call define_rst_var(ncid,ACCPRCP   , "ACCPRCP" )
   call define_rst_var(ncid,ACCECAN   , "ACCECAN" )
