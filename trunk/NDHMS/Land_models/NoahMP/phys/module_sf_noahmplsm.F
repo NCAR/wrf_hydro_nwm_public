@@ -6956,7 +6956,19 @@ ENDIF   ! CROPTYPE == 0
 !surface runoff and infiltration rate using different schemes
 
 !jref impermable surface at urban
-    IF ( parameters%urban_flag ) FCR(1)= parameters%imperv
+    IF (OPT_IMPERV == 1) THEN
+       ! Use total imperviousness
+       FCR(1) = parameters%imperv 
+    ELSE IF (OPT_IMPERV == 2) THEN
+       ! Effective imperviousness from Alley & Veenhuis
+       FCR(1) = 0.0015 * ( (100. * parameters%imperv)**1.41 )
+    ELSE IF (OPT_IMPERV == 3) THEN
+       ! Effective imperviousness from Sutherland 2000
+       FCR(1) = parameters%impconnA * ( (100. * parameters%imperv)**parameters%impconnB ) / 100.
+    ELSE  
+       ! Fixed value
+       IF ( parameters%urban_flag ) FCR(1)=0.95 
+    END IF
 
     IF(OPT_RUN == 1) THEN
        FFF = 6.0
