@@ -654,7 +654,7 @@ end subroutine getChanDim
 subroutine LandRT_ini(did)
 
   use module_noah_chan_param_init_rt
-  use config_base, only: nlst
+  use config_base, only: nlst, noah_lsm
   use module_RT_data, only: rt_domain
   use module_gw_gw2d_data, only: gw2d
 #ifdef HYDRO_D
@@ -1202,10 +1202,14 @@ subroutine LandRT_ini(did)
         end do
      end do
 
+     !Apply impervious adjustment to retdeprt (AD)
+     if (noah_lsm%imperv_option .ne. 0) then
+       rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth*(1.-rt_domain(did)%impervfrac)
+     end if
 
      !Apply calibration scaling factors to sfc roughness and retention depth here...
      rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
-     rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
+     ! Removing roughness parameter update since it has not been populated yet... currently happens in Noah_dist_routing (AD)
 
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
