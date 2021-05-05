@@ -652,6 +652,7 @@ subroutine LandRT_ini(did)
   use config_base, only: nlst
   use module_RT_data, only: rt_domain
   use module_gw_gw2d_data, only: gw2d
+  use module_HYDRO_io, only: regrid_lowres_to_highres
 #ifdef HYDRO_D
   use module_HYDRO_io, only: output_lake_types
 #endif
@@ -1193,7 +1194,17 @@ subroutine LandRT_ini(did)
 
      !Apply calibration scaling factors to sfc roughness and retention depth here...
      rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
+
+     !Create overland roughness high-res grid
+     print *, "ADCHECK_pre ncoarse 2 2 nfine 11 53:", rt_domain(did)%OV_ROUGH2d(2, 2), rt_domain(did)%overland%properties%roughness(11,53)
+     call regrid_lowres_to_highres(did, rt_domain(did)%OV_ROUGH2d, rt_domain(did)%overland%properties%roughness, &
+                                    rt_domain(did)%ixrt, rt_domain(did)%jxrt)
+     print *, "ADCHECK_post_regrid nfine 2 2:", rt_domain(did)%overland%properties%roughness(2,2)
+     print *, "ADCHECK_post_regrid nfine 11 53:", rt_domain(did)%overland%properties%roughness(11,53)
+     !Apply scaling factor
      rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
+     print *, "ADCHECK_post_fac nfine 2 2:", rt_domain(did)%overland%properties%roughness(2,2)
+     print *, "ADCHECK_post_fac nfine 11 53:", rt_domain(did)%overland%properties%roughness(11,53)
 
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
@@ -1222,6 +1233,7 @@ subroutine LandRT_ini(did)
 #ifdef MPP_LAND
    ! communicate the value to
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+     call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%roughness,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_y,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      do i = 1, 8

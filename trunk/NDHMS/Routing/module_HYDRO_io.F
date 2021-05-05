@@ -11041,6 +11041,60 @@ subroutine read2dlsm(did,file,varName,varOut)
 
 end subroutine read2dlsm
 
+subroutine regrid_lowres_to_highres(did, lowres_grid, highres_grid, ixrt, jxrt)
+
+  implicit none
+  integer :: did
+  integer :: ixrt, jxrt
+  real, dimension(global_nx, global_ny) :: lowres_grid
+!  real, dimension(global_rt_nx, global_rt_ny) :: highres_grid
+  real, dimension(ixrt,jxrt) :: highres_grid
+  ! Local variables
+  integer :: i, j, irt, jrt, aggfacxrt, aggfacyrt
+
+#ifdef MPP_LAND
+  real,allocatable,dimension(:,:) :: tmpArr
+  if(my_id .eq. io_id) then
+     allocate(tmpArr(global_rt_nx, global_rt_ny))
+#endif
+
+!print *, "ADCHECK_regrid x, y, rtx, rty", global_nx, global_ny, global_rt_nx, global_rt_ny
+
+  do j = 1,global_ny ! Start coarse grid j loop
+    do i = 1,global_nx ! Start coarse grid i loop
+
+      do aggfacyrt = nlst(did)%AGGFACTRT-1,0,-1 ! Start disagg fine grid j loop
+        do aggfacxrt = nlst(did)%AGGFACTRT-1,0,-1 ! Start disagg fine grid i loop
+
+          irt = i * nlst(did)%AGGFACTRT - aggfacxrt ! Define fine grid i
+          jrt = j * nlst(did)%AGGFACTRT - aggfacyrt ! Define fine grid j
+#ifdef MPP_LAND
+          if(left_id.ge.0) irt = irt + 1
+          if(down_id.ge.0) jrt = jrt + 1
+          tmpArr(irt,jrt) = lowres_grid(i,j)
+!          print *, "ADCHECK_regrid i, j, irt, jrt", i,j, irt,jrt
+!          print *, "ADCHECK_regrid lowres highres", lowres_grid(i,j), tmpArr(irt,jrt)
+#else
+          highres_grid(irt,jrt) = lowres_grid(i,j)
+#endif
+
+        end do
+      end do
+
+    end do
+  end do
+
+#ifdef MPP_LAND
+  else
+     allocate(tmpArr(1,1))
+  endif
+  call decompose_rt_real(tmpArr, highres_grid, global_rt_nx, global_rt_ny, ixrt, jxrt)
+  print *, "ADCHECK_regrid decompose 2 2", highres_grid(2,2)
+  print *, "ADCHECK_regrid decompose 11 53", highres_grid(11,53)
+  deallocate(tmpArr)
+#endif
+
+end subroutine regrid_lowres_to_highres
 
 subroutine read_channel_only (olddateIn, hgrid, indir, dtbl)
 !use module_HYDRO_io, only: read_rst_crt_reach_nc
