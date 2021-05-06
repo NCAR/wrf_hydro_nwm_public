@@ -1203,7 +1203,7 @@ subroutine LandRT_ini(did)
      end do
 
      !Apply impervious adjustment to retdeprt (AD)
-     if (noah_lsm%imperv_option .ne. 0) then
+     if (nlst(did)%imperv_adj .ne. 0) then
        rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth*(1.-rt_domain(did)%impervfrac)
      end if
 

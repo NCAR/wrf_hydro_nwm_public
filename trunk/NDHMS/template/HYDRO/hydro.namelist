@@ -134,6 +134,9 @@ OVRTSWCRT = 1
 ! NOTE: Currently subsurface flow is only steepest descent
 rt_option = 1
 
+! Specify whether to adjust overland flow parameters based on imperviousness
+imperv_adj = 0
+
 ! Switch to activate channel routing...(0=no, 1=yes)
 CHANRTSWCRT = 1
 

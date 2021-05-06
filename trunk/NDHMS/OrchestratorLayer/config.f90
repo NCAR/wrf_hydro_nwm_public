@@ -158,6 +158,7 @@ module config_base
      character(len=256) :: timeSlicePath
      integer            :: nLastObs
      integer            :: bucket_loss
+     integer            :: imperv_adj
 
    contains
 
@@ -444,6 +445,10 @@ contains
       endif
    end if
 
+   if( (self%imperv_adj .lt. 0 ) .or. (self%imperv_adj .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid imperv_adj specified')
+   endif
+
   end subroutine rt_nlst_check
 
   subroutine init_namelist_rt_field(did)
@@ -457,7 +462,7 @@ contains
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-         UDMP_OPT, io_form_outputs, bucket_loss
+         UDMP_OPT, io_form_outputs, bucket_loss, imperv_adj
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -548,7 +553,7 @@ contains
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
          frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, imperv_adj
 
 #ifdef WRF_HYDRO_NUDGING
     namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -584,6 +589,7 @@ contains
     reservoir_rfc_forecasts = .FALSE.
     reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
+    imperv_adj = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -756,6 +762,7 @@ contains
     nlst(did)%order_to_write = order_to_write
     nlst(did)%compound_channel = compound_channel
     nlst(did)%channel_loss_option = channel_loss_option
+    nlst(did)%imperv_adj = imperv_adj
     ! files
     nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f
