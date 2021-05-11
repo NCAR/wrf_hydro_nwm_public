@@ -138,6 +138,7 @@ subroutine output_chrt_NWM(domainId)
    integer :: numPtsOut
    real, allocatable, dimension(:,:) :: varMetaReal
    integer, allocatable, dimension(:,:) :: varMetaInt
+   integer(kind=int64), allocatable, dimension(:,:) :: varMetaInt8
 
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
@@ -658,7 +659,8 @@ subroutine output_chrt_NWM(domainId)
       allocate(varOutReal(fileMeta%numVars,numPtsOut))
       allocate(varOutInt(numPtsOut))
       allocate(varMetaReal(3,numPtsOut))
-      allocate(varMetaInt(2,numPtsOut))
+      allocate(varMetaInt(1,numPtsOut))
+      allocate(varMetaInt8(1,numPtsOut))
 
       varOutReal(1,:) = PACK(g_qlinkOut(:,1),g_outInd == 1)
       varOutReal(2,:) = PACK(g_nudgeOut,g_outInd == 1)
@@ -678,7 +680,7 @@ subroutine output_chrt_NWM(domainId)
       varMetaReal(2,:) = PACK(g_chlonOut,g_outInd == 1)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
       varMetaInt(1,:) = PACK(g_orderOut,g_outInd == 1)
-      varMetaInt(2,:) = PACK(g_linkidOut,g_outInd == 1)
+      varMetaInt8(1,:) = PACK(g_linkidOut,g_outInd == 1)
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -798,7 +800,7 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place inverse_flattening into crs variable.')
 
       ! Create feature_id variable
-      iret = nf90_def_var(ftn,"feature_id",nf90_int,dimId(1),featureVarId)
+      iret = nf90_def_var(ftn,"feature_id",nf90_int64,dimId(1),featureVarId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create feature_id variable.')
       iret = nf90_put_att(ftn,featureVarId,'long_name',trim(fileMeta%featureIdLName))
       call nwmCheck(diagFlag,iret,'ERROR: Uanble to place long_name attribute into feature_id variable')
@@ -964,7 +966,7 @@ subroutine output_chrt_NWM(domainId)
       ! Place link ID values into the NetCDF file
       iret = nf90_inq_varid(ftn,'feature_id',varId)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to locate feature_id in NetCDF file.')
-      iret = nf90_put_var(ftn,varId,varMetaInt(2,:))
+      iret = nf90_put_var(ftn,varId,varMetaInt8(1,:))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place data into feature_id output variable.')
 
 #ifndef NWM_META
@@ -1018,6 +1020,7 @@ subroutine output_chrt_NWM(domainId)
       deallocate(varOutInt)
       deallocate(varMetaReal)
       deallocate(varMetaInt)
+      deallocate(varMetaInt8)
    endif
    deallocate(g_chlonOut)
    deallocate(g_chlatOut)

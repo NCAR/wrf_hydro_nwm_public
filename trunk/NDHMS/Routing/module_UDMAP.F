@@ -51,7 +51,7 @@ type userDefineMapping
     integer, allocatable, dimension(:) :: grid_i, grid_j
     real, allocatable, dimension(:) :: weight, nodeArea, cellArea
     integer :: ngrids
-    integer :: myid
+    integer(kind=int64) :: myid
 !   for bucket model definition
     real, allocatable, dimension(:) :: cellWeight
     integer, allocatable, dimension(:) :: cell_i, cell_j
