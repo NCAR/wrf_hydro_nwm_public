@@ -771,12 +771,73 @@ contains
 
   end subroutine read_mmf_runoff
 
+!-------------------------------------------------------------------------------------------
+
+  subroutine read_xaj_runoff(spatial_filename,xstart, xend,ystart, yend,           &
+                             axaj_2d,bxaj_2d,xxaj_2d)
+
+    implicit none
+    character(len=*),          intent(in)  :: spatial_filename
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: axaj_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: bxaj_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: xxaj_2d
+
+    character(len=24)  :: name
+    character(len=256) :: units
+    integer :: ierr,iret, varid
+    integer :: ncid
+    real, dimension(xstart:xend,ystart:yend) :: xdum
+!------------------------------------------------------------------------------------------------------
+
+    ierr = nf90_open(spatial_filename, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("FATAL ERROR: In read_xaj_runoff():  Problem opening soil file: ''", A, "''")') trim(spatial_filename)
+       stop
+    endif
+
+    name = "AXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, axaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "BXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, bxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "XXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    ! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_xaj_runoff() -  NF90_CLOSE"
+
+  end subroutine read_xaj_runoff
+
 !---------------------------------------------------------------------------------------------------------
 
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
 		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d,&
-			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d,rsurfexp_2d,axaj_2d,bxaj_2d,xxaj_2d)
+			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d,rsurfexp_2d)
     implicit none
     character(len=*),          intent(in)  :: spatial_filename
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -799,9 +860,6 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: hvt_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: rsurfexp_2d
-    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: axaj_2d
-    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: bxaj_2d
-    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: xxaj_2d
 
     character(len=24)  :: name
     character(len=256) :: units
@@ -1030,36 +1088,6 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, rsurfexp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!
-    name = "AXAJ"
-    iret = nf90_inq_varid(ncid,  trim(name),  varid)
-    if (iret /= 0) then
-      print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
-      stop
-    endif
-
-    iret = nf90_get_var(ncid, varid, axaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!
-    name = "BXAJ"
-    iret = nf90_inq_varid(ncid,  trim(name),  varid)
-    if (iret /= 0) then
-      print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
-      stop
-    endif
-  
-    iret = nf90_get_var(ncid, varid, bxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-!
-    name = "XXAJ"
-    iret = nf90_inq_varid(ncid,  trim(name),  varid)
-    if (iret /= 0) then
-      print*, 'ncid = ', ncid
-      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
-      stop
-    endif
-  
-    iret = nf90_get_var(ncid, varid, xxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
 !
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
