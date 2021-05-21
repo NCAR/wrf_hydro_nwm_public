@@ -34,6 +34,7 @@ module module_HYDRO_io
    use module_reservoir_utilities, only: read_reservoir_type
    use netcdf
    use module_hydro_stop, only:HYDRO_stop
+   use hashtable
 
    implicit none
 
@@ -250,10 +251,10 @@ module module_HYDRO_io
 
      end subroutine get_file_dimension
 
-subroutine get_file_globalatts(fileName, iswater, isurban, isoilwater)
+subroutine get_file_globalatts(fileName, iswater, islake, isurban, isoilwater)
   implicit none
   character(len=*) fileName
-  integer iswater, isurban, isoilwater
+  integer iswater, islake, isurban, isoilwater
   integer ncid, iret, istmp
 #ifdef MPP_LAND
 #ifndef PARALLELIO
@@ -272,6 +273,13 @@ if (my_id .eq. IO_id) then
     else
       write(*,*) "Using default (USGS) values for water land use types."
       iswater = 16
+    endif
+    iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISLAKE', istmp)
+    if (iret .eq. NF90_NOERR) then
+      islake = istmp
+    else
+      write(*,*) "Using default (USGS) values for lake land use types."
+      islake = -1
     endif
     iret = nf90_get_att(ncid, NF90_GLOBAL, 'ISURBAN', istmp)
     if (iret .eq. NF90_NOERR) then
@@ -292,7 +300,7 @@ if (my_id .eq. IO_id) then
 
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-  write(6, *) "get_file_globalatts: ISWATER ISURBAN ISOILWATER", iswater, isurban, isoilwater
+  write(6, *) "get_file_globalatts: ISWATER ISLAKE ISURBAN ISOILWATER", iswater, islake, isurban, isoilwater
 #endif
 #endif
 
@@ -300,6 +308,7 @@ if (my_id .eq. IO_id) then
 #ifndef PARALLELIO
 endif
 call mpp_land_bcast_int1(iswater)
+call mpp_land_bcast_int1(islake)
 call mpp_land_bcast_int1(isurban)
 call mpp_land_bcast_int1(isoilwater)
 #endif
@@ -7279,7 +7288,7 @@ subroutine READ_CHROUTING1( &
      TYPEL,        ORDER,             MAXORDER,     NLINKS,   &
      NLAKES,       CHANLEN,           MannN,        So,       &
      ChSSlp,       Bw,                Tw,                     &
-     Tw_CC,        n_CC,              HRZAREA,      LAKEMAXH, &
+     Tw_CC,        n_CC,              ChannK,       HRZAREA,      LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,        DAML,     &
      ORIFICEC,     ORIFICEA,          ORIFICEE,               &
      reservoir_type_specified,        reservoir_type,         &
@@ -7333,6 +7342,7 @@ real, intent(IN)                             :: dist(ixrt,jxrt,9)
 integer, intent(IN), dimension(IXRT,JXRT)    :: CH_NETLNK
 real,  dimension(IXRT,JXRT)                  :: ChSSlpG,BwG,TwG,MannNG  !channel properties
 real,  dimension(IXRT,JXRT)                  :: Tw_CCG,n_CCG            !channel properties of compound
+real,  dimension(IXRT,JXRT)                  :: ChannKG                 !Channel Infiltration
 real,  dimension(IXRT,JXRT)                  :: chanDepth, elrt
 
 
@@ -7355,7 +7365,7 @@ integer, intent(INOUT), dimension(:)    :: reservoir_type
 character(len=*), intent(in)            :: reservoir_parameter_file
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
-real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC ! channel properties of compund
+real, intent(INOUT),  dimension(:)      :: Tw_CC, n_CC, ChannK ! channel properties of compund
 
 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
@@ -7440,6 +7450,7 @@ TwG    = 0.0
 Tw_CCG = 0.0
 n_CCG  = 0.0
 
+
 ChSSlpG = 0.0
 MannNG  = 0.0
 TYPEL   = 0
@@ -7449,6 +7460,8 @@ Tw      = 0.0
 Tw_CC   = 0.0
 n_CC    = 0.0
 ChSSlp  = 0.0
+ChannK  = 0.0
+ChannKG = 0.0
 
 
 if (channel_option .eq. 3) then
@@ -7535,6 +7548,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j) 
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7565,6 +7579,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7594,6 +7609,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7624,6 +7640,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7653,6 +7670,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7683,6 +7701,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7713,6 +7732,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7742,6 +7762,7 @@ do j = 1,JXRT  !rows
                MannN(cnt) = MannNG(i,j)
                ChSSlp(cnt) = ChSSlpG(i,j)
                Bw(cnt) = BwG(i,j)
+               ChannK(cnt) = ChannKG(i,j)
                Tw(cnt) = TwG(i,j)
                Tw_CC(cnt) = Tw_CCG(i,j)
                n_CC(cnt) = n_CCG(i,j)
@@ -7800,6 +7821,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j) 
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -7847,6 +7869,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -7892,6 +7915,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -7938,6 +7962,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -7983,6 +8008,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -8029,6 +8055,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -8074,6 +8101,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -8120,6 +8148,7 @@ do j = 1,JXRT
             MannN(cnt) = MannNG(i,j)
             ChSSlp(cnt) = ChSSlpG(i,j)
             Bw(cnt) = BwG(i,j)
+            ChannK(cnt) = ChannKG(i,j)
             Tw(cnt) = TwG(i,j)
             Tw_CC(cnt) = Tw_CCG(i,j)
             n_CC(cnt) = n_CCG(i,j)
@@ -8172,7 +8201,7 @@ subroutine read_routelink(&
      NLAKES,       MUSK,         MUSX,                 &
      QLINK,        CHANLEN,      MannN,    So,         &
      ChSSlp,       Bw,           Tw,       Tw_CC,      &
-     n_CC,         LAKEIDA,      HRZAREA,              &
+     n_CC,         ChannK,       LAKEIDA,  HRZAREA,    &
      LAKEMAXH,     WEIRH,        WEIRC,   WEIRL, DAML, &
      ORIFICEC,     ORIFICEA,     ORIFICEE,             &
      reservoir_type_specified,   reservoir_type,       &
@@ -8190,6 +8219,7 @@ real,    intent(INOUT),  dimension(:,:)    :: QLINK  !channel flow
 real,    intent(INOUT),  dimension(NLINKS) :: CHANLEN, MannN, So
 real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw !added Top Width LKR/DY
 real,    intent(INOUT),  dimension(:)      :: Tw_CC, n_CC !compound chnannel params
+real,    intent(INOUT),  dimension(:)      :: ChannK !added ChanLoss
 integer, intent(INOUT),  dimension(:)      :: LAKEIDA !lake COMid 4all link on full nlinks database
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
 real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML
@@ -8218,7 +8248,7 @@ LAKELINKID = 0
 call readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f,maxorder, &
      LINKID, TO_NODE, TYPEL, ORDER , &
      QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-     MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
+     MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, ChannK, LAKEIDA, HRZAREA,  &
      LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML, ORIFICEC, &
      ORIFICEA, ORIFICEE, reservoir_type_specified, reservoir_type, reservoir_parameter_file, &
      gages, gageMiss, LAKEIDM, NLAKES, latlake, lonlake,ELEVLAKE)
@@ -8260,7 +8290,7 @@ end subroutine read_routelink
    subroutine readLinkSL( GNLINKSL,NLINKSL,route_link_f, route_lake_f, maxorder, &
                    LINKID, TO_NODE, TYPEL, ORDER , &
                    QLINK,CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN, &
-                   MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, LAKEIDA, HRZAREA,  &
+                   MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, ChannK, LAKEIDA, HRZAREA,  &
                    LAKEMAXH,WEIRH,  WEIRC, WEIRL, DAML, ORIFICEC, &
                    ORIFICEA, ORIFICEE, reservoir_type_specified, reservoir_type, reservoir_parameter_file, &
                    gages, gageMiss, LAKEIDM,NLAKES, latlake, lonlake, ELEVLAKE)
@@ -8275,6 +8305,7 @@ end subroutine read_routelink
         real,dimension(:,:)  :: QLINK
         real, intent(out), dimension(:) ::  CHLON, CHLAT, ZELEV, MUSK, MUSX, CHANLEN
         real, intent(out), dimension(:) ::  MannN, So, ChSSlp, Bw, Tw, latlake, lonlake, Tw_CC, n_CC
+        real, intent(out), dimension(:) ::  ChannK
 
         character(len=15), dimension(:), intent(inout) :: gages
         character(len=15), intent(in) :: gageMiss
@@ -8300,7 +8331,8 @@ end subroutine read_routelink
         real :: tmpQLINK(GNLINKSL,2)
         real, allocatable, dimension(:) ::  tmpCHLON, tmpCHLAT, tmpZELEV, tmpMUSK, tmpMUSX, tmpCHANLEN
         real, allocatable, dimension(:) ::  tmpMannN, tmpSo, tmpChSSlp, tmpBw, tmpTw, tmpTw_CC, tmpn_CC
-#endif
+        real, allocatable, dimension(:) ::  tmpChannK
+#endif 
 
         !! is RouteLink file netcdf (*.nc) or csv (*.csv)
         route_link_f_r = adjustr(route_link_f)
@@ -8331,7 +8363,7 @@ end subroutine read_routelink
           allocate(tmpTw(GNLINKSL))
           allocate(tmpTw_CC(GNLINKSL))
           allocate(tmpn_CC(GNLINKSL))
-
+          allocate(tmpChannK(GNLINKSL))
 
           if(routeLinkNetcdf) then
 
@@ -8341,8 +8373,8 @@ end subroutine read_routelink
                   tmpCHLAT,      tmpZELEV,     tmpTYPEL,    tmpORDER,    &
                   tmpQLINK(:,1), tmpMUSK,      tmpMUSX,     tmpCHANLEN,  &
                   tmpMannN,      tmpSo,        tmpChSSlp,   tmpBw,       &
-                  tmpTw,         tmpTw_CC,     tmpn_CC,     tmpGages,    &
-                  tmpLAKEIDA                                              )
+                  tmpTw,         tmpTw_CC,     tmpn_CC,     tmpChannK,   &
+                  tmpGages,      tmpLAKEIDA                         )
 
           else
 
@@ -8357,7 +8389,7 @@ end subroutine read_routelink
                             tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
                             tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
                             tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i),       &
-                            tmpTw(i),       tmpTw_CC(i),     tmpn_CC(i)
+                            tmpTw(i),       tmpTw_CC(i),     tmpn_CC(i),    tmpChannK(i)
 
                 ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
                 if (tmpORDER(i) .gt. MAXORDER) MAXORDER = tmpORDER(i)
@@ -8404,7 +8436,7 @@ end subroutine read_routelink
         call ReachLS_decomp(tmpTw,       Tw     )
         call ReachLS_decomp(tmpTw_CC,    Tw_CC  )
         call ReachLS_decomp(tmpn_CC,     n_CC   )
-
+        call ReachLS_decomp(tmpChannK,   ChannK )
 
 !       call ReachLS_decomp(tmpHRZAREA,  HRZAREA)
 !       call ReachLS_decomp(tmpLAKEMAXH, LAKEMAXH)
@@ -8447,7 +8479,7 @@ end subroutine read_routelink
            if(allocated(tmpTw)) deallocate(tmpTw)
            if(allocated(tmpTw_CC)) deallocate(tmpTw_CC)
            if(allocated(tmpn_CC)) deallocate(tmpn_CC)
-
+           if(allocated(tmpChannK)) deallocate(tmpChannK)
 !, tmpHRZAREA,&
 !                  tmpLAKEMAXH, tmpWEIRC, tmpWEIRL, tmpORIFICEC, &
 !                  tmpORIFICEA,tmpORIFICEE)
@@ -8463,7 +8495,7 @@ end subroutine read_routelink
                  CHLAT,      ZELEV,     TYPEL,    ORDER,    &
                  QLINK(:,1), MUSK,      MUSX,     CHANLEN,  &
                  MannN,      So,        ChSSlp,   Bw,       &
-                 Tw,         Tw_CC,     n_CC,     gages,    &
+                 Tw,         Tw_CC,     n_CC,     ChannK, gages,    & 
                  LAKEIDA                                     )
 
         else
@@ -8476,7 +8508,7 @@ end subroutine read_routelink
           do i=1,NLINKSL
               read (17,*) LINKID(i), tmp_from_node, TO_NODE(i), CHLON(i),CHLAT(i),ZELEV(i), &
                    TYPEL(i), ORDER(i), QLINK(i,1), MUSK(i), MUSX(i), CHANLEN(i), &
-                   MannN(i), So(i), ChSSlp(i), Bw(i), Tw(i), Tw_CC(i), n_CC(i)
+                   MannN(i), So(i), ChSSlp(i), Bw(i), Tw(i), Tw_CC(i), n_CC(i), ChannK(i)
 
               ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement
               if (ORDER(i) .gt. MAXORDER) MAXORDER = ORDER(i)
@@ -8525,7 +8557,7 @@ subroutine MPP_READ_CHROUTING_new(&
      TYPEL,        ORDER,             MAXORDER,       NLINKS,    &
      NLAKES,       CHANLEN,           MannN,          So,        &
      ChSSlp,       Bw,                Tw,             Tw_CC,     &
-     n_CC,         HRZAREA,           LAKEMAXH,                  &
+     n_CC,         ChannK,            HRZAREA,        LAKEMAXH,  &
      WEIRH,        WEIRC,             WEIRL,          DAML,      &
      ORIFICEC,     ORIFICEA,          ORIFICEE,                  &
      reservoir_type_specified,        reservoir_type,            &
@@ -8575,8 +8607,8 @@ real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 integer, intent(INOUT), dimension(NLAKES)    :: reservoir_type
 character(len=*), intent(in)                 :: reservoir_parameter_file
 real, intent(INOUT),  dimension(NLAKES)      :: LATLAKE,LONLAKE,ELEVLAKE
-real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw
-real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC
+real, intent(INOUT), dimension(NLINKS)       :: ChSSlp, Bw, Tw 
+real, intent(INOUT), dimension(NLINKS)       :: Tw_CC, n_CC, ChannK
 
 character(len=*  )                           :: geo_finegrid_flnm, route_lake_f
 character(len=256)                           :: var_name
@@ -8601,7 +8633,7 @@ call READ_CHROUTING1( &
      TYPEL,        ORDER,             MAXORDER,  NLINKS,  &
      NLAKES,       CHANLEN,           MannN,     So,      &
      ChSSlp,       Bw,                Tw,        Tw_CC,   &
-     n_CC,         HRZAREA,           LAKEMAXH,           &
+     n_CC,         ChannK,            HRZAREA,   LAKEMAXH, &
      WEIRH,        WEIRC,             WEIRL,     DAML,    &
      ORIFICEC,     ORIFICEA,          ORIFICEE,           &
      reservoir_type_specified,        reservoir_type,     &
@@ -8801,8 +8833,8 @@ subroutine read_route_link_netcdf( route_link_file,                         &
                                    CHLAT,    ZELEV,     TYPEL,    ORDER,    &
                                    QLINK,    MUSK,      MUSX,     CHANLEN,  &
                                    MannN,    So,        ChSSlp,   Bw,       &
-                                   Tw,       Tw_CC,     n_CC,     gages,    &
-                                   LAKEIDA                                   )
+                                   Tw,       Tw_CC,     n_CC,     ChannK,   &
+                                   gages,   LAKEIDA                         )
 
 implicit none
 character(len=*),        intent(in)  :: route_link_file
@@ -8811,8 +8843,8 @@ real,    dimension(:),   intent(out) :: CHLON, CHLAT, ZELEV
 integer, dimension(:),   intent(out) :: TYPEL, ORDER
 real,    dimension(:),   intent(out) :: QLINK
 real,    dimension(:),   intent(out) :: MUSK, MUSX, CHANLEN
-real,    dimension(:),   intent(out) :: MannN, So, ChSSlp, Bw, Tw
-real,    dimension(:),   intent(out) :: Tw_CC, n_CC
+real,    dimension(:),   intent(out) :: MannN, So, ChSSlp, Bw, Tw 
+real,    dimension(:),   intent(out) :: Tw_CC, n_CC, ChannK
 
 character(len=15), dimension(:), intent(inout) :: gages
 
@@ -8849,6 +8881,8 @@ call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .
 where(So .lt. 0.0001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
+!! Loads channel infiltration, by default is zero, my need to add namelist option in future
+call get_1d_netcdf_real(ncid, 'Kchan',  ChannK,     'read_route_link_netcdf', .TRUE.)
 
 ! Compound channel variables, contingent on nlst_rt(did)%compound_channel option
 if(nlst(did)%compound_channel) then
@@ -8883,7 +8917,7 @@ print*, 'CHLON', CHLON(ii), 'CHLAT', CHLAT(ii), 'ZELEV', ZELEV(ii)
 print*,'TYPEL', TYPEL(ii), 'ORDER', ORDER(ii), 'QLINK', QLINK(ii), 'MUSK', MUSK(ii)
 print*, 'MUSX', MUSX(ii), 'CHANLEN', CHANLEN(ii), 'MannN', MannN(ii)
 print*,'So', So(ii), 'ChSSlp', ChSSlp(ii), 'Bw', Bw(ii), 'Tw', Tw(ii)
-print*,'TwCompund', Tw_CC(ii), 'Mann Compund', n_CC(ii)
+print*,'TwCompund', Tw_CC(ii), 'Mann Compund', n_CC(ii), 'ChannK', ChannK(ii)
 
 print*,'gages(ii): ',trim(gages(ii))
 print*,"finish read_route_link_netcdf"
@@ -9144,7 +9178,6 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
     integer, allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
-    integer :: cache_block, cache_idx, cache_block_begin, cache_block_end
 
 !   get gnid
 #ifdef MPP_LAND
@@ -9232,26 +9265,45 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
 #endif
 
        nhdBuckMask = -999
-       cache_block = 128
-       do cache_idx = 0, gnid-1, cache_block
-          cache_block_begin = cache_idx + 1
-          cache_block_end = min(cache_idx + cache_block, gnid)
-          do k = 1, numbasns
-             if(nhdBuckMask(k) /= -999) cycle
-             do i = cache_block_begin, cache_block_end
-                if(LINKID(k) .eq. tmpLinkid(i)) then
-                   gw_buck_coeff(k) = tmpCoeff(i)
-                   gw_buck_exp(k) = tmpExp(i)
-                   if(nlst(did)%bucket_loss .eq. 1) then
-                      gw_buck_loss(k) = tmpLoss(i)
-                   endif
-                   z_max(k) = tmpz_max(i)
-                   z_init(k) = tmpz_init(i)
-                   nhdBuckMask(k) = 1
-                endif
-             end do
-          end do
-       end do
+
+       ! The following loops are replaced by a hashtable-based algorithm
+       !   do k = 1, numbasns
+       !         do i = 1, gnid
+       !             if(LINKID(k) .eq. tmpLinkid(i)) then
+       !                gw_buck_coeff(k) = tmpCoeff(i)
+       !                gw_buck_exp(k) = tmpExp(i)
+       !                z_max(k) = tmpz_max(i)
+       !                z_init(k) = tmpz_init(i)
+       !                nhdBuckMask(k) = 1
+       !                goto 301 
+       !             endif
+       !         end do
+       ! 301     continue
+       !     end do
+
+       block
+         type(hash_t) :: hash_table
+         integer :: val,it
+         logical :: found
+         
+         call hash_table%set_all_idx(LINKID,numbasns)
+         do it=1, gnid
+            call hash_table%get(tmpLinkid(it), val, found)
+            if((found .eqv. .true.)) then
+               if((nhdBuckMask(val) == -999)) then
+                  gw_buck_coeff(val) = tmpCoeff(it)
+                  gw_buck_exp(val) = tmpExp(it)
+                  if(nlst(did)%bucket_loss == 1) then
+                     gw_buck_loss(val) = tmpLoss(it)
+                  end if
+                  z_max(val) = tmpz_max(it)
+                  z_init(val) = tmpz_init(it)
+                  nhdBuckMask(val) = 1
+               end if
+            end if
+         end do
+         call hash_table%clear()
+       end block
 
     if(allocated(tmpCoeff)) deallocate(tmpCoeff)
     if(allocated(tmpExp)) deallocate(tmpExp)
@@ -10258,8 +10310,6 @@ end subroutine output_chrt2
         integer,allocatable, dimension(:) ::  gto, tmpLAKELINKID, gTYPEL, gOUTLAKEID
 
       integer tmpBuf(GNLINKSL)
-      integer, allocatable :: num_a(:)
-      integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       tmpSize = size(TO_NODE,1)
       allocate(OUTLAKEID(tmpSize))
@@ -10282,68 +10332,95 @@ end subroutine output_chrt2
 
       maxNum = 0
       kk = 0
-      allocate(num_a(NLINKSL))
-      cache_block = 256
-      num_a = 0
-      tmp_num = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  kk = kk +1
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-            num = tmp_num
-            if(num .gt. maxNum) maxNum = num
-         end do
-      end do
 
-      allocate(ind(kk))
-      allocate(gToNodeOut(NLINKSL,maxNum+1))
-      gToNodeOut = -99
-      allocate(tmpTYPEL(kk))
-      allocate(tmpLINKID(kk))
-      allocate(tmpLAKEIDA(kk))
-      allocate(tmpOUTLAKEID(kk))
-      allocate(tmpTO_NODE(kk))
+            ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !       num = 0
+      !       do k = 1, gnlinksl
+      !          if(gto(k) .eq. LINKID(m) ) then
+      !              kk = kk +1
+      !              num = num + 1
+      !          endif
+      !       end do
+      !       if(num .gt. maxNum) maxNum = num
+      ! end do
 
-      if(kk .gt. 0) then
-         tmpOUTLAKEID = -999
-         tmpTYPEL = -999
-         tmpTO_NODE = -999
-      endif
-      if(NLINKSL .gt. 0) then
-         OUTLAKEID = -999
-         TYPEL = -999
-      endif
 
-      num_a = 1
-      tmp_num = 0
-      kk = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  kk = kk +1
-                  ind(kk) = k
-                  tmpTO_NODE(kk) = gto(k)
-                  gToNodeOut(m,tmp_num+1) = kk
-                  gToNodeOut(m,1) = tmp_num
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-         end do
-      end do
-      deallocate(num_a)
+
+      block
+        type(hash_t) :: hash_table
+        integer :: val,it
+        integer, allocatable :: num_a(:)
+        logical :: found
+        
+        allocate(num_a(NLINKSL))
+        num_a = 0
+        kk = 0
+        
+        call hash_table%set_all_idx(linkid, NLINKSL)
+        do it=1, gnlinksl
+           call hash_table%get(gto(it), val, found)
+           if(found .eqv. .true.) then
+              kk = kk + 1
+              num_a(val) = num_a(val) + 1
+           end if
+        end do
+        maxNum = maxval(num_a)
+        num_a = 1
+      
+        allocate(ind(kk))
+        allocate(gToNodeOut(NLINKSL,maxNum+1))
+        gToNodeOut = -99
+        allocate(tmpTYPEL(kk))
+        allocate(tmpLINKID(kk))
+        allocate(tmpLAKEIDA(kk))
+        allocate(tmpOUTLAKEID(kk))
+        allocate(tmpTO_NODE(kk))
+        
+        if(kk .gt. 0) then
+           tmpOUTLAKEID = -999
+           tmpTYPEL = -999
+           tmpTO_NODE = -999
+        endif
+        if(NLINKSL .gt. 0) then
+           OUTLAKEID = -999
+           TYPEL = -999
+        endif
+        
+        kk = 0
+        
+        ! The following loops are replaced by a hashtable-based algorithm
+        ! do m = 1, NLINKSL
+        !          num = 1
+        !          do k = 1, gnlinksl
+        !              if(gto(k) .eq. LINKID(m) ) then
+        !                  kk = kk +1
+        !                  ind(kk) = k
+        !                  tmpTO_NODE(kk) = gto(k)
+        !                  gToNodeOut(m,num+1) = kk
+        !                  gToNodeOut(m,1) = num
+        !                  num = num + 1
+        !              endif
+        !           end do
+        ! enddo
+        
+        do it=1, gnlinksl
+           call hash_table%get(gto(it), val, found)
+           if(found .eqv. .true.) then
+              kk = kk + 1
+              ind(kk) = it
+              tmpTO_NODE(kk) = gto(it)
+              gToNodeOut(val,num_a(val)+1) = kk
+              gToNodeOut(val,1) = num_a(val)
+              num_a(val) = num_a(val) + 1
+           end if
+        end do
+        
+        deallocate(num_a)
+        call hash_table%clear()
+        
+      end block
+      
       size2 = kk
       deallocate (gto)
 
@@ -10533,8 +10610,6 @@ end subroutine output_chrt2
 !       integer tmpBuf(GNLINKSL)
         integer, dimension(nlakes) :: lakemask
         integer ii
-        integer, allocatable :: num_a(:)
-        integer :: tmp_num, cache_block_begin, cache_block_end, cache_idx, cache_block
 
       allocate (gto(GNLINKSL))
       allocate (gtoLakeId_g(GNLINKSL))
@@ -10551,56 +10626,82 @@ end subroutine output_chrt2
 
       maxNum = 0
       kk = 0
-      allocate(num_a(NLINKSL))
-      cache_block = 256
-      num_a = 0
-      tmp_num = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  gtoLakeId_g(k) = lakeida(m)
-                  kk = kk +1
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-            num = tmp_num
-            if(num .gt. maxNum) maxNum = num
-         end do
-      end do
 
-      allocate(ind(kk))
-      allocate(gToNodeOut(NLINKSL,maxNum+1))
-      gToNodeOut = -99
-      allocate(tmpLAKEIDA(kk))
-      allocate(tmpTO_NODE(kk))
+      ! The following loops are replaced by a hashtable-based algorithm
+      ! do m = 1, NLINKSL
+      !    num = 0
+      !    do k = 1, gnlinksl
+      !       if(gto(k) .eq. LINKID(m) ) then
+      !          gtoLakeId_g(k) = lakeida(m)
+      !          kk = kk +1
+      !          num = num + 1
+      !       endif
+      !    end do
+      !    if(num .gt. maxNum) maxNum = num
+      ! end do
 
-      num_a = 1
-      tmp_num = 0
-      kk = 0
-      do cache_idx = 0, gnlinksl-1, cache_block
-         cache_block_begin = cache_idx + 1
-         cache_block_end = min(cache_idx + cache_block, gnlinksl)
-         do m = 1, NLINKSL
-            tmp_num = num_a(m)
-            do k = cache_block_begin, cache_block_end
-               if(gto(k) .eq. LINKID(m) ) then
-                  kk = kk +1
-                  ind(kk) = k
-                  tmpTO_NODE(kk) = gto(k)
-                  gToNodeOut(m,tmp_num+1) = kk
-                  gToNodeOut(m,1) = tmp_num
-                  tmp_num = tmp_num + 1
-               endif
-            end do
-            num_a(m) = tmp_num
-         end do
-      end do
-      deallocate(num_a)
+      block
+        type(hash_t) :: hash_table
+        integer :: val,it
+        integer, allocatable :: num_a(:)
+        logical :: found
+        
+        allocate(num_a(NLINKSL))
+        num_a = 0
+        kk = 0
+         
+        call hash_table%set_all_idx(linkid, NLINKSL)
+        do it=1, gnlinksl
+           call hash_table%get(gto(it), val, found)
+           if(found .eqv. .true.) then
+              gtoLakeId_g(it) = lakeida(val)
+              kk = kk + 1
+              num_a(val) = num_a(val) + 1
+           end if
+        end do
+        maxNum = maxval(num_a)
+        num_a = 1
+        
+        allocate(ind(kk))
+        allocate(gToNodeOut(NLINKSL,maxNum+1))
+        gToNodeOut = -99
+        allocate(tmpLAKEIDA(kk))
+        allocate(tmpTO_NODE(kk))
+        
+        kk = 0 
+        
+        ! The following loops are replaced by a hashtable-based algorithm
+        ! do m = 1, NLINKSL
+        !    num = 1
+        !    do k = 1, gnlinksl
+        !       if(gto(k) .eq. LINKID(m) ) then
+        !          kk = kk +1
+        !          ind(kk) = k
+        !          tmpTO_NODE(kk) = gto(k)
+        !          gToNodeOut(m,num+1) = kk
+        !          gToNodeOut(m,1) = num
+        !          num = num + 1
+        !       endif
+        !    end do
+        ! end do
+        
+        do it=1, gnlinksl
+           call hash_table%get(gto(it), val, found)
+           if(found .eqv. .true.) then
+              kk = kk + 1
+              ind(kk) = it
+              tmpTO_NODE(kk) = gto(it)
+              gToNodeOut(val,num_a(val)+1) = kk
+              gToNodeOut(val,1) = num_a(val)
+              num_a(val) = num_a(val) + 1
+           end if
+        end do
+        
+        deallocate(num_a)
+        call hash_table%clear()
+        
+      end block
+         
       size = kk
       if(allocated(gto)) deallocate (gto)
 

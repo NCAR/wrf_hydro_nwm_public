@@ -40,6 +40,7 @@ MODULE module_Routing
    use module_persistence_levelpool_hybrid, only: persistence_levelpool_hybrid
    use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
+   use hashtable
 
    IMPLICIT NONE
 
@@ -362,6 +363,7 @@ CONTAINS
      allocate( rt_domain(did)%Tw(nsizes) )
      allocate( rt_domain(did)%Tw_CC(nsizes) )
      allocate( rt_domain(did)%n_CC(nsizes) )
+     allocate( rt_domain(did)%ChannK(nsizes) )
      allocate( rt_domain(did)%LAKEIDA(nsizes) )
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
 
@@ -440,6 +442,10 @@ CONTAINS
 	allocate( rt_domain(did)%velocity(nsizes) )
 	rt_domain(did)%QLateral  = zeroFlt
 	rt_domain(did)%velocity  = zeroFlt
+        if( nlst(did)%channel_option .eq. 2 ) then
+           allocate( rt_domain(did)%qloss(nsizes) )
+           rt_domain(did)%qloss = zeroFlt
+        endif
      endif
 
   if( nlst(did)%channel_option .eq. 1  .or. nlst(did)%channel_option .eq. 2 ) then
@@ -485,6 +491,7 @@ CONTAINS
       rt_domain(did)%Tw = 0.0
       rt_domain(did)%Tw_CC = 0.0
       rt_domain(did)%n_CC = 0.0
+      rt_domain(did)%ChannK = 0.0
 
 
       rt_domain(did)%ZELEV = 0.0
@@ -666,7 +673,7 @@ subroutine LandRT_ini(did)
 
   real,  dimension(50)     :: BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann !Channel parms from table
   real,  dimension(50)     :: TOPWIDCC, NCC    !channnel params of compound
-
+  real,  dimension(50)     :: CHANN_K ! Channel infiltration param
   integer :: i,j,k, ll, count
 
   integer, allocatable, dimension(:) :: tmp_int
@@ -674,8 +681,6 @@ subroutine LandRT_ini(did)
   integer, allocatable, dimension(:) :: buf
   real, allocatable, dimension(:) :: tmpRESHT
   integer :: new_start_i, new_start_j, new_end_i, new_end_j
-  integer :: cache_block, cache_block_begin_i, cache_block_end_i
-  integer :: cache_idx, num_blocks, cache_idx_k, cache_block_begin_k, cache_block_end_k
 
 #ifdef OUTPUT_CHAN_CONN
   real :: connCalcTimeStart, connCalcTimeEnd
@@ -729,6 +734,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%Tw,                              &
              rt_domain(did)%Tw_CC,                           &
              rt_domain(did)%n_CC,                            &
+             rt_domain(did)%ChannK,                          &
              rt_domain(did)%HRZAREA,      rt_domain(did)%LAKEMAXH, &
              rt_domain(did)%WEIRH,        rt_domain(did)%WEIRC, &
              rt_domain(did)%WEIRL,        rt_domain(did)%DAML, &
@@ -772,6 +778,7 @@ subroutine LandRT_ini(did)
            rt_domain(did)%Tw,                                       &
            rt_domain(did)%Tw_CC,                                    &
            rt_domain(did)%n_CC,                                     &
+           rt_domain(did)%ChannK,                                   &
            rt_domain(did)%LAKEIDA,       rt_domain(did)%HRZAREA,    &
            rt_domain(did)%LAKEMAXH,      rt_domain(did)%WEIRH,      &
            rt_domain(did)%WEIRC,         rt_domain(did)%WEIRL,      &
@@ -998,28 +1005,33 @@ subroutine LandRT_ini(did)
         if(down_id .ge. 0) new_start_j = 2
         if(up_id .ge. 0) new_end_j = rt_domain(did)%jxrt - 1
 
-        cache_block = 256
-        num_blocks = ceiling((new_end_i - new_start_i)/real(cache_block))
-        !$omp parallel do private(cache_idx,cache_block_begin_i,cache_block_end_i,cache_idx_k,i,k) &
-        !$omp private(cache_block_begin_k, cache_block_end_k), schedule(static)
-        do j = new_start_j, new_end_j
-           do cache_idx = 0, num_blocks - 1
-              cache_block_begin_i = new_start_i + cache_idx * cache_block + 1
-              cache_block_end_i = min(cache_block_begin_i + cache_block - 1, new_end_i)
-              do cache_idx_k = 0, rt_domain(did)%LNLINKSL - 1, cache_block
-                 cache_block_begin_k = min(cache_idx_k + 1, rt_domain(did)%LNLINKSL)
-                 cache_block_end_k = min(cache_block_begin_k + cache_block - 1, rt_domain(did)%LNLINKSL)
-                 do i = cache_block_begin_i, cache_block_end_i
-                    do k = cache_block_begin_k, cache_block_end_k
-                       if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
-                          rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
-                       endif
-                    end do
-                 end do
-              end do
-           end do
-        end do
-        !$omp end parallel do
+                ! The following loops are replaced by a hashtable-based algorithm
+        ! do k = 1, rt_domain(did)%LNLINKSL
+        !    do j = new_start_j, new_end_j
+        !       do i = new_start_i, new_end_i
+        !          if(rt_domain(did)%CH_LNKRT(i,j) .eq. rt_domain(did)%LLINKID(k) ) then
+        !             rt_domain(did)%CH_LNKRT_SL(i,j) = k   !! mapping
+        !          endif
+        !       end  do
+        !    end do
+        ! end do
+
+        block
+          type(hash_t) :: hash_table
+          integer :: val,ii,jj
+          logical :: found
+          
+          call hash_table%set_all_idx(rt_domain(did)%LLINKID, rt_domain(did)%LNLINKSL)
+          do jj = new_start_j, new_end_j
+             do ii = new_start_i, new_end_i
+                call hash_table%get(rt_domain(did)%CH_LNKRT(ii,jj), val, found)
+                if(found .eqv. .true.) then
+                   rt_domain(did)%CH_LNKRT_SL(ii,jj) = val
+                end if
+             end do
+          end do
+          call hash_table%clear()
+        end block
 
         call getLocalIndx(rt_domain(did)%gnlinksl,rt_domain(did)%LINKID, rt_domain(did)%LLINKID)
 
@@ -1399,10 +1411,10 @@ subroutine LandRT_ini(did)
       ! This conflict of options is caught in Data_Rec/module_namelist.F
       ! Some of the code for reading/using top-width-necessary params from CHANPARM.TBL are available
       ! but commented out in the code, since they were a bridge to nowhere.
-        call mpp_CHAN_PARM_INIT (BOTWID,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
+        call mpp_CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann)  !Read chan parms from table...
       !call mpp_CHAN_PARM_INIT (BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann,TOPWIDCC,NCC)  !Read chan parms from table...
 #else
-        call CHAN_PARM_INIT (BOTWID, TOPWID, HLINK_INIT, CHAN_SS, CHMann) !,TOPWIDCC,NCC)  !Read chan parms from table...
+        call CHAN_PARM_INIT (BOTWID,CHANN_K,HLINK_INIT,CHAN_SS,CHMann) !,TOPWIDCC,NCC)  !Read chan parms from table...
 #endif
      end if
 

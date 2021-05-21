@@ -41,7 +41,7 @@ module config_base
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
 
-     integer            :: split_output_count = 1
+     integer            :: split_output_count = 1 
      integer            :: khour
      integer            :: kday = -999
      real               :: zlvl
@@ -140,6 +140,8 @@ module config_base
      integer ::outlake                   ! Netcdf grid of lake
      integer :: rtFlag
      integer ::khour
+
+     integer :: channel_loss_option = 0
 
      character(len=256) :: nudgingParamFile
      character(len=256) :: netwkReExFile
@@ -390,14 +392,6 @@ contains
       inquire(file=trim(self%route_lake_f),exist=fileExists)
       if (.not. fileExists) call hydro_stop('hydro.namelist ERROR: route_lake_f not found.')
    endif
-   ! Only allow lakes to be ran with gridded routing or NWM routing
-   if(len(trim(self%route_lake_f)) .ne. 0) then
-      if(self%channel_option .ne. 3) then
-         if(self%UDMP_OPT .ne. 1) then
-            call hydro_stop('hydro.namelist ERROR: Currently lakes only work with gridded channel routing or UDMP=1. Please change your namelist settings.')
-         endif
-      endif
-   endif
 
    if((self%channel_option .eq. 3) .and. (self%compound_channel)) then
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
@@ -468,6 +462,7 @@ contains
     character(len=256) :: route_chan_f=""
     character(len=256) :: route_link_f=""
     logical            :: compound_channel
+    integer            :: channel_loss_option = 0
     character(len=256) :: route_lake_f=""
     logical            :: reservoir_persistence_usgs
     logical            :: reservoir_persistence_usace
@@ -542,7 +537,7 @@ contains
          SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
-         route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
+         route_topo_f,route_chan_f,route_link_f, compound_channel, channel_loss_option, route_lake_f, &
          reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_usgs_timeslice_path, &
          reservoir_usace_timeslice_path, reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
          reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, &
@@ -579,6 +574,7 @@ contains
     TERADJ_SOLAR = 0
     reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
     compound_channel = .FALSE.
+    channel_loss_option = 0
     bucket_loss = 0
     reservoir_persistence_usgs = .FALSE.
     reservoir_persistence_usace = .FALSE.
@@ -758,7 +754,7 @@ contains
     nlst(did)%rst_bi_out = rst_bi_out
     nlst(did)%order_to_write = order_to_write
     nlst(did)%compound_channel = compound_channel
-
+    nlst(did)%channel_loss_option = channel_loss_option
     ! files
     nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f
@@ -911,6 +907,8 @@ contains
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
+         
+         soil_data_option, pedotransfer_option, crop_option, &
 
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &

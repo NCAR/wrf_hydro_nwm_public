@@ -180,7 +180,7 @@ Contains
     integer, dimension(ix,jx) :: vegtyp_inv, soiltyp_inv,xdum_int
     integer flag ! flag = 1 from wrfsi, flag =2 from WPS.
     CHARACTER(len=256)       :: var_name
-    integer :: istmp, iswater, isoilwater, isother
+    integer :: islake, iswater, isoilwater
 
     ! Open the NetCDF file.
     ierr = nf_open(geo_static_flnm, NF_NOWRITE, ncid)
@@ -257,15 +257,20 @@ Contains
 
     endif
 
-! Default values based on USGS
-iswater = 16
-isoilwater = 14
-isother = 28 ! what is this??
+    ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISWATER', iswater)
+    if (ierr /= 0) then
+       call hydro_stop("In readland_hrldas() - Attribute ISWATER unable to be read from geo_static_flnm")
+    endif
 
-ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISWATER', istmp)
-if (ierr .eq. NF_NOERR) iswater = istmp
-ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISOILWATER', istmp)
-if (ierr .eq. NF_NOERR) isoilwater = istmp
+    ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISOILWATER', isoilwater)
+    if (ierr /= 0) then
+       call hydro_stop("In readland_hrldas() - Attribute ISOILWATER unable to be read from geo_static_flnm")
+    endif
+
+    ierr = NF_GET_ATT_INT(ncid, NF_GLOBAL, 'ISLAKE', islake)
+    if (ierr /= 0) then
+       call hydro_stop("In readland_hrldas() - Attribute ISLAKE unable to be read from geo_static_flnm")
+    endif
 
     ! Close the NetCDF file
     ierr = nf_close(ncid)
@@ -274,12 +279,12 @@ if (ierr .eq. NF_NOERR) isoilwater = istmp
        call hydro_stop("In readland_hrldas() - NF_CLOSE problem")
     endif
 
- write(6, *) "readland_hrldas: ISWATER ISOILWATER", iswater, isoilwater
+ write(6, *) "readland_hrldas: ISLAKE ISWATER ISOILWATER", islake, iswater, isoilwater
 
     ! Make sure vegtyp and soltyp are consistent when it comes to water points,
     ! by setting soil category to water when vegetation category is water, and
     ! vice-versa.
-    where (vegtyp == isother) vegtyp = iswater
+    where (vegtyp == islake) vegtyp = iswater
     where (vegtyp == iswater) soltyp = isoilwater
     where (soltyp == isoilwater) vegtyp = iswater
 
