@@ -1279,8 +1279,9 @@ program reservoir_unit_tests
 
         print *, 'dynamic_reservoir_type: ', dynamic_reservoir_type
 
-        if (outflow .ge. 3.6 - epsilon(3.6) .and. outflow .le. 3.6 + epsilon(3.6) .and. &
-        dynamic_reservoir_type == 5 .and. assimilated_value .ge. 3.6 - epsilon(3.6) &
+        if (outflow .ge. 3.6 - epsilon(3.6) .and. outflow .le. 3.6 + epsilon(3.6) &
+        .and. water_elevation .ge. 0.0 - epsilon(0.0) .and. water_elevation .le. 0.0 + epsilon(0.0) &
+        .and. dynamic_reservoir_type == 5 .and. assimilated_value .ge. 3.6 - epsilon(3.6) &
         .and. assimilated_value .le. 3.6 + epsilon(3.6) .and. &
         assimilated_source_file == "2019-08-18_00.60min.SNOA2.RFCTimeSeries.ncdf") then
             rv = .true.
