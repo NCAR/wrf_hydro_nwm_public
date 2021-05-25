@@ -952,7 +952,6 @@ subroutine output_chrt_NWM(domainId)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)
@@ -1118,7 +1117,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    character(len=1024) :: output_flnm ! Output file name
    integer :: iret ! NetCDF return status
    integer :: ftn  ! NetCDF file handle
-   integer :: dimId(7) ! NetCDF dimension ID values
+!   integer :: dimId(7) ! NetCDF dimension ID values
+! ++ T.EI crocus
+   integer :: dimId(8) ! NetCDF dimension ID values
+! -- T.EI 
    integer :: varId ! NetCDF variable ID value
    integer :: timeId ! NetCDF time variable ID
    integer :: refTimeId ! NetCDF reference_time variable ID
@@ -1241,8 +1243,17 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,1,1,1,1,1,1,1,& !61-70
                              1,1,1,1,1,1,1,1,1,1,& !71-80
                              1,1,1,1,1,1,1,1,1,1,& !81-90
-                             1,1,1,1,1,1,1,1]      !91-98
-   else if(nlst(1)%io_config_outputs .eq. 1) then
+                             1,1,1,1,1,1,1,1,&     !91-98
+      ! ++ T.EI crocus
+                             1,1,1,& !99-101
+                             1,1,1,& !102-104
+                             1,1,1,& !105-107
+                             1,1,1,& !108-110
+                             1,1,1,& !111-113
+                             1,1,1]  !114
+      ! -- T.EI 
+  
+  else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
                              0,0,0,0,0,0,1,0,0,0,& !11-20
@@ -1253,7 +1264,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,1,1,0,1,0,0,1]      !91-98
+                             0,1,1,0,1,0,0,1,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
@@ -1265,7 +1285,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,1,1,0,0,1,0,0,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,1,0,1,0,0,0]      !91-98
+                             0,0,1,0,1,0,0,0,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
@@ -1277,7 +1306,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,1,1,1,0,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,0,1,0,0,0]      !91-98
+                             1,1,1,0,1,0,0,0,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
@@ -1289,7 +1327,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,1,0,0,0,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,0,1,1,0,0,0,0]      !91-98
+                             1,0,1,1,0,0,0,0,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
       fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,& !1-10
@@ -1301,7 +1348,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,0,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,0,0,0,1,1,1]      !91-98
+                             0,0,0,0,0,1,1,1,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
@@ -1313,7 +1369,16 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,0,0,1]      !91-98
+                             1,1,1,1,1,0,0,1,&     !91-98
+      ! ++ T.EI crocus
+                             0,0,0,& !99-101
+                             0,0,0,& !102-104
+                             0,0,0,& !105-107
+                             0,0,0,& !108-110
+                             0,0,0,& !111-113
+                             0,0,0]  !114
+      ! -- T.EI   
+
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1387,6 +1452,11 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
          iret = nf90_def_dim(ftnNoahMP,'reference_time',1,dimId(6))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
+!++ T.EI crocus
+         iret = nf90_def_dim(ftnNoahMP,'glacier_levels',fileMeta%act_lev,dimId(8))
+         write(*,*) 'glacier levels ', fileMeta%act_lev, dimid(8)
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to define act_layers dimension')
+! -- T.EI
          ! Only create vis_nir if we are outputting the two snow albedo variables.
          ! Otherwise these are unecessary dimensions.
          if ((fileMeta%outFlag(96) .eq. 1) .or. (fileMeta%outFlag(96) .eq. 1)) then
@@ -1475,6 +1545,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+!++ T.EI crocus
+                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
+                     iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
+!-- T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then
@@ -1485,6 +1559,10 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
+!++ T.EI crocus
+                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
+                     iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
+!-- T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then
@@ -1713,6 +1791,9 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       ! Write array out to NetCDF file.
       if(myId .eq. 0) then
          iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
+         write(*,*) trim(fileMeta%varNames(varInd))
+         write(*,*) varInd
+         write(*,*) iret
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
          if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
             if(fileMeta%numLev(varInd) .eq. 1) then
@@ -2950,7 +3031,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)
@@ -5014,7 +5094,6 @@ subroutine output_chanObs_NWM(domainId)
             ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn, varId, &
@@ -5545,10 +5624,9 @@ subroutine output_gw_NWM(domainId,iGrid)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
-            ! Get NetCDF variable id.
+            ! Get NetCDF variable id.           
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
-
             ! Put data into NetCDF file
             if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then
                iret = nf90_put_var(ftn,varId,varOutInt)

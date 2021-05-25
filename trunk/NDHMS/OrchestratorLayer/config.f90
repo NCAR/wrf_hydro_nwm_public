@@ -11,6 +11,9 @@ module config_base
   type NOAHLSM_OFFLINE_
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
+ !++ T.EI crocus
+     integer            :: act_lev
+! -- T.EI 
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -68,6 +71,9 @@ module config_base
   TYPE namelist_rt_
 
      integer :: nsoil, SOLVEG_INITSWC
+ !++ T.EI crocus
+     integer            :: act_lev
+! -- T.EI 
      real,allocatable,dimension(:) :: ZSOIL8
      real*8 :: out_dt, rst_dt
      real   :: dt  !! dt is NOAH_TIMESTEP
@@ -304,6 +310,12 @@ contains
       endif
    end do
 
+! ++T.EI crocus
+   if(self%NSOIL .le. 0 .and. self%NSOIL .ne. -999999) then
+      call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
+   endif
+! -- T.EI
+
    if(self%dxrt0 .le. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid DXRT specified.')
    endif
@@ -508,6 +520,9 @@ contains
 !!! add the following two dummy variables
     integer  :: NSOIL
     real :: ZSOIL8(8)
+ !++ T.EI crocus
+     integer            :: act_lev
+! -- T.EI 
 
     logical            :: dir_e
     character(len=1024) :: reservoir_obs_dir
@@ -528,6 +543,9 @@ contains
 #endif
 
     namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
+ !++ T.EI crocus
+         act_lev, &
+! -- T.EI 
          RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
          geo_static_flnm, &
          land_spatial_meta_flnm, &
@@ -731,6 +749,9 @@ contains
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
 
+! ++ T.EI crocus
+    nlst(did)%act_lev = act_lev
+! -- T.EI
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
     nlst(did)%dxrt0 = dxrt
@@ -848,6 +869,9 @@ contains
     implicit none
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
+ !++ T.EI crocus
+     integer            :: act_lev
+! -- T.EI 
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -898,6 +922,9 @@ contains
 
     namelist / NOAHLSM_OFFLINE /    &
          indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
+         !++ T.EI crocus
+         act_lev,&
+         ! -- T.EI          
          start_year, start_month, start_day, start_hour, start_min, &
          outdir, &
          restart_filename_requested, restart_frequency_hours, output_timestep, &
@@ -919,6 +946,9 @@ contains
     namelist /WRF_HYDRO_OFFLINE/ &
          finemesh,finemesh_factor,forc_typ, snow_assim
 
+    !++ T.EI crocus
+    noah_lsm%act_lev               = -999
+    !-- T.EI
     noah_lsm%nsoil                   = -999
     noah_lsm%soil_thick_input        = -999
     ! dtbl                             = -999
@@ -980,6 +1010,9 @@ contains
 
     noah_lsm%indir = indir
     noah_lsm%nsoil = nsoil ! number of soil layers
+    !++ T.EI crocus
+    noah_lsm%act_lev = act_lev
+    !-- T.EI
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
     noah_lsm%start_year = start_year

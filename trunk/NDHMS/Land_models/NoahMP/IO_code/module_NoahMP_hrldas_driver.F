@@ -26,6 +26,9 @@ module module_NoahMP_hrldas_driver
   USE module_date_utilities
   USE orchestrator_base
   USE config_base, only: wrf_hydro, noah_lsm
+! ++ T.EI crocus
+  USE modi_ini_csts
+! -- T.EI
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, getLocalXY, mpp_land_bcast_char, mpp_land_sync
   use module_mpp_land, only: check_land, node_info, numprocs
@@ -88,9 +91,16 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:)      ::  DZS       ! thickness of soil layers [m]
   INTEGER                                 ::  NSOIL     ! number of soil layers
   INTEGER                                 ::  NUM_SOIL_LAYERS     ! number of soil layers
+! ++ T.EI crocus
+  INTEGER                                 :: act_lev
+! -- T.EI
   REAL                                    ::  DX        ! horizontal grid spacing [m]
   INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  IVGTYP    ! vegetation type
   INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISLTYP    ! soil type
+! ++ T.EI crocus 
+ INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  GLACINFO    ! location of  glacier 
+  REAL, ALLOCATABLE, DIMENSION(:,:)    ::  GLACT ! glacier thickness  
+! -- T.EI
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGFRA    ! vegetation fraction []
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TMN       ! deep soil temperature [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAND     ! =2 ocean; =1 land/seaice
@@ -303,6 +313,30 @@ module module_NoahMP_hrldas_driver
   REAL                                    ::  WTDDT  = 30.0    ! frequency of groundwater call [minutes]
   INTEGER                                 ::  STEPWTD          ! step of groundwater call
 
+!-----------------------
+! ++ T.EI crocus
+! -----------------------
+
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWTHRUFALXY
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWALBXY   
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWHEIGHTXY
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  PSNOWTOTSWEXY
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  FLOW_SNOW
+  REAL,       ALLOCATABLE, DIMENSION(:,:)    ::  FLOW_ICE
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWHEATXY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWRHOXY  
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWSWEXY  
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWGRAN1XY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWGRAN2XY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWAGEXY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWLIQXY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWTEMPXY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWDZXY 
+  REAL,       ALLOCATABLE, DIMENSION(:,:,:)   ::  PSNOWHISTXY
+
+! -- T.EI
+
+
 !------------------------------------------------------------------------
 ! 2D variables not used in WRF - should be removed?
 !------------------------------------------------------------------------
@@ -423,6 +457,9 @@ module module_NoahMP_hrldas_driver
 
   dtbl = real(noah_lsm%noah_timestep)
   num_soil_layers = noah_lsm%nsoil      ! because surface driver uses the long form
+!++ T.EI crocus
+  act_lev = noah_lsm%act_lev  
+!--T.EI 
   IDVEG = noah_lsm%dynamic_veg_option ! transfer from namelist to driver format
   IOPT_CRS = noah_lsm%canopy_stomatal_resistance_option
   IOPT_BTR = noah_lsm%btr_option
@@ -660,7 +697,7 @@ module module_NoahMP_hrldas_driver
   xend = noah_lsm%xend
   yend = noah_lsm%yend
   nsoil = noah_lsm%nsoil
-
+  act_lev = noah_lsm%act_lev
   ids = xstart
   ide = xend
   jds = ystart
@@ -702,6 +739,10 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( IVGTYP    (XSTART:XEND,YSTART:YEND) )    ! vegetation type
   ALLOCATE ( ISLTYP    (XSTART:XEND,YSTART:YEND) )    ! soil type
   ALLOCATE ( VEGFRA    (XSTART:XEND,YSTART:YEND) )    ! vegetation fraction []
+! ++ T.EI crocus 
+  ALLOCATE ( GLACINFO    (XSTART:XEND,YSTART:YEND) )    ! loacation of glacier 
+  ALLOCATE ( GLACT    (XSTART:XEND,YSTART:YEND) )    ! glacier thickness [m]
+!-- T.EI
   ALLOCATE ( TMN       (XSTART:XEND,YSTART:YEND) )    ! deep soil temperature [K]
   ALLOCATE ( XLAND     (XSTART:XEND,YSTART:YEND) )    ! =2 ocean; =1 land/seaice
   ALLOCATE ( XICE      (XSTART:XEND,YSTART:YEND) )    ! fraction of grid that is seaice
@@ -883,6 +924,25 @@ module module_NoahMP_hrldas_driver
 
   ALLOCATE ( CHSTARXY  (XSTART:XEND,YSTART:YEND) )  ! for consistency with MP_init; delete later
   ALLOCATE ( SEAICE    (XSTART:XEND,YSTART:YEND) )  ! seaice fraction
+! ++ T.EI crocus
+   ALLOCATE ( PSNOWTHRUFALXY   (XSTART:XEND,YSTART:YEND) )  ! 
+   ALLOCATE ( PSNOWALBXY   (XSTART:XEND,YSTART:YEND) )  ! 
+   ALLOCATE ( PSNOWHEIGHTXY   (XSTART:XEND,YSTART:YEND) )  ! 
+   ALLOCATE ( PSNOWTOTSWEXY   (XSTART:XEND,YSTART:YEND) )  ! 
+   ALLOCATE ( FLOW_SNOW   (XSTART:XEND,YSTART:YEND) )  !
+   ALLOCATE ( FLOW_ICE    (XSTART:XEND,YSTART:YEND) )  !
+   ALLOCATE ( PSNOWHEATXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWRHOXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )     
+   ALLOCATE ( PSNOWSWEXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWGRAN1XY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWGRAN2XY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWAGEXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWLIQXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWTEMPXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWDZXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+   ALLOCATE ( PSNOWHISTXY  (XSTART:XEND,1:act_lev,YSTART:YEND) )  
+! -- T.EI
+
 
 #ifdef WRF_HYDRO
    allocate( greenfrac   (XSTART:XEND,YSTART:YEND))
@@ -910,6 +970,10 @@ module module_NoahMP_hrldas_driver
   DZ8W       = undefined_real
   DZS        = undefined_real
   IVGTYP     = undefined_int
+! ++ T.EI crocus
+  GLACINFO     = undefined_int 
+  GLACT     = undefined_real   
+! -- T.EI
   ISLTYP     = undefined_int
   VEGFRA     = undefined_real
   GVFMAX     = undefined_real
@@ -1074,9 +1138,69 @@ module module_NoahMP_hrldas_driver
 
   CALL READLAND_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, XSTART, XEND, YSTART, YEND,     &
        ISWATER, ISLAKE, IVGTYP, ISLTYP, TERRAIN, TMN, XLAT_URB2D, XLONIN, XLAND,   &
-       SEAICE, MSFTX, MSFTY)
+       SEAICE, MSFTX,MSFTY,                                                        &
+       GLACINFO,GLACT) !++ T.EI crocus
 
   WHERE(SEAICE > 0.0) XICE = 1.0
+
+!----------------------------------------------------------------------
+! ++ T.EI crocus
+! Initialize glacier
+!----------------------------------------------------------------------
+      PSNOWLIQXY = undefined_real
+      PSNOWTEMPXY = undefined_real
+      PSNOWDZXY = undefined_real
+      PSNOWHEATXY = undefined_real
+      PSNOWRHOXY = undefined_real
+      PSNOWSWEXY = undefined_real
+      PSNOWGRAN1XY = undefined_real
+      PSNOWGRAN2XY = undefined_real
+      PSNOWHISTXY = undefined_real
+      PSNOWALBXY = undefined_real
+      PSNOWTHRUFALXY = undefined_real
+      PSNOWHEIGHTXY = undefined_real
+      PSNOWTOTSWEXY = undefined_real
+      FLOW_SNOW = undefined_real
+      FLOW_ICE = undefined_real
+      PSNOWAGEXY = undefined_real
+
+      PSNOWLIQXY = 0
+      PSNOWTEMPXY = 0
+      PSNOWDZXY = 0
+      PSNOWHEATXY = 0
+      PSNOWRHOXY = 0
+      PSNOWSWEXY = 0
+      PSNOWGRAN1XY = 0
+      PSNOWGRAN2XY = 0
+      PSNOWHISTXY = 0
+      PSNOWALBXY = 0
+      PSNOWTHRUFALXY = 0
+      PSNOWHEIGHTXY = 0
+      PSNOWTOTSWEXY = 0
+      FLOW_ICE = 0
+      FLOW_SNOW = 0
+      PSNOWAGEXY = 0
+
+        
+      WHERE(GLACINFO > 0.0) PSNOWALBXY=0.35
+
+      do kk = 1, act_lev
+         WHERE(GLACINFO > 0.0) PSNOWRHOXY(:,kk,:)=900.
+         WHERE(GLACINFO > 0.0) PSNOWDZXY(:,kk,:) = GLACT/act_lev
+         WHERE(GLACINFO > 0.0) PSNOWSWEXY(:,kk,:) = PSNOWDZXY(:,kk,:)*PSNOWRHOXY(:,KK,:)
+         WHERE(GLACINFO > 0.0) PSNOWHEATXY(:,kk,:) = -PSNOWSWEXY(:,kk,:)*333231.05
+         WHERE(GLACINFO > 0.0) PSNOWGRAN1XY(:,kk,:) = 0.0009
+         WHERE(GLACINFO > 0.0) PSNOWGRAN2XY(:,kk,:) = 99    ! 1
+         WHERE(GLACINFO > 0.0) PSNOWAGEXY(:,kk,:) = 20000
+      enddo
+
+    CALL INI_CSTS
+
+! -- T.EI
+
+
+
+
 
 !------------------------------------------------------------------------
 ! For spatially-varying soil parameters, read in necessary extra fields
@@ -1174,6 +1298,25 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
+! T.EI  crocus
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWAGE" ,PSNOWAGEXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWDZ" ,PSNOWDZXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWGRAN1" ,PSNOWGRAN1XY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWGRAN2" ,PSNOWGRAN2XY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWHEAT" ,PSNOWHEATXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWHIST" ,PSNOWHISTXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWLIQ" ,PSNOWLIQXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWRHO" ,PSNOWRHOXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWSWE" ,PSNOWSWEXY    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWTEMP" ,PSNOWTEMPXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWALB" ,PSNOWALBXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWHEIGHT" ,PSNOWHEIGHTXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWTHRUFAL" ,PSNOWTHRUFALXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWTOTSWE" ,PSNOWTOTSWEXY    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLOW_SNOW" ,FLOW_SNOW    )
+    call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FLOW_ICE" ,FLOW_ICE    )
+
+! -- T.EI
 #ifdef WRF_HYDRO
      if(checkRstV("ACCPRCP") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCPRCP"  ,ACCPRCP    )
      if(checkRstV("ACCECAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCECAN"  ,ACCECAN    )
@@ -1341,6 +1484,9 @@ module module_NoahMP_hrldas_driver
 
   call system_clock(count=clock_count_1)   ! Start a timer
 
+! ++ T.EI crocus
+      PSNOWTHRUFALXY(:,:) = 0.
+! -- T.EI 
 
 #ifdef WRF_HYDRO
    allocate( infxsrt   (ix,jx) )
@@ -1392,7 +1538,13 @@ endif
                   'IRG,SHG,EVG,GHV,SAG,IRB,SHB,EVB,GHB,TRAD,TG,TV,TAH,TGV,TGB,T2MV,T2MB,Q2MV,Q2MB,EAH,FWET,ZSNSO_SN,SNICE,' // &
                   'SNLIQ,SOIL_T,SOIL_W,SNOW_T,SOIL_M,SNOWH,SNEQV,QSNOW,ISNOW,FSNO,ACSNOW,ACSNOM,CM,CH,CHV,CHB,CHLEAF,CHUC,' // &
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
-                  'SOILSAT,SNOWT_AVG,QRAIN'
+                  'SOILSAT,SNOWT_AVG,QRAIN,'//&
+!++T.EI crocus
+                  'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
+                  'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'//&
+                  'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE,FLOW_ICE,FLOW_SNOW'                                    
+!--T.EI crocus
+
    endif
    if (io_config_outputs .eq. 1) then
         VARLIST = 'SNOWH,SNEQV,FSNO,SOILSAT_TOP,SNOWT_AVG,ACCET'
@@ -1415,6 +1567,7 @@ endif
 
    !!--- Parse into character array. Constructor not valid with uneven
    !!--- strings in f90 so using brute force.
+   
    do while (brkflag .eq. 0)
         if (index(VARLIST, ',') .eq. 0) then
                 IOCVARS(varind) = adjustl(VARLIST)
@@ -1422,8 +1575,8 @@ endif
         else
                 IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
                 VARLIST = VARLIST((index(VARLIST, ',')+1):)
-                varind = varind + 1
-        endif
+                varind = varind + 1                
+              endif
    end do
 
    if(wrf_hydro%finemesh .ne. 0 ) then
@@ -1653,6 +1806,15 @@ end subroutine land_driver_ini
 		  SHGXY,    SHCXY,    SHBXY,    EVGXY,     EVBXY,      GHVXY, &
 		  GHBXY,    IRGXY,    IRCXY,    IRBXY,      TRXY,      EVCXY, &
 	       CHLEAFXY,   CHUCXY,   CHV2XY,   CHB2XY,                        &
+! ++ T.EI crocus
+               PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,          & 
+               PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,         & 
+               PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & 
+               PSNOWALBXY, PSNOWAGEXY, act_lev,             & 
+               PSNOWHEIGHTXY, PSNOWTOTSWEXY, PSNOWTHRUFALXY,&
+               GLACINFO, GLACT,                             & 
+               FLOW_ICE, FLOW_SNOW,                        &
+               ! -- T.EI
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
@@ -1673,6 +1835,7 @@ end subroutine land_driver_ini
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
                 )
+
 
           call system_clock(count=count_after_sflx, count_rate=clock_rate)
           sflx_count_sum = sflx_count_sum + ( count_after_sflx - count_before_sflx )
@@ -1910,7 +2073,7 @@ subroutine  ldas_output(itime, state)
 !else
 !#endif
 !#endif /* WRF_HYDRO */
-
+  
 #ifdef WRF_HYDRO
    ! Logan add begin
    ! Go through each variable. For the first time the NWM output routine is
@@ -2015,6 +2178,28 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNDXY,IVGTYP,96)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,2,ALBSNIXY,IVGTYP,97)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QRAINXY,IVGTYP,98)
+! ++ T.EI crocus
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(GLACINFO),IVGTYP,99)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(GLACT),IVGTYP,100)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWALBXY,IVGTYP,101)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTHRUFALXY,IVGTYP,102)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWHEIGHTXY,IVGTYP,103)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNOWTOTSWEXY,IVGTYP,104)
+   
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWGRAN1XY,IVGTYP,105)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWGRAN2XY,IVGTYP,106)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWAGEXY,IVGTYP,107)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWTEMPXY,IVGTYP,108)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWDZXY,IVGTYP,109)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHISTXY,IVGTYP,110)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,(PSNOWLIQXY),IVGTYP,111)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWHEATXY,IVGTYP,112)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWRHOXY ,IVGTYP,113)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,40,PSNOWSWEXY,IVGTYP,114)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FLOW_ICE,IVGTYP,115)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,FLOW_SNOW,IVGTYP,116)
+
+! -- T.EI
 #endif /* WRF_HYDRO */
 
 !#ifdef WRF_HYDRO
@@ -2038,7 +2223,11 @@ subroutine lsm_restart(state)
   call prepare_restart_file (trim(noah_lsm%outdir), version, igrid, llanduse, olddate, startdate,                         &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
-       cen_lon, iswater, ivgtyp)
+       cen_lon, iswater, ivgtyp, &
+! ++ T.EI
+       glacinfo, glact,act_lev)  
+! -- T.EI
+
 
    write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
 
@@ -2095,6 +2284,24 @@ subroutine lsm_restart(state)
   call add_to_restart(ncid,QSFC      , "QSFC"  )
   call add_to_restart(ncid,SFCRUNOFF , "SFCRUNOFF")
   call add_to_restart(ncid,UDRUNOFF  , "UDRUNOFF" )
+! ++ T.EI crocus
+     call add_to_restart(ncid, PSNOWAGEXY ,"PSNOWAGE" ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWDZXY ,"PSNOWDZ"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWGRAN1XY ,"PSNOWGRAN1"   ,LAYERS="MAXS"  )
+     call add_to_restart(ncid, PSNOWGRAN2XY ,"PSNOWGRAN2"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWHEATXY ,"PSNOWHEAT" ,LAYERS="MAXS"    )
+     call add_to_restart(ncid, PSNOWHISTXY ,"PSNOWHIST"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWLIQXY ,"PSNOWLIQ"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWRHOXY ,"PSNOWRHO"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWSWEXY ,"PSNOWSWE"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWTEMPXY ,"PSNOWTEMP"  ,LAYERS="MAXS"   )
+     call add_to_restart(ncid, PSNOWALBXY ,"PSNOWALB"    )
+     call add_to_restart(ncid, PSNOWHEIGHTXY ,"PSNOWHEIGHT"    )
+     call add_to_restart(ncid, PSNOWTHRUFALXY ,"PSNOWTHRUFAL"    )
+     call add_to_restart(ncid, PSNOWTOTSWEXY ,"PSNOWTOTSWE"    )
+     call add_to_restart(ncid, FLOW_ICE ,"FLOW_ICE"    )
+     call add_to_restart(ncid, FLOW_SNOW ,"FLOW_SNOW"    )
+     ! -- T.EI
 #ifdef WRF_HYDRO
   call add_to_restart(ncid,ACCPRCP   , "ACCPRCP" )
   call add_to_restart(ncid,ACCECAN   , "ACCECAN" )
@@ -2213,6 +2420,24 @@ subroutine lsm_rst_bi_out(state)
   write(iunit,ERR=101) QSFC
   write(iunit,ERR=101) SFCRUNOFF
   write(iunit,ERR=101) UDRUNOFF
+! ++ T.EI crocus 
+  write(iunit,ERR=101) PSNOWAGEXY     
+  write(iunit,ERR=101) PSNOWDZXY     
+  write(iunit,ERR=101) PSNOWGRAN1XY     
+  write(iunit,ERR=101) PSNOWGRAN2XY     
+  write(iunit,ERR=101) PSNOWHEATXY     
+  write(iunit,ERR=101) PSNOWHISTXY     
+  write(iunit,ERR=101) PSNOWLIQXY     
+  write(iunit,ERR=101) PSNOWRHOXY     
+  write(iunit,ERR=101) PSNOWSWEXY     
+  write(iunit,ERR=101) PSNOWTEMPXY     
+  write(iunit,ERR=101) PSNOWALBXY     
+  write(iunit,ERR=101) PSNOWHEIGHTXY     
+  write(iunit,ERR=101) PSNOWTHRUFALXY     
+  write(iunit,ERR=101) PSNOWTOTSWEXY 
+  write(iunit,ERR=101) FLOW_SNOW 
+  write(iunit,ERR=101) FLOW_ICE     
+! -- T.EI 
 ! #ifndef REALTIME
 ! #ifdef WRF_HYDRO
 !   write(iunit,ERR=101) ACCPRCP
@@ -2343,6 +2568,26 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) QSFC
   read(iunit,ERR=101) SFCRUNOFF
   read(iunit,ERR=101) UDRUNOFF
+! ++ T.EI crocus
+  read(iunit,ERR=101) PSNOWAGEXY     
+  read(iunit,ERR=101) PSNOWDZXY     
+  read(iunit,ERR=101) PSNOWGRAN1XY     
+  read(iunit,ERR=101) PSNOWGRAN2XY     
+  read(iunit,ERR=101) PSNOWHEATXY     
+  read(iunit,ERR=101) PSNOWHISTXY     
+  read(iunit,ERR=101) PSNOWLIQXY     
+  read(iunit,ERR=101) PSNOWRHOXY     
+  read(iunit,ERR=101) PSNOWSWEXY     
+  read(iunit,ERR=101) PSNOWTEMPXY     
+  read(iunit,ERR=101) PSNOWALBXY     
+  read(iunit,ERR=101) PSNOWHEIGHTXY     
+  read(iunit,ERR=101) PSNOWTHRUFALXY     
+  read(iunit,ERR=101) PSNOWTOTSWEXY   
+  read(iunit,ERR=101) FLOW_SNOW   
+  read(iunit,ERR=101) FLOW_ICE     
+! -- T.EI 
+
+  ! read(iunit,ERR=101) PSNOWLIQXY
 ! #ifndef REALTIME
 ! #ifdef WRF_HYDRO
 !   read(iunit,ERR=101) ACCPRCP
@@ -2448,6 +2693,24 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,QSFC      , "QSFC"  )
   call define_rst_var(ncid,SFCRUNOFF , "SFCRUNOFF")
   call define_rst_var(ncid,UDRUNOFF  , "UDRUNOFF" )
+! ++ T.EI crocus
+  call define_rst_var(ncid,PSNOWAGEXY  , "PSNOWAGE" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWDZXY  , "PSNOWDZ" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWGRAN1XY  , "PSNOWGRAN1" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWGRAN2XY  , "PSNOWGRAN2" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWHEATXY  , "PSNOWHEAT" ,layers="MAXS") 
+  call define_rst_var(ncid,PSNOWHISTXY  , "PSNOWHIST" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWLIQXY  , "PSNOWLIQ" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWRHOXY  , "PSNOWRHO" ,layers="MAXS")  
+ call define_rst_var(ncid,PSNOWSWEXY  , "PSNOWSWE" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWTEMPXY  , "PSNOWTEMP" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWALBXY  , "PSNOWALB" )
+  call define_rst_var(ncid,PSNOWHEIGHTXY  , "PSNOWHEIGHT" )
+  call define_rst_var(ncid,PSNOWTHRUFALXY  , "PSNOWTHRUFAL" )
+  call define_rst_var(ncid,PSNOWTOTSWEXY  , "PSNOWTOTSWE" )
+  call define_rst_var(ncid,FLOW_SNOW  , "FLOW_SNOW" )
+  call define_rst_var(ncid,FLOW_ICE  , "FLOW_ICE" )
+  ! -- T.EI 
 #ifdef WRF_HYDRO
   call define_rst_var(ncid,ACCPRCP   , "ACCPRCP" )
   call define_rst_var(ncid,ACCECAN   , "ACCECAN" )
