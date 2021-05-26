@@ -3135,10 +3135,12 @@ DO JJ = 1,SIZE(PSNOWDZ,1)
      PSNOWTEMP(JJ,JST) =  ZSNOWTEMP(JJ,JST)
      !
    ! The control below should be suppressed after further tests
+#ifdef HYDRO_D
      IF (PSNOWTEMP(JJ,JST)-XTT > XUEPSI) THEN
        WRITE(*,*) 'pb dans MELT PSNOWTEMP(JJ,JST) >XTT:', JJ,JST, PSNOWTEMP(JJ,JST), XTT
 !       CALL ABOR1_SFX('SNOWCRO: pb dans MELT')
      ENDIF
+#endif
     !
     ! Loss of snowpack depth: (m) and liquid equiv (m):
     ! Compression factor for melt loss: this decreases
