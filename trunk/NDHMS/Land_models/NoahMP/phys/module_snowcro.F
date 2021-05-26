@@ -4695,26 +4695,26 @@ ENDDO ! end grid loops for checking shallow layers
 !
 !final check of the consistensy of the new grid size
 !
-DO JJ = 1,SIZE(PSNOW(:))
-  !
-! trude test, increase xuepsi limit
-  IF ( ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) ) > XUEPSI*10000. ) THEN
-!  IF ( ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) ) > XUEPSI*1000. ) THEN
-    !
-    WRITE(*,*) 'error in grid resizing', JJ, KNLVLS_USE(JJ), SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ),  &
-                                         PSNOW(JJ), SUM( PSNOWDZN(JJ,1:INLVLS_USE(JJ)) )-PSNOW(JJ), &
-                                         ZSNOWFALL(JJ)
-
-!    WRITE(*,*) ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) )  , xuepsi
-
-!    WRITE( *,*) 'JJ , PSNOWDZ(JJ):',JJ ,  PSNOWDZ(JJ,:)
-!    WRITE( *,*) 'JJ , PSNOWDZN(JJ):',JJ , PSNOWDZN(JJ,:)
-    !
-!    CALL ABOR1_SFX("SNOWCRO: error in grid resizing")
-    !
-  ENDIF
-  !
-ENDDO
+!!! DO JJ = 1,SIZE(PSNOW(:))
+!!!   !
+!!! ! trude test, increase xuepsi limit
+!!!   IF ( ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) ) > XUEPSI*10000. ) THEN
+!!! !  IF ( ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) ) > XUEPSI*1000. ) THEN
+!!!     !
+!!!     WRITE(*,*) 'error in grid resizing', JJ, KNLVLS_USE(JJ), SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ),  &
+!!!                                          PSNOW(JJ), SUM( PSNOWDZN(JJ,1:INLVLS_USE(JJ)) )-PSNOW(JJ), &
+!!!                                          ZSNOWFALL(JJ)
+!!! 
+!!! !    WRITE(*,*) ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) )  , xuepsi
+!!! 
+!!! !    WRITE( *,*) 'JJ , PSNOWDZ(JJ):',JJ ,  PSNOWDZ(JJ,:)
+!!! !    WRITE( *,*) 'JJ , PSNOWDZN(JJ):',JJ , PSNOWDZN(JJ,:)
+!!!     !
+!!! !    CALL ABOR1_SFX("SNOWCRO: error in grid resizing")
+!!!     !
+!!!   ENDIF
+!!!   !
+!!! ENDDO
 !
 !IF (LHOOK) CALL DR_HOOK('SNOWNLFALL_UPGRID',1,ZHOOK_HANDLE)
 !
@@ -5009,24 +5009,24 @@ ZSNOWZTOP_NEW(1) = ZPSNOW_NEW
 !write(6,*) "diff new 2", zsnowzbot_new-zsnowztop_new
 ! end trude test
 !
-! Check consistency
-! true if test:
-IF ( INLVLS_OLD>0 ) THEN
-! trude test 
-     IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.0001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
-! orig
-!      IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.00001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
-ENDIF
+!!! ! Check consistency
+!!! ! true if test:
+!!! IF ( INLVLS_OLD>0 ) THEN
+!!! ! trude test 
+!!!      IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.0001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
+!!! ! orig
+!!! !      IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.00001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
+!!! ENDIF
 ZSNOWZBOT_OLD(INLVLS_OLD) = 0.   ! trude comment. This line is included in original snowcro, but has been deleted in new WRF-Hydro code. Not sure why. 
                                                                ! Now testing with this included. 
-!
-!
-! Check consistency
-! trude test
-if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.0001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
-! orig
-!      if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.00001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
-!
+!!! !
+!!! !
+!!! ! Check consistency
+!!! ! trude test
+!!! if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.0001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
+!!! ! orig
+!!! !      if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.00001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
+!!! !
 ZSNOWZBOT_NEW(INLVLS_NEW) = 0.
 !
 ! 3. Calculate mass, heat, charcateristics mixing due to vertical grid resizing:
