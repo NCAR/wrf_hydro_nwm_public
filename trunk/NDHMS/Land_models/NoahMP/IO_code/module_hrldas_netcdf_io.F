@@ -3822,7 +3822,6 @@ contains
                                 "Problem nf90_inq_dimid for 'sosn_layers'")
 ! ++ T.EI crocus 
     else if (output_layers == "MAXS") then
-       write(6,*) output_layers, ncid, dimid_kx
        ierr = nf90_inq_dimid(ncid, "glacier_levels", dimid_kx)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'glacier_levels'")
