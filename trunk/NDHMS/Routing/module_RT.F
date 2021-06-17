@@ -985,7 +985,6 @@ subroutine LandRT_ini(did)
 #endif
 
            allocate(rt_domain(did)%LLINKID(rt_domain(did)%LNLINKSL))
-           rt_domain(did)%LLINKID = -8888
 
            k = 0
            do i = 1, rt_domain(did)%GNLINKS

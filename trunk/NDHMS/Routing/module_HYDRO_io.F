@@ -10442,6 +10442,7 @@ end subroutine output_chrt2
 
     end subroutine nhdLakeMap
 
+#ifdef MPP_LAND
     subroutine nhdLakeMap_mpp(NLAKES, NLINKSL, TYPEL, LAKELINKID, LAKEIDX, TO_NODE,LINKID, LAKEIDM, LAKEIDA,GNLINKSL)
         !--- get the lake configuration here.
         implicit none
@@ -10465,7 +10466,7 @@ end subroutine output_chrt2
       integer(kind=int64) tmpBuf(GNLINKSL)
 
       tmpSize = size(TO_NODE,1)
-      allocate(OUTLAKEID(NLINKSL))
+      allocate(OUTLAKEID(tmpSize))
 
       allocate (gto(GNLINKSL))
 
@@ -10595,7 +10596,7 @@ end subroutine output_chrt2
 !yw LAKELINKID = 0
       tmpLAKELINKID = LAKELINKID
       tmpOUTLAKEID  = tmpTO_NODE
-      OUTLAKEID(1:min(tmpsize,NLINKSL)) = TO_NODE(1:min(tmpsize,NLINKSL))
+      OUTLAKEID(1:NLINKSL)  = TO_NODE(1:NLINKSL)
 
  !! find the links that flow into lakes (e.g. TYPEL = 3), and update the TO_NODE, so that links flow into the lake reach
         DO i = 1, NLAKES
@@ -10954,6 +10955,7 @@ end subroutine output_chrt2
       if(allocated(tmplakelinkid)) deallocate(tmplakelinkid)
 
     end subroutine nhdLakeMap_scan
+#endif
 
 !ADCHANGE: New output lake types routine
     subroutine output_lake_types( inNLINKS, inLINKID, inTYPEL )
