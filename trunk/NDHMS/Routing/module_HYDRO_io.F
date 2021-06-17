@@ -8980,7 +8980,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
 
     ! read variables for lake_shape_option not equal to 0 (default Box shape)
-    if(nlst(did)%lake_shape_option >= 0) then
+    if(nlst(did)%lake_shape_option > 0) then
        call get_1d_netcdf_real(ncid, 'LkVol', LAKEVOL,      'read_route_lake_netcdf', .TRUE.)
        call get_1d_netcdf_real(ncid, 'LkMxDepth', LAKEMAXDEPTH, 'read_route_lake_netcdf', .TRUE.)
        call get_1d_netcdf_real(ncid, 'poly_a', LAKEPOLYA,  'read_route_lake_netcdf', .TRUE.)
