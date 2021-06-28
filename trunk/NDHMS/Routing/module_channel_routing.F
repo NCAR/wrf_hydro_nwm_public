@@ -33,7 +33,148 @@ use module_hydro_stop, only: HYDRO_stop
 #endif
 implicit none
 
+
+!-- Reza's code starts here (June 2021):
+type :: temperature_sim_H_inputs
+      INTEGER                                  :: NLINKS, IXRT,JXRT
+      REAL, DIMENSION(:), allocatable          :: ChanCondConst
+      REAL, DIMENSION(:,:),allocatable         :: QSTRMVOLRT	        ! Overland flow
+      REAL, DIMENSION(:,:), allocatable        :: QINFLOWBASE	        ! Groundwater flow
+      REAL, DIMENSION(:), allocatable          :: QSUM     		! Mass bal of node, flow from upstream
+      REAL, DIMENSION(:), allocatable          :: XS_Peremeter	        ! wetted perimeter (m)
+      REAL, DIMENSION(:), allocatable          :: Bw			! Bottom width (m)
+      REAL, DIMENSION(:), allocatable          :: Tw			! top width before bankfull (m)
+      REAL, DIMENSION(:), allocatable          :: velocity
+      REAL, DIMENSION(:), allocatable          :: HLINK	                ! Water head (m)
+      REAL, DIMENSION(:), allocatable          :: ChSSlp		! Channel slope (m/m)
+      INTEGER, DIMENSION(:), allocatable       :: CHANXI, CHANYJ
+      REAL, DIMENSION(:), allocatable          :: ZELEV	                ! elevation of nodes
+      INTEGER, DIMENSION(:), allocatable       :: CHANLEN    	        ! channel lngth (m)
+      INTEGER, DIMENSION(:,:), allocatable     :: CH_NETLNK	        ! River channel IDs
+      REAL, DIMENSION(:,:), allocatable        :: QLINK
+      INTEGER                                  :: DT_STEPS              ! number of timestep in routing
+      REAL                                     :: DTCT
+      REAL, DIMENSION(:),allocatable           :: node_area
+      INTEGER, DIMENSION(:),allocatable        :: TO_NODE
+      INTEGER, DIMENSION(:),allocatable        :: TYPEL
+	   
+	   
+      contains
+      procedure :: init => temperature_sim_H_inputs_init
+      procedure :: destroy => temperature_sim_H_inputs_destroy
+ 
+end type temperature_sim_H_inputs
+        
+! --------------------------------------------------------------------------
+!-- second type, to be used by the weather disaggregate	
+		
+type :: vectorizing_tools
+      INTEGER :: NLINKS, IXRT,JXRT
+      INTEGER, DIMENSION(:,:), allocatable    :: CH_NETRT, LAKE_MSKRT
+      INTEGER, DIMENSION(:), allocatable      :: CHANXI, CHANYJ
+   
+      contains
+      procedure :: init => vectorizing_tools_init
+      procedure :: destroy => vectorizing_tools_destroy 
+
+end type vectorizing_tools
+
+! --------------------------------------------------------------------------
 contains
+
+subroutine temperature_sim_H_inputs_init(this, NLINKS, IXRT, JXRT, ChanCondConst, QSTRMVOLRT, &
+					QINFLOWBASE, QSUM,  XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
+                                        CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL)
+	implicit none
+	class(temperature_sim_H_inputs), intent(inout) :: this ! the type object being initialized
+	INTEGER, INTENT(in)                            :: NLINKS, IXRT,JXRT
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: ChanCondConst
+        REAL,    INTENT(in), DIMENSION(IXRT,JXRT)      :: QSTRMVOLRT     ! to be called like: QSTRMVOLRT(CHANXI(i),CHANYJ(i)); where i:1 to NLINKS
+	REAL,    INTENT(in), DIMENSION(IXRT,JXRT)      :: QINFLOWBASE	
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: QSUM     			
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: XS_Peremeter	
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: Bw			
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: Tw			
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: velocity
+        REAL,    INTENT(in), DIMENSION(NLINKS)         :: HLINK			
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: ChSSlp	
+	INTEGER, INTENT(in), DIMENSION(NLINKS)         :: CHANXI, CHANYJ	
+	REAL,    INTENT(in), DIMENSION(NLINKS)         :: ZELEV
+	INTEGER, INTENT(in), DIMENSION(NLINKS)         :: CHANLEN
+	INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)      :: CH_NETLNK
+	REAL,    INTENT(in), DIMENSION(IXRT,JXRT)      :: QLINK
+	INTEGER, INTENT(in)                            :: DT_STEPS               !-- number of timestep in routing
+	REAL,    INTENT(in)                            :: DTCT
+	REAL ,   INTENT(in), DIMENSION(NLINKS)         :: node_area
+	INTEGER, INTENT(in), DIMENSION(NLINKS)         :: TO_NODE
+	INTEGER, INTENT(IN), DIMENSION(NLINKS)         :: TYPEL                  !--link
+		
+	! Assign the values passed in to a particular 
+	
+	this%NLINKS            = NLINKS
+	this%IXRT              = IXRT
+	this%JXRT              = JXRT
+	this%ChanCondConst     = ChanCondConst
+	this%QSTRMVOLRT        = QSTRMVOLRT
+	this%QINFLOWBASE       = QINFLOWBASE
+	this%QSUM              = QSUM 
+	this%XS_Peremeter      = XS_Peremeter
+	this%Bw                = Bw
+	this%Tw                = Tw
+	this%velocity          = velocity
+	this%HLINK             = HLINK
+	this%ChSSlp            = ChSSlp
+	this%CHANXI            = CHANXI
+	this%CHANYJ            = CHANYJ
+	this%ZELEV             = ZELEV
+	this%CHANLEN           = CHANLEN
+	this%CH_NETLNK         = CH_NETLNK
+	this%QLINK             = QLINK
+	this%DT_STEPS          = DT_STEPS
+	this%DTCT              = DTCT
+	this%node_area         = node_area
+	this%TO_NODE           = TO_NODE
+	this%TYPEL             = TYPEL
+	
+end subroutine temperature_sim_H_inputs_init
+
+
+subroutine temperature_sim_H_inputs_destroy (this)
+
+	implicit none
+	! the type object being destroyed
+	class(temperature_sim_H_inputs), intent(inout) :: this
+ 
+end subroutine temperature_sim_H_inputs_destroy 
+		
+		
+subroutine vectorizing_tools_init(this, NLINKS, IXRT, JXRT, CH_NETRT, &
+	                          CHANXI, CHANYJ, LAKE_MSKRT)
+	implicit none
+	class(vectorizing_tools), intent(inout)         :: this             ! the type object being initialized
+	INTEGER, INTENT(in)                             :: NLINKS, IXRT, JXRT
+	INTEGER ,INTENT(in), DIMENSION(IXRT,JXRT)  	:: CH_NETRT, LAKE_MSKRT
+	INTEGER, INTENT(in), DIMENSION(NLINKS)  	:: CHANXI, CHANYJ 
+	
+	this%NLINKS = NLINKS
+	this%IXRT = IXRT
+	this%JXRT = JXRT
+	this%CH_NETRT = CH_NETRT
+	this%CHANXI = CHANXI
+	this%CHANYJ = CHANYJ
+	this%LAKE_MSKRT = LAKE_MSKRT
+		
+end subroutine vectorizing_tools_init
+
+subroutine vectorizing_tools_destroy(this)
+
+	implicit none
+	! the type object being destroyed
+	class(vectorizing_tools), intent(inout) :: this 
+
+end subroutine vectorizing_tools_destroy 
+
+!-- Reza's code ends here
 
 ! ------------------------------------------------
 !   FUNCTION MUSKING
@@ -138,6 +279,11 @@ Kd = (1.0/n)*(R**(2.0/3.0))*AREA     !-- convenyance
 
 Kf =  (1.0-w)*Kd + w*Ku      !-- conveyance
 DIFFUSION = Kf * sqrt(abs(Sf))*sgn
+
+!-------------------------------------------------------
+!-- Reza (June 2021):
+XS_Peremeter(nod) = Bw+ 2.0*((h1+h2)/2.)*sqrt(1.0 + z*z)
+!-------------------------------------------------------
 
 
 100 format('z1,z2,h1,h2,kf,Dif, Sf, sgn  ',f8.3,2x,f8.3,2x,f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.3,2x,f8.0)
@@ -682,6 +828,15 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer flag
 
         integer :: n, kk2, nt, nsteps  ! tmp
+
+	!-------------------------------------------------------
+	!-- Reza (June 2021):
+	REAL, DIMENSION(NLINKS)	:: XS_Peremeter   !-- cross sectional area calculated at diffusion function
+	!-- I consider an average value to pass to the temperature routine
+	REAL 					:: ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
+	!-------------------------------------------------------
+
+
 
         QLAKEIP = 0
         QLAKEI8 = 0

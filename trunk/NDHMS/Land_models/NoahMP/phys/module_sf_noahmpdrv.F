@@ -26,10 +26,59 @@ MODULE module_sf_noahmpdrv
 #endif
 !-------------------------------
 
+
+!----------------------------------------------------------------------------
+!-- Reza's edits (June 2021):
+
+type :: NoahMP_vectorizing_tools
+	INTEGER :: ims,ime, jms,jme, nsoil
+	REAL,DIMENSION( :,:), allocatable      ::  TMN   ! deep soil temperature [K]
+	REAL,DIMENSION( :,:), allocatable      ::  TSK   ! surface radiative temperature [K]
+	REAL,DIMENSION( :,:,:), allocatable    ::  TSLB  ! soil temperature [K]   
+
+	contains
+	procedure :: init => NoahMP_vectorizing_tools_init
+	procedure :: destroy => NoahMP_vectorizing_tools_destroy  
+
+end type NoahMP_vectorizing_tools
+
 !
 CONTAINS
 !
-  SUBROUTINE noahmplsm(ITIMESTEP,        YR,   JULIAN,   COSZIN,   XLATIN,  & ! IN : Time/Space-related
+
+
+subroutine NoahMP_vectorizing_tools_init(this, ims,ime, jms,jme, TMN, TSK, TSLB, nsoil)
+	implicit none
+	class(NoahMP_vectorizing_tools), intent(inout) :: this    ! the type object being initialized
+	INTEGER, INTENT(in) :: ims,ime, jms,jme, nsoil
+	REAL,DIMENSION( ims:ime,jms:jme), INTENT(IN)         ::  TMN
+	REAL,DIMENSION( ims:ime,jms:jme), INTENT(IN)         ::  TSK
+	REAL,DIMENSION( ims:ime,1:nsoil,jms:jme), INTENT(IN) ::  TSLB
+		
+	this%ims = ims
+	this%ime = ime
+	this%jms = jms
+	this%jme = jme
+	this%TMN = TMN
+	this%TSK = TSK
+	this%TSLB = TSLB
+	this%nsoil = nsoil
+		
+end subroutine NoahMP_vectorizing_tools_init
+
+
+subroutine NoahMP_vectorizing_tools_destroy(this)
+
+	implicit none
+	! the type object being destroyed
+	class(NoahMP_vectorizing_tools), intent(inout) :: this 
+
+end subroutine NoahMP_vectorizing_tools_destroy
+
+!-- End of Reza's edits (June 2021):
+!----------------------------------------------------------------------------
+
+SUBROUTINE noahmplsm(ITIMESTEP,        YR,   JULIAN,   COSZIN,   XLATIN,  & ! IN : Time/Space-related
                   DZ8W,       DT,       DZS,    NSOIL,       DX,            & ! IN : Model configuration 
 	        IVGTYP,   ISLTYP,    VEGFRA,   VEGMAX,      TMN,            & ! IN : Vegetation/Soil characteristics
 		 XLAND,     XICE,XICE_THRES,                                & ! IN : Vegetation/Soil characteristics

@@ -40,7 +40,57 @@ interface read_hydro_forcing
 #endif
 end interface
 
+
+! --------------------------------------------------------------------------
+!-- Reza's edits (June 2021):
+type :: weather_2D_inputs
+      INTEGER :: IX, JX
+      REAL, DIMENSION(:,:), allocatable   :: T2		! Air temperature
+      REAL, DIMENSION(:,:), allocatable   :: q2x	! Humidity
+      REAL, DIMENSION(:,:), allocatable   :: u		! Near surface wind in the u-component
+      REAL, DIMENSION(:,:), allocatable   :: short	! Shortwave radiation.
+
+      contains
+      procedure :: init => weather_2D_inputs_init
+      procedure :: destroy => weather_2D_inputs_destroy
+                
+end type weather_2D_inputs
+
+
 Contains
+
+subroutine weather_2D_inputs_init(this, IX, JX, T2, q2x, u, short)
+        
+	implicit none
+	class(weather_2D_inputs), intent(inout) :: this         ! the type object being initialized
+	INTEGER, INTENT(in)                 :: IX,JX            ! IXRT, JXRT
+	REAL,    INTENT(in), DIMENSION(:,:) :: T2		! Air temperature
+	REAL,    INTENT(in), DIMENSION(:,:) :: q2x		! Humidity
+	REAL,    INTENT(in), DIMENSION(:,:) :: u		! Near surface wind in the u-component
+	REAL,    INTENT(in), DIMENSION(:,:) :: short		! Shortwave radiation
+
+	! Assign the values passed in to a particular
+	this%IX        = IX
+	this%JX        = JX
+	this%T2        = T2
+	this%q2x       = q2x
+	this%u         = u
+	this%short     = short
+
+end subroutine weather_2D_inputs_init
+
+
+subroutine weather_2D_inputs_destroy (this)
+
+	implicit none
+	! the type object being destroyed
+	class(weather_2D_inputs), intent(inout) :: this
+
+end subroutine weather_2D_inputs_destroy
+
+!-- End of Reza's edits (June 2021)
+! --------------------------------------------------------------------------
+
 
   subroutine READFORC_WRF(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp,lai,fpar)
 
