@@ -308,8 +308,20 @@ contains
 
             end if
 
-            ! Set outflow to corresponding discharge from array
-            this%output%outflow = this%state%discharges(this%state%time_series_index)
+            ! If reservoir_type is 4 for CONUS RFC reservoirs
+            if (this%properties%reservoir_type == 4) then
+ 
+                ! Set outflow to corresponding discharge from array
+                this%output%outflow = this%state%discharges(this%state%time_series_index)
+
+            ! Else reservoir_type 5 for for Alaska RFC glacier outflows
+            else
+
+                ! Set outflow to sum inflow and corresponding discharge from array
+                this%output%outflow = this%input%inflow + this%state%discharges(this%state%time_series_index)
+            end if
+
+
 
             ! Set dynamic_reservoir_type to RFC Forecasts Type
             this%state%dynamic_reservoir_type = this%properties%reservoir_type
