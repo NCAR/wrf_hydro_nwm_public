@@ -2,9 +2,9 @@
 #FC=gfortran
 #FC=ifort
 
-include ../../../macros
+include ../../macros
 
-MODFLAG := -I ../../../MPP -I ../../../mod
+MODFLAG := -I ../../MPP -I ../../mod
 
 %.o : %.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
