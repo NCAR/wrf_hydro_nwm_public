@@ -11,6 +11,7 @@ BASIC:
 	make -C Routing/Overland
 	make -C Routing/Subsurface
 	make -C Routing/Reservoirs
+	make -C Routing/RiverTemperature
 	make -C Data_Rec
 	make -C Debug_Utilities
 	make -C Routing
@@ -23,6 +24,7 @@ clean:
 	make -C Routing/Overland clean
 	make -C Routing/Subsurface clean
 	make -C Routing/Reservoirs clean
+	make -C Routing/RiverTemperature clean
 	(cd Data_Rec; make -f Makefile clean)
 	(cd HYDRO_drv; make -f Makefile clean)
 	(cd MPP; make -f Makefile clean)
