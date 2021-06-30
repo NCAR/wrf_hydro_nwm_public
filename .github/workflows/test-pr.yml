@@ -1,0 +1,64 @@
+name: WRF-Hydro CI
+
+on:
+  push:
+    branches: [ master, v5.2.x ]
+  pull_request:
+    branches: [ master, v5.2.x ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR to test"
+        required: true
+
+jobs:
+  Model_Testing:
+    strategy:
+      matrix:
+        configuration: [nwm_ana, nwm_long_range, gridded, reach]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout candidate (automatic)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with:
+          path: candidate
+          
+      - name: Checkout candidate (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env: 
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: gh repo clone ${{ github.repository }} candidate && cd candidate && gh pr checkout -R ${{ github.repository }} ${{ github.event.inputs.pr }}
+
+      - name: Checkout reference (automatic)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: reference
+          
+      - name: Checkout reference (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env: 
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: gh repo clone ${{ github.repository }} reference && cd reference && git checkout --track origin/$(gh pr view ${{ github.event.inputs.pr }} --json baseRefName --jq '.baseRefName')
+      
+      - name: Run testing container
+        run: |
+          docker run -e TRAVIS=1 -t --name test_container \
+           -v $GITHUB_WORKSPACE/candidate:/home/docker/candidate \
+           -v $GITHUB_WORKSPACE/reference:/home/docker/reference \
+           wrfhydro/dev:modeltesting --config ${{ matrix.configuration }} --domain_tag dev
+      
+      - name: Copy test results from container
+        run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
+        
+      - name: Archive test results to GitHub
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-reports
+          path: ${{ github.workspace }}/test_report/**.html
+        
