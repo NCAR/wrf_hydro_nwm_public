@@ -4,6 +4,7 @@
    type (subsurface_static_interface) :: subsurface_static
    type (subsurface_input_interface) :: subsurface_input
    type (subsurface_output_interface) :: subsurface_output
+   type (river_temperature) :: river_temp
 
    class (reservoir_container), allocatable, dimension(:) :: reservoirs
    integer, allocatable, dimension(:) :: reservoir_type ! specifying type of reservoir
