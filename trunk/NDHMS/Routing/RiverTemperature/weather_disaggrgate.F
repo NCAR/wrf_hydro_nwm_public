@@ -18,19 +18,19 @@
 MODULE disaggregateWeatherModule
 
 use module_lsm_forcing, only: weather_2D_inputs
-use module_channel_routing, only: vectorizing_tools 
+!use module_channel_routing, only: vectorizing_tools 
 use module_sf_noahmpdrv, only: NoahMP_vectorizing_tools
 
 IMPLICIT NONE
 	
 type  :: fineWeatherData
-		INTEGER                                  :: NLINKS
-    REAL, DIMENSION(:), allocatable          :: TAIR_FINE_1D, RELH_FINE_1D, WINDSPD_FINE_1D, SOLARRAD_FINE_1D
-    REAL, DIMENSION(:), allocatable          :: TMN_1D_FINE, TSLB_1D_FINE, TSK_1D_FINE
+	    !INTEGER                                  :: NLINKS
+            REAL, DIMENSION(:), allocatable          :: TAIR_FINE_1D, RELH_FINE_1D, WINDSPD_FINE_1D, SOLARRAD_FINE_1D
+            REAL, DIMENSION(:), allocatable          :: TMN_1D_FINE, TSLB_1D_FINE, TSK_1D_FINE
 		
-		type (weather_2D_inputs), pointer        :: weather_2D => null() 
-		type (vectorizing_tools), pointer        :: vectorizer => null()
-		type (NoahMP_vectorizing_tools), pointer :: NMPvectorizer => null()
+	    !type (weather_2D_inputs), pointer        :: weather_2D => null() 
+	    type (vectorizing_tools), pointer        :: vectorizer => null()
+	    type (NoahMP_vectorizing_tools), pointer :: NMPvectorizer => null()
 
     logical :: pointer_allocation_guard = .false.
 		
@@ -45,23 +45,23 @@ end type fineWeatherData
 ! --------------------------------------------------------------------------
 contains 
 
-subroutine fineWeatherData_init(this, IX, JX, IXRT, JXRT, T2, q2x, u, short, NLINKS, CH_NETRT, &
-					                        CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
+subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
+					                         LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
                                   ims,ime, jms,jme, &
                                   Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine,&
                                   TSK_1D_fine,TSLB_1D_fine)
 	implicit none
 	class(fineWeatherData), intent(inout)       :: this                   ! the type object being initialized
 	INTEGER, INTENT(in)                         :: IX,JX, reach_number		! coarse grid i,j dims
-	INTEGER, INTENT(in)                         :: IXRT, JXRT 			      ! fine grid i,j dims
+	
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: T2	                    ! Air temperature
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: q2x	                  ! Humidity
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: u	                    ! Near surface wind in the u-component
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: short	                ! Shortwave radiation
 	! -- for vectorizing
-	INTEGER, INTENT(in)                         :: NLINKS
-	INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT, LAKE_MSKRT
-	INTEGER, INTENT(in), DIMENSION(NLINKS)      :: CHANXI, CHANYJ 
+	
+	INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT
+	 
 	character(len=20)                           :: Reach_number_string
 	! -- for the stuff that are coming from NoahMP
 	INTEGER, INTENT(in)                         :: nsoil, ims,ime, jms,jme
@@ -124,20 +124,20 @@ subroutine fineWeatherData_init(this, IX, JX, IXRT, JXRT, T2, q2x, u, short, NLI
                         
 		end if
 			
-		! try to allocate vectorizer
-		allocate ( this%vectorizer )
-		if ( .not. associated(this%vectorizer) ) then
-			! if the output structure could not be created, call hydro_stop.
-                        write(Reach_number_string, "(I15)") reach_number
-                        !call hydro_stop("ERROR: Failure to allocate temeprature module vectorizer for reach " &
-                        !// trim(ADJUSTL(Reach_number_string)) // ".")	
-		else
-                        ! initialize vectorizer
-                        call this%vectorizer%init(NLINKS, IXRT, JXRT, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT)
+		!! try to allocate vectorizer
+		!allocate ( this%vectorizer )
+		!if ( .not. associated(this%vectorizer) ) then
+			!! if the output structure could not be created, call hydro_stop.
+                        !write(Reach_number_string, "(I15)") reach_number
+                        !!call hydro_stop("ERROR: Failure to allocate temeprature module vectorizer for reach " &
+                        !!// trim(ADJUSTL(Reach_number_string)) // ".")	
+		!else
+                        !! initialize vectorizer
+                        !call this%vectorizer%init(NLINKS, IXRT, JXRT, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT)
                         
                         ! I am calling this next function for debugging/testing
-                        call this%vectorizer%inputs_vec()						
-		end if
+                        !call this%vectorizer%inputs_vec()						
+		!end if
 			
 		! try to allocate NMPvectorizer
 		allocate ( this%NMPvectorizer)
