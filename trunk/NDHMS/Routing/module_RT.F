@@ -41,6 +41,7 @@ MODULE module_Routing
    use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
    use hashtable
+   use module_river_temperature, only: river_temperature
 
    IMPLICIT NONE
 
@@ -888,6 +889,11 @@ subroutine LandRT_ini(did)
            end select
 
    end do
+   
+   !-- Reza's code goes here to be initialized
+   !-- This will be finalized
+   call river_temperature%run()
+   
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
