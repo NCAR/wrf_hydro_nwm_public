@@ -1430,7 +1430,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
 
            !-- Reza's update goes in here:
            !-- The RUN function should be called here. 
-				 	       
+	   ! Run the subroutine to diaggregate
+           ! call weather_sim%run()		 	       
+	   ! call temperature%run()
 	   
            KRT = KRT + 1                     !-- iterate on the timestep
            if(KRT .eq. DT_STEPS) exit crnt   !-- up to the maximum time in interval
