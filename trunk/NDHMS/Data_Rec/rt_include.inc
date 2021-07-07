@@ -35,6 +35,7 @@
   INTEGER :: GNLINKSL, linklsS, linklsE , nlinksize  !## for reach based channel routing
 
   INTEGER :: iswater     !id for water in vegtyp
+  INTEGER :: islake      !id for lake in vegtyp
   INTEGER :: isurban     !id for urban in vegtyp
   INTEGER :: isoilwater  !id for water in soiltyp
 
@@ -139,12 +140,12 @@
   REAL, allocatable, DIMENSION(:)      :: CHANLEN    !link length
   REAL, allocatable, DIMENSION(:)      :: MannN      !mannings N
   REAL, allocatable, DIMENSION(:)      :: So     !link slope and channel conductivity (m/s)
+  REAL, allocatable, DIMENSION(:)      :: Channk ! channel infiltration parameter
   REAL, allocatable, DIMENSION(:)      :: ChSSlp ! channel side slope
   REAL, allocatable, DIMENSION(:)      :: Bw     ! Bottom width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw     ! top width of channel
   REAL, allocatable, DIMENSION(:)      :: Tw_CC  ! top width of the (CC) compound channel
   REAL, allocatable, DIMENSION(:)      :: n_CC   ! mannings N of (CC) compound channel
-
   REAL, allocatable, DIMENSION(:,:)    :: QLINK      !flow in link
   integer, allocatable, DIMENSION(:)   :: ascendIndex !sorting of routelink
 #ifdef WRF_HYDRO_NUDGING
@@ -153,7 +154,7 @@
   REAL, allocatable, DIMENSION(:)      :: HLINK      !head in link
   REAL, allocatable, DIMENSION(:)      :: ZELEV      !elevation of nodes for channel
   INTEGER, allocatable, DIMENSION(:)   :: CHANXI,CHANYJ !map chan to fine grid
-  REAL,  DIMENSION(50)     :: BOTWID,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
+  REAL,  DIMENSION(50)     :: BOTWID,CHANN_K,TOPWID,HLINK_INIT,CHAN_SS,CHMann !Channel parms from table
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
   ! VARIABLES FOR  RESERVOIRS
@@ -176,7 +177,7 @@
   REAL  , allocatable, DIMENSION(:)  ::   qSfcLatRunoff,   qBucket, qBtmVertRunoff
   REAL, allocatable, DIMENSION(:)    :: accLndRunOff, accQLateral, accStrmvolrt
   !REAL, allocatable, DIMENSION(:)    :: qqLndRunOff, qqStrmvolrt, qqBucket
-  REAL, allocatable, DIMENSION(:)    :: QLateral, velocity
+  REAL, allocatable, DIMENSION(:)    :: QLateral, velocity, qloss
 
 #ifdef MPP_LAND
   INTEGER, allocatable, DIMENSION(:)    :: lake_index,nlinks_index

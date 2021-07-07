@@ -43,6 +43,11 @@ override ESMF_F90COMPILECPPFLAGS += -DDEBUG
 override ESMF_CXXCOMPILECPPFLAGS += -DDEBUG
 endif
 
+ifdef DBGBUILD
+ESMF_F90COMPILEOPTS += -g -traceback
+ESMF_CXXCOMPILEOPTS += -g -traceback
+endif
+
 # ###########################
 # Determine Installation Path
 # ###########################
@@ -64,17 +69,20 @@ endif
 # ###############
 
 ifndef WRFHYDRO_DIR
-MODEL_DIR    := $(abspath $(DIR)/../..)
+MODEL_RDIR   := $(abspath $(DIR)/../../../..)
 else
-MODEL_DIR    := $(abspath $(WRFHYDRO_DIR))
+MODEL_RDIR   := $(abspath $(WRFHYDRO_DIR))
 endif
+MODEL_DIR    := $(abspath $(MODEL_RDIR)/trunk/NDHMS)
+MODEL_MKDIR  := $(abspath $(MODEL_DIR))
 MODEL_LIBDIR := $(abspath $(MODEL_DIR)/lib)
 MODEL_MODDIR := $(abspath $(MODEL_DIR)/mod)
 MODEL_MPPDIR := $(abspath $(MODEL_DIR)/MPP)
-MODEL_LIB    := $(abspath $(MODEL_LIBDIR)/libHYDRO.a)
-MODEL_MKDIR  := $(abspath $(MODEL_DIR))
+MODEL_RTGDIR := $(abspath $(MODEL_DIR)/Routing)
+
 MODEL_MK     := $(abspath $(MODEL_MKDIR)/Makefile.comm)
 MODEL_MKINC  := $(abspath $(MODEL_DIR)/macros)
+MODEL_LIB    := $(abspath $(MODEL_LIBDIR)/libHYDRO.a)
 
 MODEL_MODS   := $(abspath $(MODEL_MPPDIR)/module_mpp_land.mod)
 MODEL_MODS   += $(abspath $(MODEL_MPPDIR)/module_cpl_land.mod)
@@ -83,6 +91,8 @@ MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_rt_data.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_namelist.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_hydro_io.mod)
 MODEL_MODS   += $(abspath $(MODEL_MODDIR)/module_lsm_forcing.mod)
+MODEL_MODS   += $(abspath $(MODEL_RTGDIR)/Overland/overland_data.mod)
+MODEL_MODS   += $(abspath $(MODEL_RTGDIR)/Overland/overland_control.mod)
 
 MODEL_FILES  := $(MODEL_LIB) $(MODEL_MODS)
 
@@ -202,17 +212,29 @@ $(CAP_VERS):
 	@echo $(HR)
 	@echo "Generating Version Information"
 	@echo
-	@echo "# NUOPC Cap Version" > $(CAP_VERS)
-	@if [ -d .svn ]; then \
-	  echo "SVN Repository" > $(CAP_VERS); \
-	  svn info . | grep URL >> $(CAP_VERS); \
-	  svn info . | grep "Last Changed Rev" >> $(CAP_VERS); \
-	elif [ -d .git ]; then \
-	  echo "Git Repository" > $(CAP_VERS); \
-	  git show . | grep -m 1 "commit " >> $(CAP_VERS); \
-	  git show . | grep -m 1 "Author: " >> $(CAP_VERS); \
-	  git show . | grep -m 1 "Date: " >> $(CAP_VERS); \
-	fi
+ifneq (,$(wildcard $(MODEL_RDIR)/.git))
+	@echo "# NUOPC Cap Revision #" > $(CAP_VERS)
+	@git log . | grep -m 1 "commit " >> $(CAP_VERS)
+	@git log . | grep -m 1 "Author: " >> $(CAP_VERS)
+	@git log . | grep -m 1 "Date: " >> $(CAP_VERS)
+	@echo >> $(CAP_VERS)
+	@echo "# Model Revision     #" >> $(CAP_VERS)
+	@git log $(MODEL_RDIR) | grep -m 1 "commit " >> $(CAP_VERS)
+	@git log $(MODEL_RDIR) | grep -m 1 "Author: " >> $(CAP_VERS)
+	@git log $(MODEL_RDIR) | grep -m 1 "Date: " >> $(CAP_VERS)
+	@echo >> $(CAP_VERS)
+else ifneq (,$(wildcard $(MODEL_RDIR)/.svn))
+	@echo "# NUOPC Cap Revision #" > $(CAP_VERS)
+	@svn info . | grep URL >> $(CAP_VERS)
+	@svn info . | grep "Last Changed Rev" >> $(CAP_VERS)
+	@echo >> $(CAP_VERS)
+	@echo "# Model Revision     #" >> $(CAP_VERS)
+	@svn info $(MODEL_RDIR) | grep URL >> $(CAP_VERS)
+	@svn info $(MODEL_RDIR) | grep "Last Changed Rev" >> $(CAP_VERS)
+	@echo >> $(CAP_VERS)
+else
+	@echo "# Version Information Not Found" > $(CAP_VERS)
+endif
 
 $(CAP_MK): 
 	@echo $(HR)
@@ -236,7 +258,7 @@ $(INSTPATH)/%:
 	@echo "Installing $(notdir $@)"
 	@echo
 	@mkdir -p $(INSTPATH)
-	cp $(notdir $@) $@
+	@cp $(notdir $@) $@
 
 install_mk: 
 	@echo $(HR)

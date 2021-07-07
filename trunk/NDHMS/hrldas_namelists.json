@@ -43,12 +43,16 @@
     },
 
     "nwm_ana": {
-        "noahlsm_offline": {},
+        "noahlsm_offline": {
+            "runoff_option": 7
+        },
         "wrf_hydro_offline": {}
     },
 
     "nwm_long_range" : {
-        "noahlsm_offline": {},
+        "noahlsm_offline": {
+            "runoff_option": 7
+        },
         "wrf_hydro_offline": {}
     },
 
@@ -66,6 +70,7 @@
 
     "nwm_output_ana" : {
         "noahlsm_offline": {
+            "runoff_option": 7,
             "khour": 1,
             "restart_frequency_hours": 1
 	},
@@ -74,6 +79,7 @@
 
     "nwm_output_long_range" : {
         "noahlsm_offline": {
+            "runoff_option": 7,
             "khour": 1,
             "restart_frequency_hours": 1
 	},

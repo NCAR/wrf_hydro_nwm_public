@@ -440,12 +440,12 @@ program create_forcing
      endif
 
      if (date(12:13) == "00") then
-        where (geo_em%use == geo_em%iswater) vegfra%field = 0.0
+        where (geo_em%use == geo_em%iswater .or. geo_em%use == geo_em%islake) vegfra%field = 0.0
         call output_databuffer(ncid, vegfra)
      endif
 
      if (date(12:13) == "00" .and. vary_lai) then
-        where (geo_em%use == geo_em%iswater) lai%field = 0.0
+        where (geo_em%use == geo_em%iswater .or. geo_em%use == geo_em%islake) lai%field = 0.0
         call output_databuffer(ncid, lai)
      endif
 
@@ -459,8 +459,8 @@ program create_forcing
              ncid, version, geo_em%idim, geo_em%jdim, geo_em, .true.)
 
            call output_timestring_to_netcdf(ncid, date)
-	   
-	   where(geo_em%use .eq. geo_em%iswater) geo_em%tmn = -1.e36
+   
+           where(geo_em%use == geo_em%iswater .or. geo_em%use == geo_em%islake) geo_em%tmn = -1.e36
 
            call output_to_netcdf(ncid,     "XLAT", "degree_north", geo_em%lat, geo_em%idim, geo_em%jdim)
            call output_to_netcdf(ncid,    "XLONG", "degree_east" , geo_em%lon, geo_em%idim, geo_em%jdim)
@@ -2007,6 +2007,9 @@ subroutine open_netcdf_for_output(output_flnm, ncid, version, ix, jx, geo_em, in
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISWATER", geo_em%iswater)
     call error_handler(ierr, "Problem nf90_put_att ISWATER")
+
+    ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISLAKE", geo_em%islake)
+    call error_handler(ierr, "Problem nf90_put_att ISLAKE")
   
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISURBAN", geo_em%isurban)
     call error_handler(ierr, "Problem nf90_put_att ISURBAN")

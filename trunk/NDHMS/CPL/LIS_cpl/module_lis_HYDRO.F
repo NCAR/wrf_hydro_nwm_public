@@ -88,7 +88,9 @@ module module_lis_HYDRO
         CALL mpi_initialized( mpi_inited, ierr )
         if ( .NOT. mpi_inited ) then
            call MPI_INIT( ierr )  ! stand alone land model.
-           HYDRO_COMM_WORLD = MPI_COMM_WORLD
+           if (ierr /= MPI_SUCCESS) stop "MPI_INIT"
+           call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+           if (ierr /= MPI_SUCCESS) stop "MPI_COMM_DUP"
         endif
         call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
         call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
