@@ -29,6 +29,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
+use module_river_temperature, only:river_temperature
 
 #endif
 implicit none
@@ -832,6 +833,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 	!-------------------------------------------------------
 	!-- Reza (June 2021):
 	REAL, DIMENSION(NLINKS)	:: XS_Peremeter   !-- cross sectional area calculated at diffusion function
+	
 	!-- I consider an average value to pass to the temperature routine
 	REAL 					:: ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
 	!-------------------------------------------------------
@@ -1426,6 +1428,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
           call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLINK(:,1),NLINKS,99)
 #endif
 
+           !-- Reza's update goes in here:
+           !-- The RUN function should be called here. 
+				 	       
+	   
            KRT = KRT + 1                     !-- iterate on the timestep
            if(KRT .eq. DT_STEPS) exit crnt   !-- up to the maximum time in interval
 
