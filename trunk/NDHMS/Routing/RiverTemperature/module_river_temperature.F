@@ -18,6 +18,7 @@ MODULE module_river_temperature
 	
 	use module_channel_routing, only: temperature_sim_H_inputs
 	use disaggregateWeatherModule,  only: fineWeatherData	
+	use module_RT_data, only: rt_domain
 	
 	IMPLICIT NONE
 		
@@ -39,46 +40,28 @@ REAL, parameter ::  c_water = 4182.
         
 contains
 
-subroutine river_temperature_init(this, NLINKS, IXRT, JXRT, reach_number, ChanCondConst, QSTRMVOLRT,  &
-					  QINFLOWBASE, QSUM,  XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
-					  CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL, &
-            IX, JX,  T2, q2x, u, short, CH_NETRT, LAKE_MSKRT, nsoil, ims,ime, jms,jme, TMN, TSK, TSLB, &
-            Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine, T_QSUM)
+!subroutine river_temperature_init(this, NLINKS, IXRT, JXRT, reach_number, ChanCondConst, QSTRMVOLRT,  &
+!					  QINFLOWBASE, QSUM,  XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
+!					  CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL, &
+!           IX, JX,  T2, q2x, u, short, CH_NETRT, LAKE_MSKRT, nsoil, ims,ime, jms,jme, TMN, TSK, TSLB, &
+!            Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine, T_QSUM)
+	    
+	    
+	subroutine river_temperature_init(this, Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, &
+	                                  TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine, T_QSUM, reach_number)
 
 		implicit none
 		
-		class(river_temperature), INTENT(inout)                          :: this                                 ! the type object being initialized
-		INTEGER,              INTENT(in)                                 :: NLINKS, IXRT,JXRT, reach_number
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: ChanCondConst
-		REAL,                 INTENT(in),  DIMENSION(IXRT,JXRT)          :: QSTRMVOLRT	                         ! to be called like: QSTRMVOLRT(CHANXI(i),CHANYJ(i)); where i:1 to NLINKS
-		REAL,                 INTENT(in),  DIMENSION(IXRT,JXRT)          :: QINFLOWBASE	
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: QSUM     			
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: XS_Peremeter	
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: Bw			
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: Tw			
-    REAL,                 INTENT(in),  DIMENSION(NLINKS)       	     :: velocity		
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: HLINK			
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: ChSSlp	
-		INTEGER,              INTENT(in),  DIMENSION(NLINKS)             :: CHANXI, CHANYJ	
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: ZELEV
-		INTEGER,              INTENT(in),  DIMENSION(NLINKS)             :: CHANLEN
-		INTEGER,              INTENT(in),  DIMENSION(IXRT,JXRT)          :: CH_NETLNK
-		REAL,                 INTENT(in),  DIMENSION(IXRT,JXRT)          :: QLINK
-		INTEGER,              INTENT(in)                                 :: DT_STEPS                              !-- number of timestep in routing
-	  REAL,                 INTENT(in)                                 :: DTCT
-		REAL,                 INTENT(in),  DIMENSION(NLINKS)             :: node_area
-		INTEGER,              INTENT(in),  DIMENSION(NLINKS)             :: TO_NODE
-		INTEGER,              INTENT(in),  DIMENSION(NLINKS)             :: TYPEL
+		class(river_temperature), INTENT(inout)                          :: this              ! the type object being initialized
+		INTEGER,              INTENT(in)                                 :: reach_number	
+                !REAL,                 INTENT(in),  DIMENSION(IX, JX)             :: T2, q2x, u, short
+   	        !INTEGER, INTENT(in)                                              :: nsoil, ims,ime, jms,jme
+   	        !REAL, INTENT(in), DIMENSION(ix,jx)                               :: TMN
+                !REAL, INTENT(in), DIMENSION(ix,jx)                               :: TSK
+                !REAL, INTENT(in), DIMENSION(ix,nsoil,jx)                         :: TSLB
+                REAL, INTENT(inout), DIMENSION(NLINKS)             :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
+                !REAL, INTENT(inout), DIMENSION(NLINKS)             :: T_QSUM        
 		character(len=20)                                                :: Reach_number_string
-    INTEGER,              INTENT(in)                                 :: IX, JX 
-    REAL,                 INTENT(in),  DIMENSION(IX, JX)             :: T2, q2x, u, short
-   	INTEGER,              INTENT(in),  DIMENSION(IXRT,JXRT)          :: CH_NETRT, LAKE_MSKRT
-   	INTEGER, INTENT(in)                                              :: nsoil, ims,ime, jms,jme
-   	REAL, INTENT(in), DIMENSION(ix,jx)                               :: TMN
-    REAL, INTENT(in), DIMENSION(ix,jx)                               :: TSK
-    REAL, INTENT(in), DIMENSION(ix,nsoil,jx)                         :: TSLB
-    REAL, INTENT(inout), DIMENSION(NLINKS)             :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
-    REAL, INTENT(inout), DIMENSION(NLINKS)             :: T_QSUM        
 		
 		if (this%pointer_allocation_guard .eq. .false. ) then
 		! try to allocate input
@@ -106,21 +89,21 @@ subroutine river_temperature_init(this, NLINKS, IXRT, JXRT, reach_number, ChanCo
                         !end if
 			
                         ! try to allocate hydraulics_sim
-		    allocate ( this%hydraulics_sim )
-		    if ( .not. associated(this%hydraulics_sim) ) then
+		    !allocate ( this%hydraulics_sim )
+		    !if ( .not. associated(this%hydraulics_sim) ) then
 				! if the output structure could not be created, call hydro_stop.
-                                write(Reach_number_string, "(I15)") reach_number
+                                !write(Reach_number_string, "(I15)") reach_number
                                ! call hydro_stop("ERROR: Failure to allocate temeprature module the hydraulics_sim information for reach " &
                                ! // trim(ADJUSTL(Reach_number_string)) // ".")	
-			  else
+			  !else
                 ! initialize hydraulics_sim
-                call this%hydraulics_sim%init(NLINKS, IXRT, JXRT, ChanCondConst, QSTRMVOLRT,  &
-				               		     QINFLOWBASE, QSUM, XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
-				      	        	     CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL)
+                !call this%hydraulics_sim%init(NLINKS, IXRT, JXRT, ChanCondConst, QSTRMVOLRT,  &
+		!		               		     QINFLOWBASE, QSUM, XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
+		!		      	        	     CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL)
 
                  ! For debugging and testing purposes, I am gonna run the following subroutine
                  ! call this%hydraulics_sim%inputs_hyd()
-			   end if
+		 !	   end if
 							
 			   ! try to allocate weather_sim
 			   allocate ( this%weather_sim )
@@ -131,12 +114,15 @@ subroutine river_temperature_init(this, NLINKS, IXRT, JXRT, reach_number, ChanCo
                                 !// trim(ADJUSTL(Reach_number_string)) // ".")	
 			    else
           ! initialize weather_sim                         	
-                 call this%weather_sim%init(IX, JX, IXRT, JXRT, T2, q2x, u, short, NLINKS, CH_NETRT, &
-					                   CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
-                             ims,ime, jms,jme, &
-                             Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
-                 ! Run the subroutine to diaggregate
-                 call this%weather_sim%run()
+                !call this%weather_sim%init(IX, JX, IXRT, JXRT, T2, q2x, u, short, NLINKS, CH_NETRT, &
+		!			                   CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
+                !             ims,ime, jms,jme, &
+                !             Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
+		!--updated version for the WRF-Hydro combined phase
+		!-- Maybe I don't need to initialize something in weather_sim%init()!
+		!call this%weather_sim%init(Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
+                ! Run the subroutine to diaggregate
+                !call this%weather_sim%run()
 					 					
      			end if
 			    this%pointer_allocation_guard = .true.
@@ -151,7 +137,7 @@ subroutine river_temperature_destroy(this)
  end subroutine river_temperature_destroy
 
 ! --------------------------------------------------------------------------
-subroutine river_temperature_run(this, T_QSUM)
+subroutine river_temperature_run(this, did)
 		
 	implicit none
   class(river_temperature), INTENT(inout)             :: this
@@ -160,8 +146,8 @@ subroutine river_temperature_run(this, T_QSUM)
 	REAL,    DIMENSION(:), allocatable                  :: C_Em, P_size                    
 	REAL,    DIMENSION(:), allocatable                  :: shadeF, sur_albedo, viewToSky, cloud   ! Shading factor and surface albedo for the reach
 	REAL,    INTENT(INOUT), DIMENSION(:)                :: T_QSUM
-  INTEGER, DIMENSION(:), allocatable                  :: gridShape
-  INTEGER                                             :: gridNm
+  
+  INTEGER                                             ::  did  ! for the rt_domain
          
   !-- For the T_bed, I considered the temperature I am using for the hyporheic exchange,  this%weather_sim%TSLB_1D_fine
   !-- I hard-coded the following vectors here but they need to be imported to the model as inputs, for the next phase.
@@ -172,50 +158,49 @@ subroutine river_temperature_run(this, T_QSUM)
   sur_albedo = (/0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2/) 
   viewToSky = (/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1./)
   cloud = (/0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1/)
-	gridShape = shape(T_QSUM)
-  gridNm = gridShape(1)
+
 	 
 
-  call river_TEMPERATURE_SOLVER(dx,	                         	        &
-					                      this%hydraulics_sim%DT_STEPS,         &
-                                this%hydraulics_sim%IXRT,             &                 
-                                this%hydraulics_sim%JXRT,             &
-                                this%weather_sim%Tair_fine_1D,		    &
-					                      this%weather_sim%RelH_fine_1D,		    &
-					                      this%weather_sim%windSpd_fine_1D,		  &
-					                      Cloud,             			              &
-					                      this%weather_sim%TSLB_1D_fine,     	  &
-					                      this%weather_sim%SolarRad_fine_1D,	  &
-					                      this%hydraulics_sim%XS_Peremeter,		  &
-					                      this%hydraulics_sim%HLINK,		        & 	 	
-					                      this%hydraulics_sim%ChSSlp,		        &
-					                      this%hydraulics_sim%ZELEV,		        &
-                                this%hydraulics_sim%velocity,		      &
-					                      this%hydraulics_sim%Tw,			          &
-					                      this%hydraulics_sim%QSUM,			        &
-					                      this%hydraulics_sim%QINFLOWBASE,		  &
-					                      this%hydraulics_sim%QSTRMVOLRT,		    &
-					                      this%weather_sim%TMN_1D_fine,		      &
-					                      this%weather_sim%TSLB_1D_fine,        &
-					                      this%weather_sim%TSK_1D_fine,		      &
-                                sur_albedo,        			              &
+  call river_TEMPERATURE_SOLVER(dx,                	        &
+				rt_domain(did)%DT_STEPS,        &
+                                rt_domain(did)%IXRT,            &                 
+                                rt_domain(did)%JXRT,            &
+                                rt_domain(did)%Tair_fine_1D,    &
+				rt_domain(did)%RelH_fine_1D,    &
+				rt_domain(did)%windSpd_fine_1D, &
+					                      Cloud,      &
+				rt_domain(did)%TSLB_1D_fine,    &
+				rt_domain(did)%SolarRad_fine_1D,&
+					rt_domain(did)%XS_Peremeter,		  &
+				rt_domain(did)%HLINK,	       & 	 	
+				rt_domain(did)%ChSSlp,	       &
+				rt_domain(did)%ZELEV,	       &
+                                rt_domain(did)%velocity,       &
+				rt_domain(did)%Tw,	       &
+				rt_domain(did)%QSUM,	       &
+				rt_domain(did)%QINFLOWBASE,    &
+				rt_domain(did)%QSTRMVOLRT,     &
+				rt_domain(did)%TMN_1D_fine,    &
+				rt_domain(did)%TSLB_1D_fine,   &
+				rt_domain(did)%TSK_1D_fine,    &
+                                			      sur_albedo,        			              &
                 					      shadeF,                  			        &
 					                      viewToSky,         			              &
-					                      this%hydraulics_sim%ChanCondConst,    &
-                                C_Em,		         		                  &
+					              rt_domain(did)%ChanCondConst,    &
+                                			      C_Em,		         		                  &
 	                				      P_size,           			              &
-					                      this%hydraulics_sim%CHANXI,		        &
-					                      this%hydraulics_sim%CHANYJ,		        &
-					                      this%hydraulics_sim%CH_NETLNK,		    &
-                                this%weather_sim%vectorizer%CH_NETRT, &
-                                this%hydraulics_sim%QLINK,		        &
-					                      this%hydraulics_sim%DT_STEPS,		      & 
-					                      this%hydraulics_sim%DTCT,			        &
-					                      this%hydraulics_sim%node_area,		    &
-					                      this%hydraulics_sim%TO_NODE,		      &
-					                      this%hydraulics_sim%TYPEL,		        &
+				rt_domain(did)%CHANXI,         &
+				rt_domain(did)%CHANYJ,	       &
+				rt_domain(did)%CH_NETLNK,      &
+                                rt_domain(did)%CH_NETRT,       &
+                                rt_domain(did)%QLINK,	       &
+				rt_domain(did)%DT_STEPS,       & 
+				rt_domain(did)%DTCT,	       &
+				rt_domain(did)%node_area,      &
+				rt_domain(did)%TO_NODE,	       &
+				rt_domain(did)%TYPEL,	       &
 					                      T_QSUM,	                  		        &
-                                gridNm                                &
+                                rt_domain(did)%NLINKS          &
                  					      )
 	
 	
