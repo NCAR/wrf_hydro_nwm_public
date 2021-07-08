@@ -24,7 +24,7 @@ https://help.github.com/articles/about-issues/.
 
 ### Bug reports
 Please use the supplied issue template when submitting bug reports. This will help ensure that your
-bug is described in sufficient detail. Additionally, you can read more on how to construct an
+bug is described in sufficient detail. You can read more on how to construct an
 appropriate bug report here: https://stackoverflow.com/help/mcve
 
 ### Feature requests
@@ -41,8 +41,7 @@ documentation.
 All code development contributions will be made via [forks](https://help.github.com/articles/about-forks/)
 and [pull requests](https://help.github.com/articles/about-pull-requests/). If you are
 unfamiliar with GitHub, forks, or pull requests, see [collaborating with issues and pull
-requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for a
-thorough guide to collaborating on GitHub.
+requests](https://help.github.com/categories/collaborating-with-issues-and-pull-requests/) for guidance.
 
 ### WRF-Hydro Fortran code style standards
 Please see our Fortran [code style guidelines](CODESTYLE.md)
@@ -56,7 +55,7 @@ Please see our Fortran [code style guidelines](CODESTYLE.md)
   contributor to resolve any merge conflicts **prior** to submitting a pull request.
 * All contributions must pass relevant automated testing procedures. These tests are executed
   automatically when you submit your pull request.
-* Be respectful when giving and receiving feedback on contributions or issues.
+* Be respectful when giving and receiving feedback on contributions or issues (see our community [code of conduct](../CODE_OF_CONDUCT.md).
 
 ### Pull requests
 
@@ -82,11 +81,11 @@ which changes the answer must be isolated as much as possible into its own pull 
 ### Types of code contributions
 #### Bug fixes
 All bug fixes must address a specific [GitHub
-issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with "Community
-dev" are open to community contributions. The majority of issues will be open to community
-contributions, but some cases may require more careful handling. Issues without the "Community dev"
-label are either still being investigated, are of broad scope, or involve changes to code that is
-actively being developed internally.
+issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with ["community
+dev"](https://github.com/NCAR/wrf_hydro_nwm_public/labels/community%20dev) are open to community 
+contributions. The majority of issues will be open to community contributions, but some cases may 
+require more careful handling. Issues without the "community dev" label are either still being 
+investigated, are of broad scope, or involve changes to code that is actively being developed internally.
 
 All code changes to address issues must be submitted using a pull request, and the corresponding
 issue number must be referenced in the pull request. For more information on referencing issues,
@@ -96,7 +95,7 @@ see [issues and keywords](https://help.github.com/articles/closing-issues-using-
 Code contributions for minor model enhancements or new features follow a similar pattern to bug
 fixes. The proposed feature must be submitted as a GitHub issue and all discussions regarding the
 new feature should reside in the issue thread. Additionally, work should not begin on the new
-feature until the issue has been tagged with "Community dev".
+feature until the issue has been tagged with "community dev".
 
 Depending on the scope of the new feature, a WRF-Hydro core contributor may suggest you create a
 [branch](https://help.github.com/articles/about-branches/) to hold all development for the new
@@ -143,7 +142,7 @@ case should include:
    * Does no harm to the existing code (e.g., produces identical solutions EXCEPT when the new feature is 
 activated by a namelist or parameter setting).
    * Fixes a documented issue (reference existing issue in the 
-[WRF-Hydro github issue tracking](https://github.com/NCAR/wrf_hydro_nwm_public/issues) - this could also be a feature request).
+[WRF-Hydro GitHub issue tracking](https://github.com/NCAR/wrf_hydro_nwm_public/issues) - this could also be a feature request).
    * If model performance is improved, for example through more efficient IO, memory utilization, or other 
 software-specific improvements, it must be demonstrable and measurable.
    * *TIP*: All pull requests go through automated CI testing, but for a new feature it is important to do 

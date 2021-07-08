@@ -624,7 +624,7 @@ contains
         lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
         filename_string = "hybrid_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
 
-        open (113, file=filename_string, status="unknown", access = 'append')
+        open (113, file=filename_string, status="unknown", position = 'append')
 
         write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, A15, A1, I20, A1, F15.5, A1, F15.5, &
         A1, F15.15, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5, A1, F15.5)") &
@@ -675,7 +675,7 @@ contains
         lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
         filename_string = "rfc_forecasts_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
 
-        open (113, file=filename_string, status="unknown", access = 'append')
+        open (113, file=filename_string, status="unknown", position = 'append')
 
         write (113, "(I20, A1, I20, A1, I20, A1, I20, A1, I20, A1, A5, A1, F15.5, A1, &
         F15.5, A1, F15.5, A1, F15.5)") &
@@ -721,7 +721,7 @@ contains
         lake_number_string_trimmed = ADJUSTL(trim(lake_number_string))
         filename_string = "levelpool_logs_"//ADJUSTL(trim(lake_number_string_trimmed))//".csv"
 
-        open (113, file=filename_string, status="unknown", access = 'append')
+        open (113, file=filename_string, status="unknown", position = 'append')
 
         write (113, "(F15.8, A1, F15.8, A1, F15.8)") &
         inflow, ',', water_elevation, ',', outflow

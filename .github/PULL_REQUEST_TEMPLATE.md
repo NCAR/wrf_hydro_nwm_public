@@ -1,3 +1,5 @@
+If you haven't already, please review our [contributing guidelines](CONTRIBUTING.md) before opening your pull request.
+
 Use this template to give a detailed message describing the change you want to make to the code.
 
 The title of this pull request should be a brief "purpose" for this change.
@@ -31,5 +33,5 @@ on why below the bullet.
  - [ ] Tests added (unit tests and/or regression/integration tests)
  - [ ] Backwards compatible
  - [ ] Requires new files? If so, how to generate them.
- - [ ] Fully documented
+ - [ ] Documentation included
  - [ ] Short description in the Development section of `NEWS.md`

@@ -296,6 +296,7 @@ else
    !        tmpCHLAT(i),    tmpZELEV(i),     tmpTYPEL(i),   tmpORDER(i),    &
    !        tmpQLINK(i,1),  tmpMUSK(i),      tmpMUSX(i),    tmpCHANLEN(i),  &
    !        tmpMannN(i),    tmpSo(i),        tmpChSSlp(i),  tmpBw(i),       &
+   !        tmpChannK(i),                                                   &
    !        tmpHRZAREA(i),  tmpLAKEMAXH(i),  tmpWEIRC(i),   tmpWEIRL(i),    &
    !        tmpORIFICEC(i), tmpORIFICEA(i),  tmpORIFICEE(i)
    !   ! if (So(i).lt.0.005) So(i) = 0.005  !-- impose a minimum slope requireement

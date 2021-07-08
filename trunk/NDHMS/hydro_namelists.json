@@ -3,6 +3,7 @@
         "hydro_nlist": {
             "aggfactrt": 4,
             "channel_option": 2,
+            "channel_loss_option": 0,
             "chanobs_domain": 1,
             "chanrtswcrt": 1,
             "chrtout_domain": 1,

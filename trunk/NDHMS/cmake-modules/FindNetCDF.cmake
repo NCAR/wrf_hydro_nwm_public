@@ -63,6 +63,21 @@ NetCDF_check_interface (CXX netcdfcpp.h netcdf_c++)
 NetCDF_check_interface (F77 netcdf.inc  netcdff)
 NetCDF_check_interface (F90 netcdf.mod  netcdff)
 
+# Add links to library dependencies (e.g. -lhdf5 -lm -lz )
+find_program (NETCDF_CONFIG_EXE NAMES nc-config PATHS "$ENV{NETCDF}/bin" ENV NETCDF_DIR)
+if (NETCDF_CONFIG_EXE)
+  execute_process( COMMAND ${NETCDF_CONFIG_EXE} --libs RESULT_VARIABLE nc_config_ret OUTPUT_VARIABLE nc_config_libs)
+  if (nc_config_ret EQUAL 0)
+    string( STRIP ${nc_config_libs} nc_config_libs )
+    list (APPEND NetCDF_libs ${nc_config_libs})
+    list (REMOVE_DUPLICATES NetCDF_libs)
+  else (nc_config_ret EQUAL 0)
+    message(WARNING "nc-config --libs not found, library dependencies may not link.")
+  endif (nc_config_ret EQUAL 0)
+else (NETCDF_CONFIG_EXE)
+  message(WARNING "nc-config not found, library dependencies may not link.")
+endif (NETCDF_CONFIG_EXE)
+
 set (NETCDF_LIBRARIES ${NetCDF_libs} CACHE INTERNAL "All NetCDF libraries required for interface level")
 
 # handle the QUIETLY and REQUIRED arguments and set NETCDF_FOUND to TRUE if

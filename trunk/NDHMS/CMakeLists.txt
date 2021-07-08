@@ -1,8 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
 
-set (CMAKE_C_COMPILER "mpicc")
-set (CMAKE_CXX_COMPILER "mpicxx")
-set (CMAKE_Fortran_COMPILER "mpif90")
+if (NOT CMAKE_C_COMPILER)
+	set (CMAKE_C_COMPILER "mpicc")
+endif (NOT CMAKE_C_COMPILER)
+if (NOT CMAKE_CXX_COMPILER)
+	set (CMAKE_CXX_COMPILER "mpicxx")
+endif (NOT CMAKE_CXX_COMPILER)
+if (NOT CMAKE_Fortran_COMPILER)
+	set (CMAKE_Fortran_COMPILER "mpif90")
+endif (NOT CMAKE_Fortran_COMPILER)
 
 project (WRF_Hydro)
 
@@ -34,7 +40,7 @@ enable_language (Fortran)
 
 # netcdf does not have a built in package locator so add custom module directory
 # that contains FindNetCDF.cmake
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
+set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
 
 #try to find the installed NETCDF library
 set (NETCDF_F90 "YES")
@@ -62,6 +68,7 @@ set (NWM_META $ENV{NWM_META} CACHE STRING "NWM output metadata 0=off 1=on")
 set (WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0=off 1=on")
 set (OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set (PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
+set (WRF_HYDRO_NUOPC $ENV{WRF_HYDRO_NUOPC} CACHE STRING "NUOPC library 0=off 1=on")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")
@@ -104,6 +111,9 @@ if (PRECIP_DOUBLE STREQUAL "")
 	set (PRECIP_DOUBLE "0" CACHE STRING "Precipitation as double" FORCE)
 endif (PRECIP_DOUBLE STREQUAL "")
 
+if (WRF_HYDRO_NUOPC STREQUAL "")
+        set (WRF_HYDRO_NUOPC "0" CACHE STRING "NUOPC library 0=off, 1=on" FORCE)
+endif (WRF_HYDRO_NUOPC STREQUAL "")
 
 # add preprocessor defines using env variables
 
@@ -173,6 +183,12 @@ if (PRECIP_DOUBLE STREQUAL "1" )
 	add_definitions(-DPRECIP_DOUBLE)
 endif (PRECIP_DOUBLE STREQUAL "1")
 
+#set -DWRF_HYDRO_NUOPC from env
+message ("WRF_HYDRO_NUOPC = " ${WRF_HYDRO_NUOPC} )
+if (WRF_HYDRO_NUOPC STREQUAL "1" )
+        add_definitions(-DWRF_HYDRO_NUOPC)
+endif (WRF_HYDRO_NUOPC STREQUAL "1")
+
 message("=============================================================")
 
 #set compile flags based on compiler id
@@ -180,7 +196,7 @@ message("=============================================================")
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     # set compile flags for gfortran
     message ( "-- Using gfortran")
-    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4")
+    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 -fallow-argument-mismatch")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
     message ( "Using ifort")
@@ -223,6 +239,10 @@ if (WRF_HYDRO_NUDGING STREQUAL "1")
 	add_subdirectory("nudging")
 	add_dependencies(hydro_driver hydro_nudging)
 endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
+if (WRF_HYDRO_NUOPC STREQUAL "1")
+        add_subdirectory("CPL/NUOPC_cpl")
+endif (WRF_HYDRO_NUOPC STREQUAL "1")
 
 # add module dependencies
 add_dependencies(hydro_debug_utils hydro_mpp)
@@ -312,14 +332,14 @@ if (HYDRO_LSM MATCHES "NoahMP")
 	add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
+		COMMAND rm ${PROJECT_BINARY_DIR}/wrfhydro.exe
 	)
 
 elseif(HYDRO_LSM MATCHES "Noah")
@@ -367,14 +387,14 @@ elseif(HYDRO_LSM MATCHES "Noah")
         add_custom_command(TARGET wrfhydro.exe POST_BUILD
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
 		COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-		COMMAND cp ${CMAKE_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
-		COMMAND cp ${CMAKE_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_BINARY_DIR}/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/Noah/* ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+		COMMAND cp ${PROJECT_SOURCE_DIR}/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
 		COMMAND ln -s wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-		COMMAND rm ${CMAKE_BINARY_DIR}/wrfhydro.exe
+		COMMAND rm ${PROJECT_BINARY_DIR}/wrfhydro.exe
         )
 
 

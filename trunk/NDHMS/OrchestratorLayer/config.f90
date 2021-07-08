@@ -141,6 +141,8 @@ module config_base
      integer :: rtFlag
      integer ::khour
 
+     integer :: channel_loss_option = 0
+
      character(len=256) :: nudgingParamFile
      character(len=256) :: netwkReExFile
      logical            :: readTimesliceParallel
@@ -460,6 +462,7 @@ contains
     character(len=256) :: route_chan_f=""
     character(len=256) :: route_link_f=""
     logical            :: compound_channel
+    integer            :: channel_loss_option = 0
     character(len=256) :: route_lake_f=""
     logical            :: reservoir_persistence_usgs
     logical            :: reservoir_persistence_usace
@@ -534,7 +537,7 @@ contains
          SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, dtrt_ter,dtrt_ch,dxrt,&
          GwSpinCycles, GwPreCycles, GwSpinUp, GwPreDiag, GwPreDiagInterval, gwIhShift, &
          GWBASESWCRT, gwChanCondSw, gwChanCondConstIn, gwChanCondConstOut , &
-         route_topo_f,route_chan_f,route_link_f, compound_channel, route_lake_f, &
+         route_topo_f,route_chan_f,route_link_f, compound_channel, channel_loss_option, route_lake_f, &
          reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_usgs_timeslice_path, &
          reservoir_usace_timeslice_path, reservoir_observation_lookback_hours, reservoir_observation_update_time_interval_seconds, &
          reservoir_rfc_forecasts, reservoir_rfc_forecasts_time_series_path, reservoir_rfc_forecasts_lookback_hours, &
@@ -571,6 +574,7 @@ contains
     TERADJ_SOLAR = 0
     reservoir_data_ingest = 0 ! STUB FOR USE OF REALTIME RESERVOIR DISCHARGE DATA. CURRENTLY NOT IN USE.
     compound_channel = .FALSE.
+    channel_loss_option = 0
     bucket_loss = 0
     reservoir_persistence_usgs = .FALSE.
     reservoir_persistence_usace = .FALSE.
@@ -750,7 +754,7 @@ contains
     nlst(did)%rst_bi_out = rst_bi_out
     nlst(did)%order_to_write = order_to_write
     nlst(did)%compound_channel = compound_channel
-
+    nlst(did)%channel_loss_option = channel_loss_option
     ! files
     nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f

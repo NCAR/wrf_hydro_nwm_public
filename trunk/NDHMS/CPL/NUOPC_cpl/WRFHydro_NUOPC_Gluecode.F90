@@ -53,17 +53,7 @@ module wrfhydro_nuopc_gluecode
   use config_base, only: &
     nlst, &
     init_namelist_rt_field
-!  use module_gw_gw2d_data, only: &
-!    gw2d
-!  use module_domain, only: &
-!    domain, &
-!    domain_clock_get
-!  use module_configure, only: &
-!    grid_config_rec_type
-!  use module_configure, only: &
-!    config_flags
-!  use module_configure, only: &
-!    model_config_rec
+  use orchestrator_base
 
   implicit none
 
@@ -322,6 +312,8 @@ contains
     call WRFHYDRO_TimeToString(startTime,timestr=startTimeStr,rc=rc)
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
+    call orchestrator%init()
+
     ! Set default namelist values
     read (startTimeStr(1:4),"(I)")   nlst(did)%START_YEAR
     read (startTimeStr(6:7),"(I)")   nlst(did)%START_MONTH
@@ -366,9 +358,9 @@ contains
       return  ! bail out
     endif
 
-    call MPP_LAND_INIT()  ! required before get_file_dimension
     call get_file_dimension(fileName=nlst(did)%geo_static_flnm,& 
       ix=nx_global(1),jx=ny_global(1))
+    call MPP_LAND_INIT(nx_global(1),ny_global(1))
 
 #ifdef DEBUG
     write (logMsg,"(A,2(I0,A))") MODNAME//": Global Dimensions = (", &
