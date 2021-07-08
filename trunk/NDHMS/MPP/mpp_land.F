@@ -2061,35 +2061,45 @@ MODULE MODULE_MPP_LAND
 
     subroutine sum_real1d(vin,nsize)
        implicit none
-       integer  :: nsize
-       real,dimension(nsize) :: vin
-       real*8,dimension(nsize) :: vin8
-       vin8=vin
-       call sum_real8(vin8,nsize)
-       vin=vin8
+       integer  :: nsize, tag, ierr
+       real,dimension(nsize) :: vin, recv
+       !real*8,dimension(nsize) :: vin8
+       
+        tag = 319
+        call MPI_ALLREDUCE(vin, recv, nsize, MPI_REAL, MPI_SUM,HYDRO_COMM_WORLD, ierr)
+        vin(:) = recv(:)
+
+       !vin8=vin
+       !call sum_real8(vin8,nsize)
+       !vin=vin8
     end subroutine sum_real1d
 
     subroutine sum_real8(vin,nsize)
        implicit none
-       integer nsize,i,j,tag,ierr
+       integer nsize,tag,ierr
+       !integer i,j
        real*8, dimension(nsize):: vin,recv
        real, dimension(nsize):: v
+
        tag = 319
-       if(my_id .eq. IO_id) then
-          do i = 0, numprocs - 1
-             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_DOUBLE_PRECISION,i,  &
-                    tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-               vin(:) = vin(:) + recv(:)
-             endif
-          end do
-          v = vin
-       else
-             call mpi_send(vin,nsize,MPI_DOUBLE_PRECISION,IO_id,   &
-                  tag,HYDRO_COMM_WORLD,ierr)
-       endif
-       call mpp_land_bcast_real(nsize,v)
-       vin = v
+       call MPI_ALLREDUCE(vin, recv, nsize, MPI_DOUBLE_PRECISION, MPI_SUM, HYDRO_COMM_WORLD, ierr)
+       vin(:) = recv(:)
+
+       !if(my_id .eq. IO_id) then
+       !   do i = 0, numprocs - 1
+       !      if(i .ne. my_id) then
+       !        call mpi_recv(recv,nsize,MPI_DOUBLE_PRECISION,i,  &
+       !             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+       !        vin(:) = vin(:) + recv(:)
+       !      endif
+       !   end do
+       !   v = vin
+       !else
+       !      call mpi_send(vin,nsize,MPI_DOUBLE_PRECISION,IO_id,   &
+       !           tag,HYDRO_COMM_WORLD,ierr)
+       !endif
+       !call mpp_land_bcast_real(nsize,v)
+       !vin = v
        return
     end subroutine sum_real8
 
