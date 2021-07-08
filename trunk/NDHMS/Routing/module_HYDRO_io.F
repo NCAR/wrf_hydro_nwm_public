@@ -9167,19 +9167,21 @@ end function get_netcdf_dim
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
-    integer :: numbasns
+    integer, intent(in) :: numbasns
     integer, dimension(numbasns) :: LINKID
     real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
     real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
-    character(len=*) :: infile
+    character(len=*), intent(in) :: infile
 !   define temp array
-    integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
+    integer, volatile :: i,k
+    integer, volatile :: gnid, ncid, varid, dimid, ierr, iret
     integer, allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
 
 !   get gnid
+    gnid = 0
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
@@ -9193,7 +9195,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                !print*, "nf90_inq_dimid:  BasinDim"
                call hydro_stop("Failed read GBUCKETPARM - nf90_inq_dimid:  BasinDim")
        endif
-       iret = nf90_inquire_dimension(ncid, dimid, len = gnid)
+       iret = nf90_inquire_dimension(ncid, dimid, len=gnid)
     endif
     call mpp_land_bcast_int1(gnid)
 #endif
