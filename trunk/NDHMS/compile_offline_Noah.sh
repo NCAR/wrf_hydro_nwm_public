@@ -43,7 +43,7 @@ make clean ; rm -f Run/wrf_hydro_Noah.exe ; rm -f Run/*TBL ; rm -f Run/*namelist
 
 cat macros LandModel/user_build_options.bak > LandModel/user_build_options
 
-make
+make; make install
 
 
 if [[ $? -eq 0 ]]; then

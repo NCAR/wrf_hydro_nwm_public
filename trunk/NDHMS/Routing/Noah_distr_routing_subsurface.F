@@ -162,6 +162,10 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, CWAT
     !DJG    - SUBSURFACE ROUITNG ONLY PERFORMED ON SATURATED LAYERS
     !DJG -----------------------------------------------------------------
 
+    !Z. Cui -----------------------------------------------------------------
+    !Move SUBDT initialization up to avoid crash when HYDRO_D is defined
+    SUBDT = subrt_static%dt                !-- initialize the routing timestep to DT
+    !Z. Cui -----------------------------------------------------------------
 #ifdef HYDRO_D
     ! ADCHANGE: START Initial water balance variables
     ! ALL VARS in MM
@@ -204,7 +208,6 @@ SUBROUTINE SUBSFC_RTNG(subrt_data, subrt_static, subrt_input, subrt_output, CWAT
 
     !DJG Set up mass balance checks...
     !         CWATAVAIL = 0.            !-- initialize subsurface watavail
-    SUBDT = subrt_static%dt                !-- initialize the routing timestep to DT
 
 
     !!!! Find saturated layer depth...
