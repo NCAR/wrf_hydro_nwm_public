@@ -20,6 +20,7 @@ MODULE disaggregateWeatherModule
 use module_lsm_forcing, only: weather_2D_inputs
 !use module_channel_routing, only: vectorizing_tools 
 use module_sf_noahmpdrv, only: NoahMP_vectorizing_tools
+USE config_base, only: noah_lsm
 
 IMPLICIT NONE
 	
@@ -46,7 +47,7 @@ end type fineWeatherData
 contains 
 
 subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
-					                         LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
+					                         LAKE_MSKRT, TMN, TSK, TSLB, reach_number, &
                                   ims,ime, jms,jme, &
                                   Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine,&
                                   TSK_1D_fine,TSLB_1D_fine)
@@ -64,7 +65,7 @@ subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
 	 
 	character(len=20)                           :: Reach_number_string
 	! -- for the stuff that are coming from NoahMP
-	INTEGER, INTENT(in)                         :: nsoil, ims,ime, jms,jme
+	INTEGER, INTENT(in)                         :: ims,ime, jms,jme
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: TMN
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: TSK
 	REAL,    INTENT(in), DIMENSION(ix,nsoil,jx) :: TSLB
@@ -148,7 +149,8 @@ subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
                         !// trim(ADJUSTL(Reach_number_string)) // ".")	
 		else
                        ! initialize NMPvectorizer
-                       call this%NMPvectorizer%init(ims,ime, jms,jme, TMN, TSK, TSLB, nsoil)
+		       !!! removed the nsoil from the follosing call
+                       call this%NMPvectorizer%init(ims,ime, jms,jme, TMN, TSK, TSLB)
 
                        ! I am calling this next function for debugging/testing 
                        call this%NMPvectorizer%noahMP_inputs()						
@@ -192,7 +194,7 @@ subroutine fineWeatherData_run(this)
 				                   this%NMPvectorizer%TMN,		&
 				                   this%NMPvectorizer%TSK,		&
 				                   this%NMPvectorizer%TSLB,   &
-				                   this%NMPvectorizer%nsoil   &
+				                   noah_lsm%nsoil   &
                            )
 							
 end subroutine fineWeatherData_run
