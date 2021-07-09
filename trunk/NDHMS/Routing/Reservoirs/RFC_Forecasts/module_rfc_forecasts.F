@@ -129,7 +129,7 @@ contains
                 // trim(ADJUSTL(lake_number_string)) // ".")
             else
                 ! initialize rfc forecasts properties
-                call this%properties%init(lake_number, reservoir_parameter_file)
+                call this%properties%init(lake_area, lake_max_water_elevation, lake_number, reservoir_parameter_file)
             end if
             this%pointer_allocation_guard = .true.
 
@@ -275,10 +275,11 @@ contains
 
         ! Update state water elevation
         this%state%water_elevation = water_elevation
+        this%state%levelpool_water_elevation = water_elevation
 
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
-        lateral_inflow, this%state%water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
+        lateral_inflow, this%state%levelpool_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
         this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
 
         ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
@@ -310,6 +311,19 @@ contains
             ! Set outflow to corresponding discharge from array
             this%output%outflow = this%state%discharges(this%state%time_series_index)
 
+            ! Update water elevation
+            this%state%water_elevation = this%state%water_elevation + &
+            ((this%input%inflow - this%output%outflow) / this%properties%lake_area) * routing_period
+
+            ! Ensure that the water elevation is within the minimum and maximum elevation
+            if (this%state%water_elevation < 0.0) then
+                this%state%water_elevation = 0.0
+
+            else if (this%state%water_elevation > this%properties%max_water_elevation) then
+                this%state%water_elevation = this%properties%max_water_elevation
+
+            end if
+
             ! Set dynamic_reservoir_type to RFC Forecasts Type
             this%state%dynamic_reservoir_type = this%properties%reservoir_type
 
@@ -331,6 +345,9 @@ contains
                 if (this%output%outflow < 0) then
                     this%output%outflow = levelpool_outflow
 
+                    ! Update water elevation to levelpool water elevation
+                    this%state%water_elevation = this%state%levelpool_water_elevation
+
                     ! Set dynamic_reservoir_type to levelpool type
                     this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type
 
@@ -345,6 +362,9 @@ contains
 
         else
             this%output%outflow = levelpool_outflow
+
+            ! Update water elevation to levelpool water elevation
+            this%state%water_elevation = this%state%levelpool_water_elevation
 
             ! Set dynamic_reservoir_type to levelpool type
             this%state%dynamic_reservoir_type = this%state%levelpool_reservoir_type

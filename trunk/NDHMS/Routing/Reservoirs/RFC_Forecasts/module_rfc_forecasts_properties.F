@@ -18,6 +18,8 @@ module module_rfc_forecasts_properties
     ! Extend/derive rfc forecasts properties from the abstract base
     ! type for reservoir properties.
     type, extends(reservoir_properties) :: rfc_forecasts_properties_interface
+        real              :: lake_area                    ! area of reservoir (meters^2)
+        real              :: max_water_elevation          ! max water elevation (meters)
         integer           :: lake_number                  ! lake number
         integer           :: reservoir_type               ! reservoir type
         character(len=5)  :: rfc_gage_id
@@ -44,13 +46,20 @@ module module_rfc_forecasts_properties
 contains
 
     ! RFC Forecasts Properties Constructor
-    subroutine rfc_forecasts_properties_init(this, lake_number, reservoir_parameter_file)
+    subroutine rfc_forecasts_properties_init(this, lake_area, lake_max_water_elevation, lake_number, reservoir_parameter_file)
         implicit none
         class(rfc_forecasts_properties_interface), intent(inout) :: this ! the type object being initialized
-        integer, intent(in)          :: lake_number                   ! lake number
+        real,    intent(in)          :: lake_area                    ! area of lake (km^2)
+        real,    intent(in)          :: lake_max_water_elevation     ! max water elevation (meters)
+        integer, intent(in)          :: lake_number                  ! lake number
         character(len=*), intent(in) :: reservoir_parameter_file
         integer                      :: ncid, var_id, lake_id_index
-        integer                      :: status                        ! status of reading NetCDF
+        integer                      :: status                       ! status of reading NetCDF
+
+        ! Convert from km^2 to meters^2
+        this%lake_area = lake_area * 1.0E6
+
+        this%max_water_elevation = lake_max_water_elevation
 
         this%lake_number = lake_number
 
