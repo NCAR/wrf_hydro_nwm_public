@@ -171,24 +171,24 @@ subroutine river_temperature_run(this, did)
 					                      Cloud,      &
 				rt_domain(did)%TSLB_1D_fine,    &
 				rt_domain(did)%SolarRad_fine_1D,&
-					rt_domain(did)%XS_Peremeter,		  &
-				rt_domain(did)%HLINK,	       & 	 	
-				rt_domain(did)%ChSSlp,	       &
-				rt_domain(did)%ZELEV,	       &
-                                rt_domain(did)%velocity,       &
-				rt_domain(did)%Tw,	       &
-				rt_domain(did)%QSUM,	       &
-				rt_domain(did)%QINFLOWBASE,    &
-				rt_domain(did)%QSTRMVOLRT,     &
-				rt_domain(did)%TMN_1D_fine,    &
-				rt_domain(did)%TSLB_1D_fine,   &
-				rt_domain(did)%TSK_1D_fine,    &
-                                			      sur_albedo,        			              &
-                					      shadeF,                  			        &
-					                      viewToSky,         			              &
-					              rt_domain(did)%ChanCondConst,    &
-                                			      C_Em,		         		                  &
-	                				      P_size,           			              &
+				rt_domain(did)%XS_Peremeter,    &
+				rt_domain(did)%HLINK,	        & 	 	
+				rt_domain(did)%ChSSlp,	        &
+				rt_domain(did)%ZELEV,	        &
+                                rt_domain(did)%velocity,        &
+				rt_domain(did)%Tw,	        &
+				rt_domain(did)%QSUM,	        &
+				rt_domain(did)%QINFLOWBASE,     & 
+				rt_domain(did)%QSTRMVOLRT,      &
+				rt_domain(did)%TMN_1D_fine,     &
+				rt_domain(did)%TSLB_1D_fine,    &
+				rt_domain(did)%TSK_1D_fine,     &
+                                			      sur_albedo,  &
+                					      shadeF,      &
+					                      viewToSky,   &
+				rt_domain(did)%ChanCondConst,   &
+                                			      C_Em,	   &
+	                				      P_size,      &
 				rt_domain(did)%CHANXI,         &
 				rt_domain(did)%CHANYJ,	       &
 				rt_domain(did)%CH_NETLNK,      &
@@ -199,9 +199,9 @@ subroutine river_temperature_run(this, did)
 				rt_domain(did)%node_area,      &
 				rt_domain(did)%TO_NODE,	       &
 				rt_domain(did)%TYPEL,	       &
-					                      T_QSUM,	                  		        &
+				rt_domain(did)%T_QSUM,	       &
                                 rt_domain(did)%NLINKS          &
-                 					      )
+                 		)
 	
 	
 end subroutine river_temperature_run
