@@ -281,12 +281,6 @@ Kd = (1.0/n)*(R**(2.0/3.0))*AREA     !-- convenyance
 Kf =  (1.0-w)*Kd + w*Ku      !-- conveyance
 DIFFUSION = Kf * sqrt(abs(Sf))*sgn
 
-!-------------------------------------------------------
-!-- Reza (June 2021):
-rt_domain%XS_Peremeter(nod) = Bw+ 2.0*((h1+h2)/2.)*sqrt(1.0 + z*z)
-!-------------------------------------------------------
-
-
 100 format('z1,z2,h1,h2,kf,Dif, Sf, sgn  ',f8.3,2x,f8.3,2x,f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.3,2x,f8.0)
 
 end function DIFFUSION
@@ -1421,6 +1415,9 @@ gwOption:   if(gwBaseSwCRT == 3) then
                    QLINK(i,1)=DIFFUSION(i,ZELEV(FROM_NODE(i)),ZELEV(TO_NODE(i)), &
                       HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
                       CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
+		      !--Reza-------------------------------------------------------
+                      rt_domain%XS_Peremeter(i) = Bw(i)+ 2.0*((HLINKTMP(FROM_NODE(i))+HLINKTMP(TO_NODE(i)))/2.)* &
+	                                            sqrt(1.0 + ChSSlp(i)*ChSSlp(i))
             endif
          enddo
 
