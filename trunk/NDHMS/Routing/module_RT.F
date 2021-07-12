@@ -902,7 +902,7 @@ subroutine LandRT_ini(did)
 		   rt_domain(did)%TSK_1D_fine,      &
 		   rt_domain(did)%TSLB_1D_fine      &
 		   )
-   call river_temperature%run()
+   call river_temperature%init(rt_domain(did)%T_QSUM)
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
