@@ -893,9 +893,16 @@ subroutine LandRT_ini(did)
    end do
    
    !-- Reza's code goes here to be initialized
-   !fineWeatherData%init (...)
+   call fineWeatherData%init (                      &
+                   rt_domain(did)%Tair_fine_1D,     &
+		   rt_domain(did)%RelH_fine_1D,     &
+		   rt_domain(did)%windSpd_fine_1D,  &
+		   rt_domain(did)%SolarRad_fine_1D, &
+		   rt_domain(did)%TMN_1D_fine,      &
+		   rt_domain(did)%TSK_1D_fine,      &
+		   rt_domain(did)%TSLB_1D_fine      &
+		   )
    call river_temperature%run()
-   
 
    !ADCHANGE: Add lake reach output
 #ifdef HYDRO_D
