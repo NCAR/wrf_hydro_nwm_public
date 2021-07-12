@@ -18,8 +18,6 @@
 MODULE disaggregateWeatherModule
 
 use module_lsm_forcing, only: weather_2D_inputs
-!use module_channel_routing, only: vectorizing_tools 
-use module_sf_noahmpdrv, only: NoahMP_vectorizing_tools
 use config_base, only: noah_lsm, nlst
 use module_NoahMP_hrldas_driver
 use module_RT_data, only: rt_domain
