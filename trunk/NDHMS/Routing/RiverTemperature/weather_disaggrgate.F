@@ -48,106 +48,26 @@ end type fineWeatherData
 ! --------------------------------------------------------------------------
 contains 
 
-subroutine fineWeatherData_init(this, T2, q2x, u, short, reach_number,   &
+subroutine fineWeatherData_init(this, reach_number,   &
                                 Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, &
 				SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
 	implicit none
 	class(fineWeatherData), intent(inout)       :: this                   ! the type object being initialized
-	INTEGER, INTENT(in)                         :: reach_number
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: T2	              ! Air temperature
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: q2x	              ! Humidity
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: u	              ! Near surface wind in the u-component
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: short	              ! Shortwave radiation
- 
 	character(len=20)                           :: Reach_number_string
 
-	REAL,    INTENT(inout), DIMENSION(NLINKS)      :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D
- 	REAL,    INTENT(inout), DIMENSION(NLINKS)      :: SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
+	REAL,    INTENT(inout), DIMENSION(:)        :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D
+ 	REAL,    INTENT(inout), DIMENSION(:)        :: SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
 	
 
-	this%Tair_fine_1D       = Tair_fine_1D
-	this%RelH_fine_1D       = RelH_fine_1D
-	this%windSpd_fine_1D    = windSpd_fine_1D
-	this%SolarRad_fine_1D   = SolarRad_fine_1D
-	this%TMN_1D_fine        = TMN_1D_fine
-	this%TSK_1D_fine        = TSK_1D_fine
-	this%TSLB_1D_fine       = TSLB_1D_fine
+	!this%Tair_fine_1D       = Tair_fine_1D
+	!this%RelH_fine_1D       = RelH_fine_1D
+	!this%windSpd_fine_1D    = windSpd_fine_1D
+	!this%SolarRad_fine_1D   = SolarRad_fine_1D
+	!this%TMN_1D_fine        = TMN_1D_fine
+	!this%TSK_1D_fine        = TSK_1D_fine
+	!this%TSLB_1D_fine       = TSLB_1D_fine
 	
-	if (this%pointer_allocation_guard .eq. .false. ) then
-			! try to allocate input
-               ! allocate (this%input)
-               ! if ( .not. associated(this%input) ) then
-                        ! if the input structure could not be created, call hydro_stop.
-                        !write(Reach_number_string, "(I15)") reach_number
-                        !call hydro_stop("ERROR: Failure to allocate temeprature module input structure for reach " &
-                        !// trim(ADJUSTL(Reach_number_string)) // ".")
-                !else
-                ! initialize the input structure
-                !call this%input%init()
-                !end if
-		
-                ! try to allocate output
-                !allocate ( this%output )
-                !if ( .not. associated(this%output) ) then
-                       ! if the output structure could not be created, call hydro_stop.
-                       !write(Reach_number_string, "(I15)") reach_number
-                       !call hydro_stop("ERROR: Failure to allocate temeprature module output structure for reach " &
-                       !// trim(ADJUSTL(Reach_number_string)) // ".")
-                !else
-                       ! initialize the output structure
-                       !call this%output%init()
-                !end if
 
-		! try to allocate weather_2D
-		allocate ( this%weather_2D )
-		if ( .not. associated(this%weather_2D) ) then
-			! if the output structure could not be created, call hydro_stop.
-                        write(Reach_number_string, "(I15)") reach_number
-                        !call hydro_stop("ERROR: Failure to allocate temeprature module weather_2D for reach " &
-                        !// trim(ADJUSTL(Reach_number_string)) // ".")	
-		else
-                ! initialize weather_2D
-                        !call this%weather_2D%init(IX, JX, IXRT, JXRT, T2, q2x, u, short)	! 2D corse grid size based		
-                        !call this%weather_2D%init(IX, JX, T2, q2x, u, short)	! 2D corse grid size based
-                        call this%weather_2D%init(IX, JX, T2, q2x, u, short)
-
-                        ! I am calling this next function for debugging/testing 
-                        call this%weather_2D%inputs()
-                        
-		end if
-			
-		!! try to allocate vectorizer
-		!allocate ( this%vectorizer )
-		!if ( .not. associated(this%vectorizer) ) then
-			!! if the output structure could not be created, call hydro_stop.
-                        !write(Reach_number_string, "(I15)") reach_number
-                        !!call hydro_stop("ERROR: Failure to allocate temeprature module vectorizer for reach " &
-                        !!// trim(ADJUSTL(Reach_number_string)) // ".")	
-		!else
-                        !! initialize vectorizer
-                        !call this%vectorizer%init(NLINKS, IXRT, JXRT, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT)
-                        
-                        ! I am calling this next function for debugging/testing
-                        !call this%vectorizer%inputs_vec()						
-		!end if
-			
-		!! try to allocate NMPvectorizer
-		!allocate ( this%NMPvectorizer)
-		!if ( .not. associated(this%NMPvectorizer) ) then
-			!! if the output structure could not be created, call hydro_stop.
-                        !write(Reach_number_string, "(I15)") reach_number
-                        !!call hydro_stop("ERROR: Failure to allocate temeprature module NMPvectorizer for reach " &
-                        !!// trim(ADJUSTL(Reach_number_string)) // ".")	
-		!else
-                       !! initialize NMPvectorizer
-		       !!! removed the nsoil from the follosing call
-                       !call this%NMPvectorizer%init(ims,ime, jms,jme, TMN, TSK, TSLB)
-
-                       !! I am calling this next function for debugging/testing 
-                       !call this%NMPvectorizer%noahMP_inputs()						
-		end if
-		this%pointer_allocation_guard = .true.
-	end if
 		
 end subroutine fineWeatherData_init
 ! --------------------------------------------------------------------------
