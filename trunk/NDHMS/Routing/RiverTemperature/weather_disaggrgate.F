@@ -20,7 +20,7 @@ MODULE disaggregateWeatherModule
 use module_lsm_forcing, only: weather_2D_inputs
 !use module_channel_routing, only: vectorizing_tools 
 use module_sf_noahmpdrv, only: NoahMP_vectorizing_tools
-use config_base, only: noah_lsm
+use config_base, only: noah_lsm, nlst
 use module_NoahMP_hrldas_driver
 use module_RT_data, only: rt_domain
 
@@ -182,7 +182,8 @@ subroutine fineWeatherData_run(this, did)
 				 module_NoahMP_hrldas_driver%TMN,  &
 				 module_NoahMP_hrldas_driver%TSK,  &
 				 module_NoahMP_hrldas_driver%TSLB, &
-				 noah_lsm%nsoil                    &
+				 noah_lsm%nsoil,                   &
+				 nlst(did)%AGGFACTRT               &
                                  )
 							
 end subroutine fineWeatherData_run
@@ -190,12 +191,12 @@ end subroutine fineWeatherData_run
 ! --------------------------------------------------------------------------
 
 subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, Tair, SolarRad, RelH, windSpd, &
-                               NLINKS, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil)
+                               NLINKS, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, AGGFACTRT)
 
     implicit none
     class(fineWeatherData), intent(inout)                ::    this
     ! Input Variables ------------------------------------------------------------------------						   
-    integer                    		       :: IX, JX, IXRT, JXRT, NLINKS, nsoil
+    integer                    		       :: IX, JX, IXRT, JXRT, NLINKS, nsoil, AGGFACTRT
     REAL, INTENT(IN), DIMENSION(IX,JX)	       :: Tair, SolarRad, RelH, windSpd, TMN, TSK
     REAL, INTENT(IN), DIMENSION(IX,1:nsoil,JX) :: TSLB
     INTEGER,INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT, LAKE_MSKRT
@@ -205,7 +206,7 @@ subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, Tair, SolarRad, RelH, w
     integer                    :: IXXRT, JYYRT ! fine grid i,j coordinates
     integer                    :: AGGFACYRT, AGGFACXRT ! fine grid aggregation factors
     ! 
-    integer	               :: AGGFACTRT = 2			   ! disaggregation factor, I assume as 2, 500m to 2x250m; should be checked later
+    !integer	               :: AGGFACTRT = 2			   ! disaggregation factor, I assume as 2, 500m to 2x250m; should be checked later
     ! 
     REAL,  DIMENSION(IXRT,JXRT)	:: Tair_fine, SolarRad_fine, RelH_fine, windSpd_fine, TMN_fine, TSK_fine, TSLB_fine
 
