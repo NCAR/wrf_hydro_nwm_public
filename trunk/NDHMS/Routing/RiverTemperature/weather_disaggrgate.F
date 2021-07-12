@@ -46,12 +46,11 @@ end type fineWeatherData
 ! --------------------------------------------------------------------------
 contains 
 
-subroutine fineWeatherData_init(this, reach_number,   &
-                                Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, &
+subroutine fineWeatherData_init(this, Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, &
 				SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
 	implicit none
 	class(fineWeatherData), intent(inout)       :: this                   ! the type object being initialized
-	character(len=20)                           :: Reach_number_string
+	!character(len=20)                           :: Reach_number_string
 
 	REAL,    INTENT(inout), DIMENSION(:)        :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D
  	REAL,    INTENT(inout), DIMENSION(:)        :: SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
