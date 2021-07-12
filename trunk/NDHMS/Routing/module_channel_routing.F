@@ -835,7 +835,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 	REAL, DIMENSION(NLINKS)	                :: XS_Peremeter   !-- cross sectional area calculated at diffusion function
 	REAL, INTENT(INOUT), DIMENSION(NLINKS)  :: T_QSUM         ! To save the final products
 	!-- I consider an average value to pass to the temperature routine
-	REAL 					:: ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
+	rt_domain%ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
 	!-------------------------------------------------------
 
 
