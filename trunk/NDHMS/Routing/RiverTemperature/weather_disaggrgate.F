@@ -58,9 +58,7 @@ subroutine fineWeatherData_init(this, T2, q2x, u, short, reach_number,   &
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: q2x	              ! Humidity
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: u	              ! Near surface wind in the u-component
 	REAL,    INTENT(in), DIMENSION(ix,jx)       :: short	              ! Shortwave radiation
-	
-	!INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT
-	 
+ 
 	character(len=20)                           :: Reach_number_string
 
 	REAL,    INTENT(inout), DIMENSION(NLINKS)      :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D
