@@ -256,7 +256,7 @@ Subroutine river_TEMPERATURE_SOLVER(dx, dt, IXRT, JXRT,  T_a, H, V_wind, C_L, T_
 		! For hyporheic exchange incflow calculation & Porosity of the conduction layer (unitless)
 		REAL, DIMENSION(IXRT,JXRT)        :: Q_hyp		! Darcy’s Law for Calculating for Hyporheic Flow (Domenico and Schwartz 1990)
 		REAL, DIMENSION(IXRT,JXRT)        :: Disp_coef
-    REAL		          	  :: A_s		! Cross-Sectional Across Seepage Face (m2)	
+                REAL		          	  :: A_s		! Cross-Sectional Across Seepage Face (m2)	
 		REAL			          :: k_s		! Composite Substrate Hydraulic Conductivity (m/s) 
 		REAL, INTENT(IN),    DIMENSION(:) :: C_E		! Embeddedness                                                                    - As an input
 		REAL, INTENT(IN),    DIMENSION(:) :: P_s		! Substrate particle size (mm)
@@ -283,7 +283,7 @@ Subroutine river_TEMPERATURE_SOLVER(dx, dt, IXRT, JXRT,  T_a, H, V_wind, C_L, T_
 		REAL,                   DIMENSION(totLength)          :: TLateral
 		INTEGER, INTENT(IN),    DIMENSION(:)                  :: CHANXI, CHANYJ
 		INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETLNK
-    INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETRT
+                INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETRT
 		REAL,                   DIMENSION(totLength)          :: QLateral
 		REAL,    INTENT(IN),    DIMENSION(totLength,2)        :: QLINK
 		INTEGER, INTENT(in)                                   :: DT_STEPS               !-- number of timestep in routing
@@ -294,9 +294,9 @@ Subroutine river_TEMPERATURE_SOLVER(dx, dt, IXRT, JXRT,  T_a, H, V_wind, C_L, T_
 		REAL,    INTENT(INOUT), DIMENSION(:)                  :: T_QSUM_local	            ! -- FINAL PRODUCT
 		INTEGER,                DIMENSION(totLength)          :: BC_Grid		    ! -- This is the new way I am thinking of to detec the upstream grids
 		INTEGER                                               :: neighbours, i, j
-    ! Simulated water temeprature (C)
+                ! Simulated water temeprature (C)
 		REAL,                   DIMENSION(totLength,2)        :: T_w_sim	! Simulatd water temperature for the reach in space & time (C)
-    REAL                                                  :: Q_strTot, T_strTot 
+                REAL                                                  :: Q_strTot, T_strTot 
 				
     ! ++++++++++++++++++++++++++++update this part
 		! Assigning the upstream water temeprature boundary condition to the main matrix
