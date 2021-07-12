@@ -20,7 +20,9 @@ MODULE disaggregateWeatherModule
 use module_lsm_forcing, only: weather_2D_inputs
 !use module_channel_routing, only: vectorizing_tools 
 use module_sf_noahmpdrv, only: NoahMP_vectorizing_tools
-USE config_base, only: noah_lsm
+use config_base, only: noah_lsm
+use module_NoahMP_hrldas_driver
+use module_RT_data, only: rt_domain
 
 IMPLICIT NONE
 	
@@ -46,41 +48,32 @@ end type fineWeatherData
 ! --------------------------------------------------------------------------
 contains 
 
-subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
-					                         LAKE_MSKRT, TMN, TSK, TSLB, reach_number, &
-                                  ims,ime, jms,jme, &
-                                  Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine,&
-                                  TSK_1D_fine,TSLB_1D_fine)
+subroutine fineWeatherData_init(this, T2, q2x, u, short, reach_number,   &
+                                Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, &
+				SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
 	implicit none
 	class(fineWeatherData), intent(inout)       :: this                   ! the type object being initialized
-	INTEGER, INTENT(in)                         :: IX,JX, reach_number		! coarse grid i,j dims
+	INTEGER, INTENT(in)                         :: reach_number
+	REAL,    INTENT(in), DIMENSION(ix,jx)       :: T2	              ! Air temperature
+	REAL,    INTENT(in), DIMENSION(ix,jx)       :: q2x	              ! Humidity
+	REAL,    INTENT(in), DIMENSION(ix,jx)       :: u	              ! Near surface wind in the u-component
+	REAL,    INTENT(in), DIMENSION(ix,jx)       :: short	              ! Shortwave radiation
 	
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: T2	                    ! Air temperature
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: q2x	                  ! Humidity
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: u	                    ! Near surface wind in the u-component
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: short	                ! Shortwave radiation
-	! -- for vectorizing
-	
-	INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT
+	!INTEGER, INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT
 	 
 	character(len=20)                           :: Reach_number_string
-	! -- for the stuff that are coming from NoahMP
-	INTEGER, INTENT(in)                         :: ims,ime, jms,jme
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: TMN
-	REAL,    INTENT(in), DIMENSION(ix,jx)       :: TSK
-	REAL,    INTENT(in), DIMENSION(ix,nsoil,jx) :: TSLB
-	
+
 	REAL,    INTENT(inout), DIMENSION(NLINKS)      :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D
  	REAL,    INTENT(inout), DIMENSION(NLINKS)      :: SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
 	
 
-  this%Tair_fine_1D       = Tair_fine_1D
-  this%RelH_fine_1D       = RelH_fine_1D
-  this%windSpd_fine_1D    = windSpd_fine_1D
-  this%SolarRad_fine_1D   = SolarRad_fine_1D
-  this%TMN_1D_fine        = TMN_1D_fine
-  this%TSK_1D_fine        = TSK_1D_fine
-  this%TSLB_1D_fine       = TSLB_1D_fine
+	this%Tair_fine_1D       = Tair_fine_1D
+	this%RelH_fine_1D       = RelH_fine_1D
+	this%windSpd_fine_1D    = windSpd_fine_1D
+	this%SolarRad_fine_1D   = SolarRad_fine_1D
+	this%TMN_1D_fine        = TMN_1D_fine
+	this%TSK_1D_fine        = TSK_1D_fine
+	this%TSLB_1D_fine       = TSLB_1D_fine
 	
 	if (this%pointer_allocation_guard .eq. .false. ) then
 			! try to allocate input
@@ -140,25 +133,22 @@ subroutine fineWeatherData_init(this, IX, JX,  T2, q2x, u, short,  &
                         !call this%vectorizer%inputs_vec()						
 		!end if
 			
-		! try to allocate NMPvectorizer
-		allocate ( this%NMPvectorizer)
-		if ( .not. associated(this%NMPvectorizer) ) then
-			! if the output structure could not be created, call hydro_stop.
-                        write(Reach_number_string, "(I15)") reach_number
-                        !call hydro_stop("ERROR: Failure to allocate temeprature module NMPvectorizer for reach " &
-                        !// trim(ADJUSTL(Reach_number_string)) // ".")	
-		else
-                       ! initialize NMPvectorizer
+		!! try to allocate NMPvectorizer
+		!allocate ( this%NMPvectorizer)
+		!if ( .not. associated(this%NMPvectorizer) ) then
+			!! if the output structure could not be created, call hydro_stop.
+                        !write(Reach_number_string, "(I15)") reach_number
+                        !!call hydro_stop("ERROR: Failure to allocate temeprature module NMPvectorizer for reach " &
+                        !!// trim(ADJUSTL(Reach_number_string)) // ".")	
+		!else
+                       !! initialize NMPvectorizer
 		       !!! removed the nsoil from the follosing call
-                       call this%NMPvectorizer%init(ims,ime, jms,jme, TMN, TSK, TSLB)
+                       !call this%NMPvectorizer%init(ims,ime, jms,jme, TMN, TSK, TSLB)
 
-                       ! I am calling this next function for debugging/testing 
-                       call this%NMPvectorizer%noahMP_inputs()						
+                       !! I am calling this next function for debugging/testing 
+                       !call this%NMPvectorizer%noahMP_inputs()						
 		end if
 		this%pointer_allocation_guard = .true.
-
-             
-
 	end if
 		
 end subroutine fineWeatherData_init
@@ -172,30 +162,30 @@ end subroutine fineWeatherData_destroy
 
 ! --------------------------------------------------------------------------
 
-subroutine fineWeatherData_run(this)
+subroutine fineWeatherData_run(this, did)
 	
 	implicit none
-  class(fineWeatherData), intent(inout)       ::    this
+  	class(fineWeatherData), intent(inout)       ::    this
   
-	call disaggregateWeather(this,                      &
-                           this%weather_2D%IX,				&
-                           this%weather_2D%JX,				&
-		                       this%vectorizer%IXRT,     	&
-			       	             this%vectorizer%JXRT,   		&
-				                   this%weather_2D%T2,				&
-				                   this%weather_2D%short,    	&
-				                   this%weather_2D%q2x,	     	&
-				                   this%weather_2D%u,	     		&
-                           this%vectorizer%NLINKS,		&
-				                   this%vectorizer%CH_NETRT, 	&
-			                     this%vectorizer%CHANXI,		&
-				                   this%vectorizer%CHANYJ,		&
-				                   this%vectorizer%LAKE_MSKRT,&
-				                   this%NMPvectorizer%TMN,		&
-				                   this%NMPvectorizer%TSK,		&
-				                   this%NMPvectorizer%TSLB,   &
-				                   noah_lsm%nsoil   &
-                           )
+	call disaggregateWeather(this,                             &
+                           	 rt_domain(did)%IX,	           &
+                           	 rt_domain(did)%JX,		   &
+		                 rt_domain(did)%IXRT,     	   &
+			       	 rt_domain(did)%JXRT,   	   &
+				        this%weather_2D%T2,	   & 
+				        this%weather_2D%short,     &
+				        this%weather_2D%q2x,	   &
+				        this%weather_2D%u,	   & 
+                                 rt_domain(did)%NLINKS,		   &
+				 rt_domain(did)%CH_NETRT, 	   &
+			         rt_domain(did)%CHANXI,		   & 
+				 rt_domain(did)%CHANYJ,		   &
+				        this%vectorizer%LAKE_MSKRT,&
+				 module_NoahMP_hrldas_driver%TMN,  &
+				 module_NoahMP_hrldas_driver%TSK,  &
+				 module_NoahMP_hrldas_driver%TSLB, &
+				 noah_lsm%nsoil                    &
+                                 )
 							
 end subroutine fineWeatherData_run
 
@@ -204,22 +194,22 @@ end subroutine fineWeatherData_run
 subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, Tair, SolarRad, RelH, windSpd, &
                                NLINKS, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil)
 
-   	implicit none
+    implicit none
     class(fineWeatherData), intent(inout)                ::    this
-		! Input Variables ------------------------------------------------------------------------						   
-		integer                    		         :: IX, JX, IXRT, JXRT, NLINKS, nsoil
-		REAL, INTENT(IN), DIMENSION(IX,JX)	   :: Tair, SolarRad, RelH, windSpd, TMN, TSK
+    ! Input Variables ------------------------------------------------------------------------						   
+    integer                    		       :: IX, JX, IXRT, JXRT, NLINKS, nsoil
+    REAL, INTENT(IN), DIMENSION(IX,JX)	       :: Tair, SolarRad, RelH, windSpd, TMN, TSK
     REAL, INTENT(IN), DIMENSION(IX,1:nsoil,JX) :: TSLB
-		INTEGER,INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT, LAKE_MSKRT
-		INTEGER, INTENT(in), DIMENSION(NLINKS)     :: CHANXI, CHANYJ						   
-		! Local Variables ------------------------------------------------------------------------					   
-		integer                    :: i, j         ! coarse grid loop indices
-		integer                    :: IXXRT, JYYRT ! fine grid i,j coordinates
-		integer                    :: AGGFACYRT, AGGFACXRT ! fine grid aggregation factors
-		! 
-    integer	                   :: AGGFACTRT = 2			   ! disaggregation factor, I assume as 2, 500m to 2x250m; should be checked later
+    INTEGER,INTENT(in), DIMENSION(IXRT,JXRT)   :: CH_NETRT, LAKE_MSKRT
+    INTEGER, INTENT(in), DIMENSION(NLINKS)     :: CHANXI, CHANYJ						   
+    ! Local Variables ------------------------------------------------------------------------					   
+    integer                    :: i, j         ! coarse grid loop indices
+    integer                    :: IXXRT, JYYRT ! fine grid i,j coordinates
+    integer                    :: AGGFACYRT, AGGFACXRT ! fine grid aggregation factors
     ! 
-		REAL,  DIMENSION(IXRT,JXRT)	:: Tair_fine, SolarRad_fine, RelH_fine, windSpd_fine, TMN_fine, TSK_fine, TSLB_fine
+    integer	               :: AGGFACTRT = 2			   ! disaggregation factor, I assume as 2, 500m to 2x250m; should be checked later
+    ! 
+    REAL,  DIMENSION(IXRT,JXRT)	:: Tair_fine, SolarRad_fine, RelH_fine, windSpd_fine, TMN_fine, TSK_fine, TSLB_fine
 
 		do J=1,JX ! Start coarse grid j loop
 			do I=1,IX ! Start coarse grid i loop
