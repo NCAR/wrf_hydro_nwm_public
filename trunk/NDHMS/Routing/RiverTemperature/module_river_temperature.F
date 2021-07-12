@@ -47,86 +47,11 @@ contains
 !            Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine, T_QSUM)
 	    
 	    
-	subroutine river_temperature_init(this, Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, &
-	                                  TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine, T_QSUM, reach_number)
+subroutine river_temperature_init(this, T_QSUM)
 
-		implicit none
-		
-		class(river_temperature), INTENT(inout)                          :: this              ! the type object being initialized
-		INTEGER,              INTENT(in)                                 :: reach_number	
-                !REAL,                 INTENT(in),  DIMENSION(IX, JX)             :: T2, q2x, u, short
-   	        !INTEGER, INTENT(in)                                              :: nsoil, ims,ime, jms,jme
-   	        !REAL, INTENT(in), DIMENSION(ix,jx)                               :: TMN
-                !REAL, INTENT(in), DIMENSION(ix,jx)                               :: TSK
-                !REAL, INTENT(in), DIMENSION(ix,nsoil,jx)                         :: TSLB
-                REAL, INTENT(inout), DIMENSION(NLINKS)             :: Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine
-                !REAL, INTENT(inout), DIMENSION(NLINKS)             :: T_QSUM        
-		character(len=20)                                                :: Reach_number_string
-		
-		if (this%pointer_allocation_guard .eq. .false. ) then
-		! try to allocate input
-                        ! allocate ( this%input )
-                        !if ( .not. associated(this%input) ) then
-                        ! if the input structure could not be created, call hydro_stop.
-                        !        write(Reach_number_string, "(I15)") reach_number
-                        !        call hydro_stop("ERROR: Failure to allocate temeprature module input structure for reach " &
-                        !        // trim(ADJUSTL(Reach_number_string)) // ".")
-                        !else
-                        ! initialize the input structure
-                        !        call this%input%init()
-                        !end if
-
-		 ! try to allocate output
-                        !allocate ( this%output )
-                        !if ( .not. associated(this%output) ) then
-                        ! if the output structure could not be created, call hydro_stop.
-                        !        write(Reach_number_string, "(I15)") reach_number
-                        !        call hydro_stop("ERROR: Failure to allocate temeprature module output structure for reach " &
-                        !        // trim(ADJUSTL(Reach_number_string)) // ".")
-                        !else
-                        ! initialize the output structure
-                        !        call this%output%init()
-                        !end if
-			
-                        ! try to allocate hydraulics_sim
-		    !allocate ( this%hydraulics_sim )
-		    !if ( .not. associated(this%hydraulics_sim) ) then
-				! if the output structure could not be created, call hydro_stop.
-                                !write(Reach_number_string, "(I15)") reach_number
-                               ! call hydro_stop("ERROR: Failure to allocate temeprature module the hydraulics_sim information for reach " &
-                               ! // trim(ADJUSTL(Reach_number_string)) // ".")	
-			  !else
-                ! initialize hydraulics_sim
-                !call this%hydraulics_sim%init(NLINKS, IXRT, JXRT, ChanCondConst, QSTRMVOLRT,  &
-		!		               		     QINFLOWBASE, QSUM, XS_Peremeter, Bw, Tw, velocity, HLINK, ChSSlp, &
-		!		      	        	     CHANXI, CHANYJ, ZELEV, CHANLEN, CH_NETLNK, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL)
-
-                 ! For debugging and testing purposes, I am gonna run the following subroutine
-                 ! call this%hydraulics_sim%inputs_hyd()
-		 !	   end if
-							
-			   ! try to allocate weather_sim
-			   allocate ( this%weather_sim )
-			   if ( .not. associated(this%weather_sim) ) then
-			   ! if the output structure could not be created, call hydro_stop.
-                                write(Reach_number_string, "(I15)") reach_number
-                                !call hydro_stop("ERROR: Failure to allocate temeprature module the weather_sim information for reach " &
-                                !// trim(ADJUSTL(Reach_number_string)) // ".")	
-			    else
-          ! initialize weather_sim                         	
-                !call this%weather_sim%init(IX, JX, IXRT, JXRT, T2, q2x, u, short, NLINKS, CH_NETRT, &
-		!			                   CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, reach_number, &
-                !             ims,ime, jms,jme, &
-                !             Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
-		!--updated version for the WRF-Hydro combined phase
-		!-- Maybe I don't need to initialize something in weather_sim%init()!
-		!call this%weather_sim%init(Tair_fine_1D, RelH_fine_1D, windSpd_fine_1D, SolarRad_fine_1D, TMN_1D_fine, TSK_1D_fine,TSLB_1D_fine)
-                ! Run the subroutine to diaggregate
-                !call this%weather_sim%run()
-					 					
-     			end if
-			    this%pointer_allocation_guard = .true.
-		end if
+	implicit none
+	class(river_temperature), INTENT(inout)       :: this              ! the type object being initialize
+        REAL, INTENT(inout), DIMENSION(:)             :: T_QSUM        
 		
 end subroutine river_temperature_init
 ! --------------------------------------------------------------------------
