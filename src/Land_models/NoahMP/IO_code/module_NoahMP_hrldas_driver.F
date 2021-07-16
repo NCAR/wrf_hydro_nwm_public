@@ -237,7 +237,6 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STBLCPXY  ! stable carbon in deep soil [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FASTCPXY  ! short-lived carbon, shallow soil [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LAI       ! leaf area index
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LQF       ! liquid fraction
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XSAIXY    ! stem area index
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TAUSSXY   ! snow age factor
 
@@ -863,7 +862,6 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( STBLCPXY  (XSTART:XEND,YSTART:YEND) )  ! stable carbon in deep soil [g/m2]
   ALLOCATE ( FASTCPXY  (XSTART:XEND,YSTART:YEND) )  ! short-lived carbon, shallow soil [g/m2]
   ALLOCATE ( LAI       (XSTART:XEND,YSTART:YEND) )  ! leaf area index
-  ALLOCATE ( LQF       (XSTART:XEND,YSTART:YEND) )  ! liquid fraction
   ALLOCATE ( XSAIXY    (XSTART:XEND,YSTART:YEND) )  ! stem area index
   ALLOCATE ( TAUSSXY   (XSTART:XEND,YSTART:YEND) )  ! snow age factor
 
@@ -1063,7 +1061,6 @@ module module_NoahMP_hrldas_driver
   STBLCPXY   = undefined_real
   FASTCPXY   = undefined_real
   LAI        = undefined_real
-  LQF        = undefined_real
   XSAIXY     = undefined_real
   TAUSSXY    = undefined_real
   XLONIN     = undefined_real
@@ -1735,13 +1732,17 @@ end subroutine land_driver_ini
 	     noah_lsm%forcing_name_SW,noah_lsm%forcing_name_PR,noah_lsm%forcing_name_SN, &
 	     noah_lsm%forcing_name_LF, &
              T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),          &
-	       P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, SNOWBL, VEGFRA, update_veg, LAI, update_lai)
+             P8W(:,1,:), GLW       ,SWDOWN      ,RAINBL_tmp, &
+             SNOWBL, VEGFRA, update_veg, LAI, &
+             update_lai)
      else
         if(olddate == forcDate) then
-           CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim,olddate,                      &
+           CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim, olddate,                     &
                xstart, xend, ystart, yend,    &
-               T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
-               GLW,SWDOWN,RAINBL_tmp,LAI,LQF,VEGFRA,state%SNOWH,ITIME,noah_lsm%FORCING_TIMESTEP,prcp0)
+               T_PHY(:,1,:), QV_CURR(:,1,:), U_PHY(:,1,:), V_PHY(:,1,:), &
+               P8W(:,1,:), GLW, SWDOWN, RAINBL_tmp, &
+               LAI, SNOWBL, VEGFRA, state%SNOWH, &
+               ITIME, noah_lsm%FORCING_TIMESTEP, prcp0)
                if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
            call geth_newdate(newdate, forcDate, noah_lsm%FORCING_TIMESTEP)
