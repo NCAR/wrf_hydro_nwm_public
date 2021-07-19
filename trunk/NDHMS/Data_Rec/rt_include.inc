@@ -256,14 +256,14 @@
     REAL,    allocatable, DIMENSION(:,:,:) :: dist_lsm
 
 ! added for the river temeprature module
-   REAL,    allocatable, DIMENSION(:,:)   :: Tair_fine_1D
-   REAL,    allocatable, DIMENSION(:,:)   :: RelH_fine_1D
-   REAL,    allocatable, DIMENSION(:,:)   :: windSpd_fine_1D
-   REAL,    allocatable, DIMENSION(:,:)   :: SolarRad_fine_1D
-   REAL,    allocatable, DIMENSION(:,:)   :: TMN_1D_fine
-   REAL,    allocatable, DIMENSION(:,:)   :: TSK_1D_fine
-   REAL,    allocatable, DIMENSION(:,:)   :: TSLB_1D_fine
-   REAL,    allocatable, DIMENSION(:)     :: T_QSUM
+   REAL,    allocatable, DIMENSION(:)   :: Tair_fine_1D
+   REAL,    allocatable, DIMENSION(:)   :: RelH_fine_1D
+   REAL,    allocatable, DIMENSION(:)   :: windSpd_fine_1D
+   REAL,    allocatable, DIMENSION(:)   :: SolarRad_fine_1D
+   REAL,    allocatable, DIMENSION(:)   :: TMN_1D_fine
+   REAL,    allocatable, DIMENSION(:)   :: TSK_1D_fine
+   REAL,    allocatable, DIMENSION(:)   :: TSLB_1D_fine
+   REAL,    allocatable, DIMENSION(:)   :: T_QSUM
    ! NEW FOR module_channel_routing.F
    REAL,    allocatable, DIMENSION(:)     :: XS_Peremeter 
    REAL                                   :: ChanCondConst 
