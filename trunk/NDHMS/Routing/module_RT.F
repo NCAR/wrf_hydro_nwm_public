@@ -369,6 +369,11 @@ CONTAINS
      allocate( rt_domain(did)%ChannK(nsizes) )
      allocate( rt_domain(did)%LAKEIDA(nsizes) )
      allocate( rt_domain(did)%LAKEIDX(nsizes) )
+     allocate( rt_domain(did)%C_Emb(nsizes) )
+     allocate( rt_domain(did)%P_Size(nsizes) )
+     allocate( rt_domain(did)%F_Shade(nsizes) )
+     allocate( rt_domain(did)%S_Albedo(nsizes) )
+     allocate( rt_domain(did)%C_Cloud (nsizes) )
 
      if(NLAKES .gt. 0) then
 
@@ -495,6 +500,11 @@ CONTAINS
       rt_domain(did)%Tw_CC = 0.0
       rt_domain(did)%n_CC = 0.0
       rt_domain(did)%ChannK = 0.0
+      rt_domain(did)%C_Emb = 0.0
+      rt_domain(did)%P_Size = 0.0
+      rt_domain(did)%F_Shade = 0.0
+      rt_domain(did)%S_Albedo = 0.0 
+      rt_domain(did)%C_Cloud = 0.0
 
 
       rt_domain(did)%ZELEV = 0.0
@@ -1478,6 +1488,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .eq. 2) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1498,6 +1523,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .eq. 3) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1518,6 +1558,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .eq. 4) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1538,6 +1593,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .eq. 5) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1558,6 +1628,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .eq. 6) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1578,6 +1663,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            elseif (rt_domain(did)%ORDER(j) .ge. 7) then
               if(rt_domain(did)%Bw(j) .eq. 0.0) then
                  rt_domain(did)%Bw(j) = BOTWID(rt_domain(did)%ORDER(j))
@@ -1598,6 +1698,21 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(rt_domain(did)%ORDER(j))
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(rt_domain(did)%ORDER(j))
+	      if(rt_domain(did)%C_Emb(j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb(j) = CEmb(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%P_Size(j) .eq. 0.0) then
+                 rt_domain(did)%P_Size(j) = PSize(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%F_Shade(j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade(j) = FShade(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%S_Albedo(j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo(j) = SAlbedo(rt_domain(did)%ORDER(j))
+              endif
+	      if(rt_domain(did)%C_Cloud(j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud(j) = CCloud(rt_domain(did)%ORDER(j))
+              endif
            else   !-- the outlets won't have orders since there's no nodes, so
               !-- assign the order 5 values
 
@@ -1621,6 +1736,22 @@ subroutine LandRT_ini(did)
                  rt_domain(did)%MannN(j) = CHMann(5)
               endif
               rt_domain(did)%HLINK(j) = HLINK_INIT(5)
+	      
+	      if(rt_domain(did)%C_Emb (j) .eq. 0.0) then
+                 rt_domain(did)%C_Emb (j) = CEmb (5)
+              endif
+	      if(rt_domain(did)%P_Size (j) .eq. 0.0) then
+                 rt_domain(did)%P_Size (j) = PSize (5)
+              endif
+	      if(rt_domain(did)%F_Shade (j) .eq. 0.0) then
+                 rt_domain(did)%F_Shade (j) = FShade (5)
+              endif
+	      if(rt_domain(did)%S_Albedo (j) .eq. 0.0) then
+                 rt_domain(did)%S_Albedo (j) = SAlbedo (5)
+              endif
+	      if(rt_domain(did)%C_Cloud (j) .eq. 0.0) then
+                 rt_domain(did)%C_Cloud (j) = C_Cloud (5)
+              endif
            endif
 
            rt_domain(did)%CVOL(j) = (rt_domain(did)%Bw(j)+ 1/rt_domain(did)%ChSSLP(j)*rt_domain(did)%HLINK(j))*rt_domain(did)%HLINK(j)*rt_domain(did)%CHANLEN(j) !-- initalize channel volume
