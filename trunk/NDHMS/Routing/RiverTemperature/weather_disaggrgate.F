@@ -82,25 +82,25 @@ subroutine fineWeatherData_run(this, did)
 	implicit none
   	class(fineWeatherData), intent(inout)       ::    this
   
-	call disaggregateWeather(this,                             &
-                           	 rt_domain(did)%IX,	           &
-                           	 rt_domain(did)%JX,		   &
-		                 rt_domain(did)%IXRT,     	   &
-			       	 rt_domain(did)%JXRT,   	   &
-				        this%weather_2D%T2,	   & 
-				        this%weather_2D%short,     &
-				        this%weather_2D%q2x,	   &
-				        this%weather_2D%u,	   & 
-                                 rt_domain(did)%NLINKS,		   &
-				 rt_domain(did)%CH_NETRT, 	   &
-			         rt_domain(did)%CHANXI,		   & 
-				 rt_domain(did)%CHANYJ,		   &
-				        this%vectorizer%LAKE_MSKRT,&
-				 module_NoahMP_hrldas_driver%TMN,  &
-				 module_NoahMP_hrldas_driver%TSK,  &
-				 module_NoahMP_hrldas_driver%TSLB, &
-				 noah_lsm%nsoil,                   &
-				 nlst(did)%AGGFACTRT               &
+	call disaggregateWeather(this,                                                 &
+                           	 rt_domain(did)%IX,	                               &
+                           	 rt_domain(did)%JX,		                       &
+		                 rt_domain(did)%IXRT,     	                       &
+			       	 rt_domain(did)%JXRT,   	                       &
+				        this%weather_2D%T2,	                       &  
+				        this%weather_2D%short,                         &
+				        this%weather_2D%q2x,	                       &
+				        this%weather_2D%u,	                       &   
+                                 rt_domain(did)%NLINKS,		                       &
+				 rt_domain(did)%CH_NETRT, 	                       &
+			         rt_domain(did)%CHANXI,		                       & 
+				 rt_domain(did)%CHANYJ,		                       &
+				 rt_domain(did)%overland%streams_and_lakes%lake_mask,  &
+				 module_NoahMP_hrldas_driver%TMN,                      &
+				 module_NoahMP_hrldas_driver%TSK,                      &
+				 module_NoahMP_hrldas_driver%TSLB,                     &
+				 noah_lsm%nsoil,                                       &
+				 nlst(did)%AGGFACTRT                                   &
                                  )
 							
 end subroutine fineWeatherData_run
