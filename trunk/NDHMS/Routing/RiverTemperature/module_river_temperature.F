@@ -19,7 +19,7 @@ MODULE module_river_temperature
 	use module_channel_routing, only: temperature_sim_H_inputs
 	use disaggregateWeatherModule,  only: fineWeatherData	
 	use module_RT_data, only: rt_domain
-	
+	use config_base, only: nlst
 	IMPLICIT NONE
 		
 type  :: river_temperature
@@ -66,17 +66,17 @@ subroutine river_temperature_run(this, did)
 		
 	implicit none
   class(river_temperature), INTENT(inout)             :: this
-  INTEGER                                             :: dx
+  
   ! Embeddedness and Substrate particle size (mm) respectively
 	REAL,    DIMENSION(:), allocatable                  :: C_Em, P_size                    
 	REAL,    DIMENSION(:), allocatable                  :: shadeF, sur_albedo, viewToSky, cloud   ! Shading factor and surface albedo for the reach
-	REAL,    INTENT(INOUT), DIMENSION(:)                :: T_QSUM
+	!REAL,    INTENT(INOUT), DIMENSION(:)                :: T_QSUM
   
   INTEGER                                             ::  did  ! for the rt_domain
          
   !-- For the T_bed, I considered the temperature I am using for the hyporheic exchange,  this%weather_sim%TSLB_1D_fine
   !-- I hard-coded the following vectors here but they need to be imported to the model as inputs, for the next phase.
-  dx = 250
+  
   C_Em = (/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3/)
   P_size = (/60,60,60,60,60,60,60,60,60,60,60,60/)
   shadeF = (/0,0,0,0,0,0,0,0,0,0,0,0/)             ! No shade; if = 1, full shade
@@ -86,7 +86,7 @@ subroutine river_temperature_run(this, did)
 
 	 
 
-  call river_TEMPERATURE_SOLVER(dx,                	        &
+  call river_TEMPERATURE_SOLVER(nlst(did)%dxrt0,      	        &
 				rt_domain(did)%DT_STEPS,        &
                                 rt_domain(did)%IXRT,            &                 
                                 rt_domain(did)%JXRT,            &
