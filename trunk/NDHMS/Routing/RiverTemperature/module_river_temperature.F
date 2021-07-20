@@ -73,18 +73,7 @@ subroutine river_temperature_run(this, did)
 	!REAL,    INTENT(INOUT), DIMENSION(:)                :: T_QSUM
   
   INTEGER                                             ::  did  ! for the rt_domain
-         
-  !-- For the T_bed, I considered the temperature I am using for the hyporheic exchange,  this%weather_sim%TSLB_1D_fine
-  !-- I hard-coded the following vectors here but they need to be imported to the model as inputs, for the next phase.
-  
-  C_Em = (/0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3/)
-  P_size = (/60,60,60,60,60,60,60,60,60,60,60,60/)
-  shadeF = (/0,0,0,0,0,0,0,0,0,0,0,0/)             ! No shade; if = 1, full shade
-  sur_albedo = (/0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2/) 
-  viewToSky = (/1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1./)
-  cloud = (/0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1/)
-
-	 
+          
 
   call river_TEMPERATURE_SOLVER(nlst(did)%dxrt0,      	        &
 				rt_domain(did)%DT_STEPS,        &
@@ -93,7 +82,7 @@ subroutine river_temperature_run(this, did)
                                 rt_domain(did)%Tair_fine_1D,    &
 				rt_domain(did)%RelH_fine_1D,    &
 				rt_domain(did)%windSpd_fine_1D, &
-					                      Cloud,      &
+				rt_domain(did)%C_Cloud,         &
 				rt_domain(did)%TSLB_1D_fine,    &
 				rt_domain(did)%SolarRad_fine_1D,&
 				rt_domain(did)%XS_Peremeter,    &
@@ -108,24 +97,23 @@ subroutine river_temperature_run(this, did)
 				rt_domain(did)%TMN_1D_fine,     &
 				rt_domain(did)%TSLB_1D_fine,    &
 				rt_domain(did)%TSK_1D_fine,     &
-                                			      sur_albedo,  &
-                					      shadeF,      &
-					                      viewToSky,   &
+                                rt_domain(did)%S_Albedo,        &
+                		rt_domain(did)%F_Shade,         &
 				rt_domain(did)%ChanCondConst,   &
-                                			      C_Em,	   &
-	                				      P_size,      &
-				rt_domain(did)%CHANXI,         &
-				rt_domain(did)%CHANYJ,	       &
-				rt_domain(did)%CH_NETLNK,      &
-                                rt_domain(did)%CH_NETRT,       &
-                                rt_domain(did)%QLINK,	       &
-				rt_domain(did)%DT_STEPS,       & 
-				rt_domain(did)%DTCT,	       &
-				rt_domain(did)%node_area,      &
-				rt_domain(did)%TO_NODE,	       &
-				rt_domain(did)%TYPEL,	       &
-				rt_domain(did)%T_QSUM,	       &
-                                rt_domain(did)%NLINKS          &
+                                rt_domain(did)%C_Emb,	        &
+	                	rt_domain(did)%P_Size,          &
+				rt_domain(did)%CHANXI,          &
+				rt_domain(did)%CHANYJ,	        &
+				rt_domain(did)%CH_NETLNK,       &
+                                rt_domain(did)%CH_NETRT,        &
+                                rt_domain(did)%QLINK,	        &
+				rt_domain(did)%DT_STEPS,        & 
+				rt_domain(did)%DTCT,	        &
+				rt_domain(did)%node_area,       &
+				rt_domain(did)%TO_NODE,	        &
+				rt_domain(did)%TYPEL,	        &
+				rt_domain(did)%T_QSUM,	        &
+                                rt_domain(did)%NLINKS           &
                  		)
 	
 	
@@ -135,425 +123,417 @@ end subroutine river_temperature_run
 !   SUBROUTINE RIVER_TEMPERATURE_SOLVER
 ! ------------------------------------------------
 Subroutine river_TEMPERATURE_SOLVER(dx, dt, IXRT, JXRT,  T_a, H, V_wind, C_L, T_bed, s_in, Pw_river, y_w, S_0, z_elv, V_w, W_w, Q_str, Q_GW, &
-								Q_Trib, T_GW, T_hyp, T_Trib, albedo, SF, vts, k_s_0, &
-								C_E, P_s, CHANXI, CHANYJ, CH_NETLNK,CH_NETRT, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL, T_QSUM_local, totLength)
-		implicit none
+								Q_Trib, T_GW, T_hyp, T_Trib, albedo, SF, k_s_0, C_E, P_s, CHANXI, CHANYJ, CH_NETLNK, &
+								CH_NETRT, QLINK, DT_STEPS, DTCT, node_area, TO_NODE, TYPEL, T_QSUM_local, totLength)
+	implicit none
+	! -------- DECLARATIONS ------------------------
+	INTEGER, INTENT(IN)  :: dx			! Space intervals which should be based on the HYDRO grid size  -===================> CHANLEN 
+	INTEGER, INTENT(IN)  :: dt			! time intervals which in most of cases should be 1 hour           - ??? should be based on the hydraulic routing module
+	!INTEGER, INTENT(IN) :: t 			! the current and previous time steps for the simulation, t=2
+	INTEGER, INTENT(IN)  :: totLength          	! Total length (# of cells) of the domain for simulation -===========================> NLINKS
+	INTEGER, INTENT(IN)  :: IXRT, JXRT
+	REAL, INTENT(IN), DIMENSION(:)    :: T_a		! Air temperature 						               - As an input
+	REAL, INTENT(IN), DIMENSION(:)    :: H		        ! Humidity (%) - relative humidity			                       - As an input
+	REAL, INTENT(IN), DIMENSION(:)    :: V_wind	        ! Wind speed (m/s)							       - As an input
+	REAL, INTENT(IN), DIMENSION(:)	  :: C_L	        ! Cloudiness (0 to 1)					                       - As an input - should find it from somewhere!
+	REAL, INTENT(IN), DIMENSION(:)	  :: T_bed	        ! Conduction Layer Temperature (C)			                       - As an input
+	REAL, INTENT(IN), DIMENSION(:)    :: s_in		! Incoming sortwave radiation, as an input
+	REAL, INTENT(IN), DIMENSION(:)    :: Pw_river	        ! Wetted perimeter in the river channle for the desird grid (m)                 =====> XS_Peremeter
+	REAL, INTENT(IN), DIMENSION(:)    :: y_w		! Water Column Depth (m)                                    	                =====> HLINK
+	REAL, INTENT(IN), DIMENSION(:)	  :: S_0		! Stream gradient (unitless)							=====> ChSSlp
+        REAL, INTENT(IN), DIMENSION(:)	  :: z_elv		! Elevation of station where met. data was obtained				=====> ZELEV
+	REAL, INTENT(IN), DIMENSION(:)	  :: V_w		! Average Flow Velocity (m/s)							=====> velocity
+	REAL, INTENT(IN), DIMENSION(:)	  :: W_w		! Wetted width (Top; m)								=====> Tw											
+	! Discharge data, instream, groundwatr flow, triburaty
+	REAL, INTENT(IN), DIMENSION(:)	  :: Q_str		! Instream flow in the river channel - from sll sources (csm)                   =====> QSUM
+	REAL, INTENT(IN), DIMENSION(:,:)  :: Q_GW		! Groundwater flow in the gridded based (cms)					=====> QINFLOWBASE
+	REAL, INTENT(IN), DIMENSION(:,:)  :: Q_Trib		! Tributarty surface inflow in the gridded based (cms)			        =====> QSTRMVOLRT
+	REAL, INTENT(IN), DIMENSION(:)	  :: T_GW		! Groundwater flow temperature in the gridded based (C)		         	- As an input
+	REAL, INTENT(IN), DIMENSION(:)	  :: T_hyp		! Hyporheic Flow temperature in the gridded based (C)		         	- As an input
+	REAL, INTENT(IN), DIMENSION(:)	  :: T_Trib		! Tributarty surface inflow temperature (C)					- As an input
+	! Shading related parameters
+	REAL, INTENT(IN), DIMENSION(:)    :: albedo		! albedo at the stream surface (0 to 1)						- ???
+	REAL, INTENT(IN), DIMENSION(:)    :: SF			! Shading factor for each grid of the reach					- ???
+	REAL, INTENT(IN), DIMENSION(:)    :: vts 		! View to sky factor (1-SF)								
+	! Fluxes
+	REAL                              :: SW_rad		! Shortwave radiation flux (W/m2)
+	REAL                              :: LW_rad		! Longwave radiation flux (W/m2)
+	REAL                              :: LH		        ! Latent heat energy flux (W/m2)
+	REAL                              :: SH		        ! Sensible heat energy flux (W/m2)
+	REAL                              :: CH		        ! Conduction flux (W/m2)
+	REAL,  DIMENSION(totLength)       :: Net_HeatFlux	! Net heat flux from 5 sources (W/m2)			
+	! For hyporheic exchange incflow calculation & Porosity of the conduction layer (unitless)
+	REAL, DIMENSION(IXRT,JXRT)        :: Q_hyp		! Darcy’s Law for Calculating for Hyporheic Flow (Domenico and Schwartz 1990)
+	REAL, DIMENSION(IXRT,JXRT)        :: Disp_coef
+        REAL		          	  :: A_s		! Cross-Sectional Across Seepage Face (m2)	
+	REAL			          :: k_s		! Composite Substrate Hydraulic Conductivity (m/s) 
+	REAL, INTENT(IN),    DIMENSION(:) :: C_E		! Embeddedness                                                                    - As an input
+	REAL, INTENT(IN),    DIMENSION(:) :: P_s		! Substrate particle size (mm)
+	REAL, INTENT(IN),    DIMENSION(:) :: k_s_0		! Dominant Substrate Hydraulic Conductivity (m/s)                                 ===========> ChanCondConst
 		
-		! -------- DECLARATIONS ------------------------
-		INTEGER, INTENT(IN)  :: dx			! Space intervals which should be based on the HYDRO grid size  -===================> CHANLEN 
-		INTEGER, INTENT(IN)  :: dt			! time intervals which in most of cases should be 1 hour           - ??? should be based on the hydraulic routing module
-		!INTEGER, INTENT(IN) :: t 			! the current and previous time steps for the simulation, t=2
-		INTEGER, INTENT(IN)  :: totLength          	! Total length (# of cells) of the domain for simulation -===========================> NLINKS
-		INTEGER, INTENT(IN)  :: IXRT, JXRT
-		REAL, INTENT(IN), DIMENSION(:)    :: T_a		! Air temperature 						               - As an input
-		REAL, INTENT(IN), DIMENSION(:)    :: H		        ! Humidity (%) - relative humidity			                       - As an input
-		REAL, INTENT(IN), DIMENSION(:)    :: V_wind	        ! Wind speed (m/s)							       - As an input
-		REAL, INTENT(IN), DIMENSION(:)	  :: C_L	        ! Cloudiness (0 to 1)					                       - As an input - should find it from somewhere!
-		REAL, INTENT(IN), DIMENSION(:)	  :: T_bed	        ! Conduction Layer Temperature (C)			                       - As an input
-		REAL, INTENT(IN), DIMENSION(:)    :: s_in		! Incoming sortwave radiation, as an input
-		REAL, INTENT(IN), DIMENSION(:)    :: Pw_river	        ! Wetted perimeter in the river channle for the desird grid (m)                 =====> XS_Peremeter
-		REAL, INTENT(IN), DIMENSION(:)    :: y_w		! Water Column Depth (m)                                    	                =====> HLINK
-		REAL, INTENT(IN), DIMENSION(:)	  :: S_0		! Stream gradient (unitless)							=====> ChSSlp
-    REAL, INTENT(IN), DIMENSION(:)	  :: z_elv		! Elevation of station where met. data was obtained				=====> ZELEV
-		REAL, INTENT(IN), DIMENSION(:)	  :: V_w		! Average Flow Velocity (m/s)							=====> velocity
-		REAL, INTENT(IN), DIMENSION(:)	  :: W_w		! Wetted width (Top; m)								=====> Tw
-													
-		! Discharge data, instream, groundwatr flow, triburaty
-		REAL, INTENT(IN), DIMENSION(:)	  :: Q_str		! Instream flow in the river channel - from sll sources (csm)                   =====> QSUM
-		REAL, INTENT(IN), DIMENSION(:,:)  :: Q_GW		! Groundwater flow in the gridded based (cms)					=====> QINFLOWBASE
-		REAL, INTENT(IN), DIMENSION(:,:)  :: Q_Trib		! Tributarty surface inflow in the gridded based (cms)			        =====> QSTRMVOLRT
-		REAL, INTENT(IN), DIMENSION(:)	  :: T_GW		! Groundwater flow temperature in the gridded based (C)		         	- As an input
-		REAL, INTENT(IN), DIMENSION(:)	  :: T_hyp		! Hyporheic Flow temperature in the gridded based (C)		         	- As an input
-		REAL, INTENT(IN), DIMENSION(:)	  :: T_Trib		! Tributarty surface inflow temperature (C)					- As an input
-		! Shading related parameters
-		REAL, INTENT(IN), DIMENSION(:)    :: albedo		! albedo at the stream surface (0 to 1)						- ???
-		REAL, INTENT(IN), DIMENSION(:)    :: SF			! Shading factor for each grid of the reach					- ???
-		REAL, INTENT(IN), DIMENSION(:)    :: vts		! View to sky factor (1-SF)								
+	REAL                              :: h_D		! Hydraulic Head for Darcy Calculation at location i (m)
+	REAL                              :: h_D_dn		! Hydraulic Head for Darcy Calculation at location i+1 (m)
+	REAL                              :: Dummy1		! For calcluating the hydraulic conductiveity 
+	REAL                              :: Dummy2		! For calcluating the hydraulic conductiveity 
+	REAL                              :: d_h		! Change in hydraulic head per unit distance
+	! Two variables for the calculations
+	!REAL, INTENT(OUT)                :: rho_water          ! Density of water (kg/m3)
+	!REAL, INTENT(OUT)                :: c_water	        ! Specific heat capacity of water (J/kgC)
+	! Component of the main equaion of the simulated water temperature
+	REAL                              :: Advection  	!
+	REAL                              :: Dispersion 	! 
+	REAL                              :: up
+	REAL                              :: FluxTemp	        !
+	!REAL                              :: Disp_coef      	! Dispersion Coefficient (m2/s)
+	REAL                              :: Shear_Velocity	! Shear Velocity (m/s)
+	REAL                              :: SlopeWS		! Water surface slope
+	!REAL, INTENT(IN), DIMENSION(totLength)	  :: Z			                    ! Side slope (fraction)
+	REAL,                   DIMENSION(totLength)          :: TLateral
+	INTEGER, INTENT(IN),    DIMENSION(:)                  :: CHANXI, CHANYJ
+	INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETLNK
+        INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETRT
+	REAL,                   DIMENSION(totLength)          :: QLateral
+	REAL,    INTENT(IN),    DIMENSION(totLength,2)        :: QLINK
+	INTEGER, INTENT(in)                                   :: DT_STEPS               !-- number of timestep in routing
+	REAL,    INTENT(in)                                   :: DTCT
+	REAL,   INTENT(in),    DIMENSION(:)                  :: node_area
+	INTEGER, INTENT(in),    DIMENSION(:)                  :: TO_NODE
+	INTEGER, INTENT(IN),    DIMENSION(:)                  :: TYPEL
+	REAL,    INTENT(INOUT), DIMENSION(:)                  :: T_QSUM_local	            ! -- FINAL PRODUCT
+	INTEGER,                DIMENSION(totLength)          :: BC_Grid		    ! -- This is the new way I am thinking of to detec the upstream grids
+	INTEGER                                               :: neighbours, i, j
+        ! Simulated water temeprature (C)
+	REAL,                   DIMENSION(totLength,2)        :: T_w_sim	! Simulatd water temperature for the reach in space & time (C)
+        REAL                                                  :: Q_strTot, T_strTot 
+		
+	vts = 1. - SF
+        ! ++++++++++++++++++++++++++++update this part
+	! Assigning the upstream water temeprature boundary condition to the main matrix
+		
+	Disp_coef = 0.
+        ! Calculating hyporheic fluxes
+	Do i = 1, totLength
+		! Find hyporheic fluxes
+		! Ratio Conductivity of dominant sunstrate
+		Dummy1 = k_s_0(CH_NETLNK(CHANXI(i),CHANYJ(i))) * (1.0 - C_E(i))
 
-		! Fluxes
-		REAL                              :: SW_rad		! Shortwave radiation flux (W/m2)
-		REAL                              :: LW_rad		! Longwave radiation flux (W/m2)
-		REAL                              :: LH		        ! Latent heat energy flux (W/m2)
-		REAL                              :: SH		        ! Sensible heat energy flux (W/m2)
-		REAL                              :: CH		        ! Conduction flux (W/m2)
-		REAL,  DIMENSION(totLength)       :: Net_HeatFlux	! Net heat flux from 5 sources (W/m2)			
-		
-		! For hyporheic exchange incflow calculation & Porosity of the conduction layer (unitless)
-		REAL, DIMENSION(IXRT,JXRT)        :: Q_hyp		! Darcy’s Law for Calculating for Hyporheic Flow (Domenico and Schwartz 1990)
-		REAL, DIMENSION(IXRT,JXRT)        :: Disp_coef
-                REAL		          	  :: A_s		! Cross-Sectional Across Seepage Face (m2)	
-		REAL			          :: k_s		! Composite Substrate Hydraulic Conductivity (m/s) 
-		REAL, INTENT(IN),    DIMENSION(:) :: C_E		! Embeddedness                                                                    - As an input
-		REAL, INTENT(IN),    DIMENSION(:) :: P_s		! Substrate particle size (mm)
-		REAL, INTENT(IN),    DIMENSION(:) :: k_s_0		! Dominant Substrate Hydraulic Conductivity (m/s)                                 ===========> ChanCondConst
-		
-		REAL                              :: h_D		! Hydraulic Head for Darcy Calculation at location i (m)
-		REAL                              :: h_D_dn		! Hydraulic Head for Darcy Calculation at location i+1 (m)
-		REAL                              :: Dummy1		! For calcluating the hydraulic conductiveity 
-		REAL                              :: Dummy2		! For calcluating the hydraulic conductiveity 
-		REAL                              :: d_h		! Change in hydraulic head per unit distance
-		! Two variables for the calculations
-		!REAL, INTENT(OUT)                :: rho_water          ! Density of water (kg/m3)
-		!REAL, INTENT(OUT)                :: c_water	        ! Specific heat capacity of water (J/kgC)
-		! Component of the main equaion of the simulated water temperature
-		REAL                              :: Advection  	!
-		REAL                              :: Dispersion 	! 
-		REAL                              :: up
-		REAL                              :: FluxTemp	        !
-		!REAL                              :: Disp_coef      	! Dispersion Coefficient (m2/s)
-		REAL                              :: Shear_Velocity	! Shear Velocity (m/s)
-		REAL                              :: SlopeWS		! Water surface slope
-	
-		!REAL, INTENT(IN), DIMENSION(totLength)	  :: Z			                    ! Side slope (fraction)
-		REAL,                   DIMENSION(totLength)          :: TLateral
-		INTEGER, INTENT(IN),    DIMENSION(:)                  :: CHANXI, CHANYJ
-		INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETLNK
-                INTEGER, INTENT(IN),    DIMENSION(:,:)                :: CH_NETRT
-		REAL,                   DIMENSION(totLength)          :: QLateral
-		REAL,    INTENT(IN),    DIMENSION(totLength,2)        :: QLINK
-		INTEGER, INTENT(in)                                   :: DT_STEPS               !-- number of timestep in routing
-		REAL,    INTENT(in)                                   :: DTCT
-		REAL ,   INTENT(in),    DIMENSION(:)                  :: node_area
-		INTEGER, INTENT(in),    DIMENSION(:)                  :: TO_NODE
-		INTEGER, INTENT(IN),    DIMENSION(:)                  :: TYPEL
-		REAL,    INTENT(INOUT), DIMENSION(:)                  :: T_QSUM_local	            ! -- FINAL PRODUCT
-		INTEGER,                DIMENSION(totLength)          :: BC_Grid		    ! -- This is the new way I am thinking of to detec the upstream grids
-		INTEGER                                               :: neighbours, i, j
-                ! Simulated water temeprature (C)
-		REAL,                   DIMENSION(totLength,2)        :: T_w_sim	! Simulatd water temperature for the reach in space & time (C)
-                REAL                                                  :: Q_strTot, T_strTot 
-				
-    ! ++++++++++++++++++++++++++++update this part
-		! Assigning the upstream water temeprature boundary condition to the main matrix
-		
-		Disp_coef = 0.
-                ! Calculating hyporheic fluxes
-		Do i = 1, totLength
-			! Find hyporheic fluxes
-			! Ratio Conductivity of dominant sunstrate
-			Dummy1 = k_s_0(CH_NETLNK(CHANXI(i),CHANYJ(i))) * (1.0 - C_E(i))
-                        
-      ! Ratio Conductivity of sand - low range
-			! 0.00002 is the embedded Substrate Hydraulic Conductivity for Silt/Sand (m/s)
-			Dummy2 = 0.00002 * C_E(i)
-			! True cond. (m/s); Composite Substrate Hydraulic Conductivity
-			k_s = Dummy1 + Dummy2
-			
-			! For the last grid where there is no water surface in the downstream
-			if (CH_NETLNK(CHANXI(i),CHANYJ(i)) .EQ. totLength) then
-				!h_D = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
-                                d_h = 0
-                        else
-                                h_D = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
-                                h_D_dn = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))+1) - (dx * S_0(CH_NETLNK(CHANXI(i),CHANYJ(i))))
-			        !Change in hydraulic head per unit distance
-			        d_h = (h_D - h_D_dn) / dx
+	       ! Ratio Conductivity of sand - low range
+	       ! 0.00002 is the embedded Substrate Hydraulic Conductivity for Silt/Sand (m/s)
+	       Dummy2 = 0.00002 * C_E(i)
+	       ! True cond. (m/s); Composite Substrate Hydraulic Conductivity
+	       k_s = Dummy1 + Dummy2
 
-			end if
-			
+	       ! For the last grid where there is no water surface in the downstream
+	       if (CH_NETLNK(CHANXI(i),CHANYJ(i)) .EQ. totLength) then
 			!h_D = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
+			d_h = 0
+	       else
+	       h_D = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
+	       h_D_dn = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))+1) - (dx * S_0(CH_NETLNK(CHANXI(i),CHANYJ(i))))
+	       !Change in hydraulic head per unit distance
+	       d_h = (h_D - h_D_dn) / dx
+	       end if
 
-			! Cross-Sectional Area of the Seepage Face (m2)
-			A_s = dx * S_0(CH_NETLNK(CHANXI(i),CHANYJ(i))) * Pw_river(CH_NETLNK(CHANXI(i),CHANYJ(i)))
-			! Darcy’s Law for Calculating for Hyporheic Flow (cms 
-      Q_hyp(CHANXI(i),CHANYJ(i)) = A_s * k_s * d_h 
-                       
-      ! Calculating dispersion coefficient
-			! Calculate dispersion using equations adapted from SubMcCormick1 - HeatSourceModel source code
-			! (Martin and McCutcheon 1999)
-			! To enable simulating the cooling/warming effect of riffle-pool 
-			SlopeWS = d_h
-			if (SlopeWS < 0.0) then
-				! For adverse slopes
-				Shear_Velocity = V_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
-			else
-				Shear_Velocity = sqrt(9.8 * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * SlopeWS)
-			end if
-			! Calculating wetted width for the river channel (top with - m)
-			!W_w = W_b(node) + 2.0 * Z(node) * y_w(node) => Will grab it from the routing module
+		!h_D = y_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
+
+		! Cross-Sectional Area of the Seepage Face (m2)
+		A_s = dx * S_0(CH_NETLNK(CHANXI(i),CHANYJ(i))) * Pw_river(CH_NETLNK(CHANXI(i),CHANYJ(i)))
+		! Darcy’s Law for Calculating for Hyporheic Flow (cms 
+		Q_hyp(CHANXI(i),CHANYJ(i)) = A_s * k_s * d_h 
+
+        	! Calculating dispersion coefficient
+		! Calculate dispersion using equations adapted from SubMcCormick1 - HeatSourceModel source code
+		! (Martin and McCutcheon 1999)
+		! To enable simulating the cooling/warming effect of riffle-pool 
+		SlopeWS = d_h
+		if (SlopeWS < 0.0) then
+			! For adverse slopes
+			Shear_Velocity = V_w(CH_NETLNK(CHANXI(i),CHANYJ(i)))
+		else
+			Shear_Velocity = sqrt(9.8 * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * SlopeWS)
+		end if
+		! Calculating wetted width for the river channel (top with - m)
+		!W_w = W_b(node) + 2.0 * Z(node) * y_w(node) => Will grab it from the routing module
+
+		! Physical Dispersion Coefficient (Fischer et. al. 1979)
+		! I Changed 0.011 to 0.06 in below eqn to account for natural (not straight) streams
 			
-			! Physical Dispersion Coefficient (Fischer et. al. 1979)
-			! I Changed 0.011 to 0.06 in below eqn to account for natural (not straight) streams
-			
-      Disp_coef(CHANXI(i),CHANYJ(i)) = (0.06 * (V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) ** 2.0) * (W_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) ** 2.0))/ &
+        	Disp_coef(CHANXI(i),CHANYJ(i)) = (0.06 * (V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) ** 2.0) * (W_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) ** 2.0))/ &
 						(y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * Shear_Velocity)
 
-			! A condition based on the adaptd methods from Martin & McCutcheon (1999) also considered with Boyd & Kasper (2003)
-			! 3600 is the assumed dt in sectonds
-			if ((Disp_coef(CHANXI(i),CHANYJ(i)) * ((3600.0 / dx) ** 2.0)) > 0.5) then
-				Disp_coef(CHANXI(i),CHANYJ(i)) = (0.45 * (dx ** 2.0)) / 3600.0
-                        end if
+		! A condition based on the adaptd methods from Martin & McCutcheon (1999) also considered with Boyd & Kasper (2003)
+		! 3600 is the assumed dt in sectonds
+		if ((Disp_coef(CHANXI(i),CHANYJ(i)) * ((3600.0 / dx) ** 2.0)) > 0.5) then
+			Disp_coef(CHANXI(i),CHANYJ(i)) = (0.45 * (dx ** 2.0)) / 3600.0
+		end if
 
-		end Do
+	end Do
 	             
   
-    !-- I have this long if statement for determining  the headwaters within the grid. 
-    BC_Grid = 0
-    T_QSUM_local = 0.
+	!-- I have this long if statement for determining  the headwaters within the grid. 
+	BC_Grid = 0
+	T_QSUM_local = 0.
 
-		if (dt .eq. 1) then	!-- To do this only one time!	
-			neighbours = 0
-			DO i = 1,IXRT  !rows
-				DO j = 1,JXRT   !colsumns
-                                        if ( CH_NETRT(i,j) .EQ. 0) then
+	if (dt .eq. 1) then	!-- To do this only one time!	
+		neighbours = 0
+		DO i = 1,IXRT  !rows
+			DO j = 1,JXRT   !colsumns
+				if ( CH_NETRT(i,j) .EQ. 0) then
+				if ((i .gt. 1) .and. (i .lt. IXRT) .and. (j .gt. 1) .and. (j .lt. JXRT)) then
+					if (CH_NETRT(i-1,j-1) .NE. -9999) then
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i-1,j) .NE. -9999) then 
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i-1,j+1) .NE. -9999) then 
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j-1) .NE. -9999) then
+                  				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i+1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+             	 			end if
+				else if ((i .ne. 1) .and. (i .ne. IXRT) .and. (j .eq. 1)) then 
+					if (CH_NETRT(i-1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i-1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i+1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if	
+				else if ((i .eq. IXRT) .and. (j .ne. 1) .and. (j .ne. JXRT)) then
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i-1,j-1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i-1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i-1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+				else if ((j .ne. 1) .and. (j.ne. JXRT) .and. (i .eq. 1)) then
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j+1) .NE. -9999) then 
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+				else if ((i .ne. 1) .and. (i .ne. IXRT) .and. (j .eq. JXRT)) then
+					if (CH_NETRT(i-1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i-1,j-1) .NE. -9999) then
+				                 neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+				                 neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then 
+                 				neighbours = neighbours + 1
+              				end if
+				else if ((i .eq. 1) .and. (j .eq. 1)) then
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+						neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i+1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if			
+				else if ((i .eq. IXRT) .and. (j .eq. 1)) then
+					if (CH_NETRT(i-1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1	
+              				end if
+					if (CH_NETRT(i-1,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j+1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+				else if ((i .eq. 1) .and. (j .eq. JXRT)) then
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+                 				neighbours = neighbours + 1
+				        end if
+	      				if (CH_NETRT(i+1,j-1) .NE. -9999) then 
+                 				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i+1,j) .NE. -9999) then
+                 				neighbours = neighbours + 1
+              				end if
+				else if ((i .eq. IXRT) .and. (j .eq. JXRT)) then
+					if (CH_NETRT(i-1,j-1) .NE. -9999) then
+                				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i-1,j) .NE. -9999) then
+                				neighbours = neighbours + 1
+              				end if
+					if (CH_NETRT(i,j-1) .NE. -9999) then
+                				neighbours = neighbours + 1	
+              				end if
+				end if
 
-					if ((i .gt. 1) .and. (i .lt. IXRT) .and. (j .gt. 1) .and. (j .lt. JXRT)) then
-							if (CH_NETRT(i-1,j-1) .NE. -9999) then
-                  neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i-1,j) .NE. -9999) then 
-                  neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i-1,j+1) .NE. -9999) then 
-                  neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                  neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                  neighbours = neighbours + 1
-              end if
-						 	if (CH_NETRT(i+1,j-1) .NE. -9999) then
-                  neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i+1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-					else if ((i .ne. 1) .and. (i .ne. IXRT) .and. (j .eq. 1)) then 
-							if (CH_NETRT(i-1,j) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i-1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i+1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-					else if ((i .eq. IXRT) .and. (j .ne. 1) .and. (j .ne. JXRT)) then
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i-1,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i-1,j) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i-1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-					else if ((j .ne. 1) .and. (j.ne. JXRT) .and. (i .eq. 1)) then
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j+1) .NE. -9999) then 
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-					else if ((i .ne. 1) .and. (i .ne. IXRT) .and. (j .eq. JXRT)) then
-							if (CH_NETRT(i-1,j) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i-1,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then 
-                 neighbours = neighbours + 1
-              end if
-					else if ((i .eq. 1) .and. (j .eq. 1)) then
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i+1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if			
-					else if ((i .eq. IXRT) .and. (j .eq. 1)) then
-							if (CH_NETRT(i-1,j) .NE. -9999) then
-                 neighbours = neighbours + 1	
-              end if
-							if (CH_NETRT(i-1,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j+1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-					else if ((i .eq. 1) .and. (j .eq. JXRT)) then
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j-1) .NE. -9999) then 
-                 neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i+1,j) .NE. -9999) then
-                 neighbours = neighbours + 1
-              end if
-					else if ((i .eq. IXRT) .and. (j .eq. JXRT)) then
-							if (CH_NETRT(i-1,j-1) .NE. -9999) then
-                neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i-1,j) .NE. -9999) then
-                neighbours = neighbours + 1
-              end if
-							if (CH_NETRT(i,j-1) .NE. -9999) then
-                neighbours = neighbours + 1	
-              end if
-					end if
+				if ((neighbours .eq. 1) .and. (CH_NETLNK(i,j) .ne. totLength)) then
+					BC_Grid(CH_NETLNK(i,j)) = 1
+				end if
 
-					if ((neighbours .eq. 1) .and. (CH_NETLNK(i,j) .ne. totLength)) then
-						BC_Grid(CH_NETLNK(i,j)) = 1
-					end if
-
-					neighbours = 0
-          end if
-				end do
+				neighbours = 0
+          			end if
 			end do
+		end do
 
       !-- Preparing the T_w_sim to be used in the first time step directly from the inputs from NoahMP
       T_w_sim = 0.
       T_w_sim(:,2) =  T_Trib - 273.
                         
+      end if
+		
+      ! Caclulating the temperature
+      Do i = 1 , totLength
+		! Calculate the heat fluxes
+		SW_rad = SW_RAD_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), s_in, SF, albedo)
+		LW_rad = LW_RAD_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), T_w_sim, T_a, H, C_L, vts)	
+		LH     = LatentHeat_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), SW_rad, LW_rad, T_w_sim, T_a, H, V_wind, z_elv)
+		SH     = SensibleHeat_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), T_w_sim, LH, T_a, H, z_elv)
+		CH     = BedSediment_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)),  dx, T_w_sim, P_s, C_E, Pw_river, T_bed)
+		! Net heat flux
+		Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) = SW_rad + LW_rad + LH + SH + CH
+		! Calculate mixture temperature for each node and time step 
+		Advection = Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / (rho_water * c_water * &
+			    y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
+
+
+		! For the first time step, where the temperature is not calculated for that time step yet:
+		! This is impprtant though! As, basically, here I am definig the upstream boundary condition.
+		if ((BC_Grid(CH_NETLNK(CHANXI(i),CHANYJ(i))) .eq. 1) .and. (dt .eqv. 1)) then		! -- somethoing like this if statement.
+		! => changed this one for my example, but not sure if it should be the same for the WRF-Hydro inputs, THE ISSUE WITH CH-NETLINK
+		T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),1) =(Q_Trib(CHANXI(i),CHANYJ(i))*(T_Trib(i)-273.1)+ &                 
+							 Q_GW(CHANXI(i),CHANYJ(i))*(T_GW(i)-273.1)+ &
+							 Q_hyp(CHANXI(i),CHANYJ(i))*(T_hyp(i)-273.1))/ &
+							(Q_Trib(CHANXI(i),CHANYJ(i))+Q_GW(CHANXI(i),CHANYJ(i))+ &
+							 Q_hyp(CHANXI(i),CHANYJ(i)))
 		end if
-		
-
-		! Caclulating the temperature
-		Do i = 1 , totLength
-			! Calculate the heat fluxes
-			SW_rad = SW_RAD_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), s_in, SF, albedo)
-			LW_rad = LW_RAD_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), T_w_sim, T_a, H, C_L, vts)	
-                        LH     = LatentHeat_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), SW_rad, LW_rad, T_w_sim, T_a, H, V_wind, z_elv)
-			SH     = SensibleHeat_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)), T_w_sim, LH, T_a, H, z_elv)
-			CH     = BedSediment_FLUX(CH_NETLNK(CHANXI(i),CHANYJ(i)),  dx, T_w_sim, P_s, C_E, Pw_river, T_bed)
-			! Net heat flux
-			Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) = SW_rad + LW_rad + LH + SH + CH
-			! Calculate mixture temperature for each node and time step 
-			Advection = Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / (rho_water * c_water * &
-			            y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
-			
-		
-			! For the first time step, where the temperature is not calculated for that time step yet:
-			! This is impprtant though! As, basically, here I am definig the upstream boundary condition.
-			if ((BC_Grid(CH_NETLNK(CHANXI(i),CHANYJ(i))) .eq. 1) .and. (dt .eqv. 1)) then		! -- somethoing like this if statement.
-                        ! => changed this one for my example, but not sure if it should be the same for the WRF-Hydro inputs, THE ISSUE WITH CH-NETLINK
-                       T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),1) =(Q_Trib(CHANXI(i),CHANYJ(i))*(T_Trib(i)-273.1)+ &                 
-							         Q_GW(CHANXI(i),CHANYJ(i))*(T_GW(i)-273.1)+ &
-							         Q_hyp(CHANXI(i),CHANYJ(i))*(T_hyp(i)-273.1))/ &
-							        (Q_Trib(CHANXI(i),CHANYJ(i))+Q_GW(CHANXI(i),CHANYJ(i))+ &
-							         Q_hyp(CHANXI(i),CHANYJ(i)))
-			end if
-                        
-
-			! For the very upstream grid where there is no information in the prior grid:
-			if (BC_Grid(CH_NETLNK(CHANXI(i),CHANYJ(i))) .eq. 1) then
-				up = 0.
-				Dispersion = (-1.0 * Disp_coef(CHANXI(i),CHANYJ(i)) * ((Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / &
-							 (rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * &
-							  V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))) - up)) / dx
-				FluxTemp = T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),1) + (Advection + Dispersion) * (dx/V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
-				!BC_Grid = .FALSE.
-			else	
-				up = (Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))-1) / &
-					(rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))-1) * V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))-1)))
-				Dispersion = (-1.0 * Disp_coef(CHANXI(i),CHANYJ(i)) * ((Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / &
-			                 (rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * &
-						      V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))) - up)) / dx
-				FluxTemp = T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i))-1,1) + (Advection + Dispersion) * (dx/V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
-
-			end if
 
 
-			! -- We don't apply the lateral inflows to T_w_sim; They will be applied to the final porduct, T_QSUM later, 
-			T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),2) = FluxTemp
-	   
+		! For the very upstream grid where there is no information in the prior grid:
+		if (BC_Grid(CH_NETLNK(CHANXI(i),CHANYJ(i))) .eq. 1) then
+			up = 0.
+			Dispersion = (-1.0 * Disp_coef(CHANXI(i),CHANYJ(i)) * ((Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / &
+						 (rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * &
+						  V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))) - up)) / dx
+			FluxTemp = T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),1) + (Advection + Dispersion) * (dx/V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
+			!BC_Grid = .FALSE.
+		else	
+			up = (Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))-1) / &
+				(rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))-1) * V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))-1)))
+			Dispersion = (-1.0 * Disp_coef(CHANXI(i),CHANYJ(i)) * ((Net_HeatFlux(CH_NETLNK(CHANXI(i),CHANYJ(i))) / &
+				 (rho_water * c_water * y_w(CH_NETLNK(CHANXI(i),CHANYJ(i))) * &
+					      V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))) - up)) / dx
+			FluxTemp = T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i))-1,1) + (Advection + Dispersion) * (dx/V_w(CH_NETLNK(CHANXI(i),CHANYJ(i))))
 
-			!-- getting a weighted average
-			if (CH_NETLNK(CHANXI(i),CHANYJ(i)) .gt. 0) then
+		end if
+
+
+		! -- We don't apply the lateral inflows to T_w_sim; They will be applied to the final porduct, T_QSUM later, 
+		T_w_sim(CH_NETLNK(CHANXI(i),CHANYJ(i)),2) = FluxTemp
+
+
+		!-- getting a weighted average
+		if (CH_NETLNK(CHANXI(i),CHANYJ(i)) .gt. 0) then
                 !TLateral(i) = (Q_Trib(CH_NETLNK(CHANXI(i),CHANYJ(i)))*(T_Trib(i)-273.1)+ &             => changed this one for my example, but not sure if it should be the same for the WRF-Hydro inputs,
-							  ! Q_GW(CH_NETLNK(CHANXI(i),CHANYJ(i)))*(T_GW(i)-273.1)+ &       => changed this one for my example, but not sure if it should be the same for the WRF-Hydro inputs,
+		! Q_GW(CH_NETLNK(CHANXI(i),CHANYJ(i)))*(T_GW(i)-273.1)+ &       => changed this one for my example, but not sure if it should be the same for the WRF-Hydro inputs,
                 TLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) = (Q_Trib(CHANXI(i),CHANYJ(i))*(T_Trib(i)-273.1)+ & 
                                                             Q_GW(CHANXI(i),CHANYJ(i))*(T_GW(i)-273.1)+ &
-				                                                    Q_hyp(CHANXI(i),CHANYJ(i))*(T_hyp(i)-273.1))/ &
-				                                                   (Q_Trib(CHANXI(i),CHANYJ(i))+Q_GW(CHANXI(i),CHANYJ(i))+ &
-				                                                    Q_hyp(CHANXI(i),CHANYJ(i)))
-			          !-- I am not about this part "(DT_STEPS*node_area(CH_NETLNK(CHANXI(i),CHANYJ(i)))/1000./DTCT)" here. 
+							    Q_hyp(CHANXI(i),CHANYJ(i))*(T_hyp(i)-273.1))/ &
+							   (Q_Trib(CHANXI(i),CHANYJ(i))+Q_GW(CHANXI(i),CHANYJ(i))+ &
+							    Q_hyp(CHANXI(i),CHANYJ(i)))
+		!-- I am not about this part "(DT_STEPS*node_area(CH_NETLNK(CHANXI(i),CHANYJ(i)))/1000./DTCT)" here. 
                 !-- I should check this when I wanna combine my code with the WRF-Hydro. I assume it's correct for the WRF-Hydro
-				        QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) = ((Q_Trib(CHANXI(i),CHANYJ(i)) + Q_GW(CHANXI(i),CHANYJ(i))) / &
-									                                         (DT_STEPS*node_area(CH_NETLNK(CHANXI(i),CHANYJ(i)))/1000./DTCT)) + &
-									                                          Q_hyp(CHANXI(i),CHANYJ(i))
+		QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))) = ((Q_Trib(CHANXI(i),CHANYJ(i)) + Q_GW(CHANXI(i),CHANYJ(i))) / &
+							   (DT_STEPS*node_area(CH_NETLNK(CHANXI(i),CHANYJ(i)))/1000./DTCT)) + &
+							    Q_hyp(CHANXI(i),CHANYJ(i))
 														  
-			end if
+		end if
 
                               
-      !-- Here I wanna detect the cells/grids discharging to the current cell
-      !-- Not very efficient. Should check with Soren to see if I can find a better way
-      Q_strTot = 0.
-      T_strTot = 0.
-      Do j = 1, totLength
-         if (TO_NODE(j) .eq. i) then
-             Q_strTot = Q_strTot + Q_str(j)
-             T_strTot = (Q_strTot * T_strTot + Q_str(j) * T_w_sim(j,1)) / &
-                        (Q_strTot +  Q_str(j))
-          end if
-      end do
+	      !-- Here I wanna detect the cells/grids discharging to the current cell
+	      !-- Not very efficient. Should check with Soren to see if I can find a better way
+	      Q_strTot = 0.
+	      T_strTot = 0.
+	      Do j = 1, totLength
+		 if (TO_NODE(j) .eq. i) then
+		     Q_strTot = Q_strTot + Q_str(j)
+		     T_strTot = (Q_strTot * T_strTot + Q_str(j) * T_w_sim(j,1)) / &
+				(Q_strTot +  Q_str(j))
+		  end if
+	      end do
 
 			
-			!-- inflow to node across each face  
-			!if(TYPEL(i) .eq. 0) then                         ! -- If stream; only regular nodes have to attribute
-			T_QSUM_local(i) = (Q_strTot * T_strTot + &
-			                   QLINK(CH_NETLNK(CHANXI(i),CHANYJ(i)),1)*T_w_sim(i,2) + &
-		         	           QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i)))*TLateral(i)) / &
-		         	           (Q_strTot+QLINK(CH_NETLNK(CHANXI(i),CHANYJ(i)),1)+QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))))
+	      !-- inflow to node across each face  
+	      !if(TYPEL(i) .eq. 0) then                         ! -- If stream; only regular nodes have to attribute
+	      T_QSUM_local(i) = (Q_strTot * T_strTot + &
+			   QLINK(CH_NETLNK(CHANXI(i),CHANYJ(i)),1)*T_w_sim(i,2) + &
+			   QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i)))*TLateral(i)) / &
+			   (Q_strTot+QLINK(CH_NETLNK(CHANXI(i),CHANYJ(i)),1)+QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i))))
 
-			print *,"T_Qsub(1):", T_QSUM_local(1)
-      print *,"stop running the code"
-      stop
+	      !print *,"T_Qsub(1):", T_QSUM_local(1)
+              !print *,"stop running the code"
+              !stop
 
-      ! Update the vector to be used in the next time step.		 
+              ! Update the vector to be used in the next time step.		 
 			T_w_sim(i,1) = T_QSUM_local(i)						
 			
 	
-			! -- Q_str = QSUM(TO_NODE(i))                   : The amount of the water is gonna be sent to the grid in the downstream?
-			! -- 						  QSUM's unit is volume, that means the QLateral also should be converted to the volume. 
-			! -- T_QSUM(TO_NODE(i))                         : The temperature we are gonna attach to the QSUM to affect it's downstream
-			! -- QLINK(i,1)                                 : Volume of the water that updates the QSUM and in the case of cells 9 & 13 go to 14 (my example),  
-			!                                                 They could both update the flux of the cell #14. It's unit also is volume
-			! -- T_w_sim(i,2)                               : Simulated water temperature based on the energy budget calculations, not affected by the lateral inlflows
-			! -- QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i)))   : Lateral surface and subsurface inflows
-			! -- TLateral(i)                                : Temperature of the lateral surface and subsurface inflows,(combined) 
-			!						  based on the equation I showed earlier today
+	      ! -- Q_str = QSUM(TO_NODE(i))                   : The amount of the water is gonna be sent to the grid in the downstream?
+	      ! -- 						QSUM's unit is volume, that means the QLateral also should be converted to the volume. 
+	      ! -- T_QSUM(TO_NODE(i))                         : The temperature we are gonna attach to the QSUM to affect it's downstream
+	      ! -- QLINK(i,1)                                 : Volume of the water that updates the QSUM and in the case of cells 9 & 13 go to 14 (my example),  
+	      !                                                 They could both update the flux of the cell #14. It's unit also is volume
+	      ! -- T_w_sim(i,2)                               : Simulated water temperature based on the energy budget calculations, not affected by the lateral inlflows
+	      ! -- QLateral(CH_NETLNK(CHANXI(i),CHANYJ(i)))   : Lateral surface and subsurface inflows
+	      ! -- TLateral(i)                                : Temperature of the lateral surface and subsurface inflows,(combined) 
+	      !						        based on the equation I showed earlier today
 
+	      ! For now, the idea is to run the temperature module based on the time step we have for the hydraulics routing module but report the results only for every hour. 
 
-			! For now, the idea is to run the temperature module based on the time step we have for the hydraulics routing module but report the results only for every hour. 
-
-		end DO
+     end DO
                 
     !-- Updating the T_w_sim for the next timestep
     T_w_sim(:,2) = T_w_sim(:,1)
