@@ -74,7 +74,7 @@
 
        subroutine HYDRO_frocing_drv (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
-          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,SNOWBL,lai,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
+          T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,SNOWBL,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
          use config_base, only: nlst
