@@ -303,6 +303,7 @@ MODULE MODULE_SF_NOAHMPLSM
      REAL :: BATS_NIR_DIR !cosz factor for direct NIR snow albedo Yang97 eqn. 16
      REAL :: RSURF_SNOW   !surface resistance for snow(s/m)
      REAL :: RSURF_EXP    !exponent in the shape parameter for soil resistance option 1
+     REAL :: SCAMAX       !maximum fractional snow covered area (0.0-1.0)
 
 !------------------------------------------------------------------------------------------!
 ! From the crop section of MPTABLE.TBL
@@ -1822,7 +1823,7 @@ ENDIF   ! CROPTYPE == 0
      IF(SNOWH.GT.0.)  THEN
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
-         FSNO     = TANH( SNOWH /(2.5* Z0 * FMELT))
+         FSNO     = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
      ENDIF
 
 ! ground roughness length
@@ -9261,6 +9262,7 @@ MODULE NOAHMP_TABLES
     REAL :: BATS_NIR_DIR_TABLE  !cosz factor for direct NIR snow albedo Yang97 eqn. 16
     REAL :: RSURF_SNOW_TABLE    !surface resistance for snow(s/m)
     REAL :: RSURF_EXP_TABLE    !exponent in the shape parameter for soil resistance option 1
+    REAL :: SCAMAX_TABLE        !maximum fractional snow covered area (0.0-1.0)
 
 ! MPTABLE.TBL crop parameters
 
@@ -9766,12 +9768,12 @@ CONTAINS
     REAL :: CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
-	    RSURF_SNOW,RSURF_EXP
+	    RSURF_SNOW,RSURF_EXP,SCAMAX
 
     NAMELIST / noahmp_global_parameters / CO2,O2,TIMEAN,FSATMX,Z0SNO,SSI,SNOW_RET_FAC, &
             SWEMX,TAU0,GRAIN_GROWTH,EXTRA_GROWTH,DIRT_SOOT,&
 	    BATS_COSZ,BATS_VIS_NEW,BATS_NIR_NEW,BATS_VIS_AGE,BATS_NIR_AGE,BATS_VIS_DIR,BATS_NIR_DIR,&
-	    RSURF_SNOW,RSURF_EXP
+	    RSURF_SNOW,RSURF_EXP,SCAMAX
 
 
     ! Initialize our variables to bad values, so that if the namelist read fails, we come to a screeching halt as soon as we try to use anything.
@@ -9796,6 +9798,7 @@ BATS_VIS_DIR_TABLE   = -1.E36
 BATS_NIR_DIR_TABLE   = -1.E36
 RSURF_SNOW_TABLE     = -1.E36
  RSURF_EXP_TABLE     = -1.E36
+    SCAMAX_TABLE     = -1.E36
 
     inquire( file='MPTABLE.TBL', exist=file_named ) 
     if ( file_named ) then
@@ -9833,6 +9836,7 @@ BATS_VIS_DIR_TABLE   = BATS_VIS_DIR
 BATS_NIR_DIR_TABLE   = BATS_NIR_DIR
 RSURF_SNOW_TABLE     = RSURF_SNOW
  RSURF_EXP_TABLE     = RSURF_EXP
+    SCAMAX_TABLE     = SCAMAX
 
   end subroutine read_mp_global_parameters
 
