@@ -50,9 +50,7 @@ cat macros LandModel/hydro/user_build_options.bak  > LandModel/user_build_option
 ln -sf CPL/NoahMP_cpl LandModel_cpl
 make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
-#for debugging and testing
-#make debug; make install; make test 
-make; make install
+make
 
 if [[ $? -eq 0 ]]; then
     echo
