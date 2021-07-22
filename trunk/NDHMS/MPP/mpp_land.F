@@ -669,6 +669,9 @@ MODULE MODULE_MPP_LAND
       integer tag, i, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
+#ifdef HYDRO_D
+      write(6,*) "Entering decompose_data_real!"
+#endif
       tag = 2
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
@@ -682,6 +685,11 @@ MODULE MODULE_MPP_LAND
             else
                ! send data to the rest process.
                size = local_nx_size(i+1)*local_ny_size(i+1)
+#ifdef HYDRO_D
+               write(6,*) "decompose_data_real call mpi_send: size=", size
+ 
+               write(6,*) "decompose_data_real call mpi_send: i=", i, " ibegin=", ibegin, " iend=", iend, " jbegin=", jbegin, " jend=", jend, " tag=", tag
+#endif
                call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_REAL, i,tag,HYDRO_COMM_WORLD,ierr)
             end if
@@ -691,6 +699,9 @@ MODULE MODULE_MPP_LAND
          call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
                 tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
+#ifdef HYDRO_D
+      write(6,*) "Entering decompose_data_real!"
+#endif
       return
   end subroutine decompose_data_real
 

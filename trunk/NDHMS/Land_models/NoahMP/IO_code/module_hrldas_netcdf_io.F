@@ -432,6 +432,9 @@ contains
     integer :: i
     integer :: rank
 
+#ifdef HYDRO_D
+    write(6, *) "Entering read_hrldas_hdrinfo!"
+#endif
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F "// &
@@ -575,6 +578,9 @@ contains
     call error_handler(ierr, failure="In read_hrldas_hdrinfo()- "// &
                        " Problems closing NetCDF file.")
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving read_hrldas_hdrinfo!"
+#endif
   end subroutine read_hrldas_hdrinfo
 
 !---------------------------------------------------------------------------------------------------------
@@ -605,6 +611,9 @@ contains
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
+#ifdef HYDRO_D
+       write(6, *) "Entering readland_hrldas!"
+#endif
 
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
@@ -691,6 +700,10 @@ contains
     where (vegtyp == ISWATER .or. vegtyp == ISLAKE) soltyp = 14
     where (soltyp == 14) vegtyp = ISWATER
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving readland_hrldas!"
+#endif
+
   end subroutine readland_hrldas
 
 !---------------------------------------------------------------------------------------------------------
@@ -715,6 +728,9 @@ contains
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
 
+#ifdef HYDRO_D
+    write(6, *) "Entering read_mmf_runoff!"
+#endif
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_mmf_runoff()"// &
@@ -769,7 +785,71 @@ contains
                         " - NF90_CLOSE problem."
 
 
+#ifdef HYDRO_D
+    write(6, *) "Leaving read_mmf_runoff!"
+#endif
   end subroutine read_mmf_runoff
+
+!-------------------------------------------------------------------------------------------
+
+  subroutine read_xaj_runoff(spatial_filename,xstart, xend,ystart, yend,           &
+                             axaj_2d,bxaj_2d,xxaj_2d)
+
+    implicit none
+    character(len=*),          intent(in)  :: spatial_filename
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: axaj_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: bxaj_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: xxaj_2d
+
+    character(len=24)  :: name
+    character(len=256) :: units
+    integer :: ierr,iret, varid
+    integer :: ncid
+    real, dimension(xstart:xend,ystart:yend) :: xdum
+!------------------------------------------------------------------------------------------------------
+
+    ierr = nf90_open(spatial_filename, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("FATAL ERROR: In read_xaj_runoff():  Problem opening soil file: ''", A, "''")') trim(spatial_filename)
+       stop
+    endif
+
+    name = "AXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, axaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "BXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, bxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "XXAJ"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_xaj_runoff():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, xxaj_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    ! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_xaj_runoff() -  NF90_CLOSE"
+
+  end subroutine read_xaj_runoff
 
 !---------------------------------------------------------------------------------------------------------
 
@@ -1027,7 +1107,7 @@ contains
     endif
 
     iret = nf90_get_var(ncid, varid, rsurfexp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
-
+!
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
     if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_3d_soil() -  NF90_CLOSE"
@@ -1109,6 +1189,9 @@ contains
 #ifdef MPP_LAND
     real:: g_array(global_nx,global_ny)
 #endif
+#ifdef HYDRO_D
+    write(6,*) "Entering get_2d_netcdf! name=", name
+#endif
 
     ierr = 0
 
@@ -1164,14 +1247,32 @@ contains
 #ifdef MPP_LAND
 9991    continue
     endif
+#ifdef HYDRO_D
+    write(6,*) "call  mpp_land_bcast_int1(ierr), my_id=", my_id
+#endif
     call mpp_land_bcast_int1(ierr)
     !yyww call mpp_land_bcast(units)
+#ifdef HYDRO_D
+    write(6,*) "call mpp_land_bcast_char(256,units), my_id=", my_id
+#endif
     call mpp_land_bcast_char(256,units)
+#ifdef HYDRO_D
+    write(6,*) "done mpp_land_bcast_char(256,units), my_id=", my_id
+    write(6,*) "ierr=", ierr
+#endif
     if(ierr /= 0) return
 #ifdef HYDRO_D
-    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+    write(6,*) "my_id, xstart,xend, ystart, yend",my_id, xstart,xend, ystart, yend
+    write(6,*) "call decompose_data_real, my_id=", my_id
 #endif
     call decompose_data_real(g_array,array)
+#ifdef HYDRO_D
+    write(6,*) "done call decompose_data_real, my_id=", my_id
+#endif
+
+#endif
+#ifdef HYDRO_D
+    write(6,*) "Done get_2d_netcdf!"
 #endif
   end subroutine get_2d_netcdf
 
