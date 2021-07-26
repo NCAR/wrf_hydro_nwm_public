@@ -17,7 +17,7 @@
 
 MODULE disaggregateWeatherModule
 
-use module_lsm_forcing, only: weather_2D_inputs
+use module_lsm_forcing, only: weather2d
 use config_base, only: noah_lsm, nlst
 use module_NoahMP_hrldas_driver
 use module_RT_data, only: rt_domain
@@ -87,10 +87,10 @@ subroutine fineWeatherData_run(this, did)
                            	 rt_domain(did)%JX,		                       &
 		                 rt_domain(did)%IXRT,     	                       &
 			       	 rt_domain(did)%JXRT,   	                       &
-				        this%weather_2D%T2,	                       &  
-				        this%weather_2D%short,                         &
-				        this%weather_2D%q2x,	                       &
-				        this%weather_2D%u,	                       &   
+				 weather2d%T2,	                                       &  
+				 weather2d%short,                                      &
+				 weather2d%q2x,	                                       &
+				 weather2d%u,	                                       &   
                                  rt_domain(did)%NLINKS,		                       &
 				 rt_domain(did)%CH_NETRT, 	                       &
 			         rt_domain(did)%CHANXI,		                       & 
