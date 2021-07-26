@@ -30,6 +30,7 @@ implicit none
 #include <netcdf.inc>
     integer :: i_forcing
 character(len=19) out_date
+type(weather_2D_inputs), allocatable :: weather2d(:,:) 
 
 interface read_hydro_forcing
 #ifdef MPP_LAND
@@ -2771,6 +2772,9 @@ print*,'PRECIP DOUBLE'
 #endif
 PRCP1 = PRCP1 * 2.0
 #endif
+
+!-- For grabbing the desired arguments for the weather_disaggregate 
+allocate(weather2D(ix,jx))
 
 end subroutine read_hydro_forcing_mpp1
 
