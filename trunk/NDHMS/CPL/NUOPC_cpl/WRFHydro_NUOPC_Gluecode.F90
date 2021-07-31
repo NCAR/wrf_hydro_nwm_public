@@ -44,16 +44,14 @@ module wrfhydro_nuopc_gluecode
     cpl_outdate
   use module_rt_data, only: &
     rt_domain
-  use overland_data, only: &
-    overland_struct
-  use overland_control, only: &
-    overland_control_struct
   use module_lsm_forcing, only: &
     read_ldasout
   use config_base, only: &
     nlst, &
     init_namelist_rt_field
   use orchestrator_base
+  use wrfhydro_nuopc_fields
+  use wrfhydro_nuopc_flags
 
   implicit none
 
@@ -66,173 +64,7 @@ module wrfhydro_nuopc_gluecode
   public :: WRFHYDRO_get_timestep
   public :: WRFHYDRO_set_timestep
   public :: WRFHYDRO_get_hgrid
-  public :: WRFHYDRO_RunModeGet
-  public :: WRFHYDRO_Unknown
-  public :: WRFHYDRO_Offline
-  public :: WRFHYDRO_Coupled
-  public :: WRFHYDRO_Hybrid
-  public :: WRFHYDRO_Field
-  public :: WRFHYDRO_FieldList
-  public :: WRFHYDRO_FieldDictionaryAdd
-  public :: WRFHYDRO_FieldCreate
-
-  INTEGER, PARAMETER :: WRFHYDRO_Unknown = -1
-  INTEGER, PARAMETER :: WRFHYDRO_Offline =  0
-  INTEGER, PARAMETER :: WRFHYDRO_Coupled =  1
-  INTEGER, PARAMETER :: WRFHYDRO_Hybrid  =  2
-
-  type WRFHYDRO_Field
-    character(len=64)   :: stdname        = ' '
-    character(len=10)   :: units          = ' '
-    character(len=16)   :: stateName      = ' '
-    character(len=64)   :: transferOffer  = 'will provide'
-    logical             :: adImport       = .FALSE.
-    logical             :: realizedImport = .FALSE.
-    logical             :: adExport       = .FALSE.
-    logical             :: realizedExport = .FALSE.
-    logical             :: assoc          = .FALSE. 
-    real(ESMF_KIND_R8), dimension(:,:,:), pointer :: farrayPtr => null()
-  endtype WRFHYDRO_Field
-
-  type(WRFHYDRO_Field),dimension(46) :: WRFHYDRO_FieldList = (/ &
-    WRFHYDRO_Field( & !(01)
-      stdname='aerodynamic_roughness_length', units='m', &
-      stateName='z0',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(02)
-      stdname='canopy_moisture_storage', units='kg m-2', &
-      stateName='cmc',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(03)
-      stdname='carbon_dioxide', units='mol?', &
-      stateName='co2',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(04)
-      stdname='cosine_zenith_angle', units='?', &
-      stateName='cosz',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(05)
-      stdname='exchange_coefficient_heat', units='?', &
-      stateName='ch',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(06)
-      stdname='exchange_coefficient_heat_height2m', units='?', &
-      stateName='ch2',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(07)
-      stdname='exchange_coefficient_moisture_height2m', units='?', &
-      stateName='ch2',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(08)
-      stdname='ice_mask', units='1', &
-      stateName='xice',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(09)
-      stdname='inst_down_lw_flx', units='W m-2', &
-      stateName='lwdown',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(10)
-      stdname='inst_down_sw_flx', units='W m-2', &
-      stateName='swdown',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(11)
-      stdname='inst_height_lowest', units='m', &
-      stateName='hgt',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(12)
-      stdname='inst_merid_wind_height_lowest', units='m s-1', &
-      stateName='vwind',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(13)
-      stdname='inst_pres_height_lowest', units='Pa', &
-      stateName='psurf',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(14)
-      stdname='inst_pres_height_surface', units='Pa', &
-      stateName='psurf',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(15)
-      stdname='inst_spec_humid_height_lowest', units='kg kg-1', &
-      stateName='q2',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(16)
-      stdname='inst_temp_height_lowest', units='K', &
-      stateName='sfctmp',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(17)
-      stdname='inst_temp_height_surface', units='K', &
-      stateName='sfctmp',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(18)
-      stdname='inst_wind_speed_height_lowest', units='m s-1', &
-      stateName='sfcspd',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(19)
-      stdname='inst_zonal_wind_height_lowest', units='m s-1', &
-      stateName='uwind',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(20)
-      stdname='liquid_fraction_of_soil_moisture_layer_1', units='m3 m-3', &
-      stateName='sh2ox1',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(21)
-      stdname='liquid_fraction_of_soil_moisture_layer_2', units='m3 m-3', &
-      stateName='sh2ox2',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(22)
-      stdname='liquid_fraction_of_soil_moisture_layer_3', units='m3 m-3', &
-      stateName='sh2ox3',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(23)
-      stdname='liquid_fraction_of_soil_moisture_layer_4', units='m3 m-3', &
-      stateName='sh2ox4',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(24)
-      stdname='mean_cprec_rate', units='kg s-1 m-2', &
-      stateName='prcpconv',adImport=.FALSE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(25)
-      stdname='mean_down_lw_flx', units='W m-2', &
-      stateName='lwdown',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(26)
-      stdname='mean_down_sw_flx', units='W m-2', &
-      stateName='swdown',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(27)
-      stdname='mean_fprec_rate', units='kg s-1 m-2', &
-      stateName='prcp_frozen',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(28)
-      stdname='mean_prec_rate', units='kg s-1 m-2', &
-      stateName='prcprain',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(29)
-      stdname='mean_surface_albedo', units='lm lm-1', &
-      stateName='albedo',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(30)
-      stdname='soil_moisture_fraction_layer_1', units='m3 m-3', &
-      stateName='smc1',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(31)
-      stdname='soil_moisture_fraction_layer_2', units='m3 m-3', &
-      stateName='smc2',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(32)
-      stdname='soil_moisture_fraction_layer_3', units='m3 m-3', &
-      stateName='smc3',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(33)
-      stdname='soil_moisture_fraction_layer_4', units='m3 m-3', &
-      stateName='smc4',adImport=.TRUE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(34)
-      stdname='soil_porosity', units='1', &
-      stateName='smcmax1',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(35)
-      stdname='subsurface_runoff_amount', units='kg m-2', &
-      stateName='soldrain',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(36)
-      stdname='surface_runoff_amount', units='kg m-2', &
-      stateName='infxsrt',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(37)
-      stdname='surface_snow_thickness', units='m', &
-      stateName='snowdepth',adImport=.FALSE.,adExport=.TRUE.), & 
-    WRFHYDRO_Field( & !(38)
-      stdname='soil_temperature_layer_1', units='K', &
-      stateName='stc1',adImport=.TRUE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(39)
-      stdname='soil_temperature_layer_2', units='K', &
-      stateName='stc2',adImport=.TRUE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(40)
-      stdname='soil_temperature_layer_3', units='K', &
-      stateName='stc3',adImport=.TRUE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(41)
-      stdname='soil_temperature_layer_4', units='K', &
-      stateName='stc4',adImport=.TRUE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(42)
-      stdname='vegetation_type', units='1', &
-      stateName='vegtyp',adImport=.FALSE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(43)
-      stdname='volume_fraction_of_total_water_in_soil', units='m3 m-3', &
-      stateName='snliqv',adImport=.FALSE.,adExport=.TRUE.), & 
-    WRFHYDRO_Field( & !(44)
-      stdname='surface_water_depth', units='mm', &
-      stateName='sfchead',adImport=.FALSE.,adExport=.TRUE.), &
-    WRFHYDRO_Field( & !(45)
-      stdname='time_step_infiltration_excess', units='mm', &
-      stateName='infxsrt',adImport=.TRUE.,adExport=.FALSE.), &
-    WRFHYDRO_Field( & !(46)
-      stdname='soil_column_drainage', units='mm', &
-      stateName='soldrain',adImport=.TRUE.,adExport=.FALSE.)/)
+  public :: WRFHYDRO_get_restart
 
   ! PARAMETERS
   character(len=ESMF_MAXSTR) :: indir = 'WRFHYDRO_FORCING'
@@ -337,7 +169,7 @@ contains
     write(nlst(did)%hgrid,'(I1)') did
 
     if(nlst(did)%dt .le. 0) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Timestep less than 1 is not supported!", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -352,7 +184,7 @@ contains
 #endif
 
     if(nlst(did)%nsoil .gt. 4) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Maximum soil levels supported is 4.", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -473,7 +305,7 @@ contains
     cpl_outdate = startTimeStr(1:19)
 
     if(nlst(did)%dt .le. 0) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Timestep less than 1 is not supported!", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -521,9 +353,10 @@ contains
 #undef METHOD
 #define METHOD "wrfhydro_nuopc_run"
 
-  subroutine wrfhydro_nuopc_run(did,mode,clock,importState,exportState,rc)
+  subroutine wrfhydro_nuopc_run(did,lsm_forcings,clock,importState,&
+  exportState,rc)
     integer, intent(in)                     :: did
-    integer, intent(in)                     :: mode
+    logical, intent(in)                     :: lsm_forcings
     type(ESMF_Clock),intent(in)             :: clock
     type(ESMF_State),intent(inout)          :: importState
     type(ESMF_State),intent(inout)          :: exportState
@@ -539,7 +372,7 @@ contains
     rc = ESMF_SUCCESS
 
     if(.not. RT_DOMAIN(did)%initialized) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg="WRHYDRO: Model has not been initialized!", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -556,7 +389,7 @@ contains
     if(ESMF_STDERRORCHECK(rc)) return ! bail out
 
     if(nlst(did)%dt .le. 0) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Timestep less than 1 is not supported!", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -593,7 +426,7 @@ contains
       nlst(did)%GWBASESWCRT .eq. 0) then
        call ESMF_LogWrite(METHOD//": SUBRTSWCRT,OVRTSWCRT,GWBASESWCRT are zero!", &
             ESMF_LOGMSG_WARNING)
-      !call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      !call ESMF_LogSetError(ESMF_FAILURE, &
       !  msg=METHOD//": SUBRTSWCRT,OVRTSWCRT,GWBASESWCRT are zero!", &
       !  file=FILENAME,rcToReturn=rc)
       !return  ! bail out
@@ -603,31 +436,13 @@ contains
       call ESMF_LogWrite(METHOD//": Restart initial data from offline file.", &
         ESMF_LOGMSG_INFO)
     else
-
-      select case (mode)
-        case (WRFHYDRO_Offline)
-          call read_ldasout(olddate=nlst(did)%olddate(1:19), &
-            hgrid=nlst(did)%hgrid, &
-            indir=trim(indir), dt=nlst(did)%dt, &
-            ix=rt_domain(did)%ix,jx=rt_domain(did)%jx, &
-            infxsrt=rt_domain(did)%infxsrt,soldrain=rt_domain(did)%soldrain)
-        case (WRFHYDRO_Coupled)
-
-
-        case (WRFHYDRO_Hybrid)
-          call read_ldasout(olddate=nlst(did)%olddate(1:19), &
-            hgrid=nlst(did)%hgrid, &
-            indir=trim(indir), dt=nlst(did)%dt, &
-            ix=rt_domain(did)%ix,jx=rt_domain(did)%jx, &
-            infxsrt=rt_domain(did)%infxsrt,soldrain=rt_domain(did)%soldrain)
-
-
-        case default
-          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
-            msg=METHOD//": Running mode is unknown.", &
-            file=FILENAME, rcToReturn=rc)
-          return  ! bail out
-      end select
+      if (.not. lsm_forcings) then
+        call read_ldasout(olddate=nlst(did)%olddate(1:19), &
+          hgrid=nlst(did)%hgrid, &
+          indir=trim(indir), dt=nlst(did)%dt, &
+          ix=rt_domain(did)%ix,jx=rt_domain(did)%jx, &
+          infxsrt=rt_domain(did)%infxsrt,soldrain=rt_domain(did)%soldrain)
+      endif
     endif
   
     ! Call the WRF-HYDRO run routine
@@ -680,128 +495,6 @@ contains
 #endif
 
   end subroutine
-
-  !-----------------------------------------------------------------------------
-  ! Create field using internal memory
-  !-----------------------------------------------------------------------------
-
-#undef METHOD
-#define METHOD "WRFHYDRO_FieldCreate"
-
-  function WRFHYDRO_FieldCreate(stateName,grid,did,rc)
-    ! RETURN VALUE
-    type(ESMF_Field) :: WRFHYDRO_FieldCreate
-    ! ARGUMENTS
-    character(*), intent(in)                :: stateName
-    type(ESMF_Grid), intent(in)             :: grid
-    integer, intent(in)                     :: did
-    integer,          intent(out)           :: rc
-    ! LOCAL VARIABLES
-
-#ifdef DEBUG
-    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
-#endif
-
-    rc = ESMF_SUCCESS
-
-    SELECT CASE (trim(stateName))
-      CASE ('sh2ox1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%sh2ox(:,:,1), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('sh2ox2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%sh2ox(:,:,2), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('sh2ox3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%sh2ox(:,:,3), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('sh2ox4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%sh2ox(:,:,4), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('smc1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%smc(:,:,1), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('smc2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%smc(:,:,2), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('smc3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%smc(:,:,3), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('smc4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%smc(:,:,4), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('smcmax1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%smcmax1, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('stc1')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%stc(:,:,1), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('stc2')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%stc(:,:,2), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('stc3')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%stc(:,:,3), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('stc4')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%stc(:,:,4), &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('vegtyp')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%vegtyp, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('sfchead')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%overland%control%surface_water_head_lsm, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if(ESMF_STDERRORCHECK(rc)) return ! bail out
-      CASE ('infxsrt')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%infxsrt, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-      CASE ('soldrain')
-        WRFHYDRO_FieldCreate = ESMF_FieldCreate(name=stateName, grid=grid, &
-          farray=rt_domain(did)%soldrain, &
-          indexflag=ESMF_INDEX_DELOCAL, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-      CASE DEFAULT
-        call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
-          msg=METHOD//": Field hookup missing: "//trim(stateName), &
-          file=FILENAME,rcToReturn=rc)
-        return  ! bail out
-    END SELECT
-
-#ifdef DEBUG
-    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
-#endif
-
-  end function
 
 #undef METHOD
 #define METHOD "WRFHYDRO_GridCreate"
@@ -1237,57 +930,31 @@ contains
   !-----------------------------------------------------------------------------
 
 #undef METHOD
-#define METHOD "WRFHYDRO_RunModeGet"
+#define METHOD "WRFHYDRO_get_restart"
 
-  function WRFHYDRO_RunModeGet(importState,rc)
-    ! RETURN
-    integer                          :: WRFHYDRO_RunModeGet
+  subroutine WRFHYDRO_get_restart(did,restart,rc)
     ! ARGUMENTS
-    type(ESMF_State), intent(in)     :: importState
-    integer, intent(out), optional   :: rc
-    ! LOCAL VARIABLES
-    integer                    :: fieldIndex
-    integer                    :: forcingCount
-    integer                    :: connectedCount
-    type(ESMF_StateItem_Flag)  :: itemType
+    integer, intent(in)         :: did
+    logical, intent(out)        :: restart
+    integer, intent(out)        :: rc
 
 #ifdef DEBUG
     call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
 #endif
 
-    if(present(rc)) rc = ESMF_SUCCESS
+    rc = ESMF_SUCCESS
 
-    WRFHYDRO_RunModeGet = WRFHYDRO_Unknown
-    forcingCount = 0
-    connectedCount = 0
-
-    do fieldIndex=1, size(WRFHYDRO_FieldList)
-      if(WRFHYDRO_FieldList(fieldIndex)%adImport) then
-        forcingCount = forcingCount + 1
-        ! Check itemType to see if field exists in state
-        call ESMF_StateGet(importState, &
-          itemName=trim(WRFHYDRO_FieldList(fieldIndex)%stateName), &
-          itemType=itemType, rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-
-        if (itemType == ESMF_STATEITEM_FIELD) then
-          if (NUOPC_IsConnected(importState, &
-          fieldName=trim(WRFHYDRO_FieldList(fieldIndex)%stateName))) then
-            connectedCount = connectedCount + 1
-          endif
-        endif
-      endif
-    enddo
-
-    if( connectedCount == 0 ) then
-      WRFHYDRO_RunModeGet = WRFHYDRO_Offline
-    elseif ( connectedCount == forcingCount ) then
-      WRFHYDRO_RunModeGet = WRFHYDRO_Coupled
-    elseif ( connectedCount < forcingCount ) then
-      WRFHYDRO_RunModeGet = WRFHYDRO_Hybrid
+    if (nlst(did)%rst_typ .eq. 0) then
+      restart = .FALSE.
+    else
+      restart = .TRUE.
     endif
 
-  end function
+#ifdef DEBUG
+    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
+#endif
+
+  end subroutine
 
   !-----------------------------------------------------------------------------
   ! Conversion Utilities
@@ -1348,7 +1015,7 @@ contains
     timestr = '' ! clear string
 
     if (len(timestr) < 19) then
-      call ESMF_LogSetError(ESMF_RC_ARG_OUTOFRANGE, &
+      call ESMF_LogSetError(ESMF_FAILURE, &
         msg=METHOD//": Time string is too short!", &
         file=FILENAME,rcToReturn=rc)
       return  ! bail out
@@ -1399,46 +1066,6 @@ contains
 #endif
 
   end function
-
-  !-----------------------------------------------------------------------------
-  ! Dictionary Utility
-  !-----------------------------------------------------------------------------
-
-#undef METHOD
-#define METHOD "WRFHYDRO_FieldDictionaryAdd"
-
-  subroutine WRFHYDRO_FieldDictionaryAdd(rc)
-    ! ARGUMENTS
-    integer,intent(out)                     :: rc
-    ! LOCAL VARIABLES
-    integer                    :: fIndex
-    logical                    :: isPresent
-
-#ifdef DEBUG
-    call ESMF_LogWrite(MODNAME//": entered "//METHOD, ESMF_LOGMSG_INFO)
-#endif
-
-    rc = ESMF_SUCCESS
-
-    do fIndex=1,size(WRFHYDRO_FieldList)
-      isPresent = NUOPC_FieldDictionaryHasEntry( &
-        trim(WRFHYDRO_FieldList(fIndex)%stdname), &
-        rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return
-      if (.not.isPresent) then
-        call NUOPC_FieldDictionaryAddEntry( &
-          trim(WRFHYDRO_FieldList(fIndex)%stdname), &
-          trim(WRFHYDRO_FieldList(fIndex)%units), &
-          rc=rc)
-        if (ESMF_STDERRORCHECK(rc)) return
-      endif
-    enddo
-
-#ifdef DEBUG
-    call ESMF_LogWrite(MODNAME//": leaving "//METHOD, ESMF_LOGMSG_INFO)
-#endif
-
-  end subroutine
 
   !-----------------------------------------------------------------------------
   ! Log Utilities
