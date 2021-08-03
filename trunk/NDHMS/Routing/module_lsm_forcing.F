@@ -46,10 +46,10 @@ end interface
 !-- Reza's edits (June 2021):
 type :: weather_2D_inputs
       INTEGER :: IX, JX
-      REAL, DIMENSION(:,:), allocatable   :: T2		! Air temperature
-      REAL, DIMENSION(:,:), allocatable   :: q2x	! Humidity
-      REAL, DIMENSION(:,:), allocatable   :: u		! Near surface wind in the u-component
-      REAL, DIMENSION(:,:), allocatable   :: short	! Shortwave radiation.
+      REAL   :: T2	! Air temperature
+      REAL   :: q2x	! Humidity
+      REAL   :: u	! Near surface wind in the u-component
+      REAL   :: short	! Shortwave radiation.
 
       contains
       procedure :: init => weather_2D_inputs_init
