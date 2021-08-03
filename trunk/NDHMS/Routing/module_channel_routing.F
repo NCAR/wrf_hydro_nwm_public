@@ -730,10 +730,10 @@ END SUBROUTINE SUBMUSKINGCUNGE
 
 	!-------------------------------------------------------
 	!-- Reza (June 2021):
-	REAL, DIMENSION(NLINKS)	                :: XS_Peremeter   !-- cross sectional area calculated at diffusion function
+	!REAL, DIMENSION(NLINKS)	                :: XS_Peremeter   !-- cross sectional area calculated at diffusion function
 	REAL, INTENT(INOUT), DIMENSION(NLINKS)  :: T_QSUM         ! To save the final products
 	!-- I consider an average value to pass to the temperature routine
-	rt_domain%ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
+	rt_domain(did)%ChanCondConst = (gwChanCondConstIn + gwChanCondConstOut)/2.0  
 	!-------------------------------------------------------
 
 
@@ -1320,7 +1320,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
                       HLINKTMP(FROM_NODE(i)),HLINKTMP(TO_NODE(i)), &
                       CHANLEN(i), MannN(i), Bw(i), ChSSlp(i))
 		      !--Reza-------------------------------------------------------
-                      rt_domain%XS_Peremeter(i) = Bw(i)+ 2.0*((HLINKTMP(FROM_NODE(i))+HLINKTMP(TO_NODE(i)))/2.)* &
+                      rt_domain(did)%XS_Peremeter(i) = Bw(i)+ 2.0*((HLINKTMP(FROM_NODE(i))+HLINKTMP(TO_NODE(i)))/2.)* &
 	                                            sqrt(1.0 + ChSSlp(i)*ChSSlp(i))
             endif
          enddo
