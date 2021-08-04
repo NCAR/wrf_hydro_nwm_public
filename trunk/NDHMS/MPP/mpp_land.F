@@ -619,23 +619,27 @@ MODULE MODULE_MPP_LAND
     r_s(1) = local_startx
     r_s(2) = local_starty
     call mpp_land_sync()
+    
+    ! dwj use all gather to share startx and starty
+    call mpi_allgather(r_s(1:1), 1, MPI_INTEGER, startx, numprocs, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    call mpi_allgather(r_s(2:2), 1, MPI_INTEGER, starty, numprocs, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
 
-    if(my_id .eq. IO_id) then
-        do i = 0, numprocs - 1
-           ! block receive  from other node.
-           if(i.ne.my_id) then
-              tag = 1
-              call mpi_recv(r_s,2,MPI_INTEGER,i, &
-                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-              startx(i+1) = r_s(1)
-              starty(i+1) = r_s(2)
-           end if
-        end do
-     else
-           tag =  1
-           call mpi_send(r_s,2,MPI_INTEGER, IO_id,     &
-               tag,HYDRO_COMM_WORLD,ierr)
-     end if
+    !if(my_id .eq. IO_id) then
+    !    do i = 0, numprocs - 1
+    !       ! block receive  from other node.
+    !       if(i.ne.my_id) then
+    !          tag = 1
+    !          call mpi_recv(r_s,2,MPI_INTEGER,i, &
+    !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+    !          startx(i+1) = r_s(1)
+    !          starty(i+1) = r_s(2)
+    !       end if
+    !    end do
+    ! else
+    !       tag =  1
+    !       call mpi_send(r_s,2,MPI_INTEGER, IO_id,     &
+    !           tag,HYDRO_COMM_WORLD,ierr)
+    ! end if
 
      call mpp_land_sync()
 
