@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -20,13 +20,13 @@ NoahMP : $(OBJS_NoahMP) $(OBJS)
 module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F ../../../HYDRO_drv/module_HYDRO_drv.o ../../../Data_Rec/module_namelist.o ../../../Data_Rec/module_RT_data.o
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG) -I. \
-	-I../phys -I../Utility_routines -I../../../mod $(NETCDFMOD) $(*).F
+	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod $(NETCDFMOD) $(*).F
 	@echo ""
 
 main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o main_hrldas_driver.F
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
-	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $(*).F
+	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $(*).F
 #	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
 #	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
