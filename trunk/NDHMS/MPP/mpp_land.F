@@ -580,7 +580,8 @@ MODULE MODULE_MPP_LAND
   subroutine calculate_start_p()
 ! calculate startx and starty
     integer :: i,status, ierr, tag
-    integer :: r_s(2)
+    !integer :: r_s(2)
+    integer :: g(1)
     integer ::  t_nx, t_ny
 
     if(.not. allocated(starty) ) allocate(starty(numprocs),stat = ierr)
@@ -611,19 +612,22 @@ MODULE MODULE_MPP_LAND
     if(down_id .lt. 0) local_starty = 1
 
 
-    if(my_id .eq. IO_id) then
-         startx(my_id+1) = local_startx
-         starty(my_id+1) = local_starty
-    end if
+    !if(my_id .eq. IO_id) then
+    !     startx(my_id+1) = local_startx
+    !     starty(my_id+1) = local_starty
+    !end if
 
-    r_s(1) = local_startx
-    r_s(2) = local_starty
+    !r_s(1) = local_startx
+    !r_s(2) = local_starty
     call mpp_land_sync()
     
     ! dwj use all gather to share startx and starty
-    call mpi_allgather(r_s(1:1), 1, MPI_INTEGER, startx, numprocs, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
-    call mpi_allgather(r_s(2:2), 1, MPI_INTEGER, starty, numprocs, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    g(1) = local_startx
+    call mpi_allgather(g, 1, MPI_INTEGER, startx, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    g(1) = local_starty
+    call mpi_allgather(g, 1, MPI_INTEGER, starty, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
 
+    !old code for initalizing starx and starty
     !if(my_id .eq. IO_id) then
     !    do i = 0, numprocs - 1
     !       ! block receive  from other node.
@@ -635,13 +639,13 @@ MODULE MODULE_MPP_LAND
     !          starty(i+1) = r_s(2)
     !       end if
     !    end do
-    ! else
+    !else
     !       tag =  1
     !       call mpi_send(r_s,2,MPI_INTEGER, IO_id,     &
     !           tag,HYDRO_COMM_WORLD,ierr)
-    ! end if
+    !end if
 
-     call mpp_land_sync()
+    call mpp_land_sync()
 
 ! calculate the routing land start x and y
      local_startx_rt = local_startx*rt_AGGFACTRT - (rt_AGGFACTRT-1)
