@@ -361,6 +361,9 @@ MODULE MODULE_SF_NOAHMPLSM
      REAL :: DWSAT(NSOIL)  !saturated soil hydraulic diffusivity
      REAL :: QUARTZ(NSOIL) !soil quartz content
      REAL :: F1            !soil thermal diffusivity/conductivity coef (not used MB: 20140718)
+     REAL :: AXAJ          !Xinanjiang: Tension water distribution inflection parameter [-]
+     REAL :: BXAJ          !Xinanjiang: Tension water distribution shape parameter [-]
+     REAL :: XXAJ          !Xinanjiang: Free water distribution shape parameter [-]
 !------------------------------------------------------------------------------------------!
 ! From the GENPARM.TBL file
 !------------------------------------------------------------------------------------------!
@@ -2952,7 +2955,7 @@ ENDIF   ! CROPTYPE == 0
         ALBSNI(2)=parameters%BATS_NIR_NEW*(1.-parameters%BATS_NIR_AGE*FAGE)        
 
         ALBSND(1)=ALBSNI(1)+parameters%BATS_VIS_DIR*FZEN*(1.-ALBSNI(1))    !  vis direct
-        ALBSND(2)=ALBSNI(2)+parameters%BATS_VIS_DIR*FZEN*(1.-ALBSNI(2))    !  nir direct
+        ALBSND(2)=ALBSNI(2)+parameters%BATS_NIR_DIR*FZEN*(1.-ALBSNI(2))    !  nir direct
 
   END SUBROUTINE SNOWALB_BATS
 
@@ -5841,7 +5844,7 @@ ENDIF   ! CROPTYPE == 0
           RUNSUB       = QDIS          !mm/s
        END IF
 
-       IF(OPT_RUN == 3 .or. OPT_RUN == 4) THEN 
+       IF(OPT_RUN == 3 .or. OPT_RUN == 4 .or. OPT_RUN == 7) THEN 
           RUNSUB       = RUNSUB + QDRAIN        !mm/s
        END IF
 
@@ -6995,7 +6998,9 @@ ENDIF   ! CROPTYPE == 0
          PDDUM  = QINSUR - RUNSRF                       ! m/s
        END IF
     END IF
-
+    IF (OPT_RUN == 7) THEN
+      CALL COMPUTE_XAJ_SURFRUNOFF(parameters,DT,FCR,NSOIL,SMC,ZSOIL,QINSUR,RUNSRF,PDDUM)
+    END IF
 ! determine iteration times and finer time step
 
     NITER = 1
@@ -7018,6 +7023,11 @@ ENDIF   ! CROPTYPE == 0
           CALL INFIL (parameters,NSOIL  ,DTFINE     ,ZSOIL  ,SH2O   ,SICE   , & !in
                       SICEMAX,QINSUR ,                         & !in
                       PDDUM  ,RUNSRF )                           !out
+       END IF
+
+       IF (QINSUR > 0. .AND. OPT_RUN == 7) THEN
+          CALL COMPUTE_XAJ_SURFRUNOFF(parameters,DTFINE,FCR,NSOIL,SMC,ZSOIL,QINSUR,& ! in
+                                      RUNSRF,PDDUM)                                  ! out
        END IF
 
        CALL SRT   (parameters,NSOIL  ,ZSOIL  ,DTFINE ,PDDUM  ,ETRANI , & !in
@@ -7343,7 +7353,7 @@ ENDIF   ! CROPTYPE == 0
           IF(OPT_RUN == 1 .or. OPT_RUN == 2) THEN
              QDRAIN   = 0.
           END IF
-          IF(OPT_RUN == 3) THEN
+          IF(OPT_RUN == 3 .OR. OPT_RUN == 7) THEN
              QDRAIN   = parameters%SLOPE*WCND(K)
           END IF
           IF(OPT_RUN == 4) THEN
@@ -7510,6 +7520,82 @@ ENDIF   ! CROPTYPE == 0
     SMC = SH2O + SICE
 
   END SUBROUTINE SSTEP
+
+!== begin xinanjiag=================================================================================
+  SUBROUTINE COMPUTE_XAJ_SURFRUNOFF(parameters,DT,FCR,NSOIL,SMC,ZSOIL,QINSUR,RUNSRF,PDDUM)
+! ----------------------------------------------------------------------
+! Calculate the saturated area and runoff based on Xinanjiag runoff scheme.
+! Reference: Knoben, W. J., Freer, J. E., Fowler, K. J., Peel, M. C., & Woods, R. A. (2019). 
+! Modular Assessment of Rainfall-Runoff Models Toolbox (MARRMoT) v1. 2: 
+! an open-source, extendable framework providing implementations of 46 conceptual 
+! hydrologic models as continuous state-space formulations.
+! ----------------------------------------------------------------------
+! Author: Prasanth Valayamkunnath <prasanth@ucar.edu>
+! Date: August 03, 2020
+! ----------------------------------------------------------------------
+    IMPLICIT NONE
+! ----------------------------------------------------------------------
+! Inputs
+    TYPE (noahmp_parameters), INTENT(IN)   :: parameters
+    INTEGER,                  INTENT(IN)   :: NSOIL
+    REAL, DIMENSION(1:NSOIL), INTENT(IN)   :: SMC
+    REAL, DIMENSION(1:NSOIL), INTENT(IN)   :: ZSOIL
+    REAL, DIMENSION(1:NSOIL), INTENT(IN)   :: FCR      !fraction of imperviousness (-) = IMP
+    REAL                    , INTENT(IN)   :: QINSUR
+    REAL                    , INTENT(IN)   :: DT
+! Output
+    REAL                    , INTENT(INOUT):: RUNSRF
+    REAL                    , INTENT(INOUT):: PDDUM
+! local
+    REAL    :: WM,WM_MAX,SM,SM_MAX,IRUNOFF,PRUNOFF
+    INTEGER :: IZ
+!------------------------------------------------------------------------
+!initialize  
+    WM      = 0.0
+    WM_MAX  = 0.0
+    SM      = 0.0 
+    SM_MAX  = 0.0
+    IRUNOFF = 0.0
+    PRUNOFF = 0.0
+    RUNSRF  = 0.0
+
+    DO IZ=1,NSOIL-2
+       IF ((SMC(IZ)-parameters%SMCREF(IZ)) .GT. 0.) THEN ! soil moisture greater than field capacity
+          SM     = SM + (SMC(IZ) - parameters%SMCREF(IZ) )*-1*ZSOIL(IZ) !m
+          WM     = WM + (parameters%SMCREF(IZ)*-1*ZSOIL(IZ))            !m  
+       ELSE
+          WM     = WM + (SMC(IZ)*-1*ZSOIL(IZ))
+       END IF
+       WM_MAX = WM_MAX + (parameters%SMCREF(IZ)*-1*ZSOIL(IZ))
+       SM_MAX = SM_MAX + (parameters%SMCMAX(IZ) - parameters%SMCREF(IZ))*-1*ZSOIL(IZ)
+    END DO
+
+    WM = MIN(WM,WM_MAX) ! tension water (m) 
+    SM = MIN(SM,SM_MAX) ! free water (m)
+
+! impervious surface runoff R_IMP    
+    IRUNOFF = FCR(1)*QINSUR*DT
+
+! solve pervious surface runoff (m) based on Eq. (310)
+    IF ((WM/WM_MAX) .LE. (0.5-parameters%AXAJ))THEN
+       PRUNOFF = (1-FCR(1))*QINSUR*DT*((0.5-parameters%AXAJ)**(1-parameters%BXAJ))*((WM/WM_MAX)**parameters%BXAJ)
+    ELSE
+       PRUNOFF = (1-FCR(1))*QINSUR*DT*(1-(((0.5+parameters%AXAJ)**(1-parameters%BXAJ))*((1-(WM/WM_MAX))**parameters%BXAJ)))
+    END IF
+
+! estimate surface runoff based on Eq. (313)
+    IF(QINSUR .EQ. 0.0) THEN
+      RUNSRF  = 0.0
+    ELSE
+      RUNSRF = PRUNOFF*(1-((1-(SM/SM_MAX))**parameters%XXAJ))+IRUNOFF
+    END IF
+    RUNSRF = RUNSRF/DT !m/s
+    RUNSRF = MAX(0.0,    RUNSRF)
+    RUNSRF = MIN(QINSUR, RUNSRF)
+    PDDUM  = QINSUR - RUNSRF
+
+  END SUBROUTINE COMPUTE_XAJ_SURFRUNOFF
+!== end xinanjiag ==================================================================================
 
 !== begin wdfcnd1 ==================================================================================
 
@@ -9117,17 +9203,19 @@ MODULE NOAHMP_TABLES
 
     INTEGER            :: SLCATS
 
-    REAL :: BEXP_TABLE(MAX_SOILTYP)          !maximum intercepted h2o per unit lai+sai (mm)
+    REAL :: BEXP_TABLE(MAX_SOILTYP)        !maximum intercepted h2o per unit lai+sai (mm)
     REAL :: SMCDRY_TABLE(MAX_SOILTYP)      !characteristic leaf dimension (m)
-    REAL :: F1_TABLE(MAX_SOILTYP)         !momentum roughness length (m)
+    REAL :: F1_TABLE(MAX_SOILTYP)          !momentum roughness length (m)
     REAL :: SMCMAX_TABLE(MAX_SOILTYP)      !top of canopy (m)
     REAL :: SMCREF_TABLE(MAX_SOILTYP)      !bottom of canopy (m)
     REAL :: PSISAT_TABLE(MAX_SOILTYP)      !tree density (no. of trunks per m2)
     REAL :: DKSAT_TABLE(MAX_SOILTYP)       !tree crown radius (m)
     REAL :: DWSAT_TABLE(MAX_SOILTYP)       !monthly stem area index, one-sided
     REAL :: SMCWLT_TABLE(MAX_SOILTYP)      !monthly leaf area index, one-sided
-    REAL :: QUARTZ_TABLE(MAX_SOILTYP)         !single-side leaf area per Kg [m2/kg]
-
+    REAL :: QUARTZ_TABLE(MAX_SOILTYP)      !single-side leaf area per Kg [m2/kg]
+    REAL :: AXAJ_TABLE(MAX_SOILTYP)        !Xinanjiang: Tension water distribution inflection parameter [-]
+    REAL :: BXAJ_TABLE(MAX_SOILTYP)        !Xinanjiang: Tension water distribution shape parameter [-] 
+    REAL :: XXAJ_TABLE(MAX_SOILTYP)        !Xinanjiang: Free water distribution shape parameter [-]
 ! GENPARM.TBL parameters
 
     REAL :: SLOPE_TABLE(9)    !slope factor for soil drainage
@@ -9532,8 +9620,10 @@ CONTAINS
        FRZK_TABLE = -1.E36
        ZBOT_TABLE = -1.E36
        CZIL_TABLE = -1.E36
-
-!
+       AXAJ_TABLE = -1.E36
+       BXAJ_TABLE = -1.E36
+       XXAJ_TABLE = -1.E36
+! 
 !-----READ IN SOIL PROPERTIES FROM SOILPARM.TBL
 !
     inquire( file='SOILPARM.TBL', exist=file_named ) 
@@ -9560,7 +9650,8 @@ CONTAINS
     DO LC=1,SLCATS
       READ (21,*) ITMP,BEXP_TABLE(LC),SMCDRY_TABLE(LC),F1_TABLE(LC),SMCMAX_TABLE(LC),    &
                   SMCREF_TABLE(LC),PSISAT_TABLE(LC),DKSAT_TABLE(LC), DWSAT_TABLE(LC),   &
-                  SMCWLT_TABLE(LC), QUARTZ_TABLE(LC)
+                  SMCWLT_TABLE(LC), QUARTZ_TABLE(LC), AXAJ_TABLE (LC), BXAJ_TABLE (LC), &
+                  XXAJ_TABLE(LC)
     ENDDO
 
     CLOSE (21)
