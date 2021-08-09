@@ -1328,6 +1328,10 @@ gwOption:   if(gwBaseSwCRT == 3) then
 #ifdef MPP_LAND
           call MPP_CHANNEL_COM_REAL(Link_location,ixrt,jxrt,QLINK(:,1),NLINKS,99)
 #endif
+           !-- compiling start's from here!
+           print *, "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+           print *,"I am here here-------------------------------------------------"
+           !stop
 
            !-- Reza's update goes in here:
            !-- The RUN function should be called here. 
