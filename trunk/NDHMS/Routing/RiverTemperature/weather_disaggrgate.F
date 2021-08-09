@@ -111,7 +111,7 @@ end subroutine fineWeatherData_run
 !subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, Tair, SolarRad, RelH, windSpd, &
 !                               NLINKS, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, AGGFACTRT)
 			
-subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, weather2d_local &
+subroutine disaggregateWeather(this, IX, JX, IXRT, JXRT, weather2d_local, &
                                NLINKS, CH_NETRT, CHANXI, CHANYJ, LAKE_MSKRT, TMN, TSK, TSLB, nsoil, AGGFACTRT)
     implicit none
     class(fineWeatherData), intent(inout)                ::    this
