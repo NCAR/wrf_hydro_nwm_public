@@ -44,6 +44,11 @@ MODULE MODULE_MPP_LAND
   integer, allocatable, DIMENSION(:), public :: local_rt_nx_size,local_rt_ny_size
   integer, allocatable, DIMENSION(:), public :: startx,starty
   integer, allocatable, DIMENSION(:), public :: mpp_nlinks
+  
+  !dwj offset vectors and size vectors for scatterv and gatherv
+  integer, allocatable, dimension(:), public :: offset_vectors
+  integer, allocatable, dimension(:), public :: size_vectors
+
 
   interface check_land
      module procedure check_landreal1
@@ -224,6 +229,7 @@ MODULE MODULE_MPP_LAND
 
         call get_local_size(local_nx, local_ny,local_rt_nx,local_rt_ny)
         call calculate_start_p()
+        call calculate_offset_vectors()
 
         in_global_nx = local_nx
         in_global_ny = local_ny
@@ -669,6 +675,25 @@ MODULE MODULE_MPP_LAND
 
      return
   end subroutine calculate_start_p
+  
+  subroutine calculate_offset_vectors()
+    !calculate the size and offset vectors needed by scatterv and gatherv
+    integer :: i, ierr, last_offset
+  
+    ! first make sure the arrays have been allocated
+    if ( .not. allocated(offset_vectors) ) allocate(offset_vectors(numprocs),stat = ierr)
+    if ( .not. allocated(size_vectors)   ) allocate(size_vectors(numprocs),stat = ierr)
+    
+    ! caluclate the size and offsets using local_nx_size and local_ny_size
+    last_offset = 0
+    do i=1, numprocs
+        size_vectors(i) = local_ny_size(i) * local_nx_size(i)
+        offset_vectors(i) = last_offset
+        last_offset = last_offset + size_vectors(i)
+    end do
+       
+    return
+  end subroutine calculate_offset_vectors
 
   subroutine decompose_data_real3d (in_buff,out_buff,klevel)
       implicit none
@@ -1485,6 +1510,10 @@ MODULE MODULE_MPP_LAND
           if(info(4,i).lt.0) local_rt_ny_size(i) = local_rt_ny_size(i) -1
           if(info(5,i).lt.0) local_rt_ny_size(i) = local_rt_ny_size(i) -1
        enddo
+       
+       ! offset vectors are needed for scatterv and gatherv communications
+       call calculate_offset_vectors()
+       
       return
       end   subroutine wrf_LAND_set_INIT
 
