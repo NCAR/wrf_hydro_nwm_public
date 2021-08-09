@@ -380,7 +380,8 @@ MODULE MODULE_MPP_LAND
 !   ### if it is IO node, get the local_size of the x and y direction
 !   ### for all other tasks.
     integer s_r(2)
-
+    integer g(1)
+    
 !   if(my_id .eq. IO_id) then
        if(.not. allocated(local_nx_size) ) allocate(local_nx_size(numprocs),stat = status)
        if(.not. allocated(local_ny_size) ) allocate(local_ny_size(numprocs),stat = status)
@@ -388,53 +389,63 @@ MODULE MODULE_MPP_LAND
        if(.not. allocated(local_rt_ny_size) ) allocate(local_rt_ny_size(numprocs),stat = status)
 !   end if
 
-       call mpp_land_sync()
+    ! dwj use all gather to share set buffers with all gather
+    g(1) = local_nx
+    call mpi_allgather(g, 1, MPI_INTEGER, local_nx_size, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    g(1) = local_ny
+    call mpi_allgather(g, 1, MPI_INTEGER, local_ny_size, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    g(1) = rt_nx
+    call mpi_allgather(g, 1, MPI_INTEGER, local_rt_nx_size, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+    g(1) = rt_ny
+    call mpi_allgather(g, 1, MPI_INTEGER, local_rt_ny_size, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
 
-       if(my_id .eq. IO_id) then
-           do i = 0, numprocs - 1
-              if(i .ne. my_id) then
-                 !block receive  from other node.
-                 tag = 1
-                 call mpi_recv(s_r,2,MPI_INTEGER,i, &
-                      tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-                 local_nx_size(i+1) = s_r(1)
-                 local_ny_size(i+1) = s_r(2)
-               else
-                   local_nx_size(i+1) = local_nx
-                   local_ny_size(i+1) = local_ny
-               end if
-           end do
-       else
-           tag =  1
-           s_r(1) = local_nx
-           s_r(2) = local_ny
-           call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
-               tag,HYDRO_COMM_WORLD,ierr)
-       end if
-
-
-       if(my_id .eq. IO_id) then
-           do i = 0, numprocs - 1
-              if(i .ne. my_id) then
-                 !block receive  from other node.
-                 tag = 2
-                 call mpi_recv(s_r,2,MPI_INTEGER,i, &
-                      tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-                 local_rt_nx_size(i+1) = s_r(1)
-                 local_rt_ny_size(i+1) = s_r(2)
-               else
-                   local_rt_nx_size(i+1) = rt_nx
-                   local_rt_ny_size(i+1) = rt_ny
-               end if
-           end do
-       else
-           tag =  2
-           s_r(1) = rt_nx
-           s_r(2) = rt_ny
-           call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
-               tag,HYDRO_COMM_WORLD,ierr)
-       end if
-       call mpp_land_sync()
+       !call mpp_land_sync()
+       !
+       !if(my_id .eq. IO_id) then
+       !    do i = 0, numprocs - 1
+       !       if(i .ne. my_id) then
+       !          !block receive  from other node.
+       !          tag = 1
+       !          call mpi_recv(s_r,2,MPI_INTEGER,i, &
+       !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+       !          local_nx_size(i+1) = s_r(1)
+       !          local_ny_size(i+1) = s_r(2)
+       !        else
+       !            local_nx_size(i+1) = local_nx
+       !            local_ny_size(i+1) = local_ny
+       !        end if
+       !    end do
+       !else
+       !    tag =  1
+       !    s_r(1) = local_nx
+       !    s_r(2) = local_ny
+       !    call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
+       !        tag,HYDRO_COMM_WORLD,ierr)
+       !end if
+       !
+       !
+       !if(my_id .eq. IO_id) then
+       !    do i = 0, numprocs - 1
+       !       if(i .ne. my_id) then
+       !          !block receive  from other node.
+       !          tag = 2
+       !          call mpi_recv(s_r,2,MPI_INTEGER,i, &
+       !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+       !          local_rt_nx_size(i+1) = s_r(1)
+       !          local_rt_ny_size(i+1) = s_r(2)
+       !        else
+       !            local_rt_nx_size(i+1) = rt_nx
+       !            local_rt_ny_size(i+1) = rt_ny
+       !        end if
+       !    end do
+       !else
+       !    tag =  2
+       !    s_r(1) = rt_nx
+       !    s_r(2) = rt_ny
+       !    call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
+       !        tag,HYDRO_COMM_WORLD,ierr)
+       !end if
+       !call mpp_land_sync()
        return
   end  subroutine get_local_size
 
