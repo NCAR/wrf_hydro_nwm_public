@@ -4,7 +4,7 @@
 
 include ../../macros
 
-MODFLAG := -I ../../MPP -I ../../mod
+MODFLAG := -I ../../MPP -I ../../mod  -I ../
 
 %.o : %.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
