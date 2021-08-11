@@ -17,10 +17,10 @@
 
 MODULE disaggregateWeatherModule
 
-use module_lsm_forcing, only: weather2d
-use config_base, only: noah_lsm, nlst
-use module_NoahMP_hrldas_driver
-use module_RT_data, only: rt_domain
+!use module_lsm_forcing, only: weather2d
+!use config_base, only: noah_lsm, nlst
+!use module_NoahMP_hrldas_driver
+!use module_RT_data, only: rt_domain
 
 IMPLICIT NONE
 	
@@ -77,34 +77,34 @@ end subroutine fineWeatherData_destroy
 
 ! --------------------------------------------------------------------------
 
-subroutine fineWeatherData_run(this, did)
+!subroutine fineWeatherData_run(this, did)
 	
-	implicit none
-  	class(fineWeatherData), intent(inout)       ::    this
+!	implicit none
+!  	class(fineWeatherData), intent(inout)       ::    this
   
-	call disaggregateWeather(this,                                                 &
-                           	 rt_domain(did)%IX,	                               &
-                           	 rt_domain(did)%JX,		                       &
-		                 rt_domain(did)%IXRT,     	                       &
-			       	 rt_domain(did)%JXRT,   	                       &
-				 weather2d,                                            &
+!	call disaggregateWeather(this,                                                 &
+!                           	 rt_domain(did)%IX,	                               &
+!                           	 rt_domain(did)%JX,		                       &
+!		                 rt_domain(did)%IXRT,     	                       &
+!			       	 rt_domain(did)%JXRT,   	                       &
+!				 weather2d,                                            &
 				 !weather2d%T2,	                                       &  
 				 !weather2d%short,                                     &
 				 !weather2d%q2x,	                               &
 				 !weather2d%u,	                                       &   
-                                 rt_domain(did)%NLINKS,		                       &
-				 rt_domain(did)%CH_NETRT, 	                       &
-			         rt_domain(did)%CHANXI,		                       & 
-				 rt_domain(did)%CHANYJ,		                       &
-				 rt_domain(did)%overland%streams_and_lakes%lake_mask,  &
-				 module_NoahMP_hrldas_driver%TMN,                      &
-				 module_NoahMP_hrldas_driver%TSK,                      &
-				 module_NoahMP_hrldas_driver%TSLB,                     &
-				 noah_lsm%nsoil,                                       &
-				 nlst(did)%AGGFACTRT                                   &
-                                 )
+!                                rt_domain(did)%NLINKS,		                       &
+!				 rt_domain(did)%CH_NETRT, 	                       &
+!			         rt_domain(did)%CHANXI,		                       & 
+!				 rt_domain(did)%CHANYJ,		                       &
+!				 rt_domain(did)%overland%streams_and_lakes%lake_mask,  &
+!				 module_NoahMP_hrldas_driver%TMN,                      &
+!				 module_NoahMP_hrldas_driver%TSK,                      &
+!				 module_NoahMP_hrldas_driver%TSLB,                     &
+!				 noah_lsm%nsoil,                                       &
+!				 nlst(did)%AGGFACTRT                                   &
+!                                )
 							
-end subroutine fineWeatherData_run
+!end subroutine fineWeatherData_run
 
 ! --------------------------------------------------------------------------
 
