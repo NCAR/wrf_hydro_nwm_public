@@ -16,20 +16,20 @@
 MODULE module_river_temperature
 
 	
-	use module_channel_routing, only: temperature_sim_H_inputs
-	use disaggregateWeatherModule,  only: fineWeatherData	
-	use module_RT_data, only: rt_domain
-	use config_base, only: nlst
+	!use module_channel_routing, only: temperature_sim_H_inputs
+	!use disaggregateWeatherModule,  only: fineWeatherData	
+	!use module_RT_data, only: rt_domain
+	!use config_base, only: nlst
 	IMPLICIT NONE
 		
 type  :: river_temperature
-		type (temperature_sim_H_inputs), pointer :: hydraulics_sim => null() 
-		type (fineWeatherData), pointer :: weather_sim => null() 
+		!type (temperature_sim_H_inputs), pointer :: hydraulics_sim => null() 
+		!type (fineWeatherData), pointer :: weather_sim => null() 
 
      logical :: pointer_allocation_guard = .false.
-		
-	   contains
-	   procedure :: init => river_temperature_init
+		 
+     contains
+     procedure :: init => river_temperature_init
      procedure :: destroy => river_temperature_destroy
      procedure :: run => river_temperature_run
 		
@@ -62,62 +62,61 @@ subroutine river_temperature_destroy(this)
  end subroutine river_temperature_destroy
 
 ! --------------------------------------------------------------------------
-subroutine river_temperature_run(this, did)
+!subroutine river_temperature_run(this, did)
 		
-	implicit none
-  class(river_temperature), INTENT(inout)             :: this
+!	implicit none
+!  class(river_temperature), INTENT(inout)             :: this
   
   ! Embeddedness and Substrate particle size (mm) respectively
-	REAL,    DIMENSION(:), allocatable                  :: C_Em, P_size                    
-	REAL,    DIMENSION(:), allocatable                  :: shadeF, sur_albedo, viewToSky, cloud   ! Shading factor and surface albedo for the reach
+!	REAL,    DIMENSION(:), allocatable                  :: C_Em, P_size                    
+!	REAL,    DIMENSION(:), allocatable                  :: shadeF, sur_albedo, viewToSky, cloud   ! Shading factor and surface albedo for the reach
 	!REAL,    INTENT(INOUT), DIMENSION(:)                :: T_QSUM
   
-  INTEGER                                             ::  did  ! for the rt_domain
+! INTEGER                                             ::  did  ! for the rt_domain
           
 
-  call river_TEMPERATURE_SOLVER(nlst(did)%dxrt0,      	        &
-				rt_domain(did)%DT_STEPS,        &
-                                rt_domain(did)%IXRT,            &                 
-                                rt_domain(did)%JXRT,            &
-                                rt_domain(did)%Tair_fine_1D,    &
-				rt_domain(did)%RelH_fine_1D,    &
-				rt_domain(did)%windSpd_fine_1D, &
-				rt_domain(did)%C_Cloud,         &
-				rt_domain(did)%TSLB_1D_fine,    &
-				rt_domain(did)%SolarRad_fine_1D,&
-				rt_domain(did)%XS_Peremeter,    &
-				rt_domain(did)%HLINK,	        & 	 	
-				rt_domain(did)%ChSSlp,	        &
-				rt_domain(did)%ZELEV,	        &
-                                rt_domain(did)%velocity,        &
-				rt_domain(did)%Tw,	        &
-				rt_domain(did)%QSUM,	        &
-				rt_domain(did)%QINFLOWBASE,     & 
-				rt_domain(did)%QSTRMVOLRT,      &
-				rt_domain(did)%TMN_1D_fine,     &
-				rt_domain(did)%TSLB_1D_fine,    &
-				rt_domain(did)%TSK_1D_fine,     &
-                                rt_domain(did)%S_Albedo,        &
-                		rt_domain(did)%F_Shade,         &
-				rt_domain(did)%ChanCondConst,   &
-                                rt_domain(did)%C_Emb,	        &
-	                	rt_domain(did)%P_Size,          &
-				rt_domain(did)%CHANXI,          &
-				rt_domain(did)%CHANYJ,	        &
-				rt_domain(did)%CH_NETLNK,       &
-                                rt_domain(did)%CH_NETRT,        &
-                                rt_domain(did)%QLINK,	        &
-				rt_domain(did)%DT_STEPS,        & 
-				rt_domain(did)%DTCT,	        &
-				rt_domain(did)%node_area,       &
-				rt_domain(did)%TO_NODE,	        &
-				rt_domain(did)%TYPEL,	        &
-				rt_domain(did)%T_QSUM,	        &
-                                rt_domain(did)%NLINKS           &
-                 		)
-	
-	
-end subroutine river_temperature_run
+!  call river_TEMPERATURE_SOLVER(nlst(did)%dxrt0,      	        &
+!				rt_domain(did)%DT_STEPS,        &
+!                                rt_domain(did)%IXRT,            &                 
+!                                rt_domain(did)%JXRT,            &
+!                                rt_domain(did)%Tair_fine_1D,    &
+!				rt_domain(did)%RelH_fine_1D,    &
+!				rt_domain(did)%windSpd_fine_1D, &
+!				rt_domain(did)%C_Cloud,         &
+!				rt_domain(did)%TSLB_1D_fine,    &
+!				rt_domain(did)%SolarRad_fine_1D,&
+!				rt_domain(did)%XS_Peremeter,    &
+!				rt_domain(did)%HLINK,	        & 	 	
+!				rt_domain(did)%ChSSlp,	        &
+!				rt_domain(did)%ZELEV,	        &
+!                                rt_domain(did)%velocity,        &
+!				rt_domain(did)%Tw,	        &
+!				rt_domain(did)%QSUM,	        &
+!				rt_domain(did)%QINFLOWBASE,     & 
+!				rt_domain(did)%QSTRMVOLRT,      &
+!				rt_domain(did)%TMN_1D_fine,     &
+!				rt_domain(did)%TSLB_1D_fine,    &
+!				rt_domain(did)%TSK_1D_fine,     &
+!                                rt_domain(did)%S_Albedo,        &
+!                		rt_domain(did)%F_Shade,         &
+!				rt_domain(did)%ChanCondConst,   &
+!                                rt_domain(did)%C_Emb,	        &
+!	                	rt_domain(did)%P_Size,          &
+!				rt_domain(did)%CHANXI,          &
+!				rt_domain(did)%CHANYJ,	        &
+!				rt_domain(did)%CH_NETLNK,       &
+!                                rt_domain(did)%CH_NETRT,        &
+!                                rt_domain(did)%QLINK,	        &
+!				rt_domain(did)%DT_STEPS,        & 
+!				rt_domain(did)%DTCT,	        &
+!				rt_domain(did)%node_area,       &
+!				rt_domain(did)%TO_NODE,	        &
+!				rt_domain(did)%TYPEL,	        &
+!				rt_domain(did)%T_QSUM,	        &
+!                               rt_domain(did)%NLINKS           &
+!                 		)
+		
+!end subroutine river_temperature_run
 	
 ! ------------------------------------------------
 !   SUBROUTINE RIVER_TEMPERATURE_SOLVER
