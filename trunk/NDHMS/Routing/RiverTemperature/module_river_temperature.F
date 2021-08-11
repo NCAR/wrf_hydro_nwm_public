@@ -32,7 +32,8 @@ type  :: river_temperature
      procedure :: init => river_temperature_init
      procedure :: destroy => river_temperature_destroy
      procedure :: run => river_temperature_run
-		
+     procedure :: runRiverTempModel => river_TEMPERATURE_SOLVER
+
 end type river_temperature
 
 REAL, parameter ::  rho_water = 1000.
