@@ -40,6 +40,7 @@ type  :: fineWeatherData
 	procedure :: init => fineWeatherData_init
         procedure :: destroy => fineWeatherData_destroy
         procedure :: run => fineWeatherData_run
+	procedure :: runWeatherDisagg => disaggregateWeather
 		
 end type fineWeatherData
 	
