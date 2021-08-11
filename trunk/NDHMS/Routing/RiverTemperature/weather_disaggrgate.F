@@ -30,8 +30,8 @@ type  :: fineWeatherData
             REAL, DIMENSION(:), allocatable          :: TMN_1D_FINE, TSLB_1D_FINE, TSK_1D_FINE
 		
 	    !type (weather_2D_inputs), pointer        :: weather_2D => null() 
-	    type (vectorizing_tools), pointer        :: vectorizer => null()
-	    type (NoahMP_vectorizing_tools), pointer :: NMPvectorizer => null()
+	    !type (vectorizing_tools), pointer        :: vectorizer => null()
+	    !type (NoahMP_vectorizing_tools), pointer :: NMPvectorizer => null()
 
     logical :: pointer_allocation_guard = .false.
 		
