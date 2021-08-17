@@ -710,33 +710,88 @@ MODULE MODULE_MPP_LAND
 ! the IO node will distribute the data to rest of the node.
       real,intent(in), dimension(:,:) :: in_buff
       real,intent(out), dimension(local_nx,local_ny) :: out_buff
-      integer tag, i, status, ierr,size
+      real, dimension(:), allocatable :: send_buff
+      integer tag, i, ii, jj, pos, status, ierr,size
       integer ibegin,iend,jbegin,jend
 
-      tag = 2
       if(my_id .eq. IO_id) then
-         do i = 0, numprocs - 1
-            ibegin = startx(i+1)
-            iend   = startx(i+1)+local_nx_size(i+1) -1
-            jbegin = starty(i+1)
-            jend   = starty(i+1)+local_ny_size(i+1) -1
-
-            if(my_id .eq. i) then
-               out_buff=in_buff(ibegin:iend,jbegin:jend)
-            else
-               ! send data to the rest process.
-               size = local_nx_size(i+1)*local_ny_size(i+1)
-               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
-                  MPI_REAL, i,tag,HYDRO_COMM_WORLD,ierr)
-            end if
+        
+         ! allocate the buffer to hold data as required by mpi_scatterv
+         ! be careful with the index range if using array prepared for mpi in fortran (offset_vectors)
+         allocate(send_buff(0: (global_nx*global_ny) -1),stat = ierr)
+         
+         ! for each sub region in the global buffer linearize the data and place it in the
+         ! correct send buffer location
+         do i = 1, numprocs
+            ibegin = startx(i)
+            iend   = startx(i)+local_nx_size(i) -1
+            jbegin = starty(i)
+            jend   = starty(i)+local_ny_size(i) -1
+         
+            !write (6,*) offset_vectors(i), offset_vectors(i) +size_vectors(i) -1, ibegin, iend, jbegin, jend
+            
+            ! we may want use this direct loop to avoid array temps
+            !pos = offset_vectors(i)
+            !do jj = jbegin, jend
+            !    do ii = ibegin, iend
+            !        send_buff(pos) = in_buff(ii,jj)
+            !        pos = pos + 1
+            !    end do
+            !end do
+            
+            ! this is much more readable
+            send_buff(offset_vectors(i): offset_vectors(i) + size_vectors(i) - 1) = \
+               reshape(in_buff(ibegin:iend,jbegin:jend), (/size_vectors(i)/) )
          end do
+         
+         ! send the to each process size_vector(mpi_rank+1) data elements
+         ! and store the results in out_buff
+         call mpi_scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, \
+                      out_buff, size_vectors(my_id+1), MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
+         
+         ! remove the send buffer
+         deallocate(send_buff)
+
       else
-         size = local_nx*local_ny
-         call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
-                tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+         ! other processes only need to make mpi_scatterv call
+         call mpi_scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, \
+                      out_buff, size_vectors(my_id+1), MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
       end if
       return
   end subroutine decompose_data_real
+
+!  subroutine decompose_data_real (in_buff,out_buff)
+! usage: all of the cpu call this subroutine.
+! the IO node will distribute the data to rest of the node.
+!      real,intent(in), dimension(:,:) :: in_buff
+!      real,intent(out), dimension(local_nx,local_ny) :: out_buff
+!      integer tag, i, status, ierr,size
+!      integer ibegin,iend,jbegin,jend
+!
+!      tag = 2
+!      if(my_id .eq. IO_id) then
+!         do i = 0, numprocs - 1
+!            ibegin = startx(i+1)
+!            iend   = startx(i+1)+local_nx_size(i+1) -1
+!            jbegin = starty(i+1)
+!            jend   = starty(i+1)+local_ny_size(i+1) -1!
+!
+!            if(my_id .eq. i) then
+!               out_buff=in_buff(ibegin:iend,jbegin:jend)
+!            else
+!               ! send data to the rest process.
+!               size = local_nx_size(i+1)*local_ny_size(i+1)
+!               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+!                  MPI_REAL, i,tag,HYDRO_COMM_WORLD,ierr)
+!            end if
+!         end do
+!      else
+!         size = local_nx*local_ny
+!         call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
+!                tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+!      end if
+!      return
+!  end subroutine decompose_data_real
 
 
   subroutine decompose_data_int (in_buff,out_buff)
