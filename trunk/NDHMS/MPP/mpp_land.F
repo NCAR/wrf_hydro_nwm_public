@@ -405,55 +405,8 @@ MODULE MODULE_MPP_LAND
     g(1) = rt_ny
     call mpi_allgather(g, 1, MPI_INTEGER, local_rt_ny_size, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
 
-       !call mpp_land_sync()
-       !
-       !if(my_id .eq. IO_id) then
-       !    do i = 0, numprocs - 1
-       !       if(i .ne. my_id) then
-       !          !block receive  from other node.
-       !          tag = 1
-       !          call mpi_recv(s_r,2,MPI_INTEGER,i, &
-       !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-       !          local_nx_size(i+1) = s_r(1)
-       !          local_ny_size(i+1) = s_r(2)
-       !        else
-       !            local_nx_size(i+1) = local_nx
-       !            local_ny_size(i+1) = local_ny
-       !        end if
-       !    end do
-       !else
-       !    tag =  1
-       !    s_r(1) = local_nx
-       !    s_r(2) = local_ny
-       !    call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
-       !        tag,HYDRO_COMM_WORLD,ierr)
-       !end if
-       !
-       !
-       !if(my_id .eq. IO_id) then
-       !    do i = 0, numprocs - 1
-       !       if(i .ne. my_id) then
-       !          !block receive  from other node.
-       !          tag = 2
-       !          call mpi_recv(s_r,2,MPI_INTEGER,i, &
-       !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-       !          local_rt_nx_size(i+1) = s_r(1)
-       !          local_rt_ny_size(i+1) = s_r(2)
-       !        else
-       !            local_rt_nx_size(i+1) = rt_nx
-       !            local_rt_ny_size(i+1) = rt_ny
-       !        end if
-       !    end do
-       !else
-       !    tag =  2
-       !    s_r(1) = rt_nx
-       !    s_r(2) = rt_ny
-       !    call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
-       !        tag,HYDRO_COMM_WORLD,ierr)
-       !end if
-       !call mpp_land_sync()
-       return
-  end  subroutine get_local_size
+    return
+  end subroutine get_local_size
 
 
   subroutine MPP_LAND_UB_COM(in_out_data,NX,NY,flag)
@@ -594,8 +547,10 @@ MODULE MODULE_MPP_LAND
     return
   end  subroutine MPP_LAND_UB_COM8
 
+  
   subroutine calculate_start_p()
-! calculate startx and starty
+    ! calculate startx and starty
+    
     integer :: i,status, ierr, tag
     !integer :: r_s(2)
     integer :: g(1)
@@ -607,7 +562,7 @@ MODULE MODULE_MPP_LAND
     local_startx = int(global_nx/left_right_np) * left_right_p+1
     local_starty = int(global_ny/up_down_np) * up_down_p+1
 
-!ywold
+    !ywold
     t_nx = 0
     do i = 1, mod(global_nx,left_right_np)
        if(left_right_p .gt. i ) then
@@ -628,14 +583,6 @@ MODULE MODULE_MPP_LAND
     if(left_id .lt. 0) local_startx = 1
     if(down_id .lt. 0) local_starty = 1
 
-
-    !if(my_id .eq. IO_id) then
-    !     startx(my_id+1) = local_startx
-    !     starty(my_id+1) = local_starty
-    !end if
-
-    !r_s(1) = local_startx
-    !r_s(2) = local_starty
     call mpp_land_sync()
     
     ! dwj use all gather to share startx and starty
@@ -644,36 +591,18 @@ MODULE MODULE_MPP_LAND
     g(1) = local_starty
     call mpi_allgather(g, 1, MPI_INTEGER, starty, 1, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
 
-    !old code for initalizing starx and starty
-    !if(my_id .eq. IO_id) then
-    !    do i = 0, numprocs - 1
-    !       ! block receive  from other node.
-    !       if(i.ne.my_id) then
-    !          tag = 1
-    !          call mpi_recv(r_s,2,MPI_INTEGER,i, &
-    !               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-    !          startx(i+1) = r_s(1)
-    !          starty(i+1) = r_s(2)
-    !       end if
-    !    end do
-    !else
-    !       tag =  1
-    !       call mpi_send(r_s,2,MPI_INTEGER, IO_id,     &
-    !           tag,HYDRO_COMM_WORLD,ierr)
-    !end if
-
     call mpp_land_sync()
 
-! calculate the routing land start x and y
-     local_startx_rt = local_startx*rt_AGGFACTRT - (rt_AGGFACTRT-1)
-     if(local_startx_rt.gt.1) local_startx_rt=local_startx_rt - 1
-     local_starty_rt = local_starty*rt_AGGFACTRT - (rt_AGGFACTRT-1)
-     if(local_starty_rt.gt.1) local_starty_rt=local_starty_rt - 1
+    ! calculate the routing land start x and y
+    local_startx_rt = local_startx*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+    if(local_startx_rt.gt.1) local_startx_rt=local_startx_rt - 1
+    local_starty_rt = local_starty*rt_AGGFACTRT - (rt_AGGFACTRT-1)
+    if(local_starty_rt.gt.1) local_starty_rt=local_starty_rt - 1
 
-     local_endx_rt   = local_startx_rt + local_rt_nx -1
-     local_endy_rt   = local_starty_rt + local_rt_ny -1
+    local_endx_rt   = local_startx_rt + local_rt_nx -1
+    local_endy_rt   = local_starty_rt + local_rt_ny -1
 
-     return
+    return
   end subroutine calculate_start_p
   
   subroutine calculate_offset_vectors()
@@ -759,39 +688,6 @@ MODULE MODULE_MPP_LAND
       end if
       return
   end subroutine decompose_data_real
-
-!  subroutine decompose_data_real (in_buff,out_buff)
-! usage: all of the cpu call this subroutine.
-! the IO node will distribute the data to rest of the node.
-!      real,intent(in), dimension(:,:) :: in_buff
-!      real,intent(out), dimension(local_nx,local_ny) :: out_buff
-!      integer tag, i, status, ierr,size
-!      integer ibegin,iend,jbegin,jend
-!
-!      tag = 2
-!      if(my_id .eq. IO_id) then
-!         do i = 0, numprocs - 1
-!            ibegin = startx(i+1)
-!            iend   = startx(i+1)+local_nx_size(i+1) -1
-!            jbegin = starty(i+1)
-!            jend   = starty(i+1)+local_ny_size(i+1) -1!
-!
-!            if(my_id .eq. i) then
-!               out_buff=in_buff(ibegin:iend,jbegin:jend)
-!            else
-!               ! send data to the rest process.
-!               size = local_nx_size(i+1)*local_ny_size(i+1)
-!               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
-!                  MPI_REAL, i,tag,HYDRO_COMM_WORLD,ierr)
-!            end if
-!         end do
-!      else
-!         size = local_nx*local_ny
-!         call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
-!                tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-!      end if
-!      return
-!  end subroutine decompose_data_real
 
 
   subroutine decompose_data_int (in_buff,out_buff)
