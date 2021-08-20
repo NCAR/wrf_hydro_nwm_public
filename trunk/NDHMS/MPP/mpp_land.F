@@ -793,8 +793,6 @@ MODULE MODULE_MPP_LAND
       return
   end subroutine write_IO_int
 
-
-
 !  subroutine write_IO_int(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
 !      integer,dimension(:,:):: in_buff,  out_buff
@@ -873,35 +871,84 @@ MODULE MODULE_MPP_LAND
          call write_IO_real(in_buff(:,k,:),out_buff(:,k,:))
       end do
   end subroutine write_IO_real3d
-
-  subroutine write_IO_real(in_buff,out_buff)
-! the IO node will receive the data from the rest process.
-      real,dimension(:,:):: in_buff, out_buff
-      integer tag, i, status, ierr,size
+  
+  
+  subroutine write_IO_real (in_buff,out_buff)
+! usage: all of the cpu call this subroutine.
+! the IO node will recieve data from rest of the node.
+      real,intent(in), dimension(:,:) :: in_buff
+      real,intent(out), dimension(global_nx,global_ny) :: out_buff
+      real, dimension(:), allocatable :: recv_buff
+      integer tag, i, ii, jj, pos, status, ierr,size
       integer ibegin,iend,jbegin,jend
-      if(my_id .ne. IO_id) then
-          size = local_nx*local_ny
-          tag = 2
-          call mpi_send(in_buff,size,MPI_REAL, IO_id,     &
-                tag,HYDRO_COMM_WORLD,ierr)
+
+      if(my_id .eq. IO_id) then
+        
+         ! allocate the buffer to hold data as required by mpi_scatterv
+         ! be careful with the index range if using array prepared for mpi in fortran (offset_vectors)
+         allocate(recv_buff(0: (global_nx*global_ny) -1),stat = ierr)
+ 
+         ! recieve from each process size_vector(mpi_rank+1) data elements
+         ! and store the results in recv_buffer
+         call mpi_gatherv(in_buff, size_vectors(my_id+1), MPI_REAL, \
+                          recv_buff, size_vectors, offset_vectors, MPI_REAL, \
+                          IO_id, HYDRO_COMM_WORLD, ierr)
+         
+         ! for each sub region in the recv buffer create a correct shapped array 
+         ! and assign it to the output buffer
+         do i = 1, numprocs
+            ibegin = startx(i)
+            iend   = startx(i)+local_nx_size(i) -1
+            jbegin = starty(i)
+            jend   = starty(i)+local_ny_size(i) -1
+         
+            
+            ! this is much more readable
+            out_buff(ibegin:iend,jbegin:jend) = \
+                reshape(recv_buff(offset_vectors(i): offset_vectors(i) + size_vectors(i) - 1), \
+                (/local_nx_size(i), local_ny_size(i)/) )
+         end do
+         
+         ! remove the send buffer
+         deallocate(recv_buff)
+
       else
-          do i = 0, numprocs - 1
-            ibegin = startx(i+1)
-            iend   = startx(i+1)+local_nx_size(i+1) -1
-            jbegin = starty(i+1)
-            jend   = starty(i+1)+local_ny_size(i+1) -1
-            if(i .eq. IO_id) then
-               out_buff(ibegin:iend,jbegin:jend) = in_buff
-            else
-               size = local_nx_size(i+1)*local_ny_size(i+1)
-               tag = 2
-               call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
-                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-            end if
-          end do
+         ! other processes only need to make mpi_gatherv call
+         call mpi_gatherv(in_buff, size_vectors(my_id+1), MPI_REAL, \
+                          recv_buff, size_vectors, offset_vectors, MPI_REAL, \
+                          IO_id, HYDRO_COMM_WORLD, ierr)
       end if
       return
   end subroutine write_IO_real
+
+!  subroutine write_IO_real(in_buff,out_buff)
+! the IO node will receive the data from the rest process.
+!      real,dimension(:,:):: in_buff, out_buff
+!      integer tag, i, status, ierr,size
+!      integer ibegin,iend,jbegin,jend
+!      if(my_id .ne. IO_id) then
+!          size = local_nx*local_ny
+!          tag = 2
+!          call mpi_send(in_buff,size,MPI_REAL, IO_id,     &
+!                tag,HYDRO_COMM_WORLD,ierr)
+!      else
+!          do i = 0, numprocs - 1
+!            ibegin = startx(i+1)
+!            iend   = startx(i+1)+local_nx_size(i+1) -1
+!            jbegin = starty(i+1)
+!            jend   = starty(i+1)+local_ny_size(i+1) -1
+!            if(i .eq. IO_id) then
+!               out_buff(ibegin:iend,jbegin:jend) = in_buff
+!            else
+!               size = local_nx_size(i+1)*local_ny_size(i+1)
+!               tag = 2
+!               call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+!                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+!            end if
+!          end do
+!      end if
+!      return
+!  end subroutine write_IO_real
 
   subroutine write_IO_RT_real(in_buff,out_buff)
 ! the IO node will receive the data from the rest process.
