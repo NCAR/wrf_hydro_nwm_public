@@ -1208,8 +1208,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "Snow heat",&   !112                               
                                "Snow density",&   !113
                                "Snow water equivalent", &  ! 114
-                               "Glacier melt from ice", &  ! 115
-                               "Glacier melt from snow"]  !116
+                               "Accumulated glacier melt from ice", &  ! 115
+                               "Accumulated glacier melt from snow"]  !116
 
 !-- T.EI
    ldasOutDict%units(:) = [character(len=64) :: &
