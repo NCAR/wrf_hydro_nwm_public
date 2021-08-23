@@ -1197,8 +1197,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "Runoff from glacier",&   !102                                                         
                               "Total snow height",&   !103
                               "Total snow swe", &  !104
-                               "Snow grain 1",&   !105
-                               "Snow grain2",&   !106
+                               "Snow gran 1, optiacal diameter",&   !105
+                               "Snow gran 2, sphericity",&   !106
                                "Snow age",&   !107
                                "Snow temperature",&   !108
                                "Snow thickness",&   !109
@@ -1231,11 +1231,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "mm","1","1","1","K", &                            !91-95
                             "-","-","mm s-1",&                                  !96-98
 ! ++ T.EI for crocus
-                            "-","m"," ", &  ! 99-101
+                            "-","m","-", &  ! 99-101
                             "kg/(m2 s)","m","tbd",& !102-104
-                            "TBD","TBD","TBD",& !105-107
-                            "K","TBD","TBD",& !108-110
-                            "kg/m3","TBD","m",& !111-113
+                            "m","-","days since snowfall",& !105-107
+                            "K","m","-",& !108-110
+                            "kg/m3","J/m2","m",& !111-113
                             "kg m-2"] !114
 
    
