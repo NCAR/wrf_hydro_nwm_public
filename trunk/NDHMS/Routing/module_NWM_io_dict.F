@@ -1234,12 +1234,12 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "mm","1","1","1","K", &                            !91-95
                             "-","-","mm s-1",&                                  !96-98
 ! ++ T.EI for crocus
-                            "-","m"," ", &  ! 99-101
-                            "kg/(m2 s)","m","tbd",& !102-104
-                            "TBD","TBD","TBD",& !105-107
-                            "K","TBD","TBD",& !108-110
-                            "kg/m3","TBD","m",& !111-113
-                            "kg m-2","kg/(m2 s)","kg/(m2 s)"] !114-116
+                            "-","m","-", &  ! 99-101
+                            "kg/(m2 s)","m","kg m-2",& !102-104
+                            "m","-","days since snowfall",& !105-107
+                            "K","m","-",& !108-110
+                            "kg/m3","J/m2","m",& !111-113
+                            "kg m-2","kg/m2","kg/m2"] !114-116
 
    
 ! -- T.EI
