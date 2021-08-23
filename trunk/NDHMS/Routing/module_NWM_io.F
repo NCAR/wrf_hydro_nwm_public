@@ -1339,7 +1339,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,0,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,0,0,0,1,1,1]      !91-98
                              0,0,0,0,0,1,1,1,&      !91-98
 ! ++ T.EI crocus
                              0,0,0,& ! 99-101
@@ -1361,7 +1360,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,0,0,1]      !91-98
                              1,1,1,1,1,0,0,1,&      !91-98
 ! ++ T.EI crocus
                              0,0,0,& ! 99-101

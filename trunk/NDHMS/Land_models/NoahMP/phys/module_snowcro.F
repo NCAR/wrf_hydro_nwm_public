@@ -3634,6 +3634,11 @@ ZSNOWEVAP (:) = 0.0
 ZSNOWEVAPX(:) = 0.0
 ZSNOWDZ   (:) = 0.0
 !
+!++ trude. Test for rare event where snow is present, but density is zero (thin snow layer ~1e-10m)
+WHERE ( PSNOWRHO==0.0 )
+  PSNOWDZ(:)=0.0
+END WHERE
+
 WHERE ( PSNOWDZ>0.0 )
   !
   ! 1. Sublimation/condensation of snow ice
