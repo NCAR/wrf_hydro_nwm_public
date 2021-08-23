@@ -1243,7 +1243,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,& !105-107
                              1,1,1,& !108-110
                              1,1,1,& !111-113
-                             1] !114
+                             1,1,1] !114
 ! -- T.EI   
   else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
@@ -1263,7 +1263,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,& !105-107
                              1,1,1,& !108-110
                              1,1,1,& !111-113
-                             1] !114
+                             1,1,1] !114
 ! -- T.EI   
 
    else if(nlst(1)%io_config_outputs .eq. 2) then
@@ -1284,7 +1284,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
-                             0] !114
+                             0,0,0] !114
 ! -- T.EI   
 
    else if(nlst(1)%io_config_outputs .eq. 3) then
@@ -1305,7 +1305,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
-                             0] !114
+                             0,0,0] !114
 ! -- T.EI   
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
@@ -1325,7 +1325,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
-                             0] !114
+                             0,0,0] !114
 ! -- T.EI   
 
    else if(nlst(1)%io_config_outputs .eq. 5) then
@@ -1346,7 +1346,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
-                             0] !114
+                             0,0,0] !114
 ! -- T.EI   
 
    else if(nlst(1)%io_config_outputs .eq. 6) then
@@ -1367,7 +1367,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
-                             0] !114
+                             0,0,0] !114
 
 ! -- T.EI   
    else
@@ -1445,7 +1445,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
 !++ T.EI crocus
          iret = nf90_def_dim(ftnNoahMP,'glacier_levels',fileMeta%act_lev,dimId(8))
-!         write(*,*) 'glacier levels ', fileMeta%act_lev, dimid(8)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define act_layers dimension')
 ! -- T.EI
          ! Only create vis_nir if we are outputting the two snow albedo variables.
@@ -1788,7 +1787,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 !         write(*,*) 'ftnNoahMP :', ftnNoahMP
 !         write(*,*) 'num lev :', fileMeta%numLev(varInd)
          iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
-         write(*,*) iret
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
 !         write(*,*) 'trude foo2'
          if((nlst(1)%io_form_outputs .eq. 1) .or. (nlst(1)%io_form_outputs .eq. 2)) then

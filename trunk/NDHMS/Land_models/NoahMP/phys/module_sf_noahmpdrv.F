@@ -64,7 +64,8 @@ CONTAINS
               PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & !IN/OUT for crocus, T.EI
               PSNOWALBXY, PSNOWAGEXY, act_level,      & !IN/OUT  for crocus, T.EI
               PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY, & !OUT  for crocus   & out, T.EI
-              GLACINFO ,GLACT,VIS_ICEALB,& ! INOUT for crocus, T.EI
+              GLACINFO ,GLACT,VIS_ICEALB, &
+              FLOW_ICE, FLOW_SNOW,                           & ! OUT  ! INOUT for crocus, T.EI
 ! -- T.EI
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
@@ -505,7 +506,8 @@ CONTAINS
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
-
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: FLOW_ICE
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: FLOW_SNOW
       INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)              :: GLACINFO  
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: GLACT
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: VIS_ICEALB
@@ -516,11 +518,11 @@ CONTAINS
       LOGICAL                              :: OGLACIER
 
      REAL, DIMENSION(1)           ::   ZP_RRSNOW ,ZP_PSN3L, ZP_QA
-      REAL, DIMENSION(1)          :: ZP_PEW_A_COEF, ZP_PEW_B_COEF  
-      REAL, DIMENSION(1)          ::  ZP_PET_A_COEF, ZP_PEQ_A_COEF
+      REAL, DIMENSION(1)          ::   ZP_PEW_A_COEF, ZP_PEW_B_COEF  
+      REAL, DIMENSION(1)          ::   ZP_PET_A_COEF, ZP_PEQ_A_COEF
       REAL, DIMENSION(1)          ::   ZP_PET_B_COEF, ZP_PEQ_B_COEF ! trude ZP_PET_B_COEF potential temp?
-      REAL, PARAMETER              :: ZTFRZ   = 273.16 !freezing/melting point (k) 
-      REAL                                   :: ZFPICE ! snow fraction of precip
+      REAL, PARAMETER              ::  ZTFRZ   = 273.16 !freezing/melting point (k) 
+      REAL                          :: ZFPICE ! snow fraction of precip
       REAL, DIMENSION(1)           :: FOO1, FOO2
       REAL, DIMENSION(1,1:act_level) :: ZP_SNOWSWE
       REAL, DIMENSION(1,1:act_level) :: ZP_SNOWDZ
@@ -538,15 +540,17 @@ CONTAINS
       REAL, DIMENSION(1)    ::   ZP_Z0NAT
       REAL, DIMENSION(1)    ::   ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND
       REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB, ZP_VIS_ICEALB                   
-      
+      REAL, DIMENSION(1)    ::   ZFLOW_ICE, ZFLOW_SNOW
       REAL, DIMENSION(1)    ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
       REAL, DIMENSION(1)    ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT) 
       REAL, DIMENSION(1)    ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
       REAL, DIMENSION(1)    ::   ZP_SNOWHMASS                                                                !(OUT)
       REAL, DIMENSION(1)    ::   ZP_USTARSNOW                                                               !(OUT)
 
-      REAL,DIMENSION(1)     ::   ZP_VEGTYPE, ZP_ZENITH                                   !(IN)
-      REAL,DIMENSION(1)     :: ZP_PS               !PSFC
+      
+
+      REAL,DIMENSION(1)     ::  ZP_VEGTYPE, ZP_ZENITH                                   !(IN)
+      REAL,DIMENSION(1)     ::  ZP_PS               !PSFC
       REAL,DIMENSION(1)     ::  ZP_SRSNOW    !QSNOW
       REAL,DIMENSION(1)     ::  ZP_TA               ! T_ML 
       REAL,DIMENSION(1)     ::  ZP_TG               !TG? 
@@ -695,6 +699,8 @@ CONTAINS
        PRCP   = PRECIP_IN (I,J) / DT                  ! timestep total precip rate (glacier) [mm/s]! MB: v3.7
 
        CROPTYPE = 0
+       ZFLOW_ICE = 0
+       ZFLOW_SNOW = 0
 
        IF (PRESENT(MP_RAINC) .AND. PRESENT(MP_RAINNC) .AND. PRESENT(MP_SHCV) .AND. &
            PRESENT(MP_SNOW)  .AND. PRESENT(MP_GRAUP)  .AND. PRESENT(MP_HAIL)   ) THEN
@@ -1003,19 +1009,21 @@ CONTAINS
                   ZP_SNOWGRAN1, ZP_SNOWGRAN2, ZP_SNOWHIST, ZP_SNOWAGE, DT,  & !(INOUT) PTSTEP: (IN)
                   ZP_PS, ZP_SRSNOW, ZP_RRSNOW ,ZP_PSN3L, ZP_TA, ZP_TG,     & !(IN)
                   ZP_SW_RAD, ZP_QA, ZP_VMOD, ZP_LW_RAD, ZP_RHOA, ZP_UREF,       & !(IN)
-                  ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW, ZP_ZREF, ZP_Z0NAT, ZP_Z0EFF,   & !(IN)
-                  ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND, ZP_D_G,                                     & !(IN)
-                  ZP_SNOWLIQ,                                                                                              & !(OUT)  
-                  ZP_SNOWTEMP, ZP_SNOWDZ, ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR,  & !(OUT)
-                  ZP_RNSNOW, ZP_HSNOW, ZP_GFLUXSNOW, ZP_HPSNOW, ZP_LES3L,       & !(OUT) 
-                  ZP_LEL3L, ZP_EVAP, ZP_SNDRIFT, ZP_RI,                         & !(OUT)
-                  ZP_EMISNOW, ZP_CDSNOW, ZP_USTARSNOW,                          & !(OUT)
-                  ZP_CHSNOW, ZP_SNOWHMASS, ZP_QS,                                      & !(OUT)
-                  ZP_VEGTYPE, ZP_ZENITH,                                                                  & !(IN)
-                  OSNOWDRIFT,OSNOWDRIFT_SUBLIM,                 & !(IN)
+                  ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW, ZP_ZREF, ZP_Z0NAT, ZP_Z0EFF,  & !(IN)
+                  ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND, ZP_D_G,                      & !(IN)
+                  ZP_SNOWLIQ,                                                  & !(OUT)  
+                  ZP_SNOWTEMP, ZP_SNOWDZ, ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR, & !(OUT)
+                  ZP_RNSNOW, ZP_HSNOW, ZP_GFLUXSNOW, ZP_HPSNOW, ZP_LES3L,      & !(OUT) 
+                  ZP_LEL3L, ZP_EVAP, ZP_SNDRIFT, ZP_RI,                        & !(OUT)
+                  ZP_EMISNOW, ZP_CDSNOW, ZP_USTARSNOW,                         & !(OUT)
+                  ZP_CHSNOW, ZP_SNOWHMASS, ZP_QS,                              & !(OUT)
+                  ZP_VEGTYPE, ZP_ZENITH,                                       & !(IN)
+                  OSNOWDRIFT,OSNOWDRIFT_SUBLIM,                                & !(IN)
                   OSNOW_ABS_ZENITH, HSNOWMETAMO,HSNOWRAD,                      &
                   act_level, ZP_VIS_ICEALB,                                    &
-                  ZP_FSA_CROCUS, ZP_FSR_CROCUS, ZP_FIRA_CROCUS,I,J) !(OUT)
+                  ZP_FSA_CROCUS, ZP_FSR_CROCUS, ZP_FIRA_CROCUS,                &
+                  ZFLOW_ICE, ZFLOW_SNOW,                                         &
+                  I,J) !(OUT)
 
 
 
@@ -1455,7 +1463,8 @@ CONTAINS
 
              PSNOWALBXY(I,J) = ZP_SNOWALB(1)
              PSNOWTHRUFALXY(I,J) = ZP_THRUFAL(1)*DT
-             
+             FLOW_ICE(I,J) = ZFLOW_ICE(1)*DT
+             FLOW_SNOW(I,J) = ZFLOW_SNOW(1)*DT
              PSNOWHEIGHTXY(I,J) = sum(PSNOWDZXY(I,:,J))
              PSNOWTOTSWEXY(I,J) = sum(PSNOWSWEXY(I,:,J))
 

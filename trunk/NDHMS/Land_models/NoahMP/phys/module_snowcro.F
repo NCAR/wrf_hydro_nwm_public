@@ -30,11 +30,13 @@ CONTAINS
                PTHRUFAL,PGRNDFLUX,PEVAPCOR,PRNSNOW,PHSNOW,PGFLUXSNOW,    &
                PHPSNOW,PLES3L,PLEL3L,PEVAP,PSNDRIFT,PRI,                 &
                PEMISNOW,PCDSNOW,PUSTAR,PCHSNOW,PSNOWHMASS,PQS,           &
-               PPERMSNOWFRAC,PZENITH,                        &
+               PPERMSNOWFRAC,PZENITH,                                    &
                OSNOWDRIFT,OSNOWDRIFT_SUBLIM,OSNOW_ABS_ZENITH,            &
                HSNOWMETAMO,HSNOWRAD,                                     &
-               act_level, VIS_ICEALB,                                    &
-               PFSA_CROCUS, PFSR_CROCUS, PFIRA_CROCUS,I,J)                  !(OUT)) 
+               act_level,                                                &
+               PFSA_CROCUS, PFSR_CROCUS, PFIRA_CROCUS,                   &
+               FLOW_ICE, FLOW_SNOW,                                      & 
+               I,J)                  !(OUT)) 
 !     ##########################################################################
 !
 !!****  *SNOWCRO*
@@ -278,6 +280,9 @@ REAL, DIMENSION(:), INTENT(OUT)      :: PTHRUFAL, PGRNDFLUX, PEVAPCOR
 !                                                  actual snow cover (as snow vanishes)
 !                                                  and apply it as a surface soil water
 !                                                  sink. [kg/(m2 s)]
+! ++ trude
+REAL, DIMENSION(:), INTENT(OUT)    :: FLOW_ICE,FLOW_SNOW
+! -- trude
 !
 REAL, DIMENSION(:), INTENT(OUT)      :: PRNSNOW, PHSNOW, PGFLUXSNOW, PLES3L, PLEL3L, &
                                         PHPSNOW, PCDSNOW, PUSTAR, PEVAP, PSNDRIFT
@@ -453,8 +458,8 @@ PFSA_CROCUS(:) = 0
 PFSR_CROCUS(:) = 0
 PFIRA_CROCUS(:) = 0
 PTHRUFAL(:)   = 0.
-
-
+FLOW_SNOW(:)   = 0.
+FLOW_ICE(:)   = 0.
 !
 ZUSTAR2_IC = 0.0
 ZTA_IC     = 0.0
@@ -1122,7 +1127,16 @@ PGRNDFLUX(:) = PGRNDFLUX(:) + ZRADXS(:)
 !write(*,*) 'foo25 psnowdz', psnowdz
  CALL SNOWCROREFRZ(PTSTEP,PRR,PSNOWRHO,ZSNOWTEMP,PSNOWDZ,PSNOWLIQ,PTHRUFAL, &
                    ZSCAP,PLEL3L,INLVLS_USE                                  ) 
-!write(*,*) 'foo26 psnowdz', psnowdz
+
+! ++ trude
+!Assign streamflow from ice versus snow for output (diagnostics) 
+IF (PSNOWRHO(1,1) .ge. XRHOTHRESHOLD_ICE) THEN
+  FLOW_ICE = PTHRUFAL
+ELSE
+  FLOW_SNOW= PTHRUFAL
+ENDIF
+
+                   !write(*,*) 'foo26 psnowdz', psnowdz
 !                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 16" ! trude
 !
 !***************************************DEBUG IN**********************************************

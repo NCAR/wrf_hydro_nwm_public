@@ -21,8 +21,9 @@ implicit none
 integer, parameter :: numChVars = 11
 !++T.EI crocus
 !integer, parameter :: numLdasVars = 98
-integer, parameter :: numLdasVars = 114
+integer, parameter :: numLdasVars = 116
 !-- T.EI
+
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
@@ -1087,7 +1088,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                 "PSNOWGRAN1XY","PSNOWGRAN2XY","PSNOWAGEXY",& !105-107
                                 "PSNOWTEMPXY","PSNOWDZXY","PSNOWHISTXY",&  !108-110
                                 "PSNOWLIQ","PSNOWHEAT","PSNOWRHOXY",& !111-113
+<<<<<<< HEAD
                                 "PSNOWSWEXY"]  !114
+=======
+                                "PSNOWSWEXY", "FLOW_ICE", "FLOW_SNOW"]  !114-116
+>>>>>>> trude_crocus_merged
 
 
 !-- T.EI
@@ -1206,7 +1211,9 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "Liquid in snow",& ! 111   
                                "Snow heat",&   !112                               
                                "Snow density",&   !113
-                               "Snow water equivalent"]  !114
+                               "Snow water equivalent", &  ! 114
+                               "Accumulated glacier melt from ice", &  ! 115
+                               "Accumulated glacier melt from snow"]  !116
 
 !-- T.EI
    ldasOutDict%units(:) = [character(len=64) :: &
@@ -1236,8 +1243,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "m","-","days since snowfall",& !105-107
                             "K","m","-",& !108-110
                             "kg/m3","J/m2","m",& !111-113
-                            "kg m-2"] !114
-
+                            "kg m-2","kg/m2","kg/m2"] !114-116
    
 ! -- T.EI
    ldasOutDict%scaleFactor(:) = [1.0, 1.0, 0.01, 0.1, 0.1, &                   !1-5
@@ -1267,7 +1273,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.01,0.01,0.0001, & ! 105-107
                                  0.01,1.0,1.0, & ! 108-110
                                  0.0001,0.000001,0.001, & ! 111-1113
-                                 0.000001 ]   ! 114
+                                 0.000001, 0.01, 0.01 ]   ! 114-116
 ! -- .T.EI
    ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !1-10
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !11-20
@@ -1285,7 +1291,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                0.0,0.0,0.0, &    !105-107
                                0.0,0.0,0.0, &    !108-110
                                0.0,0.0,0.0, &    !111-103
-                               0.0] ! 114
+                               0.0,0.0,0.0] ! 114-116
 ! -- T.EI
    ! Note that output flags will be set in the the output routine, and will vary
    ! by the IOC flag specified in hydro.namelist.
@@ -1305,7 +1311,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                0,0,0, &    !105-107
                                0,0,0, &    !108-110
                                0,0,0, &    !111-103
-                               0] ! 114
+                               0,0,0]      !114-116
 ! -- T.EI
    ldasOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1, & !1-10
                                   1,1,1,1,1,1,1,1,1,1, & !11-20
@@ -1323,7 +1329,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   1,1,1, &   !105-107
                                   1,1,1, &   !108-110
                                   1,1,1, &   !111-113
-                                  1] ! 114
+                                  1,1,1]     !114-116
 ! -- T.EI
    ldasOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1, &  !1-10
                             1,1,1,1,1,1,1,1,1,1, &  !11-20
@@ -1341,7 +1347,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   40,40,40, & !105-107
                                   40,40,40, & !108-110
                                   40,40,40, & !111-113
-                                  40] ! 114
+                                  40,1,1]     !114-116
 ! -- T.EI
 
    ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
@@ -1370,7 +1376,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   -9999.0,-9999.0,-9999.0, &   !105-107
                                   -9999.0,-9999.0,-9999.0, &   !108-110
                                   -9999.0,-9999.0,-9999.0, &   !111-113
-                                  -9999.0 ] ! 114
+                                  -9999.0,-9999.0,-9999.0 ]    !114-116
 ! -- T.EI
 
    ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
@@ -1399,7 +1405,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   -9999.0,-9999.0,-9999.0, &   !105-107
                                   -9999.0,-9999.0,-9999.0, &   !108-110
                                   -9999.0,-9999.0,-9999.0, &   !111-113
-                                  -9999.0 ] ! 114
+                                  -9999.0,-9999.0,-9999.0 ]    !114-116
 ! -- T.EI
 
    ldasOutDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !1-5
@@ -1428,8 +1434,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   0.0d0,0.0d0,0.0d0, &   !102-104
                                   -1.0D+3,0.0d0,0.0d0, &   !105-107
                                   0.0d0,0.0d0,0.0d0, &   !108-110
-                                  0.0d0,-1.0d0+7,0.0d0, &   !111-113
-                                  0.0d0 ]   ! 114
+                                  0.0d0,-1.0d0+7,0.0d0, &  !111-113
+                                  0.0d0,0.0d0,0.0d0 ]      !114-116
 ! -- T.EI
 
    ldasOutDict%validMaxDbl(:) = [100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, &             !1-5
@@ -1459,7 +1465,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   1.0D+3, 1.0D+3, 1.0D+6, &    !105-107
                                   300.0d0, 1.0D+4, 1.0D+4, &    !108-110
                                   1.0d0, 0.0d0, 1.0D+3, &    !111-113
-                                  1.0D+9] ! 114
+                                  1.0D+9,1000.d0,1000.d0]    !114-116
 ! -- T.EI
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
