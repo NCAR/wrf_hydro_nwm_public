@@ -433,7 +433,7 @@ contains
    subroutine get_node_area(did)
        integer :: did
 
-       call get_area_g8(rt_domain(did)%node_area, rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
+       call get_area_g8(rt_domain(did)%node_area, rt_domain(did)%CH_NETLNK, &
          rt_domain(did)%NLINKS,rt_domain(did)%ixrt, rt_domain(did)%jxrt, rt_domain(did)%overland%properties%distance_to_neighbor)
    end subroutine get_node_area
     
