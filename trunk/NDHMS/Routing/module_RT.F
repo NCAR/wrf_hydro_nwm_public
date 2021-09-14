@@ -309,9 +309,6 @@ CONTAINS
   if(nlst(did)%channel_only       .eq. 0) then
      !allocate( rt_domain(did)%overland%streams_and_lakes%ch_netrt   	(IXRT,JXRT) ) !moved to overland%streams_and_lakes
      !rt_domain(did)%overland%streams_and_lakes%ch_netrt   	= 0.0                 !moved to overland%streams_and_lakes
-#ifdef HYDRO_D
-     write(6,*) "rt_allocate ****** allocate CH_LNKRT, IXRT=", IXRT, " JXRT=", JXRT
-#endif
      allocate( rt_domain(did)%CH_LNKRT (IXRT,JXRT) )
      rt_domain(did)%CH_LNKRT = 0.0
   endif
@@ -688,9 +685,6 @@ subroutine LandRT_ini(did)
 #ifdef OUTPUT_CHAN_CONN
   real :: connCalcTimeStart, connCalcTimeEnd
 #endif
-#ifdef HYDRO_D
-   write(6,*) "Entering LandRT_ini!"
-#endif
 !------------------------------------------------------------------------
 !DJG Routing Processing
 !------------------------------------------------------------------------
@@ -1036,14 +1030,8 @@ subroutine LandRT_ini(did)
           logical :: found
           
           call hash_table%set_all_idx(rt_domain(did)%LLINKID, rt_domain(did)%LNLINKSL)
-#ifdef HYDRO_D
-   write(6,*) "LandRT_ini: new_start_j=", new_start_j, " new_end_j", new_end_j, " new_start_i=", new_start_i, " new_end_i=", new_end_i
-#endif
           do jj = new_start_j, new_end_j
              do ii = new_start_i, new_end_i
-#ifdef HYDRO_D
-   write(6,*) "LandRT_ini: before call has_table%get: ii=", ii, " jj=", jj, " CH_LNKRT(", ii, ",", jj, ")=", rt_domain(did)%CH_LNKRT(ii,jj)
-#endif
                 call hash_table%get(rt_domain(did)%CH_LNKRT(ii,jj), val, found)
                 if(found .eqv. .true.) then
                    rt_domain(did)%CH_LNKRT_SL(ii,jj) = val
@@ -1689,9 +1677,6 @@ subroutine LandRT_ini(did)
    if(allocated(rt_domain(did)%ORIFICEA)) deallocate(rt_domain(did)%ORIFICEA)
    if(allocated(rt_domain(did)%LAKEMAXH)) deallocate(rt_domain(did)%LAKEMAXH)
 
-#ifdef HYDRO_D
-   write(6,*) "Done LandRT_ini!"
-#endif
 end subroutine LandRT_ini
 
 subroutine deriveFromNode(did)
