@@ -1084,15 +1084,11 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "ALBSND","ALBSNI","QRAIN",&                               !96-98
    !++ T.EI , crocus             
                                 "glacier", "glacier_thickness" ,"PSNOWALB",  &    !99-101
-                                "PSNOWTHRUFAL" ,"PSNOWHEIGHTXY","PSNOWTOTSWEXY" ,& ! 102-104
-                                "PSNOWGRAN1XY","PSNOWGRAN2XY","PSNOWAGEXY",& !105-107
-                                "PSNOWTEMPXY","PSNOWDZXY","PSNOWHISTXY",&  !108-110
-                                "PSNOWLIQ","PSNOWHEAT","PSNOWRHOXY",& !111-113
-<<<<<<< HEAD
-                                "PSNOWSWEXY"]  !114
-=======
-                                "PSNOWSWEXY", "FLOW_ICE", "FLOW_SNOW"]  !114-116
->>>>>>> trude_crocus_merged
+                                "PSNOWTHRUFAL" ,"PSNOWHEIGHT","PSNOWTOTSWE" ,& ! 102-104
+                                "PSNOWGRAN1","PSNOWGRAN2","PSNOWAGE",& !105-107
+                                "PSNOWTEMP","PSNOWDZ","PSNOWHIST",&  !108-110
+                                "PSNOWLIQ","PSNOWHEAT","PSNOWRHO",& !111-113
+                                "PSNOWSWE", "FLOW_ICE", "FLOW_SNOW"]  !114-116
 
 
 !-- T.EI

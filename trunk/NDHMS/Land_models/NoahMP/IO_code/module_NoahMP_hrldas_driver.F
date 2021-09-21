@@ -1554,7 +1554,7 @@ endif
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
                   'SOILSAT,SNOWT_AVG,QRAIN,'//&
 !++T.EI crocus
-                  'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
+                  'PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
                   'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'//&
                   'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE,FLOW_ICE,FLOW_SNOW'                                    
 !--T.EI crocus
@@ -2717,7 +2717,7 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,PSNOWHISTXY  , "PSNOWHIST" ,layers="MAXS")
   call define_rst_var(ncid,PSNOWLIQXY  , "PSNOWLIQ" ,layers="MAXS")
   call define_rst_var(ncid,PSNOWRHOXY  , "PSNOWRHO" ,layers="MAXS")  
- call define_rst_var(ncid,PSNOWSWEXY  , "PSNOWSWE" ,layers="MAXS")
+  call define_rst_var(ncid,PSNOWSWEXY  , "PSNOWSWE" ,layers="MAXS")
   call define_rst_var(ncid,PSNOWTEMPXY  , "PSNOWTEMP" ,layers="MAXS")
   call define_rst_var(ncid,PSNOWALBXY  , "PSNOWALB" )
   call define_rst_var(ncid,PSNOWHEIGHTXY  , "PSNOWHEIGHT" )

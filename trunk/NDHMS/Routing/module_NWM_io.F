@@ -1780,12 +1780,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
       ! Write array out to NetCDF file.
       if(myId .eq. 0) then
-!         write(*,*) 'trude foo1'
-!         write(*,*) 'variable name : ', fileMeta%varNames(varInd)
-!         write(*,*) 'varind :', varind
-!         write(*,*) 'varid :', varid
-!         write(*,*) 'ftnNoahMP :', ftnNoahMP
-!         write(*,*) 'num lev :', fileMeta%numLev(varInd)
+      !   write(*,*) 'trude foo1'
+      !   write(*,*) 'variable name : ', fileMeta%varNames(varInd)
+      !   write(*,*) 'varind :', varind
+      !   write(*,*) 'varid :', varid
+      !   write(*,*) 'ftnNoahMP :', ftnNoahMP
+      !   write(*,*) 'num lev :', fileMeta%numLev(varInd)
          iret = nf90_inq_varid(ftnNoahMP,trim(fileMeta%varNames(varInd)),varId)
          call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(varInd)))
 !         write(*,*) 'trude foo2'

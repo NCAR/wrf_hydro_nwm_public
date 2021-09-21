@@ -93,7 +93,10 @@ CONTAINS
 !   ++T.EI, crocus
       USE module_snowcro        ! crocus,trude
       USE MODD_SNOW_PAR, ONLY: XZ0SN, XZ0HSN
-!    --T.EI, crocus
+   
+
+      
+      !    --T.EI, crocus
 !----------------------------------------------------------------
     IMPLICIT NONE
 !----------------------------------------------------------------
@@ -506,6 +509,7 @@ CONTAINS
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
+!      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: PSNOWEVAPXY
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: FLOW_ICE
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: FLOW_SNOW
       INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)              :: GLACINFO  
@@ -587,6 +591,8 @@ CONTAINS
       REAL :: SNDPTHH
       REAL :: SNEQVOH
       CHARACTER(3)     :: HSNOWMETAMO, HSNOWRAD
+
+   
 
 ! ++ T.EI   crocus, assign mock local values, and initialize. These values should be in namelist. 
       HSNOWRES = 'ISBA-SNOW3L'  !   'DEF'
@@ -852,7 +858,7 @@ CONTAINS
       ZP_SNOWTEMP(1,1:act_level) = PSNOWTEMPXY(I,1:act_level,J)       
       ZP_SNOWDZ(1,1:act_level) = PSNOWDZXY(I,1:act_level,J)       
       ZP_SNOWALB(1) =  PSNOWALBXY(I,J)
-      
+      ZP_EVAP(1)    =  0 !PSNOWEVAPXY(I,J)
       ZP_vis_icealb(1) = VIS_ICEALB(I,J)
 
       ZP_ZENITH    = ACOS(COSZIN(I,J)) 
@@ -872,7 +878,7 @@ CONTAINS
       ZP_ZREF(1)       = Z_ML
       ZP_HSNOW(1)   = FSH
       ZP_LES3L(1)      = FGEV
-      ZP_EVAP(1)       = ESOIL
+      
       ZP_EMISNOW(1) = EMISSI
       ZP_CDSNOW(1)  = CM
       ZP_CHSNOW(1)  = CH
@@ -1089,6 +1095,10 @@ CONTAINS
              
              TG=ZP_SNOWTEMP(1,1)
              STC   (      1:NSOIL)=273.16
+   
+             
+   
+   
              !----------------
           ENDIF
           ! T.EI If crocus is not running, use the original NOAH-MP glacier
@@ -1462,12 +1472,29 @@ CONTAINS
              PSNOWDZXY(I,1:act_level,J) = ZP_SNOWDZ(1,1:act_level) 
 
              PSNOWALBXY(I,J) = ZP_SNOWALB(1)
+             !PSNOWEVAPXY(I,J) = ZP_EVAP(1)
              PSNOWTHRUFALXY(I,J) = ZP_THRUFAL(1)*DT
-             FLOW_ICE(I,J) = ZFLOW_ICE(1)*DT
-             FLOW_SNOW(I,J) = ZFLOW_SNOW(1)*DT
+             FLOW_ICE(I,J) = FLOW_ICE(I,J)+ZFLOW_ICE(1)*DT
+             FLOW_SNOW(I,J) = FLOW_SNOW(I,J)+ZFLOW_SNOW(1)*DT
              PSNOWHEIGHTXY(I,J) = sum(PSNOWDZXY(I,:,J))
              PSNOWTOTSWEXY(I,J) = sum(PSNOWSWEXY(I,:,J))
-
+             
+             if (GLACINFO(I,J).eq.1 .and. PSNOWHEIGHTXY(I,J).gt.0) then
+               ALBEDO   (I,J) = ZP_SNOWALB(1)
+               SNEQVOXY (I,J) = PSNOWTOTSWEXY(I,J)
+               SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
+               ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
+#ifdef WRF_HYDRO
+                  if(present(ACCETRAN)) ACCETRAN (I,J)  = 0.
+                  if(present(ACCECAN)) ACCECAN(I,J)                  = 0.
+                  if(present(ACCEDIR)) ACCEDIR(I,J) = ACCEDIR(I,J) +(zp_evap(1)*DT) - (ESOIL * DT) 
+                  if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)   = undefined_value
+                  if(present(SOILSAT)) SOILSAT (I,J)  = undefined_value
+               
+#endif
+            
+               
+            endif
 ! --T.EI
 
 
