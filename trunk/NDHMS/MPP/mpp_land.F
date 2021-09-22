@@ -2022,7 +2022,8 @@ MODULE MODULE_MPP_LAND
           implicit none
           integer gnlinks,nlinks, map_l2g(nlinks)
           integer(kind=int64) ::  recv(nlinks), v(nlinks)
-          integer(kind=int64), allocatable, dimension(:) :: tmp_map , tmp_v
+          integer(kind=int64), allocatable, dimension(:) :: tmp_v
+          integer, allocatable, dimension(:) :: tmp_map
           integer(kind=int64), dimension(:) :: g_v
           integer i, ierr, tag, k
           integer length, node, message_len
@@ -2048,10 +2049,9 @@ MODULE MODULE_MPP_LAND
                       !block receive  from other node.
 
                       tag = 109
-                      call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER8,i, &
+                      call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                       tag = 119
-
                       call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER8,i,  &
                               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
@@ -2081,7 +2081,7 @@ MODULE MODULE_MPP_LAND
               end do
           else
               tag =  109
-              call mpi_send(map_l2g,nlinks,MPI_INTEGER8, IO_id,     &
+              call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                       tag,HYDRO_COMM_WORLD,ierr)
               tag = 119
               call mpi_send(v,nlinks,MPI_INTEGER8,IO_id,   &
