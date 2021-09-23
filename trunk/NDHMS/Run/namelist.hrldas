@@ -67,6 +67,7 @@
  tracer_sublayer(4)      = 1
  !------------------------------------
 ! test
+! second test
 
  ! Restart file format options
  rst_bi_in = 0      !0: use netcdf input restart file
