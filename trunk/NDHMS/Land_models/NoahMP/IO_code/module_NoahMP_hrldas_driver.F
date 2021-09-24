@@ -42,6 +42,7 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
+   REAL,    allocatable, DIMENSION(:,:)   :: infxsrt_tr,  soldrain_tr    ! water tracer vars
    !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
    integer :: forc_typ, snow_assim, HRLDAS_ini_typ
    !integer :: forc_typ, snow_assim
@@ -1593,6 +1594,15 @@ print *, "NTRACER", NTRACER
    allocate( soldrain  (ix,jx) )
    allocate( etpnd     (ix,jx) )
    allocate( prcp0     (ix,jx) )
+   
+   !-----water tracer vars-----
+   if (OPT_WT .eq. 1) then
+     allocate( infxsrt_tr   (ix,jx) )
+     allocate( soldrain_tr  (ix,jx) )
+     infxsrt_tr  = 0.0
+     soldrain_tr = 0.0
+   end if
+   !-----water tracer end------   
 
    prcp0     = 0
    sfcheadrt = 0.0
@@ -2052,6 +2062,7 @@ print *, "NTRACER", NTRACER
 #endif
 #ifdef WRF_HYDRO
                  sfcheadrt,INFXSRT,soldrain,                          &    !O
+                 INFXSRT_TR=INFXSRT_TR, soldrain_tr=soldrain_tr       &    !O water tracer
 #endif
                 ids,ide, jds,jde, kds,kde,                      &
                 ims,ime, jms,jme, kms,kme,                      &
@@ -2110,7 +2121,14 @@ print *, "FLAG9-2"
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
-     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL) 
+     if (OPT_WT .le. 0) then
+       call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NTRACER) 
+     else
+       call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, &
+            NTRACER, WVTFLAG=WVTFALG, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB, &    ! water tracer vars      
+            SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR,              &    ! water tracer vars
+            infxsrt_tr=infxsrt_tr, soldrain_tr=soldrain_tr)           ! water tracer vars
+     end if
 #endif
 
 ! Output for history

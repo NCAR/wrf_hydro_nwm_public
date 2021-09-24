@@ -58,7 +58,9 @@ module module_HRLDAS_HYDRO
 
 CONTAINS
 
-    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk)
+    subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,&
+                               NTRACER, WVTFLAG, SMC_SUB,SH2OX_SUB,SMC_TR,SH2OX_TR,&    !wt vars
+                               infxsrt_tr, soldrain_tr)                                 !wt vars
 
 !---lpr added 2015-07-30---------
 #ifdef WRF_HYDRO_RAPID
@@ -73,6 +75,12 @@ CONTAINS
        integer k, gwsoilcpl
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, qsgw
+       !-----needed for water tracer capability------
+       integer, intent(inout)   :: NTRACER
+       integer, intent(inout), optional :: WVTFLAG
+       real,    intent(inout), optional, dimension(ii,jj,NTRACER) :: SMC_SUB,SH2OX_SUB,SMC_TR,SH2OX_TR
+       real,    intent(inout), optional, dimension(ii,jj)         :: infxsrt_tr, soldrain_tr
+       !---------------------------------------------
 
 !lpr add 2014-06-24
 #ifdef WRF_HYDRO_RAPID
@@ -168,6 +176,14 @@ CONTAINS
            RT_DOMAIN(did)%SH2OX = SH2OX
            RT_DOMAIN(did)%infxsrt = infxsrt
            RT_DOMAIN(did)%soldrain = soldrain
+           if (present(WVTFLAG)) then
+             RT_DOMAIN(did)%SMC_SUB     = SMC_SUB
+             RT_DOMAIN(did)%SH2OX_SUB   = SH2OX_SUB
+             RT_DOMAIN(did)%SMC_TR      = SMC_TR
+             RT_DOMAIN(did)%SH2OX_TR    = SH2OX_TR
+             RT_DOMAIN(did)%infxsrt_tr  = infxsrt_tr
+             RT_DOMAIN(did)%soldrain_tr = soldrain_tr
+           end if
         end if
            
            if(nlst_rt(did)%GWBASESWCRT == 3) gw2d(did)%qsgw = qsgw
@@ -199,6 +215,12 @@ CONTAINS
            SMC = rt_domain(did)%SMC
            SH2OX = rt_domain(did)%SH2OX
            sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
+           if (present(WVTFLAG)) then
+             SMC_SUB   = rt_domain(did)%SMC_SUB
+             SH2OX_SUB = rt_domain(did)%SH2OX_SUB
+             SMC_TR    = rt_domain(did)%SMC_TR
+             SH2OX_TR  = rt_domain(did)%SH2OX_TR
+           end if
         end if
         if(nlst_rt(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
 

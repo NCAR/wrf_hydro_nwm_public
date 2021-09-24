@@ -66,6 +66,7 @@ CONTAINS
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
+               INFXSRT_TR, soldrain_tr                                      & ! OUT water tracer vars
 #endif
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
@@ -149,6 +150,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ), OPTIONAL ::  MP_HAIL   ! hail precipitation entering land model [mm]       ! MB/AN : v3.7
 #ifdef WRF_HYDRO
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  sfcheadrt,INFXSRT,soldrain   ! for WRF-Hydro
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  INFXSRT_TR, soldrain_tr   ! water tracer vars
 #endif
 #ifdef SPATIAL_SOIL
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(IN) ::  BEXP_3D   ! C-H B exponent
@@ -1005,6 +1007,10 @@ print *, "FLAG006"
             soldrain(i,j) = max(RUNSB*dt, 0.)        !mm , underground runoff
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 
+     !-----water tracer start------
+     if (present(soldrain_tr))  soldrain_tr(i,j) = max(RUNSB_TR*dt, 0.)
+     if (present(INFXSRT_TR))   INFXSRT_TR(i,j)  = RUNSF_TR*dt 
+     !-----------------------------
 #endif
 
 
