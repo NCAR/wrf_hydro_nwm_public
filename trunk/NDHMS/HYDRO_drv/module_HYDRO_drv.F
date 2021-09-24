@@ -618,9 +618,17 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       endif
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
+           if (nlst_rt(did)%WVTFLAG .gt. 0) then
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
+                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, nlst_rt(did)%NTRACER,    &
+                 
+                 )
+           else
+            call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
+                 rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
+                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, nlst_rt(did)%NTRACER)
+           end if
          endif
       endif
 
