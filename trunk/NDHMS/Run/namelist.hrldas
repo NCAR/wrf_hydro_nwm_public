@@ -54,21 +54,6 @@
  ! Forcing data measurement height for winds, temp, humidity
  ZLVL = 10.0
 
- !------------------------------------
- ! water tracer tagging configuration
- !------------------------------------
- WATER_TRACER_OPTION     = 1       !0:off; 1:on
- PARTIAL_MIXING_OPTION   = 0       !0:off; 1:on
- track_start             = 201505010000
- track_end               = 201505070000
- tracer_sublayer(1)      = 1
- tracer_sublayer(2)      = 1
- tracer_sublayer(3)      = 1
- tracer_sublayer(4)      = 1
- !------------------------------------
-! test
-! second test
-
  ! Restart file format options
  rst_bi_in = 0      !0: use netcdf input restart file
                     !1: use parallel io for reading multiple restart files (1 per core)
