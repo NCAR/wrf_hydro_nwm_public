@@ -67,6 +67,7 @@ module module_hrldas_netcdf_io
   integer, private, allocatable, dimension(:,:) :: glacinfo_remember   ! not sure if needed
   real, private, allocatable, dimension(:,:) :: glact_remember   ! not sure if needed
   integer, private :: dimid_glacier_layers_remember
+  integer, private :: crocus_opt = 0
 ! -- T.EI
 
   interface define_rst_var
@@ -590,7 +591,7 @@ contains
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
        longitude, xland, seaice, msftx, msfty, &
-       crocus_opt, glacinfo,glact)  !!T.EI crocus
+       local_crocus_opt, glacinfo,glact)  !!T.EI crocus
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -598,9 +599,9 @@ contains
     integer,                   intent(in)  :: islake
     integer, dimension(xstart:xend,ystart:yend), intent(out) :: vegtyp, soltyp
 ! ++ T.EI crocus
-    integer,                                     intent(in)  :: crocus_opt
-    integer, dimension(xstart:xend,ystart:yend), intent(out) :: glacinfo
-    real,    dimension(xstart:xend,ystart:yend), intent(out) :: glact
+    integer,                                     intent(in)  :: local_crocus_opt
+    integer, dimension(xstart:xend,ystart:yend), intent(out), optional :: glacinfo
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
 ! -- T.EI
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
@@ -616,6 +617,8 @@ contains
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
+
+    crocus_opt = local_crocus_opt ! setting module scope variable
 
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
@@ -692,7 +695,7 @@ contains
     ! - crocus_opt = 1
     !   - no glacier or glacier_thickness: ERROR
     !   - glacier = 0: WARNING
-    if (crocus_opt .eq. 1) then
+    if (crocus_opt /= 0) then
        call get_landuse_or_glacinfo_netcdf("glacinfo", ncid, xdum , units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
        if (ierr == 0) then
           glacinfo = nint(xdum)
@@ -707,7 +710,7 @@ contains
           print *, "WARNING: crocus_opt on but get_2d_netcdf of glacier_thickness returned", ierr, &
                ". Setting glacier thickness to 0.0"
        end if
-    end if
+    end if ! crocus_opt /= 0
 ! -- T.EI
 
     ! Get Dominant Soil Type categories in the top layer (stl)
@@ -2260,7 +2263,7 @@ contains
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
 ! ++ T.EI crocus
-    integer,                                  intent(in) :: act_level
+    integer, optional,                        intent(in) :: act_level
 ! -- T.Ei
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
@@ -2268,20 +2271,25 @@ contains
     integer,          dimension(ixpar,jxpar), intent(in) :: vegtyp
     integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
 ! ++ T.EI crocus
-    integer,          dimension(ixpar,jxpar), intent(in) :: glacinfo
-    real,          dimension(ixpar,jxpar), intent(in) :: glact
+    integer,optional, dimension(ixpar,jxpar), intent(in) :: glacinfo
+    real,   optional, dimension(ixpar,jxpar), intent(in) :: glact
 ! -- T.EI
     integer,          dimension(global_nx,global_ny) :: g_vegtyp
     integer,          dimension(global_nx,global_ny) :: g_soltyp
 ! ++ T.EI crocus
-    integer,          dimension(global_nx,global_ny) :: g_glacinfo
-    real,          dimension(global_nx,global_ny) :: g_glact
+    integer,          dimension(:,:), allocatable    :: g_glacinfo
+    real,             dimension(:,:), allocatable    :: g_glact
 ! -- T.EI
 
     call write_io_int(vegtyp, g_vegtyp)
     call write_io_int(soltyp, g_soltyp)
 
     if(my_id .eq. IO_id) then
+       if (crocus_opt /= 0) then ! crocus turned on
+          allocate(g_glacinfo(ixpar,jxpar))
+          allocate(g_glact(ixpar,jxpar))
+       end if
+
        call prepare_output_file_seq(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
@@ -2335,7 +2343,7 @@ contains
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
 ! ++ T.EI crocus
-     integer,                                  intent(in) :: act_level
+    integer, optional,                        intent(in) :: act_level
 ! -- T.EI
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
@@ -2343,8 +2351,8 @@ contains
     integer,          dimension(ixpar,jxpar), intent(in) :: vegtyp
     integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
 ! ++ T.EI crocus
-   integer,          dimension(ixpar,jxpar), intent(in) :: glacinfo
-    real,          dimension(ixpar,jxpar), intent(in) :: glact
+    integer, optional, dimension(ixpar,jxpar), intent(in) :: glacinfo
+    real,    optional, dimension(ixpar,jxpar), intent(in) :: glact
 ! -- T.EI
 
     integer :: ncid
@@ -2395,7 +2403,8 @@ contains
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
 ! ++ T.EI crocus
-       iret = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
+       if (crocus_opt /= 0) &
+            iret = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
 ! -- T.EI
        iret = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "OUTPUT FROM HRLDAS "//version)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
@@ -2453,17 +2462,20 @@ contains
     dimid_layers_remember = dimid_layers
     dimid_snow_layers_remember = dimid_snow_layers
 ! ++ T.EI crocus
-    dimid_glacier_layers_remember = dimid_glacier_layers
+    if (crocus_opt /= 0) &
+         dimid_glacier_layers_remember = dimid_glacier_layers
 ! -- T.EI
     iswater_remember = iswater
 
     allocate(vegtyp_remember(ixpar,jxpar))
     vegtyp_remember = vegtyp
 ! ++ T.EI crocus
-    allocate(glacinfo_remember(ixpar,jxpar))
-    glacinfo_remember = glacinfo
-    allocate(glact_remember(ixpar,jxpar))
-    glact_remember = glact
+    if (crocus_opt /= 0) then
+       allocate(glacinfo_remember(ixpar,jxpar))
+       glacinfo_remember = glacinfo
+       allocate(glact_remember(ixpar,jxpar))
+       glact_remember = glact
+    end if
 ! -- T.EI
 
 !
@@ -2950,7 +2962,7 @@ contains
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
 ! ++ T.EI crocus
-    integer,                               intent(in) :: act_level
+    integer, optional,                     intent(in) :: act_level
 ! -- T.EI
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
@@ -2960,8 +2972,8 @@ contains
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
     integer, dimension(global_nx,global_ny) :: gvegtyp
 ! ++ T.EI crocus
-    integer, dimension(ixpar,jxpar),       intent(in) :: glacinfo
-    real, dimension(ixpar,jxpar),       intent(in) :: glact
+    integer, dimension(ixpar,jxpar), optional, intent(in) :: glacinfo
+    real,    dimension(ixpar,jxpar), optional, intent(in) :: glact
 !-- T.EI
 
     call write_io_int(vegtyp, gvegtyp)
@@ -3006,7 +3018,7 @@ contains
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
 ! ++ T.EI crocus
-    integer,                               intent(in) :: act_level
+    integer, optional,                     intent(in) :: act_level
 ! -- T.EI
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
@@ -3038,7 +3050,6 @@ contains
     rank = 0
 
 #endif
-
 
     write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
     if (rank==0) then
@@ -3074,7 +3085,8 @@ contains
     ierr = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
     ierr = nf90_def_dim(ncid, "sosn_layers", nsnow+nsoil, dimid_sosn_layers)
 ! ++ T.EI crocus
-    ierr = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
+    if (crocus_opt /= 0) &
+         ierr = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
 ! -- T.Ei
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "RESTART FILE FROM HRLDAS "//version)
@@ -3892,7 +3904,7 @@ contains
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'sosn_layers'")
 ! ++ T.EI crocus
-    else if (output_layers == "MAXS") then
+    else if (output_layers == "MAXS" .and. crocus_opt /= 0) then
        ierr = nf90_inq_dimid(ncid, "glacier_levels", dimid_kx)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'glacier_levels'")

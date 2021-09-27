@@ -12,8 +12,8 @@ module config_base
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
  !++ T.EI crocus
-     integer            :: crocus_opt = -1
-     integer            :: act_lev
+     integer            :: crocus_opt = 0
+     integer            :: act_lev    = 0
 ! -- T.EI
      integer            :: forcing_timestep
      integer            :: noah_timestep
@@ -73,7 +73,7 @@ module config_base
 
      integer :: nsoil, SOLVEG_INITSWC
  !++ T.EI crocus
-     integer            :: act_lev
+     integer            :: act_lev = 0
 ! -- T.EI
      real,allocatable,dimension(:) :: ZSOIL8
      real*8 :: out_dt, rst_dt
@@ -179,7 +179,7 @@ module config_base
 
   type crocus_options
      integer :: crocus_opt = 0
-     integer :: act_lev = -999
+     integer :: act_lev = 0
   end type crocus_options
 
   integer, parameter :: max_domain = 5
@@ -1109,8 +1109,11 @@ contains
     end if
 
     opt%crocus_opt = crocus_opt
-    opt%act_lev = act_lev
-
+    if (crocus_opt == 0) then
+       opt%act_lev = 0
+    else
+       opt%act_lev = act_lev
+    end if
   end subroutine read_crocus_namelist
 
 end module config_base
