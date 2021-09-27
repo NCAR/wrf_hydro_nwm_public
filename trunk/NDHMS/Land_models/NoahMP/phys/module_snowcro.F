@@ -3636,6 +3636,13 @@ ZSNOWEVAP (:) = 0.0
 ZSNOWEVAPX(:) = 0.0
 ZSNOWDZ   (:) = 0.0
 !
+
+! ++ trude. This test is added because at one point PSNOWDZ had a very thin snow layer (~1e-10 m) and
+! ++ PSNOWRHO was zero. This caused a crash. 
+WHERE (PSNOWRHO==0)
+  PSNOWDZ(:)=0
+ENDWHERE
+
 WHERE ( PSNOWDZ>0.0 )
   !
   ! 1. Sublimation/condensation of snow ice

@@ -1120,7 +1120,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 !   integer :: dimId(7) ! NetCDF dimension ID values
 ! ++ T.EI crocus
    integer :: dimId(8) ! NetCDF dimension ID values
-! -- T.EI 
+! -- T.EI
    integer :: varId ! NetCDF variable ID value
    integer :: timeId ! NetCDF time variable ID
    integer :: refTimeId ! NetCDF reference_time variable ID
@@ -1251,8 +1251,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,& !108-110
                              1,1,1,& !111-113
                              1,1,1]  !114
-      ! -- T.EI 
-  
+      ! -- T.EI
+
   else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
       fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
@@ -1272,7 +1272,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !108-110
                              0,0,0,& !111-113
                              0,0,0]  !114
-      ! -- T.EI   
+      ! -- T.EI
 
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
@@ -1293,7 +1293,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !108-110
                              0,0,0,& !111-113
                              0,0,0]  !114
-      ! -- T.EI   
+      ! -- T.EI
 
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
@@ -1314,7 +1314,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !108-110
                              0,0,0,& !111-113
                              0,0,0]  !114
-      ! -- T.EI   
+      ! -- T.EI
 
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
@@ -1335,7 +1335,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,& !108-110
                              0,0,0,& !111-113
                              0,0,0]  !114
-      ! -- T.EI   
+      ! -- T.EI
 
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
@@ -1348,15 +1348,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,0,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,0,0,0,1,1,1,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,1,& !99-101
-                             1,1,1,& !102-104
+                             0,0,0,0,0,1,1,1,&      !91-98
+! ++ T.EI crocus
+                             0,0,0,& ! 99-101
+                             0,0,0,& !102-104
                              0,0,0,& !105-107
                              1,1,0,& !108-110
                              1,0,0,& !111-113
                              1,1,1]  !114
-      ! -- T.EI   
+! -- T.EI
 
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
@@ -1369,16 +1369,15 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,0,0,1,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,0,& !99-101
+                             1,1,1,1,1,0,0,1,&      !91-98
+! ++ T.EI crocus
+                             0,0,0,& ! 99-101
                              0,0,0,& !102-104
                              0,0,0,& !105-107
                              0,0,0,& !108-110
                              0,0,0,& !111-113
                              0,0,0]  !114
-      ! -- T.EI   
-
+! -- T.EI
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -5618,7 +5617,7 @@ subroutine output_gw_NWM(domainId,iGrid)
             else
                varOutInt(:) = NINT((varOutReal(iTmp,:)-fileMeta%addOffset(iTmp))/fileMeta%scaleFactor(iTmp))
             endif
-            ! Get NetCDF variable id.           
+            ! Get NetCDF variable id.
             iret = nf90_inq_varid(ftn,trim(fileMeta%varNames(iTmp)),varId)
             call nwmCheck(diagFlag,iret,'ERROR: Unable to find variable ID for var: '//trim(fileMeta%varNames(iTmp)))
             ! Put data into NetCDF file

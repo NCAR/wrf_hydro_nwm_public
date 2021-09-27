@@ -45,7 +45,10 @@ SUBROUTINE wrf_error_fatal( str )
 END SUBROUTINE wrf_error_fatal
 
 SUBROUTINE wrf_abort
-      STOP 'wrf_abort'
+  integer ierr
+  CALL MPI_ABORT(HYDRO_COMM_WORLD,1,ierr)
+  call MPI_finalize(ierr)
+  STOP 'wrf_abort'
 END SUBROUTINE wrf_abort
 
 SUBROUTINE wrf_debug( level , str ) 

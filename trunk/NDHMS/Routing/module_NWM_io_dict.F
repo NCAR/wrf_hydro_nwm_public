@@ -19,7 +19,10 @@ implicit none
 
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 11
+!++T.EI crocus
 integer, parameter :: numLdasVars = 116
+!-- T.EI
+
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
@@ -769,7 +772,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
                                0.0,0.0]
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
-   ! output subroutine. 
+   ! output subroutine.
    chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0]
    chrtOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1]
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
@@ -1078,7 +1081,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "GPP","NPP","PSN","APAR","ACCET", &                       !86-90
                                "CANWAT","SOILICE","SOILSAT_TOP","SOILSAT","SNOWT_AVG", & !91-95
                                "ALBSND","ALBSNI","QRAIN", &                              !96-98
-   !++ T.EI , crocus             
+   !++ T.EI , crocus
                                 "glacier", "glacier_thickness" ,"PSNOWALB", &            !99-101
                                 "PSNOWTHRUFAL" ,"PSNOWHEIGHTXY","PSNOWTOTSWEXY", &       !102-104
                                 "PSNOWGRAN1XY","PSNOWGRAN2XY","PSNOWAGEXY", &            !105-107
@@ -1190,7 +1193,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "Glacier grid point", &                   !99
                               "Glacier height",&                        !100
                               "Snow albedo",&                           !101
-                              "Runoff from glacier",&                   !102                                                         
+                              "Runoff from glacier",&                   !102
                               "Total snow height",&                     !103
                               "Total snow swe", &                       !104
                                "Snow grain 1",&                         !105
@@ -1199,8 +1202,8 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "Snow temperature",&                     !108
                                "Snow thickness",&                       !109
                                "Snow history",&                         !110
-                               "Liquid in snow",&                       !111   
-                               "Snow heat",&                            !112                               
+                               "Liquid in snow",&                       !111
+                               "Snow heat",&                            !112
                                "Snow density",&                         !113
                                "Snow water equivalent", &               !114
                                "Glacier melt from ice", &               !115
@@ -1257,7 +1260,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.01, 0.01, 0.01, 0.01, 0.01, &               !86-90
                                  0.01, 0.01, 0.001, 0.001, 0.1, &              !91-95
                                  0.01, 0.01, 0.00001, &                        !96-98
-   ! ++ T.EI for crocus! 
+   ! ++ T.EI for crocus!
    !!! Rember to do the correct scaling factor
                                  1.0, 1.0,1.0,&           !99-101
                                  1.0,1.0,0.01, &          !102-104
@@ -1364,15 +1367,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                                 -9999.0,-9999.0, -999.0, &                 !96-98
-   ! ++ T.EI for crocus
-                                 -9999.0,-9999.0,-9999.0, &   !99-101
-                                 -9999.0,-9999.0,-9999.0, &   !102-104
-                                 -9999.0,-9999.0,-9999.0, &   !105-107
-                                 -9999.0,-9999.0,-9999.0, &   !108-110
-                                 -9999.0,-9999.0,-9999.0, &   !111-113
-                                 -9999.0,-9999.0,-9999.0 ]    !114-116
-   ! -- T.EI
+                                 -9999.0,-9999.0,-999.0,&                  !96-98
+! ++ T.EI for crocus
+                                  -9999.0,-9999.0,-9999.0, &   !99-101
+                                  -9999.0,-9999.0,-9999.0, &   !102-104
+                                  -9999.0,-9999.0,-9999.0, &   !105-107
+                                  -9999.0,-9999.0,-9999.0, &   !108-110
+                                  -9999.0,-9999.0,-9999.0, &   !111-113
+                                  -9999.0,-9999.0,-9999.0 ]    !114-116
+! -- T.EI
 
    ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
@@ -1393,15 +1396,15 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                              -9999.0,-9999.0, -999.0, &                 !96-98
-   ! ++ T.EI for crocus
-                              -9999.0,-9999.0,-9999.0, &   !99-101
-                              -9999.0,-9999.0,-9999.0, &   !102-104
-                              -9999.0,-9999.0,-9999.0, &   !105-107
-                              -9999.0,-9999.0,-9999.0, &   !108-110
-                              -9999.0,-9999.0,-9999.0, &   !111-113
-                              -9999.0,-9999.0,-9999.0 ]    !114-116
-   ! -- T.EI
+                              -9999.0,-9999.0,-999.0,&                   !96-98
+! ++ T.EI for crocus
+                                  -9999.0,-9999.0,-9999.0, &   !99-101
+                                  -9999.0,-9999.0,-9999.0, &   !102-104
+                                  -9999.0,-9999.0,-9999.0, &   !105-107
+                                  -9999.0,-9999.0,-9999.0, &   !108-110
+                                  -9999.0,-9999.0,-9999.0, &   !111-113
+                                  -9999.0,-9999.0,-9999.0 ]    !114-116
+! -- T.EI
 
    ldasOutDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !1-5
                                  -1000.0d0, -1.0d0, -1500.0d0, 0.0d0, 0.0d0, &            !6-10
