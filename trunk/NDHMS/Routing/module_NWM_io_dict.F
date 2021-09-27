@@ -1347,6 +1347,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             40,40,40, &   !111-113
                             40,1,1]       !114-116
    ! -- T.EI
+   ldasOutDict%numLev(105:114) = ldasOutDict%act_lev ! Set crocus levels to number from namelist
 
    ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
