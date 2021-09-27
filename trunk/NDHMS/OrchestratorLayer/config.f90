@@ -12,8 +12,9 @@ module config_base
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
  !++ T.EI crocus
+     integer            :: crocus_opt = -1
      integer            :: act_lev
-! -- T.EI 
+! -- T.EI
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -44,7 +45,7 @@ module config_base
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
 
-     integer            :: split_output_count = 1 
+     integer            :: split_output_count = 1
      integer            :: khour
      integer            :: kday = -999
      real               :: zlvl
@@ -73,7 +74,7 @@ module config_base
      integer :: nsoil, SOLVEG_INITSWC
  !++ T.EI crocus
      integer            :: act_lev
-! -- T.EI 
+! -- T.EI
      real,allocatable,dimension(:) :: ZSOIL8
      real*8 :: out_dt, rst_dt
      real   :: dt  !! dt is NOAH_TIMESTEP
@@ -175,6 +176,11 @@ module config_base
      procedure, nopass :: init => config_init
      procedure, nopass :: init_nlst => init_namelist_rt_field
   end type Configuration_
+
+  type crocus_options
+     integer :: crocus_opt = 0
+     integer :: act_lev = -999
+  end type crocus_options
 
   integer, parameter :: max_domain = 5
 
@@ -521,8 +527,8 @@ contains
     integer  :: NSOIL
     real :: ZSOIL8(8)
  !++ T.EI crocus
-     integer            :: act_lev
-! -- T.EI 
+    type(crocus_options) :: crocus_opts
+! -- T.EI
 
     logical            :: dir_e
     character(len=1024) :: reservoir_obs_dir
@@ -543,9 +549,6 @@ contains
 #endif
 
     namelist /HYDRO_nlist/ NSOIL, ZSOIL8,&
- !++ T.EI crocus
-         act_lev, &
-! -- T.EI 
          RESTART_FILE,SPLIT_OUTPUT_COUNT,IGRID,&
          geo_static_flnm, &
          land_spatial_meta_flnm, &
@@ -638,6 +641,7 @@ contains
 #endif
     close(12)
 
+    call read_crocus_namelist(crocus_opts)
 ! #ifdef MPP_LAND
 !     endif
 ! #endif
@@ -750,7 +754,7 @@ contains
     endif
 
 ! ++ T.EI crocus
-    nlst(did)%act_lev = act_lev
+    nlst(did)%act_lev = crocus_opts%act_lev
 ! -- T.EI
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
@@ -870,8 +874,8 @@ contains
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
  !++ T.EI crocus
-     integer            :: act_lev
-! -- T.EI 
+     type(crocus_options) :: crocus_opts
+! -- T.EI
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -922,9 +926,6 @@ contains
 
     namelist / NOAHLSM_OFFLINE /    &
          indir, nsoil, soil_thick_input, forcing_timestep, noah_timestep, &
-         !++ T.EI crocus
-         act_lev,&
-         ! -- T.EI          
          start_year, start_month, start_day, start_hour, start_min, &
          outdir, &
          restart_filename_requested, restart_frequency_hours, output_timestep, &
@@ -934,7 +935,7 @@ contains
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
-         
+
          soil_data_option, pedotransfer_option, crop_option, &
 
          split_output_count, &
@@ -946,9 +947,6 @@ contains
     namelist /WRF_HYDRO_OFFLINE/ &
          finemesh,finemesh_factor,forc_typ, snow_assim
 
-    !++ T.EI crocus
-    noah_lsm%act_lev               = -999
-    !-- T.EI
     noah_lsm%nsoil                   = -999
     noah_lsm%soil_thick_input        = -999
     ! dtbl                             = -999
@@ -998,6 +996,12 @@ contains
     endif
 
 #ifndef NCEP_WCOSS
+    call read_crocus_namelist(crocus_opts, 30)
+#else
+    call read_crocus_namelist(crocus_opts, 11)
+#endif
+
+#ifndef NCEP_WCOSS
     close(30)
 #else
     close(11)
@@ -1011,7 +1015,8 @@ contains
     noah_lsm%indir = indir
     noah_lsm%nsoil = nsoil ! number of soil layers
     !++ T.EI crocus
-    noah_lsm%act_lev = act_lev
+    noah_lsm%crocus_opt = crocus_opts%crocus_opt
+    noah_lsm%act_lev = crocus_opts%act_lev
     !-- T.EI
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
@@ -1072,5 +1077,40 @@ contains
     noah_lsm%spatial_filename = spatial_filename
 
   end subroutine init_noah_lsm_and_wrf_hydro
+
+  subroutine read_crocus_namelist(opt, f_in)
+    type(crocus_options), intent(OUT) :: opt
+    integer, intent(IN), optional :: f_in
+    character(len=15) :: filename = "namelist.hrldas"
+    logical :: f_exists, f_opened
+    integer :: crocus_opt, act_lev
+    integer :: ierr, f_local
+    namelist /CROCUS_nlist/ &
+         crocus_opt, act_lev
+
+    ! check if file is opened
+    if (present(f_in)) then
+       rewind(30)
+       read(f_in, NML=CROCUS_nlist, iostat=ierr)
+    else
+       ! check that file exists
+       inquire(file=filename, exist=f_exists)
+       if (f_exists .eqv. .false.) &
+           call hydro_stop (" FATAL ERROR: namelist.hrldas does not exist")
+       open(f_local, file=filename, form="FORMATTED", iostat=ierr)
+       read(f_local, NML=CROCUS_nlist, iostat=ierr)
+       close(f_local)
+    end if
+
+    if ((ierr .ne. 0) .or. (crocus_opt .eq. 0)) &
+         return
+    if ((act_lev .gt. 50) .or. (act_lev .lt. 0)) then
+       call hydro_stop (" FATAL ERROR: Crocus act_lev out of range of 0-50 ")
+    end if
+
+    opt%crocus_opt = crocus_opt
+    opt%act_lev = act_lev
+
+  end subroutine read_crocus_namelist
 
 end module config_base
