@@ -330,7 +330,10 @@ subroutine SUBMUSKINGCUNGE(    &
      qdc, vel, idx, qup,  quc, &
      qdp, ql,   dt,  So,   dx, &
      n,   Cs,   Bw,  Tw, TwCC, &
-     nCC, depth                 )
+     nCC, depth                &
+     , wvtflag_pass, qdc_tr    & !wt vars
+     , qup_tr, quc_tr, qdp_tr  & !wt vars
+     , ql_tr, depth_tr     )   & !wt vars
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -355,6 +358,17 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         REAL, intent(INOUT)    :: vel        ! mannings coefficient
         INTEGER, intent(IN)    :: idx        ! channel id
         REAL, intent(INOUT)    :: depth      ! depth of flow in channel
+!-----needed for water tracer capability-----
+        INTEGER, OPTIONAL, INTENT(IN)       :: wvtflag_pass
+        REAL,    OPTIONAL, INTENT(INOUT)    :: qdc_tr
+        REAL,    OPTIONAL, INTENT(IN)       :: qup_tr
+        REAL,    OPTIONAL, INTENT(IN)       :: quc_tr
+        REAL,    OPTIONAL, INTENT(IN)       :: qdp_tr
+        REAL,    OPTIONAL, INTENT(IN)       :: ql_tr
+        REAL,    OPTIONAL, INTENT(INOUT)    :: depth_tr
+        !----local vars-----
+        REAL                                :: PROPOR_TR
+!--------------------------------------------
 
 !--local variables
         REAL    :: C1, C2, C3, C4
@@ -659,15 +673,65 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
         R = (h*(Bw + Twl) / 2.0) / (Bw + 2.0*(((Twl - Bw) / 2.0)**2.0 + h**2)**0.5)    
         vel =  (1./n) * (R **(2.0/3.0)) * sqrt(So)  ! average velocity in m/s
         depth = h
- 
+ !-----needed for water tracer capability------
+        if (present(wvtflag_pass)) then
+          call calculate_proportr_muskingcunge(Km, X, dt,   &
+                                               qup,    qdp,    quc,    qdc,    ql,    &
+                                               qup_tr, qdp_tr, quc_tr,         ql_tr, &
+                                               PROPOR_TR)
+          qdc_tr  =  qdc  *PROPOR_TR
+          depth_tr = depth*PROPOR_TR
+        end if
+ !---------------------------------------------
+
       else   ! no flow to route
        qdc = 0.0
        depth = 0.0
+       if (present(wvtflag_pass)) then
+         qdc_tr   = 0.0
+         depth_tr = 0.0
+       end if
      endif 
 
 ! ----------------------------------------------------------------
 END SUBROUTINE SUBMUSKINGCUNGE
 ! ----------------------------------------------------------------
+
+
+! ------------------------------------------------
+! HUANCUI HU:  SUBROUTINE CALCULATE_PROPORTR_MUSKINGCUNGE
+! ------------------------------------------------
+SUBROUTINE calculate_proportr_muskingcunge(Km, X, dt, &
+                                           qup,    qdp,    quc,    qdc,    ql,    &
+                                           qup_tr, qdp_tr, quc_tr,         ql_tr, &
+                                           PROPOR_TR)
+
+  REAL,   INTENT(IN)    :: Km
+  REAL,   INTENT(IN)    :: X
+  REAL,   INTENT(IN)    :: dt
+  REAL,   INTENT(IN)    :: qup
+  REAL,   INTENT(IN)    :: qdp
+  REAL,   INTENT(IN)    :: quc
+  REAL,   INTENT(IN)    :: qdc
+  REAL,   INTENT(IN)    :: ql
+  REAL,   INTENT(IN)    :: qup_tr
+  REAL,   INTENT(IN)    :: qdp_tr
+  REAL,   INTENT(IN)    :: quc_tr
+  REAL,   INTENT(IN)    :: ql_tr
+  REAL,   INTENT(OUT)   :: PROPOR_TR
+  !-----LOCAL VARS------
+  REAL                  :: STORAGE_TR
+  REAL                  :: STORAGE_TOTAL
+
+  PROPOR_TR     = 0.0
+  STORAGE_TOTAL = 0.5*(Km*qup   +Km*(1-X)*qdp   +Km*quc   +Km*(1-X)*qdc   )+ql*dt
+  STORAGE_TR    = 0.5*(Km*qup_tr+Km*(1-X)*qdp_tr+Km*quc_tr)                +ql_tr*dt
+  PROPOR_TR     = STORAGE_TR/(STORAGE_TOTAL -0.5*Km*(1-X)*qdc)
+  PROPOR_TR     = min(1, max(0,PROPOR_TR))
+
+! ------------------------------------------------
+END SUBROUTINE calculate_proportr_muskingcunge
+! ------------------------------------------------
 
 ! ------------------------------------------------
 !   FUNCTION KINEMATIC
@@ -1737,7 +1801,10 @@ end subroutine drive_CHANNEL
        , qSfcLatRunoff,     qBucket                  &
        , QLateral, velocity                          &
        , HLINK                                       &
-       , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only)
+       , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only  &
+       , wvtflag_pass, QLINK_TR_pass, qout_gwsubbas_tr_pass               & !wt vars
+       , landRunOff_tr_pass, QLateral_tr_pass, HLINK_tr_pass              & !wt vars
+       )
 
        use module_UDMAP, only: LNUMRSL, LUDRSL
        use module_namelist, only:  nlst_rt 
@@ -1863,6 +1930,23 @@ end subroutine drive_CHANNEL
        integer :: n, kk2, nt, nsteps  ! tmp 
        real, intent(in), dimension(:) :: qout_gwsubbas
        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+
+!-----needed for water tracer capability------
+       integer, intent(IN),    optional                       :: wvtflag_pass
+       real ,   intent(INOUT), optional, dimension(:,:)       :: QLINK_TR_pass
+       real ,   intent(IN),    optional, dimension(:)         :: qout_gwsubbas_tr_pass
+       real ,   intent(INOUT), optional, dimension(ixrt,jxrt) :: landRunOff_tr_pass
+       real ,   intent(INOUT), optional, dimension(:)         :: QLateral_tr_pass
+       real ,   intent(INOUT), optional, dimension(:)         :: HLINK_TR_pass  
+       !-----local vars------
+       real,                             dimension(NLINKSL,2) :: tmpQLINK_tr
+       real                                                   :: Qup_tr, Quc_tr
+       real*8,                           dimension(NLINKSL)   :: LQLateral_tr
+       real,                             dimension(nToNodeInd,2) :: gQLINK_tr
+       real,                             dimension(NLINKSL)   :: QLINK_TR_pass2
+       real,                             dimension(nToNodeInd):: gQLINK_tr2
+       real                                                   :: tmpQLink_tr3, QLINK_TR_pass3,QLateral_tr_pass3, HLINK_tr_pass3
+!---------------------------------------------
        
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
@@ -1921,6 +2005,10 @@ else
 
    QLateral = 0 !! the variable solved in this section. Channel only knows this already.
    LQLateral = 0          !-- initial lateral flow to 0 for this reach
+   if (present(wvtflag_pass)) then
+     QLateral_tr_pass = 0
+     LQLateral_tr     = 0
+   end if
 
    tmpQLateral = 0  !! WHY DOES THIS tmp variable EXIST?? Only for accumulations??
    tmpLQLateral = 0
@@ -1936,6 +2024,10 @@ else
                  *LUDRSL(k)%cellArea(m)/DT
             tmpLQLateral(k) = tmpLQLateral(k)+landRunOff(ii,jj)*LUDRSL(k)%cellweight(m)/1000 & 
                  *LUDRSL(k)%cellArea(m)/DT
+            if (present(wvtflag_pass)) then
+              LQLateral_tr(k) = LQLateral_tr(k)+landRunOff_tr_pass(ii,jj)*LUDRSL(k)%cellweight(m)/1000 &
+                 *LUDRSL(k)%cellArea(m)/DT
+            end if
          end do
       end do
 
@@ -1989,9 +2081,11 @@ else
 
 #ifdef MPP_LAND
    call updateLinkV(LQLateral, QLateral(1:NLINKSL))
+   if (present(wvtflag_pass)) call updateLinkV(LQLateral_tr, QLateral_tr_pass)
 #else
    call hydro_stop("fatal error: NHDPlus only works for parallel now.")
    QLateral = LQLateral
+   if (present(wvtflag_pass)) QLateral_tr_pass = LQLateral_tr
 #endif
 endif !! (channel_only .eq. 1 .or. channelBucket_only .eq. 1) then; else; endif
 
@@ -2005,7 +2099,10 @@ if(channel_only .eq. 1) then
 #endif /* HYDRO_D */
 else
    !! REQUIRE BUCKET MODEL ON HERE?
-   if(NLINKSL .gt. 0) QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
+   if(NLINKSL .gt. 0) then
+     QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
+     if (present(wvtflag_pass)) QLateral_tr_pass(1:NLINKSL) = QLateral_tr_pass(1:NLINKSL)+qout_gwsubbas_tr_pass(1:NLINKSL)
+   end if
 endif  !! if(channel_only .eq. 1) then; else; endif
 
 if(nlst_rt(1)%output_channelBucket_influx .eq. 1 .or. &
@@ -2025,9 +2122,15 @@ do nt = 1, nsteps
    call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,2), NLINKSL, gQLINK(:,2))
    call gbcastReal2(toNodeInd,nToNodeInd,QLINK(1:NLINKSL,1), NLINKSL, gQLINK(:,1)) 
    !---------- route other reaches, with upstream inflow
+   if (present(wvtflag_pass)) then
+     gQLINK_tr = 0
+     call gbcastReal2(toNodeInd,nToNodeInd,QLINK_TR_pass(1:NLINKSL,2), NLINKSL, gQLINK_tr(:,2))
+     call gbcastReal2(toNodeInd,nToNodeInd,QLINK_TR_pass(1:NLINKSL,1), NLINKSL, gQLINK_tr(:,1)) 
+   end if
 #endif
    
    tmpQlink = 0
+   if (present(wvtflag_pass)) tmpQlink_tr = 0   !wt var
 #ifdef MPP_LAND
    if(my_id .eq. io_id) then
 #endif
@@ -2043,6 +2146,10 @@ do nt = 1, nsteps
       
       Quc  = 0
       Qup  = 0
+      if (present(wvtflag_pass)) then
+        Quc_tr = 0
+        Qup_tr = 0
+      end if
       
       !process as standard link or a lake inflow link, or lake outflow link
       ! link flowing out of lake, accumulate all the inflows with the revised TO_NODEs
@@ -2060,12 +2167,19 @@ do nt = 1, nsteps
             !! done before doing the downstream?
             if(gQLINK(m,2) .gt. 0)   Quc = Quc + gQLINK(m,2)  !--accum of upstream inflow of current timestep (2)  
             if(gQLINK(m,1) .gt. 0)   Qup = Qup + gQLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+            if (present(wvtflag_pass)) then 
+              if (gQLINK_tr(m,2) .gt. 0)   Quc_tr = Quc_tr + gQLINK_tr(m,2)
+              if (gQLINK_tr(m,1) .gt. 0)   Qup_tr = Qup_tr + gQLINK_tr(m,1)
          end do ! do i
 #else
          do m = 1, NLINKSL                
             if (LINKID(k) .eq. TO_NODE(m)) then
                Quc = Quc + QLINK(m,2)  !--accum of upstream inflow of current timestep (2)
                Qup = Qup + QLINK(m,1)  !--accum of upstream inflow of previous timestep (1)
+               if (present(wvtflag_pass)) then
+                 Quc_tr = Quc_tr + QLINK_tr_pass(m,2)
+                 Qup_tr = Qup_tr + QLINK_tr_pass(m,1)
+               end if
             endif
          end do ! do m
 #endif
@@ -2102,12 +2216,21 @@ do nt = 1, nsteps
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
 #endif
-         
+       if (present(wvtflag_pass)) then
+         call SUBMUSKINGCUNGE(&
+              tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
+              QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
+              MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k)   &
+              , wvtflag_pass=wvtflag_pass, tmpQLink_tr2=tmpQLINK_tr(k,2)              & !wt vars
+              , Qup_tr=Qup_tr, Quc_tr=Quc_tr, QLINK_TR_pass3=QLINK_TR_pass(k,1)       & !wt vars
+              , QLateral_tr_pass3=QLateral_tr_pass(k),HLINK_tr_pass3=HLINK_tr_pass(k))  !wt vars
+       else 
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
               MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k) )
-         
+        end if
+        
       else
 #ifdef HYDRO_D
          print *, " no channel option selected"
@@ -2127,8 +2250,10 @@ do nt = 1, nsteps
    do k = 1, NLINKSL !tmpQLINK?
       if(TYPEL(k) .ne. 2) then   !only the internal lake nodes don't have info.. but need to save QLINK of lake out too
          QLINK(k,2) = tmpQLINK(k,2)
+         if (present(wvtflag_pass)) QLINK_TR_pass(k,2) = tmpQLINK_tr(k,2)  !wt var
       endif
       QLINK(k,1) = QLINK(k,2)    !assigng link flow of current to be previous for next time step
+      if (present(wvtflag_pass)) QLINK_TR_pass(k,1) = QLINK_TR_pass(k,2)
    end do
    
    

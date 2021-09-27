@@ -600,6 +600,9 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !              call read_land_par(did,lsm(did)%ix,lsm(did)%jx)
 !          endif
 
+!-----needed for water tracer capability-----
+    real, dimension(RT_DOMAIN(did)%ix,  RT_DOMAIN(did)%jx)      :: INFXSRT_tr_pass
+    real, dimension(RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt)    :: landRunOff_tr_pass
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
     nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
@@ -621,13 +624,13 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
            if (nlst_rt(did)%WVTFLAG .gt. 0) then
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, nlst_rt(did)%NTRACER,    &
-                 
+                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, &
+                 wvtflag_pass=nlst_rt(did)%WVTFLAG, INFXSRT_tr_pass=RT_DOMAIN(did)%INFXSRT_tr, landRunOff_tr_pass=RT_DOMAIN(did)%landRunOff_tr                     &       !wt vars
                  )
            else
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
-                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, nlst_rt(did)%NTRACER)
+                 RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)
            end if
          endif
       endif
@@ -665,6 +668,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       else
          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
          rt_domain(did)%overland%control%infiltration_excess = 0.
+         if (nlst_rt(did)%WVTFLAG .gt. 0) then
+           rt_domain(did)%overland%control%surface_water_head_routing_tr = rt_domain(did)%overland%control%infiltration_excess_tr
+           rt_domain(did)%overland%control%infiltration_excess_tr = 0.
+         end if
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -752,7 +759,8 @@ end if
            if(allocated(RT_DOMAIN(did)%SOLDRAIN)) RT_DOMAIN(did)%SOLDRAIN = 0
            if(allocated(RT_DOMAIN(did)%QSUBRT))   RT_DOMAIN(did)%QSUBRT   = 0            
 
-
+           if(allocated(RT_DOMAIN(did)%SOLDRAIN_TR)) RT_DOMAIN(did)%SOLDRAIN_TR = 0
+           if(allocated(RT_DOMAIN(did)%QSUBRT_TR))   RT_DOMAIN(did)%QSUBRT_TR   = 0
 
       end subroutine HYDRO_exe
 
@@ -910,7 +918,46 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
 
  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
+   if (nlst_rt(did)%WVTFLAG .gt. 0) then
+    call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
+       RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
+       RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
+       rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst_rt(did)%DT, nlst_rt(did)%DTCT, nlst_rt(did)%DTRT_CH, &
+       RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX, RT_DOMAIN(did)%QLINK, &
+       RT_DOMAIN(did)%CHANLEN, RT_DOMAIN(did)%MannN, RT_DOMAIN(did)%So, RT_DOMAIN(did)%ChSSlp,RT_DOMAIN(did)%Bw, &
+       RT_DOMAIN(did)%Tw,  RT_DOMAIN(did)%Tw_CC, RT_DOMAIN(did)%n_CC, &
+       RT_DOMAIN(did)%RESHT, RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, &
+       RT_DOMAIN(did)%WEIRL, RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, &
+       RT_DOMAIN(did)%ORIFICEE,  RT_DOMAIN(did)%CVOL, RT_DOMAIN(did)%QLAKEI, &
+       RT_DOMAIN(did)%QLAKEO, RT_DOMAIN(did)%LAKENODE, &
+       RT_DOMAIN(did)%QINFLOWBASE, RT_DOMAIN(did)%CHANXI, RT_DOMAIN(did)%CHANYJ, nlst_rt(did)%channel_option,  &
+       RT_DOMAIN(did)%nlinks, RT_DOMAIN(did)%NLINKSL, RT_DOMAIN(did)%LINKID, RT_DOMAIN(did)%node_area,         &
+       RT_DOMAIN(did)%qout_gwsubbas, &
+       RT_DOMAIN(did)%LAKEIDA, RT_DOMAIN(did)%LAKEIDM, RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%LAKEIDX   &
+#ifdef MPP_LAND
+       , RT_DOMAIN(did)%nlinks_index, RT_DOMAIN(did)%mpp_nlinks, RT_DOMAIN(did)%yw_mpp_nlinks  &
+       , RT_DOMAIN(did)%LNLINKSL   &
+       , RT_DOMAIN(did)%gtoNode, RT_DOMAIN(did)%toNodeInd, RT_DOMAIN(did)%nToInd      &
+#endif
+       , RT_DOMAIN(did)%CH_LNKRT_SL, RT_DOMAIN(did)%landRunOff   &
+#ifdef WRF_HYDRO_NUDGING
+       , RT_DOMAIN(did)%nudge &
+#endif
+       , rt_domain(did)%accSfcLatRunoff,    rt_domain(did)%accBucket &
+       , rt_domain(did)%qSfcLatRunoff,        rt_domain(did)%qBucket &
+       , rt_domain(did)%QLateral,            rt_domain(did)%velocity &
+       ,                                     RT_DOMAIN(did)%HLINK    &
+       , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
+       ,                                     nlst_rt(did)%SUBRTSWCRT &
+       , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
+       , wvtflag_pass = nlst_rt(did)%WVTFLAG, QLINK_TR_pass=RT_DOMAIN(did)%QLINK_tr   &  !wt vars
+       , qout_gwsubbas_tr_pass=RT_DOMAIN(did)%qout_gwsubbas_tr                        &  !wt vars
+       , landRunOff_tr_pass=RT_DOMAIN(did)%landRunOff_tr                              &  !wt vars
+       , Qlateral_tr_pass=RT_DOMAIN(did)%QLateral_tr                                  &  !wt vars
+       , HLINK_tr_pass=RT_DOMAIN(did)%HLINK_tr                                        &  !wt vars 
+       )
 
+   else
     call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
@@ -943,7 +990,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        ,                                     nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
        )
-
+   end if
 else
 
     call drive_CHANNEL(RT_DOMAIN(did)%latval,RT_DOMAIN(did)%lonval, &
@@ -1288,10 +1335,15 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
 	
       end subroutine aggregateDomain
       
-      subroutine RunOffDisag(runoff1x_in, runoff1x, area_lsm,cellArea, infxswgt, AGGFACTRT, ix,jx)
+      subroutine RunOffDisag(runoff1x_in, runoff1x, area_lsm,cellArea, infxswgt, AGGFACTRT, ix,jx, &
+                            wvtflag_pass, infxsrt_tr_pass, landrunoff_tr_pass)       !wt vars
         implicit none
         real, dimension(:,:) :: runoff1x_in, runoff1x, area_lsm, cellArea, infxswgt
         integer :: i,j,ix,jx,AGGFACYRT, AGGFACXRT, AGGFACTRT, IXXRT, JYYRT
+        integer,              optional, intent(in)      :: wvtflag_pass
+        real, dimension(:,:), optional, intent(in)      :: infxsrt_tr_pass
+        real, dimension(:,:), optional, intent(inout)   :: landrunoff_tr_pass
+        real                                            :: wvt_ratio
 
         do J=1,JX
         do I=1,IX
@@ -1306,9 +1358,14 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
 !DJG Implement subgrid weighting routine...
                if( (runoff1x_in(i,j) .lt. 0) .or. (runoff1x_in(i,j) .gt. 1000) ) then
                     runoff1x(IXXRT,JYYRT) = 0
+                    if (present(WVTFLAG))  landrunoff_tr_pass = 0    !wt var
                else
                     runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
                         *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
+                    if (present(WVTFLAG)) then
+                       wvt_ratio  = min(1,max(0, infxsrt_tr_pass(i,j)/runoff1x_in(i,j)))
+                       landrunoff_tr_pass(IXXRT,JYYRT)=runorunoff1x(IXXRT,JYYRT)*wvt_ratio
+                    end if
                endif
 
              enddo
