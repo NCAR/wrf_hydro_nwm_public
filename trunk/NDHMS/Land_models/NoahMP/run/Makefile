@@ -10,14 +10,14 @@ include ../user_build_options
 ifeq ($(WRF_HYDRO_RAPID),1)
 PHDF5_INC=-I ${TACC_HDF5_INC}
 RAPID_MACRO = ${TAO_FORTRAN_LIB} ${TAO_LIB} ${PETSC_LIB} ${PHDF5_INC} \
-        -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB} -lhdf5 -lz 
+        -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB} -lhdf5 -lz
 RAPID_LIB =  -lrapid
 else
-RAPID_MACRO = 
-RAPID_LIB =  
+RAPID_MACRO =
+RAPID_LIB =
 endif
 
-OBJS_NoahMP = ../IO_code/module_NoahMP_hrldas_driver.o 
+OBJS_NoahMP = ../IO_code/module_NoahMP_hrldas_driver.o
 
 OBJS = \
 	../IO_code/main_hrldas_driver.o \
@@ -30,16 +30,16 @@ OBJS = \
 	../Utility_routines/module_model_constants.o \
 	../Utility_routines/module_date_utilities.o \
 	../Utility_routines/kwm_string_utilities.o\
-	../phys/modd_csts.o\
-	../phys/tridiag_ground_snowcro.o\
-	../phys/mode_surf_coefs.o\
-	../phys/mode_snow3l.o\
-	../phys/modd_snow_par.o\
-	../phys/ini_csts.o\
+	../phys/surfex/modd_csts.o\
+	../phys/surfex/tridiag_ground_snowcro.o\
+	../phys/surfex/mode_surf_coefs.o\
+	../phys/surfex/mode_snow3l.o\
+	../phys/surfex/modd_snow_par.o\
+	../phys/surfex/ini_csts.o\
 	../phys/module_snowcro.o\
-	../phys/mode_thermos.o\
-	../phys/modd_surf_atm.o\
-	../phys/modd_snow_metamo.o
+	../phys/surfex/mode_thermos.o\
+	../phys/surfex/modd_surf_atm.o\
+	../phys/surfex/modd_snow_metamo.o
 
 CMD = hrldas.exe
 all:	$(CMD)
@@ -48,7 +48,7 @@ all:	$(CMD)
 hrldas.exe: $(OBJS)
 	@echo ""
 	echo "${TAO_FORTRAN_LIB} ${TAO_LIB} ${PETSC_LIB} ${PHDF5_INC} -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB} -lhdf5 -lz"
-# We have to include the modules built in ../IO_code 
+# We have to include the modules built in ../IO_code
 	$(COMPILERF90) -o $(@) -I../IO_code -I../phys $(OBJS) $(OBJS_NoahMP) $(HYDRO_LIB) $(RAPID_LIB) $(NETCDFLIB) $(RAPID_MACRO) $(LDFLAGS) $(LIBS)
 
 	@echo ""
@@ -62,4 +62,3 @@ NoahMP: $(OBJS)
 # This command cleans up
 clean:
 	$(RM) *~ $(CMD)
-
