@@ -30,7 +30,7 @@ subroutine OverlandRouting( &
     REAL, INTENT(IN) :: DT, DTRT_TER
     integer, INTENT(IN) :: ixrt, jxrt, rt_option
     !REAL, INTENT(out), DIMENSION(IXRT,JXRT)   :: SFCHEADSUBRT  ! moved into overland_data%control
-    real, intent(inout) :: q_sfcflx_x,q_sfcflx_y
+    real, dimension(IXRT,JXRT), intent(inout) :: q_sfcflx_x,q_sfcflx_y
 
     ! REMOVED VARIABLES
     !INTEGER, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: LAKE_MSKRT
@@ -876,4 +876,3 @@ SUBROUTINE ROUTE_OVERLAND2 (dt,                               &
 
     !DJG ----------------------------------------------------------------------
 end subroutine ROUTE_OVERLAND2
-
