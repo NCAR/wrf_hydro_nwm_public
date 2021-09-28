@@ -193,9 +193,9 @@ LOGICAL, INTENT(IN)                 :: OGLACIER   ! True = Over permanent snow a
 
 ! trude added
     
-INTEGER, INTENT(IN)                  :: act_level
-INTEGER, INTENT(IN)                  :: I,J
-REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
+INTEGER, INTENT(IN)                      :: act_level
+INTEGER, INTENT(IN)                      :: I,J
+REAL, DIMENSION(:), INTENT(IN), OPTIONAL :: VIS_ICEALB   
 !end trude
 
 REAL, DIMENSION(:), INTENT(IN)      :: PPS, PTA, PSW_RAD, PQA, PVMOD, PLW_RAD, PSR, PRR 
@@ -451,8 +451,6 @@ INTEGER :: IDEBUG
 
 
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
-!write(*,*) "psnowtemp ", PSNOWTEMP
-!write(*,*) "airtemp" , PTA 
 !
 PFSA_CROCUS(:) = 0 
 PFSR_CROCUS(:) = 0
@@ -508,9 +506,6 @@ INLVLS_USE(:) = 0
   ENDDO  !  end loop snow layers
 ENDDO    ! end loop grid points
 
-!write(*,*) 'foo1 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 1"
 
 ! Incrementation of snow layers age
 ZTSTEPDAYS = PTSTEP/86400. ! time step in days
@@ -568,9 +563,7 @@ ZSNOWBIS(:) = ZSNOW(:)
 ! Calculate uppermost density and thickness changes due to snowfall,
 ! and add heat content of falling snow
 !
-!      write(6,*) "before snownfall_upgrid psnowrho ", psnowrho
-! CALL SNOWNLFALL_UPGRID(TPTIME, OGLACIER,                                       &
-!write(*,*) 'foo2 psnowdz', psnowdz
+
  CALL SNOWNLFALL_UPGRID(OGLACIER,                                       &
                         PTSTEP,PSR,PTA,PVMOD,ZSNOWBIS,PSNOWRHO,PSNOWDZ,         &
                         PSNOWHEAT,PSNOWHMASS,PSNOWALB,PPERMSNOWFRAC,            &
@@ -579,9 +572,7 @@ ZSNOWBIS(:) = ZSNOW(:)
                         ZSNOWAGEF,GMODIF_MAILLAGE,INLVLS_USE,OSNOWDRIFT,PZ0EFF,PUREF,&
                         HSNOWMETAMO) 
 
-!write(*,*) 'foo3 psnowdz', psnowdz
-!      write(6,*) "after snownfall_upgrid psnowrho ", psnowrho
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 2" ! trude
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWFALL_UPGRID",INLVLS_USE(IDEBUG),LPRINTGRAN,      &
@@ -603,29 +594,18 @@ DO JJ=1,SIZE(ZSNOW)
   IF ( GMODIF_MAILLAGE(JJ) ) THEN    
 
 
-!     write(*,*) 'foo4 psnowdz', psnowdz
- !     write(6,*) "before snownlgridresh_1D"
- !     write(6,*) "psnowdz ", psnowdz
- !     write(6,*) "psnowrho ", psnowrho
-!      write(6,*) "before snownlgfidfresh__1d psnowrho ", psnowrho
- !    write(*,*) 'foo2 psnowdz', psnowdz
     CALL SNOWNLGRIDFRESH_1D(JJ,ZSNOW(JJ),PSNOWDZ(JJ,:),ZSNOWDZN(JJ,:),PSNOWRHO(JJ,:),    &
                             PSNOWHEAT(JJ,:),PSNOWGRAN1(JJ,:),PSNOWGRAN2(JJ,:),           &
                             PSNOWHIST(JJ,:),PSNOWAGE(JJ,:),GSNOWFALL(JJ),ZSNOWRHOF(JJ),  &
                             ZSNOWDZF(JJ),PSNOWHMASS(JJ),ZSNOWGRAN1F(JJ),ZSNOWGRAN2F(JJ), &
                             ZSNOWHISTF(JJ),ZSNOWAGEF(JJ),INLVLS_USE(JJ),HSNOWMETAMO, I, J      ) 
-!    write(*,*) 'foo5 psnowdz', psnowdz 
-!     write(6,*) "after snownlgridresh_1D"
-!      write(6,*) "psnowdz ", psnowdz
-!      write(6,*) "after snownlgfidfresh__1d psnowrho ", psnowrho
-
 
   ENDIF
   !
 
 
 ENDDO 
-!      if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 3" ! trude
+
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -649,33 +629,15 @@ DO JJ = 1,SIZE(ZSNOW)
   ! active layers
   DO JST=1,INLVLS_USE(JJ)
     PSNOWSWE (JJ,JST) = PSNOWDZ(JJ,JST) * PSNOWRHO(JJ,JST)
-!      if (isnan(psnowswe(jj,jst))) write(6,*) "isnans psnowswe 1, jj, jst"
-!      if (isnan(psnowdz(jj,jst))) write(6,*) "isnans psnowdz 1, jj, jst"
-!      if (isnan(psnowrho(jj,jst))) write(6,*) "isnans psnowrho 1, jj, jst"
-!      if (isnan(psnowheat(jj,jst))) write(6,*) "isnans psnowheat 1, jj, jst"
-      
-!
     ZSCAP    (JJ,JST) = PSNOWRHO(JJ,JST) * XCI
-!      if (isnan(zscap(jj,jst))) write(6,*) "isnans zscap 1, jj, jst"
-!
     ZSNOWTEMP(JJ,JST) = XTT + &
                         ( ( PSNOWHEAT(JJ,JST)/PSNOWDZ(JJ,JST) + XLMTT*PSNOWRHO(JJ,JST) )/ZSCAP(JJ,JST) ) 
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "isnans psnowtemp 1", jj, jst
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "xtt ", xtt
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "psnowheat ", psnowheat(jj,jst)
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "psnowdz ", psnowdz(jj,jst)
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "xlmtt ", xlmtt
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "psnowrho ", psnowrho(jj,jst)
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "zscap ", zscap(jj,jst)
 !
     PSNOWLIQ (JJ,JST) = MAX( 0.0, ZSNOWTEMP(JJ,JST)-XTT ) * ZSCAP(JJ,JST) * &
                         PSNOWDZ(JJ,JST) / (XLMTT*XRHOLW) 
-!      if (isnan(psnowliq(jj,jst))) write(6,*) "isnans psnowliq1, jj, jst"
 !
     ZSNOWTEMP(JJ,JST) = MIN( XTT, ZSNOWTEMP(JJ,JST) )
-!      if (isnan(zsnowtemp(jj,jst))) write(6,*) "isnans zsnowtemp1, jj, jst"
   ENDDO  !  end loop active snow layers
-!      if (isnan(zsnowtemp(1,1))) write(6,*) "isnan temp 1"  ! trude
 
   !
   ! unactive layers  
@@ -693,7 +655,6 @@ DO JJ = 1,SIZE(ZSNOW)
   ENDDO  !  end loop unactive snow layers
   !
 ENDDO    ! end loop grid points
-!      if (isnan(zsnowtemp(1,1))) write(6,*) "isnan temp 2"  ! trude
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -709,14 +670,10 @@ ENDDO    ! end loop grid points
 !        4.BIS   Snow metamorphism
 !                ----------------- 
 !  
-! write(*,*) 'foo6 psnowdz', psnowdz
  CALL SNOWCROMETAMO(PSNOWDZ,PSNOWGRAN1,PSNOWGRAN2,PSNOWHIST,ZSNOWTEMP, &
                     PSNOWLIQ,PTSTEP,PSNOWSWE,INLVLS_USE,PSNOWAGE,HSNOWMETAMO       ) 
 
 !
-!write(*,*) 'foo7 psnowdz', psnowdz
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 4" ! trude
-!      if (isnan(zsnowtemp(1,1))) write(6,*) "isnan temp 3"  ! trude
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWCROMETAMO", INLVLS_USE(IDEBUG),LPRINTGRAN,       &
@@ -731,43 +688,10 @@ ENDDO    ! end loop grid points
 !               ---------------
 ! Calculate snow density: compaction/aging: density increases
 !
-! trude test
-!      write(6,*) "Before compact"
-!      write(6,*) "1", PTSTEP
-!      write(6,*) "2", PSNOWRHO
-!      write(6,*) "3", PSNOWDZ
-!      write(6,*) "4", ZSNOWTEMP
-!      write(6,*) "5", ZSNOW
-!      write(6,*) "6", PSNOWGRAN1
-!      write(6,*) "7", PSNOWGRAN2
-!      write(6,*) "8", PSNOWHIST
-!      write(6,*) "9", PSNOWLIQ
-!      write(6,*) "10", INLVLS_USE
-!      write(6,*) "11", PDIRCOSZW
-!      write(6,*) "12",   HSNOWMETAMO
 
-!      write(6,*) ' before snowcrocompactn psnowrho ', psnowrho
-!write(*,*) 'foo8 psnowdz', psnowdz
-!write(*,*) zsnowtemp
  CALL SNOWCROCOMPACTN(PTSTEP,PSNOWRHO,PSNOWDZ,ZSNOWTEMP,ZSNOW,                      &
                       PSNOWGRAN1,PSNOWGRAN2,PSNOWHIST,PSNOWLIQ,INLVLS_USE,PDIRCOSZW,&
                       HSNOWMETAMO)
-!write(*,*) 'foo9 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 5" ! trude
- !     write(6,*) "After compact"
- !     write(6,*) "1", PTSTEP
- !     write(6,*) "2", PSNOWRHO
- !     write(6,*) "3", PSNOWDZ
- !     write(6,*) "4", ZSNOWTEMP
- !     write(6,*) "5", ZSNOW
- !     write(6,*) "6", PSNOWGRAN1
- !     write(6,*) "7", PSNOWGRAN2
- !     write(6,*) "8", PSNOWHIST
- !                      write(6,*) "9", PSNOWLIQ
- !     write(6,*) "10", INLVLS_USE
-  !     write(6,*) "12",   HSNOWMETAMO
-
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -784,27 +708,12 @@ ENDDO    ! end loop grid points
 PSNDRIFT(:) = 0.0
 IF (OSNOWDRIFT) THEN
 
-!      write(6,*) 'before'
-!      write(6,*) '1) ' , PSNOWRHO, PSNOWDZ,PSNOWGRAN1
-!      write(6,*) '2) ' ,  PSNOWGRAN2,PSNOWHIST
-!      write(6,*) '3) ' , ZSNOW
-!      write(6,*) '4) ' , PSNDRIFT !blowing snow sublimation (kg/m2/s)
-
-!write(*,*) 'foo10 psnowdz', psnowdz
-!write(*,*) zsnowtemp
   CALL SNOWDRIFT(PTSTEP, PVMOD, PSNOWRHO,PSNOWDZ, ZSNOW,                      &
                  PSNOWGRAN1,PSNOWGRAN2,PSNOWHIST,INLVLS_USE,PTA,PQA,PPS,PRHOA,&
                  PZ0EFF,PUREF,OSNOWDRIFT_SUBLIM,HSNOWMETAMO,PSNDRIFT)
-!write(*,*) 'foo11 psnowdz', psnowdz
-
-!      write(6,*) 'after'
-!      write(6,*) '1) ' , PSNOWRHO, PSNOWDZ,PSNOWGRAN1
-!      write(6,*) '2) ',  PSNOWGRAN2,PSNOWHIST
-!      write(6,*) '3) ' , ZSNOW
-!      write(6,*) '4) ', PSNDRIFT !blowing snow sublimation (kg/m2/s)
 
 ENDIF
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 6" ! trude
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWDRIFT", INLVLS_USE(IDEBUG),LPRINTGRAN,           &
@@ -855,17 +764,14 @@ END SELECT
 !
 SELECT CASE (HSNOWRAD)
   CASE ("B92")
-!    CALL SNOWCRORAD(TPTIME,OGLACIER,                      &
-!write(*,*) 'foo12 psnowdz', psnowdz
-!write(*,*) zsnowtemp
+
     CALL SNOWCRORAD(OGLACIER,                      &
                     PSW_RAD,PSNOWALB,PSNOWDZ,PSNOWRHO,    &
                     PALB,ZRADSINK,ZRADXS,                 &
                     PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE,PPS, &
                     PZENITH, PPERMSNOWFRAC,INLVLS_USE,    &
                     OSNOW_ABS_ZENITH,HSNOWMETAMO,VIS_ICEALB) 
-  !
-!write(*,*) 'foo13 psnowdz', psnowdz
+
   CASE ("TAR","TA1","TA2")
 !    CALL SNOWCRO_TARTES(PSNOWGRAN1,PSNOWGRAN2,PSNOWRHO,PSNOWDZ,ZSNOWG0,ZSNOWY0,ZSNOWW0, &
 !                        ZSNOWB0,ZSNOWIMP_DENSITY,ZSNOWIMP_CONTENT,PALB,PSW_RAD,PZENITH, &
@@ -875,7 +781,7 @@ SELECT CASE (HSNOWRAD)
 !    CALL ABOR1_SFX("UNKNOWN CSNOWRAD OPTION")
   !
 END SELECT
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 7" ! trude
+
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -891,7 +797,6 @@ END SELECT
 !               ---------------------------------------
 ! Snow thermal conductivity:
 !
-!      write(6,*) ' before snowcrothrm', zsnowtemp
  CALL SNOWCROTHRM(PSNOWRHO,ZSCOND,ZSNOWTEMP,PPS,PSNOWLIQ,GCOND_GRAIN,GCOND_YEN)
 !
 !***************************************DEBUG IN**********************************************
@@ -945,14 +850,7 @@ ELSE
          ENDWHERE               ! trude added
 END IF
       
-!     write(6,*) PSNOWRHO(:,1)
-!write(6,*) XZ0ICEZ0SNOW
-!write(6,*)   ZZ0_SNOWICE  , PZ0
-!write(6,*)  ZZ0H_SNOWICE , PZ0H
-!write(6,*)  ZZ0EFF_SNOWICE, PZ0EFF
-!      write(6,*) ' before snowcroebud', zsnowtemp
-!write(*,*) 'foo14 psnowdz', psnowdz
-!write(*,*) zsnowtemp
+
  CALL SNOWCROEBUD(HSNOWRES, HIMPLICIT_WIND,                                    &
                   PPEW_A_COEF, PPEW_B_COEF,                                    &
                   PPET_A_COEF, PPEQ_A_COEF, PPET_B_COEF, PPEQ_B_COEF,          &
@@ -967,10 +865,8 @@ END IF
                   ZCT,PEMISNOW,PRHOA,ZTSTERM1,ZTSTERM2,ZRA,PCDSNOW,PCHSNOW,    &
                   ZQSAT, ZDQSAT, ZRSRA, ZUSTAR2_IC, PRI,                       &
                   ZPET_A_COEF_T,ZPEQ_A_COEF_T,ZPET_B_COEF_T,ZPEQ_B_COEF_T      ) 
-!write(*,*) 'foo15 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 8" ! trude
+
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWCROEBUD", INLVLS_USE(IDEBUG),LPRINTGRAN,              &
@@ -979,27 +875,18 @@ END IF
 !                           PSNOWGRAN2(IDEBUG,:),PSNOWHIST(IDEBUG,:),PSNOWAGE(IDEBUG,:),     &
 !                           HSNOWMETAMO)
 !ENDIF
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 9" ! trude
 !***************************************DEBUG OUT********************************************
 !
 ! Heat transfer: simple diffusion along the thermal gradient
 !
 ZSNOWTEMPO1(:) = ZSNOWTEMP(:,1) ! save surface snow temperature before update
 !
-!write(*,*) "PGRNDFLUX 1" , PGRNDFLUX
-!      write(6,*) ' before snowcrosolvt', zsnowtemp
-!write(*,*) 'foo16 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!write(*,*) 'psoilcond', psoilcond
  CALL SNOWCROSOLVT(PTSTEP,XSNOWDZMIN,PSNOWDZ,ZSCOND,ZSCAP,PTG,                &
                    PSOILCOND,PD_G,ZRADSINK,ZCT,ZTSTERM1,ZTSTERM2,             &
                    ZPET_A_COEF_T,ZPEQ_A_COEF_T,ZPET_B_COEF_T,ZPEQ_B_COEF_T,   &
                    ZTA_IC,ZQA_IC,PGRNDFLUX, ZSNOWTEMP ,ZSNOWFLUX,             &
                    INLVLS_USE                                                 ) 
-!write(*,*) 'foo17 psnowdz', psnowdz
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 10" ! trude
-!
-!write(*,*) "PGRNDFLUX 2" , PGRNDFLUX
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWCROSOLVT", INLVLS_USE(IDEBUG),LPRINTGRAN,             &
@@ -1008,15 +895,13 @@ ZSNOWTEMPO1(:) = ZSNOWTEMP(:,1) ! save surface snow temperature before update
 !                           PSNOWGRAN2(IDEBUG,:),PSNOWHIST(IDEBUG,:),PSNOWAGE(IDEBUG,:),     &
 !                           HSNOWMETAMO)
 !ENDIF
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 11" ! trude
+
 !***************************************DEBUG OUT********************************************
 !
 !*       8.     Surface fluxes
 !               --------------
 !
-!      write(6,*) ' before snowcroflux', zsnowtemp
-!write(*,*) 'foo18 psnowdz', psnowdz
-!write(*,*) zsnowtemp
+
  CALL SNOWCROFLUX(ZSNOWTEMP(:,1),PSNOWDZ(:,1),PEXNS,PEXNA,            &
                   ZUSTAR2_IC,                                         &
                   PTSTEP,PSNOWALB,PSW_RAD,PEMISNOW,ZLWUPSNOW,PLW_RAD, &
@@ -1026,9 +911,7 @@ ZSNOWTEMPO1(:) = ZSNOWTEMP(:,1) ! save surface snow temperature before update
                   PRNSNOW,PHSNOW,PGFLUXSNOW,PLES3L,PLEL3L,PEVAP,      &
                   PUSTAR,                                                     &
                   PFSA_CROCUS, PFSR_CROCUS, PFIRA_CROCUS) ! trude added 
-!write(*,*) 'foo19 psnowdz', psnowdz
-!
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 12" ! trude
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWCROFLUX", INLVLS_USE(IDEBUG),LPRINTGRAN,              &
@@ -1044,15 +927,12 @@ ZSNOWTEMPO1(:) = ZSNOWTEMP(:,1) ! save surface snow temperature before update
 !
 ! First Test to see if snow pack vanishes during this time step:
 !
-!write(*,*) 'foo19b psnowdz', psnowdz
-!write(*,*) zsnowtemp
+
  CALL SNOWCROGONE(PTSTEP,PLEL3L,PLES3L,PSNOWRHO,                  &
                   PSNOWHEAT,ZRADSINK,PEVAPCOR,PTHRUFAL,PGRNDFLUX, &
                   PGFLUXSNOW,PSNOWDZ,PSNOWLIQ,ZSNOWTEMP,ZRADXS,   &
                   PRR,INLVLS_USE                                  ) 
-!write(*,*) 'foo20 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 13" ! trude
+
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -1071,14 +951,10 @@ PGRNDFLUX(:) = PGRNDFLUX(:) + ZRADXS(:)
 !
 ! Second Test to see if one or several snow layers vanishe during this time
 ! step. In such a case, the concerned snow layers are agregated to neighbours
-!write(*,*) 'foo21 psnowdz', psnowdz
-!write(*,*) zsnowtemp
+
  CALL SNOWCROLAYER_GONE(PTSTEP,ZSCAP,ZSNOWTEMP,PSNOWDZ,          &
                         PSNOWRHO,PSNOWLIQ,PSNOWGRAN1,PSNOWGRAN2, &
                         PSNOWHIST,PSNOWAGE,PLES3L, INLVLS_USE    ) 
-!write(*,*) 'foo22 psnowdz', psnowdz
-!write(*,*) zsnowtemp
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 14" ! trude
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -1092,21 +968,8 @@ PGRNDFLUX(:) = PGRNDFLUX(:) + ZRADXS(:)
 !
 ! For partial melt: transform excess heat content into snow liquid:
 !
-!write(*,*) 'foo23 psnowdz', psnowdz
-!write(*,*) zscap
-!write(*,*) zsnowtemp
-!write(*,*) psnowrho
-!write(*,*) psnowliq
-!write(*,*) INLVLS_USE
- CALL SNOWCROMELT(ZSCAP,ZSNOWTEMP,PSNOWDZ,PSNOWRHO,PSNOWLIQ,INLVLS_USE)
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 15" ! trude
 
-!write(*,*) 'foo24 psnowdz', psnowdz
-!write(*,*) zscap
-!write(*,*) zsnowtemp
-!write(*,*) psnowrho
-!write(*,*) psnowliq
-!write(*,*) INLVLS_USE
+ CALL SNOWCROMELT(ZSCAP,ZSNOWTEMP,PSNOWDZ,PSNOWRHO,PSNOWLIQ,INLVLS_USE)
 
 !
 !***************************************DEBUG IN**********************************************
@@ -1124,7 +987,7 @@ PGRNDFLUX(:) = PGRNDFLUX(:) + ZRADXS(:)
 ! Liquid water vertical transfer and possible snowpack runoff
 ! And refreezing/freezing of meltwater/rainfall (ripening of the snow)
 !
-!write(*,*) 'foo25 psnowdz', psnowdz
+
  CALL SNOWCROREFRZ(PTSTEP,PRR,PSNOWRHO,ZSNOWTEMP,PSNOWDZ,PSNOWLIQ,PTHRUFAL, &
                    ZSCAP,PLEL3L,INLVLS_USE                                  ) 
 
@@ -1136,8 +999,6 @@ ELSE
   FLOW_SNOW= PTHRUFAL
 ENDIF
 
-                   !write(*,*) 'foo26 psnowdz', psnowdz
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 16" ! trude
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -1152,11 +1013,9 @@ ENDIF
 !*      11.     Snow Evaporation/Sublimation mass updates:
 !               ------------------------------------------
 !
-!write(*,*) 'foo27 psnowdz', psnowdz
+
  CALL SNOWCROEVAPN(PLES3L,PTSTEP,ZSNOWTEMP(:,1),PSNOWRHO(:,1), &
                    PSNOWDZ(:,1),PEVAPCOR,PSNOWHMASS            ) 
-!write(*,*) 'foo28 psnowdz', psnowdz
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 17" ! trude
 !
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
@@ -1171,13 +1030,11 @@ ENDIF
 ! If all snow in uppermost layer evaporates/sublimates, re-distribute
 ! grid (below could be evoked for vanishingly thin snowpacks):
 !
-!write(*,*) 'foo29 psnowdz', psnowdz
+
  CALL SNOWCROEVAPGONE(PSNOWHEAT,PSNOWDZ,PSNOWRHO,ZSNOWTEMP,PSNOWLIQ,PSNOWGRAN1, &
                       PSNOWGRAN2,PSNOWHIST,PSNOWAGE,INLVLS_USE,HSNOWMETAMO      ) 
-!write(*,*) 'foo30 psnowdz', psnowdz
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 18" ! trude
-!
-!                      write(6,*) ' after snowcroevapgone', zsnowtemp
+
+
 !***************************************DEBUG IN**********************************************
 !IF (GCRODEBUGDETAILSPRINT) THEN
 !  CALL SNOWCROPRINTPROFILE("after SNOWCROEVAPGONE", INLVLS_USE(IDEBUG),LPRINTGRAN,          &
@@ -1193,17 +1050,16 @@ ENDIF
 ! Snow clear sky albedo:
 !
 IF ( HSNOWRAD=='B92' ) THEN
-!  CALL SNOWCROALB(TPTIME,OGLACIER,                                             &
-!write(*,*) 'foo31 psnowdz', psnowdz
+
+
   CALL SNOWCROALB(OGLACIER,                                             &
                   PSNOWALB,ZSPECTRALALBEDO,PSNOWDZ(:,1),PSNOWRHO(:,1:2),       &
                   PPERMSNOWFRAC,PSNOWGRAN1(:,1),PSNOWGRAN2(:,1),               &
                   PSNOWAGE(:,1),PSNOWGRAN1(:,2),PSNOWGRAN2(:,2),PSNOWAGE(:,2), &
                   PPS, PZENITH, INLVLS_USE, HSNOWMETAMO,VIS_ICEALB) 
-!write(*,*) 'foo32 psnowdz', psnowdz
-  !the albedo is not updated in the case of TARTES scheme                 
+
 ENDIF
-!                        if (isnan(PSNOWDZ(1,1))) write(6,*) "Problem 19" ! trude
+
 !
 !*      13.     Update snow heat content:
 !               -------------------------
@@ -2166,7 +2022,7 @@ REAL, DIMENSION(SIZE(PALBEDOSC))  :: ZVAGE1
 INTEGER         :: JJ   ! looping indexes
 
 !++ trude, crocus
-REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
+REAL, DIMENSION(:), INTENT(IN), OPTIONAL   :: VIS_ICEALB   
 !-- trude
 !
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
@@ -2177,13 +2033,6 @@ REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB
 ! 0. Initialize:
 ! ------------------
 !
-! write(*,*) "XVAGING_NOGLACIER" ,XVAGING_NOGLACIER
-!write(*,*)  XANSMAX, XANSMIN,XAGLAMIN, XAGLAMAX
-!      write(*,*)     XVRPRE1,XVRPRE2,XVAGING_NOGLACIER
-!      write(*,*)XVAGING_GLACIER, XVSPEC1,XVSPEC2
-!      write(*,*)XVSPEC3, XVW1,XVW2,XVD1,XVD2
-
-! PRINT*,XVAGING_NOGLACIER,XVAGING_GLACIER
 IF ( OGLACIER ) THEN
   ZANSMIN(:) = XAGLAMIN * PPERMSNOWFRAC(:) + XANSMIN * (1.0-PPERMSNOWFRAC(:))
   ZANSMAX(:) = XAGLAMAX * PPERMSNOWFRAC(:) + XANSMAX * (1.0-PPERMSNOWFRAC(:))  
@@ -2289,7 +2138,7 @@ REAL, DIMENSION(3), INTENT(OUT) :: PALB
 REAL :: ZDIAM, ZDIAM_SQRT
 
 !++ trude, crocus
-REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   
+REAL, DIMENSION(:), INTENT(IN), OPTIONAL   :: VIS_ICEALB   
 !-- trude
 !
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
@@ -2310,17 +2159,22 @@ IF ( PSNOWRHO_IN<XRHOTHRESHOLD_ICE ) THEN
 ! ! ! ! !               PALB(1)=MAX(XVALB11,PALB(1)-MIN(MAX(PPS_IN/XVPRES1,XVRPRE1), &
 ! ! ! ! !                       XVRPRE2)*XVALB10*MIN(365.,ZAGE_NOW-PSNOWAGE)/PVAGE1)
 
-!      write(*,*) XVPRES1, PVAGE1
+
   PALB(1) = MAX( XVALB11, PALB(1) - MIN( MAX(PPS_IN/XVPRES1,XVRPRE1), XVRPRE2 ) * &
                    XVALB10 * PSNOWAGE / PVAGE1 )
 ELSE
   ! Prescribed spectral albedo for surface ice
   !! ++ trude, crocus
-  IF (VIS_ICEALB(1).ne.0.0) THEN
-      PALB(1) = VIS_ICEALB(1)
-  ELSE
-      PALB(1) = XALBICE1
-  ENDIF
+ 
+  
+if (isnan(VIS_ICEALB(1))) then 
+  PALB(1) = XALBICE1
+  elseif (VIS_ICEALB(1).ne.0.0) THEN
+  PALB(1) = XALBICE1
+else  
+  PALB(1) = VIS_ICEALB(1)
+endif  
+  
   PALB(2) = XALBICE2
   PALB(3) = XALBICE3
 ENDIF
@@ -2398,7 +2252,7 @@ INTEGER :: JJ,JST,JB   ! looping indexes
 
 !++ trude, crocus
 
-REAL, DIMENSION(:), INTENT(IN)       :: VIS_ICEALB   !-- trude!
+REAL, DIMENSION(:), INTENT(IN), OPTIONAL   :: VIS_ICEALB   !-- trude!
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
 !IF (LHOOK) CALL DR_HOOK('SNOWCRORAD',0,ZHOOK_HANDLE)
@@ -2692,7 +2546,6 @@ PRI(:) = ZRI(:)
 !
 
 PRSRA(:) = PRHOA(:) / PRA(:)
-!write(*,*) "PRA (RAHB) " , PRA
 !
 ! For atmospheric model coupling:
 !
@@ -2967,13 +2820,8 @@ ENDDO
 ! 4. Compute solution vector
 ! --------------------------
 !
-!write(*,*) 'foo100', zsnowtemp
-!write(*,*) zamtrx 
-!write(*,*) zbmtrx 
-!write(*,*) zcmtrx 
-!write(*,*) zfrcv 
+
 CALL TRIDIAG_GROUND_SNOWCRO(ZAMTRX,ZBMTRX,ZCMTRX,ZFRCV,ZSNOWTEMP,KNLVLS_USE,0) 
-!write(*,*) 'foo101', zsnowtemp
 !
 ! Heat flux between surface and 2nd snow layers: (W/m2)
 !
@@ -3005,7 +2853,6 @@ ENDDO
 !
 
  CALL TRIDIAG_GROUND_SNOWCRO(ZAMTRX_M,ZBMTRX_M,ZCMTRX_M,ZFRCV_M,ZSNOWTEMP_M,KNLVLS_USE,1) 
-!write(*,*) 'foo104', zsnowtemp_m
 !
 ! If melting for 2 consecuative time steps, then replace current T-profile
 ! with one assuming T=Tf in surface layer:
@@ -3019,10 +2866,8 @@ END WHERE
 !
 DO JJ = 1,SIZE(PTG)
   DO JST = 2,KNLVLS_USE(JJ)
-!write(*,*) 'foo105', zsnowtemp(jj,jst)
     ZSNOWTEMP(JJ,JST) = ZSNOWTEMP_DELTA(JJ)       * ZSNOWTEMP_M(JJ,JST-1) + &
                         (1.0-ZSNOWTEMP_DELTA(JJ)) * ZSNOWTEMP  (JJ,JST)
-!write(*,*) 'foo106', zsnowtemp(jj,jst)
   ENDDO
 ENDDO
 !
@@ -3035,24 +2880,17 @@ ENDDO
 !
 DO JJ=1, SIZE(PTG)
  ZGBAS(JJ) = ZDTERM(JJ,KNLVLS_USE(JJ)) * ( ZSNOWTEMP(JJ,KNLVLS_USE(JJ))             - PTG(JJ) ) 
-!      write(*,*) "zgbas(jj)" , zgbas(jj), ptg(jj)
  PGBAS(JJ) = ZDTERM(JJ,KNLVLS_USE(JJ)) * ( MIN( XTT, ZSNOWTEMP(JJ,KNLVLS_USE(JJ)) ) - PTG(JJ) )
- !     write(*,*) "pgbas(jj)" , pgbas(jj), ptg(jj)
-!write(*,*) 'foo107', zsnowtemp(jj,knlvls_use(jj))
  ZSNOWTEMP(JJ,KNLVLS_USE(JJ)) = ZSNOWTEMP(JJ,KNLVLS_USE(JJ)) + &
                                 ( ZGBAS(JJ)-PGBAS(JJ) ) / ZCTERM(JJ,KNLVLS_USE(JJ))      
                                 
-!write(*,*) 'foo108', zsnowtemp(jj,knlvls_use(jj))
- !     write(*,*) 'zsnowtemp(jj,knlvls_use(jj))', zsnowtemp(jj,knlvls_use(jj))
 ENDDO
 !
 ! 7. Update temperatute profile in time:
 ! --------------------------------------
 !
 DO JJ=1, SIZE(PTG)
-!write(*,*) 'foo109', psnowtemp(jj,knlvls_use(jj))
   PSNOWTEMP(JJ,1:KNLVLS_USE(JJ)) = ZSNOWTEMP(JJ,1:KNLVLS_USE(JJ))
-!write(*,*) 'foo110', psnowtemp(jj,knlvls_use(jj))
 ENDDO
 !
 !
@@ -3060,9 +2898,6 @@ ENDDO
 ! -----------------------------------------------------
 !
 PTA_IC(:) = PPET_B_COEF_T(:) + PPET_A_COEF_T(:) * PSNOWTEMP(:,1)
-!write(*,*) "pta_ic", pta_ic
-!write(*,*) "ptg ", ptg
-!
 PQA_IC(:) = PPEQ_B_COEF_T(:) + PPEQ_A_COEF_T(:) * PSNOWTEMP(:,1)
 !
 !IF (LHOOK) CALL DR_HOOK('SNOWCROSOLVT',1,ZHOOK_HANDLE)
@@ -3168,7 +3003,6 @@ DO JJ = 1,SIZE(PSNOWDZ,1)
     ZCMPRSFACT(JJ,JST) = ( ZSNOWLWE(JJ,JST) - (PSNOWLIQ(JJ,JST)+ZSNOWMELT(JJ,JST)) ) &
                        / ( ZSNOWLWE(JJ,JST) - PSNOWLIQ(JJ,JST) )
     PSNOWDZ   (JJ,JST) = PSNOWDZ (JJ,JST) * ZCMPRSFACT(JJ,JST)
-!      write(*,*) "psnowdz ", psnowdz
     PSNOWRHO  (JJ,JST) = ZSNOWLWE(JJ,JST) * XRHOLW / PSNOWDZ(JJ,JST)
     !
     ! 2. Add snow melt to current snow liquid water content:
@@ -3502,12 +3336,10 @@ ENDDO
 ! ------------------------------
 !
 PSNOWTEMP(:) = ZSNOWTEMP(:)
-!write(*,*) "in snowcroflux ZSNOWTEMP(:)", ZSNOWTEMP
 !
 ! 5. Final evaporative flux (kg/m2/s)
 !
 PEVAP(:) = ZEVAPC(:)
- !WRITE(*,*) 'Flux surface:',PGFLUX(1),PRN(1),PH(1), ZLE(1), PHPSNOW(1)
 !
 ! 5. Friction velocity
 ! --------------------
@@ -3575,19 +3407,6 @@ PGFLUX    = PRN - PH - ZLE + PHPSNOW
 PFSA_CROCUS= (1-PALBT)*PSW_RAD
 PFSR_CROCUS = PALBT*PSW_RAD
 PFIRA_CROCUS = ZLWUPSNOW - PEMIST*PLW_RAD
-
-!write(*,*) "Crocus LW"
-!write(*,*) ZDELTAT, PSNOWTEMP, PEMIST,XSTEFAN, PLW_RAD, PFIRA_CROCUS
-
-! write(*,*) "Crocus SH"
-! write(*,*) PRHOA,XCPD,"foo ",PRSRA*XCPD,PSNOWTEMP,PTA
-!write(*,*) PEXNS, PEXNA 
-
-!write(*,*) "ZLE crocus_FGEV? ", ZLE
-!write(*,*) "snowcro FSA ", (1-PALBT)*PSW_RAD
-!write(*,*) "snowcro FIRA ", PEMIST*PLW_RAD - ZLWUPSNOW
-
-
 
 !
 !IF (LHOOK) CALL DR_HOOK('SNOWCRO:GET_FLUX',1,ZHOOK_HANDLE)
@@ -4727,11 +4546,6 @@ DO JJ = 1,SIZE(PSNOW(:))
                                          PSNOW(JJ), SUM( PSNOWDZN(JJ,1:INLVLS_USE(JJ)) )-PSNOW(JJ), &
                                          ZSNOWFALL(JJ)
 
-!    WRITE(*,*) ABS( SUM( PSNOWDZN(JJ,1:KNLVLS_USE(JJ)) ) - PSNOW(JJ) )  , xuepsi
-
-!    WRITE( *,*) 'JJ , PSNOWDZ(JJ):',JJ ,  PSNOWDZ(JJ,:)
-!    WRITE( *,*) 'JJ , PSNOWDZN(JJ):',JJ , PSNOWDZN(JJ,:)
-    !
 !    CALL ABOR1_SFX("SNOWCRO: error in grid resizing")
     !
   ENDIF
@@ -4927,8 +4741,6 @@ INLVLS_OLD = -1
 ZPSNOW_NEW = 0.
 ZPSNOW_OLD = 0.
 !
-!write(6,*) "in snownlgridfresh "
-!write(6,*) "psnowrho 1", psnowrho
 DO JST = 1,INLVLS_NEW
   ZPSNOW_NEW = ZPSNOW_NEW + PSNOWDZN(JST)
 ENDDO
@@ -5004,9 +4816,6 @@ ENDIF
 ZSNOWZTOP_OLD(1) = ZPSNOW_OLD
 ZSNOWZTOP_NEW(1) = ZPSNOW_NEW
 
-!write(6,*) "zpsnowtop_new ", zsnowztop_new(1)
-!
-
       DO JST = 1,INLVLS_OLD
          IF ( JST>1 ) ZSNOWZTOP_OLD(JST) = ZSNOWZBOT_OLD(JST-1)
          ZSNOWZBOT_OLD(JST) = ZSNOWZTOP_OLD(JST) - ZSNOWDZO(JST)
@@ -5020,34 +4829,13 @@ ZSNOWZTOP_NEW(1) = ZPSNOW_NEW
 ! NBNBNBNB trude test. When zsnowzbot=zsnowztop_new there is a problem in get_mass_heat. The entire glacier layer for this
 ! gridpoint is set to zero because snowrho does not get a value. This is a fast fix that needs to be evaluated. 
 
-! trude foo comment this out for testing
-
-!      if (zsnowzbot_new(1)==zsnowztop_new(1)) then
-!         zsnowztop_new(1)=zsnowztop_new(1)+1.e-4  
-!         zsnowzbot_new(1)=zsnowzbot_new(1)-1.e-4  
-!      endif
-
-
-!write(6,*) "diff new 2", zsnowzbot_new-zsnowztop_new
-! end trude test
 !
 ! Check consistency
 ! true if test:
-IF ( INLVLS_OLD>0 ) THEN
-! trude test 
-     IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.0001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
-! orig
-!      IF ( ABS(ZSNOWZBOT_OLD(INLVLS_OLD)) > 0.00001 ) WRITE (*,*) 'Error bottom OLD' , abs(ZSNOWZBOT_OLD(INLVLS_OLD))
-ENDIF
+!IF ( INLVLS_OLD>0 ) THEN
+
 ZSNOWZBOT_OLD(INLVLS_OLD) = 0.   ! trude comment. This line is included in original snowcro, but has been deleted in new WRF-Hydro code. Not sure why. 
                                                                ! Now testing with this included. 
-!
-!
-! Check consistency
-! trude test
-if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.0001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
-! orig
-!      if ( ABS(ZSNOWZBOT_NEW(INLVLS_NEW)) > 0.00001 ) WRITE (*,*) 'Error bottom NEW' , ABS(ZSNOWZBOT_NEW(INLVLS_NEW))
 !
 ZSNOWZBOT_NEW(INLVLS_NEW) = 0.
 !
@@ -5068,9 +4856,8 @@ ZSNOWZBOT_NEW(INLVLS_NEW) = 0.
 !
 
 
-!write(6,*) " after get mass heat"
-!write(6,*) "zsnowrhoo 1 ", zsnowrhoo
-!write(6,*) "zsnowrhon 1 ", zsnowrhon
+
+
 ! check of consistency between new and old snowpacks
 ZSNOWHEAN  = 0.
 ZMASTOTN   = 0.
@@ -5104,7 +4891,6 @@ ENDIF
 PSNOWDZ   (:) = PSNOWDZN   (:)
 !
 PSNOWRHO  (:) = ZSNOWRHON  (:)
-!write(6,*) "psnowrho 2", psnowrho
 PSNOWHEAT (:) = ZSNOWHEATN (:)
 PSNOWGRAN1(:) = ZSNOWGRAN1N(:)
 PSNOWGRAN2(:) = ZSNOWGRAN2N(:)

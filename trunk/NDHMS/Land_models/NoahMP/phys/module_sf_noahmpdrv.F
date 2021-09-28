@@ -64,7 +64,7 @@ CONTAINS
               PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & !IN/OUT for crocus, T.EI
               PSNOWALBXY, PSNOWAGEXY, act_level,      & !IN/OUT  for crocus, T.EI
               PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY, & !OUT  for crocus   & out, T.EI
-              GLACINFO ,GLACT,VIS_ICEALB, &
+              GLACINFO ,GLACT, &
               FLOW_ICE, FLOW_SNOW,                           & ! OUT  ! INOUT for crocus, T.EI
 ! -- T.EI
 #ifdef SPATIAL_SOIL
@@ -80,7 +80,8 @@ CONTAINS
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
                its,ite,  jts,jte,  kts,kte,                    &
-               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &    
+               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL, &
+               VIS_ICEALB  &    
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
@@ -514,8 +515,8 @@ CONTAINS
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(INOUT)               :: FLOW_SNOW
       INTEGER, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)              :: GLACINFO  
       REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: GLACT
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT)                 :: VIS_ICEALB
-
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT) , OPTIONAL      :: VIS_ICEALB
+      
       INTEGER                              :: GLACINFOH,GLACR ! glacier info
       CHARACTER(LEN=11)         :: HSNOWRES
       CHARACTER(LEN=3)           :: HIMPLICIT_WIND
@@ -1008,7 +1009,8 @@ CONTAINS
           ELSE
 !             write(*,*) "before call snowcro"
 !             write(*,*) 'zp_snowdz(1,1)', zp_snowdz(1,1)
-             CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                & !(IN)
+            write(*,*) 'vis_icealb ', i,j, zp_vis_icealb
+            CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                & !(IN)
                   ZP_PEW_A_COEF, ZP_PEW_B_COEF,                                                                & !(IN)
                   ZP_PET_A_COEF, ZP_PEQ_A_COEF, ZP_PET_B_COEF, ZP_PEQ_B_COEF,   & !(IN)
                   ZP_SNOWSWE,ZP_SNOWRHO, ZP_SNOWHEAT, ZP_SNOWALB,               & ! (INOUT) !several layers
@@ -1032,7 +1034,7 @@ CONTAINS
                   I,J) !(OUT)
 
 
-
+            
 
              
              !  Call to NOAHM_GLACIER to after CROCUS to calculte 2m temp and other 2m variables. 

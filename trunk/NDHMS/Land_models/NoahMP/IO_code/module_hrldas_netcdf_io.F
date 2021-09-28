@@ -699,7 +699,7 @@ contains
 
 
     ! Get visible ice albedo map (vis_icealb) 
-    call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, FATAL, ierr)
+    call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
     ! print*, 'vis_icealb(xstart,ystart) = ', vis_icealb(xstart,ystart)
 ! -- T.EI
 

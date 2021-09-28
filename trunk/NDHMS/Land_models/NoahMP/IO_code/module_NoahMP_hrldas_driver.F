@@ -100,7 +100,7 @@ module module_NoahMP_hrldas_driver
 ! ++ T.EI crocus 
  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  GLACINFO    ! location of  glacier 
   REAL, ALLOCATABLE, DIMENSION(:,:)      ::  GLACT ! glacier thickness  
-  REAL, ALLOCATABLE, DIMENSION(:,:)      ::  VIS_ICEALB  ! map of visible ice albedo 
+  REAL, ALLOCATABLE, DIMENSION(:,:)     ::  VIS_ICEALB  ! map of visible ice albedo 
   ! -- T.EI
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGFRA    ! vegetation fraction []
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TMN       ! deep soil temperature [K]
@@ -1826,7 +1826,7 @@ end subroutine land_driver_ini
                PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & 
                PSNOWALBXY, PSNOWAGEXY, act_lev,            & 
                PSNOWHEIGHTXY, PSNOWTOTSWEXY, PSNOWTHRUFALXY,&
-               GLACINFO, GLACT,VIS_ICEALB,                 & 
+               GLACINFO, GLACT,              & 
                FLOW_ICE, FLOW_SNOW,                        &
 ! -- T.EI
 #ifdef SPATIAL_SOIL
@@ -1844,7 +1844,8 @@ end subroutine land_driver_ini
                 its,ite, jts,jte, kts,kte,        &
 ! variables below are optional
                 MP_RAINC =  RAINCV, MP_RAINNC =    RAINNCV, MP_SHCV = RAINSHV,&
-		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
+    MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV, &
+    VIS_ICEALB=VIS_ICEALB &
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
