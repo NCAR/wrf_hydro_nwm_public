@@ -2233,7 +2233,7 @@ contains
        nsoil, nsnow, sldpth, startdate, date, &
        vegtyp, soltyp, &
 ! ++ T.EI crocus
-      glacinfo, glact, act_level)
+      act_level)
 ! -- T.EI
 
     implicit none
@@ -2270,26 +2270,13 @@ contains
     character(len=19),                        intent(in) :: date
     integer,          dimension(ixpar,jxpar), intent(in) :: vegtyp
     integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
-! ++ T.EI crocus
-    integer,optional, dimension(ixpar,jxpar), intent(in) :: glacinfo
-    real,   optional, dimension(ixpar,jxpar), intent(in) :: glact
-! -- T.EI
     integer,          dimension(global_nx,global_ny) :: g_vegtyp
     integer,          dimension(global_nx,global_ny) :: g_soltyp
-! ++ T.EI crocus
-    integer,          dimension(:,:), allocatable    :: g_glacinfo
-    real,             dimension(:,:), allocatable    :: g_glact
-! -- T.EI
 
     call write_io_int(vegtyp, g_vegtyp)
     call write_io_int(soltyp, g_soltyp)
 
     if(my_id .eq. IO_id) then
-       if (crocus_opt /= 0) then ! crocus turned on
-          allocate(g_glacinfo(ixpar,jxpar))
-          allocate(g_glact(ixpar,jxpar))
-       end if
-
        call prepare_output_file_seq(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
@@ -2297,7 +2284,7 @@ contains
        nsoil, nsnow, sldpth, startdate, date, &
        g_vegtyp, g_soltyp, &
 ! ++ T.EI crocus
-       g_glacinfo,g_glact,act_level)
+       act_level)
 ! -- T.EI
     end if
 
@@ -2311,7 +2298,7 @@ contains
        nsoil, nsnow, sldpth, startdate, date, &
        vegtyp, soltyp, &
 ! ++ T.EI crocus
-       glacinfo,glact,act_level)
+       act_level)
 ! -- T.EI
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
@@ -2350,10 +2337,6 @@ contains
     character(len=19),                        intent(in) :: date
     integer,          dimension(ixpar,jxpar), intent(in) :: vegtyp
     integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
-! ++ T.EI crocus
-    integer, optional, dimension(ixpar,jxpar), intent(in) :: glacinfo
-    real,    optional, dimension(ixpar,jxpar), intent(in) :: glact
-! -- T.EI
 
     integer :: ncid
 
@@ -2469,14 +2452,6 @@ contains
 
     allocate(vegtyp_remember(ixpar,jxpar))
     vegtyp_remember = vegtyp
-! ++ T.EI crocus
-    if (crocus_opt /= 0) then
-       allocate(glacinfo_remember(ixpar,jxpar))
-       glacinfo_remember = glacinfo
-       allocate(glact_remember(ixpar,jxpar))
-       glact_remember = glact
-    end if
-! -- T.EI
 
 !
 ! While we're here, put the data for the "Times" variable to the NetCDF file.
@@ -2550,10 +2525,6 @@ contains
 
 !yw    deallocate(vegtyp_remember)
     if(allocated(vegtyp_remember)) deallocate(vegtyp_remember)
-! ++ T.EI crocus
-    if(allocated(glacinfo_remember)) deallocate(glacinfo_remember)
-    if(allocated(glact_remember)) deallocate(glact_remember)
-! -- T.EI
   end subroutine finalize_output_file
 
 !---------------------------------------------------------------------------------------------------------
