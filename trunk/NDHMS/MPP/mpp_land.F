@@ -142,7 +142,7 @@ MODULE MODULE_MPP_LAND
 
   !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
   subroutine MPP_LAND_INIT(in_global_nx,in_global_ny)
-!    ### initialize the land model logically based on the two D method. 
+!    ### initialize the land model logically based on the two D method.
 !    ### Call this function directly if it is nested with WRF.
     implicit none
     integer, optional :: in_global_nx, in_global_ny
@@ -151,7 +151,7 @@ MODULE MODULE_MPP_LAND
     logical mpi_inited
 
     global_nx = in_global_nx
-    global_ny = in_global_ny 
+    global_ny = in_global_ny
 
     ! left_right_np = ew_numprocs
     ! up_down_np  = sn_numprocs
@@ -908,7 +908,7 @@ MODULE MODULE_MPP_LAND
       if(my_id .ne. IO_id) then
           size = local_rt_nx*local_rt_ny
           tag = 2
-          call mpi_send(in_buff,size,MPI_INTEGER, IO_id,     &
+          call mpi_send(in_buff,size,MPI_INTEGER8, IO_id,     &
                   tag,HYDRO_COMM_WORLD,ierr)
       else
           do i = 0, numprocs - 1
@@ -924,7 +924,7 @@ MODULE MODULE_MPP_LAND
                   size = local_rt_nx_size(i+1)*local_rt_ny_size(i+1)
                   tag = 2
                   call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
-                          MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+                          MPI_INTEGER8,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
               end if
           end do
       end if
@@ -1458,12 +1458,12 @@ MODULE MODULE_MPP_LAND
                   ! send data to the rest process.
                   size = (iend-ibegin+1)*(jend-jbegin+1)
                   call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
-                          MPI_INTEGER, i,tag,HYDRO_COMM_WORLD,ierr)
+                          MPI_INTEGER8, i,tag,HYDRO_COMM_WORLD,ierr)
               end if
           end do
       else
           size = nx*ny
-          call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
+          call mpi_recv(out_buff,size,MPI_INTEGER8,IO_id, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
       return
@@ -2022,7 +2022,8 @@ MODULE MODULE_MPP_LAND
           implicit none
           integer gnlinks,nlinks, map_l2g(nlinks)
           integer(kind=int64) ::  recv(nlinks), v(nlinks)
-          integer(kind=int64), allocatable, dimension(:) :: tmp_map , tmp_v
+          integer(kind=int64), allocatable, dimension(:) :: tmp_v
+          integer, allocatable, dimension(:) :: tmp_map
           integer(kind=int64), dimension(:) :: g_v
           integer i, ierr, tag, k
           integer length, node, message_len
@@ -2048,10 +2049,9 @@ MODULE MODULE_MPP_LAND
                       !block receive  from other node.
 
                       tag = 109
-                      call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER8,i, &
+                      call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                       tag = 119
-
                       call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER8,i,  &
                               tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
@@ -2081,7 +2081,7 @@ MODULE MODULE_MPP_LAND
               end do
           else
               tag =  109
-              call mpi_send(map_l2g,nlinks,MPI_INTEGER8, IO_id,     &
+              call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
                       tag,HYDRO_COMM_WORLD,ierr)
               tag = 119
               call mpi_send(v,nlinks,MPI_INTEGER8,IO_id,   &
@@ -2818,6 +2818,3 @@ MODULE MODULE_MPP_LAND
 
 
 END MODULE MODULE_MPP_LAND
-
-
-
