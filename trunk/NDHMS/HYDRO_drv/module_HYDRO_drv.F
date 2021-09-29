@@ -668,10 +668,10 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       else
          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
          rt_domain(did)%overland%control%infiltration_excess = 0.
-         if (nlst_rt(did)%WVTFLAG .gt. 0) then
-           rt_domain(did)%overland%control%surface_water_head_routing_tr = rt_domain(did)%overland%control%infiltration_excess_tr
-           rt_domain(did)%overland%control%infiltration_excess_tr = 0.
-         end if
+!         if (nlst_rt(did)%WVTFLAG .gt. 0) then
+!           rt_domain(did)%overland%control%surface_water_head_routing_tr = rt_domain(did)%overland%control%infiltration_excess_tr
+!           rt_domain(did)%overland%control%infiltration_excess_tr = 0.
+!         end if
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -1358,13 +1358,13 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
 !DJG Implement subgrid weighting routine...
                if( (runoff1x_in(i,j) .lt. 0) .or. (runoff1x_in(i,j) .gt. 1000) ) then
                     runoff1x(IXXRT,JYYRT) = 0
-                    if (present(WVTFLAG))  landrunoff_tr_pass = 0    !wt var
+                    if (present(wvtflag_pass))  landrunoff_tr_pass = 0    !wt var
                else
                     runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
                         *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
-                    if (present(WVTFLAG)) then
-                       wvt_ratio  = min(1,max(0, infxsrt_tr_pass(i,j)/runoff1x_in(i,j)))
-                       landrunoff_tr_pass(IXXRT,JYYRT)=runorunoff1x(IXXRT,JYYRT)*wvt_ratio
+                    if (present(wvtflag_pass)) then
+                       wvt_ratio  = min(1.0,max(0.0, infxsrt_tr_pass(i,j)/runoff1x_in(i,j)))
+                       landrunoff_tr_pass(IXXRT,JYYRT)=runoff1x(IXXRT,JYYRT)*wvt_ratio
                     end if
                endif
 

@@ -66,7 +66,6 @@ CONTAINS
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
-               INFXSRT_TR, soldrain_tr                                      & ! OUT water tracer vars
 #endif
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
@@ -86,7 +85,9 @@ CONTAINS
                 , SMCWTDXY_TR, DEEPRECHXY_TR, RECHXY_TR           & ! INOUT
                 , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR               &
 		, EDIRXY_TR,  ETRANXY_TR, FLUXXY_TR               & ! IN/OUT WVT variables
-
+#ifdef WRF_HYDRO
+                ,INFXSRT_TR, soldrain_tr                          & ! OUT water tracer vars
+#endif
                )
 !----------------------------------------------------------------
     USE MODULE_SF_NOAHMPLSM
@@ -1008,8 +1009,8 @@ print *, "FLAG006"
             INFXSRT(i,j) = RUNSF*dt        !mm , surface runoff
 
      !-----water tracer start------
-     if (present(soldrain_tr))  soldrain_tr(i,j) = max(RUNSB_TR*dt, 0.)
-     if (present(INFXSRT_TR))   INFXSRT_TR(i,j)  = RUNSF_TR*dt 
+     if (present(soldrain_tr))  soldrain_tr(i,j) = max(RUNSUB_TR*dt, 0.)
+     if (present(INFXSRT_TR))   INFXSRT_TR(i,j)  = RUNSRF_TR*dt 
      !-----------------------------
 #endif
 

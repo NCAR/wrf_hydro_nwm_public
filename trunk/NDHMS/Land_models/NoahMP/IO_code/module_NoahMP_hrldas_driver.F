@@ -550,8 +550,8 @@ module module_NoahMP_hrldas_driver
   restart_frequency_hours = -999
   tracer_sublayer         = -999       ! water tracer sublayers
   wvtflag                 = -999       ! flag for water tracer
-  nlst_rt%wvtflag         = -999
-  nlst_rt%NTRACER         = -999
+  nlst_rt(did)%wvtflag    = -999
+  nlst_rt(did)%NTRACER    = -999
 
 #ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
@@ -620,9 +620,9 @@ module module_NoahMP_hrldas_driver
     IOPT_PM  = partial_mixing_option
     NSUB     = tracer_sublayer
     NTRACER  = sum(NSUB(1:nsoil))
-    nlst_rt%NTRACER = NTRACER
-    allocate(nlst_rt%NSUB(MAX_SOIL_LEVELS))
-    nlst_rt%NSUB    = NSUB
+    nlst_rt(did)%NTRACER = NTRACER
+    allocate(nlst_rt(did)%NSUB(MAX_SOIL_LEVELS))
+    nlst_rt(did)%NSUB    = NSUB
   end if
   print *, "FLAG1"
   print *, "OPT_WT", OPT_WT
@@ -1726,6 +1726,23 @@ end subroutine land_driver_ini
   subroutine land_driver_exe(itime)
   use module_hydro_io, only: read_channel_only
      implicit  none
+     INTERFACE
+        subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk, &
+                                   NTRACER, WVTFLAG, SMOIS_SUB, SH2OXY_SUB, &      !wt vars
+                                   SMOIS_TR, SH2OXY_TR,infxsrt_tr, soldrain_tr )   !wt vars
+          implicit none
+          integer,                                intent(INOUT) :: ii,jj,kk
+          real,dimension(ii,kk,jj),               intent(INOUT) :: STC_io,SMC_io,SH2OX_io
+          real,dimension(ii,jj),                  intent(INOUT) :: infxsrt,sfcheadrt, soldrain
+         !-----water tracer vars------
+          integer,                                intent(INOUT) :: NTRACER
+          integer,                      optional, intent(INOUT) :: WVTFLAG
+          real,dimension(ii,NTRACER,jj),optional, intent(INOUT) :: SMOIS_SUB, SH2OXY_SUB, SMOIS_TR,SH2OXY_TR
+          real,dimension(ii,jj),        optional, intent(INOUT) :: infxsrt_tr, soldrain_tr
+        end subroutine hrldas_drv_HYDRO
+     END INTERFACE
+
+
      integer :: itime          ! timestep loop
 
 !---------------------------------------------------------------------------------
@@ -1747,7 +1764,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, indir, dtbl,ix,jx,infxsrt,soldrain)
-          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NTRACER)
           call geth_newdate(newdate, olddate, nint(dtbl))
           olddate = newdate
           return
@@ -1762,7 +1779,7 @@ end subroutine land_driver_ini
           call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
           write(hgrid_hydro,'(I1)') igrid_hydro
           call read_channel_only(olddate, hgrid_hydro, indir, forcing_timestep)
-          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NTRACER)
           call geth_newdate(newdate, olddate, nint(dtbl))
           olddate = newdate
           return
@@ -2067,7 +2084,6 @@ print *, "NTRACER", NTRACER
 #endif
 #ifdef WRF_HYDRO
                  sfcheadrt,INFXSRT,soldrain,                          &    !O
-                 INFXSRT_TR=INFXSRT_TR, soldrain_tr=soldrain_tr       &    !O water tracer
 #endif
                 ids,ide, jds,jde, kds,kde,                      &
                 ims,ime, jms,jme, kms,kme,                      &
@@ -2089,7 +2105,9 @@ print *, "NTRACER", NTRACER
                 , SMCWTDXY_TR=SMCWTDXY_TR, DEEPRECHXY_TR=DEEPRECHXY_TR, RECHXY_TR=RECHXY_TR          & ! INOUT
                 , RUNSFXY_TR=RUNSFXY_TR, RUNSBXY_TR=RUNSBXY_TR, ECANXY_TR=ECANXY_TR                  &
 		, EDIRXY_TR=EDIRXY_TR, ETRANXY_TR=ETRANXY_TR, FLUXXY_TR=FLUXXY_TR                    & ! IN WVT variables
- 
+#ifdef WRF_HYDRO
+                , INFXSRT_TR=INFXSRT_TR, soldrain_tr=soldrain_tr               &    !O water tracer
+#endif 
                 )
 print *, "FLAG9-1" 
 
@@ -2130,7 +2148,7 @@ print *, "FLAG9-2"
        call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NTRACER) 
      else
        call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, &
-            NTRACER, WVTFLAG=WVTFALG, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB, &    ! water tracer vars      
+            NTRACER, WVTFLAG=WVTFLAG, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB, &    ! water tracer vars      
             SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR,              &    ! water tracer vars
             infxsrt_tr=infxsrt_tr, soldrain_tr=soldrain_tr)           ! water tracer vars
      end if

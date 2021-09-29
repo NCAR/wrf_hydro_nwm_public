@@ -196,25 +196,25 @@ subroutine output_chrt_NWM(domainId)
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
    if (nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation 
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,0]
    else if (nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,1]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,0]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -274,11 +274,11 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_linkidOut(gsize))
          allocate(g_outInd(gsize))
          !----water tracer vars----
-         allocate(q_qlink_tr(gsize,2))
+         allocate(g_qlink_tr(gsize,2))
          allocate(g_QLateral_tr(gsize))
          allocate(g_hlink_tr(gsize))
          allocate(g_qBucket_tr(gsize))
-         allocate(q_qlink_trOut(gsize,2))
+         allocate(g_qlink_trOut(gsize,2))
          allocate(g_QLateral_trOut(gsize))
          allocate(g_hlink_trOut(gsize))
          allocate(g_qBucket_trOut(gsize))
@@ -317,11 +317,11 @@ subroutine output_chrt_NWM(domainId)
          allocate(g_linkidOut(1))
          allocate(g_outInd(1))
          !----water tracer vars----
-         allocate(q_qlink_tr(1,2))
+         allocate(g_qlink_tr(1,2))
          allocate(g_QLateral_tr(1))
          allocate(g_hlink_tr(1))
          allocate(g_qBucket_tr(1))
-         allocate(q_qlink_trOut(1,2))
+         allocate(g_qlink_trOut(1,2))
          allocate(g_QLateral_trOut(1))
          allocate(g_hlink_trOut(1))
          allocate(g_qBucket_trOut(1))
@@ -393,7 +393,7 @@ subroutine output_chrt_NWM(domainId)
                fileMeta%outFlag(7) = 1
                call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
                call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
-               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket_tr,g_qBucket_tr)
+             !  call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket_tr,g_qBucket_tr)
             endif
             if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
                nlst_rt(domainId)%channel_only                .eq. 0         ) then
@@ -485,11 +485,11 @@ subroutine output_chrt_NWM(domainId)
       g_QLateral = RT_DOMAIN(domainId)%QLateral
       g_velocity = RT_DOMAIN(domainId)%velocity
       !-----water tracer vars------
-      allocate(q_qlink_tr(gsize,2))
+      allocate(g_qlink_tr(gsize,2))
       allocate(g_QLateral_tr(gsize))
       allocate(g_hlink_tr(gsize))
       allocate(g_qBucket_tr(gsize))
-      allocate(q_qlink_trOut(gsize,2))
+      allocate(g_qlink_trOut(gsize,2))
       allocate(g_QLateral_trOut(gsize))
       allocate(g_hlink_trOut(gsize))
       allocate(g_qBucket_trOut(gsize))
@@ -513,7 +513,7 @@ subroutine output_chrt_NWM(domainId)
             fileMeta%outFlag(7) = 1
             g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
             g_qBucket = RT_DOMAIN(domainId)%qBucket
-            g_qBucket_tr = RT_DOMAIN(domainId)%qBucket_tr
+           ! g_qBucket_tr = RT_DOMAIN(domainId)%qBucket_tr
          endif
          if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
             fileMeta%outFlag(8) = 1

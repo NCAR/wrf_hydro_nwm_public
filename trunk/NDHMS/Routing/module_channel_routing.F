@@ -333,7 +333,7 @@ subroutine SUBMUSKINGCUNGE(    &
      nCC, depth                &
      , wvtflag_pass, qdc_tr    & !wt vars
      , qup_tr, quc_tr, qdp_tr  & !wt vars
-     , ql_tr, depth_tr     )   & !wt vars
+     , ql_tr, depth_tr     )     !wt vars
 
 #ifdef HYDRO_D
 use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter diagnostic print
@@ -727,7 +727,7 @@ SUBROUTINE calculate_proportr_muskingcunge(Km, X, dt, &
   STORAGE_TOTAL = 0.5*(Km*qup   +Km*(1-X)*qdp   +Km*quc   +Km*(1-X)*qdc   )+ql*dt
   STORAGE_TR    = 0.5*(Km*qup_tr+Km*(1-X)*qdp_tr+Km*quc_tr)                +ql_tr*dt
   PROPOR_TR     = STORAGE_TR/(STORAGE_TOTAL -0.5*Km*(1-X)*qdc)
-  PROPOR_TR     = min(1, max(0,PROPOR_TR))
+  PROPOR_TR     = min(1.0, max(0.0,PROPOR_TR))
 
 ! ------------------------------------------------
 END SUBROUTINE calculate_proportr_muskingcunge
@@ -2168,6 +2168,7 @@ do nt = 1, nsteps
             if (present(wvtflag_pass)) then 
               if (gQLINK_tr(m,2) .gt. 0)   Quc_tr = Quc_tr + gQLINK_tr(m,2)
               if (gQLINK_tr(m,1) .gt. 0)   Qup_tr = Qup_tr + gQLINK_tr(m,1)
+            end if
          end do ! do i
 #else
          do m = 1, NLINKSL                

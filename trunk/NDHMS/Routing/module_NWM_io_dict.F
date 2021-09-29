@@ -718,7 +718,7 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
                               "Head","qSfcLatRunoff","qBucket",&
                               "qBtmVertRunoff","AccSfcLatRunoff","accBucket", &
                               "streamflow_tr", "q_lateral_tr",                & !wt vars
-                              "Head_tr","qBucket_tr"]                         & !wt vars
+                              "Head_tr","qBucket_tr"]                           !wt vars
    chrtOutDict%longName(:) = [character(len=64) :: "River Flow","Amount of stream flow alteration",&
                               "Runoff into channel reach","River Velocity",&
                               "River Stage","Runoff from terrain routing",&
