@@ -59,10 +59,10 @@ CONTAINS
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
 ! ++ T.EI crocus
-              PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,            & !OUT, for crocus, T.EI
-              PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,           & ! IN/OUT for crocus,  T.EI
-              PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,       & !IN/OUT for crocus, T.EI
-              PSNOWALBXY, PSNOWAGEXY, act_level,             & !IN/OUT  for crocus, T.EI
+              PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,               & !OUT, for crocus, T.EI
+              PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,         & ! IN/OUT for crocus,  T.EI
+              PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & !IN/OUT for crocus, T.EI
+              PSNOWALBXY, PSNOWAGEXY, act_level,      & !IN/OUT  for crocus, T.EI
               PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY, & !OUT  for crocus   & out, T.EI
               GLACINFO ,GLACT,                               & ! INOUT for crocus, T.EI
               FLOW_ICE, FLOW_SNOW,                           & ! OUT
@@ -81,7 +81,8 @@ CONTAINS
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
                its,ite,  jts,jte,  kts,kte,                    &
-               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &
+               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL, &
+               VIS_ICEALB  &
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
@@ -94,7 +95,10 @@ CONTAINS
 !   ++T.EI, crocus
       USE module_snowcro        ! crocus,trude
       USE MODD_SNOW_PAR, ONLY: XZ0SN, XZ0HSN
-!    --T.EI, crocus
+
+
+
+      !    --T.EI, crocus
 !----------------------------------------------------------------
     IMPLICIT NONE
 !----------------------------------------------------------------
@@ -512,6 +516,7 @@ CONTAINS
       INTEGER, DIMENSION(:, :), INTENT(INOUT), allocatable  :: GLACINFO
       REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  :: GLACT
       INTEGER,                                           INTENT(IN)              :: crocus_opt
+      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT) , OPTIONAL      :: VIS_ICEALB
 
       INTEGER                              :: GLACINFOH,GLACR ! glacier info
       CHARACTER(LEN=11)         :: HSNOWRES
@@ -540,9 +545,8 @@ CONTAINS
       REAL, DIMENSION(1)    ::   ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW
       REAL, DIMENSION(1)    ::   ZP_Z0NAT
       REAL, DIMENSION(1)    ::   ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND
-      REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB
+      REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB, ZP_VIS_ICEALB
       REAL, DIMENSION(1)    ::   ZFLOW_ICE, ZFLOW_SNOW
-
       REAL, DIMENSION(1)    ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
       REAL, DIMENSION(1)    ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT)
       REAL, DIMENSION(1)    ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
@@ -866,6 +870,8 @@ CONTAINS
           ZP_SNOWTEMP(1,1:act_level) = PSNOWTEMPXY(I,1:act_level,J)
           ZP_SNOWDZ(1,1:act_level) = PSNOWDZXY(I,1:act_level,J)
           ZP_SNOWALB(1) =  PSNOWALBXY(I,J)
+          ZP_EVAP(1)    =  0 !PSNOWEVAPXY(I,J)
+          ZP_vis_icealb(1) = VIS_ICEALB(I,J)
 
           ZP_ZENITH    = ACOS(COSZIN(I,J))
 
@@ -1016,7 +1022,8 @@ CONTAINS
           ELSE
 !             write(*,*) "before call snowcro"
 !             write(*,*) 'zp_snowdz(1,1)', zp_snowdz(1,1)
-             CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                & !(IN)
+            write(*,*) 'vis_icealb ', i,j, zp_vis_icealb
+            CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                & !(IN)
                   ZP_PEW_A_COEF, ZP_PEW_B_COEF,                                                                & !(IN)
                   ZP_PET_A_COEF, ZP_PEQ_A_COEF, ZP_PET_B_COEF, ZP_PEQ_B_COEF,   & !(IN)
                   ZP_SNOWSWE,ZP_SNOWRHO, ZP_SNOWHEAT, ZP_SNOWALB,               & ! (INOUT) !several layers
@@ -1034,7 +1041,7 @@ CONTAINS
                   ZP_VEGTYPE, ZP_ZENITH,                                       & !(IN)
                   OSNOWDRIFT,OSNOWDRIFT_SUBLIM,                                & !(IN)
                   OSNOW_ABS_ZENITH, HSNOWMETAMO,HSNOWRAD,                      &
-                  act_level,                                                   &
+                  act_level, ZP_VIS_ICEALB,                                    &
                   ZP_FSA_CROCUS, ZP_FSR_CROCUS, ZP_FIRA_CROCUS,                &
                   ZFLOW_ICE, ZFLOW_SNOW,                                         &
                   I,J) !(OUT)
@@ -1103,6 +1110,10 @@ CONTAINS
 
              TG=ZP_SNOWTEMP(1,1)
              STC   (      1:NSOIL)=273.16
+
+
+
+
              !----------------
           ENDIF ! if not (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0)
           ! T.EI If crocus is not running, use the original NOAH-MP glacier
@@ -1478,10 +1489,25 @@ CONTAINS
 
                 PSNOWALBXY(I,J) = ZP_SNOWALB(1)
                 PSNOWTHRUFALXY(I,J) = ZP_THRUFAL(1)*DT
-                FLOW_ICE(I,J) = ZFLOW_ICE(1)*DT
-                FLOW_SNOW(I,J) = ZFLOW_SNOW(1)*DT
+                FLOW_ICE(I,J) = FLOW_ICE(I,J)+ZFLOW_ICE(1)*DT
+                FLOW_SNOW(I,J) = FLOW_SNOW(I,J)+ZFLOW_SNOW(1)*DT
                 PSNOWHEIGHTXY(I,J) = sum(PSNOWDZXY(I,:,J))
                 PSNOWTOTSWEXY(I,J) = sum(PSNOWSWEXY(I,:,J))
+
+                if (GLACINFO(I,J).eq.1 .and. PSNOWHEIGHTXY(I,J).gt.0) then
+                   ALBEDO   (I,J) = ZP_SNOWALB(1)
+                   SNEQVOXY (I,J) = PSNOWTOTSWEXY(I,J)
+                   SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
+                   ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
+#ifdef WRF_HYDRO
+                   if(present(ACCETRAN)) ACCETRAN (I,J)  = 0.
+                   if(present(ACCECAN)) ACCECAN(I,J)                  = 0.
+                   if(present(ACCEDIR)) ACCEDIR(I,J) = ACCEDIR(I,J) +(zp_evap(1)*DT) - (ESOIL * DT)
+                   if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)   = undefined_value
+                   if(present(SOILSAT)) SOILSAT (I,J)  = undefined_value
+
+#endif
+                endif
              end if ! crocus_opt /= 0
 ! --T.EI
 

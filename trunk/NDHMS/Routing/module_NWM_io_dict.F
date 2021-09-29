@@ -1080,17 +1080,18 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "STMASS","WOOD","STBLCP","FASTCP","NEE", &                !81-85
                                "GPP","NPP","PSN","APAR","ACCET", &                       !86-90
                                "CANWAT","SOILICE","SOILSAT_TOP","SOILSAT","SNOWT_AVG", & !91-95
-                               "ALBSND","ALBSNI","QRAIN", &                              !96-98
+                               "ALBSND","ALBSNI","QRAIN",&                               !96-98
    !++ T.EI , crocus
-                                "glacier", "glacier_thickness" ,"PSNOWALB", &            !99-101
-                                "PSNOWTHRUFAL" ,"PSNOWHEIGHTXY","PSNOWTOTSWEXY", &       !102-104
-                                "PSNOWGRAN1XY","PSNOWGRAN2XY","PSNOWAGEXY", &            !105-107
-                                "PSNOWTEMPXY","PSNOWDZXY","PSNOWHISTXY", &               !108-110
-                                "PSNOWLIQ","PSNOWHEAT","PSNOWRHOXY", &                   !111-113
-                                "PSNOWSWEXY", "FLOW_ICE", "FLOW_SNOW"]                   !114-116
-   !-- T.EI
+                                "glacier", "glacier_thickness" ,"PSNOWALB",  &    !99-101
+                                "PSNOWTHRUFAL" ,"PSNOWHEIGHT","PSNOWTOTSWE" ,& ! 102-104
+                                "PSNOWGRAN1","PSNOWGRAN2","PSNOWAGE",& !105-107
+                                "PSNOWTEMP","PSNOWDZ","PSNOWHIST",&  !108-110
+                                "PSNOWLIQ","PSNOWHEAT","PSNOWRHO",& !111-113
+                                "PSNOWSWE", "FLOW_ICE", "FLOW_SNOW"]  !114-116
 
-   ldasOutDict%longName(:) = [character(len=128) :: &
+
+!-- T.EI
+  ldasOutDict%longName(:) = [character(len=128) :: &
                               "Dominant vegetation category",&          !1
                               "Dominant soil category",&                !2
                               "Green Vegetation Fraction",&             !3
@@ -1188,27 +1189,26 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "average snow temperature (by layer mass)",& !95
                               "snowpack albedo, direct",&               !96
                               "snowpack albedo, diffuse",&              !97
-                              "Rainfall rate on the ground",&           !98
-   ! ++ T.EI for crocus
-                              "Glacier grid point", &                   !99
-                              "Glacier height",&                        !100
-                              "Snow albedo",&                           !101
-                              "Runoff from glacier",&                   !102
-                              "Total snow height",&                     !103
-                              "Total snow swe", &                       !104
-                               "Snow grain 1",&                         !105
-                               "Snow grain2",&                          !106
-                               "Snow age",&                             !107
-                               "Snow temperature",&                     !108
-                               "Snow thickness",&                       !109
-                               "Snow history",&                         !110
-                               "Liquid in snow",&                       !111
-                               "Snow heat",&                            !112
-                               "Snow density",&                         !113
-                               "Snow water equivalent", &               !114
-                               "Glacier melt from ice", &               !115
-                               "Glacier melt from snow"]                !116
-   !-- T.EI
+                              "Rainfall rate on the ground",&            !98
+! ++ T.EI for crocus
+                              "Glacier grid point", &    !99
+                              "Glacier height",&   ! 100
+                              "Snow albedo",&   !101
+                              "Runoff from glacier",&   !102
+                              "Total snow height",&   !103
+                              "Total snow swe", &  !104
+                               "Snow gran 1, optiacal diameter",&   !105
+                               "Snow gran 2, sphericity",&   !106
+                               "Snow age",&   !107
+                               "Snow temperature",&   !108
+                               "Snow thickness",&   !109
+                               "Snow history",&   !110
+                               "Liquid in snow",& ! 111
+                               "Snow heat",&   !112
+                               "Snow density",&   !113
+                               "Snow water equivalent", &  ! 114
+                               "Accumulated glacier melt from ice", &  ! 115
+                               "Accumulated glacier melt from snow"]  !116
 
    ldasOutDict%units(:) = [character(len=64) :: &
                             "category","category","-","-","-", &               !1-5
@@ -1230,16 +1230,16 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2", &  !81-85
                             "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2","mm", & !86-90
                             "mm","1","1","1","K", &                            !91-95
-                            "-","-","mm s-1", &                                !96-98
-   ! ++ T.EI for crocus
-                            "-","m"," ", &                    !99-101
-                            "kg/(m2 s)","m","tbd",&           !102-104
-                            "TBD","TBD","TBD",&               !105-107
-                            "K","TBD","TBD",&                 !108-110
-                            "kg/m3","TBD","m",&               !111-113
-                            "kg m-2","kg/(m2 s)","kg/(m2 s)"] !114-116
-   ! -- T.EI
+                            "-","-","mm s-1",&                                  !96-98
+! ++ T.EI for crocus
+                            "-","m","-", &  ! 99-101
+                            "kg/(m2 s)","m","kg m-2",& !102-104
+                            "m","-","days since snowfall",& !105-107
+                            "K","m","-",& !108-110
+                            "kg/m3","J/m2","m",& !111-113
+                            "kg m-2","kg/m2","kg/m2"] !114-116
 
+! -- T.EI
    ldasOutDict%scaleFactor(:) = [1.0, 1.0, 0.01, 0.1, 0.1, &                   !1-5
                                  0.1, 0.01, 0.1, 0.00001, 0.01, &              !6-10
                                  0.1, 0.1, 0.1, 0.1, 0.1, &                    !11-15

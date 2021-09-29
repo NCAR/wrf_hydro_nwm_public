@@ -101,7 +101,8 @@ module module_NoahMP_hrldas_driver
 ! ++ T.EI crocus
   INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  GLACINFO  ! location of  glacier
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  GLACT     ! glacier thickness
-! -- T.EI
+  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VIS_ICEALB! map of visible ice albedo
+  ! -- T.EI
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  VEGFRA    ! vegetation fraction []
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TMN       ! deep soil temperature [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  XLAND     ! =2 ocean; =1 land/seaice
@@ -749,6 +750,7 @@ module module_NoahMP_hrldas_driver
   if (crocus_opt /= 0) then
      ALLOCATE (GLACINFO(XSTART:XEND,YSTART:YEND) )    ! loacation of glacier
      ALLOCATE (GLACT   (XSTART:XEND,YSTART:YEND) )    ! glacier thickness [m]
+     ALLOCATE (VIS_ICEALB(XSTART:XEND,YSTART:YEND))
   end if
 !-- T.EI
   ALLOCATE ( TMN       (XSTART:XEND,YSTART:YEND) )    ! deep soil temperature [K]
@@ -985,10 +987,10 @@ module module_NoahMP_hrldas_driver
   IVGTYP     = undefined_int
 ! ++ T.EI crocus
   if (crocus_opt /= 0) then
-     GLACINFO = undefined_int
-     GLACT    = undefined_real
+     GLACINFO   = undefined_int
+     GLACT      = undefined_real
+     VIS_ICEALB = undefined_real
   end if
-! -- T.EI
   ISLTYP     = undefined_int
   VEGFRA     = undefined_real
   GVFMAX     = undefined_real
@@ -1155,7 +1157,8 @@ module module_NoahMP_hrldas_driver
                        YEND,   ISWATER,    ISLAKE,   IVGTYP, &
                        ISLTYP, TERRAIN,    TMN,      XLAT_URB2D, &
                        XLONIN, XLAND,      SEAICE,   MSFTX, &
-                       MSFTY,  crocus_opt, GLACINFO, GLACT)
+                       MSFTY,  crocus_opt, GLACINFO, GLACT, &
+                       VIS_ICEALB)
 
   WHERE(SEAICE > 0.0) XICE = 1.0
 
@@ -1563,8 +1566,13 @@ endif
                   'CHV2,CHB2,LFMASS,RTMASS,STMASS,WOOD,STBLCP,FASTCP,NEE,GPP,NPP,PSN,APAR,ACCET,CANWAT,SOILICE,SOILSAT_TOP,'// &
                   'SOILSAT,SNOWT_AVG,QRAIN,'//&
 !++T.EI crocus
-                  'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
-                  'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'              //&
+! <<<<<<< HEAD
+!                   'glacier,glacier_thickness,PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
+!                   'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'              //&
+!                   'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE,FLOW_ICE,FLOW_SNOW'
+! =======
+                  'PSNOWALB,PSNOWTHRUFAL,PSNOWHEIGHT,PSNOWTOTSWE,'//&
+                  'PSNOWGRAN1,PSNOWGRAN2,PSNOWAGE,PSNOWTEMP,PSNOWDZ,PSNOWHIST'//&
                   'PSNOWLIQ,PSNOWHEAT,PSNOWRHO,PSNOWSWE,FLOW_ICE,FLOW_SNOW'
 !--T.EI crocus
 
@@ -1851,7 +1859,8 @@ end subroutine land_driver_ini
                 its,ite, jts,jte, kts,kte,        &
 ! variables below are optional
                 MP_RAINC =  RAINCV, MP_RAINNC =    RAINNCV, MP_SHCV = RAINSHV,&
-		MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV &
+    MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV, &
+    VIS_ICEALB=VIS_ICEALB &
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
@@ -2249,7 +2258,7 @@ subroutine lsm_restart(state)
                              nsoil,                 nsnow,     dx,        dy,        &
                              truelat1,              truelat2,  mapproj,   lat1,      &
                              lon1,                  cen_lon,   iswater,   ivgtyp,    &
-                             glacinfo,              glact,     act_lev)
+                             glacinfo,              glact,     act_lev,   VIS_ICEALB)
 
 
    write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid

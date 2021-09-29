@@ -64,8 +64,6 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
 ! ++ T.EI crocus
-  integer, private, allocatable, dimension(:,:) :: glacinfo_remember   ! not sure if needed
-  real, private, allocatable, dimension(:,:) :: glact_remember   ! not sure if needed
   integer, private :: dimid_glacier_layers_remember
   integer, private :: crocus_opt = 0
 ! -- T.EI
@@ -591,7 +589,7 @@ contains
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
        longitude, xland, seaice, msftx, msfty, &
-       local_crocus_opt, glacinfo,glact)  !!T.EI crocus
+       local_crocus_opt, glacinfo, glact, vis_icealb)  !!T.EI crocus
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -602,6 +600,7 @@ contains
     integer,                                     intent(in)  :: local_crocus_opt
     integer, dimension(xstart:xend,ystart:yend), intent(out), optional :: glacinfo
     real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: vis_icealb
 ! -- T.EI
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
@@ -710,8 +709,13 @@ contains
           print *, "WARNING: crocus_opt on but get_2d_netcdf of glacier_thickness returned", ierr, &
                ". Setting glacier thickness to 0.0"
        end if
+
+       ! Get visible ice albedo map (vis_icealb)
+       call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+       if (ierr /= 0) print*, 'WARNING: crocus_opt on but did not find min_vis'
     end if ! crocus_opt /= 0
 ! -- T.EI
+
 
     ! Get Dominant Soil Type categories in the top layer (stl)
     call get_soilcat_netcdf(ncid, xdum ,   units, xstart, xend, ystart, yend)
@@ -2913,7 +2917,7 @@ contains
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
        iswater, vegtyp,&
 ! ++ T.EI crocus
-       glacinfo,glact,act_level)
+       glacinfo,glact,act_level,vis_icealb)
 ! -- T.EI
 
     implicit none
@@ -2945,7 +2949,7 @@ contains
 ! ++ T.EI crocus
     integer, dimension(ixpar,jxpar), optional, intent(in) :: glacinfo
     real,    dimension(ixpar,jxpar), optional, intent(in) :: glact
-!-- T.EI
+    real,    dimension(ixpar,jxpar),           intent(in) :: vis_icealb
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then
