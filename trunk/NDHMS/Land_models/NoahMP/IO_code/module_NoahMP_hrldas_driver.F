@@ -549,7 +549,9 @@ module module_NoahMP_hrldas_driver
   output_timestep         = -999
   restart_frequency_hours = -999
   tracer_sublayer         = -999       ! water tracer sublayers
-  wvtflag                = -999       ! flag for water tracer
+  wvtflag                 = -999       ! flag for water tracer
+  nlst_rt%wvtflag         = -999
+  nlst_rt%NTRACER         = -999
 
 #ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
@@ -618,6 +620,9 @@ module module_NoahMP_hrldas_driver
     IOPT_PM  = partial_mixing_option
     NSUB     = tracer_sublayer
     NTRACER  = sum(NSUB(1:nsoil))
+    nlst_rt%NTRACER = NTRACER
+    allocate(nlst_rt%NSUB(MAX_SOIL_LEVELS))
+    nlst_rt%NSUB    = NSUB
   end if
   print *, "FLAG1"
   print *, "OPT_WT", OPT_WT

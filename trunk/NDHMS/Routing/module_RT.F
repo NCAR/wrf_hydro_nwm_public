@@ -51,11 +51,12 @@ MODULE module_Routing
 
 CONTAINS
 
-   subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT)   
+   subroutine rt_allocate(did,ix,jx,ixrt,jxrt,nsoil,CHANRTSWCRT,NTRACER)   
       use module_RT_data, only: rt_domain
       implicit none
       integer ixrt,jxrt, ix,jx,nsoil,NLINKS, CHANRTSWCRT, NLAKES, NLINKSL
       integer istatus, did, nsizes
+      integer, optional,intent(in)   :: NTRACER
 
       if(rt_domain(did)%allo_status .eq. 1) return
       rt_domain(did)%allo_status = 1
@@ -122,6 +123,8 @@ CONTAINS
      
      if(nlst_rt(did)%UDMP_OPT .eq. 1) then
         allocate ( RT_DOMAIN(did)%landRunOff (ixrt,jxrt) )
+        allocate ( RT_DOMAIN(did)%landRunOff_tr (ixrt,jxrt) )     !wt var
+                   RT_DOMAIN(did)%landRunOff_tr   = 0.0
      endif
      
      allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
@@ -226,6 +229,16 @@ CONTAINS
             rt_domain(did)%SMC   = 0.25           
   allocate( rt_domain(did)%SICE (IX,JX,NSOIL) )
             rt_domain(did)%SICE  = 0.
+  !-----needed for water tracer capability-----
+  allocate( rt_domain(did)%SMC_tr  (IX,JX,NTRACER) )
+            rt_domain(did)%SMC_tr   = 0.0
+  allocate( rt_domain(did)%SH2OX_tr  (IX,JX,NTRACER) ) 
+            rt_domain(did)%SH2OX_tr  = 0.0
+  allocate( rt_domain(did)%SMC_SUB  (IX,JX,NTRACER) )
+            rt_domain(did)%SMC_SUB   = 0.0
+  allocate( rt_domain(did)%SH2OX_SUB  (IX,JX,NTRACER) )
+            rt_domain(did)%SH2OX_SUB   = 0.0
+  !--------------------------------------------
   ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
   ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )
   ! allocate( rt_domain(did)%lon_lsm (ixrt,jxrt) )
@@ -267,6 +280,11 @@ CONTAINS
             rt_domain(did)%LKSAT    = 0.0            
   allocate( rt_domain(did)%SOLDRAIN   (IX,JX) )
             rt_domain(did)%SOLDRAIN    = 0.0            
+ 
+  allocate( rt_domain(did)%INFXSRT_tr   (IX,JX) )     !wt vars
+            rt_domain(did)%INFXSRT_tr    = 0.0        !wt vars
+  allocate( rt_domain(did)%SOLDRAIN_tr   (IX,JX) )    !wt vars
+            rt_domain(did)%SOLDRAIN_tr    = 0.0       !wt vars
 
   end if ! neither channel_only nor channelBucket_only
 
@@ -327,6 +345,8 @@ CONTAINS
      allocate( rt_domain(did)%TYPEL(nsizes) )
      allocate( rt_domain(did)%ORDER(nsizes) )
      allocate( rt_domain(did)%QLINK(nsizes,2) )
+     allocate( rt_domain(did)%QLINK_tr(nsizes,2) )     !wt var
+               rt_domain(did)%QLINK_tr  = 0.0          !wt var
 
 #ifdef WRF_HYDRO_NUDGING
      allocate( rt_domain(did)%nudge(nsizes) )
@@ -408,6 +428,8 @@ CONTAINS
 	allocate( rt_domain(did)%velocity(nsizes) )
 	rt_domain(did)%QLateral  = zeroFlt
 	rt_domain(did)%velocity  = zeroFlt
+        allocate( rt_domain(did)%QLateral_tr(nsizes))
+        rt_domain(did)%QLateral_tr  = zeroFlt
      endif
 
   if( nlst_rt(did)%channel_option .eq. 1  .or. nlst_rt(did)%channel_option .eq. 2 ) then
@@ -429,6 +451,8 @@ CONTAINS
      allocate( rt_domain(did)%QLAKEO(NLAKES),STAT=istatus )
 
      allocate( rt_domain(did)%HLINK(nsizes) )  !--used for diffusion only
+     allocate( rt_domain(did)%HLINK_tr(nsizes))    !wt var
+               rt_domain(did)%HLINK_tr  = 0.0      !wt var
 
      allocate( rt_domain(did)%node_area(nsizes) )
 
@@ -467,7 +491,7 @@ CONTAINS
       rt_domain(did)%RESHT = 0.0                    
       rt_domain(did)%QLAKEI = 0.0                     
       rt_domain(did)%QLAKEO = 0.0                     
-      rt_domain(did)%QLINK = 0        
+      rt_domain(did)%QLINK = 0       
 #ifdef WRF_HYDRO_NUDGING
       rt_domain(did)%nudge = 0
 #endif
@@ -500,6 +524,7 @@ implicit none
       
 integer ixrt,jxrt, ix,jx, did, i,j
 integer, allocatable,dimension(:,:) :: CH_NETLNK, GCH_NETLNK
+integer                             :: NTRACER
 !INTEGER, dimension( rt_domain(did)%ixrt,GCH_NETLNK(ixrt,jxrt)) :: GCH_NETLNK, CH_NETLNK
 
 real :: Vmax
@@ -534,9 +559,14 @@ if(nlst_rt(did)%channel_only       .eq. 1 .or. &
    endif
    if(nlst_rt(did)%UDMP_OPT .eq. 1) &
         call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
-
-   call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+  
+   if (nlst_rt(did)%NTRACER .gt. 1) then
+     call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+        rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT, NTRACER=nlst_rt(did)%NTRACER)
+   else
+     call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
         rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+   end if 
 
    return
    
@@ -592,8 +622,13 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
    call read_NSIMLAKES(rt_domain(did)%NLAKES,nlst_rt(did)%route_lake_f)
 endif
 
-call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+if (nlst_rt(did)%NTRACER .gt. 1) then
+  call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
+     rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT,NTRACER=nlst_rt(did)%NTRACER)
+else
+  call rt_allocate(did,rt_domain(did)%ix,rt_domain(did)%jx,&
      rt_domain(did)%ixrt,rt_domain(did)%jxrt, nlst_rt(did)%nsoil,nlst_rt(did)%CHANRTSWCRT)
+end if
 
 
 if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT .eq. 2) then  !IF/then for channel routing
@@ -1094,6 +1129,9 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
 
    allocate (rt_domain(did)%qout_gwsubbas (rt_domain(did)%nlinksL))
    rt_domain(did)%qout_gwsubbas = 0
+   allocate (rt_domain(did)%qout_gwsubbas_tr (rt_domain(did)%nlinksL))   !wt var
+   rt_domain(did)%qout_gwsubbas_tr = 0                                   !wt var
+
    ! use different baseflow for NHDPlus
    if (nlst_rt(did)%GWBASESWCRT.ge.1) then
       rt_domain(did)%numbasns = rt_domain(did)%NLINKSL
@@ -1120,6 +1158,9 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       rt_domain(did)%gw_buck_coeff = 0.04
       rt_domain(did)%gw_buck_exp  = 0.2
       rt_domain(did)%z_max = 0.1
+     
+      allocate (rt_domain(did)%qin_gwsubbas_tr (rt_domain(did)%numbasns))    !wt var
+                rt_domain(did)%qin_gwsubbas_tr = 0                           !wt var
       
       !Temporary hardwire...
       rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL

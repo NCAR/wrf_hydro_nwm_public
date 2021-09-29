@@ -1943,9 +1943,7 @@ end subroutine drive_CHANNEL
        real                                                   :: Qup_tr, Quc_tr
        real*8,                           dimension(NLINKSL)   :: LQLateral_tr
        real,                             dimension(nToNodeInd,2) :: gQLINK_tr
-       real,                             dimension(NLINKSL)   :: QLINK_TR_pass2
-       real,                             dimension(nToNodeInd):: gQLINK_tr2
-       real                                                   :: tmpQLink_tr3, QLINK_TR_pass3,QLateral_tr_pass3, HLINK_tr_pass3
+       real                                                   :: qdctr, qdp_tr, ql_tr, depth_tr
 !---------------------------------------------
        
 #ifdef MPP_LAND
@@ -2221,9 +2219,9 @@ do nt = 1, nsteps
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
               MannN(k),      ChSSlp(k),   Bw(k), Tw(k), Tw_CC(k), n_CC(k), HLINK(k)   &
-              , wvtflag_pass=wvtflag_pass, tmpQLink_tr2=tmpQLINK_tr(k,2)              & !wt vars
-              , Qup_tr=Qup_tr, Quc_tr=Quc_tr, QLINK_TR_pass3=QLINK_TR_pass(k,1)       & !wt vars
-              , QLateral_tr_pass3=QLateral_tr_pass(k),HLINK_tr_pass3=HLINK_tr_pass(k))  !wt vars
+              , wvtflag_pass=wvtflag_pass, qdc_tr=tmpQLINK_tr(k,2)              & !wt vars
+              , Qup_tr=Qup_tr, Quc_tr=Quc_tr, qdp_tr=QLINK_TR_pass(k,1)         & !wt vars
+              , ql_tr=QLateral_tr_pass(k),depth_tr=HLINK_tr_pass(k))              !wt vars
        else 
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &

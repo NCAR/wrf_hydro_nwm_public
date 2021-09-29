@@ -16,14 +16,14 @@ use module_version, only: get_model_version
 implicit none
 
 ! Declare parameter values for module.
-integer, parameter :: numChVars = 10
-integer, parameter :: numLdasVars = 117
+integer, parameter :: numChVars = 14          !have incluced tracer vars
+integer, parameter :: numLdasVars = 117       !have included tracer vars
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
-integer, parameter :: numLsmVars = 14
+integer, parameter :: numLsmVars = 19         !have included some tracer vars
 integer, parameter :: numChObsVars = 1
-integer, parameter :: numGwVars = 3
+integer, parameter :: numGwVars = 5           !have included tracer vars
 integer :: i
 
 ! Declare public types that will hold metadata
@@ -716,38 +716,50 @@ subroutine initChrtDict(chrtOutDict,diagFlag,procId)
    !                            "qBtmVertRunoff","AccSfcLatRunoff","accBucket"/)
    chrtOutDict%varNames(:) = [character(len=64) :: "streamflow","nudge","q_lateral","velocity",&
                               "Head","qSfcLatRunoff","qBucket",&
-                              "qBtmVertRunoff","AccSfcLatRunoff","accBucket"]
+                              "qBtmVertRunoff","AccSfcLatRunoff","accBucket", &
+                              "streamflow_tr", "q_lateral_tr",                & !wt vars
+                              "Head_tr","qBucket_tr"]                         & !wt vars
    chrtOutDict%longName(:) = [character(len=64) :: "River Flow","Amount of stream flow alteration",&
                               "Runoff into channel reach","River Velocity",&
                               "River Stage","Runoff from terrain routing",&
                               "Flux from gw bucket",&
                               "Runoff from bottom of soil to bucket",&
                               "Accumulated runoff from terrain routing",&
-                              "Accumulated runoff from gw bucket"]
+                              "Accumulated runoff from gw bucket",    &
+                              "tracer River Flow", "tracer Runoff into channel reach",&
+                              "tracer River Stage", "tracer Flux from gw bucket"]
    chrtOutDict%units(:) = [character(len=64) :: "m3 s-1","m3 s-1","m3 s-1","ms-1",&
                                                 "meter","m3 s-1","m3 s-1",&
-                                                "m3","m3","m3"]
+                                                "m3","m3","m3", &
+                                                "m3 s-1", "m3 s-1", "meter", "m3 s-1"]
    chrtOutDict%coordNames(:) = [character(len=64) :: "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
+                                 "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude",&
                                  "latitude longitude","latitude longitude"]
    chrtOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.001,0.001,0.001,&
-                                 0.01,0.01]
+                                 0.01,0.01,&
+                                 0.01,0.1,0.01,0.001]
    chrtOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                               0.0]
+                               0.0,0.0,0.0,0.0,0.0]
    ! Initialize all output flags to 0. Modify (if absolutely necessary) in the
    ! output subroutine. 
-   chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0]
-   chrtOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1]
+   chrtOutDict%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+   chrtOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    chrtOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                              -9999.0,-9999.0,-9999.0,-9999.0,&
                               -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+                                 -9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
+                                 -9999.0,-9999.0,-9999.0,-9999.0]
    chrtOutDict%validMinReal(:) = [0.0,-500000.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                                  0.0,0.0]
+                                  0.0,0.0,&
+                                  0.0,0.0,0.0,0.0]
    chrtOutDict%validMaxReal(:) = [500000.0,500000.0,500000.0,500000.0,500000.0,&
-                                  500000.0,500000.0,500000.0,500000.0,500000.0]
+                                  500000.0,500000.0,500000.0,500000.0,500000.0,&
+                                  500000.0,500000.0,500000.0,500000.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numChVars
@@ -2257,7 +2269,9 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
 
    lsmOutDict%varNames(:) = [character(len=64) :: "stc1","smc1","sh2ox1","stc2",&
                              "smc2","sh2ox2","stc3","smc3","sh2ox3","stc4",&
-                             "smc4","sh2ox4","infxsrt","sfcheadrt"]
+                             "smc4","sh2ox4","infxsrt","sfcheadrt", &
+                             "infxsrt_tr", "sh2ox1_tr","sh2ox2_tr", &    !wt vars
+                             "sh2ox3_tr","sh2ox4_tr"]                    !wt vars
    lsmOutDict%longName(:) = [character(len=64) :: "Soil temperature in the top layer",&
                              "Soil moisture in the top layer",&
                              "Volumetric soil moisture in the top layer",&
@@ -2270,25 +2284,37 @@ subroutine initLsmOutDict(lsmOutDict,procId,diagFlag)
                              "Soil temperature in the fourth layer",&
                              "Soil moisture in the fourth layer",&
                              "Volumetric soil moisture in the fourth layer",&
-                             "Infiltration excess","Surface head"]
+                             "Infiltration excess","Surface head",   &
+                             "tracer infiltration excess",           &
+                             "tracer soil water in the top layer",   &
+                             "tracer soil water in the second layer",&
+                             "tracer soil water in the third layer", &
+                             "tracer soil water in the fourth layer"]
    lsmOutDict%units(:) = [character(len=64) :: "K","fraction","fraction",&
                           "K","fraction","fraction","K","fraction",&
                           "fraction","K","fraction","fraction",&
-                          "mm","mm"]
+                          "mm","mm",            &
+                          "mm","fraction","fraction","fraction","fraction"]
    lsmOutDict%scaleFactor(:) = [0.1,0.01,0.01,0.1,0.01,0.01,0.1,0.01,0.01,&
-                                0.1,0.01,0.01,1.0,1.0]
+                                0.1,0.01,0.01,1.0,1.0, &
+                                1.0, 0.01,0.01,0.01,0.01]
    lsmOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,&
-                              0.0,0.0,0.0,0.0]
-   lsmOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-   lsmOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                              0.0,0.0,0.0,0.0,&
+                              0.0,0.0,0.0,0.0,0.0]
+   lsmOutDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+   lsmOutDict%numLev(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
    lsmOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                                -9999.0,-9999.0,-9999.0,-9999.0]
+                                -9999.0,-9999.0,-9999.0,-9999.0,  &
+                                -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    lsmOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,&
-                             -9999.0,-9999.0,-9999.0,-9999.0]
+                             -9999.0,-9999.0,-9999.0,-9999.0,&
+                             -9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
    lsmOutDict%validMinReal(:) = [150.0,0.0,0.0,150.0,0.0,0.0,150.0,0.0,0.0,&
-                                 150.0,0.0,0.0,0.0,0.0]
+                                 150.0,0.0,0.0,0.0,0.0,&
+                                 0.0,0.0,0.0,0.0,0.0]
    lsmOutDict%validMaxReal(:) = [400.0,1.0,1.0,400.0,1.0,1.0,400.0,1.0,1.0,&
-                                 400.0,1.0,1.0,100000.0,100000.0]
+                                 400.0,1.0,1.0,100000.0,100000.0,&
+                                 100000.0, 1.0,1.0,1.0,1.0]
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLsmVars
@@ -2457,18 +2483,18 @@ subroutine initGwDict(gwOutDict)
    !gwOutDict%lonUnits = "degrees_east"
    !gwOutDict%lonStName = "longitude"
 
-   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth']
-   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth']
-   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm']
+   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth','inflow_tr','outflow_tr']
+   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth','tracer Bucket Inflow','tracer Bucket Outflow']
+   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm','m3 s-1','m3 s-1']
    !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude']
-   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1]
-   gwOutDict%addOffset(:) = [0.0,0.0,0.0]
-   gwOutDict%outFlag(:) = [0,0,0]
-   gwOutDict%timeZeroFlag(:) = [0,0,1]
-   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0]
-   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0]
-   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0]
-   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0]
+   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01]
+   gwOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0]
+   gwOutDict%outFlag(:) = [0,0,0,0,0]
+   gwOutDict%timeZeroFlag(:) = [0,0,1,0,0]
+   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0,-10000.0,-10000.0]
+   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0,10000.0,10000.0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.

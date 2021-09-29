@@ -136,6 +136,16 @@ subroutine output_chrt_NWM(domainId)
    integer :: numPtsOut
    real, allocatable, dimension(:,:) :: varMetaReal
    integer, allocatable, dimension(:,:) :: varMetaInt
+!-----needed for water tracer capability------
+   real, allocatable, dimension(:,:) :: g_qlink_tr
+   real, allocatable, dimension(:) :: g_QLateral_tr
+   real, allocatable, dimension(:) :: g_hlink_tr
+   real, allocatable, dimension(:) :: g_qBucket_tr
+   real, allocatable, dimension(:,:) :: g_qlink_trOut
+   real, allocatable, dimension(:) :: g_QLateral_trOut
+   real, allocatable, dimension(:) :: g_hlink_trOut
+   real, allocatable, dimension(:) :: g_qBucket_trOut
+!---------------------------------------------
 
    character (len=64) :: modelConfigType ! This is character verion (long name) for the io_config_outputs
 
@@ -186,25 +196,25 @@ subroutine output_chrt_NWM(domainId)
    ! OWP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
    if (nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,1,1,1,1,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation 
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,0,1,0,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,1]
    else if (nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0]
+      fileMeta%outFlag(:) = [1,0,1,1,0,0,0,0,0,0,1,1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -263,6 +273,16 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(gsize))
          allocate(g_linkidOut(gsize))
          allocate(g_outInd(gsize))
+         !----water tracer vars----
+         allocate(q_qlink_tr(gsize,2))
+         allocate(g_QLateral_tr(gsize))
+         allocate(g_hlink_tr(gsize))
+         allocate(g_qBucket_tr(gsize))
+         allocate(q_qlink_trOut(gsize,2))
+         allocate(g_QLateral_trOut(gsize))
+         allocate(g_hlink_trOut(gsize))
+         allocate(g_qBucket_trOut(gsize))
+         !-------------------------
       else
          allocate(g_chlon(1))
          allocate(g_chlat(1))
@@ -296,6 +316,16 @@ subroutine output_chrt_NWM(domainId)
          allocate(chIndArray(1))
          allocate(g_linkidOut(1))
          allocate(g_outInd(1))
+         !----water tracer vars----
+         allocate(q_qlink_tr(1,2))
+         allocate(g_QLateral_tr(1))
+         allocate(g_hlink_tr(1))
+         allocate(g_qBucket_tr(1))
+         allocate(q_qlink_trOut(1,2))
+         allocate(g_QLateral_trOut(1))
+         allocate(g_hlink_trOut(1))
+         allocate(g_qBucket_trOut(1))
+         !-------------------------
       endif
 
       ! Allocate local streamflow and velocity arrays. We need to do a check to
@@ -340,6 +370,11 @@ subroutine output_chrt_NWM(domainId)
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral,g_QLateral)
          call ReachLS_write_io(velocityLocal,g_velocity)
          call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
+         !-----water tracer vars------
+         call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK_tr(:,2),g_qlink_tr(:,2))
+         call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral_tr,g_QLateral_tr)
+         call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK_tr,g_hlink_tr)
+         !----------------------------
          ! Optional outputs
          if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
@@ -358,6 +393,7 @@ subroutine output_chrt_NWM(domainId)
                fileMeta%outFlag(7) = 1
                call ReachLS_write_io(RT_DOMAIN(domainId)%qSfcLatRunoff,g_qSfcLatRunoff)
                call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket,g_qBucket)
+               call ReachLS_write_io(RT_DOMAIN(domainId)%qBucket_tr,g_qBucket_tr)
             endif
             if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2 .and. &
                nlst_rt(domainId)%channel_only                .eq. 0         ) then
@@ -448,6 +484,19 @@ subroutine output_chrt_NWM(domainId)
       g_qlink = RT_DOMAIN(domainId)%QLINK 
       g_QLateral = RT_DOMAIN(domainId)%QLateral
       g_velocity = RT_DOMAIN(domainId)%velocity
+      !-----water tracer vars------
+      allocate(q_qlink_tr(gsize,2))
+      allocate(g_QLateral_tr(gsize))
+      allocate(g_hlink_tr(gsize))
+      allocate(g_qBucket_tr(gsize))
+      allocate(q_qlink_trOut(gsize,2))
+      allocate(g_QLateral_trOut(gsize))
+      allocate(g_hlink_trOut(gsize))
+      allocate(g_qBucket_trOut(gsize))
+      g_hlink_tr = RT_DOMAIN(domainId)%HLINK_tr
+      g_qlink_tr = RT_DOMAIN(domainId)%QLINK_tr
+      g_QLateral_tr = RT_DOMAIN(domainId)%QLateral_tr
+      !----------------------------
       ! Optional outputs
       if(nudgeFlag .eq. 1)then
 #ifdef WRF_HYDRO_NUDGING
@@ -464,6 +513,7 @@ subroutine output_chrt_NWM(domainId)
             fileMeta%outFlag(7) = 1
             g_qSfcLatRunoff = RT_DOMAIN(domainId)%qSfcLatRunoff
             g_qBucket = RT_DOMAIN(domainId)%qBucket
+            g_qBucket_tr = RT_DOMAIN(domainId)%qBucket_tr
          endif
          if(nlst_rt(domainId)%output_channelBucket_influx .eq. 2) then
             fileMeta%outFlag(8) = 1
@@ -573,6 +623,12 @@ subroutine output_chrt_NWM(domainId)
             g_chlonOut(iTmp) = g_chlon(indTmp)
             g_orderOut(iTmp) = g_order(indTmp)
             g_zelevOut(iTmp) = g_zelev(indTmp)
+            !----water tracer vars-----
+            g_qlink_trOut(iTmp,1)  = g_qlink_tr(indTmp,1)
+            g_QLateral_trOut(iTmp) = g_QLateral_tr(indTmp)
+            g_hlink_trOut(iTmp)    = g_hlink_tr(indTmp)
+            g_qBucket_trOut(iTmp)  = g_qBucket_tr(indTmp)
+            !--------------------------
          end do
       else
          g_linkidOut = g_linkid
@@ -590,6 +646,12 @@ subroutine output_chrt_NWM(domainId)
          g_chlonOut = g_chlon
          g_orderOut = g_order
          g_zelevOut = g_zelev
+         !----water tracer vars----
+         g_qlink_trOut(:,1) = g_qlink_tr(:,1)
+         g_QLateral_trOut = g_QLateral_tr
+         g_hlink_trOut = g_hlink_tr
+         g_qBucket_trOut = g_qBucket_tr
+         !-------------------------
       endif
 
       ! Calculate index values based on minimum strahler order to write. 
@@ -635,6 +697,12 @@ subroutine output_chrt_NWM(domainId)
       varMetaReal(3,:) = PACK(g_zelevOut,g_outInd == 1)
       varMetaInt(1,:) = PACK(g_orderOut,g_outInd == 1)
       varMetaInt(2,:) = PACK(g_linkidOut,g_outInd == 1)
+      !-----water tracer vars-----
+      varOutReal(11,:) = PACK(g_qlinkOut(:,1),g_outInd == 1)
+      varOutReal(12,:) = PACK(g_QLateralOut,g_outInd == 1)
+      varOutReal(13,:) = PACK(g_hlinkOut,g_outInd == 1)
+      varOutReal(14,:) = PACK(g_qBucketOut,g_outInd == 1)
+      !---------------------------
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -1006,6 +1074,16 @@ subroutine output_chrt_NWM(domainId)
    deallocate(strFlowLocal)
    deallocate(velocityLocal)
    deallocate(g_outInd)
+   !----water tracer vars----
+   deallocate(g_hlink_trOut)
+   deallocate(g_qlink_trOut)
+   deallocate(g_QLateral_trOut)
+   deallocate(g_qBucket_trOut)
+   deallocate(g_hlink_tr)
+   deallocate(g_qlink_tr)
+   deallocate(g_QLateral_tr)
+   deallocate(g_qBucket_tr)
+   !-------------------------
 
 end subroutine output_chrt_NWM
 
@@ -3506,7 +3584,7 @@ subroutine output_lsmOut_NWM(domainId)
    ! For now, will always default to outputting all available
    ! variables since the nature of this output file is
    ! diagnostic in nature.
-   fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+   fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst_rt(1)%io_config_outputs)
@@ -3802,6 +3880,17 @@ subroutine output_lsmOut_NWM(domainId)
                   varRealTmp = rt_domain(domainId)%INFXSRT(iTmp2,jTmp2)
                else if(iTmp .eq. 14) then
                   varRealTmp = rt_domain(domainId)%overland%control%surface_water_head_lsm(iTmp2,jTmp2) ! updated to use new location of sfcheadrt
+               !-----water tracer vars output------
+               else if(iTmp .eq. 15) then
+                  varRealTmp = rt_domain(domainId)%INFXSRT_tr(iTmp2,jTmp2)
+               else if(iTmp .eq. 16) then
+                  varRealTmp = rt_domain(domainId)%sh2ox_tr(iTmp2,jTmp2,1)
+               else if(iTmp .eq. 17) then
+                  varRealTmp = rt_domain(domainId)%sh2ox_tr(iTmp2,jTmp2,2)
+               else if(iTmp .eq. 18) then
+                  varRealTmp = rt_domain(domainId)%sh2ox_tr(iTmp2,jTmp2,3)
+               else if(iTmp .eq. 19) then
+                  varRealTmp = rt_domain(domainId)%sh2ox_tr(iTmp2,jTmp2,4)
                endif
 
                ! For now, we are foregoing converting these variables to integer
@@ -4910,6 +4999,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: gnbasns
    ! Allocatable arrays to hold output variables. 
    real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_z_gwsubbas
+   real, allocatable, dimension(:) :: g_qin_gwsubbas_tr,g_qout_gwsubbas_tr    !wt vars
    integer, allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
@@ -4953,25 +5043,25 @@ subroutine output_gw_NWM(domainId,iGrid)
 
    if(nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1] 
+      fileMeta%outFlag(:) = [1,1,1,1,1] 
    else if(nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics 
-      fileMeta%outFlag(:) = [1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -4997,11 +5087,17 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_qout_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_z_gwsubbas(rt_domain(domainId)%gnumbasns))
          allocate(g_basnsInd(rt_domain(domainId)%gnumbasns))
+         !----water tracer vars----
+         allocate(g_qin_gwsubbas_tr(rt_domain(domainId)%gnumbasns))
+         allocate(g_qout_gwsubbas_tr(rt_domain(domainId)%gnumbasns))
       else
          allocate(g_qin_gwsubbas(1))
          allocate(g_qout_gwsubbas(1))
          allocate(g_z_gwsubbas(1))
          allocate(g_basnsInd(1))
+         !----water tracer vars---
+         allocate(g_qin_gwsubbas_tr(1))
+         allocate(g_qout_gwsubbas_tr(1))
       endif
 
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
@@ -5014,6 +5110,10 @@ subroutine output_gw_NWM(domainId,iGrid)
          !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
          call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas*1000.,g_z_gwsubbas)
          call ReachLS_write_io(rt_domain(domainId)%linkid,g_basnsInd)
+         !-----water tracer vars-----
+         call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas_tr/nlst_rt(domainId)%DT,g_qin_gwsubbas_tr)
+         call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas_tr,g_qout_gwsubbas_tr)
+         !---------------------------
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
                                rt_domain(domainId)%basnsInd,g_qin_gwsubbas)
@@ -5102,6 +5202,10 @@ subroutine output_gw_NWM(domainId,iGrid)
       varOutReal(1,:) = g_qin_gwsubbas
       varOutReal(2,:) = g_qout_gwsubbas
       varOutReal(3,:) = g_z_gwsubbas
+      !----water tracer vars----
+      varOutReal(4,:) = g_qin_gwsubbas_tr
+      varOutReal(5,:) = g_qout_gwsubbas_tr
+      !-------------------------
 
       ! Mask out missing values
       where ( varOutReal == fileMeta%modelNdv ) varOutReal = -9999.0
@@ -5317,6 +5421,10 @@ subroutine output_gw_NWM(domainId,iGrid)
    deallocate(g_qout_gwsubbas)
    deallocate(g_z_gwsubbas)
    deallocate(g_basnsInd)
+   !-----water tracer vars-----
+   deallocate(g_qin_gwsubbas_tr)
+   deallocate(g_qout_gwsubbas_tr)
+   !---------------------------
 end subroutine output_gw_NWM
 
 subroutine postDiagMsg(diagFlag,diagMsg)

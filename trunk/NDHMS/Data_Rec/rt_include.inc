@@ -26,6 +26,35 @@
   INTEGER :: iswater     !id for water in vegtyp
   INTEGER :: isurban     !id for urban in vegtyp
   INTEGER :: isoilwater  !id for water in soiltyp
+!===============================================================
+! Needed for water tracer capability
+!---------------------------------------------------------------
+  REAL,    allocatable, DIMENSION(:,:)      :: landRunOff_tr      !surface runoff disaggragated
+  REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT_tr         !surfacer unoff
+  REAL,    allocatable, DIMENSION(:,:)      :: SOLDRAIN_tr        !time-step drainage
+  REAL,    allocatable, DIMENSION(:)        :: qin_gwsubbas_tr    !flow to GW bucket
+  REAL,    allocatable, DIMENSION(:)        :: qout_gwsubbas_tr   !flow from GW bucket
+  REAL,    allocatable, DIMENSION(:,:)      :: QLINK_tr           !flow in link
+  REAL,    allocatable, DIMENSION(:)        :: HLINK_tr           !head in link
+  REAL,    allocatable, DIMENSION(:)        :: QLateral_tr        !lateral flow
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SMC_TR             !tracer soil moisture
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SH2OX_TR           !tracer soil water
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SMC_SUB            !soil moisture in tracer sublayer
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SH2OX_SUB          !soil water in tracer sublayer
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SICE_TR            !tracer soil ice
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SICE_SUB           !soil ice in tracer sublayer
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SMCRT_TR           !tracer soil moisture in routing grids
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SMCRT_SUB          !soil moisture in routing grids
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SMCMAXRT_SUB       !maximum soil moisture in routing grid
+  REAL,    allocatable, DIMENSION(:)        :: SH2OAGGRT_TR       !tracer soil water aggregated for each column
+  REAL,    allocatable, DIMENSION(:)        :: SH2OAGGRT_SUB      !soil moisture aggregated for each column
+  REAL                                      :: SFCHEADAGGRT_TR    !tracer surface water aggregated for each LSM grid
+  REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x_tr      !tracer surface routing flux accumulated
+  REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_y_tr      !tracer surface routing flux accumulated (might be useless)
+  REAL                                      :: QSUBBDRYTRT_TR
+  REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT_TR          !tracer subsurfacer routing flux
+  REAL,    allocatable, DIMENSION(:,:)      :: QSUBBDRYRT_TR      !tracer subsurfacer boundary flux? 
+!---------------------------------------------------------------
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !DJG   VARIABLES FOR ROUTING
