@@ -22,6 +22,7 @@ module module_hrldas_netcdf_io
   use module_date_utilities
   use netcdf
   use module_hydro_stop, only:HYDRO_stop
+  use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
 
 #ifdef MPP_LAND
   use module_mpp_land, only:mpp_land_bcast_int1, decompose_data_real, mpp_land_bcast_real1, decompose_data_int, &
@@ -712,7 +713,10 @@ contains
 
        ! Get visible ice albedo map (vis_icealb)
        call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
-       if (ierr /= 0) print*, 'WARNING: crocus_opt on but did not find min_vis'
+       if (ierr /= 0) then
+          vis_icealb = IEEE_VALUE(vis_icealb, IEEE_QUIET_NAN)
+          print*, 'WARNING: crocus_opt on but did not find min_vis, setting to NaN'
+       end if
     end if ! crocus_opt /= 0
 ! -- T.EI
 
