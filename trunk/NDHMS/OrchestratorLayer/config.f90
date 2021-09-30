@@ -11,10 +11,8 @@ module config_base
   type NOAHLSM_OFFLINE_
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
- !++ T.EI crocus
      integer            :: crocus_opt = 0
      integer            :: act_lev    = 0
-! -- T.EI
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -72,22 +70,20 @@ module config_base
   TYPE namelist_rt_
 
      integer :: nsoil, SOLVEG_INITSWC
- !++ T.EI crocus
-     integer            :: act_lev = 0
-! -- T.EI
+     integer :: act_lev = 0
      real,allocatable,dimension(:) :: ZSOIL8
-     real*8 :: out_dt, rst_dt
-     real   :: dt  !! dt is NOAH_TIMESTEP
+     real*8  :: out_dt, rst_dt
+     real    :: dt  !! dt is NOAH_TIMESTEP
      integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
      character(len=256)  :: restart_file = ""
-     integer            :: split_output_count
+     integer             :: split_output_count
      integer :: igrid
      integer :: rst_bi_in   ! used for parallel io with large restart file.
      integer :: rst_bi_out   ! used for parallel io with large restart file.
      ! each process will output the restart tile.
      character(len=256) :: geo_static_flnm = ""
      character(len=1024) :: land_spatial_meta_flnm = ""
-     integer  :: DEEPGWSPIN
+     integer :: DEEPGWSPIN
      integer ::  order_to_write, rst_typ
      character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
      character(len=256)  :: hydrotbl_f = ""    ! hydrotbl file
@@ -316,11 +312,9 @@ contains
       endif
    end do
 
-! ++T.EI crocus
    if(self%NSOIL .le. 0 .and. self%NSOIL .ne. -999999) then
       call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
    endif
-! -- T.EI
 
    if(self%dxrt0 .le. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid DXRT specified.')
@@ -526,9 +520,7 @@ contains
 !!! add the following two dummy variables
     integer  :: NSOIL
     real :: ZSOIL8(8)
- !++ T.EI crocus
     type(crocus_options) :: crocus_opts
-! -- T.EI
 
     logical            :: dir_e
     character(len=1024) :: reservoir_obs_dir
@@ -753,9 +745,7 @@ contains
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
 
-! ++ T.EI crocus
     nlst(did)%act_lev = crocus_opts%act_lev
-! -- T.EI
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
     nlst(did)%dxrt0 = dxrt
@@ -873,9 +863,7 @@ contains
     implicit none
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
- !++ T.EI crocus
      type(crocus_options) :: crocus_opts
-! -- T.EI
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -1014,10 +1002,8 @@ contains
 
     noah_lsm%indir = indir
     noah_lsm%nsoil = nsoil ! number of soil layers
-    !++ T.EI crocus
     noah_lsm%crocus_opt = crocus_opts%crocus_opt
     noah_lsm%act_lev = crocus_opts%act_lev
-    !-- T.EI
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
     noah_lsm%start_year = start_year

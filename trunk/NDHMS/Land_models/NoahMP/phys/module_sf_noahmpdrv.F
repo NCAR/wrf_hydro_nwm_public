@@ -58,16 +58,14 @@ CONTAINS
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY,                      & ! OUT Noah MP only
-! ++ T.EI crocus
-              PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,               & !OUT, for crocus, T.EI
-              PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,         & ! IN/OUT for crocus,  T.EI
-              PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,     & !IN/OUT for crocus, T.EI
-              PSNOWALBXY, PSNOWAGEXY, act_level,      & !IN/OUT  for crocus, T.EI
-              PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY, & !OUT  for crocus   & out, T.EI
-              GLACINFO ,GLACT,                               & ! INOUT for crocus, T.EI
-              FLOW_ICE, FLOW_SNOW,                           & ! OUT
-              crocus_opt,                                    & ! IN
-              ! -- T.EI
+              PSNOWLIQXY, PSNOWTEMPXY, PSNOWDZXY,                           & ! OUT    for crocus
+              PSNOWHEATXY, PSNOWRHOXY, PSNOWSWEXY,                          & ! IN/OUT for crocus
+              PSNOWGRAN1XY, PSNOWGRAN2XY, PSNOWHISTXY,                      & ! IN/OUT for crocus
+              PSNOWALBXY, PSNOWAGEXY, act_level,                            & ! IN/OUT for crocus
+              PSNOWHEIGHTXY, PSNOWTOTSWEXY,  PSNOWTHRUFALXY,                & ! OUT    for crocus
+              GLACINFO ,GLACT,                                              & ! IN/OUT for crocus
+              FLOW_ICE, FLOW_SNOW,                                          & ! OUT    for crocus
+              crocus_opt,                                                   & ! IN     for crocus
 #ifdef SPATIAL_SOIL
                  BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,             &
 		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                       &
@@ -92,13 +90,9 @@ CONTAINS
     USE MODULE_SF_NOAHMPLSM
     USE module_sf_noahmp_glacier
     USE NOAHMP_TABLES, ONLY: ISICE_TABLE, CO2_TABLE, O2_TABLE, HVB_TABLE, HVT_TABLE
-!   ++T.EI, crocus
-      USE module_snowcro        ! crocus,trude
-      USE MODD_SNOW_PAR, ONLY: XZ0SN, XZ0HSN
+    USE module_snowcro
+    USE MODD_SNOW_PAR, ONLY: XZ0SN, XZ0HSN
 
-
-
-      !    --T.EI, crocus
 !----------------------------------------------------------------
     IMPLICIT NONE
 !----------------------------------------------------------------
@@ -448,10 +442,10 @@ CONTAINS
     REAL                                :: CHUC         ! under canopy exchange coefficient
     REAL                                :: CHV2         ! veg 2m exchange coefficient
     REAL                                :: CHB2         ! bare 2m exchange coefficient
-  REAL   :: PAHV    !precipitation advected heat - vegetation net (W/m2)
-  REAL   :: PAHG    !precipitation advected heat - under canopy net (W/m2)
-  REAL   :: PAHB    !precipitation advected heat - bare ground net (W/m2)
-  REAL   :: PAH     !precipitation advected heat - total (W/m2)
+    REAL                                :: PAHV         ! precipitation advected heat - vegetation net (W/m2)
+    REAL                                :: PAHG         ! precipitation advected heat - under canopy net (W/m2)
+    REAL                                :: PAHB         ! precipitation advected heat - bare ground net (W/m2)
+    REAL                                :: PAH          ! precipitation advected heat - total (W/m2)
 
 ! Intermediate terms
 
@@ -484,7 +478,7 @@ CONTAINS
     INTEGER                             :: SLOPETYP
     LOGICAL                             :: IPRINT
 
-    INTEGER                             :: SOILCOLOR          ! soil color index
+    INTEGER                             :: SOILCOLOR    ! soil color index
     INTEGER                             :: IST          ! surface type 1-soil; 2-lake
     INTEGER                             :: YEARLEN
 
@@ -493,137 +487,131 @@ CONTAINS
 
     type(noahmp_parameters) :: parameters
 
-! ++ T.EI / Crocus:
-      INTEGER,                                           INTENT(IN)                 :: act_level
-      REAL, DIMENSION(:,:),                              INTENT(INOUT), allocatable :: PSNOWALBXY    ! Prognostic surface snow albedo
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWHEATXY
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWRHOXY
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWSWEXY
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWGRAN1XY   ! Snow layer(s) grain parameter 1
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWGRAN2XY   ! Snow layer(s) grain parameter 2
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWHISTXY       ! Snow layer(s) grain historical parameter
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable :: PSNOWAGEXY ! Snow grain age
 
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable   :: PSNOWLIQXY
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable   :: PSNOWTEMPXY
-      REAL, DIMENSION(:,:,:),                            INTENT(INOUT), allocatable   :: PSNOWDZXY
+    INTEGER,                INTENT(IN)                 :: act_level
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable :: PSNOWALBXY    ! Prognostic surface snow albedo
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWHEATXY
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWRHOXY
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWSWEXY
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWGRAN1XY   ! Snow layer(s) grain parameter 1
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWGRAN2XY   ! Snow layer(s) grain parameter 2
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWHISTXY       ! Snow layer(s) grain historical parameter
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable :: PSNOWAGEXY ! Snow grain age
 
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  ::   FLOW_ICE
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  ::   FLOW_SNOW
-      INTEGER, DIMENSION(:, :), INTENT(INOUT), allocatable  :: GLACINFO
-      REAL, DIMENSION(:,    :), INTENT(INOUT), allocatable  :: GLACT
-      INTEGER,                                           INTENT(IN)              :: crocus_opt
-      REAL, DIMENSION(ims:ime,    jms:jme), INTENT(OUT) , OPTIONAL      :: VIS_ICEALB
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable   :: PSNOWLIQXY
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable   :: PSNOWTEMPXY
+    REAL, DIMENSION(:,:,:), INTENT(INOUT), allocatable   :: PSNOWDZXY
 
-      INTEGER                              :: GLACINFOH,GLACR ! glacier info
-      CHARACTER(LEN=11)         :: HSNOWRES
-      CHARACTER(LEN=3)           :: HIMPLICIT_WIND
-      LOGICAL                              :: OGLACIER
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  :: PSNOWTHRUFALXY ! rate that liquid water leaves snow pack [kg/(m2 s)]   (should only be out)
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  :: PSNOWHEIGHTXY   ! integrated crocus snowheight PSNOWDZXY
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  :: PSNOWTOTSWEXY   ! crocus snowheight PSNOWSWE
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  ::   FLOW_ICE
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  ::   FLOW_SNOW
+    INTEGER,DIMENSION(:,:), INTENT(INOUT), allocatable  :: GLACINFO
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  :: GLACT
+    INTEGER,                INTENT(IN)                  :: crocus_opt
+    REAL, DIMENSION(:,:),   INTENT(INOUT), allocatable  :: VIS_ICEALB
 
-      REAL, DIMENSION(1)           ::   ZP_RRSNOW ,ZP_PSN3L, ZP_QA
-      REAL, DIMENSION(1)          ::   ZP_PEW_A_COEF, ZP_PEW_B_COEF
-      REAL, DIMENSION(1)          ::   ZP_PET_A_COEF, ZP_PEQ_A_COEF
-      REAL, DIMENSION(1)          ::   ZP_PET_B_COEF, ZP_PEQ_B_COEF ! trude ZP_PET_B_COEF potential temp?
-      REAL, PARAMETER              ::  ZTFRZ   = 273.16 !freezing/melting point (k)
-      REAL                          :: ZFPICE ! snow fraction of precip
-      REAL, DIMENSION(1)           :: FOO1, FOO2
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWSWE
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWDZ
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWRHO
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWHEAT
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWTEMP
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWLIQ
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWGRAN1
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWGRAN2
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWHIST
-      REAL, DIMENSION(:,:), allocatable :: ZP_SNOWAGE
+    INTEGER                                             :: GLACINFOH,GLACR ! glacier info
+    CHARACTER(LEN=11)                                   :: HSNOWRES
+    CHARACTER(LEN=3)                                    :: HIMPLICIT_WIND
+    LOGICAL                                             :: OGLACIER
 
-      REAL, DIMENSION(1)    ::   ZP_VMOD,ZP_RHOA, ZP_UREF
-      REAL, DIMENSION(1)    ::   ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW
-      REAL, DIMENSION(1)    ::   ZP_Z0NAT
-      REAL, DIMENSION(1)    ::   ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND
-      REAL, DIMENSION(1)    ::   ZP_D_G,ZP_SNOWALB, ZP_VIS_ICEALB
-      REAL, DIMENSION(1)    ::   ZFLOW_ICE, ZFLOW_SNOW
-      REAL, DIMENSION(1)    ::   ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR                  !(OUT)
-      REAL, DIMENSION(1)    ::   ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW               !(OUT)
-      REAL, DIMENSION(1)    ::   ZP_LEL3L, ZP_SNDRIFT, ZP_RI                                         !(OUT)
-      REAL, DIMENSION(1)    ::   ZP_SNOWHMASS                                                                !(OUT)
-      REAL, DIMENSION(1)    ::   ZP_USTARSNOW                                                               !(OUT)
+    REAL, DIMENSION(1)                :: ZP_RRSNOW ,ZP_PSN3L, ZP_QA
+    REAL, DIMENSION(1)                :: ZP_PEW_A_COEF, ZP_PEW_B_COEF
+    REAL, DIMENSION(1)                :: ZP_PET_A_COEF, ZP_PEQ_A_COEF
+    REAL, DIMENSION(1)                :: ZP_PET_B_COEF, ZP_PEQ_B_COEF
+    REAL, PARAMETER                   :: ZTFRZ = 273.16 !freezing/melting point (k)
+    REAL                              :: ZFPICE ! snow fraction of precip
+    REAL, DIMENSION(1)                :: FOO1, FOO2
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWSWE
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWDZ
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWRHO
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWHEAT
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWTEMP
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWLIQ
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWGRAN1
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWGRAN2
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWHIST
+    REAL, DIMENSION(:,:), allocatable :: ZP_SNOWAGE
 
+    REAL, DIMENSION(1) :: ZP_VMOD,ZP_RHOA, ZP_UREF
+    REAL, DIMENSION(1) :: ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW
+    REAL, DIMENSION(1) :: ZP_Z0NAT
+    REAL, DIMENSION(1) :: ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND
+    REAL, DIMENSION(1) :: ZP_D_G,ZP_SNOWALB, ZP_VIS_ICEALB
+    REAL, DIMENSION(1) :: ZFLOW_ICE, ZFLOW_SNOW
+    REAL, DIMENSION(1) :: ZP_THRUFAL, ZP_GRNDFLUX, ZP_EVAPCOR
+    REAL, DIMENSION(1) :: ZP_RNSNOW, ZP_GFLUXSNOW, ZP_HPSNOW
+    REAL, DIMENSION(1) :: ZP_LEL3L, ZP_SNDRIFT, ZP_RI
+    REAL, DIMENSION(1) :: ZP_SNOWHMASS
+    REAL, DIMENSION(1) :: ZP_USTARSNOW
+    REAL, DIMENSION(1) :: ZP_VEGTYPE, ZP_ZENITH
+    REAL, DIMENSION(1) :: ZP_PS        ! PSFC
+    REAL, DIMENSION(1) :: ZP_SRSNOW    ! QSNOW
+    REAL, DIMENSION(1) :: ZP_TA        ! T_ML
+    REAL, DIMENSION(1) :: ZP_TG        ! TG?
+    REAL, DIMENSION(1) :: ZP_SW_RAD    ! SWDN
+    REAL, DIMENSION(1) :: ZP_LW_RAD    ! LWDN
+    REAL, DIMENSION(1) :: ZP_ZREF      ! Z_ML
+    REAL, DIMENSION(1) :: ZP_HSNOW     ! FSH
+    REAL, DIMENSION(1) :: ZP_LES3L     ! FGEV
+    REAL, DIMENSION(1) :: ZP_EVAP      ! ESOIL
+    REAL, DIMENSION(1) :: ZP_EMISNOW   ! EMISSI
+    REAL, DIMENSION(1) :: ZP_CDSNOW    ! CM
+    REAL, DIMENSION(1) :: ZP_CHSNOW    ! CH
+    REAL, DIMENSION(1) :: ZP_QS        ! QSFC1D
+    REAL, DIMENSION(1) :: ZP_Z0EFF     ! effective roughness
 
+    !     Added some temporary fields for using noahmp-glacier to calculate 2m variables
+    REAL, DIMENSION(-2:NSOIL) :: ZSNSOT ! snow layer depth [m]
+    REAL, DIMENSION(-2:0)     :: SNICET ! snow layer ice [mm]
+    REAL, DIMENSION(-2:0)     :: SNLIQT ! snow layer liquid water [mm]
 
-      REAL,DIMENSION(1)     ::  ZP_VEGTYPE, ZP_ZENITH                                   !(IN)
-      REAL,DIMENSION(1)     ::  ZP_PS               !PSFC
-      REAL,DIMENSION(1)     ::  ZP_SRSNOW    !QSNOW
-      REAL,DIMENSION(1)     ::  ZP_TA               ! T_ML
-      REAL,DIMENSION(1)     ::  ZP_TG               !TG?
-      REAL,DIMENSION(1)     ::  ZP_SW_RAD      ! SWDN
-      REAL,DIMENSION(1)     ::  ZP_LW_RAD      !  LWDN
-      REAL,DIMENSION(1)     ::  ZP_ZREF            !  Z_ML
-      REAL,DIMENSION(1)     ::  ZP_HSNOW       !  FSH
-      REAL,DIMENSION(1)     ::  ZP_LES3L          ! FGEV
-      REAL,DIMENSION(1)     ::  ZP_EVAP            ! ESOIL
-      REAL,DIMENSION(1)     ::  ZP_EMISNOW   ! EMISSI
-      REAL,DIMENSION(1)     ::  ZP_CDSNOW     ! CM
-      REAL,DIMENSION(1)     ::  ZP_CHSNOW     ! CH
-      REAL,DIMENSION(1)     ::  ZP_QS                 ! QSFC1D
-      REAL,DIMENSION(1)     ::  ZP_Z0EFF           ! effective roughness.
+    REAL, DIMENSION(-2:NSOIL) :: ZSNSOTH ! snow layer depth [m]
+    REAL, DIMENSION(-2:0)     :: SNICEH  ! snow layer ice [mm]
+    REAL, DIMENSION(-2:NSOIL) :: ZSNSOH  ! snow layer depth [m]
 
-!     Added some temporary fields for using noahmp-glacier to calculate 2m variables
-      REAL, DIMENSION(-2:NSOIL)       :: ZSNSOT ! snow layer depth [m]
-      REAL, DIMENSION(-2:              0) :: SNICET ! snow layer ice [mm]
-      REAL, DIMENSION(-2:              0) :: SNLIQT ! snow layer liquid water [mm]
+    !     Added  fluxes:
+    REAL,DIMENSION(1) :: ZP_FSA_CROCUS
+    REAL,DIMENSION(1) :: ZP_FSR_CROCUS
+    REAL,DIMENSION(1) :: ZP_FIRA_CROCUS
 
-! ++ T.EI added for use in Crocus
-      REAL, DIMENSION(-2:NSOIL)       :: ZSNSOTH ! snow layer depth [m]
-      REAL, DIMENSION(-2:              0) :: SNICEH        ! snow layer ice [mm]
-      REAL, DIMENSION(-2:NSOIL)           :: ZSNSOH        ! snow layer depth [m]
+    LOGICAL      :: OSNOWDRIFT, OSNOWDRIFT_SUBLIM ! activate snowdrift, sublimation during drift
+    LOGICAL      :: OSNOW_ABS_ZENITH ! activate parametrization of solar absorption for polar regions
+    REAL         :: SWEH
+    REAL         :: SNDPTHH
+    REAL         :: SNEQVOH
+    CHARACTER(3) :: HSNOWMETAMO, HSNOWRAD
 
-!     Added  fluxes:
-      REAL,DIMENSION(1) :: ZP_FSA_CROCUS
-      REAL,DIMENSION(1) :: ZP_FSR_CROCUS
-      REAL,DIMENSION(1) :: ZP_FIRA_CROCUS
+    ! crocus, assign mock local values, and initialize. These values should be in namelist.
+    if (crocus_opt /= 0) then
+       allocate(ZP_SNOWSWE  (1,1:act_level))
+       allocate(ZP_SNOWDZ   (1,1:act_level))
+       allocate(ZP_SNOWRHO  (1,1:act_level))
+       allocate(ZP_SNOWHEAT (1,1:act_level))
+       allocate(ZP_SNOWTEMP (1,1:act_level))
+       allocate(ZP_SNOWLIQ  (1,1:act_level))
+       allocate(ZP_SNOWGRAN1(1,1:act_level))
+       allocate(ZP_SNOWGRAN2(1,1:act_level))
+       allocate(ZP_SNOWHIST (1,1:act_level))
+       allocate(ZP_SNOWAGE  (1,1:act_level))
 
-      LOGICAL                 :: OSNOWDRIFT, OSNOWDRIFT_SUBLIM ! activate snowdrift, sublimation during drift
-      LOGICAL                :: OSNOW_ABS_ZENITH ! activate parametrization of solar absorption for polar regions
-      REAL :: SWEH
-      REAL :: SNDPTHH
-      REAL :: SNEQVOH
-      CHARACTER(3)     :: HSNOWMETAMO, HSNOWRAD
+       HSNOWRES = 'ISBA-SNOW3L'  !   'DEF'
+       OGLACIER = .false.
+       !      OGLACIER = .true.
+       HIMPLICIT_WIND = 'NEW'
+       !      HIMPLICIT_WIND = 'OLD'
 
-! ++ T.EI   crocus, assign mock local values, and initialize. These values should be in namelist.
-      if (crocus_opt /= 0) then
-         allocate(ZP_SNOWSWE(1,1:act_level))
-         allocate(ZP_SNOWDZ(1,1:act_level))
-         allocate(ZP_SNOWRHO(1,1:act_level))
-         allocate(ZP_SNOWHEAT(1,1:act_level))
-         allocate(ZP_SNOWTEMP(1,1:act_level))
-         allocate(ZP_SNOWLIQ(1,1:act_level))
-         allocate(ZP_SNOWGRAN1(1,1:act_level))
-         allocate(ZP_SNOWGRAN2(1,1:act_level))
-         allocate(ZP_SNOWHIST(1,1:act_level))
-         allocate(ZP_SNOWAGE(1,1:act_level))
-
-         HSNOWRES = 'ISBA-SNOW3L'  !   'DEF'
-         OGLACIER = .false.
-         !      OGLACIER = .true.
-         HIMPLICIT_WIND = 'NEW'
-         !      HIMPLICIT_WIND = 'OLD'
-
-
-         ZP_VEGTYPE = 1.0
-         OSNOWDRIFT = .true.
-         OSNOWDRIFT_SUBLIM = .true.
-         OSNOW_ABS_ZENITH = .false.
-         HSNOWMETAMO = 'B92'
-         !      HSNOWMETAMO = 'C13'
-         HSNOWRAD         = 'B92'
-         !     HSNOWRAD         = 'TAR2'
-      end if ! crocus_opt /= 0
-! -- T.EI crocus
+       ZP_VEGTYPE = 1.0
+       OSNOWDRIFT = .true.
+       OSNOWDRIFT_SUBLIM = .true.
+       OSNOW_ABS_ZENITH = .false.
+       HSNOWMETAMO = 'B92'
+       !      HSNOWMETAMO = 'C13'
+       HSNOWRAD         = 'B92'
+       !     HSNOWRAD         = 'TAR2'
+    end if ! crocus_opt /= 0
 
 ! ----------------------------------------------------------------------
 
@@ -650,9 +638,7 @@ CONTAINS
     END DO
 
     JLOOP : DO J=jts,jte
-! ++ T.EI
        GLACR= 0
-! -- T.EI
        IF(ITIMESTEP == 1)THEN
           DO I=its,ite
              IF((XLAND(I,J)-1.5) >= 0.) THEN    ! Open water case
@@ -678,9 +664,7 @@ CONTAINS
 
 !-----------------------------------------------------------------------
    ILOOP : DO I = its, ite
-! ++ T.EI
       GLACR= 0
-! -- T.EI
     IF (XICE(I,J) >= XICE_THRES) THEN
        ICE = 1                            ! Sea-ice point
 
@@ -855,7 +839,7 @@ CONTAINS
        PBLH   = undefined_value                       ! test dummy value ! PBL height
        DZ8W1D = DZ8W (I,1,J)                          ! thickness of atmospheric layers
 
-! ++  T.EI  initialize crocus, !  Do this before NOAHMP, so that outputs (such as TG) from Noah-mp glacier affect Crocus this step
+! Initialize crocus, !  Do this before NOAHMP, so that outputs (such as TG) from Noah-mp glacier affect Crocus this step
        if (crocus_opt /= 0) then
           GLACINFOH = GLACINFO(I,J)   ! vegetation type
 
@@ -875,8 +859,7 @@ CONTAINS
 
           ZP_ZENITH    = ACOS(COSZIN(I,J))
 
-          !     T.EI Should the original surfex naming convention be used, or use the WRF convention?
-          !     Currently the surfex naming convention is used.....
+          ! Currently the surfex naming convention is being used
           ZP_PS(1)  =   PSFC
           ZP_SRSNOW(1) = QSNOW
           ZP_TA(1) = T_ML
@@ -928,9 +911,9 @@ CONTAINS
           ZP_VMOD(1)  =      ZP_PEW_B_COEF(1)
 
 
-          !     T.EI added from module_sf_noahmp_glacier:
-          !     partition precipitation into rain and snow (from CANWATER)
-          !     Jordan (1991)
+          ! Added from module_sf_noahmp_glacier:
+          ! partition precipitation into rain and snow (from CANWATER)
+          ! Jordan (1991)
           IF(IOPT_SNF == 1 .OR. IOPT_SNF == 4) THEN
              IF(T_ML > ZTFRZ+2.5)THEN
                 ZFPICE = 0.
@@ -969,7 +952,6 @@ CONTAINS
 
           ZP_THRUFAL(:) = 0.0
       end if ! crocus_opt /= 0
-! -- T.EI crocus
 
        IF(VEGTYP == 25) FVEG = 0.0                  ! Set playa, lava, sand to bare
        IF(VEGTYP == 25) PLAI = 0.0
@@ -978,13 +960,12 @@ CONTAINS
        IF(VEGTYP == 27) FVEG = 0.0
        IF(VEGTYP == 27) PLAI = 0.0
 
-! ++ T.EI  If running crocus, test if glaicer has has comletely melted, then RUN NoahMP
+       ! If running crocus, test if glaicer has has comletely melted, then RUN NoahMP
        IF ( (crocus_opt == 0) .or. (GLACINFOH == 1 .and. ZP_SNOWDZ(1,1) .eq. 0.0)) THEN
-
           IF ( VEGTYP == ISICE_TABLE ) THEN
              ICE = -1                           ! Land-ice point
              if (crocus_opt /= 0) &
-                  GLACR = 1                     ! ++ T.EI
+                  GLACR = 1
              CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
 
              TBOT = MIN(TBOT,263.15)                      ! set deep temp to at most -10C
@@ -1003,33 +984,26 @@ CONTAINS
                              , sfcheadrt(i,j)                                      &
 #endif
                              )
-!++ T.EI
           ENDIF ! VEGTYP == ISICE_TABLE
-
        ELSE IF (crocus_opt /= 0 .and. GLACINFOH == 1 .and. ZP_SNOWDZ(1,1) .gt. 0.0) THEN
-!          write(*,*) 'inside else if'
           ICE = -1               ! Land-ice point
           GLACR= 1
           CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
           TBOT = MIN(TBOT,263.15) ! set deep temp to at most -10C
-          !     T.EI  send snow info from crocus to Noahmp_glacier to calc 2m temps etc
-          !     T.EI  move NOAHMP_GLACIER to after CROCUS
-
-          !     T.EI for temperatre glacier, set top soil temp to 272
+                                  ! send snow info from crocus to Noahmp_glacier to calc 2m temps etc
+                                  ! move NOAHMP_GLACIER to after CROCUS
+                                  ! for temperatre glacier, set top soil temp to 272
           ZP_TG(1) = 272.0
 
           IF (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0) THEN
           ELSE
-!             write(*,*) "before call snowcro"
-!             write(*,*) 'zp_snowdz(1,1)', zp_snowdz(1,1)
-            write(*,*) 'vis_icealb ', i,j, zp_vis_icealb
-            CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                & !(IN)
-                  ZP_PEW_A_COEF, ZP_PEW_B_COEF,                                                                & !(IN)
-                  ZP_PET_A_COEF, ZP_PEQ_A_COEF, ZP_PET_B_COEF, ZP_PEQ_B_COEF,   & !(IN)
-                  ZP_SNOWSWE,ZP_SNOWRHO, ZP_SNOWHEAT, ZP_SNOWALB,               & ! (INOUT) !several layers
-                  ZP_SNOWGRAN1, ZP_SNOWGRAN2, ZP_SNOWHIST, ZP_SNOWAGE, DT,  & !(INOUT) PTSTEP: (IN)
-                  ZP_PS, ZP_SRSNOW, ZP_RRSNOW ,ZP_PSN3L, ZP_TA, ZP_TG,     & !(IN)
-                  ZP_SW_RAD, ZP_QA, ZP_VMOD, ZP_LW_RAD, ZP_RHOA, ZP_UREF,       & !(IN)
+            CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                   & !(IN)
+                  ZP_PEW_A_COEF, ZP_PEW_B_COEF,                                & !(IN)
+                  ZP_PET_A_COEF, ZP_PEQ_A_COEF, ZP_PET_B_COEF, ZP_PEQ_B_COEF,  & !(IN)
+                  ZP_SNOWSWE,ZP_SNOWRHO, ZP_SNOWHEAT, ZP_SNOWALB,              & ! (INOUT) !several layers
+                  ZP_SNOWGRAN1, ZP_SNOWGRAN2, ZP_SNOWHIST, ZP_SNOWAGE, DT,     & !(INOUT) PTSTEP: (IN)
+                  ZP_PS, ZP_SRSNOW, ZP_RRSNOW ,ZP_PSN3L, ZP_TA, ZP_TG,         & !(IN)
+                  ZP_SW_RAD, ZP_QA, ZP_VMOD, ZP_LW_RAD, ZP_RHOA, ZP_UREF,      & !(IN)
                   ZP_EXNS, ZP_EXNA, ZP_DIRCOSZW, ZP_ZREF, ZP_Z0NAT, ZP_Z0EFF,  & !(IN)
                   ZP_Z0HNAT, ZP_ALB, ZP_SOILCOND, ZP_D_G,                      & !(IN)
                   ZP_SNOWLIQ,                                                  & !(OUT)
@@ -1043,18 +1017,14 @@ CONTAINS
                   OSNOW_ABS_ZENITH, HSNOWMETAMO,HSNOWRAD,                      &
                   act_level, ZP_VIS_ICEALB,                                    &
                   ZP_FSA_CROCUS, ZP_FSR_CROCUS, ZP_FIRA_CROCUS,                &
-                  ZFLOW_ICE, ZFLOW_SNOW,                                         &
+                  ZFLOW_ICE, ZFLOW_SNOW,                                       &
                   I,J) !(OUT)
-
-
-
-
 
              !  Call to NOAHM_GLACIER to after CROCUS to calculte 2m temp and other 2m variables.
              !  But use snow info from CROCUS.
 
              ALBOLD= ZP_SNOWALB(1)
-             SNDPTHH = sum(ZP_SNOWDZ)  ! trude, shoudnt this be zp_snowdz?
+             SNDPTHH = sum(ZP_SNOWDZ)
              SNEQVOH= sum(PSNOWSWEXY(I,:,J))
              SWEH = sum(ZP_SNOWDZ)
              ZSNSOTH(-1)=-SNDPTHH/2
@@ -1065,34 +1035,30 @@ CONTAINS
              zSNSOTH(4)=ZSNSO(3)-1.0
              STC(-NSNOW+3)=273.15
              STC(-NSNOW+2)=(ZP_SNOWTEMP(1,1))
-
-             ISNOW=-NSNOW+1      !(for glacier, always assume a snow layer)
+             ISNOW=-NSNOW+1 ! (for glacier, always assume a snow layer)
              SNICEH=sum(PSNOWDZXY(I,:,J))*1000./(NSNOW)
 
 
-
              CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
-                  T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
-                  PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
+                  T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN,   & ! IN : Forcing
+                  PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL,   & ! IN : Forcing
                   parameters%swe_limit                               , & ! IN : Forcing
                   QSNOW, QRAIN, SNEQVOH,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
-!                  SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
-                  !++ T.EI crocus
+!                 SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ,    & ! IN/OUT :
                   SWEH,     SMC,   ZSNSOTH,  SNDPTHH,   SNICEH,   SNLIQ, & ! IN/OUT :
-! -- T.EI
-                  TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
-                  FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT :
-                  TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
-                  QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
-                  EMISSI,  FPICE,    CHB2 &                             ! OUT :
+                  TG,     STC,   SMH2O,   TAUSS,  QSFC1D,              & ! IN/OUT :
+                  FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL,    & ! OUT :
+                  TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB,   & ! OUT :
+                  QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB,  & ! OUT :
+                  EMISSI,  FPICE,    CHB2                              & ! OUT :
 #ifdef WRF_HYDRO
-                  , sfcheadrt(i,j)                                      &
+                  , sfcheadrt(i,j)                                     &
 #endif
              )
 
 
              RUNSF=ZP_THRUFAL(1)
-             RUNSB=0.            ! trude, assume that there are no subsurface runoff under the glacier.
+             RUNSB=0.            ! assume that there are no subsurface runoff under the glacier.
 #ifdef WRF_HYDRO
              RUNSF=ZP_THRUFAL(1)+sfcheadrt(i,j)/DT
 #endif
@@ -1111,12 +1077,9 @@ CONTAINS
              TG=ZP_SNOWTEMP(1,1)
              STC   (      1:NSOIL)=273.16
 
-
-
-
              !----------------
-          ENDIF ! if not (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0)
-          ! T.EI If crocus is not running, use the original NOAH-MP glacier
+          ENDIF ! If not (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0)
+                ! If crocus is not running, use the original NOAH-MP glacier
        ELSE IF (GLACINFOH .ne. 1 .and. VEGTYP == ISICE_TABLE) THEN ! all other glacier grid points
           ICE = -1
           GLACR= 1
@@ -1124,18 +1087,18 @@ CONTAINS
           TBOT = MIN(TBOT,263.15) ! set deep temp to at most -10C
 
           CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
-               T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
-               PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL, & ! IN : Forcing
-               parameters%swe_limit,                              &
+               T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN,  & ! IN : Forcing
+               PRCP,    LWDN,    TBOT,    Z_ML, FICEOLD,   ZSOIL,  & ! IN : Forcing
+               parameters%swe_limit,                               &
                QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
-               SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
-               TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
-               FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT :
-               TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
+               SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ,   & ! IN/OUT :
+               TG,     STC,   SMH2O,   TAUSS,  QSFC1D,             & ! IN/OUT :
+               FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL,   & ! OUT :
+               TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB,  & ! OUT :
                QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
-               EMISSI,  FPICE,    CHB2 &                             ! OUT :
+               EMISSI,  FPICE,    CHB2                             & ! OUT :
 #ifdef WRF_HYDRO
-               , sfcheadrt(i,j)                                      &
+               , sfcheadrt(i,j)                                    &
 #endif
                )
 
@@ -1202,60 +1165,60 @@ CONTAINS
          LH (I,J) = FGEV
 
       ELSE
-         ICE=0                              ! Neither sea ice or land ice.
+         ICE=0 ! Neither sea ice or land ice.
 
          if (crocus_opt /= 0) then
             IF (PLAI .lt. -1000) THEN
                PLAI = 0.5            ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (TAH .lt. -1000) THEN
-               TAH = 273.2            ! trude test. Glacier points does not have a TAH value (-1e+36). Give TAH a value after glaicer has melted.
+               TAH = 273.2           ! trude test. Glacier points does not have a TAH value (-1e+36). Give TAH a value after glaicer has melted.
             endif
             IF (EAH .lt. -1000) THEN
-               EAH = 750           ! trude test. Glacier points does not have a EAH value (-1e+36). Give EAH a value  after glaicer has melted.
+               EAH = 750             ! trude test. Glacier points does not have a EAH value (-1e+36). Give EAH a value  after glaicer has melted.
             endif
             IF (FWET .lt. -1000) THEN
                FWET = 0.05           ! trude test. Glacier points does not have a FWET value (-1e+36). Give FWET a value  after glaicer has melted.
             endif
             IF (CANLIQ .lt. -1000) THEN
-               CANLIQ = 0.05           ! trude test. Glacier points does not have a CANLIQ value (-1e+36). Give CANLIQ a value  after glaicer has melted.
+               CANLIQ = 0.05         ! trude test. Glacier points does not have a CANLIQ value (-1e+36). Give CANLIQ a value  after glaicer has melted.
             endif
             IF (CANICE .lt. -1000) THEN
-               CANICE = 0.00           ! trude test. Glacier points does not have a CANICE value (-1e+36). Give CANICE a value  after glaicer has melted.
+               CANICE = 0.00         ! trude test. Glacier points does not have a CANICE value (-1e+36). Give CANICE a value  after glaicer has melted.
             endif
             IF (TV .lt. -1000) THEN
-               TV = T_ML +0.5          ! trude test. Glacier points does not have a TV value (-1e+36). Give TV a value  after glaicer has melted.
+               TV = T_ML +0.5        ! trude test. Glacier points does not have a TV value (-1e+36). Give TV a value  after glaicer has melted.
             endif
             IF (TG .le. -1000) THEN
-               TG = T_ML +1.          ! trude test. Glacier points does not have a TG value (-1e+36). Give TG a value  after glaicer has melted.
+               TG = T_ML +1.         ! trude test. Glacier points does not have a TG value (-1e+36). Give TG a value  after glaicer has melted.
             endif
-            !         IF (ZSNSO(1) .le. -1000) THEN
-            !            ZSNSO(:) = 0.          ! trude test. Glacier points does not have a ZSNSO(1) value (-1e+36). Give ZSNSO(1) a value  after glaicer has melted.
-            !         endif
+            ! IF (ZSNSO(1) .le. -1000) THEN
+            !    ZSNSO(:) = 0.       ! trude test. Glacier points does not have a ZSNSO(1) value (-1e+36). Give ZSNSO(1) a value  after glaicer has melted.
+            ! endif
             ! next varables could probably be defined from input somewhere
             IF (ZWT .lt. -1000) THEN
-               ZWT = 2.5          ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               ZWT = 2.5             ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (WA .lt. -1000) THEN
-               WA = 4900.          ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               WA = 4900.            ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (WT .lt. -1000) THEN
-               WT = 4900.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               WT = 4900.            ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (WSLAKE .lt. -1000) THEN
-               WSLAKE = 0.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               WSLAKE = 0.           ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (LFMASS .lt. -1000) THEN
-               LFMASS = 6.68219        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               LFMASS = 6.68219      ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (RTMASS .lt. -1000) THEN
-               RTMASS = 500.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               RTMASS = 500.         ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (STMASS .lt. -1000) THEN
                STMASS = 17.82        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (WOOD .lt. -1000) THEN
-               WOOD = 500.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               WOOD = 500.           ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (STBLCP .lt. -1000) THEN
                STBLCP = 1000.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
@@ -1264,7 +1227,7 @@ CONTAINS
                FASTCP = 1000.        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
             IF (PSAI .lt. -1000) THEN
-               PSAI = 0.49        ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
+               PSAI = 0.49           ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
          end if ! crocus_opt /= 0
 
@@ -1474,25 +1437,25 @@ CONTAINS
              RECHXY   (I,J)                = RECHXY(I,J) + RECH*1.E3 !RECHARGE TO THE WATER TABLE
              DEEPRECHXY(I,J)               = DEEPRECHXY(I,J) + DEEPRECH
              SMCWTDXY(I,J)                 = SMCWTD
-! ++ T.EI crocus!
-             if (crocus_opt /= 0) then
-                PSNOWSWEXY(I,1:act_level,J) = ZP_SNOWSWE(1,1:act_level)
-                PSNOWRHOXY(I,1:act_level,J) =  ZP_SNOWRHO(1,1:act_level)
-                PSNOWHEATXY(I,1:act_level,J) =  ZP_SNOWHEAT(1,1:act_level)
-                PSNOWGRAN1XY(I,1:act_level,J) =  ZP_SNOWGRAN1(1,1:act_level)
-                PSNOWGRAN2XY(I,1:act_level,J) = ZP_SNOWGRAN2(1,1:act_level)
-                PSNOWHISTXY(I,1:act_level,J)= ZP_SNOWHIST(1,1:act_level)
-                PSNOWAGEXY(I,1:act_level,J) = ZP_SNOWAGE(1,1:act_level)
-                PSNOWLIQXY(I,1:act_level,J) = ZP_SNOWLIQ(1,1:act_level)
-                PSNOWTEMPXY(I,1:act_level,J) =ZP_SNOWTEMP(1,1:act_level)
-                PSNOWDZXY(I,1:act_level,J) = ZP_SNOWDZ(1,1:act_level)
 
-                PSNOWALBXY(I,J) = ZP_SNOWALB(1)
+             if (crocus_opt /= 0) then
+                PSNOWSWEXY(I,1:act_level,J)   = ZP_SNOWSWE(1,1:act_level)
+                PSNOWRHOXY(I,1:act_level,J)   = ZP_SNOWRHO(1,1:act_level)
+                PSNOWHEATXY(I,1:act_level,J)  = ZP_SNOWHEAT(1,1:act_level)
+                PSNOWGRAN1XY(I,1:act_level,J) = ZP_SNOWGRAN1(1,1:act_level)
+                PSNOWGRAN2XY(I,1:act_level,J) = ZP_SNOWGRAN2(1,1:act_level)
+                PSNOWHISTXY(I,1:act_level,J)  = ZP_SNOWHIST(1,1:act_level)
+                PSNOWAGEXY(I,1:act_level,J)   = ZP_SNOWAGE(1,1:act_level)
+                PSNOWLIQXY(I,1:act_level,J)   = ZP_SNOWLIQ(1,1:act_level)
+                PSNOWTEMPXY(I,1:act_level,J)  = ZP_SNOWTEMP(1,1:act_level)
+                PSNOWDZXY(I,1:act_level,J)    = ZP_SNOWDZ(1,1:act_level)
+
+                PSNOWALBXY(I,J)     = ZP_SNOWALB(1)
                 PSNOWTHRUFALXY(I,J) = ZP_THRUFAL(1)*DT
-                FLOW_ICE(I,J) = FLOW_ICE(I,J)+ZFLOW_ICE(1)*DT
-                FLOW_SNOW(I,J) = FLOW_SNOW(I,J)+ZFLOW_SNOW(1)*DT
-                PSNOWHEIGHTXY(I,J) = sum(PSNOWDZXY(I,:,J))
-                PSNOWTOTSWEXY(I,J) = sum(PSNOWSWEXY(I,:,J))
+                FLOW_ICE(I,J)       = FLOW_ICE(I,J)+ZFLOW_ICE(1)*DT
+                FLOW_SNOW(I,J)      = FLOW_SNOW(I,J)+ZFLOW_SNOW(1)*DT
+                PSNOWHEIGHTXY(I,J)  = sum(PSNOWDZXY(I,:,J))
+                PSNOWTOTSWEXY(I,J)  = sum(PSNOWSWEXY(I,:,J))
 
                 if (GLACINFO(I,J).eq.1 .and. PSNOWHEIGHTXY(I,J).gt.0) then
                    ALBEDO   (I,J) = ZP_SNOWALB(1)
@@ -1500,20 +1463,16 @@ CONTAINS
                    SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
                    ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
 #ifdef WRF_HYDRO
-                   if(present(ACCETRAN)) ACCETRAN (I,J)  = 0.
-                   if(present(ACCECAN)) ACCECAN(I,J)                  = 0.
-                   if(present(ACCEDIR)) ACCEDIR(I,J) = ACCEDIR(I,J) +(zp_evap(1)*DT) - (ESOIL * DT)
-                   if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)   = undefined_value
-                   if(present(SOILSAT)) SOILSAT (I,J)  = undefined_value
+                   if(present(ACCETRAN)) ACCETRAN(I,J) = 0.
+                   if(present(ACCECAN))  ACCECAN(I,J)  = 0.
+                   if(present(ACCEDIR))  ACCEDIR(I,J)  = ACCEDIR(I,J) + (zp_evap(1)*DT) - (ESOIL*DT)
+                   if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J) = undefined_value
+                   if(present(SOILSAT))   SOILSAT(I,J) = undefined_value
 
 #endif
                 endif
              end if ! crocus_opt /= 0
-! --T.EI
-
-
           ENDIF                                                         ! endif of land-sea test
-
       ENDDO ILOOP                                                       ! of I loop
    ENDDO JLOOP                                                          ! of J loop
 

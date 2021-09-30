@@ -1117,10 +1117,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
    character(len=1024) :: output_flnm ! Output file name
    integer :: iret ! NetCDF return status
    integer :: ftn  ! NetCDF file handle
-!   integer :: dimId(7) ! NetCDF dimension ID values
-! ++ T.EI crocus
    integer :: dimId(8) ! NetCDF dimension ID values
-! -- T.EI
    integer :: varId ! NetCDF variable ID value
    integer :: timeId ! NetCDF time variable ID
    integer :: refTimeId ! NetCDF reference_time variable ID
@@ -1244,14 +1241,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,1,1,1,1,1,1,1,& !71-80
                              1,1,1,1,1,1,1,1,1,1,& !81-90
                              1,1,1,1,1,1,1,1,&     !91-98
-      ! ++ T.EI crocus
-                             1,1,1,& !99-101
-                             1,1,1,& !102-104
-                             1,1,1,& !105-107
-                             1,1,1,& !108-110
-                             1,1,1,& !111-113
-                             1,1,1]  !114
-      ! -- T.EI
+                             1,1,1,&               !99-101
+                             1,1,1,&               !102-104
+                             1,1,1,&               !105-107
+                             1,1,1,&               !108-110
+                             1,1,1,&               !111-113
+                             1,1,1]                !114
 
   else if(nlst(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
@@ -1265,14 +1260,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              0,1,1,0,1,0,0,1,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,0,& !99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             0,0,0,& !108-110
-                             0,0,0,& !111-113
-                             0,0,0]  !114
-      ! -- T.EI
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             0,0,0,&               !108-110
+                             0,0,0,&               !111-113
+                             0,0,0]                !114
 
    else if(nlst(1)%io_config_outputs .eq. 2) then
       ! Short Range
@@ -1286,14 +1279,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              0,0,1,0,1,0,0,0,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,0,& !99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             0,0,0,& !108-110
-                             0,0,0,& !111-113
-                             0,0,0]  !114
-      ! -- T.EI
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             0,0,0,&               !108-110
+                             0,0,0,&               !111-113
+                             0,0,0]                !114
 
    else if(nlst(1)%io_config_outputs .eq. 3) then
       ! Medium Range
@@ -1307,14 +1298,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              1,1,1,0,1,0,0,0,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,0,& !99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             0,0,0,& !108-110
-                             0,0,0,& !111-113
-                             0,0,0]  !114
-      ! -- T.EI
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             0,0,0,&               !108-110
+                             0,0,0,&               !111-113
+                             0,0,0]                !114
 
    else if(nlst(1)%io_config_outputs .eq. 4) then
       ! Long Range
@@ -1328,14 +1317,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              1,0,1,1,0,0,0,0,&     !91-98
-      ! ++ T.EI crocus
-                             0,0,0,& !99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             0,0,0,& !108-110
-                             0,0,0,& !111-113
-                             0,0,0]  !114
-      ! -- T.EI
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             0,0,0,&               !108-110
+                             0,0,0,&               !111-113
+                             0,0,0]                !114
 
    else if(nlst(1)%io_config_outputs .eq. 5) then
       ! Retrospective
@@ -1348,15 +1335,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,0,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,0,0,0,1,1,1,&      !91-98
-! ++ T.EI crocus
-                             0,0,0,& ! 99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             1,1,0,& !108-110
-                             1,0,0,& !111-113
-                             1,1,1]  !114
-! -- T.EI
+                             0,0,0,0,0,1,1,1,&     !91-98
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             1,1,0,&               !108-110
+                             1,0,0,&               !111-113
+                             1,1,1]                !114
 
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
@@ -1369,15 +1354,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,0,0,1,&      !91-98
-! ++ T.EI crocus
-                             0,0,0,& ! 99-101
-                             0,0,0,& !102-104
-                             0,0,0,& !105-107
-                             0,0,0,& !108-110
-                             0,0,0,& !111-113
-                             0,0,0]  !114
-! -- T.EI
+                             1,1,1,1,1,0,0,1,&     !91-98
+                             0,0,0,&               !99-101
+                             0,0,0,&               !102-104
+                             0,0,0,&               !105-107
+                             0,0,0,&               !108-110
+                             0,0,0,&               !111-113
+                             0,0,0]                !114
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -1541,10 +1524,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
-!++ T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
-!-- T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then
@@ -1555,10 +1536,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
-!++ T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
-!-- T.EI crocus
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. 1) then

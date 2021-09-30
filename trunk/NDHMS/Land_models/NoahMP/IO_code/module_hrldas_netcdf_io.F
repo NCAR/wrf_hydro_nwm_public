@@ -64,10 +64,8 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_times_remember
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
-! ++ T.EI crocus
   integer, private :: dimid_glacier_layers_remember
   integer, private :: crocus_opt = 0
-! -- T.EI
 
   interface define_rst_var
      module procedure define_3d_real,define_2d_real,define_2d_int
@@ -590,19 +588,15 @@ contains
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
        longitude, xland, seaice, msftx, msfty, &
-       local_crocus_opt, glacinfo, glact, vis_icealb)  !!T.EI crocus
+       local_crocus_opt, glacinfo, glact, vis_icealb)
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
     integer,                   intent(in)  :: iswater
     integer,                   intent(in)  :: islake
     integer, dimension(xstart:xend,ystart:yend), intent(out) :: vegtyp, soltyp
-! ++ T.EI crocus
     integer,                                     intent(in)  :: local_crocus_opt
     integer, dimension(xstart:xend,ystart:yend), intent(out), optional :: glacinfo
-    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
-    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: vis_icealb
-! -- T.EI
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: latitude
@@ -611,6 +605,8 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: vis_icealb
 
     character(len=256) :: units
     integer :: ierr
@@ -689,7 +685,6 @@ contains
     vegtyp = nint(xdum)
     ! print*, 'vegtyp(xstart,ystart) = ', vegtyp(xstart,ystart)
 
-! ++ T.EI crocus
     ! Get Glacier info (glacinfo)
     ! - crocus_opt = 0 : don't read in
     ! - crocus_opt = 1
@@ -718,7 +713,6 @@ contains
           print*, 'WARNING: crocus_opt on but did not find min_vis, setting to NaN'
        end if
     end if ! crocus_opt /= 0
-! -- T.EI
 
 
     ! Get Dominant Soil Type categories in the top layer (stl)
@@ -1142,7 +1136,8 @@ contains
   end subroutine read_3d_soil
 
 !---------------------------------------------------------------------------------------------------------
-! ++ T.EI
+!---------------------------------------------------------------------------------------------------------
+
   subroutine get_landuse_or_glacinfo_netcdf(in_name, ncid, array, units, &
                                             xstart, xend, ystart, yend, &
                                             fatal, ierr)
@@ -1197,7 +1192,7 @@ contains
        stop glacier_error
     end if
   end subroutine report_landuse_or_glacinfo_error
-! -- T.EI
+
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 
@@ -2234,15 +2229,12 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 #ifdef MPP_LAND
-      subroutine prepare_output_file_mpp(outdir, version, igrid, &
+  subroutine prepare_output_file_mpp(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       vegtyp, soltyp, &
-! ++ T.EI crocus
-      act_level)
-! -- T.EI
+       vegtyp, soltyp, act_level)
 
     implicit none
 
@@ -2270,9 +2262,7 @@ contains
     real,                                     intent(in) :: cen_lon
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
-! ++ T.EI crocus
     integer, optional,                        intent(in) :: act_level
-! -- T.Ei
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
     character(len=19),                        intent(in) :: date
@@ -2290,10 +2280,7 @@ contains
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       g_vegtyp, g_soltyp, &
-! ++ T.EI crocus
-       act_level)
-! -- T.EI
+       g_vegtyp, g_soltyp, act_level)
     end if
 
     end subroutine prepare_output_file_mpp
@@ -2304,10 +2291,7 @@ contains
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       vegtyp, soltyp, &
-! ++ T.EI crocus
-       act_level)
-! -- T.EI
+       vegtyp, soltyp, act_level)
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
     implicit none
@@ -2337,9 +2321,7 @@ contains
     real,                                     intent(in) :: cen_lon
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
-! ++ T.EI crocus
-    integer, optional,                        intent(in) :: act_level
-! -- T.EI
+    integer,          optional,               intent(in) :: act_level
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
     character(len=19),                        intent(in) :: date
@@ -2350,9 +2332,7 @@ contains
 
     integer :: dimid_ix, dimid_jx, dimid_times, dimid_datelen, varid, n
     integer :: dimid_dum, dimid_layers, dimid_snow_layers
-! ++ T.EI crocus
     integer :: dimid_glacier_layers
-! -- T.EI
     integer :: iret
     character(len=256) :: output_flnm
     character(len=19)  :: date19
@@ -2393,10 +2373,8 @@ contains
        !iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
-! ++ T.EI crocus
        if (crocus_opt /= 0) &
             iret = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
-! -- T.EI
        iret = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "OUTPUT FROM HRLDAS "//version)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
 
@@ -2452,10 +2430,8 @@ contains
     dimid_times_remember = dimid_times
     dimid_layers_remember = dimid_layers
     dimid_snow_layers_remember = dimid_snow_layers
-! ++ T.EI crocus
     if (crocus_opt /= 0) &
          dimid_glacier_layers_remember = dimid_glacier_layers
-! -- T.EI
     iswater_remember = iswater
 
     allocate(vegtyp_remember(ixpar,jxpar))
@@ -2692,10 +2668,8 @@ contains
           		zdimid = dimid_layers_remember
        		elseif (snow_or_soil == "SNOW") then
           		zdimid = dimid_snow_layers_remember
-! ++ T.EI crocus
                 elseif (snow_or_soil == "MAXS") then
                         zdimid = dimid_glacier_layers_remember
-! -- T.EI
        		else
           		write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
           stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_output_3d() - SNOW_OR_SOIL"
@@ -2917,12 +2891,11 @@ contains
 
 #ifdef MPP_LAND
       subroutine prepare_restart_file_mpp(outdir, version, igrid, llanduse, olddate, startdate,  &
-       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
-       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp,&
-! ++ T.EI crocus
-       glacinfo,glact,act_level,vis_icealb)
-! -- T.EI
+           ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                   &
+           nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj,                                    &
+           lat1, lon1, cen_lon, iswater, vegtyp, glacinfo,                                       &
+           glact, act_level, vis_icealb)
+
 
     implicit none
 
@@ -2940,9 +2913,7 @@ contains
     integer,                               intent(in) :: ystartpar
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
-! ++ T.EI crocus
     integer, optional,                     intent(in) :: act_level
-! -- T.EI
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
     integer,                               intent(in) :: mapproj
@@ -2950,7 +2921,6 @@ contains
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
     integer, dimension(global_nx,global_ny) :: gvegtyp
-! ++ T.EI crocus
     integer, dimension(ixpar,jxpar), optional, intent(in) :: glacinfo
     real,    dimension(ixpar,jxpar), optional, intent(in) :: glact
     real,    dimension(ixpar,jxpar),           intent(in) :: vis_icealb
@@ -2960,10 +2930,7 @@ contains
       call prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
-       iswater, gvegtyp,&
-! ++ T.EI crocus
-       act_level)
-! -- T.EI)
+       iswater, gvegtyp, act_level)
     endif
 
     call mpp_land_sync()
@@ -2974,10 +2941,7 @@ contains
   subroutine prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp,&
-! ++ T.EI crocus
-       act_level)
-! -- T.EI
+       iswater, vegtyp, act_level)
 
     implicit none
 #include <netcdf.inc>
@@ -2996,9 +2960,7 @@ contains
     integer,                               intent(in) :: ystartpar
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
-! ++ T.EI crocus
     integer, optional,                     intent(in) :: act_level
-! -- T.EI
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
     integer,                               intent(in) :: mapproj
@@ -3012,9 +2974,7 @@ contains
     integer :: ierr
     integer :: varid
     integer :: dimid_times, dimid_datelen, dimid_ix, dimid_jx, dimid_dum, dimid_layers, dimid_snow_layers, dimid_sosn_layers
-! ++ T.EI crocus
     integer :: dimid_glacier_layers
-! -- T.EI
     character(len=19) :: date19
     integer :: rank
 
@@ -3063,10 +3023,8 @@ contains
     ierr = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
     ierr = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
     ierr = nf90_def_dim(ncid, "sosn_layers", nsnow+nsoil, dimid_sosn_layers)
-! ++ T.EI crocus
     if (crocus_opt /= 0) &
          ierr = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
-! -- T.Ei
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "RESTART FILE FROM HRLDAS "//version)
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
@@ -3882,16 +3840,14 @@ contains
        ierr = nf90_inq_dimid(ncid, "sosn_layers", dimid_kx)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'sosn_layers'")
-! ++ T.EI crocus
     else if (output_layers == "MAXS" .and. crocus_opt /= 0) then
        ierr = nf90_inq_dimid(ncid, "glacier_levels", dimid_kx)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'glacier_levels'")
-! -- T.EI
     else
        stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
     endif
-        call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, "", "")
+    call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, "", "")
    end subroutine define_3d_real
 
 
