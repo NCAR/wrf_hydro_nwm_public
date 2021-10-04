@@ -4999,7 +4999,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    integer :: gnbasns
    ! Allocatable arrays to hold output variables. 
    real, allocatable, dimension(:) :: g_qin_gwsubbas,g_qout_gwsubbas,g_z_gwsubbas
-   real, allocatable, dimension(:) :: g_qin_gwsubbas_tr,g_qout_gwsubbas_tr    !wt vars
+   real, allocatable, dimension(:) :: g_qin_gwsubbas_tr,g_qout_gwsubbas_tr,g_z_gwsubbas_tr    !wt vars
    integer, allocatable, dimension(:) :: g_basnsInd
    real, allocatable, dimension(:,:) :: varOutReal   ! Array holding output variables in real format
    integer, allocatable, dimension(:) :: varOutInt ! Array holding output variables after 
@@ -5043,25 +5043,25 @@ subroutine output_gw_NWM(domainId,iGrid)
 
    if(nlst_rt(1)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1] 
+      fileMeta%outFlag(:) = [1,1,1,1,1,1] 
    else if(nlst_rt(1)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else if(nlst_rt(1)%io_config_outputs .eq. 6) then
       ! Diagnostics 
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -5090,6 +5090,7 @@ subroutine output_gw_NWM(domainId,iGrid)
          !----water tracer vars----
          allocate(g_qin_gwsubbas_tr(rt_domain(domainId)%gnumbasns))
          allocate(g_qout_gwsubbas_tr(rt_domain(domainId)%gnumbasns))
+         allocate(g_z_gwsubbas_tr(rt_domain(domainId)%gnumbasns))
       else
          allocate(g_qin_gwsubbas(1))
          allocate(g_qout_gwsubbas(1))
@@ -5098,6 +5099,7 @@ subroutine output_gw_NWM(domainId,iGrid)
          !----water tracer vars---
          allocate(g_qin_gwsubbas_tr(1))
          allocate(g_qout_gwsubbas_tr(1))
+         allocate(g_z_gwsubbas_tr(1))
       endif
 
       if(nlst_rt(domainId)%UDMP_OPT .eq. 1) then
@@ -5113,6 +5115,7 @@ subroutine output_gw_NWM(domainId,iGrid)
          !-----water tracer vars-----
          call ReachLS_write_io(rt_domain(domainId)%qin_gwsubbas_tr/nlst_rt(domainId)%DT,g_qin_gwsubbas_tr)
          call ReachLS_write_io(rt_domain(domainId)%qout_gwsubbas_tr,g_qout_gwsubbas_tr)
+         call ReachLS_write_io(rt_domain(domainId)%z_gwsubbas_tr*1000.,g_z_gwsubbas_tr)
          !---------------------------
       else
          call gw_write_io_real(rt_domain(domainId)%numbasns,rt_domain(domainId)%qin_gwsubbas,  &
@@ -5205,6 +5208,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       !----water tracer vars----
       varOutReal(4,:) = g_qin_gwsubbas_tr
       varOutReal(5,:) = g_qout_gwsubbas_tr
+      varOutReal(6,:) = g_z_gwsubbas_tr
       !-------------------------
 
       ! Mask out missing values
@@ -5424,6 +5428,7 @@ subroutine output_gw_NWM(domainId,iGrid)
    !-----water tracer vars-----
    deallocate(g_qin_gwsubbas_tr)
    deallocate(g_qout_gwsubbas_tr)
+   deallocate(g_z_gwsubbas_tr)
    !---------------------------
 end subroutine output_gw_NWM
 

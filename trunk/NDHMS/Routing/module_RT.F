@@ -1158,8 +1158,10 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       rt_domain(did)%gw_buck_coeff = 0.04
       rt_domain(did)%gw_buck_exp  = 0.2
       rt_domain(did)%z_max = 0.1
-     
+
+      allocate (rt_domain(did)%z_gwsubbas_tr (rt_domain(did)%numbasns  ))    !wt var 
       allocate (rt_domain(did)%qin_gwsubbas_tr (rt_domain(did)%numbasns))    !wt var
+                rt_domain(did)%z_gwsubbas_tr = 0
                 rt_domain(did)%qin_gwsubbas_tr = 0                           !wt var
       
       !Temporary hardwire...

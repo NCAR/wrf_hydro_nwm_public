@@ -32,6 +32,7 @@
   REAL,    allocatable, DIMENSION(:,:)      :: landRunOff_tr      !surface runoff disaggragated
   REAL,    allocatable, DIMENSION(:,:)      :: INFXSRT_tr         !surfacer unoff
   REAL,    allocatable, DIMENSION(:,:)      :: SOLDRAIN_tr        !time-step drainage
+  REAL,    allocatable, DIMENSION(:)        :: z_gwsubbas_tr      !tracer storage depth in GW bucket
   REAL,    allocatable, DIMENSION(:)        :: qin_gwsubbas_tr    !flow to GW bucket
   REAL,    allocatable, DIMENSION(:)        :: qout_gwsubbas_tr   !flow from GW bucket
   REAL,    allocatable, DIMENSION(:,:)      :: QLINK_tr           !flow in link

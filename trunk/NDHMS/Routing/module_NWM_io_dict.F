@@ -23,7 +23,7 @@ integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 19         !have included some tracer vars
 integer, parameter :: numChObsVars = 1
-integer, parameter :: numGwVars = 5           !have included tracer vars
+integer, parameter :: numGwVars = 6           !have included tracer vars
 integer :: i
 
 ! Declare public types that will hold metadata
@@ -2483,18 +2483,18 @@ subroutine initGwDict(gwOutDict)
    !gwOutDict%lonUnits = "degrees_east"
    !gwOutDict%lonStName = "longitude"
 
-   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth','inflow_tr','outflow_tr']
-   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth','tracer Bucket Inflow','tracer Bucket Outflow']
-   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm','m3 s-1','m3 s-1']
+   gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth','inflow_tr','outflow_tr','depth_tr']
+   gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth','tracer Bucket Inflow','tracer Bucket Outflow','tracer Bucket Depth']
+   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm','m3 s-1','m3 s-1','m3 s-1']
    !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude']
-   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01]
-   gwOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0]
-   gwOutDict%outFlag(:) = [0,0,0,0,0]
-   gwOutDict%timeZeroFlag(:) = [0,0,1,0,0]
-   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0,-10000.0,-10000.0]
-   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0,10000.0,10000.0]
+   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.01]
+   gwOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0]
+   gwOutDict%outFlag(:) = [0,0,0,0,0,0]
+   gwOutDict%timeZeroFlag(:) = [0,0,1,0,0,1]
+   gwOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   gwOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   gwOutDict%validMinReal(:) = [-10000.0,-10000.0,-10000.0,-10000.0,-10000.0,-10000.0]
+   gwOutDict%validMaxreal(:) = [10000.0,10000.0,10000.0,10000.0,10000.0,10000.0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
