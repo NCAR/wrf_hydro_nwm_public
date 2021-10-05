@@ -5,10 +5,10 @@
 	 "20","21","22","23","24","25","26","27","28","29", 
 	 "30","31");
 
-@yrs = ("10");
+@yrs = ("12");
 
 $day_start = 1;
-$day_end   = 3;
+$day_end   = 365;
 
 $cc = "20";   # Manually set the century
 
@@ -17,8 +17,8 @@ $cc = "20";   # Manually set the century
 
 @vars = ("DLWRF","DSWRF","APCP","PRES","TMP","SPFH","UGRD","VGRD"); 
 
-$data_dir = "/d1/barlage/data/NLDAS/raw";
-$results_dir = "/d1/barlage/data/NLDAS/extracted";
+$data_dir = "/glade/scratch/hhuancui/NLDAS_raw/2006_2018";
+$results_dir = "/glade/scratch/hhuancui/NLDAS_extracted/2006_2018/";
 
 for $var (@vars)
  {
@@ -27,11 +27,11 @@ for $yy (@yrs)
 
 # This is clumsy, but take care of leap years
 if($yy == "92" || $yy == "96") {$day_end = 366}
-if($yy == "00" || $yy == "04" || $yy == "08" || $yy == "12") {$day_end = 366}
+if($yy == "00" || $yy == "04" || $yy == "08" || $yy == "12" || $yy == "16") {$day_end = 366}
 
 @modays = @noleap_days;
 if($yy == "92" || $yy == "96") {@modays = @leap_days}
-if($yy == "00" || $yy == "04" || $yy == "08" || $yy == "12") {@modays = @leap_days}
+if($yy == "00" || $yy == "04" || $yy == "08" || $yy == "12" || $yy == "16") {@modays = @leap_days}
 
 # This will be the jday time loop
 

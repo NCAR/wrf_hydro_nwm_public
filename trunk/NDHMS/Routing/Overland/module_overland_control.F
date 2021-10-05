@@ -54,6 +54,17 @@ module overland_control
       ! accumulation of all boundary cell fluxes per time step (<mm>)
       real :: boundary_flux_total                             
 
+!---------------------------------------------
+! Needed for water tracer capability
+!---------------------------------------------
+      real, allocatable, dimension(:,:) :: surface_water_head_lsm_tr
+      real, allocatable, dimension(:,:) :: surface_water_head_routing_tr
+      real, allocatable, dimension(:,:) :: infiltration_excess_tr
+      real, allocatable, dimension(:,:) :: dhrt_tr
+      real, allocatable, dimension(:,:) :: boundary_flux_tr
+      real :: boundary_flux_total_tr
+!---------------------------------------------
+
 
       contains
       procedure :: init => overland_control_init
@@ -121,6 +132,43 @@ subroutine overland_control_init(this,lsm_ix,lsm_jx,rt_ix,rt_jx)
         allocation_error = .true.
     end if
 
+!---------------------------------------
+! Huancui Hu: allocate tracer vars
+!---------------------------------------
+    this%boundary_flux_total_tr = 0.0
+    if ( .not. allocated(this%surface_water_head_lsm_tr) ) then
+        allocate( this%surface_water_head_lsm_tr(lsm_ix,lsm_jx) )
+        this%surface_water_head_lsm_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+    if ( .not. allocated(this%surface_water_head_routing_tr) ) then
+        allocate( this%surface_water_head_routing_tr(rt_ix,rt_jx) )
+        this%surface_water_head_routing_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+    if ( .not. allocated(this%infiltration_excess_tr) ) then
+        allocate( this%infiltration_excess_tr(rt_ix,rt_jx) )
+        this%infiltration_excess_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+    if ( .not. allocated(this%dhrt_tr) ) then
+         allocate( this%dhrt_tr(rt_ix,rt_jx) )
+         this%dhrt_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+    if ( .not. allocated(this%boundary_flux_tr) ) then
+         allocate( this%boundary_flux_tr(rt_ix,rt_jx) )          ! allocate qbdryrt
+         this%boundary_flux_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+!---------------------------------------
+
+
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland control structure&
         &that where allready allocated. The allocated members where not changed"
@@ -170,6 +218,36 @@ subroutine overland_control_destroy(this)
     else
         allocation_error = .true.
     end if
+
+!------------------------------------------
+! Huancui Hu: allocate tracer vars
+!------------------------------------------
+    if ( allocated(this%surface_water_head_lsm_tr) ) then
+        deallocate( this%surface_water_head_lsm_tr )
+    else
+        allocation_error = .true.
+    end if
+    if ( allocated(this%surface_water_head_routing_tr) ) then
+        deallocate( this%surface_water_head_routing_tr )
+    else
+        allocation_error = .true.
+    end if
+    if ( allocated(this%infiltration_excess_tr) ) then
+        deallocate( this%infiltration_excess_tr)
+    else
+        allocation_error = .true.
+    end if
+    if ( allocated(this%dhrt_tr) ) then
+         deallocate( this%dhrt_tr )
+    else
+        allocation_error = .true.
+    end if
+    if ( allocated(this%boundary_flux_tr) ) then
+         deallocate( this%boundary_flux_tr )          ! deallocate boundary_flux
+    else
+        allocation_error = .true.
+    end if
+!-------------------------------------------
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland control structure&

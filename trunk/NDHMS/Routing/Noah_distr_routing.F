@@ -2429,7 +2429,130 @@
       subroutine disaggregateDomain_drv(did)
            use module_RT_data, only: rt_domain
            use module_namelist, only: nlst_rt
+!--------------------------------------------------------
+! Define interface for disaggregationDomain [Huancui Hu]
+INTERFACE
+  SUBROUTINE disaggregateDomain(IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, &
+                     SICE, SMC,SH2OX, INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+               SMCWLT1, VEGTYP, LKSAT, dist,INFXSWGT,OVROUGHRTFAC, &
+               LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
+               SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, OV_ROUGH2d,  &
+               SLDPTH, soiltypRT, soiltyp, elrt, iswater                        &
+               ,NTRACER, WVTFLAG, NSUB, SICE_TR_PASS, SMC_TR_PASS, SH2OX_TR_PASS & !wt vars
+               ,SICE_SUB_PASS, SMC_SUB_PASS, SH2OX_SUB_PASS, SMCRT_SUB_PASS      & !wt vars
+               ,SMCMAXRT_SUB, INFXSRT_TR_PASS, INFXSUBRT_TR_PASS, SMCRT_TR_PASS  & !wt vars
+            )
+
+        implicit none
+        integer,INTENT(IN)                              :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, iswater
+        real,   INTENT(OUT),  DIMENSION(IX,JX,NSOIL)    :: SICE
+        real,   INTENT(IN),   DIMENSION(IX,JX,NSOIL)    :: SMC,SH2OX
+        real,   INTENT(IN),   DIMENSION(IX,JX)          :: INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+                                                           SMCWLT1,  LKSAT
+        integer,INTENT(IN),   DIMENSION(IX,JX)          :: VEGTYP, soiltyp
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT,9)    :: dist
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT)      :: INFXSWGT,OVROUGHRTFAC, &
+                                                           LKSATFAC, elrt
+        integer,INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: CH_NETRT, soiltypRT
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT,NSOIL):: SH2OWGT
+        real,   INTENT(OUT),  DIMENSION(IXRT,JXRT,NSOIL):: SMCREFRT, SMCMAXRT, &
+                                                           SMCWLTRT,SMCRT
+        real,   INTENT(OUT),  DIMENSION(IXRT,JXRT)      :: INFXSUBRT
+        real,   INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: OVROUGHRT, LKSATRT
+        integer,INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: LAKE_MSKRT
+        real,   INTENT(IN),   DIMENSION(NSOIL)          :: SLDPTH
+        REAL,   INTENT(IN),   dimension(ix,jx)          :: OV_ROUGH2d
+!--------------------------------------------------------
+! Needed for water tracer capability
+!--------------------------------------------------------
+        integer,         intent(in)                                :: NTRACER
+        integer,optional,intent(in)                                :: WVTFLAG
+        integer,optional,intent(in),   dimension(NSOIL)            :: NSUB
+        real,   optional,intent(inout),dimension(IX,JX,NTRACER)    :: SICE_TR_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SMC_TR_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SH2OX_TR_PASS
+        real,   optional,intent(in),   dimension(IX,JX)            :: INFXSRT_TR_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCRT_TR_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB
+        real,   optional,intent(inout),dimension(IX,JX,NTRACER)    :: SICE_SUB_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SMC_SUB_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SH2OX_SUB_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+
+  END SUBROUTINE disaggregateDomain
+END INTERFACE
+!--------------------------------------------------------
+
            integer :: did
+           !---------------------------------------------
+           ! local vars needed for water tracer capability
+           integer                                :: WVTFLAG
+           integer, dimension(nlst_rt(did)%NSOIL) :: NSUB
+           real, allocatable, dimension(:,:,:)    :: SICE_TR_PASS
+           real, allocatable, dimension(:,:,:)    :: SMC_TR_PASS
+           real, allocatable, dimension(:,:,:)    :: SH2OX_TR_PASS
+           real, allocatable, dimension(:,:)      :: INFXSRT_TR_PASS
+           real, allocatable, dimension(:,:)      :: INFXSUBRT_TR_PASS
+           real, allocatable, dimension(:,:,:)    :: SMCRT_TR_PASS
+           real, allocatable, dimension(:,:,:)    :: SICE_SUB_PASS
+           real, allocatable, dimension(:,:,:)    :: SMC_SUB_PASS
+           real, allocatable, dimension(:,:,:)    :: SH2OX_SUB_PASS
+           real, allocatable, dimension(:,:,:)    :: SMCRT_SUB_PASS
+           real, allocatable, dimension(:,:,:)    :: SMCMAXRT_SUB
+           !---------------------------------------------
+
+         if (nlst_rt(did)%WVTFLAG .gt. 0) then
+           allocate(SICE_TR_PASS      (RT_DOMAIN(did)%IX,  RT_DOMAIN(did)%JX,  nlst_rt(did)%NTRACER)) 
+           allocate(SMC_TR_PASS       (RT_DOMAIN(did)%IX,  RT_DOMAIN(did)%JX,  nlst_rt(did)%NTRACER))
+           allocate(SH2OX_TR_PASS     (RT_DOMAIN(did)%IX,  RT_DOMAIN(did)%JX,  nlst_rt(did)%NTRACER))
+           allocate(INFXSRT_TR_PASS   (RT_DOMAIN(did)%IX,  RT_DOMAIN(did)%JX  ))
+           allocate(INFXSUBRT_TR_PASS (RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT))
+           allocate(SMCRT_TR_PASS     (RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%NTRACER))
+           allocate(SICE_SUB_PASS     (RT_DOMAIN(did)%IX  ,RT_DOMAIN(did)%JX  ,nlst_rt(did)%NTRACER))
+           allocate(SMC_SUB_PASS      (RT_DOMAIN(did)%IX  ,RT_DOMAIN(did)%JX  ,nlst_rt(did)%NTRACER))
+           allocate(SH2OX_SUB_PASS    (RT_DOMAIN(did)%IX  ,RT_DOMAIN(did)%JX  ,nlst_rt(did)%NTRACER))
+           allocate(SMCRT_SUB_PASS    (RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%NTRACER))
+           allocate(SMCMAXRT_SUB      (RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%NTRACER))
+           call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
+             RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
+             RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
+             rt_domain(did)%dist_lsm(:,:,9),RT_DOMAIN(did)%SMCMAX1,RT_DOMAIN(did)%SMCREF1, &
+             RT_DOMAIN(did)%SMCWLT1,RT_DOMAIN(did)%VEGTYP,RT_DOMAIN(did)%LKSAT,rt_domain(did)%overland%properties%distance_to_neighbor, &
+             RT_DOMAIN(did)%INFXSWGT, RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
+             rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%SH2OWGT,RT_DOMAIN(did)%SMCREFRT,       &
+             rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%SMCMAXRT, RT_DOMAIN(did)%SMCWLTRT,    &
+             RT_DOMAIN(did)%SMCRT, &
+             rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
+             RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
+             RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
+             RT_DOMAIN(did)%iswater, nlst_rt(did)%NTRACER       &
+             ,WVTFLAG            = nlst_rt(did)%WVTFLAG         &  !wt var
+             ,NSUB               = nlst_rt(did)%NSUB            &  !wt var
+             ,SICE_TR_PASS       = RT_DOMAIN(did)%SICE_TR       &  !wt var
+             ,SMC_TR_PASS        = RT_DOMAIN(did)%SMC_TR        &
+             ,SH2OX_TR_PASS      = RT_DOMAIN(did)%SH2OX_TR      &
+             ,SICE_SUB_PASS      = RT_DOMAIN(did)%SICE_SUB      &
+             ,SMC_SUB_PASS       = RT_DOMAIN(did)%SMC_SUB       &
+             ,SH2OX_SUB_PASS     = RT_DOMAIN(did)%SH2OX_SUB     &
+             ,SMCRT_SUB_PASS     = RT_DOMAIN(did)%SMCRT_SUB     &
+             ,SMCMAXRT_SUB       = RT_DOMAIN(did)%SMCMAXRT_SUB  &
+             ,INFXSRT_TR_PASS    = RT_DOMAIN(did)%INFXSRT_TR    &
+             ,INFXSUBRT_TR_PASS  = RT_DOMAIN(did)%overland%control%infiltration_excess_tr &
+             ,SMCRT_TR_PASS      = RT_DOMAIN(did)%SMCRT_TR      &
+             )
+             deallocate(SICE_TR_PASS)
+             deallocate(SMC_TR_PASS)
+             deallocate(SH2OX_TR_PASS)
+             deallocate(INFXSRT_TR_PASS)
+             deallocate(INFXSUBRT_TR_PASS)
+             deallocate(SMCRT_TR_PASS)
+             deallocate(SICE_SUB_PASS)
+             deallocate(SMC_SUB_PASS)
+             deallocate(SH2OX_SUB_PASS)
+             deallocate(SMCRT_SUB_PASS)
+             deallocate(SMCMAXRT_SUB) 
+         else              
            call disaggregateDomain( RT_DOMAIN(did)%IX,RT_DOMAIN(did)%JX,nlst_rt(did)%NSOIL,&
              RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,nlst_rt(did)%AGGFACTRT,RT_DOMAIN(did)%SICE, &
              RT_DOMAIN(did)%SMC,RT_DOMAIN(did)%SH2OX,RT_DOMAIN(did)%INFXSRT, &
@@ -2442,8 +2565,9 @@
              rt_domain(did)%overland%properties%roughness, rt_domain(did)%overland%streams_and_lakes%lake_mask, &
              RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%OV_ROUGH2d, RT_DOMAIN(did)%SLDPTH, &
 	     RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, rt_domain(did)%ELRT, &
-             RT_DOMAIN(did)%iswater)
+             RT_DOMAIN(did)%iswater, nlst_rt(did)%NTRACER)
 
+          end if
       end subroutine disaggregateDomain_drv
 
       subroutine disaggregateDomain(IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, &
@@ -2452,6 +2576,9 @@
                LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
                SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, OV_ROUGH2d,  &
                SLDPTH, soiltypRT, soiltyp, elrt, iswater                        &
+               ,NTRACER, WVTFLAG, NSUB, SICE_TR_PASS, SMC_TR_PASS, SH2OX_TR_PASS & !wt vars
+               ,SICE_SUB_PASS, SMC_SUB_PASS, SH2OX_SUB_PASS, SMCRT_SUB_PASS      & !wt vars
+               ,SMCMAXRT_SUB, INFXSRT_TR_PASS, INFXSUBRT_TR_PASS, SMCRT_TR_PASS  & !wt vars
             )
 #ifdef MPP_LAND
         use module_mpp_land, only: left_id,down_id,right_id, &
@@ -2460,28 +2587,47 @@
              sum_real1
 #endif
      implicit none
-        integer,INTENT(IN) :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, iswater
-        real, INTENT(OUT), DIMENSION(IX,JX,NSOIL) :: SICE
-        real, INTENT(IN),  DIMENSION(IX,JX,NSOIL) :: SMC,SH2OX
-        real, INTENT(IN),  DIMENSION(IX,JX) :: INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
-                                               SMCWLT1,  LKSAT
-        integer, INTENT(IN), DIMENSION(IX,JX)      :: VEGTYP, soiltyp
-
-        real,INTENT(IN),DIMENSION(IXRT,JXRT,9)::dist
-        real,INTENT(IN),DIMENSION(IXRT,JXRT)::INFXSWGT,OVROUGHRTFAC, &
-               LKSATFAC, elrt
-        integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)     ::CH_NETRT, soiltypRT
-        real,INTENT(IN),DIMENSION(IXRT,JXRT,NSOIL)::SH2OWGT
-        real,INTENT(OUT),DIMENSION(IXRT,JXRT,NSOIL)::SMCREFRT, SMCMAXRT, &
-               SMCWLTRT,SMCRT
-        real,INTENT(OUT),DIMENSION(IXRT,JXRT)::INFXSUBRT
-        real,INTENT(INOUT),DIMENSION(IXRT,JXRT)::OVROUGHRT, LKSATRT
-        integer,INTENT(INOUT), DIMENSION(IXRT,JXRT)  ::LAKE_MSKRT
-                  
-
-        real,INTENT(IN), DIMENSION(NSOIL)      :: SLDPTH
-        REAL,dimension(ix,jx) ::    OV_ROUGH2d
-
+        integer,INTENT(IN)                              :: IX,JX,NSOIL,IXRT,JXRT,AGGFACTRT, iswater
+        real,   INTENT(OUT),  DIMENSION(IX,JX,NSOIL)    :: SICE
+        real,   INTENT(IN),   DIMENSION(IX,JX,NSOIL)    :: SMC,SH2OX
+        real,   INTENT(IN),   DIMENSION(IX,JX)          :: INFXSRT, area_lsm, SMCMAX1,SMCREF1, &
+                                                           SMCWLT1,  LKSAT
+        integer,INTENT(IN),   DIMENSION(IX,JX)          :: VEGTYP, soiltyp
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT,9)    :: dist
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT)      :: INFXSWGT,OVROUGHRTFAC, &
+                                                           LKSATFAC, elrt
+        integer,INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: CH_NETRT, soiltypRT
+        real,   INTENT(IN),   DIMENSION(IXRT,JXRT,NSOIL):: SH2OWGT
+        real,   INTENT(OUT),  DIMENSION(IXRT,JXRT,NSOIL):: SMCREFRT, SMCMAXRT, &
+                                                           SMCWLTRT,SMCRT
+        real,   INTENT(OUT),  DIMENSION(IXRT,JXRT)      :: INFXSUBRT
+        real,   INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: OVROUGHRT, LKSATRT
+        integer,INTENT(INOUT),DIMENSION(IXRT,JXRT)      :: LAKE_MSKRT
+        real,   INTENT(IN),   DIMENSION(NSOIL)          :: SLDPTH
+        REAL,   INTENT(IN),   dimension(ix,jx)          :: OV_ROUGH2d
+!--------------------------------------------------------
+! Needed for water tracer capability
+!--------------------------------------------------------
+        integer,         intent(in)                                :: NTRACER
+        integer,optional,intent(in)                                :: WVTFLAG
+        integer,optional,intent(in),   dimension(NSOIL)            :: NSUB
+        real,   optional,intent(inout),dimension(IX,JX,NTRACER)    :: SICE_TR_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SMC_TR_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SH2OX_TR_PASS  
+        real,   optional,intent(in),   dimension(IX,JX)            :: INFXSRT_TR_PASS  
+        real,   optional,intent(inout),dimension(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCRT_TR_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB
+        real,   optional,intent(inout),dimension(IX,JX,NTRACER)    :: SICE_SUB_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SMC_SUB_PASS
+        real,   optional,intent(in),   dimension(IX,JX,NTRACER)    :: SH2OX_SUB_PASS
+        real,   optional,intent(inout),dimension(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+        !-----local vars-----
+        real,                          dimension(IXRT,JXRT)        :: OCEAN_INFXSUBRT_TR
+        real,                          dimension(IXRT,JXRT,NTRACER):: SMCRT_SUB_pass0
+        real                                                       :: LSMVOL_TR, SMCEXCS0, SMCEXCS_TR, PROPOR_TR
+        integer                                                    :: ISUB,ISUB1,ISUB2, KSUB
+!--------------------------------------------------------
 
         integer :: i, j, AGGFACYRT, AGGFACXRT, IXXRT, JYYRT,KRT, KF
         REAL  ::  LSMVOL,SMCEXCS, WATHOLDCAP
@@ -2502,6 +2648,10 @@
 
 	SICE=SMC-SH2OX
         SMCREFRT = 0
+        if (present(WVTFLAG)) then
+          SICE_SUB_PASS = SMC_SUB_PASS-SH2OX_SUB_PASS
+          SICE_TR_PASS  = SMC_TR_PASS -SH2OX_TR_PASS
+        end if
 
 !DJG First, Disaggregate a few key fields for routing...
 !DJG Debug...
@@ -2551,6 +2701,7 @@
 
 !DJG Weighting alg. alteration...
               LSMVOL=INFXSRT(I,J)*area_lsm(I,J)
+              if (present(WVTFLAG)) LSMVOL_TR=INFXSRT_TR_PASS(I,J)*area_lsm(I,J)
 
 
              do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -2575,6 +2726,10 @@
 !DJG Implement subgrid weighting routine...
                INFXSUBRT(IXXRT,JYYRT)=LSMVOL*     &
                    INFXSWGT(IXXRT,JYYRT)/dist(IXXRT,JYYRT,9)
+               if (present(WVTFLAG)) then
+                 INFXSUBRT_TR_PASS(IXXRT,JYYRT)=LSMVOL_TR*     &
+                   INFXSWGT(IXXRT,JYYRT)/dist(IXXRT,JYYRT,9)
+               end if
   
 
             do KRT=1,NSOIL  !Do for soil profile loop
@@ -2591,11 +2746,25 @@
                           (SICE(I,J,KRT)-WATHOLDCAP)
                     if(SICE(I,J,KRT).ge.SMCMAX1(I,J)) SMCWLTRT(IXXRT,JYYRT,KRT) = 0.
                  end if
+                 !-----wt calc-----
+                 if (present(WVTFLAG)) then
+                   ISUB1 = sum(NSUB(1:KRT))-NSUB(KRT)+1
+                   ISUB2 = sum(NSUB(1:KRT))
+                   SMCMAXRT_SUB(IXXRT,JYYRT,ISUB1:ISUB2) = SMCMAX1(I,J)-SICE_SUB_PASS(I,J,ISUB1:ISUB2)
+                 end if
+                 !-----------------
                ELSE
                  SMCMAXRT(IXXRT,JYYRT,KRT)=SMCMAX1(I,J)
                  SMCREFRT(IXXRT,JYYRT,KRT)=SMCREF1(I,J)
                  WATHOLDCAP = SMCMAX1(I,J) - SMCWLT1(I,J)
                  SMCWLTRT(IXXRT,JYYRT,KRT) = SMCWLT1(I,J) 
+                 !-----wt calc-----
+                 if (present(WVTFLAG)) then
+                   ISUB1 = sum(NSUB(1:KRT))-NSUB(KRT)+1
+                   ISUB2 = sum(NSUB(1:KRT))
+                   SMCMAXRT_SUB(IXXRT,JYYRT,ISUB1:ISUB2) = SMCMAX1(I,J)
+                 end if
+                 !-----------------
                END IF   !endif adjust for soil ice...
 
 
@@ -2604,16 +2773,61 @@
                  IF(SMCMAXRT(IXXRT,JYYRT,KRT).GT.0) THEN !Check for smcmax data (=0 over water)
                    SMCRT(IXXRT,JYYRT,KRT)=SH2OX(I,J,KRT)*SH2OWGT(IXXRT,JYYRT,KRT)
 !old                   SMCRT(IXXRT,JYYRT,KRT)=SMC(I,J,KRT)
+                   !-----wt calc-----
+                   if (present(WVTFLAG)) then
+                     ISUB1 = sum(NSUB(1:KRT))-NSUB(KRT)+1
+                     ISUB2 = sum(NSUB(1:KRT))
+                     SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB1:ISUB2) = SH2OX_SUB_PASS(I,J,ISUB1:ISUB2)*SH2OWGT(IXXRT,JYYRT,KRT)
+                     SMCRT_TR_PASS(IXXRT,JYYRT,ISUB1:ISUB2)  = SH2OX_TR_PASS(I,J,ISUB1:ISUB2)*SH2OWGT(IXXRT,JYYRT,KRT)
+                   end if
+                   !-----------------
                  ELSE
                    SMCRT(IXXRT,JYYRT,KRT) = 0.001  !will be skipped w/ landmask
                    SMCMAXRT(IXXRT,JYYRT,KRT) = 0.001
+                   !-----wt calc-----
+                   if (present(WVTFLAG)) then
+                     do KSUB = 1, NSUB(KRT)
+                       ISUB = sum(NSUB(1:KRT))-NSUB(KRT)+KSUB
+                       call calculate_wt_ratio(SMCRT_TR_PASS(IXXRT,JYYRT,ISUB),SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB),PROPOR_TR)
+                       SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB1:ISUB2) = 0.001
+                       SMCRT_TR_PASS(IXXRT,JYYRT,ISUB1:ISUB2)  = 0.001*PROPOR_TR
+                     end do
+                   end if
+                   !-----------------
                  END IF
 !DJG Check/Adjust so that subgrid cells do not exceed saturation...
                  IF (SMCRT(IXXRT,JYYRT,KRT).GT.SMCMAXRT(IXXRT,JYYRT,KRT)) THEN
+                   !-----wt cal-----
+                   if (present(WVTFLAG)) then
+                     SMCEXCS_TR = 0.0
+                     do KSUB = 1, NSUB(KRT)
+                       ISUB = sum(NSUB(1:KRT))-NSUB(KRT)+KSUB
+                       call calculate_wt_ratio(SMCRT_TR_PASS(IXXRT,JYYRT,ISUB),SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB),PROPOR_TR)
+                       SMCEXCS_TR = SMCEXCS_TR + (SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB) - SMCMAXRT_SUB(IXXRT,JYYRT,ISUB)*PROPOR_TR*SLDPTH(KRT)*1000./NSUB(KRT))
+                       SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB) = SMCMAXRT_SUB(IXXRT,JYYRT,ISUB)
+                       SMCRT_TR_PASS(IXXRT,JYYRT,ISUB)  = SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB)*PROPOR_TR
+                       SMCRT_TR_PASS(IXXRT,JYYRT,ISUB)  = min(SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB),SMCRT_TR_PASS(IXXRT,JYYRT,ISUB))
+                     end do
+                   end if
+                   !----------------
                    SMCEXCS = (SMCRT(IXXRT,JYYRT,KRT) - SMCMAXRT(IXXRT,JYYRT,KRT)) &
                              * SLDPTH(KRT)*1000.  !Excess soil water in units of (mm)
                    SMCRT(IXXRT,JYYRT,KRT) = SMCMAXRT(IXXRT,JYYRT,KRT)
                    DO KF = KRT-1,1, -1  !loop back upward to redistribute excess water from disagg.
+                     !-----wt cal------
+                     if (present(WVTFLAG)) then
+                       call calculate_wt_ratio(SMCEXCS_TR, SMCEXCS,PROPOR_TR)
+                       SMCEXCS0        = SMCEXCS
+                       SMCRT_SUB_PASS0 = SMCRT_SUB_PASS
+                       SMCEXCS_TR      = SMCEXCS0*PROPOR_TR
+                       do KSUB = NSUB(KF), 1, -1
+                         ISUB = sum(NSUB(1:KF))-NSUB(KF)+KSUB
+                         SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB) = min(SMCMAXRT_SUB(IXXRT,JYYRT,ISUB), SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB)+SMCEXCS0/(SLDPTH(KF)*1000./NSUB(KF)))
+                         SMCEXCS0 = SMCEXCS0-max(0.0, (SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB)-SMCRT_SUB_PASS0(IXXRT,JYYRT,ISUB))*SLDPTH(KF)*1000./NSUB(KF))
+                         SMCRT_TR_PASS(IXXRT,JYYRT,ISUB) = SMCRT_TR_PASS(IXXRT,JYYRT,ISUB)+max(0.0, (SMCRT_SUB_PASS(IXXRT,JYYRT,ISUB)-SMCRT_SUB_PASS0(IXXRT,JYYRT,ISUB))*SLDPTH(KF)*1000./NSUB(KF))*PROPOR_TR
+                       end do
+                     end if
+                     !-----------------
                      SMCRT(IXXRT,JYYRT,KF) = SMCRT(IXXRT,JYYRT,KF) + SMCEXCS/(SLDPTH(KF)*1000.) 
                      IF (SMCRT(IXXRT,JYYRT,KF).GT.SMCMAXRT(IXXRT,JYYRT,KF)) THEN  !Recheck new lyr sat.
                        SMCEXCS = (SMCRT(IXXRT,JYYRT,KF) - SMCMAXRT(IXXRT,JYYRT,KF)) &
@@ -2627,6 +2841,10 @@
                    IF (SMCEXCS.GT.0) THEN  !If not expired by sfc then add to Infil. Excess
                      INFXSUBRT(IXXRT,JYYRT) = INFXSUBRT(IXXRT,JYYRT) + SMCEXCS
                      SMCEXCS = 0.
+                     if (present(WVTFLAG)) then
+                       INFXSUBRT_TR_PASS(IXXRT,JYYRT) = INFXSUBRT_TR_PASS(IXXRT,JYYRT) + SMCEXCS_TR
+                       SMCEXCS_TR = 0.0
+                     end if
                    END IF
                  END IF  !End if for soil moisture saturation excess
 
@@ -2713,6 +2931,14 @@
         OCEAN_INFXSUBRT = INFXSUBRT 
         INFXSUBRT = 0.0
      endwhere
+     !----wt calc-----
+     if (present(WVTFLAG)) then
+       where (ELRT .lt. -9998)
+         OCEAN_INFXSUBRT_TR = INFXSUBRT_TR_PASS
+         INFXSUBRT_TR_PASS  = 0.0
+       endwhere
+     end if
+     !----------------
 ! END ADCHANGE
 
 #ifdef HYDRO_D
@@ -2769,6 +2995,16 @@
         call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
         call MPP_LAND_COM_REAL(SMCWLTRT(:,:,i),IXRT,JXRT,99)
      end DO
+     !-----wt calc-----
+     if (present(WVTFLAG)) then
+        call MPP_LAND_COM_REAL(INFXSUBRT_TR_PASS,IXRT,JXRT,99)
+        do i = 1, NTRACER
+          call MPP_LAND_COM_REAL(SMCMAXRT_SUB(:,:,i),IXRT,JXRT,99)
+          call MPP_LAND_COM_REAL(SMCRT_SUB_PASS(:,:,i),IXRT,JXRT,99)
+          call MPP_LAND_COM_REAL(SMCRT_TR_PASS(:,:,i),IXRT,JXRT,99)
+        end do
+     end if
+     !-----------------
 #endif
 
      end subroutine disaggregateDomain
@@ -3091,4 +3327,22 @@
                 time_array(7) + 0.001 * time_array(8)
           return
       end subroutine time_seconds
+
+!------------------------------------------------------
+! Huancui Hu: calculate_wt_ratio
+subroutine calculate_wt_ratio (a,b,c)
+
+  implicit none
+  real,    intent(in)     :: a
+  real,    intent(in)     :: b
+  real,    intent(inout)  :: c
+
+  if (b .gt. 1.0E-10) then
+    c = min(1.0,max(a/b, 0.0))
+  else
+    c = 0.0
+  end if
+
+end subroutine
+!-----------------------------------------
 
