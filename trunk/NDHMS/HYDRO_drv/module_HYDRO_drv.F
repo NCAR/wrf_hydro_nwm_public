@@ -1144,12 +1144,19 @@ endif
           do I=1,RT_DOMAIN(did)%IX
 
              RT_DOMAIN(did)%SFCHEADAGGRT = 0.
+             if (nlst_rt(did)%WVTFLAG .gt. 0) RT_DOMAIN(did)%SFCHEADAGGRT_TR = 0.0   !wt var
 !DJG Subgrid weighting edit...
              RT_DOMAIN(did)%LSMVOL=0.
              do KRT=1,nlst_rt(did)%NSOIL
 !                SMCAGGRT(KRT) = 0.
                RT_DOMAIN(did)%SH2OAGGRT(KRT) = 0.
              end do
+             !----wt calc-----
+             do KRT=1,nlst_rt(did)%NTRACER
+               RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT) = 0.0
+               RT_DOMAIN(did)%SH2OAGGRT_TR(KRT)  = 0.0
+             end do
+             !----------------
 
 
              do AGGFACYRT=nlst_rt(did)%AGGFACTRT-1,0,-1
@@ -1170,6 +1177,12 @@ endif
 !State Variables
                 RT_DOMAIN(did)%SFCHEADAGGRT = RT_DOMAIN(did)%SFCHEADAGGRT &
                                             + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT)
+                !-----wt calc-----
+                if (nlst_rt(did)%WVTFLAG .gt. 0) then
+                  RT_DOMAIN(did)%SFCHEADAGGRT_TR = RT_DOMAIN(did)%SFCHEADAGGRT_TR &
+                                                   + rt_domain(did)%overland%control%surface_water_head_routing_tr(IXXRT,JYYRT)
+                end if
+                !-----------------
 !DJG Subgrid weighting edit...
                 RT_DOMAIN(did)%LSMVOL = RT_DOMAIN(did)%LSMVOL &
                                       + rt_domain(did)%overland%control%surface_water_head_routing(IXXRT,JYYRT) &
@@ -1180,6 +1193,16 @@ endif
                    RT_DOMAIN(did)%SH2OAGGRT(KRT) = RT_DOMAIN(did)%SH2OAGGRT(KRT) &
                                                  + RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)
                 end do
+                !-----wt cal-----
+                if (nlst_rt(did)%WVTFLAG .gt. 0) then
+                  do KRT=1,nlst_rt(did)%NTRACER
+                    RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT)= RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT) &
+                                                     + RT_DOMAIN(did)%SMCRT_SUB(IXXRT,JYYRT,KRT)
+                    RT_DOMAIN(did)%SH2OAGGRT_TR(KRT) = RT_DOMAIN(did)%SH2OAGGRT_TR(KRT) &
+                                                     + RT_DOMAIN(did)%SMCRT_TR(IXXRT,JYYRT,KRT)
+                  end do
+                end if
+                !----------------
 
               end do
              end do
@@ -1189,6 +1212,18 @@ endif
             rt_domain(did)%overland%control%surface_water_head_lsm(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT &
                                           / (nlst_rt(did)%AGGFACTRT**2)
 
+            !----wt calc----
+            if (nlst_rt(did)%WVTFLAG .gt. 0) then
+              rt_domain(did)%overland%control%surface_water_head_lsm_tr(I,J) = RT_DOMAIN(did)%SFCHEADAGGRT_TR &
+                                          / (nlst_rt(did)%AGGFACTRT**2)
+              do KRT = 1, nlst_rt(did)%NTRACER
+                RT_DOMAIN(did)%SH2OX_SUB(I,J,KRT)= RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT) &
+                                                 / (nlst_rt(did)%AGGFACTRT**2)
+                RT_DOMAIN(did)%SH2OX_TR(I,J,KRT) = RT_DOMAIN(did)%SH2OAGGRT_TR(KRT) &
+                                                 / (nlst_rt(did)%AGGFACTRT**2)
+              end do
+            end if
+            !---------------
             do KRT=1,nlst_rt(did)%NSOIL
 !DJG              SMC(I,J,KRT)=SMCAGGRT(KRT)/(AGGFACTRT**2)
                RT_DOMAIN(did)%SH2OX(I,J,KRT) = RT_DOMAIN(did)%SH2OAGGRT(KRT) &
@@ -1309,6 +1344,13 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...
 	RT_DOMAIN(did)%SMC = RT_DOMAIN(did)%SH2OX + RT_DOMAIN(did)%SICE
 
+        !----wt calc----------
+        if (nlst_rt(did)%WVTFLAG .gt. 0)  then
+          RT_DOMAIN(did)%SMC_SUB = RT_DOMAIN(did)%SH2OX_SUB + RT_DOMAIN(did)%SICE_SUB
+          RT_DOMAIN(did)%SMC_TR  = RT_DOMAIN(did)%SH2OX_TR + RT_DOMAIN(did)%SICE_TR 
+        end if
+        !----------------------
+ 
 #ifdef HYDRO_D
 ! ADCHANGE: START Final water balance variables
 ! ALL VARS in MM
