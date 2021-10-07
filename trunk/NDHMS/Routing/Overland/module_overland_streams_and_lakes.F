@@ -40,6 +40,13 @@ module overland_stream_and_lake_interface
         !real, allocatable, dimension(:,:) :: lake_inflort   ! NEED VARIABLE INFO
         !Depth of water on the surface cell that will go into a lake cell from overland routing, depth (mm)
         real, allocatable, dimension(:,:) :: surface_water_to_lake
+!--------------------------------------
+! Needed for water tracer capability
+!--------------------------------------
+        real, allocatable, dimension(:,:) :: surface_water_to_channel_tr
+        real, allocatable, dimension(:,:) :: surface_water_to_lake_tr
+!--------------------------------------
+
     contains
         procedure :: init => overland_stream_and_lake_interface_init
         procedure :: destroy => overland_stream_and_lake_interface_destroy
@@ -93,6 +100,21 @@ subroutine overland_stream_and_lake_interface_init(this,ix,jx)
         allocation_error = .true.
     end if
 
+!----wt calc------
+    if ( .not. allocated(this%surface_water_to_channel_tr) ) then
+        allocate( this%surface_water_to_channel_tr(ix,jx) )
+        this%surface_water_to_channel_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+    if ( .not. allocated(this%surface_water_to_lake_tr) ) then
+        allocate( this%surface_water_to_lake_tr(ix,jx) )
+        this%surface_water_to_lake_tr = 0.0
+    else
+        allocation_error = .true.
+    end if
+!-----------------
+
     if ( allocation_error ) &
         write(0,*) "attempt to allocate data in members of overland lakes and streams structure&
         &that where allready allocated. The allocated members where not changed"    
@@ -134,6 +156,19 @@ subroutine overland_stream_and_lake_interface_destroy(this)
     else
         allocation_error = .true.
     end if
+
+!-----wt calc-----
+    if ( allocated(this%surface_water_to_channel_tr) ) then
+         deallocate( this%surface_water_to_channel_tr )
+    else
+        allocation_error = .true.
+    end if
+    if ( allocated(this%surface_water_to_lake_tr) ) then
+         deallocate( this%surface_water_to_lake_tr )          ! allocate qbdryrt
+    else
+        allocation_error = .true.
+    end if
+!-----------------
 
     if ( allocation_error ) &
         write(0,*) "attempt to deallocate data in members of overland streams and lakes structure&
