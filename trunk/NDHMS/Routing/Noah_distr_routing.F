@@ -116,7 +116,13 @@
           SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &    
           NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
           SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
-          SATLYRCHK)
+          SATLYRCHK                            &
+          ,NTRACER, WVTFLAG, NSUB              & !wt vars
+          ,QSUBRT_TR_GAIN, QSUBBDRYRT_TR_PASS    & !wt vars
+          ,QSUBBDRYTRT_TR_PASS, SMCRT_TR_PASS  & !wt vars
+          ,SMCRT_SUB_PASS, INFXSUBRT_TR_PASS   & !wt vars
+          ,SMCMAXRT_SUB_PASS                   & !wt vars
+          )
 
 !       use module_mpp_land, only: write_restart_rt_3, write_restart_rt_2, &
 !            my_id
@@ -125,6 +131,54 @@
 		my_id, io_id, numprocs
 #endif
 	IMPLICIT NONE
+
+!--------------------------------------------------
+! Define interface for subroutine ROUTE_SUBSURFACE1
+!--------------------------------------------------
+INTERFACE
+  subroutine ROUTE_SUBSURFACE1(                                 &
+                dist,z,qsub,sox,soy,                                   &
+                latksat,soldep,XX,YY,QSUBDRY,QSUBDRYT,SO8RT,SO8RT_D,    &
+                CWATAVAIL,SUBDT       &
+               ,NTRACER, NSOIL        & !wt vars
+               ,WVTFLAG, NSUB, SLDPTH, SATLYRCHK   & !wt vars
+               ,QSUBRT_SUB_GAIN,QSUBRT_TR_GAIN         & !wt vars
+               ,QSUBBDRYRT_TR_PASS, QSUBBDRYTRT_TR_PASS & !wt vars
+               ,SMCRT_TR_PASS, SMCRT_SUB_PASS           & !wt vars
+               )
+
+        IMPLICIT NONE
+        INTEGER, INTENT(IN) :: XX,YY
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: z
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: sox
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: soy
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: latksat
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: CWATAVAIL
+        REAL, INTENT(IN), DIMENSION(XX,YY) :: soldep
+        REAL, INTENT(OUT), DIMENSION(XX,YY) :: qsub
+        REAL, INTENT(INOUT), DIMENSION(XX,YY) :: QSUBDRY
+        REAL, INTENT(INOUT) :: QSUBDRYT
+        REAL, INTENT(IN) :: dist(xx,yy,9),SUBDT
+        REAL, INTENT(IN) :: SO8RT(XX,YY,8)
+        INTEGER,INTENT(IN):: SO8RT_D(XX,YY,3)
+!-------------------------------------------------
+! Needed for water tracer capability
+!-------------------------------------------------
+        INTEGER,          INTENT(IN)                  :: NTRACER
+        INTEGER,          INTENT(IN)                  :: NSOIL
+        INTEGER,OPTIONAL, INTENT(IN)                  :: WVTFLAG
+        INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: NSUB
+        REAL,   OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: SLDPTH
+        INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(XX,YY) :: SATLYRCHK
+        REAL,   OPTIONAL, INTENT(OUT),  DIMENSION(XX,YY) :: QSUBRT_SUB_GAIN
+        REAL,   OPTIONAL, INTENT(OUT),  DIMENSION(XX,YY) :: QSUBRT_TR_GAIN
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY) :: QSUBBDRYRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT)                  :: QSUBBDRYTRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY,NTRACER) :: SMCRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY,NTRACER) :: SMCRT_SUB_PASS
+  end subroutine ROUTE_SUBSURFACE1
+END INTERFACE
+!--------------------------------------------------
 
 !DJG -------- DECLARATIONS ------------------------
 
@@ -154,6 +208,31 @@
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT
 	REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT
 
+        INTEGER, INTENT(IN)  ::  rt_option
+        INTEGER :: SO8RT_D(IXRT,JXRT,3)
+        REAL :: SO8RT(IXRT,JXRT,8)
+!-------------------------------------------------------------------
+! Needed for water tracer capability
+!-------------------------------------------------------------------
+        INTEGER,         INTENT(IN)                                :: NTRACER
+        INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+        INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
+        REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_GAIN
+        REAL,   OPTIONAL,INTENT(INOUT)                             :: QSUBBDRYTRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB_PASS
+        !-----local vars------
+        REAL,   DIMENSION(IXRT,JXRT)  :: QSUBRT_SUB_GAIN
+        REAL                          :: SUBFLO_TR
+        REAL                          :: SUBFLO_SUB
+        REAL                          :: PROPOR_TR
+        INTEGER                       :: KSUB
+        INTEGER                       :: ISUB
+!-------------------------------------------------------------------
+
 	REAL, DIMENSION(IXRT,JXRT)	:: ywtmp
 !DJG Local Variables
 
@@ -164,9 +243,6 @@
 	REAL	:: SUBFLO
 	REAL	:: WATAVAIL
 
-        INTEGER :: SO8RT_D(IXRT,JXRT,3)
-        REAL :: SO8RT(IXRT,JXRT,8)
-        INTEGER, INTENT(IN)  ::  rt_option
         integer  ::  index
 
         INTEGER :: DT_STEPS             !-- number of timestep in routing
@@ -239,6 +315,7 @@
 
 !DJG debug subsfc...
          subflo = 0.0
+         if (present(WVTFLAG))  subflo_tr = 0.0
 
 !DJG Set up mass balance checks...
 !         CWATAVAIL = 0.            !-- initialize subsurface watavail
@@ -274,9 +351,28 @@
 ! allow users to still have option to use 2d overland (both are controlled by same
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
+      if (present(WVTFLAG)) then
+        CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
+               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
+               SO8RT,SO8RT_D,CWATAVAIL,SUBDT  &
+              ,NTRACER, NSOIL             &
+              ,WVTFLAG            = WVTFLAG          &
+              ,NSUB               = NSUB             &
+              ,SLDPTH             = SLDPTH           &
+              ,SATLYRCHK          = SATLYRCHK        &
+              ,QSUBRT_SUB_GAIN    = QSUBRT_SUB_GAIN  &
+              ,QSUBRT_TR_GAIN     = QSUBRT_TR_GAIN   &
+              ,QSUBBDRYRT_TR_PASS = QSUBBDRYRT_TR_PASS  &
+              ,QSUBBDRYTRT_TR_PASS= QSUBBDRYTRT_TR_PASS &
+              ,SMCRT_TR_PASS      = SMCRT_TR_PASS    &
+              ,SMCRT_SUB_PASS     = SMCRT_SUB_PASS   &
+              )
+      else
         CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &   
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &   
-               SO8RT,SO8RT_D,CWATAVAIL,SUBDT)
+               SO8RT,SO8RT_D,CWATAVAIL,SUBDT  &
+              ,NTRACER, NSOIL)
+      end if
 !     else 
 !        CALL ROUTE_SUBSURFACE2(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,      &
 !               LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT,     &
@@ -303,6 +399,12 @@
            !  SUBFLO = QSUBRT(i,j)  !Units of qsubrt converted via CWATAVAIL
            !ELSE
              SUBFLO=QSUBRT(I,J)/dist(i,j,9)*SUBDT !Convert qsubrt from m^3/s to m
+             !-----wt cacl-----
+             if (present(WVTFLAG)) then
+               SUBFLO_SUB=QSUBRT_SUB_GAIN(I,J)/dist(i,j,9)*SUBDT    ! can only be >0 no matter what SUBLO is
+               SUBFLO_TR =QSUBRT_TR_GAIN(I,J)/dist(i,j,9)*SUBDT
+             end if
+             !-----------------
            !END IF
 
            WATAVAIL=0.  !Initialize to 0. for every cell...
@@ -330,9 +432,36 @@
                   IF (WATAVAIL.GE.SUBFLO) THEN
                     SMCRT(I,J,KK) = SMCRT(I,J,KK) + SUBFLO/SLDPTH(KK)
                     SUBFLO = 0.
+                    !-----wt cacl-----
+                    if (present(WVTFLAG) ) then
+                      call calculate_wt_ratio(SUBFLO_TR, SUBFLO_SUB, PROPOR_TR)
+                      do KSUB = NSUB(KK),1,-1
+                        ISUB = sum(NSUB(1:KK))-NSUB(KK)+KSUB
+                        SMCRT_TR_PASS(I,J,ISUB)  =  SMCRT_TR_PASS(I,J,ISUB)+max(0.0, (SMCRT(I,J,KK)-SMCRT_SUB_PASS(I,J,ISUB))*PROPOR_TR)
+                        SMCRT_SUB_PASS(I,J,ISUB) = SMCRT(I,J,KK)
+                        SMCRT_TR_PASS(I,J,ISUB)  = min(SMCRT_TR_PASS(I,J,ISUB),SMCRT_SUB_PASS(I,J,ISUB))
+                      end do
+                      SUBFLO_TR  = 0.0
+                      SUBFLO_SUB = 0.0
+                    end if
+                    !-----------------
                   ELSE
                     SUBFLO = SUBFLO - WATAVAIL
                     SMCRT(I,J,KK) = SMCMAXRT(I,J,KK)
+                    !-----wt cacl-----
+                    if (present(WVTFLAG)) then
+                      call calculate_wt_ratio(SUBFLO_TR, SUBFLO_SUB, PROPOR_TR)
+                      do KSUB = NSUB(KK),1,-1
+                        ISUB = sum(NSUB(1:KK))-NSUB(KK)+KSUB
+                        SUBFLO_SUB = SUBFLO_SUB - max(0.0, (SMCMAXRT_SUB_PASS(I,J,ISUB)-SMCRT_SUB_PASS(I,J,ISUB)))
+                        SUBFLO_TR  = SUBFLO_TR  - max(0.0, (SMCMAXRT_SUB_PASS(I,J,ISUB)-SMCRT_SUB_PASS(I,J,ISUB))*PROPOR_TR)
+                        SMCRT_TR_PASS(I,J,ISUB) = SMCRT_TR_PASS(I,J,ISUB)+max(0.0,(SMCMAXRT_SUB_PASS(I,J,ISUB)-SMCRT_SUB_PASS(I,J,ISUB))*PROPOR_TR)
+                        SMCRT_SUB_PASS(I,J,ISUB)= SMCMAXRT_SUB_PASS(I,J,ISUB)
+                        SMCRT_SUB_PASS(I,J,ISUB)= min(SMCRT_SUB_PASS(I,J,ISUB),SMCRT(I,J,KK))
+                        SMCRT_TR_PASS(I,J,ISUB) = min(SMCRT_TR_PASS(I,J,ISUB), SMCRT_SUB_PASS(I,J,ISUB))
+                      end do
+                    end if
+                    !-----------------
                   END IF
                 END IF
 
@@ -345,6 +474,13 @@
 
 ! If all layers sat. add remaining subflo to infilt. excess...                  
               IF (KK.eq.0.AND.SUBFLO.gt.0.) then
+                 !-----wt calc-----
+                 if (present(WVTFLAG)) then
+                   INFXSUBRT_TR_PASS(I,J) = INFXSUBRT_TR_PASS(I,J) + SUBFLO_TR*1000.
+                   SUBFLO_TR = 0.0
+                   SUBFLO_SUB= 0.0
+                 end if
+                 !-----------------
                  INFXSUBRT(I,J) = INFXSUBRT(I,J) + SUBFLO*1000.    !Units = mm
                  SUBFLO=0.
               END IF
@@ -376,6 +512,16 @@
                    SMCRT(I,J,KK)=SMCREFRT(I,J,KK)
                    SUBFLO=SUBFLO+WATAVAIL
                  END IF
+                 !------wt cal-----
+                 if (abs(SUBFLO) .lt. 1.0E-10) then     !only call when KK loop finishes subtracting moisture
+                   if (present(WVTFLAG)) then
+                     call adjust_smc_tr(NSOIL, NTRACER, SLDPTH, NSUB, SATLYRCHK(I,J),&
+                                        KK, SMCRT(I,J,:), SMCRT_SUB_PASS(I,J,:),SMCRT_TR_PASS(I,J,:),&
+                                        SUBFLO_SUB, SUBFLO_TR)
+                   end if
+                 end if
+                 !-----------------
+
                  IF (SUBFLO.EQ.0.) EXIT
 !                IF (SUBFLO.EQ.0.) goto 668
 
@@ -384,7 +530,13 @@
 
 
 !DJG Error trap...
-              if(abs(subflo) .le. 1.E-7 )  subflo = 0.0  !truncate residual to 1E-7 prec.
+              if(abs(subflo) .le. 1.E-7 )  then
+                subflo = 0.0  !truncate residual to 1E-7 prec.
+                if (present(WVTFLAG)) then
+                  subflo_tr = 0.0
+                  subflo_sub= 0.0
+                end if
+              end if
 
 	       if (subflo.ne.0.) then
 #ifdef HYDRO_D
@@ -411,6 +563,14 @@
      do i = 1, NSOIL
         call MPP_LAND_COM_REAL(SMCRT(:,:,i),IXRT,JXRT,99)
      end DO
+     !-----wt calc-----
+     if (present(WVTFLAG)) then
+       do i = 1, NTRACER
+         call MPP_LAND_COM_REAL(SMCRT_TR_PASS(:,:,i),IXRT,JXRT,99)
+         call MPP_LAND_COM_REAL(SMCRT_SUB_PASS(:,:,i),IXRT,JXRT,99)
+       end do
+     end if
+     !----------------
 #endif
 
 #ifdef HYDRO_D
@@ -1439,7 +1599,13 @@ END INTERFACE
           SUBROUTINE ROUTE_SUBSURFACE1(                                 &
                 dist,z,qsub,sox,soy,                                   &
                 latksat,soldep,XX,YY,QSUBDRY,QSUBDRYT,SO8RT,SO8RT_D,    &
-                CWATAVAIL,SUBDT)
+                CWATAVAIL,SUBDT       &
+               ,NTRACER, NSOIL        & !wt vars
+               ,WVTFLAG, NSUB, SLDPTH, SATLYRCHK   & !wt vars
+               ,QSUBRT_SUB_GAIN,QSUBRT_TR_GAIN       & !wt vars
+               ,QSUBBDRYRT_TR_PASS, QSUBBDRYTRT_TR_PASS & !wt vars
+               ,SMCRT_TR_PASS, SMCRT_SUB_PASS           & !wt vars
+               )
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -1479,17 +1645,38 @@ END INTERFACE
         REAL, INTENT(OUT), DIMENSION(XX,YY) :: qsub
         REAL, INTENT(INOUT), DIMENSION(XX,YY) :: QSUBDRY
         REAL, INTENT(INOUT) :: QSUBDRYT
-        REAL*8, DIMENSION(XX,YY) :: qsub_tmp,QSUBDRY_tmp
 !yw        INTEGER, INTENT(OUT) :: flag
         REAL, INTENT(IN) :: dist(xx,yy,9),SUBDT
+        REAL, INTENT(IN) :: SO8RT(XX,YY,8)
+        INTEGER,INTENT(IN):: SO8RT_D(XX,YY,3)
+!-------------------------------------------------
+! Needed for water tracer capability
+!-------------------------------------------------
+        INTEGER,          INTENT(IN)                  :: NTRACER
+        INTEGER,          INTENT(IN)                  :: NSOIL
+        INTEGER,OPTIONAL, INTENT(IN)                  :: WVTFLAG
+        INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: NSUB
+        REAL,   OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: SLDPTH
+        INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(XX,YY) :: SATLYRCHK
+        REAL,   OPTIONAL, INTENT(OUT),  DIMENSION(XX,YY) :: QSUBRT_SUB_GAIN
+        REAL,   OPTIONAL, INTENT(OUT),  DIMENSION(XX,YY) :: QSUBRT_TR_GAIN
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY) :: QSUBBDRYRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT)                  :: QSUBBDRYTRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY,NTRACER) :: SMCRT_TR_PASS
+        REAL,   OPTIONAL, INTENT(INOUT),DIMENSION(XX,YY,NTRACER) :: SMCRT_SUB_PASS
+        !-----local vars----
+        INTEGER    :: KSUB, ISUB
+        REAL       :: PROPOR_TR
+        REAL       :: qqsub_tr_lose, qqsub_sub_lose
+!-------------------------------------------------
 
 !!! Declare Local Variables
 
+        REAL*8, DIMENSION(XX,YY) :: qsub_tmp,QSUBDRY_tmp
         REAL :: dzdx,dzdy,beta,gamma
         REAL :: qqsub,hh,ksat
 
-        REAL :: SO8RT(XX,YY,8)
-        INTEGER :: SO8RT_D(XX,YY,3), rt_option
+        INTEGER :: rt_option
         
 
 !!! Initialize variables
@@ -1507,6 +1694,14 @@ END INTERFACE
 !!! Loop to route water in x-direction
         qsub_tmp = 0.
         QSUBDRY_tmp = 0.
+        !----wt cal----
+        if (present(WVTFLAG)) then
+          qsubrt_sub_gain = 0.0
+          qsubrt_tr_gain  = 0.0
+          qqsub_tr_lose   = 0.0
+          qqsub_sub_lose  = 0.0
+        end if     
+        !--------------
 
 #ifdef HYDRO_D
         write(6,*) "call subsurface routing xx= , yy =", yy, xx
@@ -1568,8 +1763,20 @@ END INTERFACE
                   qqsub = -1.0*CWATAVAIL(i,j)*dist(i,j,9)/SUBDT
               end if
 
-              qsub(i,j) = qsub(i,j) + qqsub
-              qsub_tmp(ixx0,jyy0) = qsub_tmp(ixx0,jyy0) - qqsub
+              !-----wt calc-----
+              if (present(WVTFLAG)) then
+                if (qqsub .le. 1.0e-12 .and. SATLYRCHK(i,j) .lt. NSOIL+1) then
+                  call calculate_qsubout_tr(SATLYRCHK(i,j),NSOIL,NTRACER,NSUB,SLDPTH,&
+                                            qqsub,dist(i,j,9),SUBDT,qqsub_tr_lose,qqsub_sub_lose,  &
+                                            SMCRT_TR_PASS(i,j,:), SMCRT_SUB_PASS(i,j,:))
+                  qsubrt_tr_gain(ixx0,jyy0) = qsubrt_tr_gain(ixx0,jyy0) - qqsub_tr_lose    ! downstream pixel water gain
+                  qsubrt_sub_gain(ixx0,jyy0)= qsubrt_sub_gain(ixx0,jyy0) - qqsub_sub_lose  ! downstream pixel water gain
+                end if
+              end if
+              !-----------------
+
+              qsub(i,j) = qsub(i,j) + qqsub                        ! water lose
+              qsub_tmp(ixx0,jyy0) = qsub_tmp(ixx0,jyy0) - qqsub    ! downstream pixel water gain
 
 !!DJG Error Checks...
               if(qqsub .gt. 0) then
@@ -1598,6 +1805,15 @@ END INTERFACE
                 QSUBDRY_tmp(ixx0,jyy0) = QSUBDRY_tmp(ixx0,jyy0) + qqsub
 
                 QSUBDRYT = QSUBDRYT + qqsub
+                !-----wt calc-----
+                if (present(WVTFLAG)) then
+                  qsubrt_tr_gain(ixx0,jyy0) = qsubrt_tr_gain(ixx0,jyy0) + qqsub_tr_lose
+                  qsubrt_sub_gain(ixx0,jyy0)= qsubrt_sub_gain(ixx0,jyy0)+ qqsub_sub_lose
+                  QSUBBDRYRT_TR_PASS(ixx0,jyy0) = QSUBBDRYRT_TR_PASS(ixx0,jyy0) + qqsub_tr_lose
+                  QSUBBDRYTRT_TR_PASS           = QSUBBDRYTRT_TR_PASS + qqsub_tr_lose
+                end if
+                !-----------------
+
               end if
 
 998           continue
@@ -1617,7 +1833,7 @@ END INTERFACE
        call MPP_LAND_COM_REAL8(qsub_tmp,XX,YY,1)
        call MPP_LAND_COM_REAL8(QSUBDRY_tmp,XX,YY,1)
 #endif
-       qsub = qsub + qsub_tmp
+       qsub = qsub + qsub_tmp      !net change: lose+gain
        QSUBDRY= QSUBDRY + QSUBDRY_tmp 
 
 !ADNOTE: Moved this check to inside qsub calc loop, so no need for additional loop
@@ -1636,6 +1852,13 @@ END INTERFACE
 #ifdef MPP_LAND
        call MPP_LAND_COM_REAL(qsub,XX,YY,99)
        call MPP_LAND_COM_REAL(QSUBDRY,XX,YY,99)
+       !-----wt cal-----
+       if (present(WVTFLAG)) then
+         call MPP_LAND_COM_REAL(qsubrt_tr_gain,XX,YY,99)
+         call MPP_LAND_COM_REAL(qsubrt_sub_gain,XX,YY,99)
+         call MPP_LAND_COM_REAL(QSUBBDRYRT_TR_PASS,XX,YY,99)
+       end if
+       !----------------
 #endif
 
 
@@ -3199,8 +3422,78 @@ END INTERFACE
              use module_RT_data, only: rt_domain
              use module_namelist, only: nlst_rt
              implicit none
+!------------------------------------------------
+! Define interface for subrouting subsurfaceRouting [Huancui Hu]
+!------------------------------------------------
+INTERFACE
+  SUBROUTINE subsurfaceRouting(ixrt, jxrt , nsoil, &
+                  SMCRT,SMCMAXRT,SMCREFRT,SMCWLTRT, &
+                  ZSOIL, SLDPTH, &
+                  DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
+                  SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
+                  QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT    &
+                 ,NTRACER, WVTFLAG, NSUB                              & !wt vars
+                 ,SMCRT_RT_PASS, SMCRT_SUB_PASS, SMCMAXRT_SUB_PASS    & !wt vars
+                 ,INFXSUBRT_TR_PASS, QSUBBDRYTRT_TR_PASS              & !wt vars
+                 ,QSUBBDRYRT_TR_PASS,QSUBRT_TR_IN                     & !wt vars
+                )
+
+  IMPLICIT NONE
+         integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
+         REAL, INTENT(IN)                          :: DT
+         real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
+         REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: SOXRT,SOYRT,LKSATRT, SOLDEPRT , sub_resid
+         real,INTENT(INOUT), DIMENSION(IXRT,JXRT)::INFXSUBRT
+         real,INTENT(INOUT) :: QSUBBDRYTRT
+         REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
+         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT, SMCWLTRT, SMCMAXRT,SMCREFRT
+         REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
+
+         INTEGER :: SO8RT_D(IXRT,JXRT,3)
+         REAL :: SO8RT(IXRT,JXRT,8)
+         REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+!----------------------------------------------------
+! Needed for water tracer capability
+!----------------------------------------------------
+         INTEGER,         INTENT(IN)                                :: NTRACER
+         INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+         INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_RT_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(INOUT)                             :: QSUBBDRYTRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_IN
+!----------------------------------------------------
+  END SUBROUTINE subsurfaceRouting
+END INTERFACE
+!------------------------------------------------
+
              integer :: did
+!------------------------------------------------
+! Needed for water tracer capability
+!------------------------------------------------
+             integer                               :: WVTFLAG
+             integer, dimension(nlst_rt(did)%nsoil):: NSUB
+             real, allocatable, dimension(:,:,:)   :: SMCRT_RT_PASS
+             real, allocatable, dimension(:,:,:)   :: SMCRT_SUB_PASS
+             real, allocatable, dimension(:,:,:)   :: SMCMAXRT_SUB_PASS
+             real, allocatable, dimension(:,:)     :: INFXSUBRT_TR_PASS
+             REAL                                  :: QSUBBDRYTRT_TR_PASS
+             real, allocatable, dimension(:,:)     :: QSUBBDRYRT_TR_PASS
+             real, allocatable, dimension(:,:)     :: QSUBRT_TR_IN
+!------------------------------------------------
+
              IF (nlst_rt(did)%SUBRTSWCRT.EQ.1) THEN
+               IF (nlst_rt(did)%WVTFLAG .gt. 0) THEN
+                allocate(SMCRT_RT_PASS      (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, nlst_rt(did)%NTRACER)) 
+                allocate(SMCRT_SUB_PASS     (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, nlst_rt(did)%NTRACER))
+                allocate(SMCMAXRT_SUB_PASS  (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt, nlst_rt(did)%NTRACER))
+                allocate(INFXSUBRT_TR_PASS  (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt))
+                allocate(QSUBBDRYRT_TR_PASS (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt))
+                allocate(QSUBRT_TR_IN       (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt))
+              
                 call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
                      RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
                      RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
@@ -3208,7 +3501,35 @@ END INTERFACE
                      rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
                      rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
                      RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
-                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope)
+                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope &
+                    ,nlst_rt(did)%NTRACER                              &
+                    ,WVTFLAG = nlst_rt(did)%WVTFLAG                    &
+                    ,NSUB    = nlst_rt(did)%NSUB                       &
+                    ,SMCRT_RT_PASS = RT_DOMAIN(did)%SMCRT_TR           &
+                    ,SMCRT_SUB_PASS = RT_DOMAIN(did)%SMCRT_SUB         &
+                    ,SMCMAXRT_SUB_PASS = RT_DOMAIN(did)%SMCMAXRT_SUB   &
+                    ,INFXSUBRT_TR_PASS = rt_domain(did)%overland%control%infiltration_excess_tr &
+                    ,QSUBBDRYTRT_TR_PASS = RT_DOMAIN(did)%QSUBBDRYTRT_TR  &
+                    ,QSUBBDRYRT_TR_PASS = RT_DOMAIN(did)%QSUBBDRYRT_TR    &
+                    ,QSUBRT_TR_IN = RT_DOMAIN(did)%QSUBRT_TR              &
+                     )      !wt var
+                deallocate(SMCRT_RT_PASS)
+                deallocate(SMCRT_SUB_PASS)
+                deallocate(SMCMAXRT_SUB_PASS)
+                deallocate(INFXSUBRT_TR_PASS)
+                deallocate(QSUBBDRYRT_TR_PASS)
+                deallocate(QSUBRT_TR_IN)
+               ELSE
+                call subsurfaceRouting (RT_DOMAIN(did)%ixrt, RT_DOMAIN(did)%jxrt , nlst_rt(did)%nsoil, &
+                     RT_DOMAIN(did)%SMCRT,RT_DOMAIN(did)%SMCMAXRT,RT_DOMAIN(did)%SMCREFRT,&
+                     RT_DOMAIN(did)%SMCWLTRT, RT_DOMAIN(did)%ZSOIL, RT_DOMAIN(did)%SLDPTH, & 
+                     nlst_rt(did)%DT,RT_DOMAIN(did)%ZWATTABLRT,rt_domain(did)%overland%properties%surface_slope_x,       &
+                     rt_domain(did)%overland%properties%surface_slope_y,RT_DOMAIN(did)%LKSATRT, RT_DOMAIN(did)%SOLDEPRT, &
+                     rt_domain(did)%overland%control%infiltration_excess,RT_DOMAIN(did)%QSUBBDRYTRT, RT_DOMAIN(did)%QSUBBDRYRT,&
+                     RT_DOMAIN(did)%QSUBRT ,nlst_rt(did)%rt_option, rt_domain(did)%overland%properties%distance_to_neighbor, &
+                     RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope &
+                    ,nlst_rt(did)%NTRACER)      !wt var
+              END IF
              endif
 
          end subroutine SubsurfaceRouting_drv
@@ -3218,11 +3539,80 @@ END INTERFACE
                   ZSOIL, SLDPTH, &
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
                   SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
-                  QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT)
+                  QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT    &
+                 ,NTRACER, WVTFLAG, NSUB                              & !wt vars
+                 ,SMCRT_RT_PASS, SMCRT_SUB_PASS, SMCMAXRT_SUB_PASS    & !wt vars
+                 ,INFXSUBRT_TR_PASS, QSUBBDRYTRT_TR_PASS              & !wt vars
+                 ,QSUBBDRYRT_TR_PASS,QSUBRT_TR_IN                     & !wt vars
+                )
 #ifdef MPP_LAND
         use module_mpp_land, only:  mpp_land_com_real, mpp_land_com_integer
 #endif
          implicit none
+
+!-------------------------------------------------------
+! Define interface for subroutine SUBSFC_RTNG [Huancui Hu]
+!-------------------------------------------------------
+INTERFACE 
+  subroutine SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,    &
+          SOYRT,LATKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,      &
+          NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
+          SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
+          SATLYRCHK                            &
+          ,NTRACER, WVTFLAG, NSUB              & !wt vars
+          ,QSUBRT_TR_IN, QSUBBDRYRT_TR_PASS    & !wt vars
+          ,QSUBBDRYTRT_TR_PASS, SMCRT_RT_PASS  & !wt vars
+          ,SMCRT_SUB_PASS, INFXSUBRT_TR_PASS   & !wt vars
+          ,SMCMAXRT_SUB_PASS                   & !wt vars
+          )
+
+    IMPLICIT NONE
+        INTEGER, INTENT(IN) :: IXRT,JXRT,NSOIL
+
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOXRT,junk4
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOYRT
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: LATKSATRT
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)    :: SOLDEPRT
+
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
+        REAL, INTENT(IN), DIMENSION(IXRT,JXRT)   :: CWATAVAIL
+        INTEGER, INTENT(IN), DIMENSION(IXRT,JXRT) :: SATLYRCHK
+
+
+        REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBRT
+        REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT
+
+        REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+        REAL, INTENT(IN)                          :: DT
+        REAL, INTENT(IN), DIMENSION(NSOIL)        :: ZSOIL
+        REAL, INTENT(IN), DIMENSION(NSOIL)        :: SLDPTH
+        REAL, INTENT(INOUT)                       :: QSUBBDRYTRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: INFXSUBRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCMAXRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCREFRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCWLTRT
+
+        INTEGER, INTENT(IN)  ::  rt_option
+        INTEGER :: SO8RT_D(IXRT,JXRT,3)
+        REAL :: SO8RT(IXRT,JXRT,8)
+!-------------------------------------------------------------------
+! Needed for water tracer capability
+!-------------------------------------------------------------------
+        INTEGER,         INTENT(IN)                                :: NTRACER
+        INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+        INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
+        REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_IN
+        REAL,   OPTIONAL,INTENT(INOUT)                             :: QSUBBDRYTRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_RT_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+        REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB_PASS
+  end subroutine SUBSFC_RTNG
+END INTERFACE
+!-------------------------------------------------------
+
          integer, INTENT(IN) :: ixrt, jxrt , nsoil, rt_option
          REAL, INTENT(IN)                          :: DT
          real,INTENT(IN), DIMENSION(NSOIL)      :: ZSOIL, SLDPTH
@@ -3231,13 +3621,28 @@ END INTERFACE
          real,INTENT(INOUT) :: QSUBBDRYTRT
          REAL, INTENT(OUT), DIMENSION(IXRT,JXRT)   :: QSUBBDRYRT, QSUBRT
          REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT,NSOIL) :: SMCRT, SMCWLTRT, SMCMAXRT,SMCREFRT
+         REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
 
 
          INTEGER :: SO8RT_D(IXRT,JXRT,3)
          REAL :: SO8RT(IXRT,JXRT,8)
          REAL, INTENT(IN)                          :: dist(ixrt,jxrt,9)
+!----------------------------------------------------
+! Needed for water tracer capability
+!----------------------------------------------------
+         INTEGER,         INTENT(IN)                                :: NTRACER
+         INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+         INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_RT_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCMAXRT_SUB_PASS
+         REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT)        :: INFXSUBRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(INOUT)                             :: QSUBBDRYTRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
+         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_IN
+!----------------------------------------------------
+
 !  -----local array ----------
-         REAL, DIMENSION(IXRT,JXRT)   :: ZWATTABLRT
          REAL, DIMENSION(IXRT,JXRT)   :: CWATAVAIL
          INTEGER, DIMENSION(IXRT,JXRT) :: SATLYRCHK
  
@@ -3266,11 +3671,29 @@ END INTERFACE
 !    and water available for subsfc routing (CWATAVAIL)...
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
-
+    if(WVTFLAG .gt. 0) then
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
-          SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK)
+          SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK   &
+          ,NTRACER, WVTFLAG   = WVTFLAG             & !wt vars
+          ,NSUB               = NSUB                & !wt vars
+          ,QSUBRT_TR_IN       = QSUBRT_TR_IN        & !wt vars
+          ,QSUBBDRYRT_TR_PASS = QSUBBDRYRT_TR_PASS  & !wt vars
+          ,QSUBBDRYTRT_TR_PASS= QSUBBDRYTRT_TR_PASS & !wt vars
+          ,SMCRT_RT_PASS      = SMCRT_RT_PASS       & !wt vars
+          ,SMCRT_SUB_PASS     = SMCRT_SUB_PASS      & !wt vars
+          ,INFXSUBRT_TR_PASS  = INFXSUBRT_TR_PASS   & !wt vars
+          ,SMCMAXRT_SUB_PASS  = SMCMAXRT_SUB_PASS   & !wt vars
+          )
+
+    else
+    CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
+          LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
+          INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
+          SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK &
+         ,NTRACER)
+    end if
 
 #ifdef HYDRO_D
     print *, "SUBROUTE routing called and returned..."
@@ -3561,5 +3984,162 @@ subroutine calculate_wt_ratio (a,b,c)
   end if
 
 end subroutine
-!-----------------------------------------
+!------------------------------------------------------
+! Huancui Hu: adjust_smc_tr
+subroutine adjust_smc_tr(NSOIL, NTRACER, SLDPTH, NSUB, Ksat_ini,&
+                         Ksat_now, smc, smc_sub, smc_tr,&
+                         subflo_sub, subflo_tr)
 
+  implicit none
+  integer, intent(in)                       :: NSOIL
+  integer, intent(in)                       :: NTRACER
+  real,    intent(in),   dimension(NSOIL)   :: SLDPTH
+  integer, intent(in),   dimension(NSOIL)   :: NSUB
+  integer, intent(in)                       :: Ksat_ini
+  integer, intent(in)                       :: Ksat_now     ! the level below Ksat_now is saturated
+  real,    intent(in),   dimension(NSOIL)   :: smc
+  real,    intent(inout),dimension(NTRACER) :: smc_sub
+  real,    intent(inout),dimension(NTRACER) :: smc_tr
+  real,    intent(inout)                    :: subflo_sub
+  real,    intent(inout)                    :: subflo_tr
+  !-----local vars-----
+  integer        :: K, KSUB, ISUB
+  real           :: PROPOR_TR
+  real           :: dsmc_tmp
+  real           :: dsmc_acc
+  real           :: dsmc_tr_acc
+  integer,dimension(NTRACER) :: SOLVE_ORDER
+  !--------------------
+
+  if (Ksat_now .ge. Ksat_ini) then   ! only works if Ksat_now is below Kast_ini by default
+    if (SUBFLO_SUB .gt. 1.0E-12) then   !  SUBFLO_SUB >0 while SUBLO<0?? correct, SUBFLO_SUB is always >0 because it only has the gain component
+      call calculate_wt_ratio(subflo_tr, subflo_sub, PROPOR_TR)
+      do K = NSOIL, Ksat_ini, -1     ! not an error, do need to adjust each layer below Ksat_ini for tracer
+        do KSUB = NSUB(K), 1, -1
+          ISUB = sum(NSUB(1:K)-NSUB(K)+KSUB)
+          dsmc_tmp = smc(K)-smc_sub(ISUB)    !dsmc_tmp can be +/-
+          if (subflo_sub .gt. 1.0E-10) then
+            if (dsmc_tmp .gt. subflo_sub/SLDPTH(K)) then
+              call calculate_wt_ratio(subflo_tr, subflo_sub, PROPOR_TR)
+              smc_tr(ISUB)  = smc_tr(ISUB) + subflo_sub/SLDPTH(K)*PROPOR_TR
+              smc_sub(ISUB) = smc_sub(ISUB)+ subflo_sub/SLDPTH(K)
+              subflo_sub  = 0.0
+              subflo_tr   = 0.0
+            else
+              if (dsmc_tmp .gt. 1.0E-10) then   !dsmc_tmp >0
+                call calculate_wt_ratio(subflo_tr, subflo_sub, PROPOR_TR)
+                smc_tr(ISUB)  = smc_tr(ISUB) + dsmc_tmp*PROPOR_TR
+                smc_sub(ISUB) = smc(K)
+                subflo_sub  = subflo_sub - dsmc_tmp*SLDPTH(K)/NSUB(K)
+                subflo_tr   = subflo_tr  - dsmc_tmp*SLDPTH(K)/NSUB(K)*PROPOR_TR
+              else 
+                if (dsmc_tmp .lt. -1.0E-10) then
+                  call calculate_wt_ratio(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+                  smc_tr(ISUB)  = smc_tr(ISUB) + dsmc_tmp*PROPOR_TR
+                  smc_sub(ISUB) = smc(K)
+                  subflo_sub  = subflo_sub - dsmc_tmp*SLDPTH(K)/NSUB(K)
+                  subflo_tr   = subflo_tr  - dsmc_tmp*SLDPTH(K)/NSUB(K)*PROPOR_TR
+                end if
+              end if
+            end if
+          end if
+        end do
+      end do
+    end if
+  end if
+  if (subflo_sub .gt. 1.0E-6) then
+    print *, "ERROR in adjust_smc_tr"
+    print *, "subflo_sub:", subflo_sub
+  else
+    subflo_sub = 0.0
+  end if
+  !-----adjust soil moisture downward/upward------
+  dsmc_acc  = 0.0
+  dsmc_tr_acc = 0.0
+  SOLVE_ORDER = 0
+  do K = Ksat_ini, NSOIL
+    do KSUB = 1, NSUB(K)
+      ISUB = sum(NSUB(1:K))-NSUB(K)+KSUB
+      call calculate_wt_ratio(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+      dsmc_tmp = smc_sub(ISUB) - smc(K)
+      if (dsmc_tmp .lt. -1.E-7) then
+        SOLVE_ORDER(ISUB) = 3
+      else
+        if (dsmc_tmp .gt. 1.E-7) then
+          SOLVE_ORDER(ISUB) = 1
+          dsmc_acc      = dsmc_acc + dsmc_tmp*SLDPTH(K)/NSUB(K)
+          dsmc_tr_acc   = dsmc_tr_acc + dsmc_tmp*SLDPTH(K)/NSUB(K)*PROPOR_TR
+          smc_tr(ISUB)  = smc_tr(ISUB) - dsmc_tmp*SLDPTH(K)
+          smc_sub(ISUB) = smc(K)
+        end if
+      end if
+    end do
+  end do
+  do K = Ksat_ini, NSOIL
+    do KSUB = 1, NSUB(K)
+      ISUB = sum(NSUB(1:K))-NSUB(K)+KSUB
+      if (SOLVE_ORDER(ISUB) .eq. 3) then
+        dsmc_tmp = smc_sub(ISUB) - smc(K)  !now dsmc_tmp is <0
+        call calculate_wt_ratio(dsmc_tr_acc, dsmc_acc, PROPOR_TR)
+        dsmc_acc = dsmc_acc + dsmc_tmp*SLDPTH(K)/NSUB(K)
+        dsmc_tr_acc = dsmc_tr_acc + dsmc_tmp*SLDPTH(K)/NSUB(K)*PROPOR_TR
+        smc_tr(ISUB) = smc_tr(ISUB) - dsmc_tmp*PROPOR_TR
+        smc_sub(ISUB) = smc(K)
+      end if 
+    end do
+  end do
+  if (abs(dsmc_acc) .gt. 1.0E-7) then
+    print *, "ERROR in adjust_smc_tr2"
+    print *, "dsmc_acc, dsmc_tr_acc:"
+    print *, dsmc_acc, dsmc_tr_acc
+  end if
+
+end subroutine adjust_smc_tr
+!------------------------------------------------------
+! Huancui Hu: calculate_qsubout_tr
+subroutine calculate_qsubout_tr(satk,nsoil,ntracer,nsub,sldepth,&
+                                qqsub_lose,grid_area,subdt,  &
+                                qqsub_tr_lose,  &
+                                qqsub_sub_lose, &
+                                smc_tr, smc_sub)
+  implicit none
+  integer, intent(in)                            :: satk
+  integer, intent(in)                            :: nsoil
+  integer, intent(in)                            :: ntracer
+  integer, intent(in),   dimension(nsoil)        :: nsub
+  real,    intent(in),   dimension(nsoil)        :: sldepth
+  real,    intent(in)                            :: qqsub_lose     !unit:m3/s, has to be <0
+  real,    intent(in)                            :: grid_area     !unit:m2
+  real,    intent(in)                            :: subdt    
+  real,    intent(out)                           :: qqsub_tr_lose
+  real,    intent(out)                           :: qqsub_sub_lose
+  real,    intent(inout),dimension(ntracer)      :: smc_tr
+  real,    intent(inout),dimension(ntracer)      :: smc_sub
+  !-----local vars-----
+  integer     :: KSUB, ISUB, K
+  real        :: PROPOR_TR
+  real        :: qqsub_tmp
+  real        :: qqsub_sub_tmp
+  !--------------------
+
+  qqsub_tr_lose  = 0.0
+  qqsub_sub_lose = 0.0
+  qqsub_sub_tmp  = 0.0
+  do K = satk, nsoil
+    qqsub_sub_tmp = qqsub_lose*sldepth(K)/sum(sldepth(satk:nsoil))    !qqsub_sub_tmp<0
+    do KSUB = 1, NSUB(K)
+      ISUB = sum(NSUB(1:K)) - NSUB(K) + KSUB
+      call calculate_wt_ratio(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+      qqsub_tr_lose  = qqsub_tr_lose + qqsub_sub_tmp/NSUB(K)*PROPOR_TR
+      qqsub_sub_lose = qqsub_sub_lose + qqsub_sub_tmp/NSUB(K)
+      smc_tr(ISUB)   = smc_tr(ISUB)  + (qqsub_sub_tmp/grid_area*subdt)/(sldepth(K)/NSUB(K))*PROPOR_TR
+      smc_sub(ISUB)  = smc_sub(ISUB) + (qqsub_sub_tmp/grid_area*subdt)/(sldepth(K)/NSUB(K))
+    end do 
+  end do
+  if (abs(qqsub_sub_lose - qqsub_lose) .gt. 1.0E-7) then
+    print *, "ERROR in calculate_qsubout_tr!"
+    print *, "satk, nsoil, qqsub_lose, qqsub_sub_lose:"
+    print *, satk, nsoil, qqsub_lose, qqsub_sub_lose
+  end if
+end subroutine calculate_qsubout_tr
+!------------------------------------------------------

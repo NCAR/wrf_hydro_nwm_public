@@ -1554,7 +1554,7 @@ contains
 #endif
        endif
 
-       var(:,:,k) = (src(:,ktop,:)*fraction) + (src(:,kbottom,:)*(1.0-fraction))
+       var(:,k,:) = (src(:,ktop,:)*fraction) + (src(:,kbottom,:)*(1.0-fraction))
 
     enddo KLOOP
      
