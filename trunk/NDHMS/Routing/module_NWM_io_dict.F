@@ -18,7 +18,7 @@ implicit none
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 14          !have incluced tracer vars
 integer, parameter :: numLdasVars = 117       !have included tracer vars
-integer, parameter :: numRtDomainVars = 5
+integer, parameter :: numRtDomainVars = 8     !have included tracer vars
 integer, parameter :: numLakeVars = 2
 integer, parameter :: numChGrdVars = 1
 integer, parameter :: numLsmVars = 19         !have included some tracer vars
@@ -1566,20 +1566,24 @@ subroutine initRtDomainDict(rtDomainDict,procId,diagFlag)
    endif
 
    rtDomainDict%varNames(:) = [character(len=64) :: "zwattablrt","sfcheadsubrt","QSTRMVOLRT",&
-                               "QBDRYRT","SOIL_M"]
+                               "QBDRYRT","SOIL_M"  &
+                              ,"sfcheadsubrt_tr","QBDRYRT_TR","SOIL_M_TR"]     !wt vars
    rtDomainDict%longName(:) = [character(len=64) :: "water table depth","surface head",&
                                "channel inflow",&
                                "accumulated value of the boundary flux, + into domain - out of domain",&
-                               "volumetric soil moisture"]
-   rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm","m3 m-3"]
-   rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0,0.01]
-   rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0]
-   rtDomainDict%outFlag(:) = [0,0,0,0,0]
-   rtDomainDict%timeZeroFlag(:) = [1,1,1,1,1]
-   rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
-   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,-1000000.0,0.0]
-   rtDomainDict%validMaxReal(:) = [100.0,1000000.0,1000000.0,1000000.0,100.0]
+                               "volumetric soil moisture",     &
+                               "tracer surface head",          & !wt var
+                               "tracer accumulated value of the boundary flux, + into domain - out of domain",&
+                               "tracer volumetric soil moisture"]   !wt var
+   rtDomainDict%units(:) = [character(len=64) :: "m","mm","mm","mm","m3 m-3","mm","mm","m3 m-3"]
+   rtDomainDict%scaleFactor(:) = [0.1,1.0,1.0,1.0,0.01,1.0,1.0,0.1]
+   rtDomainDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+   rtDomainDict%outFlag(:) = [0,0,0,0,0,0,0,0]
+   rtDomainDict%timeZeroFlag(:) = [1,1,1,1,1,1,1,1]
+   rtDomainDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0]
+   rtDomainDict%validMinReal(:) = [0.0,0.0,0.0,-1000000.0,0.0,0.0,-1000000.0,0.0]
+   rtDomainDict%validMaxReal(:) = [100.0,1000000.0,1000000.0,1000000.0,100.0,1000000.0,1000000.0,100.0]
 
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.

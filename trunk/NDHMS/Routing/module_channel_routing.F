@@ -1941,7 +1941,11 @@ end subroutine drive_CHANNEL
        !-----local vars------
        real,                             dimension(NLINKSL,2) :: tmpQLINK_tr
        real                                                   :: Qup_tr, Quc_tr
-       real*8,                           dimension(NLINKSL)   :: LQLateral_tr
+#ifdef MPP_LAND
+       real*8,                           dimension(LNLINKSL)  :: LQLateral_tr
+#else
+       real,                             dimension(NLINKSL)   :: LQLateral_tr
+#endif
        real,                             dimension(nToNodeInd,2) :: gQLINK_tr
        real                                                   :: qdctr, qdp_tr, ql_tr, depth_tr
 !---------------------------------------------
@@ -2025,6 +2029,7 @@ else
             if (present(wvtflag_pass)) then
               LQLateral_tr(k) = LQLateral_tr(k)+landRunOff_tr_pass(ii,jj)*LUDRSL(k)%cellweight(m)/1000 &
                  *LUDRSL(k)%cellArea(m)/DT
+              if (LQLateral_tr(k) .lt. 1.E-10) LQLateral_tr(k) = 0.0
             end if
          end do
       end do
@@ -2079,7 +2084,7 @@ else
 
 #ifdef MPP_LAND
    call updateLinkV(LQLateral, QLateral(1:NLINKSL))
-   if (present(wvtflag_pass)) call updateLinkV(LQLateral_tr, QLateral_tr_pass)
+   if (present(wvtflag_pass)) call updateLinkV(LQLateral_tr, QLateral_tr_pass(1:NLINKSL))
 #else
    call hydro_stop("fatal error: NHDPlus only works for parallel now.")
    QLateral = LQLateral
@@ -2138,7 +2143,7 @@ do nt = 1, nsteps
 #ifdef MPP_LAND
    endif
 #endif
-   
+
    
    do k = 1,NLINKSL
       
@@ -2238,7 +2243,7 @@ do nt = 1, nsteps
       endif
       
    end do  !--k links
-   
+
    
 #ifdef MPP_LAND
    call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)

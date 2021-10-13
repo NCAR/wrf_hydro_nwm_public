@@ -603,6 +603,7 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !-----needed for water tracer capability-----
     real, dimension(RT_DOMAIN(did)%ix,  RT_DOMAIN(did)%jx)      :: INFXSRT_tr_pass
     real, dimension(RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt)    :: landRunOff_tr_pass
+print *,"FLAG 5)001"
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
     nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
@@ -617,16 +618,21 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
+print *,"FLAG 5)002"
          call disaggregateDomain_drv(did)
+print *,"FLAG 5)003"
       endif
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
            if (nlst_rt(did)%WVTFLAG .gt. 0) then
+print *,"FLAG 5)004"
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, &
                  wvtflag_pass=nlst_rt(did)%WVTFLAG, INFXSRT_tr_pass=RT_DOMAIN(did)%INFXSRT_tr, landRunOff_tr_pass=RT_DOMAIN(did)%landRunOff_tr                     &       !wt vars
                  )
+print *,"FLAG 5)005"
+print *,"FLAG 5)005-1 RT_DOMAIN(did)%landRunOff_tr(10,10):",RT_DOMAIN(did)%landRunOff_tr(10,10)
            else
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
@@ -644,7 +650,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    ! step 2)
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
       if(nlst_rt(did)%SUBRTSWCRT .ne.0) then
+print *,"FLAG 5)006"
          call SubsurfaceRouting_drv(did)
+print *,"FLAG 5)007"
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -664,11 +672,14 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
       call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
+print *,"FLAG 5)008"
          call OverlandRouting_drv(did)
+print *,"FLAG 5)009"
       else
          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
          rt_domain(did)%overland%control%infiltration_excess = 0.
          if (nlst_rt(did)%WVTFLAG .gt. 0) then
+print *,"FLAG 5)010"
            rt_domain(did)%overland%control%surface_water_head_routing_tr = rt_domain(did)%overland%control%infiltration_excess_tr
            rt_domain(did)%overland%control%infiltration_excess_tr = 0.
          end if
@@ -698,7 +709,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    !! channelBucket_only can be anything: the only time you dont run this is if channel_only=1
    if(nlst_rt(did)%channel_only .eq. 0) then  
       if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
+print *,"FLAG 5)011"
          call driveGwBaseflow(did)
+print *,"FLAG 5)012"
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -715,7 +728,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    end if !! channel_only == 0
 
    ! step 5) river channel physics
+print *,"FLAG 5)013"
    call driveChannelRouting(did)
+print *,"FLAG 5)014"
 #ifdef HYDRO_D
    call system_clock(count=clock_count_2, count_rate=clock_rate)
    timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -731,7 +746,9 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
 	
       ! step 6) aggregate specific fields from Hydro to LSM grid
       if (nlst_rt(did)%SUBRTSWCRT .ne.0  .or. nlst_rt(did)%OVRTSWCRT .ne. 0 ) then
+print *,"FLAG 5)015"
          call aggregateDomain(did)
+print *,"FLAG 5)016"
       endif
 
    end if !! channel_only & channelBucket_only == 0
@@ -747,7 +764,7 @@ end if
 !yw  endif
            call HYDRO_time_adv(did)
            call HYDRO_out(did, 1)
-
+print *,"FLAG 5)017"
 
 !           write(90 + my_id,*) "finish calling hydro_exe"
 !           call flush(90+my_id)
@@ -1420,6 +1437,9 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
         real, dimension(:,:), optional, intent(inout)   :: landrunoff_tr_pass
         real                                            :: wvt_ratio
 
+if (present(wvtflag_pass)) then
+print *, "FLAG inside RunOffDisag001: infxsrt_tr_pass(10,10),runoff1x_in(10,10):",infxsrt_tr_pass(10,10),runoff1x_in(10,10)
+end if
         do J=1,JX
         do I=1,IX
              do AGGFACYRT=AGGFACTRT-1,0,-1
@@ -1438,7 +1458,11 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
                     runoff1x(IXXRT,JYYRT)=runoff1x_in(i,j)*area_lsm(I,J)     &
                         *INFXSWGT(IXXRT,JYYRT)/cellArea(IXXRT,JYYRT)
                     if (present(wvtflag_pass)) then
-                       wvt_ratio  = min(1.0,max(0.0, infxsrt_tr_pass(i,j)/runoff1x_in(i,j)))
+                       if (runoff1x_in(i,j) .gt. 1.0E-7) then
+                         wvt_ratio  = min(1.0,max(0.0, infxsrt_tr_pass(i,j)/runoff1x_in(i,j)))
+                       else
+                         wvt_ratio  = 0.0
+                       end if
                        landrunoff_tr_pass(IXXRT,JYYRT)=runoff1x(IXXRT,JYYRT)*wvt_ratio
                     end if
                endif
@@ -1448,6 +1472,9 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
         enddo
         enddo
 
+if (present(wvtflag_pass)) then
+print *, "FLAG inside RunOffDisag002: infxsrt_tr_pass(10,10),runoff1x_in(10,10):",infxsrt_tr_pass(10,10),runoff1x_in(10,10)
+end if
       end subroutine RunOffDisag
       
 

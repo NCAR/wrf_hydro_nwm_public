@@ -116,6 +116,10 @@ CONTAINS
      rt_domain(did)%SMCRTCHK = 0
      allocate( rt_domain(did)%SH2OAGGRT   	(NSOIL) )
      rt_domain(did)%SH2OAGGRT = 0
+     allocate( rt_domain(did)%SH2OAGGRT_TR        (NTRACER) )   !wt var
+     rt_domain(did)%SH2OAGGRT_TR = 0
+     allocate( rt_domain(did)%SH2OAGGRT_SUB        (NTRACER) )   !wt var
+     rt_domain(did)%SH2OAGGRT_SUB = 0
      allocate( rt_domain(did)%STCAGGRT   	(NSOIL) )
      rt_domain(did)%STCAGGRT = 0
      allocate( rt_domain(did)%SMCAGGRT   	(NSOIL) )
@@ -128,7 +132,11 @@ CONTAINS
      endif
      
      allocate( rt_domain(did)%SMCRT   	(IXRT,JXRT,NSOIL) )
-     rt_domain(did)%SMCRT   	= 0.0                
+     rt_domain(did)%SMCRT   	= 0.0    
+     allocate( rt_domain(did)%SMCRT_TR  (IXRT,JXRT,NTRACER))    !wt var
+     rt_domain(did)%SMCRT_TR   = 0.0
+     allocate( rt_domain(did)%SMCRT_SUB  (IXRT,JXRT,NTRACER))    !wt var
+     rt_domain(did)%SMCRT_SUB   = 0.0
      allocate( rt_domain(did)%soiltypRT   	(IXRT,JXRT) )
      !!
 
@@ -183,6 +191,20 @@ CONTAINS
      rt_domain(did)%SH2OWGT     = 0.0
      allocate( rt_domain(did)%INFXSAGGRT 	(IXRT,JXRT) )
      rt_domain(did)%INFXSAGGRT 	= 0.0                
+     !------Needed for water tracer capability------
+     allocate( rt_domain(did)%QSUBRT_TR      (IXRT,JXRT) )
+     rt_domain(did)%QSUBRT_TR      = 0.0
+     allocate( rt_domain(did)%QSUBBDRYRT_TR  (IXRT,JXRT) )
+     rt_domain(did)%QSUBBDRYRT  = 0.0
+     allocate( rt_domain(did)%q_sfcflx_x_tr  (IXRT,JXRT) )
+     rt_domain(did)%q_sfcflx_x_tr  = 0.0
+     allocate( rt_domain(did)%q_sfcflx_y_tr  (IXRT,JXRT) )
+     rt_domain(did)%q_sfcflx_y_tr  = 0.0
+     allocate( rt_domain(did)%SMCMAXRT_SUB          (IXRT,JXRT,NTRACER) )
+     rt_domain(did)%SMCMAXRT_SUB    = 0.0
+     rt_domain(did)%SFCHEADAGGRT_TR = 0.0
+     rt_domain(did)%QSUBBDRYTRT_TR  = 0.0
+     !----------------------------------------------
      !allocate( rt_domain(did)%overland%control%dhrt   	(IXRT,JXRT) ) ! moved to overland control
      !rt_domain(did)%overland%control%dhrt   	= 0.0                 ! moved to overland control
      !allocate( rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel (IXRT,JXRT) )              ! moved to overland streams and lakes
@@ -238,6 +260,10 @@ CONTAINS
             rt_domain(did)%SMC_SUB   = 0.0
   allocate( rt_domain(did)%SH2OX_SUB  (IX,JX,NTRACER) )
             rt_domain(did)%SH2OX_SUB   = 0.0
+  allocate( rt_domain(did)%SICE_tr (IX,JX,NTRACER))
+            rt_domain(did)%SICE_tr    = 0.0
+  allocate( rt_domain(did)%SICE_SUB (IX,JX,NTRACER))
+            rt_domain(did)%SICE_SUB   = 0.0
   !--------------------------------------------
   ! allocate( rt_domain(did)%dist_lsm (ixrt,jxrt,9) )
   ! allocate( rt_domain(did)%lat_lsm (ixrt,jxrt) )

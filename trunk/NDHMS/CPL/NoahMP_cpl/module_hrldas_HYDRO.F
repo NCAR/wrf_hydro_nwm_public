@@ -177,6 +177,7 @@ CONTAINS
            RT_DOMAIN(did)%infxsrt = infxsrt
            RT_DOMAIN(did)%soldrain = soldrain
            if (present(WVTFLAG)) then
+print *, "FLAG 4)001"
              nlst_rt(did)%wvtflag       = WVTFLAG
              RT_DOMAIN(did)%SMC_SUB     = SMC_SUB
              RT_DOMAIN(did)%SH2OX_SUB   = SH2OX_SUB
@@ -197,7 +198,9 @@ CONTAINS
 
         ntime = 1
 
+print *, "FLAG 4)002"
         call HYDRO_exe(did)
+print *, "FLAG 4)003"
 
 #ifdef MPP_LAND
         if(my_id .eq. IO_id) then

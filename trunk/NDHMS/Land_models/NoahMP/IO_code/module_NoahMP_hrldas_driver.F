@@ -2468,8 +2468,7 @@ integer, intent(in)  :: wvtflag ! -999-no tracer capability, 0-2-with tracer cap
    if (wvtflag .ge. 0) then
 print *, "FLAG009-4"
 print *, "wvtflag", wvtflag
-print *, "LH_TR", LH_TR(0,0)
-print *, "LH", LH_TR(0,0)
+print *, "LH_TR, LH:", LH_TR(0,0),LH(0,0)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,LH_TR,IVGTYP,98)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ECANXY_TR,IVGTYP,99)
      call output_NoahMP_NWM(trim(outdir),igrid,output_timestep,itime,startdate,olddate,ixpar,jxpar,1,EDIRXY_TR,IVGTYP,100)

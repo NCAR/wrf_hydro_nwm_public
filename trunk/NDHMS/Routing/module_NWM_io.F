@@ -1843,25 +1843,25 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    if(nlst_rt(domainId)%io_config_outputs .eq. 0) then
       ! All
-      fileMeta%outFlag(:) = [1,1,1,1,1]
+      fileMeta%outFlag(:) = [1,1,1,1,1,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 1) then
       ! Analysis and Assimilation
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 2) then
       ! Short Range
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 3) then
       ! Medium Range
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 4) then
       ! Long Range
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 5) then
       ! Retrospective
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else if(nlst_rt(domainId)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [1,1,0,0,0]
+      fileMeta%outFlag(:) = [1,1,0,0,0,1,1,1]
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
@@ -2032,7 +2032,7 @@ subroutine output_rt_NWM(domainId,iGrid)
       ! metadata attributes. 
       do iTmp=1,fileMeta%numVars
          if(fileMeta%outFlag(iTmp) .eq. 1) then
-            if(iTmp .eq. 5) then
+            if ((iTmp .eq. 5 ) .or. (iTmp .eq. 8 )) then    ! also include tracer vars,but output for 4 layers
                ! Soil Moisture
                if((nlst_rt(1)%io_form_outputs .eq. 1) .or. (nlst_rt(1)%io_form_outputs .eq. 2)) then
                   iret = nf90_def_var(ftn,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
@@ -2166,7 +2166,7 @@ subroutine output_rt_NWM(domainId,iGrid)
    do iTmp2=1,fileMeta%numVars
 
       ! Specify the number of vertical levels we are dealing with
-      if(iTmp2 .eq. 5) then
+      if ((iTmp2 .eq. 5) .or. (iTmp2 .eq. 8)) then    ! also include tracer vars
          numLev = 4
       else
          numLev = 1
@@ -2215,6 +2215,14 @@ subroutine output_rt_NWM(domainId,iGrid)
                      varRealTmp = RT_DOMAIN(domainId)%overland%control%boundary_flux(iTmp,jTmp)
                   else if(iTmp2 .eq. 5) then
                      varRealTmp = RT_DOMAIN(domainId)%SMCRT(iTmp,jTmp,zTmp)
+                  !-----needed for water tracer capability------
+                  else if(iTmp2 .eq. 6) then
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%surface_water_head_routing_tr(iTmp,jTmp)
+                  else if(iTmp2 .eq. 7) then
+                     varRealTmp = RT_DOMAIN(domainId)%overland%control%boundary_flux_tr(iTmp,jTmp)
+                  else if(iTmp2 .eq. 8) then
+                     varRealTmp = RT_DOMAIN(domainId)%SMCRT_TR(iTmp,jTmp,zTmp)
+                  !--------------------------------------------
                   endif
 
                   ! Run a quick gross check on values to ensure they aren't outside our
