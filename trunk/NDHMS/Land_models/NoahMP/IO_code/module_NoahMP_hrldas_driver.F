@@ -67,7 +67,9 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWT_AVG ! snowpack average temperature (by layer mass) [K] ** DIAGNOSTIC VARIABLE
-   character(len=15), DIMENSION(100)        ::  IOCVARS
+   integer, parameter                                      ::  max_ioc_num_vars = 200
+   integer, parameter                                      ::  ioc_var_len = 20
+   character(len=ioc_var_len), DIMENSION(max_ioc_num_vars) ::  IOCVARS
 #endif
 
   character(len=9), parameter :: version = "v20150506"
@@ -1566,14 +1568,27 @@ endif
    !!--- strings in f90 so using brute force.
 
    do while (brkflag .eq. 0)
-        if (index(VARLIST, ',') .eq. 0) then
-                IOCVARS(varind) = adjustl(VARLIST)
-                brkflag = 1
-        else
-                IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
-                VARLIST = VARLIST((index(VARLIST, ',')+1):)
-                varind = varind + 1
-              endif
+      if (index(VARLIST, ',') .eq. 0) then
+          IOCVARS(varind) = adjustl(VARLIST)
+          brkflag = 1
+          if (varind > max_ioc_num_vars) then
+#ifdef MPP_LAND
+             call fatal_error_stop("ERROR: number of vars is greater than current max_num_vars")
+#else
+             stop "Error: number of vars is greater than current max_num_vars"
+#endif
+          endif
+       else
+#ifdef HYDRO_D
+          if (len(adjustl(VARLIST(1:(index(VARLIST, ',')-1)))) > ioc_var_len) then
+             print *,"WARNING: length of ", adjustl(VARLIST(1:(index(VARLIST, ',')-1))), &
+                  " is longer than ioc_var_len"
+          end if
+#endif
+          IOCVARS(varind) = adjustl(VARLIST(1:(index(VARLIST, ',')-1)))
+          VARLIST = VARLIST((index(VARLIST, ',')+1):)
+          varind = varind + 1
+       endif
    end do
 
    if(wrf_hydro%finemesh .ne. 0 ) then
