@@ -25,7 +25,7 @@
        
        subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk, &
                                    NTRACER, WVTFLAG, SMOIS_SUB, SH2OXY_SUB, &      !wt vars
-                                   SMOIS_TR, SH2OXY_TR,infxsrt_tr, soldrain_tr )   !wt vars
+                                   SMOIS_TR, SH2OXY_TR,infxsrt_tr,sfcheadrt_tr, soldrain_tr )   !wt vars
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO
           implicit none
           integer,                                intent(INOUT) :: ii,jj,kk
@@ -35,7 +35,7 @@
           integer,                                intent(INOUT) :: NTRACER
           integer,                      optional, intent(INOUT) :: WVTFLAG
           real,dimension(ii,NTRACER,jj),optional, intent(INOUT) :: SMOIS_SUB, SH2OXY_SUB, SMOIS_TR,SH2OXY_TR
-          real,dimension(ii,jj),        optional, intent(INOUT) :: infxsrt_tr, soldrain_tr
+          real,dimension(ii,jj),        optional, intent(INOUT) :: infxsrt_tr, sfcheadrt_tr, soldrain_tr
           !-----local vars------
           integer                       :: K
           real,dimension(ii,jj,kk)      :: STC,SMC,SH2OX
@@ -59,7 +59,7 @@ print *, 'Flag 3)001'
             call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,NTRACER, &
                                   WVTFLAG=WVTFLAG, SMC_SUB=SMC_SUB, SH2OX_SUB=SH2OX_SUB,     & !wt vars
                                   SMC_TR=SMC_TR, SH2OX_TR=SH2OX_TR,                          & !wt vars
-                                  infxsrt_tr=infxsrt_tr, soldrain_tr=soldrain_tr             & !wt vars
+                                  infxsrt_tr=infxsrt_tr,sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr   & !wt vars
                                   )
 print *, 'Flag 3)002'
              do k = 1, NTRACER
@@ -69,6 +69,12 @@ print *, 'Flag 3)002'
                SH2OXY_TR(:,k,:)  = SH2OX_TR(:,:,k)
              end do
 print *, 'Flag 3)003'
+             do k = 1, kk
+               STC_io(:,k,:) = STC(:,:,k)
+               SMC_io(:,k,:) = SMC(:,:,k)
+               SH2OX_io(:,k,:) = SH2OX(:,:,k)
+            end do
+
           else
             call hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,NTRACER)  
 
@@ -82,29 +88,70 @@ print *, 'Flag 3)003'
        end subroutine hrldas_drv_HYDRO
        
 
-       subroutine hrldas_drv_HYDRO_ini(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
+       subroutine hrldas_drv_HYDRO_ini(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,&
+                                       ii,jj,kk,kt,dt,olddate,zsoil   &
+                                      ,NTRACER,OPT_WT, SMOIS_TR, SH2OXY_TR,SMOIS_SUB,SH2OXY_SUB &    !wt vars
+                                      ,infxsrt_tr,sfcheadrt_tr,soldrain_tr)       !wt vars
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini, open_print_mpp
           implicit none
-          integer:: ii,jj,kk, kt, k
-          character(len=*) :: olddate
-          real :: dt
+          integer,            intent(in)                             :: ii,jj,kk, kt
+          character(len=*),   intent(in)                             :: olddate
+          real                                                       :: dt
+          real,               intent(inout),dimension(ii,kk,jj)      :: STC_io,SMC_io,SH2OX_io
+          real,               intent(inout),dimension(ii,jj)         :: infxsrt,sfcheadrt, soldrain
+          real,               intent(in),   dimension(kk)            :: zsoil
+!--------------------------------------------------------
+! Needed for water tracer capability
+!--------------------------------------------------------
+          integer,            intent(in)                             :: NTRACER
+          integer,optional,   intent(in)                             :: OPT_WT
+          real,   optional,   intent(inout),dimension(ii,NTRACER,jj) :: SMOIS_TR, SH2OXY_TR, SMOIS_SUB,SH2OXY_SUB
+          real,   optional,   intent(inout),dimension(ii,jj)         :: infxsrt_tr,sfcheadrt_tr, soldrain_tr 
+          !----local vars-----
+          real,dimension(ii,jj,NTRACER) :: SMC_TR,SH2OX_TR, SMC_SUB, SH2OX_SUB
+!--------------------------------------------------------
+          integer                  :: k
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-          real,dimension(ii,kk,jj) :: STC_io,SMC_io,SH2OX_io
-          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
-          real, dimension(kk) :: zsoil
+
           do k = 1, kk
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
           end do
-             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
+!----------wt calc----------
+          if (present(OPT_WT)) then
+            do k = 1, NTRACER
+              SMC_TR(:,:,k)    = SMOIS_TR(:,k,:)
+              SH2OX_TR(:,:,k)  = SH2OXY_TR(:,k,:)
+              SMC_SUB(:,:,k)   = SMOIS_SUB(:,k,:)
+              SH2OX_SUB(:,:,k) = SH2OXY_SUB(:,k,:)
+            end do
+            call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil &
+                                    ,NTRACER,OPT_WT=OPT_WT,SMC_TR=SMC_TR,SH2OX_TR=SH2OX_TR &
+                                    ,SMC_SUB=SMC_SUB, SH2OX_SUB=SH2OX_SUB                  &
+                                    ,infxsrt_tr=infxsrt_tr, sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr)
+            do k = 1, NTRACER
+              SMOIS_TR(:,k,:)    = SMC_TR(:,:,k)
+              SH2OXY_TR(:,k,:)   = SH2OX_TR(:,:,k)
+              SMOIS_SUB(:,k,:)   = SMC_SUB(:,:,k)
+              SH2OXY_SUB(:,k,:)  = SH2OX_SUB(:,:,k)
+            end do
+
+            do k = 1, kk
+               STC_io(:,k,:) = STC(:,:,k)
+               SMC_io(:,k,:) = SMC(:,:,k)
+               SH2OX_io(:,k,:) = SH2OX(:,:,k)
+            end do
+
+          else
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil,NTRACER)
 
            do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)
                SMC_io(:,k,:) = SMC(:,:,k) 
                SH2OX_io(:,k,:) = SH2OX(:,:,k) 
            end do 
-
+         end if
              call open_print_mpp(6)
        end subroutine hrldas_drv_HYDRO_ini
 

@@ -373,8 +373,10 @@ contains
                    , SMCWTD_TR  ,DEEPRECH_TR , RECH_TR                              & ! INOUT
                    , ECAN_TR, ETRAN_TR, EDIR_TR,  FCEV_TR, FCTR_TR, FGEV_TR        & ! OUT
                    , RUNSRF_TR, RUNSUB_TR, QSNBOT_TR, PONDING_TR, PONDING1_TR         & ! OUT
-                   , PONDING2_TR, FLUX_TR                                           & ! OUT
-
+                   , PONDING2_TR, FLUX_TR                       & ! OUT
+#ifdef WRF_HYDRO
+                   , SFCHEADRT_TR_PASS                          & ! INOUT
+#endif
                    )
 
 ! --------------------------------------------------------------------------------------------------
@@ -428,6 +430,7 @@ contains
 
 #ifdef WRF_HYDRO
   REAL                           , INTENT(INOUT)    :: sfcheadrt
+  REAL, OPTIONAL                 , INTENT(INOUT)    :: sfcheadrt_tr_pass !wt var
 #endif
 
 ! input/output : need arbitary intial values
@@ -899,6 +902,9 @@ print *, "FLAG0014"
                  , QIN_TR=QIN_TR, QDIS_TR=QDIS_TR, PONDING1_TR=PONDING1_TR     & !wt out
 		 , PONDING2_TR=PONDING2_TR, QSNBOT_TR=QSNBOT_TR                & !wt out
 		 , EDIR_TR=EDIR_TR, FLUX_TR=FLUX_TR                            & !wt OUT
+#ifdef WRF_HYDRO
+                        ,sfcheadrt_tr_pass=sfcheadrt_tr_pass                    &
+#endif
 
                  )  !out
 print *, "FLAG0015"   
@@ -6042,6 +6048,9 @@ end if
                     , CMC_TR,   ECAN_TR, ETRAN_TR, RUNSRF_TR, RUNSUB_TR               & !OUT
                     , QIN_TR,   QDIS_TR, PONDING1_TR, PONDING2_TR                     & !OUT
                     , QSNBOT_TR, EDIR_TR, FLUX_TR                                     & !OUT
+#ifdef WRF_HYDRO
+                        ,sfcheadrt_tr_pass                    &
+#endif
                     )  !out
 ! ----------------------------------------------------------------------  
 ! Code history:
@@ -6202,6 +6211,7 @@ end if
 
 #ifdef WRF_HYDRO
   REAL                           , INTENT(INOUT)    :: sfcheadrt
+  REAL,            OPTIONAL      , INTENT(INOUT)    :: sfcheadrt_tr_pass
 #endif
 
 ! ----------------------------------------------------------------------
@@ -6332,6 +6342,7 @@ end if
 
 #ifdef WRF_HYDRO
        QINSUR = QINSUR+sfcheadrt/DT*0.001  !sfcheadrt units (m)
+       if (present(WVTFLAG)) QINSUR_TR = QINSUR_TR+sfcheadrt_tr_pass/DT*0.001
 #endif
 
 ! lake/soil water balances

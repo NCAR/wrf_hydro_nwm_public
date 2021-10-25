@@ -60,7 +60,7 @@ CONTAINS
 
     subroutine hrldas_cpl_HYDRO(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,&
                                NTRACER, WVTFLAG, SMC_SUB,SH2OX_SUB,SMC_TR,SH2OX_TR,&    !wt vars
-                               infxsrt_tr, soldrain_tr)                                 !wt vars
+                               infxsrt_tr,sfcheadrt_tr,soldrain_tr)                                 !wt vars
 
 !---lpr added 2015-07-30---------
 #ifdef WRF_HYDRO_RAPID
@@ -79,7 +79,7 @@ CONTAINS
        integer, intent(inout)   :: NTRACER
        integer, intent(inout), optional :: WVTFLAG
        real,    intent(inout), optional, dimension(ii,jj,NTRACER) :: SMC_SUB,SH2OX_SUB,SMC_TR,SH2OX_TR
-       real,    intent(inout), optional, dimension(ii,jj)         :: infxsrt_tr, soldrain_tr
+       real,    intent(inout), optional, dimension(ii,jj)         :: infxsrt_tr,sfcheadrt_tr, soldrain_tr
        !---------------------------------------------
 
 !lpr add 2014-06-24
@@ -224,6 +224,7 @@ print *, "FLAG 4)003"
              SH2OX_SUB = rt_domain(did)%SH2OX_SUB
              SMC_TR    = rt_domain(did)%SMC_TR
              SH2OX_TR  = rt_domain(did)%SH2OX_TR
+             sfcheadrt_tr = rt_domain(did)%overland%control%surface_water_head_lsm_tr
            end if
         end if
         if(nlst_rt(did)%GWBASESWCRT == 3)  qsgw = gw2d(did)%qsgw
@@ -234,7 +235,9 @@ print *, "FLAG 4)003"
 
      end subroutine hrldas_cpl_HYDRO
 
-    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
+    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil &
+                                   ,NTRACER,OPT_WT,SMC_TR,SH2OX_TR,SMC_SUB,SH2OX_SUB &
+                                   ,infxsrt_tr,sfcheadrt_tr,soldrain_tr)
 
 
        implicit none
@@ -246,6 +249,14 @@ print *, "FLAG 4)003"
        real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
        real, dimension(kk) :: zsoil
        character(len = *) :: olddate
+!-------------------------------------------------
+! Needed for water tracer capability
+!-------------------------------------------------
+       integer,           intent(in)                            :: NTRACER
+       integer, optional, intent(in)                            :: OPT_WT
+       real,    optional, intent(inout),dimension(ii,jj,NTRACER):: SMC_TR,SH2OX_TR,SMC_SUB,SH2OX_SUB
+       real,    optional, intent(inout),dimension(ii,jj)        :: infxsrt_tr,sfcheadrt_tr,soldrain_tr
+!-------------------------------------------------
 
         integer ::  did
 
@@ -299,10 +310,24 @@ print *, "FLAG 4)003"
 #endif
           sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
           infxsrt = rt_domain(did)%infxsrt
+!---------wt calc--------
+          if (present(OPT_WT)) then
+            sfcheadrt_tr = rt_domain(did)%overland%control%surface_water_head_lsm_tr
+            infxsrt_tr   = rt_domain(did)%infxsrt_tr
+          end if
+!------------------------
           if(nlst_rt(did)%rst_typ .eq. 1) then
              STC = rt_domain(did)%STC
              SMC = rt_domain(did)%SMC
              SH2OX = rt_domain(did)%SH2OX
+             !-----wt calc-----
+             if (present(OPT_WT)) then
+               SMC_TR   = rt_domain(did)%SMC_TR
+               SH2OX_TR = rt_domain(did)%SH2OX_TR
+               SMC_SUB  = rt_domain(did)%SMC_SUB
+               SH2OX_SUB= rt_domain(did)%SH2OX_SUB
+             end if
+             !-----------------
           else
              if(nlst_rt(did)%sys_cpl .eq. 1) then
                 where( abs(STC) .gt. 500) stc = 282

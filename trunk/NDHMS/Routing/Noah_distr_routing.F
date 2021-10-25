@@ -312,6 +312,7 @@ END INTERFACE
         !yw GRDAREA=DXRT*DXRT
         ! GRDAREA=dist(i,j,9)
 
+print *, "FLAG IN SUBSFC_RTNG001"
 
 !DJG debug subsfc...
          subflo = 0.0
@@ -352,6 +353,7 @@ END INTERFACE
 ! rt_option flag). Remove this hard-coded option when rt_option=2 is fixed for subsurface.
 !     if(rt_option .eq. 1) then
       if (present(WVTFLAG)) then
+print *, "FLAG IN SUBSFC_RTNG002"
         CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT  &
@@ -367,6 +369,7 @@ END INTERFACE
               ,SMCRT_TR_PASS      = SMCRT_TR_PASS    &
               ,SMCRT_SUB_PASS     = SMCRT_SUB_PASS   &
               )
+print *, "FLAG IN SUBSFC_RTNG003"
       else
         CALL ROUTE_SUBSURFACE1(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &   
                LATKSATRT,SOLDEPRT,IXRT,JXRT,QSUBBDRYRT,QSUBBDRYTRT, &   
@@ -3671,7 +3674,8 @@ END INTERFACE
 !    and water available for subsfc routing (CWATAVAIL)...
 ! This subroutine returns: ZWATTABLRT, CWATAVAIL and SATLYRCHK
 
-    if(WVTFLAG .gt. 0) then
+    if(present(WVTFLAG)) then
+print *, "FLAG IN SubsurfaceRouting001"
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
@@ -3686,13 +3690,15 @@ END INTERFACE
           ,INFXSUBRT_TR_PASS  = INFXSUBRT_TR_PASS   & !wt vars
           ,SMCMAXRT_SUB_PASS  = SMCMAXRT_SUB_PASS   & !wt vars
           )
-
+print *, "FLAG IN SubsurfaceRouting002"
     else
+print *, "FLAG IN SubsurfaceRouting003"
     CALL SUBSFC_RTNG(dist,ZWATTABLRT,QSUBRT,SOXRT,SOYRT,  &
           LKSATRT,SOLDEPRT,QSUBBDRYRT,QSUBBDRYTRT,NSOIL,SMCRT,     &
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK &
          ,NTRACER)
+print *, "FLAG IN SubsurfaceRouting003"
     end if
 
 #ifdef HYDRO_D

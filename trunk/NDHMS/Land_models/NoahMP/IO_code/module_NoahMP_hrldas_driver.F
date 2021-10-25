@@ -42,7 +42,7 @@ module module_NoahMP_hrldas_driver
 
 #ifdef WRF_HYDRO
    REAL,    allocatable, DIMENSION(:,:)   :: infxsrt,sfcheadrt, soldrain
-   REAL,    allocatable, DIMENSION(:,:)   :: infxsrt_tr,  soldrain_tr    ! water tracer vars
+   REAL,    allocatable, DIMENSION(:,:)   :: infxsrt_tr, sfcheadrt_tr, soldrain_tr    ! water tracer vars
    !LRK - Remove HRLDAS_ini_typ for WRF-Hydro
    integer :: forc_typ, snow_assim, HRLDAS_ini_typ
    !integer :: forc_typ, snow_assim
@@ -521,6 +521,32 @@ module module_NoahMP_hrldas_driver
      use module_rt_data, only: rt_domain
      use module_hrldas_HYDRO, only: open_print_mpp
      implicit  none
+!---------------------------------------------
+! Define interface for hrldas_drv_HYDRO_ini [Huancui Hu]
+!---------------------------------------------
+INTERFACE
+  SUBROUTINE hrldas_drv_HYDRO_ini(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,&
+                                  ii,jj,kk,kt,dt,olddate,zsoil   &
+                                 ,NTRACER,OPT_WT, SMOIS_TR, SH2OXY_TR,SMOIS_SUB,SH2OXY_SUB &    !wt vars
+                                 ,infxsrt_tr,sfcheadrt_tr,soldrain_tr)       !wt vars
+          implicit none
+          integer,            intent(in)                             :: ii,jj,kk, kt
+          character(len=*),   intent(in)                             :: olddate
+          real                                                       :: dt
+          real,               intent(inout),dimension(ii,kk,jj)      :: STC_io,SMC_io,SH2OX_io
+          real,               intent(inout),dimension(ii,jj)         :: infxsrt,sfcheadrt, soldrain
+          real,               intent(in),   dimension(kk)            :: zsoil
+!--------------------------------------------------------
+! Needed for water tracer capability
+!--------------------------------------------------------
+          integer,            intent(in)                             :: NTRACER
+          integer,optional,   intent(in)                             :: OPT_WT
+          real,   optional,   intent(inout),dimension(ii,NTRACER,jj) :: SMOIS_TR, SH2OXY_TR, SMOIS_SUB,SH2OXY_SUB
+          real,   optional,   intent(inout),dimension(ii,jj)         :: infxsrt_tr,sfcheadrt_tr, soldrain_tr
+  END SUBROUTINE hrldas_drv_HYDRO_ini
+END INTERFACE
+!---------------------------------------------
+
      integer:: NTIME_out
      integer, parameter :: did=1
 
@@ -806,7 +832,9 @@ module module_NoahMP_hrldas_driver
          jx_tmp = yend - ystart + 1
     else
 #endif
+print *, "flag new1"
        call read_dim(hrldas_setup_file,ix_tmp,jx_tmp)
+print *, "flag new2"
        call MPP_LAND_PAR_INI(1,ix_tmp,jx_tmp,1)
        call getLocalXY(ix_tmp,jx_tmp,xstart,ystart,xend,yend)
 #ifdef WRF_HYDRO
@@ -814,9 +842,11 @@ module module_NoahMP_hrldas_driver
 #endif
 #endif
 
+print *, "flag new3"
   call read_hrldas_hdrinfo(hrldas_setup_file, ix, jx, xstart, xend, ystart, yend, &
        iswater, isurban, isice, llanduse, dx, dy, truelat1, truelat2, cen_lon, lat1, lon1, &
        igrid, mapproj)
+print *, "flag new4"
   write(hgrid,'(I1)') igrid
 
   write(olddate,'(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
@@ -1425,6 +1455,30 @@ print *, "NTRACER", NTRACER
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
+!------------------------------------------------------------------------------------------
+! Needed for water tracer capabilit
+!------------------------------------------------------------------------------------------
+  if (OPT_WT .eq. 1) then
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC_TR"     , SMOIS_TR    )  !1
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O_TR"    , SH2OXY_TR   )  !2
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNICE_TR"   , SNICEXY_TR  )  !3
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNLIQ_TR"   , SNLIQXY_TR  )  !4
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSNOW_TR"   , QSNOWXY_TR  )  !5
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ_TR"  , CANLIQXY_TR )  !6
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE_TR"  , CANICEXY_TR )  !7
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV_TR"   , SNOWXY_TR   )  !8
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH_TR"   , SNOWHXY_TR  )  !9
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WA_TR"      , WAXY_TR     )  !10
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "WT_TR"      , WTXY_TR     )  !11
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACMELT_TR"  , ACSNOM_TR   )  !12
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACSNOW_TR"  , ACSNOW_TR   )  !13
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF_TR",SFCRUNOFF_TR   ) !14
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF_TR" ,UDRUNOFF_TR    ) !15
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC_SUB"     , SMOIS_SUB    )  !16
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O_SUB"    , SH2OXY_SUB   )  !17
+  end if
+!------------------------------------------------------------------------------------------
+
 #ifdef WRF_HYDRO
      if(checkRstV("ACCPRCP") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCPRCP"  ,ACCPRCP    )
      if(checkRstV("ACCECAN") .eq. 0) call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACCECAN"  ,ACCECAN    )
@@ -1603,8 +1657,10 @@ print *, "NTRACER", NTRACER
    !-----water tracer vars-----
    if (OPT_WT .eq. 1) then
      allocate( infxsrt_tr   (ix,jx) )
+     allocate( sfcheadrt_tr (ix,jx) )
      allocate( soldrain_tr  (ix,jx) )
      infxsrt_tr  = 0.0
+     sfcheadrt_tr= 0.0
      soldrain_tr = 0.0
    end if
    !-----water tracer end------   
@@ -1626,9 +1682,22 @@ print *, "NTRACER", NTRACER
    print*, "zsoil/soil_thick_input = ", soil_thick_input(1:NSOIL) 
 #endif
 
+  !-------water tracer calc------
+  if (OPT_WT .eq. 1) then
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
-         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_timestep),          &
-         olddate,zsoil(1:NSOIL))
+         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NSOIL,real(noah_timestep),          &
+         olddate,zsoil(1:NSOIL)      &
+         , NTRACER, OPT_WT=OPT_WT                           &
+         , SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR           &
+         , SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB       &
+         , infxsrt_tr=infxsrt_tr                            &
+         , sfcheadrt_tr=sfcheadrt_tr                        &
+         , soldrain_tr =soldrain_tr)
+  else
+   call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
+         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,NSOIL,real(noah_timestep),          &
+         olddate,zsoil(1:NSOIL),NTRACER)
+  end if
 
 call get_iocflag(1, io_config_outputs)
 
@@ -1729,7 +1798,7 @@ end subroutine land_driver_ini
      INTERFACE
         subroutine hrldas_drv_HYDRO(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk, &
                                    NTRACER, WVTFLAG, SMOIS_SUB, SH2OXY_SUB, &      !wt vars
-                                   SMOIS_TR, SH2OXY_TR,infxsrt_tr, soldrain_tr )   !wt vars
+                                   SMOIS_TR, SH2OXY_TR,infxsrt_tr, sfcheadrt_tr,soldrain_tr )   !wt vars
           implicit none
           integer,                                intent(INOUT) :: ii,jj,kk
           real,dimension(ii,kk,jj),               intent(INOUT) :: STC_io,SMC_io,SH2OX_io
@@ -1738,7 +1807,7 @@ end subroutine land_driver_ini
           integer,                                intent(INOUT) :: NTRACER
           integer,                      optional, intent(INOUT) :: WVTFLAG
           real,dimension(ii,NTRACER,jj),optional, intent(INOUT) :: SMOIS_SUB, SH2OXY_SUB, SMOIS_TR,SH2OXY_TR
-          real,dimension(ii,jj),        optional, intent(INOUT) :: infxsrt_tr, soldrain_tr
+          real,dimension(ii,jj),        optional, intent(INOUT) :: infxsrt_tr,sfcheadrt_tr, soldrain_tr
         end subroutine hrldas_drv_HYDRO
      END INTERFACE
 
@@ -2106,7 +2175,7 @@ print *, "NTRACER", NTRACER
                 , RUNSFXY_TR=RUNSFXY_TR, RUNSBXY_TR=RUNSBXY_TR, ECANXY_TR=ECANXY_TR                  &
 		, EDIRXY_TR=EDIRXY_TR, ETRANXY_TR=ETRANXY_TR, FLUXXY_TR=FLUXXY_TR                    & ! IN WVT variables
 #ifdef WRF_HYDRO
-                , INFXSRT_TR=INFXSRT_TR, soldrain_tr=soldrain_tr               &    !O water tracer
+                , INFXSRT_TR=INFXSRT_TR, sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr           &    !O water tracer
 #endif 
                 )
 print *, "FLAG9-1" 
@@ -2150,7 +2219,7 @@ print *, "FLAG9-2"
        call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, &
             NTRACER, WVTFLAG=WVTFLAG, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB, &    ! water tracer vars      
             SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR,              &    ! water tracer vars
-            infxsrt_tr=infxsrt_tr, soldrain_tr=soldrain_tr)           ! water tracer vars
+            infxsrt_tr=infxsrt_tr, sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr)  ! water tracer vars
      end if
 #endif
 
@@ -2512,7 +2581,7 @@ subroutine lsm_restart()
   call prepare_restart_file (trim(outdir), version, igrid, llanduse, olddate, startdate,                         & 
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
-       cen_lon, iswater, ivgtyp)
+       cen_lon, iswater, ivgtyp, NTRACER)
 
    write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
 
@@ -2521,7 +2590,9 @@ subroutine lsm_restart()
   if(my_id .eq. io_id) then
 #endif
      ierr = nf90_open(trim(tmpStr),  NF90_WRITE, ncid)
+print *, 'flag rst 1'
      call define_rst_variables(ncid)
+print *, 'flag rst 3'
 #ifdef MPP_LAND
   endif
 #endif
@@ -2569,6 +2640,28 @@ subroutine lsm_restart()
   call add_to_restart(ncid,QSFC      , "QSFC"  )
   call add_to_restart(ncid,SFCRUNOFF , "SFCRUNOFF")
   call add_to_restart(ncid,UDRUNOFF  , "UDRUNOFF" )
+!-----------------------------------------------------------------
+! Needed for water tracer capability
+!-----------------------------------------------------------------
+  call add_to_restart(ncid,SMOIS_TR     , "SMC_TR"   , layers="TRAC")   !1
+  call add_to_restart(ncid,SH2OXY_TR    , "SH2O_TR"  , layers="TRAC")   !2
+  call add_to_restart(ncid,SNICEXY_TR   , "SNICE_TR" , layers="SNOW")   !3
+  call add_to_restart(ncid,SNLIQXY_TR   , "SNLIQ_TR" , layers="SNOW")   !4
+  call add_to_restart(ncid,QSNOWXY_TR   , "QSNOW_TR" )                  !5
+  call add_to_restart(ncid,CANLIQXY_TR  , "CANLIQ_TR")                  !6 
+  call add_to_restart(ncid,CANICEXY_TR  , "CANICE_TR")                  !7
+  call add_to_restart(ncid,SNOWXY_TR    , "SNEQV_TR" )                  !8
+  call add_to_restart(ncid,SNOWHXY_TR   , "SNOWH_TR" )                  !9
+  call add_to_restart(ncid,WAXY_TR      , "WA_TR"    )                  !10
+  call add_to_restart(ncid,WTXY_TR      , "WT_TR"    )                  !11
+  call add_to_restart(ncid,ACSNOM_TR    , "ACMELT_TR")                  !12
+  call add_to_restart(ncid,ACSNOW_TR    , "ACSNOW_TR")                  !13
+  call add_to_restart(ncid,SFCRUNOFF_TR , "SFCRUNOFF_TR")               !14
+  call add_to_restart(ncid,UDRUNOFF_TR  , "UDRUNOFF_TR" )               !15
+  call add_to_restart(ncid,SMOIS_SUB    , "SMC_SUB"  , layers="TRAC")   !16
+  call add_to_restart(ncid,SH2OXY_SUB   , "SH2O_SUB" , layers="TRAC")   !17
+!-----------------------------------------------------------------
+
 #ifdef WRF_HYDRO
   call add_to_restart(ncid,ACCPRCP   , "ACCPRCP" )
   call add_to_restart(ncid,ACCECAN   , "ACCECAN" )
@@ -2813,6 +2906,12 @@ subroutine lsm_rst_bi_in()
   read(iunit,ERR=101) QSFC      
   read(iunit,ERR=101) SFCRUNOFF    
   read(iunit,ERR=101) UDRUNOFF     
+!-----------------------------------
+! Needed for water tracer capability
+!----------------------------------
+! not needed for now 
+!----------------------------------
+
 ! #ifndef REALTIME
 ! #ifdef WRF_HYDRO
 !   read(iunit,ERR=101) ACCPRCP   
@@ -2871,6 +2970,7 @@ end subroutine lsm_rst_bi_in
       ierr = nf90_redef(ncid)
       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_2d_float() - "// & 
                              "Problem nf90_redef")
+print *, 'flag rst 01'
 ! add the variables
 
   call define_rst_var(ncid,TSLB      , "SOIL_T", layers="SOIL")
@@ -2916,6 +3016,29 @@ end subroutine lsm_rst_bi_in
   call define_rst_var(ncid,QSFC      , "QSFC"  )
   call define_rst_var(ncid,SFCRUNOFF , "SFCRUNOFF")
   call define_rst_var(ncid,UDRUNOFF  , "UDRUNOFF" )
+!-----------------------------------------------
+! Neede for water tracer capaiblity
+!----------------------------------------------
+if (OPT_WT .eq. 1) then
+  call define_rst_var(ncid,SMOIS_TR     , "SMC_TR"   , layers="TRAC")    !1
+  call define_rst_var(ncid,SH2OXY_TR    , "SH2O_TR"  , layers="TRAC")    !2
+  call define_rst_var(ncid,SNICEXY_TR   , "SNICE_TR" , layers="SNOW")    !3
+  call define_rst_var(ncid,SNLIQXY_TR   , "SNLIQ_TR" , layers="SNOW")    !4
+  call define_rst_var(ncid,QSNOWXY_TR   , "QSNOW_TR" )                   !5
+  call define_rst_var(ncid,CANLIQXY_TR  , "CANLIQ_TR")                   !6
+  call define_rst_var(ncid,CANICEXY_TR  , "CANICE_TR")                   !7
+  call define_rst_var(ncid,SNOWXY_TR    , "SNEQV_TR" )                   !8
+  call define_rst_var(ncid,SNOWHXY_TR   , "SNOWH_TR" )                   !9
+  call define_rst_var(ncid,WAXY_TR      , "WA_TR"    )                   !10
+  call define_rst_var(ncid,WTXY_TR      , "WT_TR"    )                   !11
+  call define_rst_var(ncid,ACSNOM_TR    , "ACMELT_TR")                   !12
+  call define_rst_var(ncid,ACSNOW_TR    , "ACSNOW_TR")                   !13
+  call define_rst_var(ncid,SFCRUNOFF_TR , "SFCRUNOFF_TR")                !14
+  call define_rst_var(ncid,UDRUNOFF_TR  , "UDRUNOFF_TR" )                !15
+  call define_rst_var(ncid,SMOIS_SUB    , "SMC_SUB"   , layers="TRAC")   !16
+  call define_rst_var(ncid,SH2OXY_SUB   , "SH2O_SUB"  , layers="TRAC")   !17
+end if
+!-----------------------------------------------
 #ifdef WRF_HYDRO
   call define_rst_var(ncid,ACCPRCP   , "ACCPRCP" )
   call define_rst_var(ncid,ACCECAN   , "ACCECAN" )

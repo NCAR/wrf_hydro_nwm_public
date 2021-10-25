@@ -86,7 +86,7 @@ CONTAINS
                 , RUNSFXY_TR, RUNSBXY_TR, ECANXY_TR               &
 		, EDIRXY_TR,  ETRANXY_TR, FLUXXY_TR               & ! IN/OUT WVT variables
 #ifdef WRF_HYDRO
-                ,INFXSRT_TR, soldrain_tr                          & ! OUT water tracer vars
+                ,INFXSRT_TR,sfcheadrt_tr, soldrain_tr             & ! OUT water tracer vars
 #endif
                )
 !----------------------------------------------------------------
@@ -151,7 +151,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ), OPTIONAL ::  MP_HAIL   ! hail precipitation entering land model [mm]       ! MB/AN : v3.7
 #ifdef WRF_HYDRO
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  sfcheadrt,INFXSRT,soldrain   ! for WRF-Hydro
-    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  INFXSRT_TR, soldrain_tr   ! water tracer vars
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  INFXSRT_TR, sfcheadrt_tr,soldrain_tr   ! water tracer vars
 #endif
 #ifdef SPATIAL_SOIL
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(IN) ::  BEXP_3D   ! C-H B exponent
@@ -507,6 +507,7 @@ CONTAINS
     REAL                                :: PONDING1_TR     ! snowmelt with no pack [mm]
     REAL                                :: PONDING2_TR     ! snowmelt with no pack [mm]
     REAL, DIMENSION( 1:NTRACER)         :: FLUX_TR         ! tracer flux at soil layer bottom [m]
+    REAL                                :: sfcheadrt_tr_pass
 !------------------------------------------------------------------------------
 
 ! Intermediate terms
@@ -731,6 +732,7 @@ end if
        if (present(SMCWTDXY_TR)) SMCWTD_TR                = SMCWTDXY_TR(I,J)
        if (present(RECHXY_TR))   RECH_TR                  = 0.
        if (present(DEEPRECHXY_TR)) DEEPRECH_TR              = 0.
+       if (present(sfcheadrt_tr))  sfcheadrt_tr_pass        = sfcheadrt_tr(i,j)
 print *, "FLAG003-1"
 !---------------------------------------------
 
@@ -973,6 +975,9 @@ print *, "FLAG005"
             , RUNSRF_TR=RUNSRF_TR, RUNSUB_TR=RUNSUB_TR, QSNBOT_TR=QSNBOT_TR  & !OUT
 	    , PONDING_TR=PONDING_TR, PONDING1_TR=PONDING1_TR             &  !OUT
 	    , PONDING2_TR=PONDING2_TR, FLUX_TR=FLUX_TR                   & ! OUT
+#ifdef WRF_HYDRO
+            , sfcheadrt_tr_pass = sfcheadrt_tr(i,j)                      &
+#endif
             )            ! OUT :  
 print *, "FLAG006"
       end if
