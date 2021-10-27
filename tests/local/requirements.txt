@@ -7,7 +7,7 @@ certifi==2019.6.16
 cftime==1.0.3.4
 chardet==3.0.4
 cloudpickle==1.2.1
-dask==0.19.4
+dask==2021.10.0
 DateTime==4.3
 deepdiff==3.3.0
 f90nml==1.0.2
