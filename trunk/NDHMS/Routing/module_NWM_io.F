@@ -1080,7 +1080,7 @@ end subroutine output_chrt_NWM
 
 subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,ixPar,jxPar,zNum,varReal,vegTyp,varInd)
    use module_rt_data, only: rt_domain
-   use config_base, only: nlst
+   use config_base, only: nlst, noah_lsm
    use Module_Date_utilities_rt, only: geth_newdate, geth_idts
    use module_NWM_io_dict
    use netcdf
@@ -1365,6 +1365,20 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! ! If crocus is off, these should not be outputted
+   if (noah_lsm%crocus_opt == 0) then
+      fileMeta%outFlag(101) = 0
+      fileMeta%outFlag(102) = 0
+      fileMeta%outFlag(103) = 0
+      fileMeta%outFlag(104) = 0
+      fileMeta%outFlag(108) = 0
+      fileMeta%outFlag(109) = 0
+      fileMeta%outFlag(111) = 0
+      fileMeta%outFlag(114) = 0
+      fileMeta%outFlag(115) = 0
+      fileMeta%outFlag(116) = 0
+   end if
+
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
@@ -1434,7 +1448,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define snow_layers dimension')
          iret = nf90_def_dim(ftnNoahMP,'reference_time',1,dimId(6))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define reference_time dimension')
-         iret = nf90_def_dim(ftnNoahMP,'glacier_levels',fileMeta%act_lev,dimId(8))
+         if (noah_lsm%crocus_opt == 1) &
+              iret = nf90_def_dim(ftnNoahMP,'glacier_levels',fileMeta%act_lev,dimId(8))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to define act_layers dimension')
          ! Only create vis_nir if we are outputting the two snow albedo variables.
          ! Otherwise these are unecessary dimensions.
@@ -1524,7 +1539,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
-                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
+                  else if(noah_lsm%crocus_opt == 1 .and. fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_int,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)
@@ -1536,7 +1551,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(4),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSnowLayers) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(5),dimId(3),dimId(1)/),varId)
-                  else if(fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
+                  else if(noah_lsm%crocus_opt == 1 .and. fileMeta%numLev(iTmp) .eq. fileMeta%act_lev) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(8),dimId(3),dimId(1)/),varId)
                   else if(fileMeta%numLev(iTmp) .eq. fileMeta%numSpectrumBands) then
                      iret = nf90_def_var(ftnNoahMP,trim(fileMeta%varNames(iTmp)),nf90_float,(/dimId(2),dimId(7),dimId(3),dimId(1)/),varId)

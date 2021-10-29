@@ -1104,7 +1104,7 @@ CONTAINS
 
 
        ENDIF
-       IF ((crocus_opt == 0) .or. GLACR == 1) THEN
+       IF ((crocus_opt == 0 .and. ICE == -1) .or. GLACR == 1) THEN
          FSNO   = 1.0
          TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
          TGB    = TG
