@@ -1459,7 +1459,7 @@ CONTAINS
 
                 if (GLACINFO(I,J).eq.1 .and. PSNOWHEIGHTXY(I,J).gt.0) then
                    ALBEDO   (I,J) = ZP_SNOWALB(1)
-                   SNEQVOXY (I,J) = PSNOWTOTSWEXY(I,J)
+                   SNOW     (I,J) = PSNOWTOTSWEXY(I,J)
                    SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
                    ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
 #ifdef WRF_HYDRO
