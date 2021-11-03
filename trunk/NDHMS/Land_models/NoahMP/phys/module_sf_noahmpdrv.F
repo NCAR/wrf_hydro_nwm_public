@@ -638,7 +638,6 @@ CONTAINS
     END DO
 
     JLOOP : DO J=jts,jte
-       GLACR= 0
        IF(ITIMESTEP == 1)THEN
           DO I=its,ite
              IF((XLAND(I,J)-1.5) >= 0.) THEN    ! Open water case
@@ -664,7 +663,10 @@ CONTAINS
 
 !-----------------------------------------------------------------------
    ILOOP : DO I = its, ite
-      GLACR= 0
+      ! Reset GLACR and ICE at the start of every iteration
+      GLACR = 0
+      ICE   = 0
+
     IF (XICE(I,J) >= XICE_THRES) THEN
        ICE = 1                            ! Sea-ice point
 
