@@ -79,7 +79,7 @@ Contains
     call get_2d_netcdf_ruc("RAINNC", ncid, pcp,   ix, jx,tlevel, .true., ierr)
     call get_2d_netcdf_ruc("VEGFRA", ncid, fpar,  ix, jx,tlevel, .true., ierr)
     if(ierr == 0) then
-        if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 10000) ) fpar = fpar/100.
+        if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 10000) ) fpar = fpar*0.01
     endif
     call get_2d_netcdf_ruc("LAI", ncid, lai,  ix, jx,tlevel, .true., ierr)
 
@@ -2793,7 +2793,7 @@ end subroutine read_hydro_forcing_mpp1
     endif
     call mpp_land_bcast_int1(ierr)
     if(ierr == 0) call decompose_data_real (buf2,fpar)
-    if(my_id .eq. io_id ) call get_2d_netcdf("LAI",     ncid, buf2,   units, ix, jx, .FALSE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf("LAI",     ncid, buf2,   units, global_nx, global_ny, .FALSE., ierr)
     call mpp_land_bcast_int1(ierr)
     if(ierr == 0) call decompose_data_real (buf2,lai)
 
@@ -2882,8 +2882,10 @@ end subroutine read_hydro_forcing_mpp1
     call mpp_land_bcast_int1(ierr)
     if(ierr == 0) call decompose_data_real (buf2,lai)
     if(my_id .eq. io_id) then
-       call get_2d_netcdf_ruc("VEGFRA", ncid, fpar,  ix, jx,tlevel, .true., ierr)
-       if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 10000) ) fpar = fpar/100.
+       call get_2d_netcdf_ruc("VEGFRA", ncid, buf2, global_nx, global_ny, tlevel, .true., ierr)
+       if(ierr == 0) then
+          if(maxval(buf2) .gt. 10 .and. maxval(buf2) .lt. 10000)  buf2 = buf2 * 1.E-2
+       endif
     endif
     call mpp_land_bcast_int1(ierr)
     if(ierr == 0) call decompose_data_real (buf2,fpar)
@@ -2907,7 +2909,7 @@ end subroutine read_hydro_forcing_mpp1
     call get_2d_netcdf_ruc("RAINNC", ncid, pcp,   ix, jx,tlevel, .true., ierr)
     call get_2d_netcdf_ruc("VEGFRA", ncid, fpar,  ix, jx,tlevel, .false., ierr)
     if(ierr == 0) then
-        if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 10000) ) fpar = fpar/100.
+        if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 10000) ) fpar = fpar * 0.01
     endif
     call get_2d_netcdf_ruc("LAI", ncid, lai,  ix, jx,tlevel, .false., ierr)
 
