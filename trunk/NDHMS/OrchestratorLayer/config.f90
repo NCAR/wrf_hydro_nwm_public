@@ -158,6 +158,8 @@ module config_base
      integer            :: nLastObs
      integer            :: bucket_loss
 
+     logical            :: channel_bypass = .FALSE.
+
    contains
 
      procedure, pass(self) :: check => rt_nlst_check
@@ -332,6 +334,10 @@ contains
       call hydro_stop('hydro.namelist ERROR: Invalid CHANRTSWCRT specified')
    endif
    if(self%CHANRTSWCRT .eq. 1) then
+      if ( self%channel_option .eq. -1 ) then
+         self%channel_option = 2
+         self%channel_bypass = .TRUE.
+      endif
       if( (self%channel_option .lt. 1 ) .or. (self%channel_option .gt. 3) ) then
          call hydro_stop('hydro.namelist ERROR: Invalid channel_option specified')
       endif
