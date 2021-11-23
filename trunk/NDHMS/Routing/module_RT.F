@@ -192,6 +192,10 @@ CONTAINS
      allocate( rt_domain(did)%INFXSAGGRT 	(IXRT,JXRT) )
      rt_domain(did)%INFXSAGGRT 	= 0.0                
      !------Needed for water tracer capability------
+     allocate( rt_domain(did)%INFXSWGT_TR    (IXRT,JXRT) )
+     rt_domain(did)%INFXSWGT_TR    = 0.0
+     allocate( rt_domain(did)%SH2OWGT_TR     (IXRT,JXRT,NTRACER) )
+     rt_domain(did)%SH2OWGT_TR     = 0.0
      allocate( rt_domain(did)%QSUBRT_TR      (IXRT,JXRT) )
      rt_domain(did)%QSUBRT_TR      = 0.0
      allocate( rt_domain(did)%QSUBBDRYRT_TR  (IXRT,JXRT) )
@@ -211,6 +215,8 @@ CONTAINS
      !rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel = 0.0                                ! moved to overland streams and lakes
      allocate( rt_domain(did)%QSTRMVOLRT_TS  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_TS  = 0.0                
+     allocate( rt_domain(did)%QSTRMVOLRT_TS_TR  (IXRT,JXRT) )
+     rt_domain(did)%QSTRMVOLRT_TS_TR  = 0.0
      allocate( rt_domain(did)%QSTRMVOLRT_ACC  (IXRT,JXRT) )
      rt_domain(did)%QSTRMVOLRT_ACC  = 0.0                
      !allocate( rt_domain(did)%overland%control%boundary_flux   	(IXRT,JXRT) )
@@ -1543,6 +1549,10 @@ if(nlst_rt(did)%channel_only       .eq. 0 .and. &
 
    rt_domain(did)%INFXSWGT = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
    rt_domain(did)%SH2OWGT = 1.
+!-----needed for tracer vars-----
+   rt_domain(did)%INFXSWGT_TR = 1./(nlst_rt(did)%AGGFACTRT*nlst_rt(did)%AGGFACTRT)
+   rt_domain(did)%SH2OWGT_TR = 1.
+!--------------------------------
    rt_domain(did)%SOLDEPRT = -1.0 * nlst_rt(did)%ZSOIL8(nlst_rt(did)%NSOIL)
    rt_domain(did)%QSUBRT = 0.0
    rt_domain(did)%ZWATTABLRT = 0.0

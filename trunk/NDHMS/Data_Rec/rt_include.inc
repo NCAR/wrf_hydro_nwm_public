@@ -52,9 +52,13 @@
   REAL                                      :: SFCHEADAGGRT_TR    !tracer surface water aggregated for each LSM grid
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_x_tr      !tracer surface routing flux accumulated
   REAL,    allocatable, DIMENSION(:,:)      :: q_sfcflx_y_tr      !tracer surface routing flux accumulated (might be useless)
+  REAL,    allocatable, DIMENSION(:,:)      :: QSTRMVOLRT_TS_TR   !tracer surface_water_to_channel
   REAL                                      :: QSUBBDRYTRT_TR
   REAL,    allocatable, DIMENSION(:,:)      :: QSUBRT_TR          !tracer subsurfacer routing flux
-  REAL,    allocatable, DIMENSION(:,:)      :: QSUBBDRYRT_TR      !tracer subsurfacer boundary flux? 
+  REAL,    allocatable, DIMENSION(:,:)      :: QSUBBDRYRT_TR      !tracer subsurfacer boundary flux?
+  REAL                                      :: LSMVOL_TR          !tracer aggregated surface water volume
+  REAL,    allocatable, DIMENSION(:,:)      :: INFXSWGT_TR        !tracer surface water aggregation/disaggregation weight
+  REAL,    allocatable, DIMENSION(:,:,:)    :: SH2OWGT_TR         !tracer soil water aggregation/disaggregation weight 
 !---------------------------------------------------------------
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

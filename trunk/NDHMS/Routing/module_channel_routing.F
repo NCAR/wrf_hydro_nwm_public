@@ -726,8 +726,12 @@ SUBROUTINE calculate_proportr_muskingcunge(Km, X, dt, &
   PROPOR_TR     = 0.0
   STORAGE_TOTAL = 0.5*(Km*qup   +Km*(1-X)*qdp   +Km*quc   +Km*(1-X)*qdc   )+ql*dt
   STORAGE_TR    = 0.5*(Km*qup_tr+Km*(1-X)*qdp_tr+Km*quc_tr)                +ql_tr*dt
-  PROPOR_TR     = STORAGE_TR/(STORAGE_TOTAL -0.5*Km*(1-X)*qdc)
-  PROPOR_TR     = min(1.0, max(0.0,PROPOR_TR))
+  if ((STORAGE_TOTAL -0.5*Km*(1-X)*qdc) .gt. 1.0E-10) then
+    PROPOR_TR     = STORAGE_TR/(STORAGE_TOTAL -0.5*Km*(1-X)*qdc)
+    PROPOR_TR     = min(1.0, max(0.0,PROPOR_TR))
+  else
+    PROPOR_TR     = 0.0
+  end if
 
 ! ------------------------------------------------
 END SUBROUTINE calculate_proportr_muskingcunge
@@ -1802,7 +1806,7 @@ end subroutine drive_CHANNEL
        , QLateral, velocity                          &
        , HLINK                                       &
        , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only  &
-       , wvtflag_pass, QLINK_TR_pass, qout_gwsubbas_tr_pass               & !wt vars
+       , wvtflag_pass, QSTRMVOLRT_TR_pass, QLINK_TR_pass, qout_gwsubbas_tr_pass               & !wt vars
        , landRunOff_tr_pass, QLateral_tr_pass, HLINK_tr_pass              & !wt vars
        )
 
@@ -1933,6 +1937,7 @@ end subroutine drive_CHANNEL
 
 !-----needed for water tracer capability------
        integer, intent(IN),    optional                       :: wvtflag_pass
+       real ,   intent(IN),    optional, dimension(IXRT,JXRT) :: QSTRMVOLRT_TR_pass
        real ,   intent(INOUT), optional, dimension(:,:)       :: QLINK_TR_pass
        real ,   intent(IN),    optional, dimension(:)         :: qout_gwsubbas_tr_pass
        real ,   intent(INOUT), optional, dimension(ixrt,jxrt) :: landRunOff_tr_pass
@@ -1947,7 +1952,7 @@ end subroutine drive_CHANNEL
        real,                             dimension(NLINKSL)   :: LQLateral_tr
 #endif
        real,                             dimension(nToNodeInd,2) :: gQLINK_tr
-       real                                                   :: qdctr, qdp_tr, ql_tr, depth_tr
+       real                                                   :: qdc_tr, qdp_tr, ql_tr, depth_tr
 !---------------------------------------------
        
 #ifdef MPP_LAND
@@ -2010,6 +2015,7 @@ else
    if (present(wvtflag_pass)) then
      QLateral_tr_pass = 0
      LQLateral_tr     = 0
+!print *, "Flag within drive_CHANNEL_RSL 01, QLateral_tr_pass(1002): ",QLateral_tr_pass(1002)
    end if
 
    tmpQLateral = 0  !! WHY DOES THIS tmp variable EXIST?? Only for accumulations??
@@ -2063,6 +2069,10 @@ else
                  *LUDRSL(k)%nodeArea(m)/DT
             tmpLQLateral(k) = tmpLQLateral(k) + QSTRMVOLRT(ii,jj)*LUDRSL(k)%weight(m)/1000 & 
                  *LUDRSL(k)%nodeArea(m)/DT
+            if (present(wvtflag_pass)) then
+              LQLateral_tr(k) = LQLateral_tr(k)+QSTRMVOLRT_TR_pass(ii,jj)*LUDRSL(k)%weight(m)/1000 &
+                 *LUDRSL(k)%nodeArea(m)/DT
+            end if
          end do
       end do
 
@@ -2084,7 +2094,10 @@ else
 
 #ifdef MPP_LAND
    call updateLinkV(LQLateral, QLateral(1:NLINKSL))
-   if (present(wvtflag_pass)) call updateLinkV(LQLateral_tr, QLateral_tr_pass(1:NLINKSL))
+   if (present(wvtflag_pass)) then
+     call updateLinkV(LQLateral_tr, QLateral_tr_pass(1:NLINKSL))
+!print *, "Flag within drive_CHANNEL_RSL 02, QLateral_tr_pass(1002): ",QLateral_tr_pass(1002)
+   end if
 #else
    call hydro_stop("fatal error: NHDPlus only works for parallel now.")
    QLateral = LQLateral
@@ -2104,7 +2117,11 @@ else
    !! REQUIRE BUCKET MODEL ON HERE?
    if(NLINKSL .gt. 0) then
      QLateral(1:NLINKSL) = QLateral(1:NLINKSL) + qout_gwsubbas(1:NLINKSL)
-     if (present(wvtflag_pass)) QLateral_tr_pass(1:NLINKSL) = QLateral_tr_pass(1:NLINKSL)+qout_gwsubbas_tr_pass(1:NLINKSL)
+     if (present(wvtflag_pass)) then
+!print *, "Flag within drive_CHANNEL_RSL 03, QLateral(1002),qout_gwsubbas(1002),QLateral_tr_pass(1002),qout_gwsubbas_tr_pass(1002):",QLateral(1002),qout_gwsubbas(1002),QLateral_tr_pass(1002),qout_gwsubbas_tr_pass(1002)
+       QLateral_tr_pass(1:NLINKSL) = QLateral_tr_pass(1:NLINKSL)+qout_gwsubbas_tr_pass(1:NLINKSL)
+!print *, "Flag within drive_CHANNEL_RSL 03, QLateral_tr_pass(1002): ",QLateral_tr_pass(1002)
+     end if
    end if
 endif  !! if(channel_only .eq. 1) then; else; endif
 
@@ -2221,6 +2238,10 @@ do nt = 1, nsteps
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
 #endif
        if (present(wvtflag_pass)) then
+if (k .eq. 1002) then
+!  print *, "Flag within drive_CHANNEL_RSL 04, k, QLINK_TR_pass(k,1), Qup_tr,Quc_tr,QLateral_tr_pass(k),HLINK_tr_pass(k):", k, QLINK_TR_pass(k,1), Qup_tr,Quc_tr,QLateral_tr_pass(k),HLINK_tr_pass(k)
+!  print *, "QLINK(k,1),Qup,Quc,tmpQLINK(k,2),QLateral(k),HLINK(k):",QLINK(k,1),Qup,Quc,tmpQLINK(k,2),QLateral(k),HLINK(k)
+end if
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &
@@ -2228,6 +2249,10 @@ do nt = 1, nsteps
               , wvtflag_pass=wvtflag_pass, qdc_tr=tmpQLINK_tr(k,2)              & !wt vars
               , Qup_tr=Qup_tr, Quc_tr=Quc_tr, qdp_tr=QLINK_TR_pass(k,1)         & !wt vars
               , ql_tr=QLateral_tr_pass(k),depth_tr=HLINK_tr_pass(k))              !wt vars
+if (k .eq. 1002) then
+!  print *, "Flag within drive_CHANNEL_RSL 05, k, QLINK_TR_pass(k,1), Qup_tr,Quc_tr,QLateral_tr_pass(k),HLINK_tr_pass(k),tmpQLINK_tr(k,2),qdc_tr:",k, QLINK_TR_pass(k,1), Qup_tr,Quc_tr,QLateral_tr_pass(k),HLINK_tr_pass(k),tmpQLINK_tr(k,2),qdc_tr
+!  print *, "QLINK(k,1),Qup,Quc,tmpQLINK(k,2),QLateral(k),HLINK(k):",QLINK(k,1),Qup,Quc,tmpQLINK(k,2),QLateral(k),HLINK(k)
+end if
        else 
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &

@@ -601,9 +601,10 @@ if(nlst_rt(did)%SUBRTSWCRT         .gt. 0 .or. &
 !          endif
 
 !-----needed for water tracer capability-----
+    integer                                                     :: wvtflag_pass
     real, dimension(RT_DOMAIN(did)%ix,  RT_DOMAIN(did)%jx)      :: INFXSRT_tr_pass
     real, dimension(RT_DOMAIN(did)%ixrt,RT_DOMAIN(did)%jxrt)    :: landRunOff_tr_pass
-print *,"FLAG 5)001"
+!print *,"FLAG 5)001"
 
 if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
     nlst_rt(did)%SUBRTSWCRT         .ne. 0 .or. &
@@ -615,24 +616,30 @@ if (nlst_rt(did)%GWBASESWCRT        .ne. 0 .or. &
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
 
       RT_DOMAIN(did)%overland%streams_and_lakes%surface_water_to_channel = zeroFlt
+      if (nlst_rt(did)%WVTFLAG .gt. 0) then
+        RT_DOMAIN(did)%overland%streams_and_lakes%surface_water_to_channel_tr = zeroFlt
+      end if
       RT_DOMAIN(did)%LAKE_INFLORT_DUM = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake
 
       if(nlst_rt(did)%SUBRTSWCRT .ne. 0 .or. nlst_rt(did)%OVRTSWCRT .ne. 0) then
-print *,"FLAG 5)002"
+!print *, "FLAG 5)002, RT_DOMAIN(did)%SMC(75,46,:),RT_DOMAIN(did)%SMC_TR(75,46,:),RT_DOMAIN(did)%SMC_SUB(75,46,:),RT_DOMAIN(did)%INFXSRT_tr(75,46),RT_DOMAIN(did)%INFXSRT(75,46):",RT_DOMAIN(did)%SMC(75,46,:),RT_DOMAIN(did)%SMC_TR(75,46,:),RT_DOMAIN(did)%SMC_SUB(75,46,:),RT_DOMAIN(did)%INFXSRT_tr(75,46),RT_DOMAIN(did)%INFXSRT(75,46)
+!print *, "RT_DOMAIN(did)%SH2OX(75,46,:),RT_DOMAIN(did)%SH2OX_TR(75,46,:),RT_DOMAIN(did)%SH2OX_SUB(75,46,:):",RT_DOMAIN(did)%SH2OX(75,46,:),RT_DOMAIN(did)%SH2OX_TR(75,46,:),RT_DOMAIN(did)%SH2OX_SUB(75,46,:)
+!print *, "FLAG 5)002, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
          call disaggregateDomain_drv(did)
-print *,"FLAG 5)003"
+!print *, "FLAG 5)003,rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108):",rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108)
+!print *, "FLAG 5)003, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
       endif
       if(nlst_rt(did)%OVRTSWCRT .eq. 0) then
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
            if (nlst_rt(did)%WVTFLAG .gt. 0) then
-print *,"FLAG 5)004"
+!print *,"FLAG 5)004"
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
                  RT_DOMAIN(did)%INFXSWGT, nlst_rt(did)%AGGFACTRT, RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx, &
                  wvtflag_pass=nlst_rt(did)%WVTFLAG, INFXSRT_tr_pass=RT_DOMAIN(did)%INFXSRT_tr, landRunOff_tr_pass=RT_DOMAIN(did)%landRunOff_tr                     &       !wt vars
                  )
-print *,"FLAG 5)005"
-print *,"FLAG 5)005-1 RT_DOMAIN(did)%landRunOff_tr(10,10):",RT_DOMAIN(did)%landRunOff_tr(10,10)
+!print *,"FLAG 5)005"
+!print *,"FLAG 5)005-1 RT_DOMAIN(did)%landRunOff_tr(10,10):",RT_DOMAIN(did)%landRunOff_tr(10,10)
            else
             call RunOffDisag(RT_DOMAIN(did)%INFXSRT, RT_DOMAIN(did)%landRunOff,        &
                  rt_domain(did)%dist_lsm(:,:,9),rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9), &
@@ -650,9 +657,11 @@ print *,"FLAG 5)005-1 RT_DOMAIN(did)%landRunOff_tr(10,10):",RT_DOMAIN(did)%landR
    ! step 2)
    if(nlst_rt(did)%channel_only .eq. 0 .and. nlst_rt(did)%channelBucket_only .eq. 0) then
       if(nlst_rt(did)%SUBRTSWCRT .ne.0) then
-print *,"FLAG 5)006"
+!print *, "FLAG 5)006,rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108):",rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108)
+!print *, "FLAG 5)006, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
          call SubsurfaceRouting_drv(did)
-print *,"FLAG 5)007"
+!print *, "FLAG 5)007,rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108):",rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108)
+!print *, "FLAG 5)007, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -672,14 +681,16 @@ print *,"FLAG 5)007"
       call system_clock(count=clock_count_1, count_rate=clock_rate)
 #endif
       if(nlst_rt(did)%OVRTSWCRT .ne. 0) then
-print *,"FLAG 5)008"
+!print *, "FLAG 5)008, RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_SUB(41,27,:),RT_DOMAIN(did)%SMCRT(41,27,:),RT_DOMAIN(did)%SMCRT_SUB(41,27,:):",RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_SUB(41,27,:),RT_DOMAIN(did)%SMCRT(161:164,105:108,:),RT_DOMAIN(did)%SMCRT_SUB(161:164,105:108,:)
          call OverlandRouting_drv(did)
-print *,"FLAG 5)009"
+!print *, "FLAG 5)009, RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_SUB(41,27,:),RT_DOMAIN(did)%SMCRT(41,27,:),RT_DOMAIN(did)%SMCRT_TR(41,27,:):",RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_SUB(41,27,:),RT_DOMAIN(did)%SMCRT(161:164,105:108,:),RT_DOMAIN(did)%SMCRT_TR(161:164,105:108,:)
+!print *, "FLAG 5)009, RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_TR(41,27,:),RT_DOMAIN(did)%INFXSRT_tr(41,27),RT_DOMAIN(did)%INFXSRT(41,27):",RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_TR(41,27,:),RT_DOMAIN(did)%INFXSRT_tr(41,27),RT_DOMAIN(did)%INFXSRT(41,27)
+!print *, "rt_domain(did)%overland%control%surface_water_head_routing(161:164,105:108),rt_domain(did)%overland%control%surface_water_head_routing_tr(161:164,105:108):",rt_domain(did)%overland%control%surface_water_head_routing(161:164,105:108),rt_domain(did)%overland%control%surface_water_head_routing_tr(161:164,105:108)
       else
          rt_domain(did)%overland%control%surface_water_head_routing = rt_domain(did)%overland%control%infiltration_excess
          rt_domain(did)%overland%control%infiltration_excess = 0.
          if (nlst_rt(did)%WVTFLAG .gt. 0) then
-print *,"FLAG 5)010"
+!print *,"FLAG 5)010"
            rt_domain(did)%overland%control%surface_water_head_routing_tr = rt_domain(did)%overland%control%infiltration_excess_tr
            rt_domain(did)%overland%control%infiltration_excess_tr = 0.
          end if
@@ -695,6 +706,9 @@ print *,"FLAG 5)010"
 #endif
 
       RT_DOMAIN(did)%QSTRMVOLRT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel
+      if (nlst_rt(did)%WVTFLAG .gt. 0) then
+        RT_DOMAIN(did)%QSTRMVOLRT_TS_TR = rt_domain(did)%overland%streams_and_lakes%surface_water_to_channel_tr
+      end if
       RT_DOMAIN(did)%QSTRMVOLRT_ACC = RT_DOMAIN(did)%QSTRMVOLRT_ACC + RT_DOMAIN(did)%QSTRMVOLRT_TS
       
       RT_DOMAIN(did)%LAKE_INFLORT_TS = rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake-RT_DOMAIN(did)%LAKE_INFLORT_DUM
@@ -709,9 +723,9 @@ print *,"FLAG 5)010"
    !! channelBucket_only can be anything: the only time you dont run this is if channel_only=1
    if(nlst_rt(did)%channel_only .eq. 0) then  
       if (nlst_rt(did)%GWBASESWCRT .gt. 0) then
-print *,"FLAG 5)011 RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998): ",RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998)
+!print *,"FLAG 5)011 RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998): ",RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998)
          call driveGwBaseflow(did)
-print *,"FLAG 5)012 RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998): ",RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998)
+!print *,"FLAG 5)012 RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998): ",RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsubbas_tr(998),RT_DOMAIN(did)%z_gwsubbas_tr(998)
       endif
 #ifdef HYDRO_D
       call system_clock(count=clock_count_2, count_rate=clock_rate)
@@ -728,9 +742,9 @@ print *,"FLAG 5)012 RT_DOMAIN(did)%qin_gwsubbas_tr(998),RT_DOMAIN(did)%qout_gwsu
    end if !! channel_only == 0
 
    ! step 5) river channel physics
-print *,"FLAG 5)013"
+!print *,"FLAG 5)013"
    call driveChannelRouting(did)
-print *,"FLAG 5)014"
+!print *,"FLAG 5)014"
 #ifdef HYDRO_D
    call system_clock(count=clock_count_2, count_rate=clock_rate)
    timeCr = timeCr     + float(clock_count_2-clock_count_1)/float(clock_rate)
@@ -746,9 +760,13 @@ print *,"FLAG 5)014"
 	
       ! step 6) aggregate specific fields from Hydro to LSM grid
       if (nlst_rt(did)%SUBRTSWCRT .ne.0  .or. nlst_rt(did)%OVRTSWCRT .ne. 0 ) then
-print *,"FLAG 5)015"
+!print *,"FLAG 5)015, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
+!print *, "FLAG 5)015, RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_TR(41,27,:),RT_DOMAIN(did)%INFXSRT_tr(41,27),RT_DOMAIN(did)%INFXSRT(41,27):",RT_DOMAIN(did)%SMC(41,27,:),RT_DOMAIN(did)%SMC_TR(41,27,:),RT_DOMAIN(did)%INFXSRT_tr(41,27),RT_DOMAIN(did)%INFXSRT(41,27)
+!print *, "FLAG 5)015,rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108):",rt_domain(did)%overland%control%infiltration_excess(161:164,105:108),rt_domain(did)%overland%control%infiltration_excess_tr(161:164,105:108)
          call aggregateDomain(did)
-print *,"FLAG 5)016"
+!print *, "FLAG 5)016, RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:):",RT_DOMAIN(did)%SMC(20,25,:),RT_DOMAIN(did)%SMC_SUB(20,25,:),RT_DOMAIN(did)%SMCRT(79,98,:),RT_DOMAIN(did)%SMCRT_SUB(79,98,:)
+!print *, "FLAG 5)016,RT_DOMAIN(did)%SMC(75,46,:),RT_DOMAIN(did)%SMC_TR(75,46,:),RT_DOMAIN(did)%SMC_SUB(75,46,:),RT_DOMAIN(did)%INFXSRT_tr(75,46),RT_DOMAIN(did)%INFXSRT(75,46):",RT_DOMAIN(did)%SMC(75,46,:),RT_DOMAIN(did)%SMC_TR(75,46,:),RT_DOMAIN(did)%SMC_SUB(75,46,:),RT_DOMAIN(did)%INFXSRT_tr(75,46),RT_DOMAIN(did)%INFXSRT(75,46)
+!print *, "RT_DOMAIN(did)%SH2OX(75,46,:),RT_DOMAIN(did)%SH2OX_TR(75,46,:),RT_DOMAIN(did)%SH2OX_SUB(75,46,:):",RT_DOMAIN(did)%SH2OX(75,46,:),RT_DOMAIN(did)%SH2OX_TR(75,46,:),RT_DOMAIN(did)%SH2OX_SUB(75,46,:)
       endif
 
    end if !! channel_only & channelBucket_only == 0
@@ -957,7 +975,125 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
       subroutine driveChannelRouting(did)
        
        implicit none
+!-------------------------------------------------------
+! add interface for drive_CHANNEL_RSL
+!INTERFACE 
+!  SUBROUTINE drive_CHANNEL_RSL(UDMP_OPT,KT, IXRT,JXRT,  &
+!        LAKEINFLORT, QSTRMVOLRT, TO_NODE, FROM_NODE, &
+!        TYPEL, ORDER, MAXORDER,   CH_LNKRT, &
+!        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
+!        CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC, &
+!        RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, &
+!        ORIFICEE,  CVOL, QLAKEI, QLAKEO, LAKENODE, &
+!        QINFLOWBASE, CHANXI, CHANYJ, channel_option,  &
+!        nlinks,NLINKSL, LINKID, node_area, qout_gwsubbas, &
+!        LAKEIDA, LAKEIDM, NLAKES, LAKEIDX, &
+!#ifdef MPP_LAND 
+!        nlinks_index,mpp_nlinks,yw_mpp_nlinks, &
+!        LNLINKSL, &
+!        gtoNode,toNodeInd,nToNodeInd,   &
+!#endif
+!         CH_LNKRT_SL, landRunOff  &
+!#ifdef WRF_HYDRO_NUDGING
+!       , nudge &
+!#endif
+!       , accSfcLatRunoff, accBucket                  &
+!       , qSfcLatRunoff,     qBucket                  &
+!       , QLateral, velocity                          &
+!       , HLINK                                       &
+!       , nsize , OVRTSWCRT, SUBRTSWCRT, channel_only, channelBucket_only  &
+!       , wvtflag_pass, QSTRMVOLRT_TR_pass, QLINK_TR_pass, qout_gwsubbas_tr_pass               & !wt vars
+!       , landRunOff_tr_pass, QLateral_tr_pass, HLINK_tr_pass              & !wt vars
+!       )
+!
+!       IMPLICIT NONE
+!       integer, intent(IN)                          :: UDMP_OPT
+!       integer, intent(INOUT)                       :: KT   ! flag of cold start (1) or continue run.
+!       integer, intent(IN)                          :: IXRT,JXRT
+!       real,    intent(IN), dimension(IXRT,JXRT)    :: LAKEINFLORT
+!       real,    intent(IN), dimension(IXRT,JXRT)    :: QSTRMVOLRT
+!       integer, intent(IN), dimension(:)            :: TO_NODE, FROM_NODE
+!       integer, intent(IN), dimension(:)            :: ORDER, TYPEL !--link
+!       integer, intent(IN)                          :: MAXORDER
+!       integer, intent(IN), dimension(IXRT,JXRT)    :: CH_LNKRT
+!       integer, intent(IN), dimension(IXRT,JXRT)    :: LAKE_MSKRT
+!       real,    intent(IN)                          :: DT    !-- model timestep
+!       real,    intent(IN)                          :: DTRT_CH  !-- routing timestep
+!       real,    intent(INOUT)                       :: DTCT
+!       real,    intent(IN),    dimension(:)         :: MUSK, MUSX
+!       real,    intent(INOUT), dimension(:,:)       :: QLINK
+!       real,    intent(IN), dimension(:)            :: CHANLEN
+!       real,    intent(IN), dimension(:)            :: So, MannN  
+!       real,    intent(IN), dimension(:)            :: ChSSlp,Bw,Tw  !--properties of nodes or links
+!       real,    intent(IN), dimension(:)            :: Tw_CC, n_CC   ! properties of compound channel
+!       real,    intent(INOUT), dimension(:)         :: RESHT    !-- reservoir height (m)
+!       real,    intent(IN), dimension(:)            :: HRZAREA  !-- horizontal area (km^2)
+!       real,    intent(IN), dimension(:)            :: LAKEMAXH !-- maximum lake depth  (m^2)
+!       real,    intent(IN), dimension(:)            :: WEIRH    !--  lake depth  (m^2)
+!       real,    intent(IN), dimension(:)            :: WEIRC    !-- weir coefficient
+!       real,    intent(IN), dimension(:)            :: WEIRL    !-- weir length (m)
+!       real,    intent(IN), dimension(:)            :: ORIFICEC !-- orrifice coefficient
+!       real,    intent(IN), dimension(:)            :: ORIFICEA !-- orrifice area (m^2)
+!       real,    intent(IN), dimension(:)            :: ORIFICEE !-- orrifce elevation (m)
+!       real,    intent(INOUT), dimension(:)         :: CVOL
+!       real,    intent(INOUT), dimension(:)         :: QLAKEI   !-- lake inflow (cms)
+!       real,    intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
+!       integer, intent(IN), dimension(:)            :: LAKENODE !-- outflow from lake used in diffusion scheme
+!       real,    intent(IN), dimension(IXRT,JXRT)    :: QINFLOWBASE
+!       integer, intent(IN), dimension(:)            :: CHANXI, CHANYJ
+!       integer, intent(IN)                          :: channel_option
+!       integer, intent(IN)                          :: NLINKSL, nlinks
+!       integer, intent(IN), dimension(:)            :: LINKID   !--  id of channel elements for linked scheme
+!       real ,   intent(IN), dimension(:)            :: node_area
+!       real,    intent(in), dimension(:)            :: qout_gwsubbas
+!       integer, intent(IN), dimension(:)            :: LAKEIDA  !--  (don't need) NHDPLUS lakeid for all lakes in domain
+!       integer, intent(IN), dimension(:)            :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
+!       integer, intent(IN)                          :: NLAKES
+!       integer, intent(IN), dimension(:)            :: LAKEIDX  !--  the sequential index of the lakes id by com id
+!#ifdef MPP_LAND
+!       integer, intent(IN), dimension(:)            :: nlinks_index
+!       integer, intent(INOUT)                       :: yw_mpp_nlinks, mpp_nlinks
+!       integer, intent(IN)                          :: LNLINKSL
+!       integer, intent(IN), dimension(:)            :: toNodeInd
+!       integer, intent(IN), dimension(:,:)          :: gtoNode
+!       integer, intent(IN)                          :: nToNodeInd
+!#endif
+!       integer, intent(IN), dimension(IXRT,JXRT)    :: CH_LNKRT_SL
+!       real,    intent(IN), dimension(ixrt,jxrt)    :: landRunOff
+!#ifdef WRF_HYDRO_NUDGING
+!       !! inout for applying previous nudge to upstream components of flow at gages
+!       real,    intent(inout),    dimension(:)      :: nudge
+!#endif
+!       real*8,  dimension(:), intent(inout)         :: accSfcLatRunoff, accBucket
+!       real,    dimension(:), intent(out)           :: qSfcLatRunoff  ,   qBucket
+!       real,    dimension(:), intent(inout)         :: QLateral !--lateral flow
+!       real,    dimension(:), intent(out)           :: velocity
+!       real,    intent(INOUT), dimension(:)         :: HLINK
+!       integer, intent(IN)                          :: nsize
+!       integer, intent(IN)                          :: OVRTSWCRT, SUBRTSWCRT
+!       integer, intent(in)                          :: channel_only, channelBucket_only
+!!-----needed for water tracer capability------
+!       integer, intent(IN),    optional                       :: wvtflag_pass
+!       real ,   intent(IN),    optional, dimension(IXRT,JXRT) :: QSTRMVOLRT_TR_pass
+!       real ,   intent(INOUT), optional, dimension(:,:)       :: QLINK_TR_pass
+!       real ,   intent(IN),    optional, dimension(:)         :: qout_gwsubbas_tr_pass
+!       real ,   intent(INOUT), optional, dimension(ixrt,jxrt) :: landRunOff_tr_pass
+!       real ,   intent(INOUT), optional, dimension(:)         :: QLateral_tr_pass
+!       real ,   intent(INOUT), optional, dimension(:)         :: HLINK_TR_pass
+!  
+!  END SUBROUTINE
+!END INTERFACE
+!-------------------------------------------------------
        integer, intent(in) :: did
+
+!----local vars needed for water tracer capability----
+       integer                        :: wvtflag_pass
+       real, dimension(RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT) :: QSTRMVOLRT_TR_pass
+       real, dimension(RT_DOMAIN(did)%NLINKSL,2)                :: QLINK_TR_pass
+       real, dimension(RT_DOMAIN(did)%NLINKSL)                  :: qout_gwsubbas_tr_pass
+       real, dimension(RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT) :: landRunOff_tr_pass
+       real, dimension(RT_DOMAIN(did)%NLINKSL)                  :: QLateral_tr_pass
+       real, dimension(RT_DOMAIN(did)%NLINKSL)                  :: HLINK_tr_pass         
        
 !-------------------------------------------------------------------
 !-------------------------------------------------------------------
@@ -969,6 +1105,7 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
  if(nlst_rt(did)%UDMP_OPT .eq. 1) then
      !!! for user defined Reach based Routing method.
    if (nlst_rt(did)%WVTFLAG .gt. 0) then
+!print *,"driveChannelRouting FLAG 01, RT_DOMAIN(did)%QLINK_tr[1002,:]:",RT_DOMAIN(did)%QLINK_tr(1002,:)
     call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
        RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS, RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, &
        RT_DOMAIN(did)%TYPEL, RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER,   RT_DOMAIN(did)%CH_LNKRT, &
@@ -1000,12 +1137,14 @@ if (nlst_rt(did)%CHANRTSWCRT.eq.1 .or. nlst_rt(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%nlinksize,            nlst_rt(did)%OVRTSWCRT &
        ,                                     nlst_rt(did)%SUBRTSWCRT &
        , nlst_rt(did)%channel_only , nlst_rt(did)%channelBucket_only &
-       , wvtflag_pass = nlst_rt(did)%WVTFLAG, QLINK_TR_pass=RT_DOMAIN(did)%QLINK_tr   &  !wt vars
+       , wvtflag_pass = nlst_rt(did)%WVTFLAG, QSTRMVOLRT_TR_pass=RT_DOMAIN(did)%QSTRMVOLRT_TS_TR & !wt vars
+       , QLINK_TR_pass=RT_DOMAIN(did)%QLINK_tr   &  !wt vars
        , qout_gwsubbas_tr_pass=RT_DOMAIN(did)%qout_gwsubbas_tr                        &  !wt vars
        , landRunOff_tr_pass=RT_DOMAIN(did)%landRunOff_tr                              &  !wt vars
        , Qlateral_tr_pass=RT_DOMAIN(did)%QLateral_tr                                  &  !wt vars
        , HLINK_tr_pass=RT_DOMAIN(did)%HLINK_tr                                        &  !wt vars 
        )
+!print *,"driveChannelRouting FLAG 02, RT_DOMAIN(did)%QLINK_tr[1002,:],QLINK_TR_pass[1002,:]:",RT_DOMAIN(did)%QLINK_tr(1002,:), QLINK_TR_pass(1002,:)
 
    else
     call drive_CHANNEL_RSL(nlst_rt(did)%UDMP_OPT,RT_DOMAIN(did)%timestep_flag, RT_DOMAIN(did)%IXRT,RT_DOMAIN(did)%JXRT,  &
@@ -1161,7 +1300,10 @@ endif
           do I=1,RT_DOMAIN(did)%IX
 
              RT_DOMAIN(did)%SFCHEADAGGRT = 0.
-             if (nlst_rt(did)%WVTFLAG .gt. 0) RT_DOMAIN(did)%SFCHEADAGGRT_TR = 0.0   !wt var
+             if (nlst_rt(did)%WVTFLAG .gt. 0) then
+               RT_DOMAIN(did)%SFCHEADAGGRT_TR = 0.0   !wt var
+               RT_DOMAIN(did)%LSMVOL_TR=0.            !wt var
+             end if
 !DJG Subgrid weighting edit...
              RT_DOMAIN(did)%LSMVOL=0.
              do KRT=1,nlst_rt(did)%NSOIL
@@ -1198,6 +1340,9 @@ endif
                 if (nlst_rt(did)%WVTFLAG .gt. 0) then
                   RT_DOMAIN(did)%SFCHEADAGGRT_TR = RT_DOMAIN(did)%SFCHEADAGGRT_TR &
                                                    + rt_domain(did)%overland%control%surface_water_head_routing_tr(IXXRT,JYYRT)
+                  RT_DOMAIN(did)%LSMVOL_TR  = RT_DOMAIN(did)%LSMVOL_TR &
+                                            + rt_domain(did)%overland%control%surface_water_head_routing_tr(IXXRT,JYYRT) &
+                                            * rt_domain(did)%overland%properties%distance_to_neighbor(IXXRT,JYYRT,9)
                 end if
                 !-----------------
 !DJG Subgrid weighting edit...
@@ -1217,6 +1362,9 @@ endif
                                                      + RT_DOMAIN(did)%SMCRT_SUB(IXXRT,JYYRT,KRT)
                     RT_DOMAIN(did)%SH2OAGGRT_TR(KRT) = RT_DOMAIN(did)%SH2OAGGRT_TR(KRT) &
                                                      + RT_DOMAIN(did)%SMCRT_TR(IXXRT,JYYRT,KRT)
+if (i .eq. 41 .and. j .eq. 27) then
+!  print *, "FLAG IN aggregration001, IXXRT,JYYRT,KRT, RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT_SUB(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OAGGRT(KRT),RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT),RT_DOMAIN(did)%SFCHEADAGGRT,RT_DOMAIN(did)%SFCHEADAGGRT_TR:",IXXRT,JYYRT,KRT, RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT), RT_DOMAIN(did)%SMCRT_SUB(IXXRT,JYYRT,KRT),RT_DOMAIN(did)%SH2OAGGRT(KRT),RT_DOMAIN(did)%SH2OAGGRT_SUB(KRT),RT_DOMAIN(did)%SFCHEADAGGRT,RT_DOMAIN(did)%SFCHEADAGGRT_TR
+end if
                   end do
                 end if
                 !----------------
@@ -1339,6 +1487,29 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
                     RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT) = max(1.0E-05, RT_DOMAIN(did)%SH2OWGT(IXXRT,JYYRT,KRT))
                   end do
 
+!----------water tracer calc----------
+                  if (nlst_rt(did)%WVTFLAG .gt. 0) then
+                    if (RT_DOMAIN(did)%LSMVOL_TR .gt. 1.0E-12) then
+                      RT_DOMAIN(did)%INFXSWGT_TR(IXXRT,JYYRT) &
+                                          = rt_domain(did)%overland%control%surface_water_head_routing_tr(IXXRT,JYYRT) &
+                                          * rt_domain(did)%overland%properties%distance_to_neighbor(IXXRT,JYYRT,9) &
+                                          / RT_DOMAIN(did)%LSMVOL_TR
+                    else
+                      RT_DOMAIN(did)%INFXSWGT_TR(IXXRT,JYYRT) &
+                                          = 1./FLOAT(nlst_rt(did)%AGGFACTRT**2)
+                    end if
+                    do KRT=1,nlst_rt(did)%NTRACER
+                      if (RT_DOMAIN(did)%SH2OX_TR(I,J,KRT) .gt. 1.0E-12) then
+                        RT_DOMAIN(did)%SH2OWGT_TR(IXXRT,JYYRT,KRT) &
+                                          = RT_DOMAIN(did)%SMCRT_TR(IXXRT,JYYRT,KRT) &
+                                          / RT_DOMAIN(did)%SH2OX_TR(I,J,KRT)
+                      else
+                        RT_DOMAIN(did)%SH2OWGT_TR(IXXRT,JYYRT,KRT) = 1.0
+                      end if
+                    end do
+                  end if
+!-------------------------------------
+
                 end do
               end do
 
@@ -1356,6 +1527,16 @@ IF ( (RT_DOMAIN(did)%SMCRT(IXXRT,JYYRT,KRT)-RT_DOMAIN(did)%SMCMAXRT(IXXRT,JYYRT,
                                   RT_DOMAIN(did)%IXRT, &
 				  RT_DOMAIN(did)%JXRT, 99)
         end do
+        if (nlst_rt(did)%WVTFLAG .gt. 0) then
+          call MPP_LAND_COM_REAL(RT_DOMAIN(did)%INFXSWGT_TR, &
+                                 RT_DOMAIN(did)%IXRT,    &
+                                 RT_DOMAIN(did)%JXRT, 99)
+          do i = 1, nlst_rt(did)%NTRACER
+            call MPP_LAND_COM_REAL(RT_DOMAIN(did)%SH2OWGT_TR(:,:,i), &
+                                  RT_DOMAIN(did)%IXRT, &
+                                  RT_DOMAIN(did)%JXRT, 99)
+          end do
+        end if
 #endif
 
 !DJG Update SMC with SICE (unchanged) and new value of SH2O from routing...

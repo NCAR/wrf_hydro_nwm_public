@@ -170,6 +170,7 @@ contains
 
 
        LQLateral = 0
+       if (present(wvtflag_pass)) LQLateral_tr = 0
        do k = 1, LNUMRSL
               ! get from land grid runoff
                do m = 1, LUDRSL(k)%ncell 
@@ -179,10 +180,10 @@ contains
                       if(OVRTSWCRT.ne.1) then
                            LQLateral(k) = LQLateral(k)+runoff1x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                *cellArea(ii,jj)
-                           if (present(wvtflag_pass)) then
-                             LQLateral_tr(k) = LQLateral_tr(k) + runoff1x_tr(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
-                               *cellArea(ii,jj)
-                           end if
+!                           if (present(wvtflag_pass)) then
+!                             LQLateral_tr(k) = LQLateral_tr(k) + runoff1x_tr(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
+!                               *cellArea(ii,jj)
+!                           end if
                       endif
                            LQLateral(k) = LQLateral(k)+runoff2x(ii,jj)*LUDRSL(k)%cellWeight(m)/1000 &
                                *cellArea(ii,jj)
@@ -240,8 +241,11 @@ contains
             qout_spill = 0.
             z_gw_spill = 0.
             if (present(wvtflag_pass)) then
-              PROPOR_TR = 0.0
-              PROPOR_TR = min(1.0,max(0.0, z_gwsubbas_tr(bas)/z_gwsubbas_tr(bas)))
+              if (z_gwsubbas(bas) .gt. 1.0E-10) then
+                PROPOR_TR = min(1.0, max(0.0, z_gwsubbas_tr(bas)/z_gwsubbas(bas)))
+              else
+                PROPOR_TR = 0.0
+              end if
             end if
 
             !!DJG...convert z_mx to millimeters...for v2 and later...

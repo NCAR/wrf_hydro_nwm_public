@@ -1910,7 +1910,7 @@ if (OPT_WT .eq. 1) then
       end if
     end if
   end if
-print *, "FLAG4"
+!print *, "FLAG4, SFCRUNOFF(32,26),SFCRUNOFF_TR(32,26):",SFCRUNOFF(32,26),SFCRUNOFF_TR(32,26)
 print *, "wvtflag", wvtflag
 print *, "NTRACER", NTRACER
   ! call tell_wt_flag(olddate, wvtstart, wvtend, wvtflag)
@@ -1971,7 +1971,7 @@ print *, "NTRACER", NTRACER
   end if
   
 end if
-print *, "FLAG5"
+!print *, "FLAG5, SFCRUNOFF(44,23),SFCRUNOFF_TR(44,23):",SFCRUNOFF(44,23),SFCRUNOFF_TR(44,23)
 print *, "NTRACER", NTRACER
 !----------------------------------------------
 
@@ -2112,9 +2112,9 @@ print *, "NTRACER", NTRACER
                 , NTRACER=NTRACER)
 
 print *, "NTRACER", NTRACER
-print *, "FLAG8"
+!print *, "FLAG8,SFCRUNOFF(28,22):",SFCRUNOFF(28,22)
     else
-print *, "FLAG9"
+!print *, "FLAG9,SFCRUNOFF(44,23),SFCRUNOFF_TR(44,23):",SFCRUNOFF(44,23),SFCRUNOFF_TR(44,23)
 print *, "NTRACER", NTRACER
          CALL noahmplsm(ITIMESTEP,       YR, JULIAN_IN,   COSZEN, XLAT_URB2D, &
 	           DZ8W,     DTBL,      DZS,     NUM_SOIL_LAYERS,         DX, &
@@ -2178,7 +2178,8 @@ print *, "NTRACER", NTRACER
                 , INFXSRT_TR=INFXSRT_TR, sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr           &    !O water tracer
 #endif 
                 )
-print *, "FLAG9-1" 
+!print *, "FLAG9-1, SMOIS(44,23,:),SMOIS_SUB(44,23,:),SH2OX(44,23),SH2OXY_SUB(44,23):",SMOIS(44,:,23),SMOIS_SUB(44,:,23),SH2O(44,:,23),SH2OXY_SUB(44,:,23)
+!print *, "FLAG9-1,SFCRUNOFF(32,26),SFCRUNOFF_TR(32,26),RUNSFXY(32,26),RUNSFXY_TR(32,26),INFXSRT(32,26),INFXSRT_TR(32,26),sfcheadrt(32,26),sfcheadrt_tr(32,26):",SFCRUNOFF(32,26),SFCRUNOFF_TR(32,26),RUNSFXY(32,26),RUNSFXY_TR(32,26),INFXSRT(32,26),INFXSRT_TR(32,26),sfcheadrt(32,26),sfcheadrt_tr(32,26)
 
     end if
 
@@ -2209,7 +2210,7 @@ print *, "FLAG9-1"
 
  ENDIF   ! SKIP FIRST TIMESTEP
 
-print *, "FLAG9-2"
+!print *, "FLAG9-2,SFCRUNOFF(28,22):",SFCRUNOFF(28,22)
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
@@ -2220,6 +2221,7 @@ print *, "FLAG9-2"
             NTRACER, WVTFLAG=WVTFLAG, SMOIS_SUB=SMOIS_SUB, SH2OXY_SUB=SH2OXY_SUB, &    ! water tracer vars      
             SMOIS_TR=SMOIS_TR, SH2OXY_TR=SH2OXY_TR,              &    ! water tracer vars
             infxsrt_tr=infxsrt_tr, sfcheadrt_tr=sfcheadrt_tr,soldrain_tr=soldrain_tr)  ! water tracer vars
+!print *, "FLAG9-3, SMOIS(44,:,23),SMOIS_SUB(44,:,23),SH2OX(44,:,23),SH2OXY_SUB(44,:,23):",SMOIS(44,:,23),SMOIS_SUB(44,:,23),SH2O(44,:,23),SH2OXY_SUB(44,:,23)
      end if
 #endif
 
@@ -2229,14 +2231,14 @@ print *, "FLAG9-2"
 
            ! convert RAINRATE back to mm/s for output
            RAINBL = RAINBL_tmp
-print *, "FLAG9-3"
+!print *, "FLAG9-3,SFCRUNOFF(28,22):",SFCRUNOFF(28,22)
            call ldas_output(ITIME, wvtflag)
 
 
         endif
      endif OUTPUT_FOR_HISTORY
 
-print *, "FLAG9-4"
+!print *, "FLAG9-4"
      if (IVGTYP(xstart,ystart)==ISWATER) then
        write(*,'(" ***DATE=", A19)', advance="NO") olddate
      else
@@ -2249,7 +2251,7 @@ print *, "FLAG9-4"
 
       if ( (restart_frequency_hours .gt. 0) .and. &
            (mod(ITIME, int(restart_frequency_hours*3600./nint(dtbl))) == 0)) then
-print *, "FLAG9-5"
+!print *, "FLAG9-5"
        if(rst_bi_out .eq. 0) then
            call lsm_restart()
        else
@@ -2257,7 +2259,7 @@ print *, "FLAG9-5"
        endif
 #ifdef WRF_HYDRO
       else
-print *, "FLAG9-6"
+!print *, "FLAG9-6"
        if (restart_frequency_hours <= 0) then
           if ( (olddate( 9:10) == "01") .and. (olddate(12:13) == "00") .and. &
                (olddate(15:16) == "00") .and. (olddate(18:19) == "00") ) then
@@ -2289,7 +2291,7 @@ print *, "FLAG9-6"
 
 
       ITIMESTEP = ITIMESTEP + 1
-print *, "FLAG10"
+!print *, "FLAG10,SFCRUNOFF(28,22):",SFCRUNOFF(28,22)
 
 end subroutine land_driver_exe
 

@@ -371,7 +371,7 @@ subroutine output_chrt_NWM(domainId)
          call ReachLS_write_io(velocityLocal,g_velocity)
          call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK,g_hlink)
          !-----water tracer vars------
-         call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK_tr(:,2),g_qlink_tr(:,2))
+         call ReachLS_write_io(RT_DOMAIN(domainId)%QLINK_tr(:,1),g_qlink_tr(:,1))
          call ReachLS_write_io(RT_DOMAIN(domainId)%QLateral_tr,g_QLateral_tr)
          call ReachLS_write_io(RT_DOMAIN(domainId)%HLINK_tr,g_hlink_tr)
          !----------------------------
@@ -698,10 +698,10 @@ subroutine output_chrt_NWM(domainId)
       varMetaInt(1,:) = PACK(g_orderOut,g_outInd == 1)
       varMetaInt(2,:) = PACK(g_linkidOut,g_outInd == 1)
       !-----water tracer vars-----
-      varOutReal(11,:) = PACK(g_qlinkOut(:,1),g_outInd == 1)
-      varOutReal(12,:) = PACK(g_QLateralOut,g_outInd == 1)
-      varOutReal(13,:) = PACK(g_hlinkOut,g_outInd == 1)
-      varOutReal(14,:) = PACK(g_qBucketOut,g_outInd == 1)
+      varOutReal(11,:) = PACK(g_qlink_trOut(:,1),g_outInd == 1)
+      varOutReal(12,:) = PACK(g_QLateral_trOut,g_outInd == 1)
+      varOutReal(13,:) = PACK(g_hlink_trOut,g_outInd == 1)
+      varOutReal(14,:) = PACK(g_qBucket_trOut,g_outInd == 1)
       !---------------------------
 
       ! Mask out missing values

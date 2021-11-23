@@ -550,8 +550,8 @@ CONTAINS
 
     type(noahmp_parameters) :: parameters
 
-print *, "FLAG001"
-print *, "NTRACER", NTRACER
+!print *, "FLAG001, SFCRUNOFF(28,22):",SFCRUNOFF(28,22)
+!print *, "NTRACER", NTRACER
 ! ----------------------------------------------------------------------
 
     CALL NOAHMP_OPTIONS(IDVEG  ,IOPT_CRS  ,IOPT_BTR  ,IOPT_RUN  ,IOPT_SFC  ,IOPT_FRZ , &
@@ -708,10 +708,9 @@ print *, "NTRACER", NTRACER
        RECH                  = 0.
        DEEPRECH              = 0.
 
-print *, "FLAG002"
-print *, "NTRACER", NTRACER
+!print *, "NTRACER", NTRACER
 if (present(SMOIS_SUB)) then
-  print *, "tracer active"
+!  print *, "tracer active"
 end if
 !--------water tracer variable transfer-------
        if (present(SMOIS_SUB)) SMC_SUB (    1:NTRACER)  = SMOIS_SUB   (I,      1:NTRACER,J)
@@ -733,8 +732,11 @@ end if
        if (present(RECHXY_TR))   RECH_TR                  = 0.
        if (present(DEEPRECHXY_TR)) DEEPRECH_TR              = 0.
        if (present(sfcheadrt_tr))  sfcheadrt_tr_pass        = sfcheadrt_tr(i,j)
-print *, "FLAG003-1"
+!print *, "FLAG003-1"
 !---------------------------------------------
+if (I .eq. 75 .and. J .eq. 46) then
+!  print *, "FLAG002,PRCP, SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR:",PRCP,SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR
+end if
 
        SLOPETYP     = 1                               ! set underground runoff slope term
        IST          = 1                               ! MP surface type: 1 = land; 2 = lake
@@ -766,10 +768,10 @@ print *, "FLAG003-1"
        parameters%mfsno  = MFSNO_2D(I,J)          ! Snow cover m parameter
        parameters%rsurf_exp = RSURFEXP_2D(I,J)    ! exponent in the shape parameter for soil resistance option 1
 #endif
-print *, "FLAG003-2"
-print *, "ZSOIL", ZSOIL
+!print *, "FLAG003-2"
+!print *, "ZSOIL", ZSOIL
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,parameters, NSOIL,ZSOIL=ZSOIL)
-print *, "FLAG003-3"
+!print *, "FLAG003-3"
        
        if (HVT_TABLE(VEGTYP) > 0.0) then
          parameters%hvb = parameters%hvt * HVB_TABLE(VEGTYP) / HVT_TABLE(VEGTYP)
@@ -785,7 +787,7 @@ print *, "FLAG003-3"
        parameters%smcwlt = max(min(parameters%smcwlt, parameters%smcref - 0.01), 0.0)
        parameters%smcdry = max(min(parameters%smcdry, parameters%smcref - 0.01), 0.0)
 
-print *, "FLAG003-4"
+!print *, "FLAG003-4"
 ! Initialized local
 
        FICEOLD = 0.0
@@ -804,10 +806,10 @@ print *, "FLAG003-4"
        IF(VEGTYP == 26) PLAI = 0.0
        IF(VEGTYP == 27) FVEG = 0.0
        IF(VEGTYP == 27) PLAI = 0.0
-print *, "FLAG003-5"
+!print *, "FLAG003-5"
 
        IF ( VEGTYP == ISICE_TABLE ) THEN
-print *, "FLAG003-6"
+!print *, "FLAG003-6"
          ICE = -1                           ! Land-ice point
          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
       
@@ -826,8 +828,9 @@ print *, "FLAG003-6"
                               , sfcheadrt(i,j)                                      &
 #endif
                               )
-
-print *, "FLAG003-7"
+if (I .eq. 75 .and. J .eq. 27) then
+!  print *, "FLAG003-7,PRCP, SMC, RUNSF:",PRCP,SMC, RUNSF
+end if
          FSNO   = 1.0       
          TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
          TGB    = TG 
@@ -886,14 +889,16 @@ print *, "FLAG003-7"
          Z0WRF  = 0.002
          QFX(I,J) = ESOIL
          LH (I,J) = FGEV
-print *, "FLAG003-8"
+!print *, "FLAG003-8"
 
     ELSE
-print *, "FLAG003-9"
+if (I .eq. 41 .and. J .eq. 27) then
+!  print *, "FLAG003-9,PRCP, SMC, RUNSF:",PRCP,SMC, RUNSF
+end if
          ICE=0                              ! Neither sea ice or land ice.
       if ( .not. present(wvtflag) ) then 
-print *, "FLAG003"
-print *, "NTRACER", NTRACER
+!print *, "FLAG003"
+!print *, "NTRACER", NTRACER
          CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
@@ -928,9 +933,13 @@ print *, "NTRACER", NTRACER
             , sfcheadrt(i,j)                               &
 #endif
             , NTRACER)            ! OUT :
-print *, "FLAG004"
+if (I .eq. 41 .and. J .eq. 27) then
+!  print *, "FLAG004,PRCP, SMC, RUNSF,RUNSRF_TR:",PRCP,SMC, RUNSF,RUNSRF_TR
+end if
       else
-print *, "FLAG005"
+if (I .eq. 75 .and. J .eq. 46) then
+!  print *, "FLAG005,PRCP, SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR:",PRCP,SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR
+end if
 	CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
@@ -979,7 +988,12 @@ print *, "FLAG005"
             , sfcheadrt_tr_pass = sfcheadrt_tr(i,j)                      &
 #endif
             )            ! OUT :  
-print *, "FLAG006"
+if (RUNSRF_TR .gt. RUNSF) then
+!  print *, "ERROR in FLAG006, I,J,RUNSF,RUNSRF_TR:",I,J,RUNSF,RUNSRF_TR
+end if
+if (I .eq. 75 .and. J .eq. 46) then
+!  print *, "FLAG006,PRCP, SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR:",PRCP,SMC,SMH2O,SMC_SUB,SH2O_SUB,SMC_TR,SH2O_TR,RUNSF,RUNSRF_TR
+end if
       end if
 		  
             QFX(I,J) = ECAN + ESOIL + ETRAN
@@ -1156,7 +1170,7 @@ print *, "FLAG006"
              SMCWTDXY(I,J)                 = SMCWTD
 	    
 	     !-------water tracer variables------------
-print *, "FLAG007"
+!print *, "FLAG007"
 	     if(present(SFCRUNOFF_TR)) SFCRUNOFF_TR(I,J)                = SFCRUNOFF_TR(I,J) + RUNSRF_TR * DT
              if(present(UDRUNOFF_TR))  UDRUNOFF_TR (I,J)                = UDRUNOFF_TR(I,J)  + RUNSUB_TR * DT
              if(present(RECHXY_TR))    RECHXY_TR   (I,J)                = RECHXY_TR(I,J) + RECH_TR*1.E3 !RECHARGE TO THE WATER TABLE
@@ -1187,7 +1201,7 @@ print *, "FLAG007"
              if(present(ETRANXY_TR))   ETRANXY_TR  (I,J)                = ETRAN_TR
              if(present(FLUXXY_TR))    FLUXXY_TR   (I,   1:NTRACER, J)  = FLUX_TR
 	     !------------------------------------------
-print *, "FLAG008"
+!print *, "FLAG008"
           ENDIF                                                         ! endif of land-sea test
 
       ENDDO ILOOP                                                       ! of I loop

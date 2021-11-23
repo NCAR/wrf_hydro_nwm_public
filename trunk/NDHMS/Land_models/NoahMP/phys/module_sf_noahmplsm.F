@@ -679,7 +679,7 @@ contains
   
   type (noahmp_parameters), INTENT(IN) :: parameters
 
-print *, "FLAG0001"
+!print *, "FLAG0001"
   ! INTENT (OUT) variables need to be assigned a value.  These normally get assigned values
   ! only if DVEG == 2.
   nee = 0.0
@@ -700,12 +700,13 @@ print *, "FLAG0001"
              SWDOWN  ,BDFALL   ,RAIN    ,SNOW    ,FP      ,FPICE   , PRCP )     
 
 !-----tag precip as water tracer------
-print *, "FLAG0003"
+!print *, "FLAG0003"
    if (present(wvt_ratio)) then
      call tag_precip(RAIN, wvt_ratio, RAIN_TR)
      call tag_precip(SNOW, wvt_ratio, SNOW_TR)
    end if
-print *, "FLAG0004"
+
+!print *, "FLAG0004"
 !-------------------------------------
 
 ! snow/soil layer thickness (m)
@@ -718,7 +719,7 @@ print *, "FLAG0004"
          END IF
      END DO
      ! do similar thing for water tracers
-print *, "FLAG0005"
+!print *, "FLAG0005"
      if (present(wvtflag)) call calculate_dz(ISNOW, NTRACER, &
                                  ZSNSO_TR(ISNOW+1:NTRACER), DZSNSO_TR(ISNOW+1:NTRACER))
 
@@ -761,7 +762,7 @@ print *, "FLAG0005"
      IF(ELAI+ESAI == 0.0) FVEG = 0.0
 
   if (present(wvtflag)) then
-print *, "FLAG0006"
+!print *, "FLAG0006"
     CALL PRECIP_HEAT(parameters,ILOC   ,JLOC   ,VEGTYP ,DT     ,UU     ,VV     , & !in
                      ELAI   ,ESAI   ,FVEG   ,IST    ,                 & !in
                      BDFALL ,RAIN   ,SNOW   ,FP     ,                 & !in
@@ -774,9 +775,9 @@ print *, "FLAG0006"
 		     , QRAIN_TR=QRAIN_TR, QSNOW_TR=QSNOW_TR           & !wt out
 		     , SNOWHIN_TR=SNOWHIN_TR, CMC_TR=CMC_TR           & !out
 		     )   !out
-print *, "FLAG0007"  
+!print *, "FLAG0007"  
   else 
-print *, "FLAG0008"
+!print *, "FLAG0008"
     CALL PRECIP_HEAT(parameters,ILOC   ,JLOC   ,VEGTYP ,DT     ,UU     ,VV     , & !in
                      ELAI   ,ESAI   ,FVEG   ,IST    ,                 & !in
                      BDFALL ,RAIN   ,SNOW   ,FP     ,                 & !in
@@ -784,13 +785,13 @@ print *, "FLAG0008"
                      QINTR  ,QDRIPR ,QTHROR ,QINTS  ,QDRIPS ,QTHROS , & !out
                      PAHV   ,PAHG   ,PAHB   ,QRAIN  ,QSNOW  ,SNOWHIN, & !out
 	             FWET   ,CMC                                    )   !out
-print *, "FLAG0009"
+!print *, "FLAG0009"
   end if
 
 ! compute energy budget (momentum & energy fluxes and phase changes) 
 
   if (present(wvtflag)) then
-print *, "FLAG0010"
+!print *, "FLAG0010"
     CALL ENERGY (parameters,ICE    ,VEGTYP ,IST    ,NSNOW  ,NSOIL  , & !in
                  ISNOW  ,DT     ,RHOAIR ,SFCPRS ,QAIR   , & !in
                  SFCTMP ,THAIR  ,LWDN   ,UU     ,VV     ,ZLVL   , & !in
@@ -824,9 +825,9 @@ print *, "FLAG0010"
                   , QMELT_TR=QMELT_TR, PONDING_TR=PONDING_TR       & !inout   
 		 )                                            !out
 !jref:end
-print *, "FLAG0011"
+!print *, "FLAG0011"
   else
-print *, "FLAG0012"
+!print *, "FLAG0012"
     CALL ENERGY (parameters,ICE    ,VEGTYP ,IST    ,NSNOW  ,NSOIL  , & !in
                  ISNOW  ,DT     ,RHOAIR ,SFCPRS ,QAIR   , & !in
                  SFCTMP ,THAIR  ,LWDN   ,UU     ,VV     ,ZLVL   , & !in
@@ -854,14 +855,27 @@ print *, "FLAG0012"
 		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,  &
                      EVC,CHLEAF,CHUC,CHV2,CHB2, NTRACER)              !out
 !jref:end
-print *, "FLAG0013"
+!print *, "FLAG0013"
   end if
 
     SICE(:) = MAX(0.0, SMC(:) - SH2O(:))   
     SNEQVO  = SNEQV
     ! do similar thing to water tracers
-    if (present(WVTFLAG)) SICE_TR(:) = MAX(0.0, SMC_TR(:)-SH2O_TR(:))
-    if (present(WVTFLAG)) SICE_SUB(:) = MAX(0.0, SMC_SUB(:)-SH2O_SUB(:))
+    if (present(WVTFLAG)) then
+      SICE_TR(:)  = MAX(0.0, SMC_TR(:)-SH2O_TR(:))
+      SICE_SUB(:) = MAX(0.0, SMC_SUB(:)-SH2O_SUB(:))
+      do IZ = 1, NSOIL
+        !----NOTE: NEED TO BE ADJUSTED IF USING MULTIPLE SUBLAYERS!!!!!-----
+        if (abs(SICE_SUB(IZ)-SICE(IZ)) .lt. 1.5E-7) then
+          SICE_SUB(IZ) = SICE(IZ)
+        else
+          print *, "ERROR around FLAG0013, ILOC, JLOC, SMC, SH2O, SICE, SMC_SUB, SH2O_SUB, SICE_SUB:",ILOC, JLOC, SMC, SH2O, SICE, SMC_SUB, SH2O_SUB, SICE_SUB
+        end if
+      end do
+if (ILOC .eq. 44 .and. JLOC .eq. 23) then
+!  print *, "FLAG0013, SMC, SH2O, SICE, SMC_SUB, SH2O_SUB, SICE_SUB:",SMC, SH2O, SICE, SMC_SUB, SH2O_SUB, SICE_SUB
+end if
+    end if
 
     QVAP = MAX( FGEV/LATHEAG, 0.)       ! positive part of fgev; Barlage change to ground v3.6
     QDEW = ABS( MIN(FGEV/LATHEAG, 0.))  ! negative part of fgev
@@ -870,7 +884,7 @@ print *, "FLAG0013"
 ! compute water budgets (water storages, ET components, and runoff)
 
    if (present(wvtflag)) then
-print *, "FLAG0014"
+!print *, "FLAG0014"
      CALL WATER (parameters,VEGTYP ,NSNOW  ,NSOIL  ,IMELT  ,DT     ,UU     , & !in
                  VV     ,FCEV   ,FCTR   ,QPRECC ,QPRECL ,ELAI   , & !in
                  ESAI   ,SFCTMP ,QVAP   ,QDEW   ,ZSOIL  ,BTRANI , & !in
@@ -907,9 +921,9 @@ print *, "FLAG0014"
 #endif
 
                  )  !out
-print *, "FLAG0015"   
+!print *, "FLAG0015"   
    else
-print *, "FLAG0016"
+!print *, "FLAG0016"
      CALL WATER (parameters,VEGTYP ,NSNOW  ,NSOIL  ,IMELT  ,DT     ,UU     , & !in
                  VV     ,FCEV   ,FCTR   ,QPRECC ,QPRECL ,ELAI   , & !in
                  ESAI   ,SFCTMP ,QVAP   ,QDEW   ,ZSOIL  ,BTRANI , & !in
@@ -927,7 +941,7 @@ print *, "FLAG0016"
                         ,sfcheadrt                     &
 #endif
                  ,NTRACER)  !out
-print *, "FLAG0017"
+!print *, "FLAG0017"
    end if
 
 !     write(*,'(a20,10F15.5)') 'SFLX:RUNOFF=',RUNSRF*DT,RUNSUB*DT,EDIR*DT
@@ -948,10 +962,10 @@ print *, "FLAG0017"
 !because total fluxes are calculated in "ENERGY" but tracer
 !fluxes from surface requires going through "WATER"
 !thus now calculated seperately
-print *, "FLAG0018"
+!print *, "FLAG0018"
    if (present(wvtflag)) call calculate_lh_energy(FROZEN_CANOPY, FROZEN_GROUND, &
                               ETRAN_TR, ECAN_TR, EDIR_TR,HVAP,HSUB, FCTR_TR, FCEV_TR, FGEV_TR)
-print *, "FLAG0019"
+!print *, "FLAG0019"
 !----------------------------------------------------------
 
 ! water and energy balance check
@@ -987,7 +1001,7 @@ print *, "FLAG0019"
       ALBEDO = -999.9
     END IF
     
-print *, "FLAG0020"
+!print *, "FLAG0020"
   END SUBROUTINE NOAHMP_SFLX
 
 !== begin atm ======================================================================================
@@ -6271,6 +6285,9 @@ end if
      QSDEW = QDEW - QSNFRO
 
    if (present(WVTFLAG)) then
+if (ILOC .eq. 41 .and. JLOC .eq. 27) then
+!  print *, "FLAG WITHIN WATER000-1, SICE_SUB,SICE,SICE_TR:",SICE_SUB,SICE,SICE_TR
+end if
      CALL SNOWWATER (parameters,NSNOW  ,NSOIL  ,IMELT  ,DT     ,ZSOIL  , & !in
           &          SFCTMP ,SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB , & !in
           &          QRAIN  ,FICEOLD,ILOC   ,JLOC   ,         & !in
@@ -6286,6 +6303,9 @@ end if
 		     , DZSNSO_TR=DZSNSO_TR,EDIR_TR=EDIR_TR           & !wt INOUT
                      , QSNBOT_TR=QSNBOT_TR,SNOFLOW_TR=SNOFLOW_TR     & !wt INOUT
 		     , PONDING1_TR=PONDING1_TR, PONDING2_TR=PONDING2_TR)  !wt out
+if (ILOC .eq. 41 .and. JLOC .eq. 27) then
+!  print *, "FLAG WITHIN WATER000, SICE_SUB,SICE,SICE_TR:",SICE_SUB,SICE,SICE_TR
+end if
    else
      CALL SNOWWATER (parameters,NSNOW  ,NSOIL  ,IMELT  ,DT     ,ZSOIL  , & !in
           &          SFCTMP ,SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB , & !in
@@ -6342,7 +6362,15 @@ end if
 
 #ifdef WRF_HYDRO
        QINSUR = QINSUR+sfcheadrt/DT*0.001  !sfcheadrt units (m)
-       if (present(WVTFLAG)) QINSUR_TR = QINSUR_TR+sfcheadrt_tr_pass/DT*0.001
+       if (present(WVTFLAG)) then
+         QINSUR_TR = QINSUR_TR+sfcheadrt_tr_pass/DT*0.001
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG WITHIN WATER001, QINSUR,QINSUR_TR,sfcheadrt,sfcheadrt_tr:",QINSUR,QINSUR_TR,sfcheadrt,sfcheadrt_tr_pass
+!  print *, "PONDING,PONDING1,PONDING2,PONDING_TR,PONDING1_TR,PONDING2_TR:",PONDING,PONDING1,PONDING2,PONDING_TR,PONDING1_TR,PONDING2_TR
+!  print *, "QSNBOT,QSDEW,QRAIN,QSNBOT_TR,QRAIN_TR:",QSNBOT,QSDEW,QRAIN,QSNBOT_TR,QRAIN_TR    
+!  print *, "FLAG WITHIN WATER001, SICE_SUB,SICE,SICE_TR:",SICE_SUB,SICE,SICE_TR
+end if
+       end if
 #endif
 
 ! lake/soil water balances
@@ -6364,6 +6392,10 @@ end if
        WSLAKE = WSLAKE + (QINSUR-QSEVA)*1000.*DT -RUNSRF*DT   !mm
     ELSE                                                      ! soil
       if (present(WVTFLAG)) then
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG WITHIN WATER002,RUNSRF, RUNSRF_TR:",RUNSRF,RUNSRF_TR
+!  print *, "SH2O,SH2O_SUB,SH2O_TR:",SH2O,SH2O_SUB,SH2O_TR
+end if
        CALL      SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                             QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC , & !in
                             SH2O   ,SMC    ,ZWT    ,VEGTYP , & !inout
@@ -6378,6 +6410,9 @@ end if
 			    , QSEVA_TR=QSEVA_TR,  FLUX_TR=FLUX_TR)                        !wt out
 			    
                  EDIR_TR = EDIR_TR + QSEVA_TR*1000.    !unit: mm/s
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG WITHIN WATER003,SH2O,SH2O_SUB,SH2O_TR,RUNSRF, RUNSRF_TR:",SH2O,SH2O_SUB,SH2O_TR,RUNSRF, RUNSRF_TR
+end if
       else 
        CALL      SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                             QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC , & !in
@@ -6730,6 +6765,9 @@ end if
 
    IF(ISNOW < 0) THEN        !when multi-layer
    if (present(WVTFLAG)) then
+if (ILOC .eq. 44 .and. JLOC .eq. 23) then
+!  print *, "FLAG IN SNOWWATER001, SICE, SICE_SUB:",SICE, SICE_SUB
+end if
    CALL  COMBINE (parameters,NSNOW  ,NSOIL  ,ILOC   ,JLOC   ,         & !in
                   ISNOW  ,SH2O   ,STC    ,SNICE  ,SNLIQ  , & !inout
                   DZSNSO ,SICE   ,SNOWH  ,SNEQV  ,         & !inout
@@ -6741,6 +6779,9 @@ end if
 		  , SICE_TR=SICE_TR, SNOWH_TR=SNOWH_TR           & !wt inout
 		  , SNEQV_TR=SNEQV_TR, PONDING1_TR=PONDING1_TR   & !wt out
 		  , PONDING2_TR=PONDING2_TR)                       !wt out
+if (ILOC .eq. 44 .and. JLOC .eq. 23) then
+!  print *, "FLAG IN SNOWWATER002, SICE, SICE_SUB:",SICE, SICE_SUB
+end if
    else
    CALL  COMBINE (parameters,NSNOW  ,NSOIL  ,ILOC   ,JLOC   ,         & !in
                   ISNOW  ,SH2O   ,STC    ,SNICE  ,SNLIQ  , & !inout
@@ -6762,6 +6803,9 @@ end if
    END IF
 
    if (present(WVTFLAG)) then
+if (ILOC .eq. 44 .and. JLOC .eq. 23) then
+!  print *, "FLAG IN SNOWWATER003, SICE, SICE_SUB:",SICE, SICE_SUB
+end if
    CALL  SNOWH2O (parameters,NSNOW  ,NSOIL  ,DT     ,QSNFRO ,QSNSUB , & !in 
                   QRAIN  ,ILOC   ,JLOC   ,                 & !in
                   ISNOW  ,DZSNSO ,SNOWH  ,SNEQV  ,SNICE  , & !inout
@@ -6775,6 +6819,9 @@ end if
 		  , SH2O_TR=SH2O_TR, SICE_TR=SICE_TR              & !wt inout
 		  , EDIR_TR=EDIR_TR, QSNBOT_TR=QSNBOT_TR          & !wt inout
 		  , PONDING1_TR=PONDING1_TR, PONDING2_TR=PONDING2_TR) !wt out
+if (ILOC .eq. 44 .and. JLOC .eq. 23) then
+!  print *, "FLAG IN SNOWWATER004, SICE, SICE_SUB:",SICE, SICE_SUB
+end if
    else
    CALL  SNOWH2O (parameters,NSNOW  ,NSOIL  ,DT     ,QSNFRO ,QSNSUB , & !in 
                   QRAIN  ,ILOC   ,JLOC   ,                 & !in
@@ -8270,6 +8317,9 @@ end if
       RUNSRF_TR = RUNSRF * PROPOR_TR
       PDDUM_TR  = PDDUM * PROPOR_TR
       SH2O0 = SH2O    ! SAVE SH2O BEFRORE SSTEP
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG IN SOILWATER001, QINSUR_TR, QINSUR, PROPOR_TR,RUNSRF,RUNSRF_TR:",QINSUR_TR, QINSUR, PROPOR_TR,RUNSRF,RUNSRF_TR
+end if
     end if
     !-----------------
 
@@ -8291,11 +8341,11 @@ end if
     QDRAIN_SAVE = 0.0
     RUNSRF_SAVE = 0.0
     DO ITER = 1, NITER
-       IF(QINSUR > 0. .and. OPT_RUN == 3) THEN
-          CALL INFIL (parameters,NSOIL  ,DTFINE     ,ZSOIL  ,SH2O   ,SICE   , & !in
-                      SICEMAX,QINSUR ,                         & !in
-                      PDDUM  ,RUNSRF )                           !out
-       END IF
+!       IF(QINSUR > 0. .and. OPT_RUN == 3) THEN
+!          CALL INFIL (parameters,NSOIL  ,DTFINE     ,ZSOIL  ,SH2O   ,SICE   , & !in
+!                      SICEMAX,QINSUR ,                         & !in
+!                      PDDUM  ,RUNSRF )                           !out
+!       END IF
 
        CALL SRT   (parameters,NSOIL  ,ZSOIL  ,DTFINE ,PDDUM  ,ETRANI , & !in
                    QSEVA  ,SH2O   ,SMC    ,ZWT    ,FCR    , & !in
@@ -8310,14 +8360,25 @@ end if
                    WPLUS)                                     !out
        RSAT =  RSAT + WPLUS
        QDRAIN_SAVE = QDRAIN_SAVE + QDRAIN
-       RUNSRF_SAVE = RUNSRF_SAVE + RUNSRF
+!       RUNSRF_SAVE = RUNSRF_SAVE + RUNSRF
     END DO
 
     QDRAIN = QDRAIN_SAVE/NITER
-    RUNSRF = RUNSRF_SAVE/NITER
+!    RUNSRF = RUNSRF_SAVE/NITER
+    !-----wt calc-----
+    if (present(WVTFLAG)) then
+      call get_wt_ratio(QINSUR_TR, QINSUR, PROPOR_TR)
+      RUNSRF_TR = RUNSRF * PROPOR_TR
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG IN SOILWATER001-1, QINSUR_TR, QINSUR, PROPOR_TR,RUNSRF,RUNSRF_TR:",QINSUR_TR, QINSUR, PROPOR_TR,RUNSRF,RUNSRF_TR
+!  print *, "SH2O,SH2O_SUB,SH2O_TR,PDDUM,PDDUM_TR:",SH2O,SH2O_SUB,SH2O_TR,PDDUM,PDDUM_TR
+end if
+    end if
+    !-----------------
 
     RUNSRF = RUNSRF * 1000. + RSAT * 1000./DT  ! m/s -> mm/s
     QDRAIN = QDRAIN * 1000.
+
 
 !WRF_HYDRO_DJG...
 !yw    INFXSRT = RUNSRF * DT   !mm/s -> mm
@@ -8372,11 +8433,18 @@ end if
    
    !-----wt calc-----
    if (present(WVTFLAG)) then
-     call SMT_TR (IOPT_PM, NSUB, NTRACER, SH2O_SUB, DZSNSO_TR(1:NTRACER), &
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG IN SOILWATER002,RUNSRF,RUNSRF_TR,RSAT,RSAT_TR:",RUNSRF,RUNSRF_TR,RSAT,RSAT_TR
+!  print *, "SH2O,SH2O_SUB,SH2O_TR,PDDUM,PDDUM_TR:",SH2O,SH2O_SUB,SH2O_TR,PDDUM,PDDUM_TR
+end if
+     call SMT_TR (ILOC,JLOC,IOPT_PM, NSUB, NTRACER, SH2O_SUB, DZSNSO_TR(1:NTRACER), &
                   SH2O, SH2O0, ZSOIL, DT, NSOIL,                          & !IN
                   PDDUM, QSEVA, ETRANI, QDRAIN, RSAT,                     & !IN
                   SH2O_TR, PDDUM_TR, QSEVA_TR, ETRAN_TR,                  &
                   QDRAIN_TR,RSAT_TR, FLUX_TR)
+if (ILOC .eq. 75 .and. JLOC .eq. 46) then
+!  print *, "FLAG IN SOILWATER003,RUNSRF,RUNSRF_TR,RSAT,RSAT_TR:",RUNSRF,RUNSRF_TR,RSAT,RSAT_TR
+end if
      ! convert unit to mm/s
      QDRAIN_TR = QDRAIN_TR*1000.0
      RUNSRF_TR = RUNSRF_TR*1000.0 + RSAT_TR*1000.0/DT
@@ -9818,7 +9886,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
     REAL,    INTENT(OUT) :: ratio1
 
     if (store_tt .gt. 1.E-10) then
-      ratio1 = store_tr/store_tt
+      ratio1 = store_tr/store_tt     
+!      ratio1 = min(1.0,store_tr/store_tt)   !commented out because it helps to debug
     else
       ratio1 = 0.0
     end if
@@ -10072,7 +10141,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
    END SUBROUTINE SOIL_SAT
 
 !============================================================
-   SUBROUTINE SMT_TR (IOPT_PM, NSUB, NTRACER, SH2O_SUB, DZSNSO_SUB, &
+   SUBROUTINE SMT_TR (II,JJ,IOPT_PM, NSUB, NTRACER, SH2O_SUB, DZSNSO_SUB, &
                      SH2O, SH2O0, ZSOIL, DT, NSOIL,                 & !IN
                      PDDUM, QSEVA, ETRANI, QDRAIN, RSAT,            & !IN
                      SH2O_TR, PDDUM_TR, QSEVA_TR, ETRAN_TR,         &
@@ -10080,7 +10149,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
 ! ---------------------------------------------------------------------
 ! Huancui Hu: calculate/updates soil moisture content due to tracer
 ! ---------------------------------------------------------------------
-    INTEGER,                       INTENT(IN)   :: IOPT_PM
+    INTEGER,                       INTENT(IN)   :: II,JJ,IOPT_PM
     INTEGER, DIMENSION(1:NSOIL  ), INTENT(IN)   :: NSUB
     INTEGER,                       INTENT(IN)   :: NTRACER
     REAL,    DIMENSION(1:NTRACER), INTENT(INOUT):: SH2O_SUB
@@ -10119,11 +10188,13 @@ END  SUBROUTINE SHALLOWWATERTABLE
     INTEGER, DIMENSION(1:NTRACER)        :: SOLVED        ! layer solved or not
     INTEGER                              :: K, N, ISUB
     REAL     :: residual, residual_tr, DENOMI,NOMENI
-    REAL     :: flux_upper, flux_lower
+    REAL     :: flux_upper, flux_lower 
+    REAL     :: PROPOR_TR, PDDUM_TR_local, PDDUM_local ! PPDUM_local is after removing RSAT
 
- ETRAN_TR    = 0.0
+  ETRAN_TR    = 0.0
   QSEVA_TR    = 0.0
   QDRAIN_TR   = 0.0
+  RSAT_TR     = 0.0
   residual_tr = 0.0
   RATIO       = 0.0
   NOMENI      = 0.0
@@ -10131,6 +10202,23 @@ END  SUBROUTINE SHALLOWWATERTABLE
   SOLVE_ORDER = 0
   FLUX_DIRE   = 0
   SOLVED      = 0
+  PDDUM_TR_local = 0.0
+  PDDUM_local    = 0.0
+
+!--------STEP -1: subtract RSAT from PDDUM first--------
+  if (RSAT .gt. 1.0E-7) then
+    if (RSAT/DT .le. PDDUM) then
+      call get_wt_ratio(PDDUM_TR, PDDUM, PROPOR_TR)
+      RSAT_TR        = RSAT*PROPOR_TR
+      PDDUM_local    = PDDUM-RSAT/DT
+      PDDUM_TR_local = PDDUM_local*PROPOR_TR
+    else
+      print *, "ERROR in SMT_TR-1: RSAT/DT, PDDUM:", RSAT/DT, PDDUM
+    end if
+  else
+    PDDUM_local = PDDUM
+    PDDUM_TR_local = PDDUM_TR
+  end if
 
 !--------STEP 0: get the thickness of each soil layer-------------------
   DO K = 1, NSOIL
@@ -10151,11 +10239,15 @@ DEPTH = DZSNSO_SUB
      END IF
   END DO
   residual = (PDDUM-QSEVA-ETRANI(1))*DT - RSAT - FLUX_BULK(1) - (SH2O(1)-SH2O0(1))*DEPTH_OLD(1)
+if (II .eq. 75 .and. JJ .eq. 46) then
+!  print *, "FLAG in SMR_TR001, FLUX_BULK,QDRAIN,residual:", FLUX_BULK,QDRAIN,residual
+!  print *, "PDDUM, QSEVA, ETRANI, RSAT:",PDDUM, QSEVA, ETRANI, RSAT
+end if
 !--------STEP 1a: calculate sublayer fluxes-----------------------
   ISUB = 0
   Do K = 1, NSOIL
      IF (K .eq. 1) THEN
-        flux_upper = (PDDUM-QSEVA)*DT
+        flux_upper = (PDDUM_local-QSEVA)*DT
         flux_lower = FLUX_BULK(K)
      ELSE
         IF (K .eq. NSOIL) THEN
@@ -10172,6 +10264,9 @@ DEPTH = DZSNSO_SUB
         ETRAN_SUB(ISUB) = ETRANI(K)/NSUB(K)
 ! update SH2O_SUB in accordance with SH2O
         SH2O_SUB(ISUB) = SH2O(K)
+if (II .eq. 75 .and. JJ .eq. 46) then
+!  print *, "FLAG in SMR_TR002, K,ISUB,FLUX(ISUB):",K,ISUB,FLUX(ISUB)
+end if
      END DO
   END DO
 !--------STEP 1b: get the solve order for different layers---------
@@ -10214,9 +10309,9 @@ FLUX_DIRE = SOLVE_ORDER
       else
         DENOM(K) = DENOM(K) + QSEVA*DT
       end if
-      NOMEN(K) = NOMEN(K) + PDDUM_TR*DT
+      NOMEN(K) = NOMEN(K) + PDDUM_TR_local*DT
     ELSE IF (K == NTRACER) THEN
-      DENOM(K) = DENOM(K) + max(QDRAIN,0.0)*DT/1000.0 + RSAT
+      DENOM(K) = DENOM(K) + max(QDRAIN,0.0)*DT/1000.0 ! + RSAT
     END IF
   END DO
 !--------STEP 3: calculate the water vapor tracer ratios to soil moisture
@@ -10236,6 +10331,10 @@ FLUX_DIRE = SOLVE_ORDER
               DENOMI = MAX(DENOM(K),0.)+MAX(FLUX(K),0.)-MIN(FLUX(K-1),0.)
            END IF
            RATIO(K) = NOMENI/DENOMI
+
+if (II .eq. 75 .and. JJ .eq. 46) then
+!  print *, "FLAG in SMR_TR003, N,K,SOLVED(K),NOMENI,DENOMI,RATIO(K):",N,K,SOLVED(K),NOMENI,DENOMI,RATIO(K)
+end if
 
            SOLVED(K) = 1
            IF ( abs(RATIO(K) < 1.0E-6)) THEN
@@ -10276,7 +10375,7 @@ FLUX_DIRE = SOLVE_ORDER
     CI_TR(K) = (SH2O_SUB(K) * RATIO(K)-SH2O_TR (K))
     if (RATIO(K) .ge. 1.0) then
       print *, "ERROR2: RATIO EXCEEDING 1!"
-!      print *, "K",K,RATIO(K)
+      print *, "II,JJ,K:",II,JJ,K,RATIO(K)
     end if
     if (IOPT_PM == 1) then
       SH2O_TR (K) = SH2O_SUB(K) * RATIO(K) *0.5
@@ -10292,8 +10391,8 @@ FLUX_DIRE = SOLVE_ORDER
       else
         QSEVA_TR = QSEVA*RATIO(K)
       end if
-      RSAT_TR  = RSAT*RATIO(K)
-      residual_tr =residual_tr - PDDUM_TR*DT + QSEVA*RATIO(K)*DT + ETRANI(K)*RATIO(K)*DT + RSAT*RATIO(K)
+!      RSAT_TR  = RSAT*RATIO(K)
+      residual_tr =residual_tr - PDDUM_TR_local*DT + QSEVA*RATIO(K)*DT + ETRANI(K)*RATIO(K)*DT !+ RSAT*RATIO(K)
     ELSE IF (K == NTRACER) THEN
       QDRAIN_TR = max(QDRAIN,0.0)*RATIO(K)/1000.0
       residual_tr =residual_tr + max(QDRAIN,0.0)*RATIO(K)*DT/1000.0

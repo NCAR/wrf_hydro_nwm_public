@@ -2489,9 +2489,9 @@ subroutine initGwDict(gwOutDict)
 
    gwOutDict%varNames(:) = [character(len=64) :: 'inflow','outflow','depth','inflow_tr','outflow_tr','depth_tr']
    gwOutDict%longName(:) = [character(len=64) :: 'Bucket Inflow','Bucket Outflow','Bucket Depth','tracer Bucket Inflow','tracer Bucket Outflow','tracer Bucket Depth']
-   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm','m3 s-1','m3 s-1','m3 s-1']
+   gwOutDict%units(:) = [character(len=64) :: 'm3 s-1','m3 s-1','mm','m3 s-1','m3 s-1','mm']
    !gwOutDict%coordNames(:) = [character(len=64) :: 'latitude longitude','latitude longitude','latitude longitude']
-   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.01]
+   gwOutDict%scaleFactor(:) = [0.01,0.01,0.1,0.01,0.01,0.1]
    gwOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0]
    gwOutDict%outFlag(:) = [0,0,0,0,0,0]
    gwOutDict%timeZeroFlag(:) = [0,0,1,0,0,1]
