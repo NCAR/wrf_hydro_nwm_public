@@ -27,7 +27,7 @@ module module_rfc_forecasts_state
         real                            :: assimilated_value
         character(len=256)              :: assimilated_source_file
         integer                         :: levelpool_reservoir_type    ! reservoir type for levelpool
-        real                            :: levelpool_assimilated_value ! levelpool assimilated sentinel value
+        real*8                          :: levelpool_assimilated_value ! levelpool assimilated sentinel value
         character(len=256)              :: levelpool_assimilated_source_file ! empty string for levelpool assimilated source
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object

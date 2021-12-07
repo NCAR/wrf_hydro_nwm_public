@@ -227,7 +227,7 @@ contains
         real*8, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
-        real, intent(out)   :: assimilated_value        ! value assimilated from observation
+        real*8, intent(out)   :: assimilated_value        ! value assimilated from observation
         character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
         real                :: delta_storage            ! timestep change in storage (cubic meters)
         real*8              :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)

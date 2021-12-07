@@ -1733,7 +1733,7 @@ end subroutine drive_CHANNEL
        real*8, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
        real*8, allocatable,dimension(:) :: tmpRESHT
        integer, allocatable, dimension(:) :: tmpFinalResType
-       real, allocatable,dimension(:) :: tmpAssimilatedValue
+       real*8, allocatable,dimension(:) :: tmpAssimilatedValue
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
 
 #ifdef MPP_LAND
