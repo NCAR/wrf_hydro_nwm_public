@@ -125,7 +125,7 @@ CONTAINS
     INTEGER,                                         INTENT(IN   ) ::  IOPT_PEDO ! soil pedotransfer function option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
     INTEGER,                                         INTENT(IN   ) ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
-                                                                                        !2->Alley&Veenhuis; 3->Sutherland)
+                                                                                        !9->old)
     INTEGER,                                         INTENT(IN   ) ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  QV3D      ! 3D water vapor mixing ratio [kg/kg_dry]
@@ -1228,7 +1228,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%KDT    = parameters%REFKDT * parameters%DKSAT(1) / parameters%REFDK
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
-       if (iopt_imperv .eq. 0) then
+       if (iopt_imperv .eq. 9) then
          parameters%SMCMAX = 0.45 
          parameters%SMCREF = 0.42 
          parameters%SMCWLT = 0.40 

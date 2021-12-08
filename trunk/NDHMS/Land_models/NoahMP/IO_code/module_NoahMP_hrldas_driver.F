@@ -119,7 +119,7 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_PEDO ! soil pedotransfer function option
   INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
   INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
-                                                                                        !2->Alley&Veenhuis)
+                                                                                        !2->Alley&Veenhuis; 9->old)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -1104,7 +1104,7 @@ module module_NoahMP_hrldas_driver
                              AXAJ_2D,BXAJ_2D,XXAJ_2D)
     end if
 
-    if (noah_lsm%imperv_option > 0) then
+    if (noah_lsm%imperv_option > 0 .and. noah_lsm%imperv_option < 9) then
         CALL READ_IMPERV(noah_lsm%SPATIAL_FILENAME,XSTART, XEND, YSTART, YEND, &
                              IMPERV_2D)
     end if

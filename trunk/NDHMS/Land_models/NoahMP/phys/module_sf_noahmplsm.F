@@ -170,9 +170,11 @@ MODULE MODULE_SF_NOAHMPLSM
                       !   1 -> Liu, et al. 2016
 
   INTEGER :: OPT_IMPERV  ! options for imperviousness infiltration adjustment
-                      ! **0 -> no imperviousness adjustment
+                      !   0 -> no imperviousness adjustment
                       !   1 -> use total imperviousness
                       !   2 -> use effective imperviousness from Alley & Veenhuis
+                      ! **9 -> older model behavior (urban soil parameter adjustment 
+                      !        and mixed runoff adjustment depending on runoff scheme)
 
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
@@ -6909,6 +6911,9 @@ ENDIF   ! CROPTYPE == 0
   REAL                                    :: SMCTOT !2-m averaged soil moisture (m3/m3)
   REAL                                    :: DZTOT  !2-m soil depth (m)
   REAL, PARAMETER :: A = 4.0
+
+  REAL                                    :: imperv_eff !local impervious adjustment (fraction, 0-1)
+
 ! ----------------------------------------------------------------------
     RUNSRF = 0.0
     PDDUM  = 0.0
@@ -6953,15 +6958,19 @@ ENDIF   ! CROPTYPE == 0
 !surface runoff and infiltration rate using different schemes
 
 !jref impermable surface at urban
+! We are updating surface runoff adjustment as an area-mean
+! of impervious and frozen soil impermeable adjustments.
     IF (OPT_IMPERV == 1) THEN
        ! Use total imperviousness
-       FCR(1) = parameters%imperv 
+       imperv_eff = parameters%imperv
+       FCR(1) = imperv_eff + (1.0 - imperv_eff) * FCR(1)
     ELSE IF (OPT_IMPERV == 2) THEN
        ! Effective imperviousness from Alley & Veenhuis
-       FCR(1) = 0.0015 * ( (100. * parameters%imperv)**1.41 )
-    ELSE  
-       ! Fixed value
-       IF ( parameters%urban_flag ) FCR(1)=0.95 
+       imperv_eff = 0.0015 * ( (100. * parameters%imperv)**1.41 )
+       FCR(1) = imperv_eff + (1.0 - imperv_eff) * FCR(1)
+    ELSE IF (OPT_IMPERV == 9) THEN 
+       ! Fixed value for urban type (older configuration)
+       IF ( parameters%urban_flag ) FCR(1)=0.95
     END IF
 
     IF(OPT_RUN == 1) THEN
@@ -7271,7 +7280,7 @@ ENDIF   ! CROPTYPE == 0
        ELSE IF (OPT_IMPERV == 2) THEN
          ! Effective imperviousness from Alley & Veenhuis
          imperv_eff = 0.0015 * ( (100. * parameters%imperv)**1.41 )
-       ELSE
+       ELSE ! options 0 and 9 both have no impervious adjustment
          ! No imperviousness adjustment
          imperv_eff = 0.0
        END IF

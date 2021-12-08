@@ -40,7 +40,7 @@ module config_base
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
-     integer            :: imperv_option = 0
+     integer            :: imperv_option = 9
 
      integer            :: split_output_count = 1 
      integer            :: khour
@@ -884,7 +884,7 @@ contains
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
-     integer            :: imperv_option = 0
+     integer            :: imperv_option = 9
      integer            :: split_output_count = 1
      integer            :: khour = -999
      integer            :: kday = -999
