@@ -578,6 +578,7 @@ END INTERFACE
   wvtflag                 = -999       ! flag for water tracer
   nlst_rt(did)%wvtflag    = -999
   nlst_rt(did)%NTRACER    = -999
+  nlst_rt(did)%PMOPT      = -999
 
 #ifndef NCEP_WCOSS
   open(30, file="namelist.hrldas", form="FORMATTED")
@@ -643,7 +644,12 @@ END INTERFACE
   OPT_WT   = water_tracer_option
   NTRACER  = 1
   if (OPT_WT .eq. 1) then 
-    IOPT_PM  = partial_mixing_option
+    nlst_rt(did)%PMOPT   = partial_mixing_option
+    if (partial_mixing_option .eq. 1 .or. partial_mixing_option .eq. 3) then
+      IOPT_PM  = 1
+    else
+      IOPT_PM  = 0
+    end if
     NSUB     = tracer_sublayer
     NTRACER  = sum(NSUB(1:nsoil))
     nlst_rt(did)%NTRACER = NTRACER
@@ -651,7 +657,7 @@ END INTERFACE
     nlst_rt(did)%NSUB    = NSUB
   end if
   print *, "FLAG1"
-  print *, "OPT_WT", OPT_WT
+  print *, "OPT_WT,IOPT_PM:", OPT_WT, IOPT_PM
   print *, "NTRACER", NTRACER 
 
   !!----------------------------------------------------------------------------

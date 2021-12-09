@@ -67,6 +67,7 @@
           integer  :: wvtflag
           integer  :: NTRACER
           integer, allocatable,dimension(:) :: NSUB
+          integer  :: PMOPT
 !--------------------------------------------
 
 !#ifdef WRF_HYDRO_NUDGING

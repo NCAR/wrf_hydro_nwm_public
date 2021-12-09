@@ -117,8 +117,8 @@
           NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
           SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
           SATLYRCHK                            &
-          ,NTRACER, WVTFLAG, NSUB              & !wt vars
-          ,QSUBRT_TR_GAIN, QSUBBDRYRT_TR_PASS    & !wt vars
+          ,NTRACER, WVTFLAG, PMOPT, NSUB       & !wt vars
+          ,QSUBRT_TR_GAIN, QSUBBDRYRT_TR_PASS  & !wt vars
           ,QSUBBDRYTRT_TR_PASS, SMCRT_TR_PASS  & !wt vars
           ,SMCRT_SUB_PASS, INFXSUBRT_TR_PASS   & !wt vars
           ,SMCMAXRT_SUB_PASS                   & !wt vars
@@ -141,7 +141,7 @@ INTERFACE
                 latksat,soldep,XX,YY,QSUBDRY,QSUBDRYT,SO8RT,SO8RT_D,    &
                 CWATAVAIL,SUBDT       &
                ,NTRACER, NSOIL        & !wt vars
-               ,WVTFLAG, NSUB, SLDPTH, SATLYRCHK   & !wt vars
+               ,WVTFLAG, PMOPT, NSUB, SLDPTH, SATLYRCHK   & !wt vars
                ,QSUBRT_SUB_GAIN,QSUBRT_TR_GAIN         & !wt vars
                ,QSUBBDRYRT_TR_PASS, QSUBBDRYTRT_TR_PASS & !wt vars
                ,SMCRT_TR_PASS, SMCRT_SUB_PASS           & !wt vars
@@ -167,6 +167,7 @@ INTERFACE
         INTEGER,          INTENT(IN)                  :: NTRACER
         INTEGER,          INTENT(IN)                  :: NSOIL
         INTEGER,OPTIONAL, INTENT(IN)                  :: WVTFLAG
+        INTEGER,OPTIONAL, INTENT(IN)                  :: PMOPT
         INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: NSUB
         REAL,   OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: SLDPTH
         INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(XX,YY) :: SATLYRCHK
@@ -216,6 +217,7 @@ END INTERFACE
 !-------------------------------------------------------------------
         INTEGER,         INTENT(IN)                                :: NTRACER
         INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+        INTEGER,OPTIONAL,INTENT(IN)                                :: PMOPT
         INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_GAIN
@@ -359,6 +361,7 @@ END INTERFACE
                SO8RT,SO8RT_D,CWATAVAIL,SUBDT  &
               ,NTRACER, NSOIL             &
               ,WVTFLAG            = WVTFLAG          &
+              ,PMOPT              = PMOPT            &
               ,NSUB               = NSUB             &
               ,SLDPTH             = SLDPTH           &
               ,SATLYRCHK          = SATLYRCHK        &
@@ -1668,7 +1671,7 @@ END INTERFACE
                 latksat,soldep,XX,YY,QSUBDRY,QSUBDRYT,SO8RT,SO8RT_D,    &
                 CWATAVAIL,SUBDT       &
                ,NTRACER, NSOIL        & !wt vars
-               ,WVTFLAG, NSUB, SLDPTH, SATLYRCHK   & !wt vars
+               ,WVTFLAG, PMOPT, NSUB, SLDPTH, SATLYRCHK   & !wt vars
                ,QSUBRT_SUB_GAIN,QSUBRT_TR_GAIN       & !wt vars
                ,QSUBBDRYRT_TR_PASS, QSUBBDRYTRT_TR_PASS & !wt vars
                ,SMCRT_TR_PASS, SMCRT_SUB_PASS           & !wt vars
@@ -1722,6 +1725,7 @@ END INTERFACE
         INTEGER,          INTENT(IN)                  :: NTRACER
         INTEGER,          INTENT(IN)                  :: NSOIL
         INTEGER,OPTIONAL, INTENT(IN)                  :: WVTFLAG
+        INTEGER,OPTIONAL, INTENT(IN)                  :: PMOPT
         INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: NSUB
         REAL,   OPTIONAL, INTENT(IN),   DIMENSION(NSOIL) :: SLDPTH
         INTEGER,OPTIONAL, INTENT(IN),   DIMENSION(XX,YY) :: SATLYRCHK
@@ -1837,7 +1841,7 @@ if (i .eq. 79 .and. j .eq. 98 ) then
 !  print *, "FLAG in ROUTE_SUBSURFACE1000, SMCRT_SUB_PASS(i,j,:):",SMCRT_SUB_PASS(i,j,:)
 end if
                 if (qqsub .le. 1.0e-12 .and. SATLYRCHK(i,j) .lt. NSOIL+1) then
-                  call calculate_qsubout_tr(i,j,SATLYRCHK(i,j),NSOIL,NTRACER,NSUB,SLDPTH,&
+                  call calculate_qsubout_tr(i,j,SATLYRCHK(i,j),NSOIL,NTRACER,PMOPT,NSUB,SLDPTH,&
                                             qqsub,dist(i,j,9),SUBDT,qqsub_tr_lose,qqsub_sub_lose,  &
                                             SMCRT_TR_PASS(i,j,:), SMCRT_SUB_PASS(i,j,:))
                   qsubrt_tr_gain(ixx0,jyy0) = qsubrt_tr_gain(ixx0,jyy0) - qqsub_tr_lose    ! downstream pixel water gain
@@ -3561,7 +3565,7 @@ INTERFACE
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
                   SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
                   QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT    &
-                 ,NTRACER, WVTFLAG, NSUB                              & !wt vars
+                 ,NTRACER, WVTFLAG, PMOPT, NSUB                       & !wt vars
                  ,SMCRT_TR_PASS, SMCRT_SUB_PASS, SMCMAXRT_SUB_PASS    & !wt vars
                  ,INFXSUBRT_TR_PASS, QSUBBDRYTRT_TR_PASS              & !wt vars
                  ,QSUBBDRYRT_TR_PASS,QSUBRT_TR_GAIN                   & !wt vars
@@ -3586,6 +3590,7 @@ INTERFACE
 !----------------------------------------------------
          INTEGER,         INTENT(IN)                                :: NTRACER
          INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+         INTEGER,OPTIONAL,INTENT(IN)                                :: PMOPT
          INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
          REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_TR_PASS
          REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
@@ -3604,6 +3609,7 @@ END INTERFACE
 ! Needed for water tracer capability
 !------------------------------------------------
              integer                               :: WVTFLAG
+             integer                               :: PMOPT
              integer, dimension(nlst_rt(did)%nsoil):: NSUB
              real, allocatable, dimension(:,:,:)   :: SMCRT_TR_PASS
              real, allocatable, dimension(:,:,:)   :: SMCRT_SUB_PASS
@@ -3633,6 +3639,7 @@ END INTERFACE
                      RT_DOMAIN(did)%sub_resid,rt_domain(did)%overland%properties%max_water_surface_slope_index, rt_domain(did)%overland%properties%water_surface_slope &
                     ,nlst_rt(did)%NTRACER                              &
                     ,WVTFLAG = nlst_rt(did)%WVTFLAG                    &
+                    ,PMOPT   = nlst_rt(did)%PMOPT                      &
                     ,NSUB    = nlst_rt(did)%NSUB                       &
                     ,SMCRT_TR_PASS = RT_DOMAIN(did)%SMCRT_TR           &
                     ,SMCRT_SUB_PASS = RT_DOMAIN(did)%SMCRT_SUB         &
@@ -3669,7 +3676,7 @@ END INTERFACE
                   DT,ZWATTABLRT,SOXRT,SOYRT,LKSATRT,&
                   SOLDEPRT,INFXSUBRT,QSUBBDRYTRT, QSUBBDRYRT,&
                   QSUBRT ,rt_option, dist,sub_resid,SO8RT_D, SO8RT    &
-                 ,NTRACER, WVTFLAG, NSUB                              & !wt vars
+                 ,NTRACER, WVTFLAG, PMOPT, NSUB                       & !wt vars
                  ,SMCRT_TR_PASS, SMCRT_SUB_PASS, SMCMAXRT_SUB_PASS    & !wt vars
                  ,INFXSUBRT_TR_PASS, QSUBBDRYTRT_TR_PASS              & !wt vars
 		 ,QSUBBDRYRT_TR_PASS,QSUBRT_TR_GAIN                    & !wt vars
@@ -3688,8 +3695,8 @@ INTERFACE
           NSOIL,SMCRT,INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,    &
           SMCWLTRT,SO8RT,SO8RT_D, rt_option,SLDPTH,junk4,CWATAVAIL, &
           SATLYRCHK                            &
-          ,NTRACER, WVTFLAG, NSUB              & !wt vars
-          ,QSUBRT_TR_GAIN, QSUBBDRYRT_TR_PASS    & !wt vars
+          ,NTRACER, WVTFLAG, PMOPT, NSUB       & !wt vars
+          ,QSUBRT_TR_GAIN, QSUBBDRYRT_TR_PASS  & !wt vars
           ,QSUBBDRYTRT_TR_PASS, SMCRT_TR_PASS  & !wt vars
           ,SMCRT_SUB_PASS, INFXSUBRT_TR_PASS   & !wt vars
           ,SMCMAXRT_SUB_PASS                   & !wt vars
@@ -3730,6 +3737,7 @@ INTERFACE
 !-------------------------------------------------------------------
         INTEGER,         INTENT(IN)                                :: NTRACER
         INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+        INTEGER,OPTIONAL,INTENT(IN)                                :: PMOPT
         INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBBDRYRT_TR_PASS
         REAL,   OPTIONAL,INTENT(OUT),  DIMENSION(IXRT,JXRT)        :: QSUBRT_TR_GAIN
@@ -3761,6 +3769,7 @@ END INTERFACE
 !----------------------------------------------------
          INTEGER,         INTENT(IN)                                :: NTRACER
          INTEGER,OPTIONAL,INTENT(IN)                                :: WVTFLAG
+         INTEGER,OPTIONAL,INTENT(IN)                                :: PMOPT
          INTEGER,OPTIONAL,INTENT(IN),   DIMENSION(NSOIL)            :: NSUB
          REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_TR_PASS
          REAL,   OPTIONAL,INTENT(INOUT),DIMENSION(IXRT,JXRT,NTRACER):: SMCRT_SUB_PASS
@@ -3808,6 +3817,7 @@ END INTERFACE
           INFXSUBRT,SMCMAXRT,SMCREFRT,ZSOIL,IXRT,JXRT,DT,SMCWLTRT,SO8RT,    &
           SO8RT_D, rt_option,SLDPTH,SUB_RESID,CWATAVAIL,SATLYRCHK   &
           ,NTRACER, WVTFLAG   = WVTFLAG             & !wt vars
+          ,PMOPT              = PMOPT               & !wt vars
           ,NSUB               = NSUB                & !wt vars
           ,QSUBRT_TR_GAIN     = QSUBRT_TR_GAIN      & !wt vars
           ,QSUBBDRYRT_TR_PASS = QSUBBDRYRT_TR_PASS  & !wt vars
@@ -4120,6 +4130,30 @@ subroutine calculate_wt_ratio (a,b,c)
 
 end subroutine
 !------------------------------------------------------
+! Huancui Hu: calculate_wt_ratio
+subroutine calculate_wt_ratio_pm (a,b,c)
+
+  implicit none
+  real,    intent(in)     :: a
+  real,    intent(in)     :: b
+  real,    intent(inout)  :: c
+  !----local vars----
+  real      :: d,b_new
+
+  d = b-a
+  if (d .gt. 1.0E-10) then
+    b_new = a+d*0.5
+    if (b_new .gt. 1.0E-8) then
+      c = min(1.0,max(a/b_new, 0.0))
+    else
+      c = 0.0
+    end if
+  else
+    c = 0.0
+  end if
+
+end subroutine
+!------------------------------------------------------
 ! Huancui Hu: adjust_smc_tr
 subroutine adjust_smc_tr(I,J,NSOIL, NTRACER, SLDPTH, NSUB, Ksat_ini,&
                          Ksat_now, smc, smc_sub, smc_tr,&
@@ -4332,7 +4366,7 @@ end if
 end subroutine
 !------------------------------------------------------
 ! Huancui Hu: calculate_qsubout_tr
-subroutine calculate_qsubout_tr(ii, jj, satk,nsoil,ntracer,nsub,sldepth,&
+subroutine calculate_qsubout_tr(ii, jj, satk,nsoil,ntracer,pmopt,nsub,sldepth,&
                                 qqsub_lose,grid_area,subdt,  &
                                 qqsub_tr_lose,  &
                                 qqsub_sub_lose, &
@@ -4341,6 +4375,7 @@ subroutine calculate_qsubout_tr(ii, jj, satk,nsoil,ntracer,nsub,sldepth,&
   integer, intent(in)                            :: ii, jj, satk
   integer, intent(in)                            :: nsoil
   integer, intent(in)                            :: ntracer
+  integer, intent(in)                            :: pmopt
   integer, intent(in),   dimension(nsoil)        :: nsub
   real,    intent(in),   dimension(nsoil)        :: sldepth
   real,    intent(in)                            :: qqsub_lose     !unit:m3/s, has to be <0
@@ -4364,11 +4399,18 @@ subroutine calculate_qsubout_tr(ii, jj, satk,nsoil,ntracer,nsub,sldepth,&
     qqsub_sub_tmp = qqsub_lose*sldepth(K)/sum(sldepth(satk:nsoil))    !qqsub_sub_tmp<0
     do KSUB = 1, NSUB(K)
       ISUB = sum(NSUB(1:K)) - NSUB(K) + KSUB
-      call calculate_wt_ratio(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+      if (pmopt .lt. 2) then
+        call calculate_wt_ratio(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+      else
+        call calculate_wt_ratio_pm(smc_tr(ISUB), smc_sub(ISUB), PROPOR_TR)
+      end if
       qqsub_tr_lose  = qqsub_tr_lose + qqsub_sub_tmp/NSUB(K)*PROPOR_TR
-      qqsub_sub_lose = qqsub_sub_lose + qqsub_sub_tmp/NSUB(K)
       smc_tr(ISUB)   = smc_tr(ISUB)  + (qqsub_sub_tmp/grid_area*subdt)/(sldepth(K)/NSUB(K))*PROPOR_TR
+      qqsub_sub_lose = qqsub_sub_lose + qqsub_sub_tmp/NSUB(K)
       smc_sub(ISUB)  = smc_sub(ISUB) + (qqsub_sub_tmp/grid_area*subdt)/(sldepth(K)/NSUB(K))
+      if (smc_tr(ISUB) .lt. -1.0E-8) then
+        print *, "ERROR in calculate_qsubout_tr00, smc_tr<0,ii,jj,pmopt,PROPOR_TR,smc_tr,smc_sub:",ii,jj,pmopt,PROPOR_TR,smc_tr,smc_sub 
+      end if
     end do 
   end do
   if (abs(qqsub_sub_lose - qqsub_lose) .gt. 1.5E-7 ) then
