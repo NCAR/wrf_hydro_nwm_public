@@ -1790,7 +1790,7 @@ end subroutine HYDRO_ini
        ! input from HYDRO.TBL.nc file
        print*, "reading from hydrotbl_f(HYDRO.TBL.nc)  file ...."
        call hdtbl_in_nc(did)
-       if (noah_lsm%imperv_option .eq. 0) then
+       if (noah_lsm%imperv_option .eq. 9) then
          !ADCHANGE: For consistency, mirror urban and param value checks used in table read
          where (rt_domain(did)%VEGTYP == rt_domain(did)%isurban)
            rt_domain(did)%SMCMAX1 = 0.45
