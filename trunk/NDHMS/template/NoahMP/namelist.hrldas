@@ -34,7 +34,7 @@ TBOT_OPTION                       = 2
 TEMP_TIME_SCHEME_OPTION           = 3
 GLACIER_OPTION                    = 2
 SURFACE_RESISTANCE_OPTION         = 4
-IMPERV_OPTION                     = 0
+IMPERV_OPTION                     = 9  !(0->none; 1->total; 2->Alley&Veenhuis; 9->orig)
 
 ! Timesteps in units of seconds
 FORCING_TIMESTEP = 3600
