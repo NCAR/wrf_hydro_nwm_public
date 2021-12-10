@@ -3005,7 +3005,11 @@ DO JJ = 1,SIZE(PSNOWDZ,1)
     ZCMPRSFACT(JJ,JST) = ( ZSNOWLWE(JJ,JST) - (PSNOWLIQ(JJ,JST)+ZSNOWMELT(JJ,JST)) ) &
                        / ( ZSNOWLWE(JJ,JST) - PSNOWLIQ(JJ,JST) )
     PSNOWDZ   (JJ,JST) = PSNOWDZ (JJ,JST) * ZCMPRSFACT(JJ,JST)
-    PSNOWRHO  (JJ,JST) = ZSNOWLWE(JJ,JST) * XRHOLW / PSNOWDZ(JJ,JST)
+    if ((PSNOWDZ(JJ,JST) .eq. 0) .and. (PSNOWRHO(JJ,JST).gt.0) .and. (PSNOWRHO(JJ,JST).ne.999)) then
+      PSNOWRHO(JJ,JST) = 0
+    else
+      PSNOWRHO(JJ,JST) = ZSNOWLWE(JJ,JST) * XRHOLW / PSNOWDZ(JJ,JST)
+    endif
     !
     ! 2. Add snow melt to current snow liquid water content:
     ! ------------------------------------------------------
