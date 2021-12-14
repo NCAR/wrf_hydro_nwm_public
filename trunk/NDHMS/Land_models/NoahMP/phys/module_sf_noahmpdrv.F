@@ -1025,6 +1025,7 @@ CONTAINS
              !  Call to NOAHM_GLACIER to after CROCUS to calculte 2m temp and other 2m variables.
              !  But use snow info from CROCUS.
 
+             ZSNSO(-NSNOW:0) = 0.0
              ALBOLD= ZP_SNOWALB(1)
              SNDPTHH = sum(ZP_SNOWDZ)
              SNEQVOH= sum(PSNOWSWEXY(I,:,J))
@@ -1065,6 +1066,7 @@ CONTAINS
              RUNSF=ZP_THRUFAL(1)+sfcheadrt(i,j)/DT
 #endif
 
+             SNLIQ = 0
              FOO1 = MAX((ZP_LEL3L+ZP_LES3L)/2.8440E06,0.)
              FOO2 = ABS(MIN((ZP_LEL3L+ZP_LES3L)/2.8440E06,0.))
 
