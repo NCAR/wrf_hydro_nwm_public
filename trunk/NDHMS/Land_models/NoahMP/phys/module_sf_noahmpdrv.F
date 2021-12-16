@@ -1040,6 +1040,9 @@ CONTAINS
              STC(-NSNOW+2)=(ZP_SNOWTEMP(1,1))
              ISNOW=-NSNOW+1 ! (for glacier, always assume a snow layer)
              SNICEH=sum(PSNOWDZXY(I,:,J))*1000./(NSNOW)
+             if (SNDPTHH.eq.0) then
+                ISNOW=1
+             endif
 
 
              CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
