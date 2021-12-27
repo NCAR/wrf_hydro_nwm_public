@@ -288,6 +288,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           if(h_0 .gt. bfd) then !water outside of defined channel
             !weight the celerity by the contributing area, and assume that the mannings
             !of the spills is 2x the manning of the channel
+            if (nCC <= 0.0) print *, "ADCHECK_CC1: nCC TwCC h_0 bfd", nCC, TwCC, h_0, bfd
                 Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                 ((2./3.)*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw+2.0*bfd*z))))*AREA &
                 + ((sqrt(So)/(nCC))*(5./3.)*(h_0-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
@@ -307,6 +308,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
           endif
 
           if(h_0 .gt. bfd) then !water outside of defined channel
+             if (nCC <= 0.0) print *, "ADCHECK_CC2: nCC TwCC h_0 bfd", nCC, TwCC, h_0, bfd
              X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2.0*TwCC*So*Ck*dx)))))
           else
             if(Ck .gt. 0.0) then
@@ -352,6 +354,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            Twl = Bw + 2.0*z*h                    !--top width of the channel inflow
 
            if(h .gt. bfd) then !water outside of defined channel
+             if (nCC <= 0.0) print *, "ADCHECK_CC3: nCC TwCC h bfd", nCC, TwCC, h, bfd
              AREA =  (Bw + bfd * z) * bfd
              AREAC = (TwCC * (h-bfd)) !assume compound component is rect. chan, that's 3 times the Tw
              WP = (Bw + 2.0 * bfd * sqrt(1.0 + z*z))
@@ -371,6 +374,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
            endif
 
           if(h .gt. bfd) then !water outside of defined channel, assumed rectangular, 3x TW and n = 3x
+                if (nCC <= 0.0) print *, "ADCHECK_CC4: nCC TwCC h bfd", nCC, TwCC, h, bfd
                 Ck = max(0.0,((sqrt(So)/n)*((5./3.)*R**(2./3.) - &
                 ((2./3.)*R**(5./3.)*(2.0*sqrt(1.0 + z*z)/(Bw + 2.0*bfd*z))))*AREA &
                 + ((sqrt(So)/(nCC))*(5./3.)*(h-bfd)**(2./3.))*AREAC)/(AREA+AREAC))
@@ -388,6 +392,7 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
             Km = dt
            endif
           if(h .gt. bfd) then !water outside of defined channel
+            if (nCC <= 0.0) print *, "ADCHECK_CC5: nCC TwCC h bfd", nCC, TwCC, h, bfd
             X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2.0*TwCC*So*Ck*dx)))))
 
           else
