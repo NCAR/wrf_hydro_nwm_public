@@ -16,6 +16,7 @@ on:
 jobs:
   Model_Testing:
     strategy:
+      fail-fast: false
       matrix:
         configuration: [nwm_ana, nwm_long_range, gridded, reach]
     runs-on: ubuntu-latest
