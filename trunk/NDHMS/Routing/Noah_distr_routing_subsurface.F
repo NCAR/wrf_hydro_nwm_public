@@ -604,6 +604,7 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
    real*8, DIMENSION(XX,YY) :: qsub_tmp, QSUBDRY_tmp ! temp trackers for fluxes (m3/s)
    ! Local parameters
    real, parameter :: nexp=1.0  ! local power law exponent
+   real :: tmp_dist(9)
 
    ! Initialize temp variables
    qsub_tmp = 0.
@@ -629,7 +630,8 @@ SUBROUTINE ROUTE_SUBSURFACE1(dist, z, latksat, soldep, &
             ! ADCHANGE: Always call routine to check for steepest elev+head slope
             ! Updates IXX0, JYY0, index, and beta for steepest slope neighbor.
             ! Note that beta will be -1 if steepest slope cannot be found.
-            call GETSUB8(i, j, XX, YY, Z, so8rt, dist(i,j,:), &
+            tmp_dist = dist(i,j,:)
+            call GETSUB8(i, j, XX, YY, Z, so8rt, tmp_dist, &
                          IXX0, JYY0, index, beta)
 
             if (dist(i,j,index) .le. 0) then
@@ -936,4 +938,3 @@ SUBROUTINE ROUTE_SUBSURFACE2(                                 &
     !DJG------------------------------------------------------------
 end subroutine ROUTE_SUBSURFACE2
 !DJG------------------------------------------------------------
-
