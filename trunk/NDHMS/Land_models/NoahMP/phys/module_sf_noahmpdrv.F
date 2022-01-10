@@ -703,8 +703,10 @@ CONTAINS
        PRCP   = PRECIP_IN (I,J) / DT                  ! timestep total precip rate (glacier) [mm/s]! MB: v3.7
 
        CROPTYPE = 0
-       ZFLOW_ICE = 0
-       ZFLOW_SNOW = 0
+       if (crocus_opt /= 0) then
+          ZFLOW_ICE = 0
+          ZFLOW_SNOW = 0
+       end if
 
        IF (PRESENT(MP_RAINC) .AND. PRESENT(MP_RAINNC) .AND. PRESENT(MP_SHCV) .AND. &
            PRESENT(MP_SNOW)  .AND. PRESENT(MP_GRAUP)  .AND. PRESENT(MP_HAIL)   ) THEN
@@ -1090,7 +1092,9 @@ CONTAINS
              !----------------
           ENDIF ! If not (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0)
                 ! If crocus is not running, use the original NOAH-MP glacier
-       ELSE IF (GLACINFOH .ne. 1 .and. VEGTYP == ISICE_TABLE) THEN ! all other glacier grid points
+       ELSE IF (crocus_opt /= 0 .and. &
+            GLACINFOH .ne. 1 .and. &
+            VEGTYP == ISICE_TABLE) THEN ! all other glacier grid points
           ICE = -1
           GLACR= 1
           CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
@@ -1114,7 +1118,8 @@ CONTAINS
 
 
        ENDIF
-       IF ((crocus_opt == 0 .and. ICE == -1) .or. GLACR == 1) THEN
+
+       IF ((crocus_opt == 0 .and. VEGTYP == ISICE_TABLE) .or. GLACR == 1) THEN
          FSNO   = 1.0
          TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
          TGB    = TG
