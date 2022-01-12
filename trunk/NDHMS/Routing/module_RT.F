@@ -41,6 +41,7 @@ MODULE module_Routing
    use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
    use hashtable
+   use iso_fortran_env, only: int64
 
    IMPLICIT NONE
 
@@ -997,7 +998,7 @@ subroutine LandRT_ini(did)
 
         endif  ! end if block for UDMP_OPT
 
-        new_start_i = 0; new_start_j = 1
+        new_start_i = 1; new_start_j = 1
         new_end_i = rt_domain(did)%ixrt; new_end_j = rt_domain(did)%jxrt
 
         if(left_id .ge. 0) new_start_i = 1
@@ -1018,7 +1019,7 @@ subroutine LandRT_ini(did)
 
         block
           type(hash_t) :: hash_table
-          integer :: val,ii,jj
+          integer(kind=int64) :: val,ii,jj
           logical :: found
           
           call hash_table%set_all_idx(rt_domain(did)%LLINKID, rt_domain(did)%LNLINKSL)
