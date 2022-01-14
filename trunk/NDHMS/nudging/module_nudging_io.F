@@ -706,7 +706,7 @@ subroutine write_nudging_last_obs_soa(lastObsStr, modelTime, g_nudge)
 
 implicit none
 
-!Arugments
+!Arguments
 type(lastObsStructure_SoA), intent(in) :: lastObsStr
 character(len=19),      intent(in)               :: modelTime
 real,                   intent(in), dimension(:) :: g_nudge
@@ -744,12 +744,12 @@ iret = nf90_def_dim(ncid, "stationIdStrLen", 15,             dimIdStnStr)
 iret = nf90_def_dim(ncid, "stationIdInd",    nf90_unlimited, dimIdNStn)
 iret = nf90_def_dim(ncid, "feature_id",      nFeature,       dimIdNFeature)
 
-!! gageId def var
+! gageId def var
 iret = nf90_def_var(ncid, "stationId", nf90_char, (/ dimIdStnStr, dimIdNstn /), varid)
 iret = nf90_put_att(ncid, varid, 'long_name', "USGS station identifer of length 15")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
-!! time def var
+! time def var
 iret = nf90_def_var(ncid, "time", nf90_char, (/ dimIdTimeStr, dimIdNTime, dimIdNStn /), varid)
 iret = nf90_put_att(ncid, varid, 'units', "UTC")
 iret = nf90_put_att(ncid, varid, 'long_name', "YYYY-mm-dd_HH:MM:SS UTC")
@@ -779,13 +779,13 @@ iret = nf90_put_att(ncid, varid, 'units', "m3 s-1")
 iret = nf90_put_att(ncid, varid, 'long_name', "Amount of stream flow alteration")
 iret = nf90_def_var_deflate(ncid, varid, 0, 1, 2)
 
-!! global attributes
+! global attributes
 iret = nf90_put_att(ncid, nf90_global, "modelTimeAtOutput", modelTime)
 
-!! end definition
+! end definition
 iret = nf90_enddef(ncid)
 
-!! gageId write var
+! gageId write var
 iret = nf90_inq_varid(ncid, "stationId", varid)
 !allocate(charArr15(nSpace))
 !charArr15=lastObsStr%usgsId(:)
@@ -841,7 +841,7 @@ deallocate(qualityInt2)
 iret = nf90_inq_varid(ncid, "nudge", varid)
 iret = nf90_put_var(ncid, varid, g_nudge)
 
-!! close
+! close
 iret= nf90_close(ncid)
 
 #ifdef HYDRO_D
@@ -935,7 +935,7 @@ nTime  = size(lastObsStr(1)%lastObsDischarge)
 
 iret = nf90_open(fileName, nf90_nowrite, ncid)
 
-!! gageId read var
+! gageId read var
 allocate(charArr15(nSpace))
 iret = nf90_inq_varid(ncid, "stationId", varid)
 iret = nf90_get_var(ncid, varid, charArr15)
@@ -993,7 +993,7 @@ else
    g_nudge=0.0000000000
 end if
 
-!! close
+! close
 iret= nf90_close(ncid)
 
 #ifdef HYDRO_D
@@ -1687,4 +1687,3 @@ end function get_netcdf_dim
 
 !===================================================================================================
 end module module_nudging_io
-

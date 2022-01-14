@@ -75,8 +75,6 @@ type, extends(lastObsStructure) :: obsStaticStructure
    !!real              :: lastObsQuality(:)         ! quality of the last obs discharge
    !!real              :: lastObsModelDischarge(:)  ! the modeled discharge value at the time of the last obs
    !! New components
-   !integer :: obsCellInd    ! index of obs on model channel network, for distance calc
-   !real    :: R, G, tau     ! the nudging parameters at this gage.
    integer, allocatable, dimension(:) ::  cellsAffected  ! indices of cells affected
    real,    allocatable, dimension(:) ::  dist           ! optional: dist to affected cells, optional
    real,    allocatable, dimension(:) ::  ws             ! spatial cressman weights at affected cells discharge.
@@ -620,23 +618,12 @@ obsStaticStr_SoA%R(:) = nudgingParamsStr%R(:)
 obsStaticStr_SoA%G(:) = nudgingParamsStr%G(:)
 obsStaticStr_SoA%tau(:) = nudgingParamsStr%tau(:)
 obsStaticStr_SoA%usgsId(:) = nudgingParamsStr%usgsId(:)
-
-! obsStaticStr(:)%R      = nudgingParamsStr%R
-! obsStaticStr(:)%G      = nudgingParamsStr%G
-! obsStaticStr(:)%tau    = nudgingParamsStr%tau
 obsStaticStr(:)%usgsId = nudgingParamsStr%usgsId
 
 allocate(obsStaticStr_SoA%lastObsDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%lastObsModelDischarge(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%lastObsTime(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
 allocate(obsStaticStr_SoA%lastObsQuality(nlst(did)%nLastObs, size(nudgingParamsStr%usgsId)))
-
-!do ll=1,size(nudgingParamsStr%usgsId)
-!   allocate(obsStaticStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
-!   allocate(obsStaticStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
-   !allocate(obsStaticStr(ll)%lastObsTime(          nlst(did)%nLastObs))
-   !allocate(obsStaticStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
-!end do
 
 !=================================================
 ! 4. Read in 'nudgingLastObs.nc' file (initialization and broadcasting come later)
@@ -646,15 +633,6 @@ if(my_id .eq. io_id) then
 
       !! Initalizing the structure is not contingent upon there
       !! being a file on disk
-      !do ll=1,size(obsStaticStr%usgsId)
-         !obsStaticStr(ll)%lastObsDischarge      = real(-9999)
-         !obsStaticStr(ll)%lastObsModelDischarge = real(-9999)
-         ! do tt=1,nTimesLastObs
-         !    obsStaticStr(ll)%lastObsTime(tt)    = missingLastObsTime
-         ! enddo
-       !  obsStaticStr(ll)%lastObsQuality        = real(0) !! keep this zero
-      !end do
-
       obsStaticStr_SoA%lastObsDischarge      = real(-9999)
       obsStaticStr_SoA%lastObsModelDischarge = real(-9999)
       obsStaticStr_SoA%lastObsTime    = missingLastObsTime
@@ -678,15 +656,8 @@ if(my_id .eq. io_id) then
             allocate(lastObsStr_SoA%lastObsQuality(nlst(did)%nLastObs,nStnLastObs))
 
             allocate(lastObsStr(nStnLastObs))
-            ! do ll=1,nStnLastObs
-            !    allocate(lastObsStr(ll)%lastObsDischarge(     nlst(did)%nLastObs))
-            !    allocate(lastObsStr(ll)%lastObsModelDischarge(nlst(did)%nLastObs))
-            !    allocate(lastObsStr(ll)%lastObsTime(          nlst(did)%nLastObs))
-            !    allocate(lastObsStr(ll)%lastObsQuality(       nlst(did)%nLastObs))
-            ! end do
 
             allocate(g_nudge(rt_domain(1)%gnlinksl))
-            !call read_nudging_last_obs(nudgingLastObsFileTry, lastObsStr, g_nudge)
             call read_nudging_last_obs_soa(nudgingLastObsFileTry, lastObsStr_SoA, g_nudge)
          end if ! nStnLastObs .gt. 0 -> read the file
       endif! trim(lastObsFile).ne.''
@@ -1179,12 +1150,6 @@ do ii=1,nObsMiss ! broadcast IO from above. (if nObsMiss is zero, this loop is s
       ! Treat obs_static_to_strutct
       call mpp_land_bcast_int1d_root(obsTimeStr(tt)%obsStr(:)%obsStaticInd, iiImage)
       call mpp_land_bcast_char1d_root(obsStaticStr_SoA%usgsId(:), iiImage)
-      !call mpp_land_bcast_int1d_root(obsStaticStr(:)%obsCellInd, iiImage)
-      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%R, iiImage)
-      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%G, iiImage)
-      ! call mpp_land_bcast_real_1d_root(obsStaticStr(:)%tau, iiImage)
-
-      call mpp_land_bcast_char1d_root(obsStaticStr_SoA%usgsId(:), iiImage)
       call mpp_land_bcast_int1d_root(obsStaticStr_SoA%obsCellInd(:), iiImage)
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%R(:), iiImage)
       call mpp_land_bcast_real_1d_root(obsStaticStr_SoA%G(:), iiImage)
@@ -1603,7 +1568,6 @@ if(my_id .eq. io_id) then
 end if
 !broadcast
 call mpp_land_bcast_logical(nudgeSpatial)
-!call mpp_land_bcast_int1d(obsStaticStr(:)%obsCellInd)
 call mpp_land_bcast_int1d(obsStaticStr_SoA%obsCellInd(:))
 #endif
 
@@ -1702,7 +1666,6 @@ if(my_id .eq. io_id) then
                whLastObsStr = whUniLoop(theMask)
                deallocate(theMask)
                !! Drop in the entire derived type for each array index! Very nice.
-               ! obsStaticStr(ll)%lastObsStructure = lastObsStr(whLastObsStr)
                obsStaticStr_SoA%lastObsStructure_SoA%usgsId(ll) = lastObsStr_SoA%usgsId(whLastObsStr)
                obsStaticStr_SoA%lastObsStructure_SoA%lastObsDischarge(:,ll) = lastObsStr_SoA%lastObsDischarge(:,whLastObsStr)
                obsStaticStr_SoA%lastObsStructure_SoA%lastObsTime(:,ll) = lastObsStr_SoA%lastObsTime(:,whLastObsStr)
