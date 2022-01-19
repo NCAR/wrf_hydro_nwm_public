@@ -20,6 +20,9 @@ implicit none
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 11
 integer, parameter :: numLdasVars = 116
+! Note: if more ldas variables are added the logic will need to be changed in
+!       module_NWM_io.F:output_NoahMP_NWM for when to close the restart file
+integer, parameter :: numLdasVars_crocus_off = 98
 
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
