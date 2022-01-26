@@ -1178,6 +1178,8 @@ CONTAINS
          Z0WRF  = 0.002
          QFX(I,J) = ESOIL
          LH (I,J) = FGEV
+         ALBSND = undefined_value
+         ALBSNI = undefined_value
 
       ELSE
          ICE=0 ! Neither sea ice or land ice.
