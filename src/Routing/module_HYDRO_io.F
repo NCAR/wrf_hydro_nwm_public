@@ -6700,7 +6700,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
       character(len=*) :: vName
       integer i, j,k
       real, dimension(gnumbasns) :: buf
-      call read_rst_crt_nc(ncid,dble(buf),gnumbasns,vName)
+      call read_rst_crt_nc(ncid,buf,gnumbasns,vName)
       do k = 1, numbasns
          outV(k) = buf(basnsInd(k))
       end do
@@ -6875,9 +6875,9 @@ if(nlst(did)%SUBRTSWCRT  .eq. 1 .or. &
       endif
 
       if(rt_domain(did)%NLAKES .gt. 0) then
-         call read_rst_crt_nc(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
-         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
-         call read_rst_crt_nc(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
+         call read_rst_crt_nc8(ncid,rt_domain(did)%RESHT,rt_domain(did)%NLAKES,"resht")
+         call read_rst_crt_nc8(ncid,rt_domain(did)%QLAKEO,rt_domain(did)%NLAKES,"qlakeo")
+         call read_rst_crt_nc8(ncid,rt_domain(did)%QLAKEI,rt_domain(did)%NLAKES,"qlakei")
       endif
 
       if( nlst(did)%channel_only       .eq. 0 .and. &
@@ -7152,6 +7152,44 @@ end subroutine RESTART_IN_nc
          implicit none
          integer ::  ireg, ncid, varid, n, iret
          !real,dimension(n) ::  var
+         real,dimension(n) ::  var
+         character(len=*) :: varStr
+
+         if( n .le. 0)  return
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) &
+#endif
+            iret = nf90_inq_varid(ncid,  trim(varStr),  varid)
+#ifdef MPP_LAND
+         call mpp_land_bcast_int1(iret)
+#endif
+            if (iret /= 0) then
+#ifdef HYDRO_D
+               print*, 'variable not found: name = "', trim(varStr)//'"'
+#endif
+               return
+            endif
+#ifdef HYDRO_D
+         print*, "read restart variable ", varStr
+#endif
+#ifdef MPP_LAND
+         if(my_id .eq. IO_id) then
+#endif
+            iret = nf90_get_var(ncid, varid, var)
+#ifdef MPP_LAND
+         endif
+         if(n .gt. 0) then
+             call mpp_land_bcast_real(n,var)
+
+         endif
+#endif
+         return
+      end subroutine read_rst_crt_nc
+
+      subroutine read_rst_crt_nc8(ncid,var,n,varStr)
+         implicit none
+         integer ::  ireg, ncid, varid, n, iret
+         !real,dimension(n) ::  var
          real*8,dimension(n) ::  var
          character(len=*) :: varStr
 
@@ -7179,13 +7217,13 @@ end subroutine RESTART_IN_nc
 #ifdef MPP_LAND
          endif
          if(n .gt. 0) then
-             call mpp_land_bcast(var)
-             !call mpp_land_bcast_real(n,var)
+             call mpp_land_bcast_real8(n,var)
 
          endif
 #endif
          return
-      end subroutine read_rst_crt_nc
+      end subroutine read_rst_crt_nc8
+
 
       subroutine read_rst_crt_stream_nc(ncid,var_out,n,varStr,gnlinks,map_l2g)
          implicit none

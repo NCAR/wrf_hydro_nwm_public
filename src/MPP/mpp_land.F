@@ -1096,6 +1096,17 @@ MODULE MODULE_MPP_LAND
     return
   end subroutine mpp_land_bcast_real
 
+  subroutine mpp_land_bcast_real8(size1,inout)
+      integer size1
+      ! real inout(size1)
+      real*8 , dimension(:) :: inout
+      integer ierr, len
+        call mpi_bcast(inout,size1,MPI_REAL8,   &
+            IO_id,HYDRO_COMM_WORLD,ierr)
+        call mpp_land_sync()
+    return
+  end subroutine mpp_land_bcast_real8
+
   subroutine mpp_land_bcast_int2d(inout)
       integer length1, k,length2
       integer inout(:,:)
