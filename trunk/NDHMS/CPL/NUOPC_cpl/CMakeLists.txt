@@ -9,6 +9,8 @@ endif (NOT TARGET esmf)
 list(APPEND wrfhydro_nuopc_files
   WRFHydro_NUOPC_Cap.F90
   WRFHydro_NUOPC_Gluecode.F90
+  WRFHydro_NUOPC_Fields.F90
+  WRFHydro_NUOPC_Flags.F90
   WRFHydro_ESMF_Extensions.F90
 )
 
