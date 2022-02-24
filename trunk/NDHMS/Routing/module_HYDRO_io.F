@@ -11179,11 +11179,13 @@ subroutine hdtbl_in_nc(did)
 end subroutine hdtbl_in_nc
 
 subroutine read2dlsm(did,file,varName,varOut,ierr)
+use module_mpp_land,only: mpp_land_bcast_int1
   implicit none
-  integer :: did, ncid ,ierr,iret
+  integer :: did, ncid , iret
   character(len=*) :: file,varName
   real,dimension(:,:) :: varOut
   character(len=256) :: units
+  integer, intent(out) :: ierr
 #ifdef MPP_LAND
   real,allocatable,dimension(:,:) :: tmpArr
   if(my_id .eq. io_id) then
@@ -11196,6 +11198,7 @@ subroutine read2dlsm(did,file,varName,varOut,ierr)
      allocate(tmpArr(1,1))
   endif
   call decompose_data_real (tmpArr,varOut)
+  call mpp_land_bcast_int1(ierr)
   deallocate(tmpArr)
 #else
      iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
