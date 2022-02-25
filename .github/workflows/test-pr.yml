@@ -13,15 +13,14 @@ on:
         description: "PR to test"
         required: true
 
-# Ensures that only one deploy task per branch/environment will run at a time.
-concurrency: staging_environment
-
 jobs:
   Model_Testing:
     strategy:
       fail-fast: false
       matrix:
         configuration: [nwm_ana, nwm_long_range, gridded, reach]
+      # Hackfix until gdrive downloads are fixed
+      max-parallel: 1
     runs-on: ubuntu-latest
 
     steps:
