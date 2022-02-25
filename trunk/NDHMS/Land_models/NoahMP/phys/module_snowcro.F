@@ -2169,7 +2169,7 @@ ELSE
 
 if (isnan(VIS_ICEALB(1))) then
   PALB(1) = XALBICE1
-  elseif (VIS_ICEALB(1).ne.0.0) THEN
+  elseif (VIS_ICEALB(1).le.0.0) THEN
   PALB(1) = XALBICE1
 else
   PALB(1) = VIS_ICEALB(1)
