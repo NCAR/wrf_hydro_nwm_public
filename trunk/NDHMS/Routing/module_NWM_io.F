@@ -1377,6 +1377,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       fileMeta%outFlag(114) = 0
       fileMeta%outFlag(115) = 0
       fileMeta%outFlag(116) = 0
+      fileMeta%numVars = numLdasVars_crocus_off ! 98
    end if
 
    ! call the GetModelConfigType function
