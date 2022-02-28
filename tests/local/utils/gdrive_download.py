@@ -1,24 +1,13 @@
 from argparse import ArgumentParser
 
 import requests
-import subprocess
+import gdown
 
 
 def download_file_from_google_drive(id, destination):
     print('downloading google drive file id ' + id + ' to ' + destination)
 
-    # --- quick solution to issue of requests being an older method to
-    #     download a google drive file. Future transition to more official
-    #     methods, listed at:
-    #     https://developers.google.com/drive/api/v3/manage-downloads
-    command = '/home/runner/.local/bin/gdown -O ' + destination + ' ' + id
-    print('$', command)
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    if output != None:
-        print(output)
-    if error != None:
-        print(error)
+    gdown.download(id=id, output=destination)
 
     # --- the following method is out-of-date
 
