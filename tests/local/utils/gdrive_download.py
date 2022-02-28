@@ -5,18 +5,33 @@ import requests
 
 def download_file_from_google_drive(id, destination):
     print('downloading google drive file id ' + id + ' to ' + destination)
-    URL = "https://docs.google.com/uc?export=download"
 
-    session = requests.Session()
+    # --- quick solution to issue of requests being an older method to
+    #     download a google drive file. Future transition to more official
+    #     methods, listed at:
+    #     https://developers.google.com/drive/api/v3/manage-downloads
+    command = 'gdown -O ' + destination + ' ' + id
+    print('$', command)
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    if output != None:
+        print(output)
+    if error != None:
+        print(error)
+    # --- the following method is out-of-date
 
-    response = session.get(URL, params={'id': id}, stream=True)
-    token = get_confirm_token(response)
+    # URL = "https://docs.google.com/uc?export=download"
 
-    if token:
-        params = {'id': id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
+    # session = requests.Session()
 
-    save_response_content(response, destination)
+    # response = session.get(URL, params={'id': id}, stream=True)
+    # token = get_confirm_token(response)
+
+    # if token:
+    #     params = {'id': id, 'confirm': token}
+    #     response = session.get(URL, params=params, stream=True)
+
+    # save_response_content(response, destination)
 
 
 
