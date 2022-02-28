@@ -20,7 +20,7 @@ jobs:
       matrix:
         configuration: [nwm_ana, nwm_long_range, gridded, reach]
       # Hackfix until gdrive downloads are fixed
-      max-parallel: 1
+      # max-parallel: 1
     runs-on: ubuntu-latest
 
     steps:
