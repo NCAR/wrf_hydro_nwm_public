@@ -24,11 +24,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download prerequisites
-        run: |
-          pip install gdown
-          which gdown
-
       - name: Checkout candidate (pull request / push)
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
         uses: actions/checkout@v2
@@ -63,6 +58,7 @@ jobs:
 
       - name: Run testing container
         run: |
+          pip install gdown
           docker run -e TRAVIS=1 -t --name test_container \
            -v $GITHUB_WORKSPACE/candidate:/home/docker/candidate \
            -v $GITHUB_WORKSPACE/reference:/home/docker/reference \
