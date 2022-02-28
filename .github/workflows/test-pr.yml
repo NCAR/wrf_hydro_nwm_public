@@ -56,17 +56,6 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: gh repo clone ${{ github.repository }} reference && cd reference && git checkout origin/$(gh pr view ${{ github.event.inputs.pr }} --json baseRefName --jq '.baseRefName')
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install gdown
-
-      - name: Test Python dependecies
-        run: python -c 'import gdown'
-
       - name: Run testing container
         run: |
           docker run -e TRAVIS=1 -t --name test_container \

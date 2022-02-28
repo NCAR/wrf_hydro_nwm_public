@@ -1,28 +1,28 @@
 from argparse import ArgumentParser
 
 import requests
-import gdown
+# import gdown
 
 
 def download_file_from_google_drive(id, destination):
     print('downloading google drive file id ' + id + ' to ' + destination)
 
-    gdown.download(id=id, output=destination)
+    # --- this will work once gdown is pip installed on docker
+    # gdown.download(id=id, output=destination)
 
-    # --- the following method is out-of-date
+    URL = "https://docs.google.com/uc?export=download"
 
-    # URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
 
-    # session = requests.Session()
+    response = session.get(URL, params={'id': id, 'alt': 'media', 'confirm':'t'}
+                           , stream=True)
+    token = get_confirm_token(response)
 
-    # response = session.get(URL, params={'id': id}, stream=True)
-    # token = get_confirm_token(response)
+    if token:
+        params = {'id': id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
 
-    # if token:
-    #     params = {'id': id, 'confirm': token}
-    #     response = session.get(URL, params=params, stream=True)
-
-    # save_response_content(response, destination)
+    save_response_content(response, destination)
 
 
 
