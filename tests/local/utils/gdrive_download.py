@@ -11,7 +11,7 @@ def download_file_from_google_drive(id, destination):
     #     download a google drive file. Future transition to more official
     #     methods, listed at:
     #     https://developers.google.com/drive/api/v3/manage-downloads
-    command = 'gdown -O ' + destination + ' ' + id
+    command = '/home/runner/.local/bin/gdown -O ' + destination + ' ' + id
     print('$', command)
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -19,6 +19,7 @@ def download_file_from_google_drive(id, destination):
         print(output)
     if error != None:
         print(error)
+
     # --- the following method is out-of-date
 
     # URL = "https://docs.google.com/uc?export=download"
