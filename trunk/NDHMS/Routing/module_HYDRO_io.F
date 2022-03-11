@@ -9007,8 +9007,8 @@ call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_link_netcdf', .
 call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .TRUE.)
-!! impose a minimum as this sometimes fails in the file. LKR changed to 10^-4 on 2/2018.
-where(So .lt. 0.0001) So=0.00001
+!! impose a minimum as this sometimes fails in the file. 
+where(So .lt. 0.00001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 !! Loads channel infiltration, by default is zero, my need to add namelist option in future
@@ -9317,19 +9317,20 @@ end function get_netcdf_dim
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
-    integer :: numbasns
+    integer, intent(in) :: numbasns
     integer(kind=int64), dimension(numbasns) :: LINKID
     real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
     real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
-    character(len=*) :: infile
+    character(len=*), intent(in) :: infile
 !   define temp array
-    integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
+    integer, volatile :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer(kind=int64), allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
 
 !   get gnid
+    gnid = 0
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
@@ -9343,7 +9344,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                !print*, "nf90_inq_dimid:  BasinDim"
                call hydro_stop("Failed read GBUCKETPARM - nf90_inq_dimid:  BasinDim")
        endif
-       iret = nf90_inquire_dimension(ncid, dimid, len = gnid)
+       iret = nf90_inquire_dimension(ncid, dimid, len=gnid)
     endif
     call mpp_land_bcast_int1(gnid)
 #endif

@@ -9,7 +9,8 @@ def download_file_from_google_drive(id, destination):
 
     session = requests.Session()
 
-    response = session.get(URL, params={'id': id}, stream=True)
+    response = session.get(URL, params={'id': id, 'alt': 'media', 'confirm':'t'}
+                           , stream=True)
     token = get_confirm_token(response)
 
     if token:

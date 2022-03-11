@@ -1299,9 +1299,10 @@ contains
     call mpp_land_bcast_char(256,units)
     if(ierr /= 0) return
 #ifdef HYDRO_D
-    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+    write(6,*) "my_id, xstart,xend, ystart, yend",my_id, xstart,xend, ystart, yend
 #endif
     call decompose_data_real(g_array,array)
+
 #endif
   end subroutine get_2d_netcdf
 
