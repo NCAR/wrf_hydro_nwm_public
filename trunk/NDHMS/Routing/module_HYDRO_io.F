@@ -5642,7 +5642,7 @@ end subroutine mpp_output_chrt
 
       SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,CH_LNKRT,LKSATFAC,route_topo_f,    &
             route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,IMPERVFRAC, &
-            channel_option, UDMP_OPT)
+            channel_option, UDMP_OPT, imperv_adj)
 
 
         INTEGER, INTENT(IN) :: IXRT,JXRT
@@ -5654,7 +5654,7 @@ end subroutine mpp_output_chrt
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: IMPERVFRAC
 
-        integer         :: I,J, iret, jj, channel_option, UDMP_OPT
+        integer         :: I,J, iret, jj, channel_option, UDMP_OPT, imperv_adj
         CHARACTER(len=256)        :: var_name
         CHARACTER(len=*  )       :: route_topo_f
         CHARACTER(len=*  )       :: route_chan_f
@@ -5716,9 +5716,13 @@ end subroutine mpp_output_chrt
 !Read in new optional impervious layer
         var_name = "IMPERVFRAC"
         IMPERVFRAC = -9999.9
-        call nreadRT2d_real(var_name,IMPERVFRAC,ixrt,jxrt,&
-                     trim(geo_finegrid_flnm))
-        where (IMPERVFRAC < 0.) IMPERVFRAC = 0.0  ! reset grid to = 0.0 if non-valid value exists
+        if (imperv_adj > 0) then
+          call nreadRT2d_real(var_name,IMPERVFRAC,ixrt,jxrt,&
+                     trim(geo_finegrid_flnm), fatalErr=.true.)
+          where (IMPERVFRAC < 0.) IMPERVFRAC = 0.0  ! reset grid to = 0.0 if non-valid value exists
+        else
+          IMPERVFRAC = 0.0
+        endif
 
 #ifdef HYDRO_D
         write(6,*) "finish READ_ROUTING_seq"

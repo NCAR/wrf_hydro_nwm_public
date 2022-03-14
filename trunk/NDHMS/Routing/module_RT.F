@@ -715,7 +715,7 @@ subroutine LandRT_ini(did)
              rt_domain(did)%LKSATFAC,trim(nlst(did)%route_topo_f),&
              nlst(did)%route_chan_f,nlst(did)%geo_finegrid_flnm  ,  &
              rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, rt_domain(did)%IMPERVFRAC, &
-             nlst(did)%channel_option, nlst(did)%udmp_opt)
+             nlst(did)%channel_option, nlst(did)%udmp_opt, nlst(did)%imperv_adj)
 
 
    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
