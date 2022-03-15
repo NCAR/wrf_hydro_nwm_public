@@ -334,7 +334,7 @@ contains
       call hydro_stop('hydro.namelist ERROR: Invalid CHANRTSWCRT specified')
    endif
    if(self%CHANRTSWCRT .eq. 1) then
-      if ( self%channel_option .eq. -1 ) then
+      if ( self%channel_option .eq. 5 ) then
          self%channel_option = 2
          self%channel_bypass = .TRUE.
       endif
