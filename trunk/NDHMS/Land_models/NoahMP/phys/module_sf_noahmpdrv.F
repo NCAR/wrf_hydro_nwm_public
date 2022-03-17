@@ -64,6 +64,7 @@ CONTAINS
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
                  AXAJ_2D,BXAJ_2D,XXAJ_2D,                                     &
+                 SSI_2D,SNOWRETFAC_2D,TAU0_2D,RSURFSNOW_2D,SCAMAX_2D,         & 
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -165,6 +166,11 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  AXAJ_2D   ! Xinanjiang: Tension water distribution inflection parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  BXAJ_2D   ! Xinanjiang: Tension water distribution shape parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  XXAJ_2D   ! Xinanjiang: Free water distribution shape parameter [-]
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SSI_2D         ! liquid water holding capacity for snowpack (m3/m3)
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SNOWRETFAC_2D  ! snowpack water release timescale factor (1/s)
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  TAU0_2D        ! tau0 from Yang97 eqn. 10a
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  RSURFSNOW_2D   ! surface resistence for snow [s/m]
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SCAMAX_2D      ! max fractional snow covered area (0.0-1.0)
 #endif
 
 ! INOUT (with generic LSM equivalent)
@@ -667,6 +673,11 @@ CONTAINS
        parameters%axaj   = AXAJ_2D(I,J)           ! Xinanjiang: Tension water distribution inflection parameter [-]
        parameters%bxaj   = BXAJ_2D(I,J)           ! Xinanjiang: Tension water distribution shape parameter [-]
        parameters%xxaj   = XXAJ_2D(I,J)           ! Xinanjiang: Free water distribution shape parameter [-]
+       parameters%ssi    = SSI_2D(I,J)            ! liquid water holding capacity for snowpack (m3/m3)
+       parameters%snow_ret_fac = SNOWRETFAC_2D(I,J)   ! snowpack water release timescale factor (1/s)
+       parameters%tau0   = TAU0_2D(I,J)           ! tau0 from Yang97 eqn. 10a
+       parameters%rsurf_snow = RSURFSNOW_2D(I,J)  ! surface resistence for snow [s/m]
+       parameters%scamax = SCAMAX_2D(I,J)         ! maximum fractional snow covered area (0.0-1.0)
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
        
@@ -1162,10 +1173,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
    parameters%TIMEAN     =      TIMEAN_TABLE
    parameters%FSATMX     =      FSATMX_TABLE
    parameters%Z0SNO      =       Z0SNO_TABLE
-   parameters%SSI        =         SSI_TABLE
-   parameters%SNOW_RET_FAC =  SNOW_RET_FAC_TABLE    
    parameters%SWEMX      =       SWEMX_TABLE
-   parameters%TAU0         =      TAU0_TABLE
    parameters%GRAIN_GROWTH = GRAIN_GROWTH_TABLE
    parameters%EXTRA_GROWTH = EXTRA_GROWTH_TABLE
    parameters%DIRT_SOOT    =    DIRT_SOOT_TABLE
@@ -1206,6 +1214,11 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%AXAJ = AXAJ_TABLE(SOILTYPE)
     parameters%BXAJ = BXAJ_TABLE(SOILTYPE)
     parameters%XXAJ = XXAJ_TABLE(SOILTYPE)
+    parameters%SSI    = SSI_TABLE
+    parameters%SNOW_RET_FAC = SNOW_RET_FAC_TABLE
+    parameters%TAU0   = TAU0_TABLE
+    parameters%RSURF_SNOW = RSURF_SNOW_TABLE
+    parameters%SCAMAX = SCAMAX_TABLE 
 #endif
 ! ----------------------------------------------------------------------
 ! Transfer GENPARM parameters
