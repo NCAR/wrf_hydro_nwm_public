@@ -212,6 +212,14 @@ subroutine output_chrt_NWM(domainId)
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
 
+   ! Turn off streamflow, velocity, head for special external channel routing config
+   if (nlst(domainId)%channel_bypass) then
+      fileMeta%outFlag(1) = 0
+      fileMeta%outFlag(2) = 0
+      fileMeta%outFlag(4) = 0
+      fileMeta%outFlag(5) = 0
+   endif
+
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 
