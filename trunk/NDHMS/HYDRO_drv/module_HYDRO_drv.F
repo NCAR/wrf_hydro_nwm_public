@@ -960,7 +960,7 @@ if (nlst(did)%CHANRTSWCRT.eq.1 .or. nlst(did)%CHANRTSWCRT.eq.2) then
        , rt_domain(did)%nlinksize,            nlst(did)%OVRTSWCRT &
        ,                                     nlst(did)%SUBRTSWCRT &
        , nlst(did)%channel_only , nlst(did)%channelBucket_only &
-       )
+       , nlst(did)%channel_bypass )
 
 else
 
