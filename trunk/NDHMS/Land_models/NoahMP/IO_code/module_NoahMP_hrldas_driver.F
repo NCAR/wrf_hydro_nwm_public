@@ -118,6 +118,8 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_SOIL ! soil configuration option
   INTEGER                                 ::  IOPT_PEDO ! soil pedotransfer function option
   INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
+  INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
+                                                                                        !2->Alley&Veenhuis; 9->old)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -159,6 +161,7 @@ module module_NoahMP_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  axaj_2D    ! Tension water distribution inflection parameter [-]
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  bxaj_2D    ! Tension water distribution shape parameter [-]
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  xxaj_2D    ! Free water distribution shape parameter [-]
+  REAL, ALLOCATABLE, DIMENSION(:,:)       ::  imperv_2D  ! impervious fraction
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  ssi_2D     ! liquid water holding capacity for snowpack (m3/m3)
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  snowretfac_2D   ! snowpack water release timescale factor (1/s)
   REAL, ALLOCATABLE, DIMENSION(:,:)       ::  tau0_2D         ! tau0 from Yang97 eqn. 10a
@@ -448,6 +451,7 @@ module module_NoahMP_hrldas_driver
   IOPT_SOIL = noah_lsm%soil_data_option
   IOPT_PEDO = noah_lsm%pedotransfer_option
   IOPT_CROP = noah_lsm%crop_option
+  IOPT_IMPERV = noah_lsm%imperv_option
 
   khour = noah_lsm%khour
 
@@ -752,6 +756,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( axaj_2D    (XSTART:XEND,YSTART:YEND) )            ! Tension water distribution inflection parameter [-]
   ALLOCATE ( bxaj_2D    (XSTART:XEND,YSTART:YEND) )            ! Tension water distribution shape parameter [-]
   ALLOCATE ( xxaj_2D    (XSTART:XEND,YSTART:YEND) )            ! Free water distribution shape parameter [-]
+  ALLOCATE ( imperv_2D  (XSTART:XEND,YSTART:YEND) )            ! impervious fraction
   ALLOCATE ( ssi_2D     (XSTART:XEND,YSTART:YEND) )            ! liquid water holding capacity for snowpack (m3/m3)
   ALLOCATE ( snowretfac_2D (XSTART:XEND,YSTART:YEND) )         ! snowpack water release timescale factor (1/s)
   ALLOCATE ( tau0_2D    (XSTART:XEND,YSTART:YEND) )            ! tau0 from Yang97 eqn. 10a
@@ -1109,6 +1114,12 @@ module module_NoahMP_hrldas_driver
         CALL READ_XAJ_RUNOFF(noah_lsm%SPATIAL_FILENAME,XSTART, XEND, YSTART, YEND, &
                              AXAJ_2D,BXAJ_2D,XXAJ_2D)
     end if
+
+    if (noah_lsm%imperv_option > 0 .and. noah_lsm%imperv_option < 9) then
+        CALL READ_IMPERV(noah_lsm%SPATIAL_FILENAME,XSTART, XEND, YSTART, YEND, &
+                             IMPERV_2D)
+    end if
+
 #endif
 
 !------------------------------------------------------------------------
@@ -1652,7 +1663,8 @@ end subroutine land_driver_ini
 		  XLAND,     XICE,     XICE_THRESHOLD,                        &
                   IDVEG, IOPT_CRS, IOPT_BTR, IOPT_RUN,  IOPT_SFC,   IOPT_FRZ, &
 	       IOPT_INF, IOPT_RAD, IOPT_ALB, IOPT_SNF, IOPT_TBOT,   IOPT_STC, &
-	       IOPT_GLA, IOPT_RSF,IOPT_SOIL,IOPT_PEDO, IOPT_CROP,    IZ0TLND, &
+	       IOPT_GLA, IOPT_RSF,IOPT_SOIL,IOPT_PEDO, IOPT_CROP,             &
+               IOPT_IMPERV, IZ0TLND,                                          &
 		  T_PHY,  QV_CURR,    U_PHY,    V_PHY,    SWDOWN,        GLW, &
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
@@ -1681,6 +1693,7 @@ end subroutine land_driver_ini
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
                  AXAJ_2D,BXAJ_2D,XXAJ_2D,                                     &
+                 IMPERV_2D,                                                   &
                  SSI_2D,SNOWRETFAC_2D,TAU0_2D,RSURFSNOW_2D,SCAMAX_2D,         &
 #endif
 #ifdef WRF_HYDRO

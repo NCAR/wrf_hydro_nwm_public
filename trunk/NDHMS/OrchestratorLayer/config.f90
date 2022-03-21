@@ -40,6 +40,7 @@ module config_base
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
+     integer            :: imperv_option = 9
 
      integer            :: split_output_count = 1 
      integer            :: khour
@@ -157,6 +158,7 @@ module config_base
      character(len=256) :: timeSlicePath
      integer            :: nLastObs
      integer            :: bucket_loss
+     integer            :: imperv_adj
 
      logical            :: channel_bypass = .FALSE.
 
@@ -449,6 +451,10 @@ contains
       endif
    end if
 
+   if( (self%imperv_adj .lt. 0 ) .or. (self%imperv_adj .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid imperv_adj specified')
+   endif
+
   end subroutine rt_nlst_check
 
   subroutine init_namelist_rt_field(did)
@@ -462,7 +468,7 @@ contains
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-         UDMP_OPT, io_form_outputs, bucket_loss
+         UDMP_OPT, io_form_outputs, bucket_loss, imperv_adj
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -553,7 +559,7 @@ contains
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
          frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, imperv_adj
 
 #ifdef WRF_HYDRO_NUDGING
     namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -589,6 +595,7 @@ contains
     reservoir_rfc_forecasts = .FALSE.
     reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
+    imperv_adj = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -761,6 +768,7 @@ contains
     nlst(did)%order_to_write = order_to_write
     nlst(did)%compound_channel = compound_channel
     nlst(did)%channel_loss_option = channel_loss_option
+    nlst(did)%imperv_adj = imperv_adj
     ! files
     nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f
@@ -882,6 +890,7 @@ contains
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
+     integer            :: imperv_option = 9
      integer            :: split_output_count = 1
      integer            :: khour = -999
      integer            :: kday = -999
@@ -915,6 +924,7 @@ contains
          glacier_option, surface_resistance_option, &
          
          soil_data_option, pedotransfer_option, crop_option, &
+         imperv_option, &
 
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
@@ -1015,6 +1025,7 @@ contains
     noah_lsm%soil_data_option = soil_data_option
     noah_lsm%pedotransfer_option = pedotransfer_option
     noah_lsm%crop_option = crop_option
+    noah_lsm%imperv_option = imperv_option
 
     noah_lsm%split_output_count = split_output_count
 

@@ -35,7 +35,8 @@ CONTAINS
 		 XLAND,     XICE,XICE_THRES,                                & ! IN : Vegetation/Soil characteristics
                  IDVEG, IOPT_CRS,  IOPT_BTR, IOPT_RUN, IOPT_SFC, IOPT_FRZ,  & ! IN : User options
               IOPT_INF, IOPT_RAD,  IOPT_ALB, IOPT_SNF,IOPT_TBOT, IOPT_STC,  & ! IN : User options
-              IOPT_GLA, IOPT_RSF, IOPT_SOIL,IOPT_PEDO,IOPT_CROP,  IZ0TLND,  & ! IN : User options
+              IOPT_GLA, IOPT_RSF, IOPT_SOIL,IOPT_PEDO,IOPT_CROP,            & ! IN : User options
+              IOPT_IMPERV, IZ0TLND,                                         & ! IN : User options
                    T3D,     QV3D,     U_PHY,    V_PHY,   SWDOWN,      GLW,  & ! IN : Forcing
 		 P8W3D,PRECIP_IN,        SR,                                & ! IN : Forcing
                    TSK,      HFX,      QFX,        LH,   GRDFLX,    SMSTAV, & ! IN/OUT LSM eqv
@@ -64,6 +65,7 @@ CONTAINS
 		 REFDK_2D,REFKDT_2D,SLOPE_2D,                                 &
 		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
                  AXAJ_2D,BXAJ_2D,XXAJ_2D,                                     &
+                 IMPERV_2D,                                                   &
                  SSI_2D,SNOWRETFAC_2D,TAU0_2D,RSURFSNOW_2D,SCAMAX_2D,         & 
 #endif
 #ifdef WRF_HYDRO
@@ -123,6 +125,8 @@ CONTAINS
     INTEGER,                                         INTENT(IN   ) ::  IOPT_SOIL ! soil configuration option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_PEDO ! soil pedotransfer function option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
+                                                                                        !9->old)
     INTEGER,                                         INTENT(IN   ) ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  QV3D      ! 3D water vapor mixing ratio [kg/kg_dry]
@@ -166,6 +170,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  AXAJ_2D   ! Xinanjiang: Tension water distribution inflection parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  BXAJ_2D   ! Xinanjiang: Tension water distribution shape parameter [-]
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  XXAJ_2D   ! Xinanjiang: Free water distribution shape parameter [-]
+    REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  IMPERV_2D ! impervious fraction
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SSI_2D         ! liquid water holding capacity for snowpack (m3/m3)
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  SNOWRETFAC_2D  ! snowpack water release timescale factor (1/s)
     REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)          ::  TAU0_2D        ! tau0 from Yang97 eqn. 10a
@@ -486,7 +491,7 @@ CONTAINS
 
     CALL NOAHMP_OPTIONS(IDVEG  ,IOPT_CRS  ,IOPT_BTR  ,IOPT_RUN  ,IOPT_SFC  ,IOPT_FRZ , &
                      IOPT_INF  ,IOPT_RAD  ,IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC , &
-		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP )
+		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP, IOPT_IMPERV )
 
     IPRINT    =  .false.                     ! debug printout
 
@@ -673,13 +678,14 @@ CONTAINS
        parameters%axaj   = AXAJ_2D(I,J)           ! Xinanjiang: Tension water distribution inflection parameter [-]
        parameters%bxaj   = BXAJ_2D(I,J)           ! Xinanjiang: Tension water distribution shape parameter [-]
        parameters%xxaj   = XXAJ_2D(I,J)           ! Xinanjiang: Free water distribution shape parameter [-]
+       parameters%imperv = IMPERV_2D(I,J)         ! impervious fraction
        parameters%ssi    = SSI_2D(I,J)            ! liquid water holding capacity for snowpack (m3/m3)
        parameters%snow_ret_fac = SNOWRETFAC_2D(I,J)   ! snowpack water release timescale factor (1/s)
        parameters%tau0   = TAU0_2D(I,J)           ! tau0 from Yang97 eqn. 10a
        parameters%rsurf_snow = RSURFSNOW_2D(I,J)  ! surface resistence for snow [s/m]
        parameters%scamax = SCAMAX_2D(I,J)         ! maximum fractional snow covered area (0.0-1.0)
 #endif
-       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
+       CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters,iopt_imperv)
        
        GRAIN = 0.0                ! mass of grain [g/m2]
        GDD   = 0.0                ! growing degree days
@@ -1016,7 +1022,7 @@ CONTAINS
   END SUBROUTINE noahmplsm
 !------------------------------------------------------
 
-SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,parameters)
+SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,parameters,iopt_imperv)
 
   USE NOAHMP_TABLES
   USE MODULE_SF_NOAHMPLSM
@@ -1028,6 +1034,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   INTEGER, INTENT(IN)    :: SLOPETYPE
   INTEGER, INTENT(IN)    :: SOILCOLOR
   INTEGER, INTENT(IN)    :: CROPTYPE
+  INTEGER, INTENT(IN)    :: iopt_imperv
     
   type (noahmp_parameters), intent(inout) :: parameters
     
@@ -1214,6 +1221,11 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%AXAJ = AXAJ_TABLE(SOILTYPE)
     parameters%BXAJ = BXAJ_TABLE(SOILTYPE)
     parameters%XXAJ = XXAJ_TABLE(SOILTYPE)
+    IF (parameters%URBAN_FLAG) THEN 
+      parameters%IMPERV = IMPERV_URBAN_TABLE
+    ELSE
+      parameters%IMPERV = 0.0
+    ENDIF
     parameters%SSI    = SSI_TABLE
     parameters%SNOW_RET_FAC = SNOW_RET_FAC_TABLE
     parameters%TAU0   = TAU0_TABLE
@@ -1231,10 +1243,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%KDT    = parameters%REFKDT * parameters%DKSAT(1) / parameters%REFDK
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
-       parameters%SMCMAX = 0.45 
-       parameters%SMCREF = 0.42 
-       parameters%SMCWLT = 0.40 
-       parameters%SMCDRY = 0.40 
+       if (iopt_imperv .eq. 9) then
+         parameters%SMCMAX = 0.45 
+         parameters%SMCREF = 0.42 
+         parameters%SMCWLT = 0.40 
+         parameters%SMCDRY = 0.40 
+       endif
        parameters%CSOIL  = 3.E6
     ENDIF
 

@@ -878,8 +878,7 @@ end subroutine MPP_seq_land_SO8
 
 subroutine disaggregateDomain_drv(did)
    use module_RT_data, only: rt_domain
-   use config_base, only: nlst
-
+   use config_base, only: nlst, noah_lsm
    integer :: did
    call disaggregateDomain( RT_DOMAIN(did)%IX, RT_DOMAIN(did)%JX, nlst(did)%NSOIL, &
                             RT_DOMAIN(did)%IXRT, RT_DOMAIN(did)%JXRT, nlst(did)%AGGFACTRT, &
@@ -905,7 +904,8 @@ subroutine disaggregateDomain_drv(did)
                             RT_DOMAIN(did)%OV_ROUGH2d, &
                             RT_DOMAIN(did)%subsurface%properties%sldpth, &
                             RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, &
-                            rt_domain(did)%ELRT, RT_DOMAIN(did)%iswater)
+                            rt_domain(did)%ELRT, RT_DOMAIN(did)%iswater, &
+                            rt_domain(did)%IMPERVFRAC, nlst(did)%imperv_adj)
 end subroutine disaggregateDomain_drv
 
 !===================================================================================================
@@ -929,7 +929,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               SMCWLT1, VEGTYP, LKSAT, NEXP, dist,INFXSWGT,OVROUGHRTFAC, &
                               LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
                               SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, NEXPRT, OV_ROUGH2d,  &
-                              SLDPTH, soiltypRT, soiltyp, elrt, iswater)
+                              SLDPTH, soiltypRT, soiltyp, elrt, iswater, impervfrac, imperv_adj)
 #ifdef MPP_LAND
    use module_mpp_land, only: left_id,down_id,right_id, &
                               up_id,mpp_land_com_real, my_id, io_id, numprocs, &
@@ -948,6 +948,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    integer, intent(in)                           :: NSOIL ! number of soil layers
    integer, intent(in)                           :: iswater ! water veg class (from geogrid attrib)
    real, intent(in), dimension(NSOIL)            :: SLDPTH ! array soil layer depth intervals (m)
+   integer, intent(in)                           :: imperv_adj ! impervious configuration option from hydro.namelist
    ! LSM grid parameters:
    real, intent(in),  dimension(IX,JX)           :: area_lsm ! cell area on the coarse grid (m2)
    integer, intent(in), dimension(IX,JX)         :: VEGTYP, soiltyp ! coarse grid veg and soil types
@@ -970,6 +971,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    real, intent(in), dimension(IXRT,JXRT)        :: LKSATFAC ! lateral ksat adj factor
    real, intent(in), dimension(IXRT,JXRT)        :: elrt ! elevation grid (m)
    integer, intent(in), dimension(IXRT,JXRT)     :: CH_NETRT ! channel network routing grid
+   real, intent(in), dimension(IXRT,JXRT)        :: impervfrac ! impervious fraction
    ! Routing states:
    real, intent(in), dimension(IXRT,JXRT)        :: INFXSWGT ! infiltration excess weighting grid
    real, intent(in), dimension(IXRT,JXRT,NSOIL)  :: SH2OWGT ! soil moisture weighting grid
@@ -1174,7 +1176,16 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                IF (VEGTYP(I,J).LE.0) then
                   OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
                ELSE
-                  OVROUGHRT(IXXRT,JYYRT) = OV_ROUGH2d(i,j)*OVROUGHRTFAC(IXXRT,JYYRT)
+                  OVROUGHRT(IXXRT,JYYRT) = OV_ROUGH2d(i,j)
+                  ! Modify based on impervious fraction
+                  ! See Liong et al. 1989 for linear weighting of "smoothness" (1/roughness)
+                  ! Assuming roughness of 0.02 for impervious and native cell roughness for pervious
+                  if (imperv_adj .ne. 0) then
+                     OVROUGHRT(IXXRT,JYYRT) = 1. / ((1./0.02)*impervfrac(IXXRT,JYYRT) + & ! impervious fraction
+                                                          (1./OVROUGHRT(IXXRT,JYYRT))*(1.-impervfrac(IXXRT,JYYRT))) ! pervious fraction
+                  endif
+                  ! Apply user-supplied adjustment factor
+                  OVROUGHRT(IXXRT,JYYRT) = OVROUGHRT(IXXRT,JYYRT)*OVROUGHRTFAC(IXXRT,JYYRT)
                END IF
 
                ! Lateral ksat
