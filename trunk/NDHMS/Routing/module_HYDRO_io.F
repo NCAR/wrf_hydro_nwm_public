@@ -624,7 +624,7 @@ end subroutine get_albedo12m_netcdf
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: idim, jdim
-    real, dimension(idim,jdim), intent(out) :: array
+    real, dimension(idim,jdim), intent(inout) :: array
     character(len=256), intent(out) :: units
     ! fatal_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
@@ -11169,24 +11169,35 @@ subroutine hdtbl_out(did)
       call hdtbl_out_nc(did,ncid, count,count_flag,"SMCWLT1",rt_domain(did)%SMCWLT1,"",ixd,jxd)
       call hdtbl_out_nc(did,ncid, count,count_flag,"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,"",ixd,jxd)
       call hdtbl_out_nc(did,ncid, count,count_flag,"LKSAT",rt_domain(did)%LKSAT,"",ixd,jxd)
+      call hdtbl_out_nc(did,ncid, count,count_flag,"NEXP",rt_domain(did)%NEXP,"",ixd,jxd)
    end do
 
 end subroutine hdtbl_out
 subroutine hdtbl_in_nc(did)
    implicit none
    integer :: did
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT)
+   integer :: ierr
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"NEXP",rt_domain(did)%NEXP,ierr)
+   ! Letting this variable be optional and setting to global default value if not found
+   if (ierr /= 0) then
+     write(6,*)  "WARNING (hydtbl_in_nc): NEXP not found so setting to global 1.0"
+     rt_domain(did)%NEXP = 1.0
+   endif
 end subroutine hdtbl_in_nc
-subroutine read2dlsm(did,file,varName,varOut)
+
+subroutine read2dlsm(did,file,varName,varOut,ierr)
+use module_mpp_land,only: mpp_land_bcast_int1
   implicit none
-  integer :: did, ncid ,ierr,iret
+  integer :: did, ncid , iret
   character(len=*) :: file,varName
   real,dimension(:,:) :: varOut
   character(len=256) :: units
+  integer, intent(out) :: ierr
 #ifdef MPP_LAND
   real,allocatable,dimension(:,:) :: tmpArr
   if(my_id .eq. io_id) then
@@ -11199,6 +11210,7 @@ subroutine read2dlsm(did,file,varName,varOut)
      allocate(tmpArr(1,1))
   endif
   call decompose_data_real (tmpArr,varOut)
+  call mpp_land_bcast_int1(ierr)
   deallocate(tmpArr)
 #else
      iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
