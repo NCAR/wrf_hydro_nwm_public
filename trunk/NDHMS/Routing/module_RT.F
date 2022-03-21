@@ -183,6 +183,10 @@ CONTAINS
      !rt_domain(did)%LKSATRT     = 0.0
      allocate( rt_domain(did)%LKSATFAC    (IXRT,JXRT) )
      rt_domain(did)%LKSATFAC    = 0.0
+
+     allocate( rt_domain(did)%IMPERVFRAC    (IXRT,JXRT) )
+     rt_domain(did)%IMPERVFRAC    = 0.0
+
      !allocate( rt_domain(did)%subsurface%state%qsubrt      (IXRT,JXRT) )
      !rt_domain(did)%subsurface%state%qsubrt      = 0.0
      !allocate( rt_domain(did)%subsurface%properties%zwattablrt  (IXRT,JXRT) )
@@ -653,7 +657,7 @@ end subroutine getChanDim
 subroutine LandRT_ini(did)
 
   use module_noah_chan_param_init_rt
-  use config_base, only: nlst
+  use config_base, only: nlst, noah_lsm
   use module_RT_data, only: rt_domain
   use module_gw_gw2d_data, only: gw2d
 #ifdef HYDRO_D
@@ -713,8 +717,8 @@ subroutine LandRT_ini(did)
              rt_domain(did)%CH_LNKRT, &
              rt_domain(did)%LKSATFAC,trim(nlst(did)%route_topo_f),&
              nlst(did)%route_chan_f,nlst(did)%geo_finegrid_flnm  ,  &
-             rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, &
-             nlst(did)%channel_option, nlst(did)%udmp_opt)
+             rt_domain(did)%OVROUGHRTFAC,rt_domain(did)%RETDEPRTFAC, rt_domain(did)%IMPERVFRAC, &
+             nlst(did)%channel_option, nlst(did)%udmp_opt, nlst(did)%imperv_adj)
 
 
    !yw CALL READ_ROUTING_old(rt_domain(did)%IXRT,rt_domain(did)%JXRT,rt_domain(did)%ELRT,rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
@@ -1201,10 +1205,14 @@ subroutine LandRT_ini(did)
         end do
      end do
 
+     !Apply impervious adjustment to retdeprt (AD)
+     if (nlst(did)%imperv_adj .ne. 0) then
+       rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth*(1.-rt_domain(did)%impervfrac)
+     end if
 
      !Apply calibration scaling factors to sfc roughness and retention depth here...
      rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
-     rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
+     ! Removing roughness parameter update since it has not been populated yet... currently happens in Noah_dist_routing (AD)
 
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
