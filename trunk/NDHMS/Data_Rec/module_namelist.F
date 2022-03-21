@@ -724,6 +724,10 @@ subroutine rt_nlst_check(nlst)
       call hydro_stop('hydro.namelist ERROR: Invalid CHANRTSWCRT specified')
    endif
    if(nlst%CHANRTSWCRT .eq. 1) then
+      if ( nlst%channel_option .eq. 5 ) then
+         nlst%channel_option = 2
+         nlst%channel_bypass = .TRUE.
+      endif
       if( (nlst%channel_option .lt. 1 ) .or. (nlst%channel_option .gt. 3) ) then
          call hydro_stop('hydro.namelist ERROR: Invalid channel_option specified')
       endif
