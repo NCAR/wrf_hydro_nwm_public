@@ -126,6 +126,7 @@ contains
                    ILOC    ,JLOC    ,COSZ    ,NSNOW   ,NSOIL   ,DT      , & ! IN : Time/Space/Model-related
                    SFCTMP  ,SFCPRS  ,UU      ,VV      ,Q2      ,SOLDN   , & ! IN : Forcing
                    PRCP    ,LWDN    ,TBOT    ,ZLVL    ,FICEOLD ,ZSOIL   , & ! IN : Forcing
+                   SWE_LIMIT                                            , & ! IN : Forcing
                    QSNOW, QRAIN,  SNEQVO,  ALBOLD,  CM,   CH   ,ISNOW   , & ! IN/OUT : 
                    SNEQV   ,SMC     ,ZSNSO   ,SNOWH   ,SNICE   ,SNLIQ   , & ! IN/OUT :
                    TG      ,STC     ,SH2O    ,TAUSS   ,QSFC    ,          & ! IN/OUT : 
@@ -163,6 +164,7 @@ contains
   REAL                           , INTENT(IN)    :: ZLVL   !reference height (m)
   REAL, DIMENSION(-NSNOW+1:    0), INTENT(IN)    :: FICEOLD!ice fraction at last timestep
   REAL, DIMENSION(       1:NSOIL), INTENT(IN)    :: ZSOIL  !layer-bottom depth from soil surf (m)
+  REAL                           , INTENT(IN)    :: SWE_LIMIT   !maximum SWE limit (mm)
 
 #ifdef WRF_HYDRO
   REAL                           , INTENT(INOUT)    :: sfcheadrt
@@ -278,7 +280,7 @@ contains
 ! compute water budgets (water storages, ET components, and runoff)
 
      CALL WATER_GLACIER (NSNOW  ,NSOIL  ,IMELT  ,DT     ,PRCP   ,SFCTMP , & !in
-                         QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
+                         QVAP   ,QDEW   ,FICEOLD,ZSOIL  , SWE_LIMIT     , & !in
                          ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                          DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,FSH    , & !inout
                          RUNSRF ,RUNSUB ,QSNOW, QRAIN, PONDING1, PONDING2,QSNBOT,FPICE &  !out
@@ -2011,7 +2013,7 @@ END IF   ! OPT_GLA == 1
   END SUBROUTINE PHASECHANGE_GLACIER
 ! ==================================================================================================
   SUBROUTINE WATER_GLACIER (NSNOW  ,NSOIL  ,IMELT  ,DT     ,PRCP   ,SFCTMP , & !in
-                            QVAP   ,QDEW   ,FICEOLD,ZSOIL  ,                 & !in
+                            QVAP   ,QDEW   ,FICEOLD,ZSOIL  , SWE_LIMIT     , & !in
                             ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  ,STC    , & !inout
                             DZSNSO ,SH2O   ,SICE   ,PONDING,ZSNSO  ,FSH    , & !inout
                             RUNSRF ,RUNSUB ,QSNOW, QRAIN, PONDING1 ,PONDING2,QSNBOT,FPICE     &   !out
@@ -2036,6 +2038,7 @@ END IF   ! OPT_GLA == 1
   REAL,                            INTENT(INOUT)    :: QDEW    !soil surface dew rate[mm/s]
   REAL, DIMENSION(-NSNOW+1:    0), INTENT(IN)    :: FICEOLD !ice fraction at last timestep
   REAL, DIMENSION(       1:NSOIL), INTENT(IN)    :: ZSOIL  !layer-bottom depth from soil surf (m)
+  REAL,                            INTENT(IN)    :: SWE_LIMIT  !maximum SWE limit (mm)
 
 ! input/output
   INTEGER,                         INTENT(INOUT) :: ISNOW   !actual no. of snow layers
@@ -2140,7 +2143,7 @@ END IF   ! OPT_GLA == 1
 
      CALL SNOWWATER_GLACIER (NSNOW  ,NSOIL  ,IMELT  ,DT     ,SFCTMP , & !in
                              SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB ,QRAIN  , & !in
-                             FICEOLD,ZSOIL  ,                         & !in
+                             FICEOLD,ZSOIL  ,SWE_LIMIT              , & !in
                              ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  , & !inout
                              SH2O   ,SICE   ,STC    ,DZSNSO ,ZSNSO  , & !inout
                              FSH    ,                                 & !inout
@@ -2189,7 +2192,7 @@ END IF   ! OPT_GLA == 1
 ! ----------------------------------------------------------------------
   SUBROUTINE SNOWWATER_GLACIER (NSNOW  ,NSOIL  ,IMELT  ,DT     ,SFCTMP , & !in
                                 SNOWHIN,QSNOW  ,QSNFRO ,QSNSUB ,QRAIN  , & !in
-                                FICEOLD,ZSOIL  ,                         & !in
+                                FICEOLD,ZSOIL  ,SWE_LIMIT              , & !in
                                 ISNOW  ,SNOWH  ,SNEQV  ,SNICE  ,SNLIQ  , & !inout
                                 SH2O   ,SICE   ,STC    ,DZSNSO ,ZSNSO  , & !inout
 				FSH    ,                                 & !inout
@@ -2210,6 +2213,7 @@ END IF   ! OPT_GLA == 1
   REAL,                            INTENT(IN)    :: QRAIN  !snow surface rain rate[mm/s]
   REAL, DIMENSION(-NSNOW+1:0)    , INTENT(IN)    :: FICEOLD!ice fraction at last timestep
   REAL, DIMENSION(       1:NSOIL), INTENT(IN)    :: ZSOIL  !layer-bottom depth from soil surf (m)
+  REAL,                            INTENT(IN)    :: SWE_LIMIT  !maximum SWE limit (mm)
 
 ! input & output
   INTEGER,                         INTENT(INOUT) :: ISNOW  !actual no. of snow layers
@@ -2276,9 +2280,9 @@ END IF   ! OPT_GLA == 1
 
 !to obtain equilibrium state of snow in glacier region
        
-   IF(SNEQV > 2000.) THEN   ! 2000 mm -> maximum water depth
+   IF(SNEQV > SWE_LIMIT) THEN   ! 2000 mm -> maximum water depth
       BDSNOW      = SNICE(0) / DZSNSO(0)
-      SNOFLOW     = (SNEQV - 2000.)
+      SNOFLOW     = (SNEQV - SWE_LIMIT)
       SNICE(0)    = SNICE(0)  - SNOFLOW 
       DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
       SNOFLOW     = SNOFLOW / DT
