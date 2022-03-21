@@ -565,10 +565,13 @@ Contains
         if (ierr /= 0) then
           ierr = nf_inq_varid(ncid,  "precip_rate",  varid)   !recheck variable name...
           if (ierr /= 0) then
+            ierr = nf_inq_varid(ncid,  "RAINRATE",  varid)   !recheck variable name...
+            if (ierr /= 0) then
 #ifdef HYDRO_D
-            write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
+              write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
 #endif
+            end if
           end if
           ierr_flg = ierr
           mmflag = 1
@@ -2980,12 +2983,22 @@ end subroutine read_hydro_forcing_mpp1
       call mpp_land_bcast_int1(ierr)
 #endif
           if (ierr /= 0) then
-            write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
+#ifdef MPP_LAND
+          if(my_id .eq. io_id) then
+#endif
+             ierr = nf_inq_varid(ncid,  "RAINRATE",  varid)   !recheck variable name...
+#ifdef MPP_LAND
+          endif
+          call mpp_land_bcast_int1(ierr)
+#endif
+            if (ierr /= 0) then
+              write(*,'("READFORC_MDV Problem reading precip netcdf file: ''", A,"''")') &
                  trim(flnm)
 #ifdef MPP_LAND
-              deallocate(buf2)
+                deallocate(buf2)
 #endif
-              return
+                return
+            end if
           end if
           ierr_flg = ierr
           mmflag = 1
