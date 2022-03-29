@@ -454,6 +454,8 @@ module WRFHydro_NUOPC
         atVal = ESMF_UtilStringUpperCase(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%realizeAllImport = (trim(atVal)=="TRUE")
+      else
+        is%wrap%realizeAllImport = .false.
       endif
 
       ! Realize all export fields
@@ -466,6 +468,8 @@ module WRFHydro_NUOPC
         atVal = ESMF_UtilStringUpperCase(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%realizeAllExport = (trim(atVal)=="TRUE")
+      else
+        is%wrap%realizeAllExport = .false.
       endif
 
       ! Determine hydro configuration filename
@@ -476,6 +480,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%configFile = atVal
+      else
+        is%wrap%configFile = "hydro.namelist"
       endif
 
       ! Determine DAS configuration filename
@@ -486,6 +492,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%dasConfigFile = atVal
+      else
+        is%wrap%configFile = "namelist.hrldas"
       endif
 
       ! Time Step
@@ -502,6 +510,8 @@ module WRFHydro_NUOPC
             line=__LINE__,file=__FILE__,rcToReturn=rc)
           return  ! bail out
         endif
+      else
+        is%wrap%timeStepInt = 0
       endif
 
       ! Forcing Directory
@@ -512,6 +522,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%forcingDir = trim(atVal)
+      else
+        is%wrap%forcingDir = "WRFHYDRO_FORCING"
       endif
 
       ! Determine Domain ID
@@ -523,6 +535,8 @@ module WRFHydro_NUOPC
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%did = ESMF_UtilString2Int(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
+      else
+        is%wrap%did = 1
       endif
 
       ! Connect Nest to Nest
@@ -535,6 +549,8 @@ module WRFHydro_NUOPC
         atVal = ESMF_UtilStringUpperCase(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%nestToNest = (trim(atVal)=="TRUE")
+      else
+        is%wrap%nestToNest = .false.
       endif
 
       ! import data memory type
@@ -545,6 +561,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%memr_import = atVal
+      else
+        is%wrap%memr_import = MEMORY_POINTER
       endif
 
       ! export data memory type
@@ -555,6 +573,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%memr_export = atVal
+      else
+        is%wrap%memr_export = MEMORY_POINTER
       endif
 
       ! import data initialization type
@@ -565,6 +585,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%init_import = atVal
+      else
+        is%wrap%init_import = FILLV_MODEL
       endif
 
       ! backwards compatible setting (overrides initialize_import)
@@ -587,6 +609,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%init_export = atVal
+      else
+        is%wrap%init_export = FILLV_MODEL
       endif
 
       ! backwards compatible setting (overrides initialize_export)
@@ -609,6 +633,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%chck_import = atVal
+      else
+        is%wrap%chck_import = CHECKCLOCK_CURRT
       endif
 
       ! Get missing import handler
@@ -619,6 +645,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%misg_import = atVal
+      else
+        is%wrap%misg_import = MISSINGVAL_FAIL
       endif
 
       ! Get reset import handler
@@ -631,6 +659,8 @@ module WRFHydro_NUOPC
         atVal = ESMF_UtilStringUpperCase(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%reset_import = (trim(atVal)=="TRUE")
+      else
+        is%wrap%reset_import = .false.
       endif
 
       ! Get component output directory
@@ -641,6 +671,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%dirOutput = trim(atVal)
+      else
+        is%wrap%dirOutput = "./HYD_OUTPUT"
       endif
 
       ! Get component input directory
@@ -651,6 +683,8 @@ module WRFHydro_NUOPC
         call NUOPC_CompAttributeGet(gcomp, name=atName, value=atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%dirInput = trim(atVal)
+      else
+        is%wrap%dirInput = "./HYD_INPUT"
       endif
 
       ! Write cap restart state
@@ -675,6 +709,8 @@ module WRFHydro_NUOPC
         atVal = ESMF_UtilStringUpperCase(atVal, rc=rc)
         if (ESMF_STDERRORCHECK(rc)) return  ! bail out
         is%wrap%multiInstance = (trim(atVal)=="TRUE")
+      else
+        is%wrap%multiInstance = .false.
       endif
 
       if (btest(verbosity,16)) then
