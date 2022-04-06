@@ -829,6 +829,9 @@ subroutine LandRT_ini(did)
        else if (rt_domain(did)%reservoir_type(lake_index) == 4 .and. nlst(did)%reservoir_rfc_forecasts) then
           allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
+       else if (rt_domain(did)%reservoir_type(lake_index) == 5 .and. nlst(did)%reservoir_rfc_forecasts) then
+          allocate(rfc_forecasts :: rt_domain(did)%reservoirs(lake_index)%ptr)
+
        else
           allocate( levelpool :: rt_domain(did)%reservoirs(lake_index)%ptr)
 
