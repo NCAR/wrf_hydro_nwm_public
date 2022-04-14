@@ -22,6 +22,7 @@ module module_hrldas_netcdf_io
   use module_date_utilities
   use netcdf
   use module_hydro_stop, only:HYDRO_stop
+  use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
 
 #ifdef MPP_LAND
   use module_mpp_land, only:mpp_land_bcast_int1, decompose_data_real, mpp_land_bcast_real1, decompose_data_int, &
@@ -63,6 +64,8 @@ module module_hrldas_netcdf_io
   integer, private :: dimid_times_remember
   integer, private :: dimid_layers_remember
   integer, private :: dimid_snow_layers_remember
+  integer, private :: dimid_glacier_layers_remember
+  integer, private :: crocus_opt = 0
 
   interface define_rst_var
      module procedure define_3d_real,define_2d_real,define_2d_int
@@ -584,13 +587,16 @@ contains
        xstart, xend,                                                   &
        ystart, yend,                                                   &
        iswater, islake, vegtyp, soltyp, terrain, tbot_2d, latitude,    &
-       longitude, xland, seaice, msftx, msfty)
+       longitude, xland, seaice, msftx, msfty, &
+       local_crocus_opt, glacinfo, glact, vis_icealb)
     implicit none
     character(len=*),          intent(in)  :: wrfinput_flnm
     integer,                   intent(in)  :: xstart, xend, ystart, yend
     integer,                   intent(in)  :: iswater
     integer,                   intent(in)  :: islake
     integer, dimension(xstart:xend,ystart:yend), intent(out) :: vegtyp, soltyp
+    integer,                                     intent(in)  :: local_crocus_opt
+    integer, dimension(xstart:xend,ystart:yend), intent(out), optional :: glacinfo
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: terrain
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: tbot_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: latitude
@@ -599,12 +605,16 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
+    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: vis_icealb
 
     character(len=256) :: units
     integer :: ierr
     integer :: ncid
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
+
+    crocus_opt = local_crocus_opt ! setting module scope variable
 
 #ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
@@ -671,9 +681,39 @@ contains
     if (ierr /= 0) print*, 'Did not find MAPFAC_MY, only needed for iopt_run=5'
 
     ! Get Dominant Land Use categories (use)
-    call get_landuse_netcdf(ncid, xdum ,   units, xstart, xend, ystart, yend)
+    call get_landuse_or_glacinfo_netcdf("landuse",ncid, xdum , units, xstart, xend, ystart, yend, FATAL, ierr)
     vegtyp = nint(xdum)
     ! print*, 'vegtyp(xstart,ystart) = ', vegtyp(xstart,ystart)
+
+    ! Get Glacier info (glacinfo)
+    ! - crocus_opt = 0 : don't read in
+    ! - crocus_opt = 1
+    !   - no glacier or glacier_thickness: ERROR
+    !   - glacier = 0: WARNING
+    if (crocus_opt /= 0) then
+       call get_landuse_or_glacinfo_netcdf("glacinfo", ncid, xdum , units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+       if (ierr == 0) then
+          glacinfo = nint(xdum)
+       else
+          stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
+               " - crocus_opt on but netcdf read of glacinfo returned non-zero"
+       end if
+       ! Get Glacier thickness (glact)
+       call get_2d_netcdf("glacier_thickness", ncid, glact,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+       if (ierr /= 0) then
+          glact = 0.0
+          print *, "WARNING: crocus_opt on but get_2d_netcdf of glacier_thickness returned", ierr, &
+               ". Setting glacier thickness to 0.0"
+       end if
+
+       ! Get visible ice albedo map (vis_icealb)
+       call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
+       if (ierr /= 0) then
+          vis_icealb = IEEE_VALUE(vis_icealb, IEEE_QUIET_NAN)
+          print*, 'WARNING: crocus_opt on but did not find min_vis, setting to NaN'
+       end if
+    end if ! crocus_opt /= 0
+
 
     ! Get Dominant Soil Type categories in the top layer (stl)
     call get_soilcat_netcdf(ncid, xdum ,   units, xstart, xend, ystart, yend)
@@ -834,10 +874,49 @@ contains
 
 !---------------------------------------------------------------------------------------------------------
 
+  subroutine read_imperv(spatial_filename, xstart, xend, ystart, yend, imperv_2d)
+
+    implicit none
+    character(len=*),          intent(in)  :: spatial_filename
+    integer,                   intent(in)  :: xstart, xend, ystart, yend
+    real,    dimension(xstart:xend,ystart:yend), intent(out) :: imperv_2d
+
+    character(len=24)  :: name
+    character(len=256) :: units
+    integer :: ierr,iret, varid
+    integer :: ncid
+    real, dimension(xstart:xend,ystart:yend) :: xdum
+!------------------------------------------------------------------------------------------------------
+
+    ierr = nf90_open(spatial_filename, NF90_NOWRITE, ncid)
+    if (ierr /= 0) then
+       write(*,'("FATAL ERROR: In read_imperv():  Problem opening soil file: ''", A, "''")') trim(spatial_filename)
+       stop
+    endif
+
+    name = "imperv"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_imperv():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, imperv_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    ! Close the NetCDF file
+    ierr = nf90_close(ncid)
+    if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_imperv() -  NF90_CLOSE"
+
+  end subroutine read_imperv
+
+!---------------------------------------------------------------------------------------------------------
+
   subroutine read_3d_soil(spatial_filename,xstart, xend,ystart, yend,           &
                           nsoil,bexp_3d,smcdry_3d,smcwlt_3d,smcref_3d,smcmax_3d,  &
 		          dksat_3d,dwsat_3d,psisat_3d,quartz_3d,refdk_2d,refkdt_2d,slope_2d,&
-			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d,rsurfexp_2d)
+			  cwpvt_2d,vcmx25_2d,mp_2d,hvt_2d,mfsno_2d,rsurfexp_2d, &
+                          ssi_2d,snowretfac_2d,tau0_2d,rsurfsnow_2d,scamax_2d)
     implicit none
     character(len=*),          intent(in)  :: spatial_filename
     integer,                   intent(in)  :: xstart, xend, ystart, yend
@@ -860,6 +939,11 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: hvt_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: mfsno_2d
     real,    dimension(xstart:xend,ystart:yend), intent(out)       :: rsurfexp_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: ssi_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: snowretfac_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: tau0_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: rsurfsnow_2d
+    real,    dimension(xstart:xend,ystart:yend), intent(out)       :: scamax_2d
 
     character(len=24)  :: name
     character(len=256) :: units
@@ -1089,6 +1173,56 @@ contains
 
     iret = nf90_get_var(ncid, varid, rsurfexp_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
 !
+    name = "ssi"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, ssi_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "snowretfac"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, snowretfac_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "tau0"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, tau0_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "rsurfsnow"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, rsurfsnow_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+!
+    name = "scamax"
+    iret = nf90_inq_varid(ncid,  trim(name),  varid)
+    if (iret /= 0) then
+      print*, 'ncid = ', ncid
+      write(*,*) "FATAL ERROR: In read_3d_soil():  Problem finding variable '"//trim(name)//"' in NetCDF file: " // trim(spatial_filename)
+      stop
+    endif
+
+    iret = nf90_get_var(ncid, varid, scamax_2d, start=(/xstart,ystart/), count=(/xend-xstart+1,yend-ystart+1/))
+
     ! Close the NetCDF file
     ierr = nf90_close(ncid)
     if (ierr /= 0) stop "FATAL ERROR: In module_hrldas_netcdf_io.F read_3d_soil() -  NF90_CLOSE"
@@ -1096,33 +1230,62 @@ contains
   end subroutine read_3d_soil
 
 !---------------------------------------------------------------------------------------------------------
+!---------------------------------------------------------------------------------------------------------
 
-  subroutine get_landuse_netcdf(ncid, array, units, xstart, xend, ystart, yend)
+  subroutine get_landuse_or_glacinfo_netcdf(in_name, ncid, array, units, &
+                                            xstart, xend, ystart, yend, &
+                                            fatal, ierr)
     implicit none
+    character(len=*), intent(in) :: in_name
     integer, intent(in) :: ncid
     integer, intent(in) :: xstart, xend, ystart, yend
+    logical, intent(in) :: fatal
     real, dimension(xstart:xend,ystart:yend), intent(out) :: array
     character(len=256), intent(out) :: units
+    integer, intent(out)            :: ierr
     integer :: iret, varid
-    character(len=24), parameter :: name = "IVGTYP"
-
+    character(len=24) :: name
+    ierr = 0
     units = " "
+
+    if (trim(in_name) == "landuse") then
+       name = "IVGTYP"
+    else if (trim(in_name) == "glacinfo") then
+       name = "glacier"
+    end if
+
 
     iret = nf90_inq_varid(ncid,  trim(name),  varid)
     if (iret /= 0) then
-       print*, 'name = "', trim(name)//'"'
-       stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_netcdf()"// &
-            " - MODULE_NOAHLSM_HRLDAS_INPUT: nf90_inq_varid"
-    endif
+       ierr = iret
+       call report_landuse_or_glacinfo_error(name, fatal)
+    end if
 
     iret = nf90_get_var(ncid, varid, array, (/xstart, ystart/), (/xend-xstart+1, yend-ystart+1/))
     if (iret /= 0) then
-       print*, 'name = "', trim(name)//'"'
-       stop "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_netcdf()"// &
-            " - MODULE_NOAHLSM_HRLDAS_INPUT: nf90_get_var"
-    endif
+       ierr = iret
+       call report_landuse_or_glacinfo_error(name, fatal)
+    end if
+  end subroutine get_landuse_or_glacinfo_netcdf
 
-  end subroutine get_landuse_netcdf
+  subroutine report_landuse_or_glacinfo_error(name, fatal)
+    implicit none
+    character(len=24), intent(in) :: name
+    logical, intent(in)           :: fatal
+    character(len=142), parameter :: land_error = &
+         "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_or_glacinfo_netcdf() &
+         &- MODULE_NOAHLSM_HRLDAS_INPUT: nf90_inq_varid for variable landuse"
+    character(len=142), parameter :: glacier_error = &
+         "FATAL ERROR: In module_hrldas_netcdf_io.F get_landuse_or_glacinfo_netcdf() &
+         &- MODULE_NOAHLSM_HRLDAS_INPUT: nf90_inq_varid for variable glacier"
+    if (fatal .eqv. .true.) return
+    print*, 'name = "', trim(name)//'"'
+    if (trim(name) == "landuse") then
+       stop land_error
+    else
+       stop glacier_error
+    end if
+  end subroutine report_landuse_or_glacinfo_error
 
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
@@ -1230,9 +1393,10 @@ contains
     call mpp_land_bcast_char(256,units)
     if(ierr /= 0) return
 #ifdef HYDRO_D
-    write(6,*) "xstart,xend, ystart, yend", xstart,xend, ystart, yend
+    write(6,*) "my_id, xstart,xend, ystart, yend",my_id, xstart,xend, ystart, yend
 #endif
     call decompose_data_real(g_array,array)
+
 #endif
   end subroutine get_2d_netcdf
 
@@ -2160,12 +2324,12 @@ contains
 !---------------------------------------------------------------------------------------------------------
 !---------------------------------------------------------------------------------------------------------
 #ifdef MPP_LAND
-      subroutine prepare_output_file_mpp(outdir, version, igrid, &
+  subroutine prepare_output_file_mpp(outdir, version, igrid, &
        output_timestep, llanduse, split_output_count, hgrid, &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       vegtyp, soltyp)
+       vegtyp, soltyp, act_level)
 
     implicit none
 
@@ -2193,6 +2357,7 @@ contains
     real,                                     intent(in) :: cen_lon
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
+    integer, optional,                        intent(in) :: act_level
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
     character(len=19),                        intent(in) :: date
@@ -2200,7 +2365,6 @@ contains
     integer,          dimension(ixpar,jxpar), intent(in) :: soltyp
     integer,          dimension(global_nx,global_ny) :: g_vegtyp
     integer,          dimension(global_nx,global_ny) :: g_soltyp
-
 
     call write_io_int(vegtyp, g_vegtyp)
     call write_io_int(soltyp, g_soltyp)
@@ -2211,7 +2375,7 @@ contains
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       g_vegtyp, g_soltyp)
+       g_vegtyp, g_soltyp, act_level)
     end if
 
     end subroutine prepare_output_file_mpp
@@ -2222,7 +2386,7 @@ contains
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar, iswater,  &
        mapproj, lat1, lon1, dx, dy, truelat1, truelat2, cen_lon,     &
        nsoil, nsnow, sldpth, startdate, date, &
-       vegtyp, soltyp)
+       vegtyp, soltyp, act_level)
     ! To prepare the output file, we create the file, write dimensions and attributes, write the time variable.
     ! At the end of this routine, the output file is out of define mode.
     implicit none
@@ -2252,6 +2416,7 @@ contains
     real,                                     intent(in) :: cen_lon
     integer,                                  intent(in) :: nsoil
     integer,                                  intent(in) :: nsnow
+    integer,          optional,               intent(in) :: act_level
     real,             dimension(nsoil),       intent(in) :: sldpth
     character(len=19),                        intent(in) :: startdate
     character(len=19),                        intent(in) :: date
@@ -2262,6 +2427,7 @@ contains
 
     integer :: dimid_ix, dimid_jx, dimid_times, dimid_datelen, varid, n
     integer :: dimid_dum, dimid_layers, dimid_snow_layers
+    integer :: dimid_glacier_layers
     integer :: iret
     character(len=256) :: output_flnm
     character(len=19)  :: date19
@@ -2302,7 +2468,8 @@ contains
        !iret = nf90_def_dim(ncid, "south_north_stag", jxfull+1, dimid_dum)
        iret = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
        iret = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
-
+       if (crocus_opt /= 0) &
+            iret = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "OUTPUT FROM HRLDAS "//version)
        iret = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
 
@@ -2358,6 +2525,8 @@ contains
     dimid_times_remember = dimid_times
     dimid_layers_remember = dimid_layers
     dimid_snow_layers_remember = dimid_snow_layers
+    if (crocus_opt /= 0) &
+         dimid_glacier_layers_remember = dimid_glacier_layers
     iswater_remember = iswater
 
     allocate(vegtyp_remember(ixpar,jxpar))
@@ -2435,7 +2604,6 @@ contains
 
 !yw    deallocate(vegtyp_remember)
     if(allocated(vegtyp_remember)) deallocate(vegtyp_remember)
-
   end subroutine finalize_output_file
 
 !---------------------------------------------------------------------------------------------------------
@@ -2595,6 +2763,8 @@ contains
           		zdimid = dimid_layers_remember
        		elseif (snow_or_soil == "SNOW") then
           		zdimid = dimid_snow_layers_remember
+                elseif (snow_or_soil == "MAXS") then
+                        zdimid = dimid_glacier_layers_remember
        		else
           		write(*,'("SNOW_OR_SOIL unrecognized: ", A)') adjustl(trim(snow_or_soil))
           stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_output_3d() - SNOW_OR_SOIL"
@@ -2816,9 +2986,11 @@ contains
 
 #ifdef MPP_LAND
       subroutine prepare_restart_file_mpp(outdir, version, igrid, llanduse, olddate, startdate,  &
-       ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
-       nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp)
+           ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                   &
+           nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj,                                    &
+           lat1, lon1, cen_lon, iswater, vegtyp, glacinfo,                                       &
+           glact, act_level, vis_icealb)
+
 
     implicit none
 
@@ -2836,6 +3008,7 @@ contains
     integer,                               intent(in) :: ystartpar
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
+    integer, optional,                     intent(in) :: act_level
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
     integer,                               intent(in) :: mapproj
@@ -2843,13 +3016,16 @@ contains
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
     integer, dimension(global_nx,global_ny) :: gvegtyp
+    integer, dimension(ixpar,jxpar), optional, intent(in) :: glacinfo
+    real,    dimension(ixpar,jxpar), optional, intent(in) :: glact
+    real,    dimension(ixpar,jxpar),           intent(in) :: vis_icealb
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then
       call prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
-       iswater, gvegtyp)
+       iswater, gvegtyp, act_level)
     endif
 
     call mpp_land_sync()
@@ -2860,7 +3036,7 @@ contains
   subroutine prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp)
+       iswater, vegtyp, act_level)
 
     implicit none
 #include <netcdf.inc>
@@ -2879,6 +3055,7 @@ contains
     integer,                               intent(in) :: ystartpar
     integer,                               intent(in) :: nsoil
     integer,                               intent(in) :: nsnow
+    integer, optional,                     intent(in) :: act_level
     real,                                  intent(in) :: dx, dy
     real,                                  intent(in) :: truelat1, truelat2
     integer,                               intent(in) :: mapproj
@@ -2892,6 +3069,7 @@ contains
     integer :: ierr
     integer :: varid
     integer :: dimid_times, dimid_datelen, dimid_ix, dimid_jx, dimid_dum, dimid_layers, dimid_snow_layers, dimid_sosn_layers
+    integer :: dimid_glacier_layers
     character(len=19) :: date19
     integer :: rank
 
@@ -2906,7 +3084,6 @@ contains
     rank = 0
 
 #endif
-
 
     write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
     if (rank==0) then
@@ -2941,6 +3118,8 @@ contains
     ierr = nf90_def_dim(ncid, "soil_layers_stag", nsoil, dimid_layers)
     ierr = nf90_def_dim(ncid, "snow_layers", nsnow, dimid_snow_layers)
     ierr = nf90_def_dim(ncid, "sosn_layers", nsnow+nsoil, dimid_sosn_layers)
+    if (crocus_opt /= 0) &
+         ierr = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "RESTART FILE FROM HRLDAS "//version)
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
@@ -3756,10 +3935,14 @@ contains
        ierr = nf90_inq_dimid(ncid, "sosn_layers", dimid_kx)
        call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
                                 "Problem nf90_inq_dimid for 'sosn_layers'")
+    else if (output_layers == "MAXS" .and. crocus_opt /= 0) then
+       ierr = nf90_inq_dimid(ncid, "glacier_levels", dimid_kx)
+       call error_handler(ierr, "In module_hrldas_netcdf_io.F add_to_restart_3d() - "// &
+                                "Problem nf90_inq_dimid for 'glacier_levels'")
     else
        stop "FATAL ERROR: In module_hrldas_netcdf_io.F add_to_restart_3d() - PANIC!"
     endif
-        call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, "", "")
+    call make_var_att_3d(ncid, dimid_ix, dimid_jx, dimid_times, NF90_FLOAT, dimid_kx, name, "", "")
    end subroutine define_3d_real
 
 

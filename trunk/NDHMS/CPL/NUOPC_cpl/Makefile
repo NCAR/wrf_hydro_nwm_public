@@ -108,10 +108,14 @@ CAP_MK        := wrfhydro.mk
 
 CAP_OBJS      := WRFHydro_NUOPC_Cap.o
 CAP_OBJS      += WRFHydro_NUOPC_Gluecode.o
+CAP_OBJS      += WRFHydro_NUOPC_Fields.o
+CAP_OBJS      += WRFHydro_NUOPC_Flags.o
 CAP_OBJS      += WRFHydro_ESMF_Extensions.o
 
 CAP_MODS      := wrfhydro_nuopc.mod
 CAP_MODS      += wrfhydro_nuopc_gluecode.mod
+CAP_MODS      += wrfhydro_nuopc_fields.mod
+CAP_MODS      += wrfhydro_nuopc_flags.mod
 CAP_MODS      += wrfhydro_esmf_extensions.mod
 
 CAP_FILES     := $(CAP_OBJS) $(CAP_MODS) $(CAP_LIB) $(CAP_VERS) $(CAP_MK)
@@ -143,12 +147,19 @@ nuopcinstall: $(CAP_LIB) $(CAP_MODS) $(CAP_VERS) \
 # ############
 
 WRFHydro_NUOPC_Cap.o: WRFHydro_NUOPC_Macros.h \
- WRFHydro_NUOPC_Gluecode.o WRFHydro_ESMF_Extensions.o
+ WRFHydro_NUOPC_Gluecode.o WRFHydro_NUOPC_Fields.o \
+ WRFHydro_NUOPC_Flags.o WRFHydro_ESMF_Extensions.o
 WRFHydro_NUOPC_Gluecode.o: WRFHydro_NUOPC_Macros.h \
+ WRFHydro_NUOPC_Fields.o WRFHydro_NUOPC_Flags.o \
  WRFHydro_ESMF_Extensions.o $(MODEL_MODS)
+WRFHydro_NUOPC_Fields.o: WRFHydro_NUOPC_Macros.h \
+ WRFHydro_NUOPC_Flags.o WRFHydro_ESMF_Extensions.o \
+ $(MODEL_MODS)
 
 wrfhydro_nuopc.mod: WRFHydro_NUOPC_Cap.o
 wrfhydro_nuopc_gluecode.mod: WRFHydro_NUOPC_Gluecode.o
+wrfhydro_nuopc_fields.mod: WRFHydro_NUOPC_Fields.o
+wrfhydro_nuopc_flags.mod: WRFHydro_NUOPC_Flags.o
 wrfhydro_esmf_extensions.mod: WRFHydro_ESMF_Extensions.o
 
 # ###############
@@ -253,7 +264,7 @@ $(CAP_MK):
 # Install Library, Modules, and Makefile Fragment
 # -----------------------------------------------------------------------------
 
-$(INSTPATH)/%:
+$(INSTPATH)/%: %
 	@echo $(HR)
 	@echo "Installing $(notdir $@)"
 	@echo

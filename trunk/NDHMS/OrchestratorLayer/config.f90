@@ -11,6 +11,8 @@ module config_base
   type NOAHLSM_OFFLINE_
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
+     integer            :: crocus_opt = 0
+     integer            :: act_lev    = 0
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -40,8 +42,9 @@ module config_base
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
+     integer            :: imperv_option = 9
 
-     integer            :: split_output_count = 1 
+     integer            :: split_output_count = 1
      integer            :: khour
      integer            :: kday = -999
      real               :: zlvl
@@ -68,19 +71,20 @@ module config_base
   TYPE namelist_rt_
 
      integer :: nsoil, SOLVEG_INITSWC
+     integer :: act_lev = 0
      real,allocatable,dimension(:) :: ZSOIL8
-     real*8 :: out_dt, rst_dt
-     real   :: dt  !! dt is NOAH_TIMESTEP
+     real*8  :: out_dt, rst_dt
+     real    :: dt  !! dt is NOAH_TIMESTEP
      integer :: START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN
      character(len=256)  :: restart_file = ""
-     integer            :: split_output_count
+     integer             :: split_output_count
      integer :: igrid
      integer :: rst_bi_in   ! used for parallel io with large restart file.
      integer :: rst_bi_out   ! used for parallel io with large restart file.
      ! each process will output the restart tile.
      character(len=256) :: geo_static_flnm = ""
      character(len=1024) :: land_spatial_meta_flnm = ""
-     integer  :: DEEPGWSPIN
+     integer :: DEEPGWSPIN
      integer ::  order_to_write, rst_typ
      character(len=256)  :: upmap_file = ""    ! user defined mapping file for NHDPLUS
      character(len=256)  :: hydrotbl_f = ""    ! hydrotbl file
@@ -157,6 +161,9 @@ module config_base
      character(len=256) :: timeSlicePath
      integer            :: nLastObs
      integer            :: bucket_loss
+     integer            :: imperv_adj
+
+     logical            :: channel_bypass = .FALSE.
 
    contains
 
@@ -169,6 +176,11 @@ module config_base
      procedure, nopass :: init => config_init
      procedure, nopass :: init_nlst => init_namelist_rt_field
   end type Configuration_
+
+  type crocus_options
+     integer :: crocus_opt = 0
+     integer :: act_lev = 0
+  end type crocus_options
 
   integer, parameter :: max_domain = 5
 
@@ -304,6 +316,10 @@ contains
       endif
    end do
 
+   if(self%NSOIL .le. 0 .and. self%NSOIL .ne. -999999) then
+      call hydro_stop('hydro.namelist ERROR: Invalid NSOIL specified.')
+   endif
+
    if(self%dxrt0 .le. 0) then
       call hydro_stop('hydro.namelist ERROR: Invalid DXRT specified.')
    endif
@@ -332,6 +348,10 @@ contains
       call hydro_stop('hydro.namelist ERROR: Invalid CHANRTSWCRT specified')
    endif
    if(self%CHANRTSWCRT .eq. 1) then
+      if ( self%channel_option .eq. 5 ) then
+         self%channel_option = 2
+         self%channel_bypass = .TRUE.
+      endif
       if( (self%channel_option .lt. 1 ) .or. (self%channel_option .gt. 3) ) then
          call hydro_stop('hydro.namelist ERROR: Invalid channel_option specified')
       endif
@@ -443,6 +463,10 @@ contains
       endif
    end if
 
+   if( (self%imperv_adj .lt. 0 ) .or. (self%imperv_adj .gt. 1) ) then
+      call hydro_stop('hydro.namelist ERROR: Invalid imperv_adj specified')
+   endif
+
   end subroutine rt_nlst_check
 
   subroutine init_namelist_rt_field(did)
@@ -456,7 +480,7 @@ contains
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
          sys_cpl, rst_typ, rst_bi_in, rst_bi_out, &
          gwChanCondSw, GwPreCycles, GwSpinCycles, GwPreDiagInterval, gwsoilcpl, &
-         UDMP_OPT, io_form_outputs, bucket_loss
+         UDMP_OPT, io_form_outputs, bucket_loss, imperv_adj
     real:: DTRT_TER,DTRT_CH,dxrt, gwChanCondConstIn, gwChanCondConstOut, gwIhShift
     character(len=256) :: route_topo_f=""
     character(len=256) :: route_chan_f=""
@@ -508,6 +532,7 @@ contains
 !!! add the following two dummy variables
     integer  :: NSOIL
     real :: ZSOIL8(8)
+    type(crocus_options) :: crocus_opts
 
     logical            :: dir_e
     character(len=1024) :: reservoir_obs_dir
@@ -547,7 +572,7 @@ contains
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
          frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx
+         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, imperv_adj
 
 #ifdef WRF_HYDRO_NUDGING
     namelist /NUDGING_nlist/ nudgingParamFile,       netwkReExFile,          &
@@ -583,6 +608,7 @@ contains
     reservoir_rfc_forecasts = .FALSE.
     reservoir_rfc_forecasts_lookback_hours = 24
     reservoir_type_specified = .FALSE.
+    imperv_adj = 0
 
 #ifdef WRF_HYDRO_NUDGING
     ! Default values for NUDGING_nlist
@@ -620,6 +646,7 @@ contains
 #endif
     close(12)
 
+    call read_crocus_namelist(crocus_opts)
 ! #ifdef MPP_LAND
 !     endif
 ! #endif
@@ -731,6 +758,7 @@ contains
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif
 
+    nlst(did)%act_lev = crocus_opts%act_lev
     nlst(did)%SUBRTSWCRT = SUBRTSWCRT
     nlst(did)%OVRTSWCRT = OVRTSWCRT
     nlst(did)%dxrt0 = dxrt
@@ -755,6 +783,7 @@ contains
     nlst(did)%order_to_write = order_to_write
     nlst(did)%compound_channel = compound_channel
     nlst(did)%channel_loss_option = channel_loss_option
+    nlst(did)%imperv_adj = imperv_adj
     ! files
     nlst(did)%route_topo_f = route_topo_f
     nlst(did)%route_chan_f = route_chan_f
@@ -848,6 +877,7 @@ contains
     implicit none
      character(len=256) :: indir
      integer            :: nsoil ! number of soil layers
+     type(crocus_options) :: crocus_opts
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -876,6 +906,7 @@ contains
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
+     integer            :: imperv_option = 9
      integer            :: split_output_count = 1
      integer            :: khour = -999
      integer            :: kday = -999
@@ -907,8 +938,9 @@ contains
          frozen_soil_option, radiative_transfer_option, snow_albedo_option, &
          pcp_partition_option, tbot_option, temp_time_scheme_option, &
          glacier_option, surface_resistance_option, &
-         
+
          soil_data_option, pedotransfer_option, crop_option, &
+         imperv_option, &
 
          split_output_count, &
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
@@ -968,6 +1000,12 @@ contains
     endif
 
 #ifndef NCEP_WCOSS
+    call read_crocus_namelist(crocus_opts, 30)
+#else
+    call read_crocus_namelist(crocus_opts, 11)
+#endif
+
+#ifndef NCEP_WCOSS
     close(30)
 #else
     close(11)
@@ -980,6 +1018,8 @@ contains
 
     noah_lsm%indir = indir
     noah_lsm%nsoil = nsoil ! number of soil layers
+    noah_lsm%crocus_opt = crocus_opts%crocus_opt
+    noah_lsm%act_lev = crocus_opts%act_lev
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
     noah_lsm%start_year = start_year
@@ -1009,6 +1049,7 @@ contains
     noah_lsm%soil_data_option = soil_data_option
     noah_lsm%pedotransfer_option = pedotransfer_option
     noah_lsm%crop_option = crop_option
+    noah_lsm%imperv_option = imperv_option
 
     noah_lsm%split_output_count = split_output_count
 
@@ -1039,5 +1080,43 @@ contains
     noah_lsm%spatial_filename = spatial_filename
 
   end subroutine init_noah_lsm_and_wrf_hydro
+
+  subroutine read_crocus_namelist(opt, f_in)
+    type(crocus_options), intent(OUT) :: opt
+    integer, intent(IN), optional :: f_in
+    character(len=15) :: filename = "namelist.hrldas"
+    logical :: f_exists, f_opened
+    integer :: crocus_opt, act_lev
+    integer :: ierr, f_local
+    namelist /CROCUS_nlist/ &
+         crocus_opt, act_lev
+
+    ! check if file is opened
+    if (present(f_in)) then
+       rewind(30)
+       read(f_in, NML=CROCUS_nlist, iostat=ierr)
+    else
+       ! check that file exists
+       inquire(file=filename, exist=f_exists)
+       if (f_exists .eqv. .false.) &
+           call hydro_stop (" FATAL ERROR: namelist.hrldas does not exist")
+       open(f_local, file=filename, form="FORMATTED", iostat=ierr)
+       read(f_local, NML=CROCUS_nlist, iostat=ierr)
+       close(f_local)
+    end if
+
+    if ((ierr .ne. 0) .or. (crocus_opt .eq. 0)) &
+         return
+    if ((act_lev .gt. 50) .or. (act_lev .lt. 0)) then
+       call hydro_stop (" FATAL ERROR: Crocus act_lev out of range of 0-50 ")
+    end if
+
+    opt%crocus_opt = crocus_opt
+    if (crocus_opt == 0) then
+       opt%act_lev = 0
+    else
+       opt%act_lev = act_lev
+    end if
+  end subroutine read_crocus_namelist
 
 end module config_base

@@ -624,7 +624,7 @@ end subroutine get_albedo12m_netcdf
     character(len=*), intent(in) :: name
     integer, intent(in) :: ncid
     integer, intent(in) :: idim, jdim
-    real, dimension(idim,jdim), intent(out) :: array
+    real, dimension(idim,jdim), intent(inout) :: array
     character(len=256), intent(out) :: units
     ! fatal_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
@@ -4788,7 +4788,7 @@ end subroutine mpp_output_chrt
      real, dimension(NLAKES),                  intent(inout) :: latlake,lonlake,elevlake,resht
      real, dimension(NLAKES),                  intent(inout) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
-     integer(kind=int64), dimension(NLAKES),       intent(in) :: LAKEIDM     ! lake id
+     integer(kind=int64), dimension(NLAKES),   intent(in) :: LAKEIDM     ! lake id
 
      character(len=*),                         intent(in) :: startdate
      character(len=*),                         intent(in) :: date
@@ -5641,7 +5641,8 @@ end subroutine mpp_output_chrt
 #endif
 
       SUBROUTINE READ_ROUTING_seq(IXRT,JXRT,ELRT,CH_NETRT,CH_LNKRT,LKSATFAC,route_topo_f,    &
-            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,channel_option, UDMP_OPT)
+            route_chan_f, geo_finegrid_flnm,OVROUGHRTFAC,RETDEPRTFAC,IMPERVFRAC, &
+            channel_option, UDMP_OPT, imperv_adj)
 
 
         INTEGER, INTENT(IN) :: IXRT,JXRT
@@ -5651,8 +5652,9 @@ end subroutine mpp_output_chrt
 !Dummy inverted grids
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: OVROUGHRTFAC
         REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: RETDEPRTFAC
+        REAL, INTENT(INOUT), DIMENSION(IXRT,JXRT) :: IMPERVFRAC
 
-        integer         :: I,J, iret, jj, channel_option, UDMP_OPT
+        integer         :: I,J, iret, jj, channel_option, UDMP_OPT, imperv_adj
         CHARACTER(len=256)        :: var_name
         CHARACTER(len=*  )       :: route_topo_f
         CHARACTER(len=*  )       :: route_chan_f
@@ -5711,6 +5713,16 @@ end subroutine mpp_output_chrt
                      trim(geo_finegrid_flnm))
         where (OVROUGHRTFAC <= 0.) OVROUGHRTFAC = 1.0 ! reset grid to = 1.0 if non-valid value exists
 
+!Read in new optional impervious layer
+        var_name = "IMPERVFRAC"
+        IMPERVFRAC = -9999.9
+        if (imperv_adj > 0) then
+          call nreadRT2d_real(var_name,IMPERVFRAC,ixrt,jxrt,&
+                     trim(geo_finegrid_flnm), fatalErr=.true.)
+          where (IMPERVFRAC < 0.) IMPERVFRAC = 0.0  ! reset grid to = 0.0 if non-valid value exists
+        else
+          IMPERVFRAC = 0.0
+        endif
 
 #ifdef HYDRO_D
         write(6,*) "finish READ_ROUTING_seq"
@@ -9007,8 +9019,8 @@ call get_1d_netcdf_real(ncid, 'MusX',     MUSX,      'read_route_link_netcdf', .
 call get_1d_netcdf_real(ncid, 'Length',   CHANLEN,   'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'n',        MannN,     'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'So',       So,        'read_route_link_netcdf', .TRUE.)
-!! impose a minimum as this sometimes fails in the file. LKR changed to 10^-4 on 2/2018.
-where(So .lt. 0.0001) So=0.00001
+!! impose a minimum as this sometimes fails in the file. 
+where(So .lt. 0.00001) So=0.00001
 call get_1d_netcdf_real(ncid, 'ChSlp',    ChSSlp,    'read_route_link_netcdf', .TRUE.)
 call get_1d_netcdf_real(ncid, 'BtmWdth',  Bw,        'read_route_link_netcdf', .TRUE.)
 !! Loads channel infiltration, by default is zero, my need to add namelist option in future
@@ -9098,7 +9110,7 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
        if (fatal_IF_ERROR) call hydro_stop("read_route_lake_netcdf: Problem opening file.")
     endif
 
-    call get_1d_netcdf_int64(ncid,  'lake_id',   LAKEIDM,'read_route_lake_netcdf', .TRUE.)
+    call get_1d_netcdf_int64(ncid,  'lake_id',  LAKEIDM, 'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'LkArea',   HRZAREA,   'read_route_lake_netcdf', .TRUE.)
     !rename the LAKEPARM input vars for Elev instead of Ht, 08/23/17 LKR/DY
     call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
@@ -9317,19 +9329,20 @@ end function get_netcdf_dim
 subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                 gw_buck_loss, z_max, z_init, LINKID, nhdBuckMask)
     implicit none
-    integer :: numbasns
+    integer, intent(in) :: numbasns
     integer(kind=int64), dimension(numbasns) :: LINKID
     real, dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
     real, dimension(numbasns) :: z_max, z_init
     integer, dimension(numbasns) :: nhdBuckMask
-    character(len=*) :: infile
+    character(len=*), intent(in) :: infile
 !   define temp array
-    integer :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
+    integer, volatile :: i,j,k, gnid, ncid, varid, ierr, dimid, iret
     integer(kind=int64), allocatable, dimension(:) :: tmpLinkid
     real, allocatable, dimension(:) :: tmpCoeff, tmpExp, tmpLoss
     real, allocatable, dimension(:) :: tmpz_max, tmpz_init
 
 !   get gnid
+    gnid = 0
 #ifdef MPP_LAND
     if(my_id .eq. io_id ) then
 #endif
@@ -9343,7 +9356,7 @@ subroutine readBucket_nhd(infile, numbasns, gw_buck_coeff, gw_buck_exp, &
                !print*, "nf90_inq_dimid:  BasinDim"
                call hydro_stop("Failed read GBUCKETPARM - nf90_inq_dimid:  BasinDim")
        endif
-       iret = nf90_inquire_dimension(ncid, dimid, len = gnid)
+       iret = nf90_inquire_dimension(ncid, dimid, len=gnid)
     endif
     call mpp_land_bcast_int1(gnid)
 #endif
@@ -11156,24 +11169,35 @@ subroutine hdtbl_out(did)
       call hdtbl_out_nc(did,ncid, count,count_flag,"SMCWLT1",rt_domain(did)%SMCWLT1,"",ixd,jxd)
       call hdtbl_out_nc(did,ncid, count,count_flag,"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,"",ixd,jxd)
       call hdtbl_out_nc(did,ncid, count,count_flag,"LKSAT",rt_domain(did)%LKSAT,"",ixd,jxd)
+      call hdtbl_out_nc(did,ncid, count,count_flag,"NEXP",rt_domain(did)%NEXP,"",ixd,jxd)
    end do
 
 end subroutine hdtbl_out
 subroutine hdtbl_in_nc(did)
    implicit none
    integer :: did
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT)
+   integer :: ierr
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"NEXP",rt_domain(did)%NEXP,ierr)
+   ! Letting this variable be optional and setting to global default value if not found
+   if (ierr /= 0) then
+     write(6,*)  "WARNING (hydtbl_in_nc): NEXP not found so setting to global 1.0"
+     rt_domain(did)%NEXP = 1.0
+   endif
 end subroutine hdtbl_in_nc
-subroutine read2dlsm(did,file,varName,varOut)
+
+subroutine read2dlsm(did,file,varName,varOut,ierr)
+use module_mpp_land,only: mpp_land_bcast_int1
   implicit none
-  integer :: did, ncid ,ierr,iret
+  integer :: did, ncid , iret
   character(len=*) :: file,varName
   real,dimension(:,:) :: varOut
   character(len=256) :: units
+  integer, intent(out) :: ierr
 #ifdef MPP_LAND
   real,allocatable,dimension(:,:) :: tmpArr
   if(my_id .eq. io_id) then
@@ -11186,6 +11210,7 @@ subroutine read2dlsm(did,file,varName,varOut)
      allocate(tmpArr(1,1))
   endif
   call decompose_data_real (tmpArr,varOut)
+  call mpp_land_bcast_int1(ierr)
   deallocate(tmpArr)
 #else
      iret = nf90_open(trim(file), NF90_NOWRITE, ncid)

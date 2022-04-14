@@ -122,7 +122,6 @@ MODULE MODULE_mpp_GWBUCKET
                   tag2 = 63
                   call mpi_recv(ibuff(1:sizeInd(i+1)),sizeInd(i+1),&
                       MPI_INTEGER8,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
-
                   do k = 1, sizeInd(i+1)
                      outV(ibuff(k)) = vbuff(k)
                   end do
@@ -181,7 +180,6 @@ MODULE MODULE_mpp_GWBUCKET
                    tag2 = 63
                    call mpi_recv(ibuff(1:sizeInd(i+1)),sizeInd(i+1),&
                        MPI_INTEGER8,i,tag2,HYDRO_COMM_WORLD,mpp_status,ierr)
-
                    do k = 1, sizeInd(i+1)
                       outV(ibuff(k)) = vbuff(k)
                    end do

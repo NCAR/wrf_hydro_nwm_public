@@ -342,6 +342,9 @@
   BATS_NIR_DIR  = 0.4   !cosz factor for direct NIR snow albedo Yang97 eqn. 16
   RSURF_SNOW = 50.0     !surface resistence for snow [s/m]
   RSURF_EXP = 5.0       !exponent in the shape parameter for soil resistance option 1
+  IMPERV_URBAN = 0.95   !impervious fraction to use for urban type [0-1]
+  SCAMAX = 1.0          !maximum fractional snow covered area [0-1]
+  SWE_LIMIT = 5000.0    !maximum SWE limit [mm]
 
 /
 
