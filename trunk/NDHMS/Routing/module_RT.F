@@ -1216,19 +1216,7 @@ subroutine LandRT_ini(did)
 
      !Apply calibration scaling factors to sfc roughness and retention depth here...
      rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
-
-     !Create overland roughness high-res grid
-     print *, "ADCHECK_pre ncoarse 2 2 nfine 11 53:", rt_domain(did)%OV_ROUGH2d(2, 2), rt_domain(did)%overland%properties%roughness(11,53)
-     call regrid_lowres_to_highres(did, rt_domain(did)%OV_ROUGH2d, rt_domain(did)%overland%properties%roughness, &
-                                    rt_domain(did)%ixrt, rt_domain(did)%jxrt)
-     print *, "ADCHECK_post_regrid nfine 2 2:", rt_domain(did)%overland%properties%roughness(2,2)
-     print *, "ADCHECK_post_regrid nfine 11 53:", rt_domain(did)%overland%properties%roughness(11,53)
-     !Apply scaling factor
      rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
-     print *, "ADCHECK_post_fac nfine 2 2:", rt_domain(did)%overland%properties%roughness(2,2)
-     print *, "ADCHECK_post_fac nfine 11 53:", rt_domain(did)%overland%properties%roughness(11,53)
-     ! Removing roughness parameter update since it has not been populated yet... currently happens in Noah_dist_routing (AD)
-
 
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
