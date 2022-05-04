@@ -660,6 +660,7 @@ subroutine LandRT_ini(did)
   use config_base, only: nlst, noah_lsm
   use module_RT_data, only: rt_domain
   use module_gw_gw2d_data, only: gw2d
+  use module_HYDRO_io, only: regrid_lowres_to_highres
 #ifdef HYDRO_D
   use module_HYDRO_io, only: output_lake_types
 #endif
@@ -1215,7 +1216,7 @@ subroutine LandRT_ini(did)
 
      !Apply calibration scaling factors to sfc roughness and retention depth here...
      rt_domain(did)%overland%properties%retention_depth = rt_domain(did)%overland%properties%retention_depth * rt_domain(did)%RETDEPRTFAC
-     ! Removing roughness parameter update since it has not been populated yet... currently happens in Noah_dist_routing (AD)
+     rt_domain(did)%overland%properties%roughness = rt_domain(did)%overland%properties%roughness * rt_domain(did)%OVROUGHRTFAC
 
    !ADCHANGE: Moved this channel cell setting from OV_RTNG so it is outside
    !of overland routine (frequently called) and time loop.
@@ -1244,6 +1245,7 @@ subroutine LandRT_ini(did)
 #ifdef MPP_LAND
    ! communicate the value to
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%retention_depth,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
+     call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%roughness,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_x,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      call MPP_LAND_COM_REAL(rt_domain(did)%overland%properties%surface_slope_y,rt_domain(did)%IXRT,rt_domain(did)%JXRT,99)
      do i = 1, 8

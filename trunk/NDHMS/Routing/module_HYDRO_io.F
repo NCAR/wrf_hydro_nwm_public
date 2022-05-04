@@ -11171,8 +11171,8 @@ subroutine hdtbl_out(did)
       call hdtbl_out_nc(did,ncid, count,count_flag,"LKSAT",rt_domain(did)%LKSAT,"",ixd,jxd)
       call hdtbl_out_nc(did,ncid, count,count_flag,"NEXP",rt_domain(did)%NEXP,"",ixd,jxd)
    end do
-
 end subroutine hdtbl_out
+
 subroutine hdtbl_in_nc(did)
    implicit none
    integer :: did
@@ -11180,7 +11180,7 @@ subroutine hdtbl_in_nc(did)
    call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCMAX1",rt_domain(did)%SMCMAX1,ierr)
    call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCREF1",rt_domain(did)%SMCREF1,ierr)
    call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"SMCWLT1",rt_domain(did)%SMCWLT1,ierr)
-   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%OV_ROUGH2D,ierr)
+   call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"OV_ROUGH2D",rt_domain(did)%overland%properties%roughness,ierr, rt=.true.)
    call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"LKSAT",rt_domain(did)%LKSAT,ierr)
    call read2dlsm(did,trim(nlst(did)%hydrotbl_f),"NEXP",rt_domain(did)%NEXP,ierr)
    ! Letting this variable be optional and setting to global default value if not found
@@ -11190,7 +11190,7 @@ subroutine hdtbl_in_nc(did)
    endif
 end subroutine hdtbl_in_nc
 
-subroutine read2dlsm(did,file,varName,varOut,ierr)
+subroutine read2dlsm(did,file,varName,varOut,ierr,rt)
 use module_mpp_land,only: mpp_land_bcast_int1
   implicit none
   integer :: did, ncid , iret
@@ -11198,29 +11198,91 @@ use module_mpp_land,only: mpp_land_bcast_int1
   real,dimension(:,:) :: varOut
   character(len=256) :: units
   integer, intent(out) :: ierr
-#ifdef MPP_LAND
+  logical, optional, intent(in) :: rt
+  logical :: regrid
+
   real,allocatable,dimension(:,:) :: tmpArr
+
+#ifdef MPP_LAND
   if(my_id .eq. io_id) then
+#endif
      allocate(tmpArr(global_nx,global_ny))
      iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
      call get_2d_netcdf(trim(varName), ncid, tmpArr, units, global_nx, global_ny, &
           .false., ierr)
      iret = nf90_close(ncid)
+#ifdef MPP_LAND
   else
      allocate(tmpArr(1,1))
   endif
-  call decompose_data_real (tmpArr,varOut)
-  call mpp_land_bcast_int1(ierr)
-  deallocate(tmpArr)
-#else
-     iret = nf90_open(trim(file), NF90_NOWRITE, ncid)
-     call get_2d_netcdf(trim(varName), ncid, varOut, units, rt_domain(did)%ix, rt_domain(did)%jx, &
-          .false., ierr)
-     iret = nf90_close(ncid)
 #endif
 
+  if (present(rt)) then
+    regrid = rt
+  else 
+    regrid = .false.
+  endif
+
+  if (regrid) then
+    call regrid_lowres_to_highres(did, tmpArr, varOut, rt_domain(did)%ixrt, rt_domain(did)%jxrt)
+  else
+    call decompose_data_real (tmpArr,varOut)
+  endif
+
+#ifdef MPP_LAND
+  call mpp_land_bcast_int1(ierr)
+#endif
+
+  deallocate(tmpArr)
 end subroutine read2dlsm
 
+subroutine regrid_lowres_to_highres(did, lowres_grid, highres_grid, ixrt, jxrt)
+
+  implicit none
+  integer :: did
+  integer :: ixrt, jxrt
+  real, dimension(global_nx, global_ny) :: lowres_grid
+  real, dimension(ixrt,jxrt) :: highres_grid
+  ! Local variables
+  integer :: i, j, irt, jrt, aggfacxrt, aggfacyrt
+
+#ifdef MPP_LAND
+  real,allocatable,dimension(:,:) :: tmpArr
+  if(my_id .eq. io_id) then
+     allocate(tmpArr(global_rt_nx, global_rt_ny))
+#endif
+
+      do j = 1,global_ny ! Start coarse grid j loop
+         do i = 1,global_nx ! Start coarse grid i loop
+
+            do aggfacyrt = nlst(did)%AGGFACTRT-1,0,-1 ! Start disagg fine grid j loop
+            do aggfacxrt = nlst(did)%AGGFACTRT-1,0,-1 ! Start disagg fine grid i loop
+
+               irt = i * nlst(did)%AGGFACTRT - aggfacxrt ! Define fine grid i
+               jrt = j * nlst(did)%AGGFACTRT - aggfacyrt ! Define fine grid j
+#ifdef MPP_LAND
+               ! if(left_id.ge.0) irt = irt + 1
+               ! if(down_id.ge.0) jrt = jrt + 1
+               tmpArr(irt,jrt) = lowres_grid(i,j)
+#else
+               highres_grid(irt,jrt) = lowres_grid(i,j)
+#endif
+
+            end do
+            end do
+
+         end do
+      end do
+
+#ifdef MPP_LAND
+  else
+     allocate(tmpArr(1,1))
+  endif
+  call decompose_RT_real(tmpArr, highres_grid, global_rt_nx, global_rt_ny, ixrt, jxrt)
+  deallocate(tmpArr)
+#endif
+
+end subroutine regrid_lowres_to_highres
 
 subroutine read_channel_only (olddateIn, hgrid, indir, dtbl)
 !use module_HYDRO_io, only: read_rst_crt_reach_nc

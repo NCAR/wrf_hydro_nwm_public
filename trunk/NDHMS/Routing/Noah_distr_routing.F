@@ -889,7 +889,7 @@ subroutine disaggregateDomain_drv(did)
                             RT_DOMAIN(did)%NEXP, &
                             rt_domain(did)%overland%properties%distance_to_neighbor, &
                             RT_DOMAIN(did)%INFXSWGT, &
-                            RT_DOMAIN(did)%OVROUGHRTFAC,RT_DOMAIN(did)%LKSATFAC, &
+                            RT_DOMAIN(did)%LKSATFAC, &
                             rt_domain(did)%overland%streams_and_lakes%ch_netrt, &
                             RT_DOMAIN(did)%SH2OWGT, &
                             RT_DOMAIN(did)%subsurface%grid_transform%smcrefrt, &
@@ -897,11 +897,9 @@ subroutine disaggregateDomain_drv(did)
                             RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt, &
                             RT_DOMAIN(did)%subsurface%grid_transform%smcwltrt, &
                             rt_domain(did)%subsurface%grid_transform%smcrt, &
-                            rt_domain(did)%overland%properties%roughness, &
                             rt_domain(did)%overland%streams_and_lakes%lake_mask, &
                             rt_domain(did)%subsurface%properties%lksatrt, &
                             rt_domain(did)%subsurface%properties%nexprt, &
-                            RT_DOMAIN(did)%OV_ROUGH2d, &
                             RT_DOMAIN(did)%subsurface%properties%sldpth, &
                             RT_DOMAIN(did)%soiltypRT, RT_DOMAIN(did)%soiltyp, &
                             rt_domain(did)%ELRT, RT_DOMAIN(did)%iswater, &
@@ -926,9 +924,9 @@ end subroutine disaggregateDomain_drv
 !===================================================================================================
 subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               SICE, SMC, SH2OX, INFXSRT, area_lsm, SMCMAX1, SMCREF1, &
-                              SMCWLT1, VEGTYP, LKSAT, NEXP, dist,INFXSWGT,OVROUGHRTFAC, &
-                              LKSATFAC, CH_NETRT,SH2OWGT,SMCREFRT, INFXSUBRT,SMCMAXRT, &
-                              SMCWLTRT,SMCRT, OVROUGHRT, LAKE_MSKRT, LKSATRT, NEXPRT, OV_ROUGH2d,  &
+                              SMCWLT1, VEGTYP, LKSAT, NEXP, dist, INFXSWGT, &
+                              LKSATFAC, CH_NETRT, SH2OWGT, SMCREFRT, INFXSUBRT, SMCMAXRT, &
+                              SMCWLTRT, SMCRT, LAKE_MSKRT, LKSATRT, NEXPRT,  &
                               SLDPTH, soiltypRT, soiltyp, elrt, iswater, impervfrac, imperv_adj)
 #ifdef MPP_LAND
    use module_mpp_land, only: left_id,down_id,right_id, &
@@ -957,7 +955,6 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    real, intent(in),  dimension(IX,JX)           :: SMCWLT1 ! coarse grid wilting point
    real, intent(in),  dimension(IX,JX)           :: LKSAT ! coarse grid lateral ksat (m/s)
    real, intent(in),  dimension(IX,JX)           :: NEXP ! coarse grid n exponent
-   real, intent(in), dimension(ix,jx)            :: OV_ROUGH2d ! overland roughness
    ! LSM states:
    real, intent(in),  dimension(IX,JX,NSOIL)     :: SMC ! total soil moisture (m3/m3)
    real, intent(in),  dimension(IX,JX,NSOIL)     :: SH2OX ! liquid soil moisture (m3/m3)
@@ -967,7 +964,6 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    real, intent(in), dimension(IXRT,JXRT,9)      :: dist
                                                     ! routing grid cell distances (m) and area (m2)
                                                     ! TODO: can we just pass in area since we don't need other distances?
-   real, intent(in), dimension(IXRT,JXRT)        :: OVROUGHRTFAC ! overland roughness adj factor
    real, intent(in), dimension(IXRT,JXRT)        :: LKSATFAC ! lateral ksat adj factor
    real, intent(in), dimension(IXRT,JXRT)        :: elrt ! elevation grid (m)
    integer, intent(in), dimension(IXRT,JXRT)     :: CH_NETRT ! channel network routing grid
@@ -987,7 +983,6 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    real, intent(out), dimension(IXRT,JXRT,NSOIL) :: SMCWLTRT ! wilting point on routing grid
    real, intent(out), dimension(IXRT,JXRT)       :: LKSATRT ! lateral ksat on the routing grid (m/s)
    real, intent(out), dimension(IXRT,JXRT)       :: NEXPRT ! n exponent on the routing grid
-   real, intent(out), dimension(IXRT,JXRT)       :: OVROUGHRT ! overland roughness on the routing grid
    ! States:
    real, intent(out), dimension(IX,JX,NSOIL)     :: SICE ! soil ice content on coarse grid (m3/m3)
    real, intent(out), dimension(IXRT,JXRT,NSOIL) :: SMCRT
@@ -1169,25 +1164,6 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
 
                ! Now do simple grid remapping tasks
 
-               ! Overland roughness:
-               !DJG map ov roughness as function of land use provided in VEGPARM.TBL...
-               ! --- added extra check for VEGTYP for 'masked-out' locations...
-               ! --- out of basin locations (VEGTYP=0) have OVROUGH hardwired to 0.1
-               IF (VEGTYP(I,J).LE.0) then
-                  OVROUGHRT(IXXRT,JYYRT) = 0.1     !COWS mask test
-               ELSE
-                  OVROUGHRT(IXXRT,JYYRT) = OV_ROUGH2d(i,j)
-                  ! Modify based on impervious fraction
-                  ! See Liong et al. 1989 for linear weighting of "smoothness" (1/roughness)
-                  ! Assuming roughness of 0.02 for impervious and native cell roughness for pervious
-                  if (imperv_adj .ne. 0) then
-                     OVROUGHRT(IXXRT,JYYRT) = 1. / ((1./0.02)*impervfrac(IXXRT,JYYRT) + & ! impervious fraction
-                                                          (1./OVROUGHRT(IXXRT,JYYRT))*(1.-impervfrac(IXXRT,JYYRT))) ! pervious fraction
-                  endif
-                  ! Apply user-supplied adjustment factor
-                  OVROUGHRT(IXXRT,JYYRT) = OVROUGHRT(IXXRT,JYYRT)*OVROUGHRTFAC(IXXRT,JYYRT)
-               END IF
-
                ! Lateral ksat
                !DJG 6.12.08 Map lateral hydraulic conductivity and apply distributed scaling
                ! ---        factor that will be read in from hires terrain file
@@ -1283,7 +1259,6 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
    call MPP_LAND_COM_REAL(INFXSUBRT,IXRT,JXRT,99)
    call MPP_LAND_COM_REAL(LKSATRT,IXRT,JXRT,99)
    call MPP_LAND_COM_REAL(NEXPRT,IXRT,JXRT,99)
-   call MPP_LAND_COM_REAL(OVROUGHRT,IXRT,JXRT,99)
    call MPP_LAND_COM_INTEGER(LAKE_MSKRT,IXRT,JXRT,99)
    do i = 1, NSOIL
       call MPP_LAND_COM_REAL(SMCMAXRT(:,:,i),IXRT,JXRT,99)
