@@ -1,5 +1,5 @@
 #
-# --- WRF-HYDRO makefile 
+# --- WRF-HYDRO makefile
 # --- Requires ESMVv7+
 # --- WRF-HYDRO ESMF component.
 #
@@ -73,7 +73,7 @@ MODEL_RDIR   := $(abspath $(DIR)/../../../..)
 else
 MODEL_RDIR   := $(abspath $(WRFHYDRO_DIR))
 endif
-MODEL_DIR    := $(abspath $(MODEL_RDIR)/trunk/NDHMS)
+MODEL_DIR    := $(abspath $(MODEL_RDIR)/src)
 MODEL_MKDIR  := $(abspath $(MODEL_DIR))
 MODEL_LIBDIR := $(abspath $(MODEL_DIR)/lib)
 MODEL_MODDIR := $(abspath $(MODEL_DIR)/mod)
@@ -183,7 +183,7 @@ $(MODEL_LIB): build_model
 # Build Settings
 # ##############
 
-.SUFFIXES: 
+.SUFFIXES:
 .SUFFIXES: .c .C .f90 .F90 .F .f
 
 .F:
@@ -192,7 +192,7 @@ $(MODEL_LIB): build_model
 	@echo "Must have an explicit rule for" $*
 .C:
 	@echo "Must have an explicit rule for" $*
-.c: 
+.c:
 	@echo "Must have an explicit rule for" $*
 
 %.o : %.f90
@@ -247,7 +247,7 @@ else
 	@echo "# Version Information Not Found" > $(CAP_VERS)
 endif
 
-$(CAP_MK): 
+$(CAP_MK):
 	@echo $(HR)
 	@echo "Generating NUOPC Makefile Fragment"
 	@echo
@@ -271,7 +271,7 @@ $(INSTPATH)/%: %
 	@mkdir -p $(INSTPATH)
 	@cp $(notdir $@) $@
 
-install_mk: 
+install_mk:
 	@echo $(HR)
 	@echo "Installing NUOPC Makefile Fragment"
 	@echo
@@ -332,7 +332,7 @@ check_model:
 # Check Cap
 # #########
 
-check_cap: 
+check_cap:
 	@echo $(HR)
 	@echo "Checking for WRF-Hydro NUOPC files..."
 	@echo
