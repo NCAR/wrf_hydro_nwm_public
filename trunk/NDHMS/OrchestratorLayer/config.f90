@@ -632,10 +632,13 @@ contains
 
     if(CHANRTSWCRT .eq. 0 .and. channel_option .lt. 3) channel_option = 3
 
-    !used to be broadcasted with MPI
-    !nlst(did)%NSOIL = NSOIL
-    !allocate(nlst(did)%ZSOIL8(NSOIL))
-    !nlst(did)%ZSOIL8 = ZSOIL8
+    ! sys_cpl .eq. 1 reads soil_thick_input from NOAHLSM_OFFLINE
+    if(sys_cpl .ne. 1) then
+      nlst(did)%NSOIL = NSOIL
+      if (allocated(nlst(did)%ZSOIL8)) deallocate(nlst(did)%ZSOIL8)
+      allocate(nlst(did)%ZSOIL8(NSOIL))
+      nlst(did)%ZSOIL8 = ZSOIL8
+    end if
 
     nlst(did)%RESTART_FILE = RESTART_FILE
     nlst(did)%hydrotbl_f = trim(hydrotbl_f)
