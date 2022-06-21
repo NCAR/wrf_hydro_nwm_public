@@ -16,7 +16,7 @@ jsonpickle==1.2
 locket==0.2.0
 more-itertools==7.2.0
 netCDF4==1.4.1
-numpy==1.17.1
+numpy==1.22.0
 pandas==0.23.4
 partd==1.0.0
 pathlib==1.0.1
