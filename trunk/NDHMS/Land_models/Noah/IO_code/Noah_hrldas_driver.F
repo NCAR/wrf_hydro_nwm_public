@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program Noah_hrldas_driver
@@ -29,11 +29,10 @@ program Noah_hrldas_driver
 
 #ifdef MPP_LAND
   use module_mpp_land, only: MPP_LAND_PAR_INI, mpp_land_init, HYDRO_COMM_WORLD
-  IMPLICIT NONE
-  include "mpif.h"
-#else
-  IMPLICIT NONE
+  use mpi
 #endif
+  IMPLICIT NONE
+
 
   character(len=9), parameter :: version = "v20110427"
   integer :: LDASIN_VERSION
@@ -95,8 +94,8 @@ program Noah_hrldas_driver
   integer :: forc_typ, snow_assim, HRLDAS_ini_typ
 
   real, allocatable, dimension(:,:) ::  qsgw
-  integer :: gwsoilcpl 
-  
+  integer :: gwsoilcpl
+
   INTEGER, allocatable, DIMENSION(:,:)   :: VEGTYP,SOLTYP
   REAL,    allocatable, DIMENSION(:,:)   :: TERRAIN, LATITUDE, LONGITUDE
   REAL,    allocatable, DIMENSION(:,:)   :: refdk2d, refkdt2d
@@ -119,7 +118,7 @@ program Noah_hrldas_driver
 !KWM  REAL,    allocatable, DIMENSION(:,:)   :: ETPNDX, SFCHEAD, INFXS1, PDDUM2, PCPDRP, SFCWATR2
 
   REAL,    allocatable, DIMENSION(:,:,:) :: SMC,STC,SH2OX
-  REAL,    allocatable, DIMENSION(:,:,:) :: ZSOILX 
+  REAL,    allocatable, DIMENSION(:,:,:) :: ZSOILX
   REAL,    allocatable, DIMENSION(:,:,:) :: SMAV2D
 
   ! Min/Max values from the 12-monthly Green Vegetation Fraction:
@@ -146,7 +145,7 @@ program Noah_hrldas_driver
   REAL    :: ZLVL     ! Height (m) above ground of atmospheric forcing variables
   REAL    :: ZLVL_WIND! Height (m) above ground of atmospheric forcing variables for wind.
   INTEGER :: NSOIL    ! Number of soil layers
-  REAL, ALLOCATABLE, DIMENSION(:) :: SLDPTH ! The THICKNESS (m) of each soil layer 
+  REAL, ALLOCATABLE, DIMENSION(:) :: SLDPTH ! The THICKNESS (m) of each soil layer
   CHARACTER(LEN=256) :: LLANDUSE ! (=USGS, using USGS landuse classification)
   CHARACTER(LEN=256) :: LSOIL    ! (=STAS, using FAO/STATSGO soil texture classification)
 
@@ -155,7 +154,7 @@ program Noah_hrldas_driver
   REAL :: SFCPRS    ! Pressure (Pa) at height ZLVL m above ground
   REAL :: PRCP      ! Precip rate (kg m-2 s-1) (NOTE: this is a rate)
   REAL :: SFCTMP    ! Air temperature (K) at height ZLVL m above ground
-  REAL :: Q2        ! Specific Humidity (kg kg-1) at height ZLVL m above ground 
+  REAL :: Q2        ! Specific Humidity (kg kg-1) at height ZLVL m above ground
   REAL :: SFCSPD    ! Wind speed (m s-1) at height ZLVL m above ground
   REAL :: PRCPRAIN  ! Liquid-precipitation rate (KG M-2 S-1) (not used)
   REAL :: TH2       ! Air potential temperature (K) at height ZLVL m above ground
@@ -181,27 +180,27 @@ program Noah_hrldas_driver
   REAL :: Z0      ! Time varying roughness length (m) as function of snow depth
   REAL :: CMCX    ! Canopy moisture content (m)
   REAL :: T1X     ! Ground/Canopy/Snowpack effective skin temperature (K)
-  REAL, allocatable, DIMENSION(:)  :: STC1    ! Soil temp (K)                            
+  REAL, allocatable, DIMENSION(:)  :: STC1    ! Soil temp (K)
   REAL, allocatable, DIMENSION(:)  :: SMC1    ! Total soil moisture content (volumetric fraction)
   REAL, allocatable, DIMENSION(:)  :: SH2O    ! Unfrozen soil moisture content (volumetric fraction)
   !          NOTE: Frozen soil moisture = SMC - SH2O
-  REAL :: SNOWH   ! Actual snow depth (m)                                      
-  REAL :: SNEQV   ! Liquid water-equivalent snow depth (m)                     
-  !       NOTE: snow density = SNEQV/SNOWH                         
-  REAL :: ALBEDO  ! Surface albedo including snow effect (unitless fraction)   
-  !      =snow-free albedo (ALB) when SNEQV=0, or                 
-  !      =FCT(MSNOALB,ALB,VEGTYP,SHDFAC,SHDMIN) when SNEQV>0      
-  REAL :: CH      ! Surface exchange coefficient for heat and moisture         
-  !   (m s-1); NOTE: CH is technically a conductance since     
-  !   it has been multiplied by wind speed.                    
-  REAL :: CM      ! Surface exchange coefficient for momentum (m s-1); NOTE:   
-  !   CM is technically a conductance since it has been        
-  !   multiplied by wind speed.                                
+  REAL :: SNOWH   ! Actual snow depth (m)
+  REAL :: SNEQV   ! Liquid water-equivalent snow depth (m)
+  !       NOTE: snow density = SNEQV/SNOWH
+  REAL :: ALBEDO  ! Surface albedo including snow effect (unitless fraction)
+  !      =snow-free albedo (ALB) when SNEQV=0, or
+  !      =FCT(MSNOALB,ALB,VEGTYP,SHDFAC,SHDMIN) when SNEQV>0
+  REAL :: CH      ! Surface exchange coefficient for heat and moisture
+  !   (m s-1); NOTE: CH is technically a conductance since
+  !   it has been multiplied by wind speed.
+  REAL :: CM      ! Surface exchange coefficient for momentum (m s-1); NOTE:
+  !   CM is technically a conductance since it has been
+  !   multiplied by wind speed.
   REAL :: SNOTIME1
 
 ! INTENT(OUT) from SFLX:
   REAL :: ETT     ! Total plant transpiration (W m-2)
-  REAL :: ETA     ! Actual latent heat flux (W m-2: negative, if up from surface)     
+  REAL :: ETA     ! Actual latent heat flux (W m-2: negative, if up from surface)
 !KWM ???  Is the note about the sign of ETA right ???? !KWM
   REAL :: SHEAT   ! Sensible heat flux (W m-2: negative, if upward from surface)
   REAL :: ETA_KINEMATIC ! Actual latent heat flux (kg m/s)
@@ -218,17 +217,17 @@ program Noah_hrldas_driver
   REAL :: ETP     ! Potential Evaporation (w m-2)
   REAL :: SSOIL   ! Soil heat flux (W m-2: negative if downward from surface)
   REAL :: FLX1    ! Precip-snow sfc (W m-2)
-  REAL :: FLX2    ! Freezing rain latent heat flux (W m-2)      
+  REAL :: FLX2    ! Freezing rain latent heat flux (W m-2)
   REAL :: FLX3    ! Phase-change heat flux from snowmelt (W m-2)
   REAL :: SNOMLT  ! Snow melt (m) (water equivalent)
   REAL :: RUNOFF1 ! Surface runoff (m s-1), not infiltrating the surface
   REAL :: RUNOFF2 ! Subsurface runoff (m s-1), drainage out bottom of last
-  !       soil layer (baseflow).  Note: RUNOFF2 is actually 
+  !       soil layer (baseflow).  Note: RUNOFF2 is actually
   !       the sum of RUNOFF2 and RUNOFF3
   REAL :: RUNOFF3 ! Numerical trunctation in excess of porosity (SMCMAX)
   ! for a given soil layer at the end of a time step (m s-1).
   REAL :: RC      ! Canopy resistance (s m-1)
-  REAL :: PC      ! Plant coefficient (dimensionless fraction, 0.0-1.0) 
+  REAL :: PC      ! Plant coefficient (dimensionless fraction, 0.0-1.0)
   ! where PC*ETP = actual transpiration
   REAL :: RCS     ! Incoming solar RC factor (dimensionless)
   REAL :: RCT     ! Air temperature RC factor (dimensionless)
@@ -238,7 +237,7 @@ program Noah_hrldas_driver
   !      between SMCWLT and SMCMAX)
   REAL :: SOILM   ! Total soil column moisture content (frozen+unfrozen) (m)
   REAL :: Q1      ! Effective specific humidity at surface (kg kg-1), used for
-  !      diagnosing the specific humidity at 2 meter for 
+  !      diagnosing the specific humidity at 2 meter for
   !      coupled model
   REAL, allocatable, dimension(:) :: SMAV    ! Documentation?
 
@@ -333,7 +332,7 @@ program Noah_hrldas_driver
   REAL, ALLOCATABLE, DIMENSION(:,:) :: TH2_URB2D
   REAL, ALLOCATABLE, DIMENSION(:,:) :: Q2_URB2D
 !
-!m     REAL, ALLOCATABLE, DIMENSION(:,:) :: AKHS_URB2D 
+!m     REAL, ALLOCATABLE, DIMENSION(:,:) :: AKHS_URB2D
   REAL, ALLOCATABLE, DIMENSION(:,:) :: AKMS_URB2D
 !
   REAL, ALLOCATABLE, DIMENSION(:,:) :: UST_URB2D
@@ -465,13 +464,13 @@ program Noah_hrldas_driver
   integer :: noah_timestep = -999
   integer :: forcing_timestep = -999
   character(len = 256):: GEO_STATIC_FLNM
-  
+
   integer :: gwCycle, GWBASESWCRT
 
   namelist / NOAHLSM_OFFLINE/ INDIR, NSOIL, ZSOIL, FORCING_TIMESTEP, NOAH_TIMESTEP, &
        START_YEAR, START_MONTH, START_DAY, START_HOUR, START_MIN, &
        RESTART_FREQUENCY_HOURS, OUTPUT_TIMESTEP, &
-       SPLIT_OUTPUT_COUNT, SFCDIF_OPTION, IZ0TLND, UPDATE_SNOW_FROM_FORCING, & 
+       SPLIT_OUTPUT_COUNT, SFCDIF_OPTION, IZ0TLND, UPDATE_SNOW_FROM_FORCING, &
        KHOUR, KDAY, ZLVL, ZLVL_WIND, HRLDAS_CONSTANTS_FILE, OUTDIR, RESTART_FILENAME_REQUESTED, &
        external_fpar_filename_template, external_lai_filename_template, &
        subwindow_xstart, subwindow_xend, subwindow_ystart, subwindow_yend, &
@@ -499,7 +498,7 @@ program Noah_hrldas_driver
   integer :: imode
   character(len=256) :: restart_flnm
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
   integer :: numtasks
   real, pointer, dimension(:,:) :: vegtyp_ptr
   integer :: send_tag
@@ -539,7 +538,7 @@ program Noah_hrldas_driver
   zlvl_wind = 10.0
 !KWM  vegmin = -999.
 !KWM  vegmax = -999.
-  
+
   output_timestep = 0
   restart_frequency_hours = 0
 
@@ -637,7 +636,7 @@ program Noah_hrldas_driver
 
   dt = real(noah_timestep)
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
 
   call MPI_INIT(ierr)
   if (ierr /= MPI_SUCCESS) stop "MPI_INIT"
@@ -678,7 +677,7 @@ program Noah_hrldas_driver
 
 !......................... end of model configuration (later in a namelist) .....
 
-!KWM#ifdef _PARALLEL_  
+!KWM#ifdef _PARALLEL_
 !KWM
 !KWM  nlandpts = count(vegtyp_ptr/=iswater)
 !KWM
@@ -710,8 +709,8 @@ program Noah_hrldas_driver
 
 #ifdef _PARALLEL_
 
-  ! Set up our parallal_xstart and parallel_xend values, the x-coordinate points over which 
-  ! each particular process will span, such that the land points of the full domain are 
+  ! Set up our parallal_xstart and parallel_xend values, the x-coordinate points over which
+  ! each particular process will span, such that the land points of the full domain are
   ! approximately evenly distributed among the processors.  This will make the loop which calls
   ! SFLX for the I/J points a little more balanced, but could make the
   ! I/O a little less balanced.
@@ -836,7 +835,7 @@ program Noah_hrldas_driver
 !KWM  allocate( PCPDRP   (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
 !KWM  allocate( SFCWATR2 (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND) )
 
-  allocate( SMC   (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND,NSOIL) ) 
+  allocate( SMC   (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND,NSOIL) )
   allocate( STC   (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND,NSOIL) )
   allocate( SH2OX (PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND,NSOIL) )
   allocate( ZSOILX(PARALLEL_XSTART:PARALLEL_XEND,SUBWINDOW_YSTART:SUBWINDOW_YEND,NSOIL) )
@@ -916,11 +915,11 @@ program Noah_hrldas_driver
   ALLOCATE(SF_AC_URB3D  ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
   ALLOCATE(CM_AC_URB3D  ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
   ALLOCATE(SFVENT_URB3D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
-  ALLOCATE(LFVENT_URB3D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) ) 
-  ALLOCATE(CMR_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) ) 
-  ALLOCATE(CHR_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) ) 
-  ALLOCATE(CMC_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) ) 
-  ALLOCATE(CHC_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) ) 
+  ALLOCATE(LFVENT_URB3D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
+  ALLOCATE(CMR_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
+  ALLOCATE(CHR_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
+  ALLOCATE(CMC_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
+  ALLOCATE(CHC_URB2D ( PARALLEL_XSTART:PARALLEL_XEND, SUBWINDOW_YSTART:SUBWINDOW_YEND ) )
   CMR_URB2D = 0.1
   CHR_URB2D = 0.1
   CMC_URB2D = 0.1
@@ -952,16 +951,16 @@ program Noah_hrldas_driver
   PRCP1=0
   PRCP_old=0
 
-  RUNOFF1X=0.0 
-  RUNOFF2X=0.0 
-  RUNOFF3X=0.0 
+  RUNOFF1X=0.0
+  RUNOFF2X=0.0
+  RUNOFF3X=0.0
   EDIRX=0.0
   ETTX=0.0
 !FC  ETPNDX=-999.9
   SNOEVPX=-999.9
   SNODEP=-999.9
-  SNODEP = 0 
-  WEASD = 0 
+  SNODEP = 0
+  WEASD = 0
 
 
   STC=-999.9
@@ -979,7 +978,7 @@ program Noah_hrldas_driver
   XLAI2D = 0.
   GVFMIN = -999.
   GVFMAX = -999.
- 
+
   LAI = 0.0
 
 !---------------------------------------------------------------------
@@ -1128,7 +1127,7 @@ program Noah_hrldas_driver
           inflnm = trim(indir)//"/"//&
           startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
           startdate(15:16)//".LDASIN_DOMAIN"//hgrid
-     else 
+     else
           inflnm = trim(indir)//"/"//&
           startdate(1:4)//startdate(6:7)//startdate(9:10)//startdate(12:13)//&
           ".LDASIN_DOMAIN"//hgrid
@@ -1137,7 +1136,7 @@ program Noah_hrldas_driver
           parallel_xstart, parallel_xend, subwindow_ystart, subwindow_yend,  &
           NSOIL, SLDPTH, OLDDATE, LDASIN_VERSION, SMC, STC, SH2OX, CMC, T1, &
           WEASD, SNODEP)
-     ! *** Read lai, fveg etc.  
+     ! *** Read lai, fveg etc.
 
 
      CALL READVEG_HRLDAS(inflnm, &
@@ -1240,12 +1239,12 @@ program Noah_hrldas_driver
     allocate(stc (ix,jx,nsoil))
     allocate(sh2ox (ix,jx,nsoil))
     smc = 0.0
-    stc = 0.0 
+    stc = 0.0
     sh2ox = 0.0
   else
     greenfrac = 0.0
 !yw    call get_greenfrac(trim(GEO_STATIC_FLNM),greenfrac, ix, jx, olddate)
-  endif 
+  endif
     sfcheadrt =0.0
     infxsrt = 0.0
     etpnd = 0.0
@@ -1260,7 +1259,7 @@ program Noah_hrldas_driver
     if(rank == 0) print*, "k, NTIME, dt = ",k,NTIME , dt
 
 !--------------------------------------------------------------------------------
-! Output for restart BEFORE the processing for this particular time has begun, 
+! Output for restart BEFORE the processing for this particular time has begun,
 ! so that upon restart, we're ready to go on this time step.
 !--------------------------------------------------------------------------------
 
@@ -1272,7 +1271,7 @@ program Noah_hrldas_driver
           call hrldas_drv_HYDRO(STC(:,:,1:NSOIL),SMC(:,:,1:NSOIL),SH2OX(:,:,1:NSOIL), &
                         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL,               &
 			qsgw)
-          goto 1003 
+          goto 1003
   endif
 
   if(rank .eq. 0) then
@@ -1281,7 +1280,7 @@ program Noah_hrldas_driver
 ! Read the forcing data.
 !---------------------------------------------------------------------------------
 
-! For HRLDAS, we're assuming (for now) that each time period is in a 
+! For HRLDAS, we're assuming (for now) that each time period is in a
 ! separate file.  So we can open a new one right now.
 
      inflnm = trim(indir)//"/"//&
@@ -1343,7 +1342,7 @@ program Noah_hrldas_driver
 
      if ( ( K == 1 ) .and. ( .not. restart_flag ) ) then
 
-        ! Initial values of Q1, the Z0-level specific humidity, are taken from the ZLVL-level 
+        ! Initial values of Q1, the Z0-level specific humidity, are taken from the ZLVL-level
         ! values.  Subsequent Q1 values are remembered from the previous time step Q1 values
         ! as recomputed by SFLX.
         Q12D = Q2X/(1.0+Q2X) ! Convert mixing ratio to specific humidity
@@ -1408,7 +1407,7 @@ program Noah_hrldas_driver
               !           CZIL
               !           SLOPE
               !           FRZFACT
-              ! 
+              !
               !    -- VEGETATION PARAMETERS:
               !
               !           TOPT
@@ -1511,7 +1510,7 @@ program Noah_hrldas_driver
               if ( ( k==1 ) .and. ( .not. restart_flag ) ) then
                  !
                  !  First time step, initialize EMISS from reasonable background values.  Subsequent
-                 !  time steps will use the EMISS value calculcated in the previous time step.  This 
+                 !  time steps will use the EMISS value calculcated in the previous time step.  This
                  !  means that EMISS has to go into the RESTART file.
                  !
                  emiss(i,j)  = real ( dble(emissmintbl(vegtypx))+dble(fraction)*(dble(emissmaxtbl(vegtypx))-dble(emissmintbl(vegtypx))) )
@@ -1586,14 +1585,14 @@ program Noah_hrldas_driver
                  Q2=Q2SAT*0.99
               ENDIF
 
-              CHKFF = CH * CPHEAT * RHO           
+              CHKFF = CH * CPHEAT * RHO
 
               STC1(1:NSOIL)=STC(I,J,1:NSOIL)
 
               SMC1(1:NSOIL)=SMC(I,J,1:NSOIL)
               SH2O(1:NSOIL)=SH2OX(I,J,1:NSOIL)
               ZSOILX(I,J,1:NSOIL)=ZSOIL(1:NSOIL)
-! *** diagnostics 
+! *** diagnostics
               SFCSPDX(I,J)=SFCSPD
 
 
@@ -1619,7 +1618,7 @@ program Noah_hrldas_driver
                       ( VEGTYP(I,J) == 32 ) .or. ( VEGTYP(I,J) == 33 ) ) THEN
                     ! VEGTYPX = 5   ! HARD WIRED CATEGORY IS A PROBLEM.  NEEDS CORRECTION
                     VEGTYPX = 10   ! HARD WIRED CATEGORY IS A PROBLEM.  NEEDS CORRECTION
-                    SHDFAC = 0.8 
+                    SHDFAC = 0.8
                     ALBBRD  =0.2
                     T1X= ( T1(I,J) -FRC_URB2D(I,J) * TS_URB2D (I,J) )/ (1-FRC_URB2D(I,J))
                  ENDIF
@@ -1633,10 +1632,10 @@ program Noah_hrldas_driver
 
 
 
-              ! The following variables are available here, to subroutine 
-              ! SFLX, and to its deeper subroutines via use-association with 
+              ! The following variables are available here, to subroutine
+              ! SFLX, and to its deeper subroutines via use-association with
               ! module noahlsm_globals.
-              ! 
+              !
               !    ALB   : Surface albedo (Fraction 0.0 to 1.0)
               !    Z0BRD : Roughness Length (m)
               !    SHDFAC: Green Vegetation Fraction
@@ -1657,20 +1656,20 @@ program Noah_hrldas_driver
               !    PTU   : Photo thermal unit (plant phenology for annuals/crops)
               !
               !    BEXP  : B parameter
-              !    SMCDRY: Dry soil moisture threshold where direct evap from top 
+              !    SMCDRY: Dry soil moisture threshold where direct evap from top
               !            layer ends (volumetric)
               !    F1    : Soil thermal diffusivity/conductivity coef.
               !    SMCMAX: Porosity, i.e. saturated value of soil moisture (volumetric)
               !             -- Max soil moisture content (porosity)
               !             -- Saturation soil moisture content (from REDPRM)
-              !    SMCREF: Soil moisture threshold where transpiration begins to 
+              !    SMCREF: Soil moisture threshold where transpiration begins to
               !            stress (volumetric)
               !             -- Reference soil moisture  (field capacity)
-              !             -- Reference soil moisture (where soil water 
+              !             -- Reference soil moisture (where soil water
               !                deficit stress sets in)
               !    PSISAT: Saturated soil matric potential
               !    DKSAT : Saturated soil conductivity
-              !    DWSAT : 
+              !    DWSAT :
               !    SMCWLT: Wilting point soil moisture (volumetric)
               !    QUARTZ: Soil quartz content
               !
@@ -1684,7 +1683,7 @@ program Noah_hrldas_driver
               !    FRZFACT: Frozen ground parameter
               !    ZBOT  : Depth (m) of lower boundary soil temperature
               !    CZIL  : Calculate roughness length of heat
-              !    KDT   
+              !    KDT
               !
               ! Arguments to SFLX are:
               ! ----------------------------------------------------------------------
@@ -1735,7 +1734,7 @@ program Noah_hrldas_driver
               !   SNEQV  : Liquid water-equivalent snow depth (m).  NOTE: Snow density = SNEQV/SNOWH
               !   ALBEDO : Surface albedo including snow effect (Fraction)
               !   CH     : Surface exchange coefficient for heat and moisture (m s-1)
-              !            NOTE: CH is technically a conductance since it has been 
+              !            NOTE: CH is technically a conductance since it has been
               !            multiplied by wind speed.
 ! UNUSED     !   CM     : Surface exchange coefficient for momentum (m s-1)
               !            NOTE: CM is technically a conductance since it has been
@@ -1891,7 +1890,7 @@ program Noah_hrldas_driver
 !              print*, 'SNOWH = ', SNOWH, 'i=',i, 'j=',j
 !              print*, 'SNEQV = ', SNEQV,'i=',i, 'j=',j
 
-              if(GWBASESWCRT .eq. 3) then              
+              if(GWBASESWCRT .eq. 3) then
                   REFDK_DATA  = refdk2d(i,j)
                   REFKDT_DATA = refkdt2d(i,j)
               endif
@@ -1901,27 +1900,27 @@ program Noah_hrldas_driver
                    LWDN,SOLDN,SOLNET,SFCPRS,PRCP,SFCTMP,Q2,SFCSPD,  &    !F
                    COSZ,PRCPRAIN, SOLARDIRECT,                      &    !F
                    TH2,Q2SAT,DQSDT2,                                &    !I
-                   VEGTYPX,SOILTYP,SlOPETYP,SHDFAC,SHDMIN,SHDMAX,   &    !S  
-                   ALB,SNOALB,TBOT,Z0BRD,Z0,EMISSI, EMBRD,          &    !S   
-                   CMCX,T1X,STC1,SMC1,SH2O,SNOWH,SNEQV,ALBEDO,CH,CM,&    !H  
-! ----------------------------------------------------------------------         
-! OUTPUTS, DIAGNOSTICS, PARAMETERS BELOW GENERALLY NOT NECESSARY WHEN            
-! COUPLED WITH E.G. A NWP MODEL (SUCH AS THE NOAA/NWS/NCEP MESOSCALE ETA         
-! MODEL).  OTHER APPLICATIONS MAY REQUIRE DIFFERENT OUTPUT VARIABLES.            
-! ----------------------------------------------------------------------         
-                   ETA,SHEAT, ETA_KINEMATIC,FDOWN,                  &    !O  
-                   EC,EDIR,ET,ETT,ESNOW,DRIP,DEW,                   &    !O  
-                   BETA,ETP,SSOIL,                                  &    !O  
-                   FLX1,FLX2,FLX3,                                  &    !O  
-                   SNOMLT,SNCOVR,                                   &    !O  
-                   RUNOFF1,RUNOFF2,RUNOFF3,                         &    !O  
-                   RC,PC,RSMIN,XLAI,RCS,RCT,RCQ,RCSOIL,             &    !O  
+                   VEGTYPX,SOILTYP,SlOPETYP,SHDFAC,SHDMIN,SHDMAX,   &    !S
+                   ALB,SNOALB,TBOT,Z0BRD,Z0,EMISSI, EMBRD,          &    !S
+                   CMCX,T1X,STC1,SMC1,SH2O,SNOWH,SNEQV,ALBEDO,CH,CM,&    !H
+! ----------------------------------------------------------------------
+! OUTPUTS, DIAGNOSTICS, PARAMETERS BELOW GENERALLY NOT NECESSARY WHEN
+! COUPLED WITH E.G. A NWP MODEL (SUCH AS THE NOAA/NWS/NCEP MESOSCALE ETA
+! MODEL).  OTHER APPLICATIONS MAY REQUIRE DIFFERENT OUTPUT VARIABLES.
+! ----------------------------------------------------------------------
+                   ETA,SHEAT, ETA_KINEMATIC,FDOWN,                  &    !O
+                   EC,EDIR,ET,ETT,ESNOW,DRIP,DEW,                   &    !O
+                   BETA,ETP,SSOIL,                                  &    !O
+                   FLX1,FLX2,FLX3,                                  &    !O
+                   SNOMLT,SNCOVR,                                   &    !O
+                   RUNOFF1,RUNOFF2,RUNOFF3,                         &    !O
+                   RC,PC,RSMIN,XLAI,RCS,RCT,RCQ,RCSOIL,             &    !O
                    SOILW,SOILM,Q1,SMAV,                             &    !D
                    RDLAI2D, USEMONALB, SNOTIME1, RIBB,              &
                    SMCWLT,SMCDRY,SMCREF,SMCMAX,NROOT,               &
                    sfcheadrt(i,j),INFXSRT(i,j),ETPND1,              &
-		   gwsoilcpl, qsgw(i,j))           !P  
-         
+		   gwsoilcpl, qsgw(i,j))           !P
+
 
 #if _DEBUG_PRINT_
               ETPND(i,j) = ETPND(i,j) + etpnd1
@@ -2028,7 +2027,7 @@ program Noah_hrldas_driver
 
 !  Convert ETA and ETP from W M-2 to KG M-2 S-1
 !KWM              ETA = ETA/2.501E+6
-              ETP = ETP/2.501E+6  
+              ETP = ETP/2.501E+6
 
               QFX(I,J) = (EDIR+EC+ETT) + ESNOW ! in W m{-2}
 
@@ -2073,7 +2072,7 @@ program Noah_hrldas_driver
               SMCWLT1(I,J)=SMCWLT
               ALBEDX(I,J)=ALBEDO
               ACRAIN(I,J)=ACRAIN(I,J)+PRCP*dt      ! (mm/s to mm)
-              
+
               ACSNOM(I,J)=ACSNOM(I,J)+snomlt*1.E3  ! Accumulated snow melt (convert m to mm).
               ! ESNOW2D:  Accumulated snow sublimation (converted from W m{-2} to kg m{-2} s{-2} to mm)
               ESNOW2D(I,J)=ESNOW2D(I,J)+(ESNOW/2.83E6)*dt
@@ -2114,7 +2113,7 @@ program Noah_hrldas_driver
 ! Call urban
 
 !
-                    UTYPE_URB = UTYPE_URB2D(I,J) !urban type (low, high or industrial) 
+                    UTYPE_URB = UTYPE_URB2D(I,J) !urban type (low, high or industrial)
                     TA_URB    = SFCTMP           ! [K]
                     QA_URB    = Q2X(I,J)         ! [kg/kg]
                     UA_URB    = SQRT(U(I,J)**2.+V(I,J)**2.)
@@ -2166,7 +2165,7 @@ program Noah_hrldas_driver
                     CHR_URB = CHR_URB2D(I,J)
                     CMC_URB = CMC_URB2D(I,J)
                     CHC_URB = CHC_URB2D(I,J)
-                    
+
 !
 
                     IF ( .FALSE. ) THEN
@@ -2278,7 +2277,7 @@ program Noah_hrldas_driver
                             'LH_URB',LH_URB, 'ETA',ETA, 'ETAKIN(I,J)',ETAKIN(I,J),        &
                             'G_URB',G_URB,'SSOIL',SSOIL,'GRDFLX(I,J)', GRDFLX(I,J),&
                             'TS_URB',TS_URB,'T1X',T1X,'T1(I,J)',T1(I,J),          &
-                            'QS_URB',QS_URB,'Q1',Q1,'Q2X(I,J)',Q2X(I,J) 
+                            'QS_URB',QS_URB,'Q1',Q1,'Q2X(I,J)',Q2X(I,J)
                     endif
 
 
@@ -2320,12 +2319,12 @@ program Noah_hrldas_driver
                     Q2_URB2D(I,J)    = Q2_URB
                     UST_URB2D(I,J)   = UST_URB
 !
-                    CMR_URB2D(I,J) = CMR_URB 
-                    CHR_URB2D(I,J) = CHR_URB 
-                    CMC_URB2D(I,J) = CMC_URB 
-                    CHC_URB2D(I,J) = CHC_URB 
+                    CMR_URB2D(I,J) = CMR_URB
+                    CHR_URB2D(I,J) = CHR_URB
+                    CMC_URB2D(I,J) = CMC_URB
+                    CHC_URB2D(I,J) = CHC_URB
 
-                    AKMS_URB2D(I,J)  = KARMAN * UST_URB2D(I,J)/(GZ1OZ0_URB2D(I,J)-PSIM_URB2D(I,J)) 
+                    AKMS_URB2D(I,J)  = KARMAN * UST_URB2D(I,J)/(GZ1OZ0_URB2D(I,J)-PSIM_URB2D(I,J))
 
                  else                                          !KWM   ?????
                     do kroof = 1, num_roof_Layers             !KWM   ?????
@@ -2390,8 +2389,8 @@ program Noah_hrldas_driver
               call add_to_output(ettx      , "ETTX"    , "Accumulated plant transpiration"     , "mm"                 )
               call add_to_output(albedx    , "ALBEDX"  , "Albedo -- What kind? (I.e., including what effects?)", "fraction")
               call add_to_output(weasd     , "WEASD"   , "Water equivalent snow depth"         , "m"                  )
-              call add_to_output(acrain    , "ACRAIN"  , "Accumulated precipitation"           , "mm"                 )      
-              call add_to_output(acsnom    , "ACSNOM"  , "Accumulated snow melt"               , "mm"                 )          
+              call add_to_output(acrain    , "ACRAIN"  , "Accumulated precipitation"           , "mm"                 )
+              call add_to_output(acsnom    , "ACSNOM"  , "Accumulated snow melt"               , "mm"                 )
               call add_to_output(esnow2d   , "ESNOW"   , "Accumulated evaporation of snow"     , "mm"                 )
               call add_to_output(drip2d    , "DRIP"    , "Accumulated canopy drip"             , "mm"                 )
               call add_to_output(dewfall   , "DEWFALL" , "Accumulated dewfall"                 , "mm"                 )
@@ -2415,9 +2414,9 @@ program Noah_hrldas_driver
                  call add_to_output(trl_urb3d , "TRL"  , "Roof temperature"                    , "K"                  )
                  call add_to_output(tbl_urb3d , "TBL"  , "Wall temperature"                    , "K"                  )
                  call add_to_output(tgl_urb3d , "TGL"  , "Road temperature"                    , "K"                  )
-                 call add_to_output(tr_urb2d  , "TR"   , "Roof layer temperature"              , "K"                  )  
-                 call add_to_output(tb_urb2d  , "TB"   , "Wall layer temperature"              , "K"                  )  
-                 call add_to_output(tg_urb2d  , "TG"   , "Road layer temperature"              , "K"                  )  
+                 call add_to_output(tr_urb2d  , "TR"   , "Roof layer temperature"              , "K"                  )
+                 call add_to_output(tb_urb2d  , "TB"   , "Wall layer temperature"              , "K"                  )
+                 call add_to_output(tg_urb2d  , "TG"   , "Road layer temperature"              , "K"                  )
                  call add_to_output(tc_urb2d  , "TC"   , "Urban canopy temperature"            , "K"                  )
               endif
 #endif
@@ -2437,18 +2436,18 @@ program Noah_hrldas_driver
 !yw     endif
 
 !------------------------------------------------------------------------
-! Update the time 
+! Update the time
 !------------------------------------------------------------------------
- 
+
      call geth_newdate(newdate, olddate, nint(dt))
      olddate = newdate
 
 !------------------------------------------------------------------------
-! End of Time Loop  (do K) 
+! End of Time Loop  (do K)
 !------------------------------------------------------------------------
 
 #ifdef _PARALLEL_
-     ! Just for sanity's sake, make sure all processors have caught up 
+     ! Just for sanity's sake, make sure all processors have caught up
      ! before continuing to the next time step.
      call mpi_barrier(HYDRO_COMM_WORLD, ierr)
      if (ierr /= MPI_SUCCESS) stop "Problem with MPI_BARRIER"
@@ -2479,17 +2478,17 @@ program Noah_hrldas_driver
              .and. (restart_frequency_hours <= 0) )  yw_rst_out = 99
 
         if ((k >= 0) .and. ((restart_frequency_hours .gt. 0) .and. (mod(k, int(restart_frequency_hours*3600./nint(dt))) == 0) &
-               .or. yw_rst_out .eq. 99) ) then 
+               .or. yw_rst_out .eq. 99) ) then
            yw_rst_out = -999
 
            if (rank == 0) print*, 'Write restart at '//olddate(1:13)
            call prepare_restart_file(trim(outdir), version, iz0tlnd, sfcdif_option,   &
-                sf_urban_physics, igrid, llanduse, olddate, startdate,                         & 
+                sf_urban_physics, igrid, llanduse, olddate, startdate,                         &
                 ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
                 nsoil, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,      &
                 iswater, vegtyp)
 
-           ! Since the restart files are not really for user consumption, the units and description are 
+           ! Since the restart files are not really for user consumption, the units and description are
            ! a little superfluous.  I've made them optional arguments.  If not present, they both default to "-".
 
            call add_to_restart ( stc,      "SOIL_T"   )
@@ -2644,12 +2643,12 @@ SUBROUTINE calc_declin ( nowdate, latitude, longitude, cosz, hrang, declin )
    DECLIN=0.
 
 !-----OBECL : OBLIQUITY = 23.5 DEGREE.
-        
+
    OBECL=23.5*DEGRAD
    SINOB=SIN(OBECL)
-        
+
 !-----CALCULATE LONGITUDE OF THE SUN FROM VERNAL EQUINOX:
-        
+
    IF(JULIAN.GE.80.)SXLONG=DPD*(JULIAN-80.)*DEGRAD
    IF(JULIAN.LT.80.)SXLONG=DPD*(JULIAN+285.)*DEGRAD
    ARG=SINOB*SIN(SXLONG)
