@@ -74,7 +74,7 @@ CONTAINS
 		 CWPVT_2D,VCMX25_2D,MP_2D,HVT_2D,MFSNO_2D,RSURFEXP_2D,        &
                  AXAJ_2D,BXAJ_2D,XXAJ_2D,                                     &
                  IMPERV_2D,                                                   &
-                 SSI_2D,SNOWRETFAC_2D,TAU0_2D,RSURFSNOW_2D,SCAMAX_2D,         & 
+                 SSI_2D,SNOWRETFAC_2D,TAU0_2D,RSURFSNOW_2D,SCAMAX_2D,         &
 #endif
 #ifdef WRF_HYDRO
                sfcheadrt,INFXSRT,soldrain,                                  &
@@ -137,7 +137,7 @@ CONTAINS
     INTEGER,                                         INTENT(IN   ) ::  IOPT_SOIL ! soil configuration option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_PEDO ! soil pedotransfer function option
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
-    INTEGER,                                         INTENT(IN   ) ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
+    INTEGER,                                         INTENT(IN   ) ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total;
                                                                                         !9->old)
     INTEGER,                                         INTENT(IN   ) ::  IZ0TLND   ! option of Chen adjustment of Czil (not used)
     REAL,    DIMENSION( ims:ime, kms:kme, jms:jme ), INTENT(IN   ) ::  T3D       ! 3D atmospheric temperature valid at mid-levels [K]
@@ -622,6 +622,9 @@ CONTAINS
        !      HSNOWMETAMO = 'C13'
        HSNOWRAD         = 'B92'
        !     HSNOWRAD         = 'TAR2'
+    else
+       allocate(ZP_SNOWDZ   (1,1)) ! This is allocated to avoid SEGFAULT when crocus_opt=0 and
+       ZP_SNOWDZ = 0.0             ! optimization is off
     end if ! crocus_opt /= 0
 
 ! ----------------------------------------------------------------------
@@ -829,7 +832,7 @@ CONTAINS
        parameters%scamax = SCAMAX_2D(I,J)         ! maximum fractional snow covered area (0.0-1.0)
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters,iopt_imperv)
-       
+
        GRAIN = 0.0                ! mass of grain [g/m2]
        GDD   = 0.0                ! growing degree days
        PGS   = 0                  ! crop growth stage
@@ -1527,7 +1530,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   INTEGER, INTENT(IN)    :: SOILCOLOR
   INTEGER, INTENT(IN)    :: CROPTYPE
   INTEGER, INTENT(IN)    :: iopt_imperv
-    
+
   type (noahmp_parameters), intent(inout) :: parameters
 
   REAL    :: REFDK
@@ -1715,7 +1718,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%AXAJ = AXAJ_TABLE(SOILTYPE)
     parameters%BXAJ = BXAJ_TABLE(SOILTYPE)
     parameters%XXAJ = XXAJ_TABLE(SOILTYPE)
-    IF (parameters%URBAN_FLAG) THEN 
+    IF (parameters%URBAN_FLAG) THEN
       parameters%IMPERV = IMPERV_URBAN_TABLE
     ELSE
       parameters%IMPERV = 0.0
@@ -1724,7 +1727,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%SNOW_RET_FAC = SNOW_RET_FAC_TABLE
     parameters%TAU0   = TAU0_TABLE
     parameters%RSURF_SNOW = RSURF_SNOW_TABLE
-    parameters%SCAMAX = SCAMAX_TABLE 
+    parameters%SCAMAX = SCAMAX_TABLE
 #endif
 ! ----------------------------------------------------------------------
 ! Transfer GENPARM parameters
@@ -1738,10 +1741,10 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
        if (iopt_imperv .eq. 9) then
-         parameters%SMCMAX = 0.45 
-         parameters%SMCREF = 0.42 
-         parameters%SMCWLT = 0.40 
-         parameters%SMCDRY = 0.40 
+         parameters%SMCMAX = 0.45
+         parameters%SMCREF = 0.42
+         parameters%SMCWLT = 0.40
+         parameters%SMCDRY = 0.40
        endif
        parameters%CSOIL  = 3.E6
     ENDIF
