@@ -126,7 +126,7 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_SOIL ! soil configuration option
   INTEGER                                 ::  IOPT_PEDO ! soil pedotransfer function option
   INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
-  INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total; 
+  INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total;
                                                                                         !2->Alley&Veenhuis; 9->old)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
@@ -320,7 +320,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSPRINGXY
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSLATXY
   REAL                                    ::  WTDDT  = 30.0    ! frequency of groundwater call [minutes]
-  INTEGER                                 ::  STEPWTD          ! step of groundwater call
+  INTEGER                                 ::  STEPWTD = 1      ! step of groundwater call
 
 !------------------------------------------------------------------------
 ! Crocus
