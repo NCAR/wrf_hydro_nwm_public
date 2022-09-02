@@ -320,7 +320,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSPRINGXY
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSLATXY
   REAL                                    ::  WTDDT  = 30.0    ! frequency of groundwater call [minutes]
-  INTEGER                                 ::  STEPWTD          ! step of groundwater call
+  INTEGER                                 ::  STEPWTD = 1      ! step of groundwater call
 
 !------------------------------------------------------------------------
 ! Crocus
