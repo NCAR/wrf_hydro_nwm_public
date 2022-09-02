@@ -42,14 +42,14 @@ MODULE module_Routing
    use module_hydro_stop, only: HYDRO_stop
    use hashtable
    use iso_fortran_env, only: int64
+#ifdef OUTPUT_CHAN_CONN
+#ifdef MPP_LAND
+   use mpi
+#endif
+#endif
 
    IMPLICIT NONE
 
-#ifdef OUTPUT_CHAN_CONN
-#ifdef MPP_LAND
-   include "mpif.h"  !! JLM: thought I could pick this up from module_mpp_land... but seems not
-#endif
-#endif
 
    integer, parameter :: r8 = selected_real_kind(8)
    real*8,  parameter :: zeroDbl=0.0000000000000000000_r8
@@ -1010,10 +1010,10 @@ subroutine LandRT_ini(did)
         endif  ! end if block for UDMP_OPT
 
         !-------------------------------------------
-        ! Z.Cui: Changed new_start_i to 0, otherwise, it crashes with 
+        ! Z.Cui: Changed new_start_i to 0, otherwise, it crashes with
         !        an out-of-bounds error when the '-check all' is enabled
         !        for the ifort compiler.
-        !        The reason is that CH_LNKRT and CH_LNKRT_SL is defined as 
+        !        The reason is that CH_LNKRT and CH_LNKRT_SL is defined as
         !        1:IXRT and 1:JXRT. Now new_start_i is changed to start from 1.
         !-------------------------------------------
         new_start_i = 1; new_start_j = 1
@@ -1039,7 +1039,7 @@ subroutine LandRT_ini(did)
           type(hash_t) :: hash_table
           integer(kind=int64) :: val,ii,jj
           logical :: found
-          
+
           call hash_table%set_all_idx(rt_domain(did)%LLINKID, rt_domain(did)%LNLINKSL)
           do jj = new_start_j, new_end_j
              do ii = new_start_i, new_end_i
@@ -1725,4 +1725,3 @@ subroutine deriveFromNode(did)
 end subroutine deriveFromNode
 
 END MODULE module_Routing
-

@@ -40,7 +40,7 @@ module module_NoahMP_hrldas_driver
   IMPLICIT NONE
 
 !#ifdef MPP_LAND
-!  include "mpif.h"
+!  use mpi
 !#endif
 
 #ifdef WRF_HYDRO
