@@ -6919,11 +6919,15 @@ ENDIF   ! CROPTYPE == 0
   REAL, PARAMETER :: A = 4.0
 
   REAL                                    :: imperv_eff !local impervious adjustment (fraction, 0-1)
+  REAL                                    :: WMINUS !subsurface deficit [m]
+  REAL                                    :: SUBDEF !accumulation of subsurface deficit [m]
 
 ! ----------------------------------------------------------------------
     RUNSRF = 0.0
     PDDUM  = 0.0
     RSAT   = 0.0
+    SUBDEF = 0.0
+    WMINUS = 0.0
 
 ! for the case when snowmelt water is too large
 
@@ -7070,8 +7074,9 @@ ENDIF   ! CROPTYPE == 0
                    SICE   ,ILOC   ,JLOC   ,ZWT            ,                 & !in
                    SH2O   ,SMC    ,AI     ,BI     ,CI     , & !inout
                    RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,                                 & !inout
-                   WPLUS)                                     !out
+                   WPLUS, WMINUS)                                     !out
        RSAT =  RSAT + WPLUS
+       SUBDEF = SUBDEF + WMINUS
        QDRAIN_SAVE = QDRAIN_SAVE + QDRAIN
        RUNSRF_SAVE = RUNSRF_SAVE + RUNSRF
     END DO
@@ -7081,6 +7086,7 @@ ENDIF   ! CROPTYPE == 0
 
     RUNSRF = RUNSRF * 1000. + RSAT * 1000./DT  ! m/s -> mm/s
     QDRAIN = QDRAIN * 1000.
+    RUNSUB = RUNSUB - SUBDEF * 1000./DT ! mm/s
 
 !WRF_HYDRO_DJG...
 !yw    INFXSRT = RUNSRF * DT   !mm/s -> mm
@@ -7443,7 +7449,7 @@ ENDIF   ! CROPTYPE == 0
                     SICE   ,ILOC   ,JLOC   ,ZWT            ,                 & !in
                     SH2O   ,SMC    ,AI     ,BI     ,CI     , & !inout
                     RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,                                 & !inout
-                    WPLUS  )                                   !out
+                    WPLUS, WMINUS  )                                   !out
 
 ! ----------------------------------------------------------------------
 ! calculate/update soil moisture content values 
@@ -7476,6 +7482,7 @@ ENDIF   ! CROPTYPE == 0
 
 !output
     REAL, INTENT(OUT)                       :: WPLUS     !saturation excess water (m)
+    REAL, INTENT(OUT)                       :: WMINUS    !deficit from negative smc correction (m)
 
 !local
     INTEGER                                 :: K
@@ -7483,9 +7490,11 @@ ENDIF   ! CROPTYPE == 0
     REAL, DIMENSION(1:NSOIL)                :: CIIN
     REAL                                    :: STOT
     REAL                                    :: EPORE
-    REAL                                    :: WMINUS
+    REAL                                    :: WATMIN  !minimum water content (m/m)
+
 ! ----------------------------------------------------------------------
     WPLUS = 0.0
+    WMINUS = 0.0
 
     DO K = 1,NSOIL
        RHSTT (K) =   RHSTT(K) * DT
@@ -7559,8 +7568,31 @@ ENDIF   ! CROPTYPE == 0
     WPLUS        = MAX((SH2O(NSOIL)-EPORE), 0.0) * DZSNSO(NSOIL) 
     SH2O(NSOIL)  = MIN(EPORE,SH2O(NSOIL))
    END IF
-   
-    SMC = SH2O + SICE
+  
+   ! Negative soil moisture check
+   IF ( ANY(SH2O < 0.0) ) THEN
+     write(*,*) "WARNING: Negative smc adjustment"
+     ! WATMIN: in soilwater check this is a fixed value of 0.01 mm; why not smcdry?
+     ! For this formulation, we convert 0.01mm to a soil water fraction per layer.
+     ! So WATMIN = (0.01/1000.)/DZSNSO to convert to units of m/m for each layer.
+     DO K = 1,NSOIL-1
+       WATMIN    = 0.00001/DZSNSO(K) ! fraction
+       ! Amount of water below residual soil water content
+       WMINUS    = MAX ((WATMIN-SH2O(K))*DZSNSO(K), 0.0 )  ! m
+       ! Remove from lower layer and add to current layer
+       SH2O(K)   = MAX(WATMIN, SH2O(K))
+       SH2O(K+1) = SH2O(K+1) - WMINUS/DZSNSO(K+1)
+     END DO
+     ! Check bottom layer to see if deficit still exists
+     WATMIN      = 0.00001/DZSNSO(NSOIL) ! fraction
+     WMINUS      = MAX ((WATMIN-SH2O(NSOIL))*DZSNSO(NSOIL), 0.0 )  ! m
+     SH2O(NSOIL) = MAX(WATMIN, SH2O(NSOIL))
+     IF (WMINUS .ne. 0) then
+        write(*,*) "WARNING: SMC deficit - this water will be removed from subsurface runoff (meters).", WMINUS
+     END IF
+   END IF
+
+   SMC = SH2O + SICE
 
   END SUBROUTINE SSTEP
 
