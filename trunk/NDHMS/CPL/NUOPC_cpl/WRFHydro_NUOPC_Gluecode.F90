@@ -147,11 +147,11 @@ contains
     call orchestrator%init()
 
     ! Set default namelist values
-    read (startTimeStr(1:4),"(I)")   nlst(did)%START_YEAR
-    read (startTimeStr(6:7),"(I)")   nlst(did)%START_MONTH
-    read (startTimeStr(9:10),"(I)")  nlst(did)%START_DAY
-    read (startTimeStr(12:13),"(I)") nlst(did)%START_HOUR
-    read (startTimeStr(15:16),"(I)") nlst(did)%START_MIN
+    read (startTimeStr(1:4),"(I4)")   nlst(did)%START_YEAR
+    read (startTimeStr(6:7),"(I2)")   nlst(did)%START_MONTH
+    read (startTimeStr(9:10),"(I2)")  nlst(did)%START_DAY
+    read (startTimeStr(12:13),"(I2)") nlst(did)%START_HOUR
+    read (startTimeStr(15:16),"(I2)") nlst(did)%START_MIN
     nlst(did)%startdate(1:19) = startTimeStr(1:19)
     nlst(did)%olddate(1:19)   = startTimeStr(1:19)
     nlst(did)%dt = dt
@@ -293,11 +293,11 @@ contains
 #endif
 
     ! Override the clock configuration in hyro.namelist
-    read (startTimeStr(1:4),"(I)")   nlst(did)%START_YEAR
-    read (startTimeStr(6:7),"(I)")   nlst(did)%START_MONTH
-    read (startTimeStr(9:10),"(I)")  nlst(did)%START_DAY
-    read (startTimeStr(12:13),"(I)") nlst(did)%START_HOUR
-    read (startTimeStr(15:16),"(I)") nlst(did)%START_MIN
+    read (startTimeStr(1:4),"(I4)")   nlst(did)%START_YEAR
+    read (startTimeStr(6:7),"(I2)")   nlst(did)%START_MONTH
+    read (startTimeStr(9:10),"(I2)")  nlst(did)%START_DAY
+    read (startTimeStr(12:13),"(I2)") nlst(did)%START_HOUR
+    read (startTimeStr(15:16),"(I2)") nlst(did)%START_MIN
     nlst(did)%startdate(1:19) = startTimeStr(1:19)
     nlst(did)%olddate(1:19)   = startTimeStr(1:19)
     nlst(did)%dt = dt
