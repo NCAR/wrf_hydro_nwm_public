@@ -4607,7 +4607,7 @@ subroutine output_chanObs_NWM(domainId)
    ! 0 means do not split = single output file
    single_output_file = nlst(domainId)%split_output_count .eq. 0
    if(single_output_file) then
-      write(output_flnm,'("CHANOBS_DOMAIN",I1,".nc")'), nlst(domainId)%igrid
+      write(output_flnm,'("CHANOBS_DOMAIN",I1,".nc")') nlst(domainId)%igrid
    else
       write(output_flnm,'(A12,".CHANOBS_DOMAIN",I1)')nlst(domainId)%olddate(1:4)//&
            nlst(domainId)%olddate(6:7)//nlst(domainId)%olddate(9:10)//&
