@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !------------------------------------------------------------------------------
@@ -29,13 +29,11 @@ module module_gw_gw2d
 #ifdef MPP_LAND
    use module_mpp_land
 #endif
-   use module_gw_gw2d_data, only: gw2d
+   use module_gw_gw2d_data, only: gw2d, gw_field
    use module_rt_data, only: rt_domain
    use config_base, only: nlst
-   
-   implicit none
 
-#include "gw_field_include.inc"
+   implicit none
 
 
 #ifdef MPP_LAND
@@ -47,35 +45,35 @@ module module_gw_gw2d
 
  contains
 
- 
+
    subroutine gw2d_ini(did,dt,dx)
-     
+
      use module_HYDRO_io, only: output_gw_spinup
-     
+
      implicit none
      integer did
      real dt,dx
      integer :: jj, ii, iter, itermax
 
-     
-    
+
+
 
       itermax = nlst(did)%GwPreCycles
 	   gw2d(did)%dx=dx
            gw2d(did)%dt=dt
-           
+
            gw2d(did)%qgw_chanrt = 0.
            gw2d(did)%qsgwrt = 0.
            gw2d(did)%qdarcyRT = 0.
            gw2d(did)%excess = 0.
-           
+
            gw2d(did)%compres=0. ! currently not implemented
            gw2d(did)%istep=0 ! initialize time step
            ! reset cells with undefined hydraulic conductivity
            where(gw2d(did)%hycond .eq. 100) gw2d(did)%hycond = 5E-4
-           
+
           do iter=1,itermax
-#ifdef HYDRO_D                        
+#ifdef HYDRO_D
 #ifdef MPP_LAND
           if(my_id .eq. IO_id) &
 #endif
@@ -87,9 +85,9 @@ module module_gw_gw2d
              gw2d(did)%ho, gw2d(did)%h, gw2d(did)%convgw, gw2d(did)%excess, &
              gw2d(did)%ebot, gw2d(did)%eocn, gw2d(did)%dt, &
              iter)
-	   
+
 	     gw2d(did)%ho = gw2d(did)%h
-	     
+
 	  if((nlst(did)%GwPreDiag .and. iter==1) .or. &
 	      nlst(did)%GwPreDiag .and. (mod(iter, nlst(did)%GwPreDiagInterval) .eq. 0) ) then
            call output_gw_spinup(nlst(did)%igrid, 1000000,                &
@@ -101,28 +99,28 @@ module module_gw_gw2d
                             RT_DOMAIN(did)%LONVAL,rt_domain(did)%overland%properties%distance_to_neighbor,          &
                             nlst(did)%output_gw)
 	   end if
-	  
-  
+
+
           end do
 
    return
    end subroutine gw2d_ini
 
    subroutine gw2d_allocate(did, ix, jx, nsoil)
-      
+
       implicit none
       integer ix, jx, nsoil
       integer istatus, did
-      
+
       if(gw2d(did)%allo_status .eq. 1) return
       gw2d(did)%allo_status = 1
-      
+
       gw2d(did)%ix = ix
       gw2d(did)%jx = jx
-      
+
 #ifdef MPP_LAND
       if(down_id == -1)  then !  if south border
-       gw2d(did)%jts = 1 
+       gw2d(did)%jts = 1
       else
        gw2d(did)%jts = 2
       endif
@@ -164,8 +162,8 @@ module module_gw_gw2d
       allocate(gw2d(did)%excess (ix,jx))
 
       allocate(gw2d(did)%qgw_chanrt (ix,jx))
-      
-      
+
+
       ! TODO allocate only if gwSoilCoupling is active
       allocate(gw2d(did)%qsgwrt   (ix,jx))
       allocate(gw2d(did)%qsgw     (rt_domain(did)%ix,rt_domain(did)%jx))
@@ -184,10 +182,10 @@ module module_gw_gw2d
 ! New (volug): calling routines use change in head, convgw = d(h-ho)/dt.
 
 ! Steps ground-water hydrology (head) through one timestep.
-! Modified from Prickett and Lonnquist (1971), basic one-layer aquifer 
+! Modified from Prickett and Lonnquist (1971), basic one-layer aquifer
 ! simulation program, with mods by Zhongbo Yu(1997).
 ! Solves S.dh/dt = d/dx(T.dh/dx) + d/dy(T.dh/dy) + "external sources"
-! for a single layer, where h is head, S is storage coeff and T is 
+! for a single layer, where h is head, S is storage coeff and T is
 ! transmissivity. 3-D arrays in main program (hycond,poros,h,bot)
 ! are 2-D here, since only a single (uppermost) layer is solved.
 ! Uses an iterative time-implicit ADI method.
@@ -210,18 +208,18 @@ module module_gw_gw2d
       real,    intent(inout), dimension(ix,jx) ::  &
         h,              &  ! head, after ghmcompute (m)           (ret)
         convgw,         &  ! convergence due to gw flow (m/s)     (ret)
-        excess            
+        excess
 
       real, intent(inout) :: ebot, eocn
-     
+
 
 
       integer ::  istep !, dt
       real, intent(in) :: dt, dx
 
-! #endif      
+! #endif
 !       eocn  = mean spurious sink for h_ocn = sealev fix (m/s)(ret)
-!               This equals the total ground-water flow across 
+!               This equals the total ground-water flow across
 !               land->ocean boundaries.
 !       ebot  = mean spurious source for "bot" fix (m/s) (returned)
 !       time  = elapsed time from start of run (sec)
@@ -238,14 +236,14 @@ module module_gw_gw2d
                                            bb, &         ! tridiagonal matrix main diagonal
                                            cc, &         ! tridiagonal matrix upper diagonal
                                            dd, &         ! right hand side
-                                           b2, &          
-                                           c2, &          
-                                           rhs, &          
-                                           wk, &           
-                                           hh           
+                                           b2, &
+                                           c2, &
+                                           rhs, &
+                                           wk, &
+                                           hh
       real, dimension(:), allocatable ::   xfac, &
                                            zfac
-#else                                         
+#else
       real, dimension(:), allocatable :: aa, &         ! tridiagonal matrix lower diagonal
                                          bb, &         ! tridiagonal matrix main diagonal
                                          cc, &         ! tridiagonal matrix upper diagonal
@@ -262,7 +260,7 @@ module module_gw_gw2d
 
       integer            :: its, ite, jts, jte, ifs, ife, jfs, jfe, &
                             xdim, ydim, fxdim, fydim
-                          
+
 ! die müssen noch sortiert, geprüft und aufgeräumt werden
       integer ::                &
         iter,                   &
@@ -275,7 +273,7 @@ module module_gw_gw2d
         ier,                    &
         ioffs,                  &
         joffs
-        
+
 !       real :: su, sc, shp, bb, aa, cc, w, zz, tareal, dtoa, dtot
       real ::                   &
         dy,                     &
@@ -310,7 +308,7 @@ darea = dx*dy
 
 #ifdef MPP_LAND
 if(down_id == -1)  then !  if south border
-  jts = 1 
+  jts = 1
 else
   jts = 2
 endif
@@ -346,12 +344,12 @@ jfs = 1
 jfe = jx
 
 
-fxdim = ife-ifs+1 
+fxdim = ife-ifs+1
 fydim = jfe-jfs+1
- xdim = ite-its+1 
+ xdim = ite-its+1
  ydim = jte-jts+1
 
-     
+
       call scopy (fxdim*fydim, ho(ifs:ife,jfs:jfe), 1,    &
                   h(ifs:ife,jfs:jfe), 1)
 
@@ -364,7 +362,7 @@ fydim = jfe-jfs+1
 !~~~~~~~~~~~~~
       iter = iter+1
 
-      
+
 #ifdef MPP_LAND
 
        call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
@@ -375,8 +373,8 @@ fydim = jfe-jfs+1
 !      ebot = 0.       ! accumulated fixes for h < bot (diagnostic)
 
 !       Set storage coefficient (sf2)
-   
-   
+
+
 
     tareal = 0.
       do j=jts,jte
@@ -394,7 +392,7 @@ fydim = jfe-jfs+1
 !         su = poros(i,j)*(1.-theta(i,j))    ! old (pre-volug)
           su = poros(i,j)                    ! new (volug)
           sc = 1.
- 
+
 !           if      (ho(i,j).le.elev(i,j) .and. h(i,j).le.elev(i,j)) then
             sf2(i,j) = su
 !           else if (ho(i,j).ge.elev(i,j) .and. h(i,j).ge.elev(i,j)) then
@@ -457,7 +455,7 @@ fydim = jfe-jfs+1
        call MPP_LAND_COM_REAL(t(:,:,1), fxdim, fydim, 99)
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 
-       
+
        allocate(aa(jts:jte,its:ite))
        allocate(bb(jts:jte,its:ite))
        allocate(cc(jts:jte,its:ite))
@@ -489,7 +487,7 @@ fydim = jfe-jfs+1
           aa(j) = 0.0
           cc(j) = 0.0
 
-          if ((j-jfs) /= 0) then 
+          if ((j-jfs) /= 0) then
            aa(j) = -t(i,j-1,1)
            bb(j) = bb(j) + t(i,j-1,1)
 	  endif
@@ -517,7 +515,7 @@ fydim = jfe-jfs+1
 
   h(i,:) = hh
   end do
-  
+
 deallocate(aa)
 deallocate(bb)
 deallocate(cc)
@@ -537,7 +535,7 @@ deallocate(hh)
           aa(j,i) = 0.0
           cc(j,i) = 0.0
 
-          if (((j-jfs) /= 0)) then 
+          if (((j-jfs) /= 0)) then
            aa(j,i) = -t(i,j-1,1)
            bb(j,i) = bb(j,i) + t(i,j-1,1)
 	  endif
@@ -572,7 +570,7 @@ deallocate(hh)
                         c2, b2, hh, wk, xfac, zfac, &
                         p_up_down+1, np_up_down, 2)
 
-	
+
 	call parysolv1(c2, b2, hh, 1., my_id+1, p_up_down+1, &
 	                xdim, ydim, np_left_right, np_up_down)
 
@@ -594,11 +592,11 @@ joffs = jts-1
 !>>>>>>>>>>>>>>>>>>>>
 
               h(i,j) = hh(j-joffs,i-ioffs)
-	      
+
 	 end do
      end do
-	      
-#endif 
+
+#endif
 
 #ifdef MPP_LAND
 
@@ -642,7 +640,7 @@ joffs = jts-1
        call MPP_LAND_COM_REAL(t(:,:,2), fxdim, fydim, 99)
 #endif
 
-#ifndef MPP_LAND     
+#ifndef MPP_LAND
 allocate(aa(ifs:ife))
 allocate(bb(ifs:ife))
 allocate(cc(ifs:ife))
@@ -667,7 +665,7 @@ allocate(hh(ifs:ife))
            bb(i) = bb(i) + t(i,j-1,1)
            dd(i) = dd(i) + h(i,j-1)*t(i,j-1,1)
 	  endif
- 
+
           if ((j-jfe) /= 0) then
            dd(i) = dd(i) + h(i,j+1)*t(i,j,1)
            bb(i) = bb(i) + t(i,j,1)
@@ -691,7 +689,7 @@ allocate(hh(ifs:ife))
 
   h(:,j) = hh
   end do
-  
+
 #else
 !-------------------
       do i=its,ite
@@ -709,7 +707,7 @@ allocate(hh(ifs:ife))
            bb(j,i) = bb(j,i) + t(i,j-1,1)
            dd(j,i) = dd(j,i) + h(i,j-1)*t(i,j-1,1)
 	  endif
- 
+
           if (((j-jfe) /= 0)) then
            dd(j,i) = dd(j,i) + h(i,j+1)*t(i,j,1)
            bb(j,i) = bb(j,i) + t(i,j,1)
@@ -724,7 +722,7 @@ allocate(hh(ifs:ife))
            bb(j,i) = bb(j,i) + t(i,j,2)
            cc(j,i) = -t(i,j,2)
 	  endif
-	  
+
 !>>>>>>>>>>>>>>>
 	end do
 !>>>>>>>>>>>>>>>
@@ -749,7 +747,7 @@ end do
                         dd, &
                         c2, b2, hh, wk, xfac, zfac, &
                         p_left_right+1, np_left_right, 1)
-	
+
         call parxsolv1(c2, b2, hh, 1., my_id+1, p_left_right+1, &
 	                xdim, ydim, np_left_right, np_up_down)
 
@@ -773,13 +771,13 @@ joffs = jts-1
 
       end do
      end do
-	      
+
 deallocate(b2)
 deallocate(c2)
 deallocate(wk)
 deallocate(xfac)
 deallocate(zfac)
-#endif 
+#endif
 deallocate(aa)
 deallocate(bb)
 deallocate(cc)
@@ -787,7 +785,7 @@ deallocate(dd)
 deallocate(hh)
 
 ! fix head < bottom of aquifer
- 
+
       do j=jts,jte
         do i=its,ite
           if (ltype(i,j).eq.1 .and. h(i,j).le.bot(i,j)+botinc) then
@@ -836,8 +834,8 @@ call mpi_bcast(delcur, 1, mpi_real, 0, HYDRO_COMM_WORLD, ierr)
 !       if ( (delcur.gt.delskip*dt/86400. .and. iter.lt.itermax)      &
       if ( (delcur.gt.delskip .and. iter.lt.itermax)      &
            .or. iter.lt.itermin ) then
-           
-#ifdef HYDRO_D 
+
+#ifdef HYDRO_D
 
 #ifdef MPP_LAND
 if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", delcur
@@ -849,29 +847,29 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
 
       goto 80
       endif
-      
+
 #ifdef MPP_LAND
 
        call MPP_LAND_COM_REAL(h, fxdim, fydim, 99)
 
 #endif
 
-      
 
-!     Compute exfiltration amount and 
-!     convergence rate due to ground water 
+
+!     Compute exfiltration amount and
+!     convergence rate due to ground water
 !     flow
 
       do j=jts,jte
         do i=its,ite
-	  
+
 	  if((elev(i,j) - h(i,j)) .lt. 0.) then
 	    excess(i,j) = sf2(i,j)*(h(i,j) - elev(i,j))
                  h(i,j) = elev(i,j)
-          else 
+          else
 	    excess(i,j) = 0.
 	  end if
-	  
+
           if(ltype(i,j).eq.1) then
             convgw(i,j) = sf2(i,j) * (h(i,j)-ho(i,j)) / dt
           else
@@ -913,7 +911,7 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
       call MPI_REDUCE(dtoa,gdtoa,1, MPI_REAL, MPI_SUM, IO_id, HYDRO_COMM_WORLD, ierr)
       call MPI_REDUCE(eocn,geocn,1, MPI_REAL, MPI_SUM, IO_id, HYDRO_COMM_WORLD, ierr)
       call MPI_REDUCE(ebot,gebot,1, MPI_REAL, MPI_SUM, IO_id, HYDRO_COMM_WORLD, ierr)
-      
+
       if(my_id .eq. IO_id) then
         write (*,900)                         &
           gdtot*zz, gdtoa*zz, -geocn*zz, gebot*zz,     &
@@ -932,11 +930,11 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
             '        ghmerror'  &
 !         /3x,4f9.4,2(9x),e14.4)
         /3x,5(e14.4))
-      
+
       return
       end subroutine gwstep
-      
-      
+
+
       SUBROUTINE SCOPY (NT, ARR, INCA, BRR, INCB)
 !
 !        Copies array ARR to BRR, incrementing by INCA and INCB
@@ -955,11 +953,11 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
       RETURN
       END SUBROUTINE SCOPY
 
-      
+
 subroutine trdiagSolve(a,b,c,rhs,x,n)
 
       implicit none
-      
+
       integer,intent(in) :: n
       real,dimension(n),intent(in) :: a, b, c, rhs
       real,dimension(n),intent(out) :: x
@@ -982,26 +980,26 @@ subroutine trdiagSolve(a,b,c,rhs,x,n)
         do i = n-1, 1, -1
           x(i) = dp(i)-cp(i)*x(i+1)
         end do
-      
+
 
 end subroutine trdiagSolve
-      
-      
+
+
 subroutine gwSoilFlux(did)
 
-  
+
   implicit none
-  
+
   integer, intent(in)	:: did
-  
-  
+
+
   real, dimension(rt_domain(did)%ixrt,rt_domain(did)%jxrt) :: smcrel, ztrans, headChange
   real :: frac, zres
-  integer :: nsoil, i, j, k  
-  
+  integer :: nsoil, i, j, k
+
   gw2d(did)%qsgwrt = 0.
   gw2d(did)%qdarcyRT = 0.
-  
+
 ! Step 1, collect data
 
 ! relative soil moisture content of lowest soil layer (1 = saturated)
@@ -1009,66 +1007,66 @@ subroutine gwSoilFlux(did)
   smcrel = rt_domain(did)%subsurface%grid_transform%smcrt(:,:,nsoil) / RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(:,:,nsoil)
 
 ! depth of transition zone from lowest soil layer to groundwater head (in cm)
-! postivie ztrans -> head below LSM soil layer 
+! postivie ztrans -> head below LSM soil layer
 ! negative ztrans -> head within LSM soil layers
   ztrans = (rt_domain(did)%elrt + nlst(did)%zsoil8(nsoil)) - gw2d(did)%ho
   ztrans = ztrans * 100
-  
+
   ! darcyGwSoil not defined for ztran = 0
   where(ztrans == 0) ztrans = -5
-  
+
 ! Step 2, compute flux either up or down
 
   do j=gw2d(did)%jts, gw2d(did)%jte
     do i=gw2d(did)%its, gw2d(did)%ite
-      
+
         if((ztrans(i,j) > 0) .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
         ! if groundwater head < soil layers
 	  call  darcyGwSoil(ztrans(i,j), smcrel(i,j), rt_domain(did)%soiltypRT(i,j), gw2d(did)%qdarcyRT(i,j))
-	  
+
 	  gw2d(did)%qsgwrt(i,j) = gw2d(did)%qdarcyRT(i,j)
-	  
+
 	  ! check and correct for mass balance
 	  if(((gw2d(did)%ho(i,j)-gw2d(did)%bot(i,j)) &
 	    *gw2d(did)%poros(i,j)) < (gw2d(did)%qsgwrt(i,j)*gw2d(did)%dt)) then
-	    
+
 	        gw2d(did)%qdarcyRT(i,j) = 0.
 	        gw2d(did)%qsgwrt(i,j) = 0.
-	        
+
 	   end if
-	
+
 	else if(ztrans(i,j) < 0 .and. (rt_domain(did)%soiltypRT(i,j) < 13)) then
 	! if groundwater head > soil layers
 	  zres = -ztrans(i,j)
 	  do k=nsoil,1,-1
-	     
+
 	     if(zres >= rt_domain(did)%subsurface%properties%sldpth(k)*100.) then
 	     ! complete filling of a LSM soil layer if groundwater head > layer top
-	       
+
 ! 	       gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%subsurface%properties%sldpth(k) &
 ! 	                               * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 				       + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
-				       
+
 	       rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k)
-	       
+
 	       zres = zres - rt_domain(did)%subsurface%properties%sldpth(k)*100.
-	       
+
 	     else
 	     ! partial filling of a soil layer if not completely below groundwater head
-	     
+
 	       if(zres > (0.5 * rt_domain(did)%subsurface%properties%sldpth(k)*100.)) then
-		 
+
 		 frac = zres / (rt_domain(did)%subsurface%properties%sldpth(k) * 100.)
-	       
-	       
+
+
 ! 	          gw2d(did)%qsgwrt(i,j) = (rt_domain(did)%subsurface%properties%sldpth(k) &
 ! 	                                * (rt_domain(did)%subsurface%grid_transform%smcmaxrt(i,j,k) - RT_DOMAIN(did)%subsurface%grid_transform%smcrt(i,j,k)) &
 ! 					* frac + gw2d(did)%qsgwrt(i,j)) / gw2d(did)%dt
-	       
+
 	          rt_domain(did)%subsurface%grid_transform%smcrt(i,j,k) = RT_DOMAIN(did)%subsurface%grid_transform%smcmaxrt(i,j,k) * frac
-	          
+
 	       end if
-	       
+
 	     end if
 	  end do
 	end if
@@ -1081,15 +1079,15 @@ subroutine gwSoilFlux(did)
 
 ! TOcheck Step 3, adapt groundwater head (assuming not time lag for percolation / capillary rise flow)
 
-! 	   modify gw-head before gwstep call with respect to specific yield of the 
+! 	   modify gw-head before gwstep call with respect to specific yield of the
 ! 	   aquifer and the computed flux (qsgwrt)
 
-  
+
  headChange = (-gw2d(did)%qdarcyRT) * gw2d(did)%dt / gw2d(did)%poros
  gw2d(did)%ho = gw2d(did)%ho + headChange
-  
+
 end subroutine gwSoilFlux
-      
+
 subroutine darcyGwSoil(Z, s, soil, q_darcy)
 
 implicit none
@@ -1162,7 +1160,7 @@ end subroutine darcyGwSoil
 
 subroutine aggregateQsgw(did)
 
- 
+
 
   implicit none
 
@@ -1175,7 +1173,7 @@ subroutine aggregateQsgw(did)
      do i=1,rt_domain(did)%ix
 
        agg= 0.
-       
+
        do m=nlst(did)%aggfactRT-1,0,-1
          do n=nlst(did)%aggfactRT-1,0,-1
 
@@ -1183,7 +1181,7 @@ subroutine aggregateQsgw(did)
 	    ixxRT = i * nlst(did)%aggfactRT-n
 	    jyyRT = j * nlst(did)%aggfactRT-m
 
-           
+
 #ifdef MPP_LAND
 	    if(left_id.ge.0) ixxRT=ixxRT+1
 	    if(down_id.ge.0) jyyRT=jyyRT+1
@@ -1191,7 +1189,7 @@ subroutine aggregateQsgw(did)
              agg = agg + gw2d(did)%qdarcyRT(ixxRT, jyyRT)
            end do
          end do
-	
+
             gw2d(did)%qsgw(i,j) = agg/(nlst(did)%aggfactRT**2)
        end do
      end do
@@ -1219,16 +1217,16 @@ end subroutine aggregateQsgw
                              ZSPS, &
                              XDNS, &
                              ZDNS
-                             
+
       real, dimension(ZSPS, XSPS), intent(inout) ::  c, &
                                                      b
       real	CLK_PER
       parameter	(CLK_PER = 6.66666667e-9)
 
       real, dimension(0:ZSPS+1, 0:XSPS+1), intent(inout) ::  r
-      
+
       real, dimension(XSPS,2) :: zn, zntmp
-      
+
       real, dimension(XSPS)   :: t1, t2, fac
 
       real :: clockdt, click
@@ -1237,7 +1235,7 @@ end subroutine aggregateQsgw
       integer :: pid, z_pid
       integer :: i, j, sndr_pid, msg_type, cnt, ackn
       integer :: sendReq, recvReq
-      
+
       integer	ZN_REC
       parameter	(ZN_REC = 46)
 
@@ -1247,7 +1245,7 @@ end subroutine aggregateQsgw
 #endif
 
       cnt = 2*XSPS
- 
+
       if (z_pid .eq. 1) then
 
 ! Load (ZSPS,j)th equations into passing arrays.
@@ -1256,7 +1254,7 @@ end subroutine aggregateQsgw
           zntmp(j,2) = r(ZSPS,j)
    10   continue
 
-        
+
 #ifdef TIMING
         ti = click()
 #endif
@@ -1376,10 +1374,10 @@ end subroutine aggregateQsgw
           r(i,j) = r(i,j) - b(i,j)*r(ZSPS,j) - c(i,j)*r(1,j)
    70   continue
    60   continue
- 
+
  call mpi_wait(sendReq, mpp_status, ierr)
 
- 
+
       else if (z_pid .lt. ZDNS) then
 
 #ifdef TIMING
@@ -1427,7 +1425,7 @@ end subroutine aggregateQsgw
  call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
  call mpi_wait(sendReq, mpp_status, ierr)
  call mpi_wait(recvReq, mpp_status, ierr)
- 
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1469,7 +1467,7 @@ end subroutine aggregateQsgw
           r(i,j) = r(i,j) - c(i,j)*r(1,j) - b(i,j)*r(ZSPS,j)
   110   continue
   100   continue
-  
+
  call mpi_wait(sendReq, mpp_status, ierr)
 
       else
@@ -1491,7 +1489,7 @@ end subroutine aggregateQsgw
  call MPI_IRECV(   zn, cnt, MPI_REAL, dest, ZN_REC, cartGridComm, recvReq, ierr)
  call mpi_wait(sendReq, mpp_status, ierr)
  call mpi_wait(recvReq, mpp_status, ierr)
- 
+
 #ifdef TIMING
         tf = click()
         call add_dt(ct,tf,ti,dt)
@@ -1534,15 +1532,15 @@ end subroutine aggregateQsgw
                               ZSPS, &
                               XDNS, &
                               ZDNS
-                              
+
       real, dimension(ZSPS, XSPS), intent(inout) ::  c, &
                                                      b
-                                                     
+
 
       real, dimension(0:ZSPS+1, 0:XSPS+1), intent(inout) ::  r
- 
+
       real, dimension(ZSPS,2) :: xn, xntmp
-      
+
       integer	XN_REC
       parameter	(XN_REC = 45)
 
@@ -1556,7 +1554,7 @@ end subroutine aggregateQsgw
 
       integer :: source, dest
 
-      
+
 #ifdef TIMING
       dt = clockdt()
 #endif
@@ -1679,7 +1677,7 @@ end subroutine aggregateQsgw
 #endif
  call mpi_cart_shift(cartGridComm, colshift, -1, source, dest, ierr)
  call MPI_ISEND(xntmp, cnt, MPI_REAL, dest, XN_REC, cartGridComm, sendReq, ierr)
- 
+
         do 60 i = 1, ZSPS
 ! Backward elimination in (i,0)th equations.
           r(i,0) = t2(i) - t1(i)*r(i,1)
@@ -1694,7 +1692,7 @@ end subroutine aggregateQsgw
 
  call mpi_wait(sendReq, mpp_status, ierr)
 
-      else if (x_pid .lt. XDNS) then 
+      else if (x_pid .lt. XDNS) then
 
         cnt = 2*ZSPS
 #ifdef TIMING
@@ -1772,7 +1770,7 @@ end subroutine aggregateQsgw
 #endif
 
 ! Forward elimination in (i,XSPS)th equations to get
-! r(i,XSPS+1).	
+! r(i,XSPS+1).
         do 100 i = 1, ZSPS
           r(i,XSPS+1) = t2(i) - t1(i)*r(i,XSPS)
   100   continue
@@ -1782,7 +1780,7 @@ end subroutine aggregateQsgw
 	do 110 i = 1, ZSPS
           r(i,j) = r(i,j) - c(i,j)*r(i,1) - b(i,j)*r(i,XSPS)
   110   continue
-  
+
  call mpi_wait(sendReq, mpp_status, ierr)
 
       else
@@ -1830,7 +1828,7 @@ end subroutine aggregateQsgw
       return
       end subroutine
 
-      
+
 ! Parallel tridiagonal solver useful for domain decomposed ADI
 ! Author(s): Mike Lambert
 ! Year: 1996
@@ -1936,7 +1934,7 @@ end subroutine aggregateQsgw
             r2(i,1) = (r2(i,1) - wk(i,1)*r2(i,2))*fac
   100     continue
 
-        else 
+        else
 
           do 110 i = 1, n_zs
             b2(i,n_xs-1) = wk(i,n_xs-1)
@@ -2120,7 +2118,7 @@ end subroutine aggregateQsgw
         x(i,j)  = x(i,j) - wk(i,j)*x(i,j+1)
    30   continue
 
-   
+
       else if (dir .eq. ZDIR) then
 
        do j = 1, n_xs
@@ -2154,6 +2152,6 @@ end subroutine aggregateQsgw
 
       return
       end  subroutine
-      
-      
+
+
 end module module_gw_gw2d

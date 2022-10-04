@@ -18,22 +18,20 @@
 !
 !  User controllable options: <if applicable>
 
-Module module_namelist
+module module_namelist
 
 #ifdef MPP_LAND
           USE module_mpp_land
 #endif
 
     use module_hydro_stop, only: HYDRO_stop
-
-    IMPLICIT NONE
-    INTEGER, PARAMETER :: max_domain=5
-
-#include "namelist.inc"
-    TYPE(namelist_rt_field) , dimension(max_domain) :: nlst_rt
+    use module_namelist_inc, only: namelist_rt_field
+    implicit none
+    integer, parameter :: max_domain=5
+    type(namelist_rt_field) , dimension(max_domain) :: nlst_rt
     save nlst_rt
 
-CONTAINS
+contains
 
     subroutine read_rt_nlst(nlst)
           implicit none
