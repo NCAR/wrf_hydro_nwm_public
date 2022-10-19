@@ -12,7 +12,7 @@ module module_levelpool_state
     ! Extend/derive level pool state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: levelpool_state_interface
-        real :: water_elevation                 ! meters AMSL
+        real*8 :: water_elevation                 ! meters AMSL
 
     contains
 
@@ -27,7 +27,7 @@ contains
     subroutine levelpool_state_init(this, water_elevation)
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(inout) :: water_elevation     ! meters AMSL
+        real*8, intent(inout) :: water_elevation     ! meters AMSL
 
         ! Assign the water elevation value passed in to a particular level pool reservoir
         ! state object's variable for water elevation

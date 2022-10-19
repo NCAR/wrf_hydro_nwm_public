@@ -14,8 +14,8 @@ module module_rfc_forecasts_state
     ! Extend/derive rfc forecasts state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: rfc_forecasts_state_interface
-        real                               :: water_elevation           ! meters AMSL
-        real                               :: levelpool_water_elevation ! meters AMSL
+        real*8                             :: water_elevation              ! meters AMSL
+        real*8                             :: levelpool_water_elevation ! meters AMSL
         real, allocatable, dimension(:)    :: discharges
         logical, allocatable, dimension(:) :: synthetic_values
         integer                         :: time_series_update_time  ! seconds
@@ -27,7 +27,7 @@ module module_rfc_forecasts_state
         real                            :: assimilated_value
         character(len=256)              :: assimilated_source_file
         integer                         :: levelpool_reservoir_type    ! reservoir type for levelpool
-        real                            :: levelpool_assimilated_value ! levelpool assimilated sentinel value
+        real*8                          :: levelpool_assimilated_value ! levelpool assimilated sentinel value
         character(len=256)              :: levelpool_assimilated_source_file ! empty string for levelpool assimilated source
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
@@ -45,7 +45,7 @@ contains
     subroutine rfc_forecasts_state_init(this, water_elevation, lake_area, lake_max_water_elevation, orifice_elevation, initial_fractional_depth)
         implicit none
         class(rfc_forecasts_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(in) :: water_elevation           ! meters AMSL
+        real*8, intent(in) :: water_elevation           ! meters AMSL
         real, intent(in) :: lake_area                 ! area of lake (km^2)
         real, intent(in) :: lake_max_water_elevation  ! max water elevation (meters)
         real, intent(in) :: orifice_elevation         ! orifice elevation (meters AMSL)

@@ -688,7 +688,7 @@ subroutine LandRT_ini(did)
   integer, allocatable, dimension(:) :: tmp_int
   real, allocatable, dimension(:) :: tmp_real
   integer, allocatable, dimension(:) :: buf
-  real, allocatable, dimension(:) :: tmpRESHT
+  real*8, allocatable, dimension(:) :: tmpRESHT
   integer :: new_start_i, new_start_j, new_end_i, new_end_j
 
 #ifdef OUTPUT_CHAN_CONN

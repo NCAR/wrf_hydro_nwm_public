@@ -14,7 +14,7 @@ module module_persistence_levelpool_hybrid_state
     ! Extend/derive hybrid state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: hybrid_state_interface
-        real    :: water_elevation              ! meters AMSL
+        real*8   :: water_elevation              ! meters AMSL
         real*4  :: current_storage              ! cubic meters
         real    :: gage_discharge               ! cubic meters per second (cms)
         real    :: persisted_outflow            ! cubic meters per second (cms)
@@ -28,7 +28,7 @@ module module_persistence_levelpool_hybrid_state
         real    :: assimilated_value
         character(len=256) :: assimilated_source_file
         integer :: levelpool_reservoir_type     ! reservoir type for levelpool
-        real    :: levelpool_assimilated_value  ! levelpool assimilated sentinel value
+        real*8    :: levelpool_assimilated_value  ! levelpool assimilated sentinel value
         character(len=256) :: levelpool_assimilated_source_file ! none for levelpool assimilated source
 
         type (levelpool), pointer :: levelpool_ptr   ! pointer to levelpool object
@@ -49,7 +49,7 @@ contains
         initial_fractional_depth, reservoir_type)
         implicit none
         class(hybrid_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(in)    :: water_elevation           ! meters AMSL
+        real*8, intent(in)    :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
         real, intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)

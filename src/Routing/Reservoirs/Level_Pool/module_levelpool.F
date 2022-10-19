@@ -59,7 +59,7 @@ contains
         orifice_area, max_depth, lake_number)
         implicit none
         class(levelpool), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation           ! meters AMSL
+        real*8, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -150,20 +150,23 @@ contains
         assimilated_value, assimilated_source_file)
         implicit none
         class(levelpool), intent(inout) :: this
-        real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
-        real, intent(in)    :: inflow                   ! cubic meters per second (cms)
-        real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
-        real, intent(out)   :: outflow                  ! cubic meters per second (cms)
-        real, intent(in)    :: routing_period           ! seconds
-        integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
-        real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
+        real*8, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
+        real*8, intent(in)    :: inflow                   ! cubic meters per second (cms)
+        real, intent(in)    :: lateral_inflow             ! cubic meters per second (cms)
+        real*8, intent(inout) :: water_elevation          ! meters
+        real*8, intent(out)   :: outflow                  ! cubic meters per second (cms)
+        real, intent(in)    :: routing_period             ! seconds
+        integer, intent(out):: dynamic_reservoir_type     ! dynamic reservoir type sent to lake out files
+        real*8, intent(out)   :: assimilated_value          ! value assimilated from observation or forecast
         character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
 
 
         ! Update input variables
         this%input%inflow = inflow
         this%input%lateral_inflow = lateral_inflow
+
+        !  write(6,29) previous_timestep_inflow,inflow,outflow
+        !  29 format("BLP ",f10.6,2x,f10.6,2x,f10.6)
 
         ! Update state variables
         this%state%water_elevation = water_elevation
@@ -211,6 +214,9 @@ contains
         call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, water_elevation, outflow)
 #endif
 
+      !   write(6,30) inflow,previous_timestep_inflow,outflow
+      !   30 format("ALP ",f8.6,2x,f8.6,2x,f8.6)
+
     end subroutine run_levelpool_reservoir
 
     ! ------------------------------------------------
@@ -222,11 +228,11 @@ contains
         !! ----------------------------  argument variables
         !! All elevations should be relative to a common base (often belev(k))
 
-        real, intent(INOUT) :: H       ! water elevation height (m)
+        real*8, intent(INOUT) :: H       ! water elevation height (m)
         real, intent(IN)    :: dt      ! routing period [s]
-        real, intent(IN)    :: qi0     ! inflow at previous timestep (cms)
-        real, intent(IN)    :: qi1     ! inflow at current timestep (cms)
-        real, intent(OUT)   :: qo1     ! outflow at current timestep
+        real*8, intent(IN)    :: qi0     ! inflow at previous timestep (cms)
+        real*8, intent(IN)    :: qi1     ! inflow at current timestep (cms)
+        real*8, intent(OUT)   :: qo1     ! outflow at current timestep
         real, intent(IN)    :: ql      ! lateral inflow
         real, intent(IN)    :: ar      ! area of reservoir (km^2)
         real, intent(IN)    :: we      ! bottom of weir elevation
@@ -241,35 +247,38 @@ contains
 
         !!DJG Add lake option switch here...move up to namelist in future versions...
         integer :: LAKE_OPT            ! Lake model option (move to namelist later)
-        real    :: Htmp                ! Temporary assign of incoming lake el. (m)
 
         !! ----------------------------  local variables
-        real :: sap                    ! local surface area values
-        real :: discharge              ! storage discharge m^3/s
-        real :: tmp1, tmp2
-        real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
-        real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs
-        real :: maxWeirDepth           !maximum capacity of weir
-        !real :: hdiff_vol, qdiff_vol   ! water balance check variables
+        real*8   :: sap                    ! local surface area values
+        real*8   :: discharge              ! storage discharge m^3/s
+        real*8   :: tmp1, tmp2,tmp3
+        real*8   :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
+        real*8   :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs
+        real*8   :: maxWeirDepth           !maximum capacity of weir
+        real*8   :: hdiff_vol, qdiff_vol   ! water balance check variables
+        real*8   :: Htmp                   !  temporary store of WSE
+
         !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
         !! -- determine from inflow hydrograph
 
 
         !!DJG Set hardwire for LAKE_OPT...move specification of this to namelist in
         !future versions...
-        LAKE_OPT = 2
-        Htmp = H   !temporary set of incoming lake water elevation...
-        !hdiff_vol = 0.0
-        !qdiff_vol = 0.0
-
+!       LAKE_OPT = 2
+        hdiff_vol = 0.0
+        qdiff_vol = 0.0
+        Htmp = H
+       
         !!DJG IF-block for lake model option  1 - outflow=inflow, 2 - Chow et al level
         !pool, .....
-        if (LAKE_OPT == 1) then     ! If-block for simple pass through scheme....
+!       if (LAKE_OPT == 1) then     ! If-block for simple pass through scheme....
 
-           qo1 = qi1                 ! Set outflow equal to inflow at current time
-           H = Htmp                  ! Set new lake water elevation to incoming lake el.
+!          qo1 = qi1                 ! Set outflow equal to inflow at current time
 
-        else if (LAKE_OPT == 2) then   ! If-block for Chow et al level pool scheme
+!       else if (LAKE_OPT == 2) then   ! If-block for Chow et al level pool scheme
+
+           open (unit=67, &
+             file='lake_massbalance_out.txt', status='unknown',position='append')
 
            It = qi0
            Itdt_3   = qi0 + ((qi1 + ql - qi0) * 0.33)
@@ -279,134 +288,151 @@ contains
            !assume vertically walled reservoir
            !remove this when moving to a variable head area volume
            sap = ar * 1.0E6
+           !sap = ar * 1.0E4
 
            !-- determine Q(dh) from elevation-discharge relationship
            !-- and dh1
-           dh = H - we
+           dh = Htmp - we
            if (dh > maxWeirDepth) then
               dh = maxWeirDepth
            endif
 
-           tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe )) !orifice at capacity
-           tmp2 = wc * wl * (dh ** (3./2.))  !weir flows at capacity
+           if(Htmp - oe .gt.0) then
+           !tmp1 = oc * (H-oe)/(we-oe)*oa * sqrt(2. * 9.81 * ( Htmp - oe )) !orifice flow is a function of storage
+            tmp1 = oc * oa * sqrt(2. * 9.81 * ( Htmp - oe )) !orifice flow is a function of storage
+           else
+           tmp1 =0.0
+           endif
+        
+           if(dh .gt. 0.0) then 
+            tmp2 = wc * wl * (dh ** (3./2.))   !spillway discharge
+           else
+            tmp2 =0.0
+           endif 
 
            !determine the discharge based on current height
            if(H > maxh) then
-             discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
-           else if (dh > 0.0 ) then              !! orifice and weir discharge
+             discharge =  tmp1 + tmp2 + (wc* dl * (Htmp - maxh)**(3./2.)) !overtop
+           else 
              discharge = tmp1 + tmp2
-           else if ( H > oe ) then     !! only orifice flow
-             discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-           else
-             discharge = 0.0   !in the dead pool
            endif
-
-           if (sap > 0) then
-              dh1 = ((It - discharge)/sap)*dt
-           else
-              dh1 = 0.0
-           endif
+           dh1 = dble(((It - discharge)/sap)*dt)
 
            !-- determine Q(H + dh1/3) from elevation-discharge relationship
            !-- dh2
-           dh = (H+dh1/3) - we
+           dh = (H+(0.33*dh1)) - we
            if (dh > maxWeirDepth) then
               dh = maxWeirDepth
            endif
 
-           tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
-           tmp2 = wc * wl * (dh ** (3./2.))
+           if((H + 0.33*dh1 ) - oe .gt. 0.0) then
+            !tmp1 = oc * ((H+0.33*dh1)-oe)/(we-oe)*oa * sqrt(2. * 9.81 * ( (H+0.33*dh1) - oe ) )
+             tmp1 = oc * oa * sqrt(2. * 9.81 * ((Htmp + 0.33*dh1) - oe) )
+           else
+            tmp1 =0.0
+           endif
+
+           if(dh .gt. 0.0) then 
+            tmp2 = wc * wl * (dh ** (3./2.)) 
+           else
+            tmp2 =0.0
+           endif 
 
            !determine the discharge based on current height
-           if(H > maxh) then
-             discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
-           else if (dh > 0.0 ) then              !! orifice and weir discharge
+           if((H + 0.33*dh1 ) > maxh) then
+             discharge =  tmp1 + tmp2 + (wc* dl * ((Htmp + 0.33*dh1)-maxh)**(3./2.)) !overtop
+           else 
              discharge = tmp1 + tmp2
-           else if ( (H+dh1/3) > oe ) then     !! only orifice flow,not full
-             discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh1/3.) - oe ) )
-           else
-             discharge = 0.0
-            endif
-
-
-           if (sap > 0.0) then
-              dh2 = ((Itdt_3 - discharge)/sap)*dt
-           else
-              dh2 = 0.0
            endif
+
+           dh2 = dble(((Itdt_3 - discharge)/sap)*dt)
 
            !-- determine Q(H + 2/3 dh2) from elevation-discharge relationship
            !-- dh3
-           dh = (H + (0.667*dh2)) - we
+           dh = (Htmp + (0.667*dh2)) - we
            if (dh > maxWeirDepth) then
               dh = maxWeirDepth
            endif
 
-           tmp1 = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
-           tmp2 = wc * wl * (dh ** (3./2.))
+           if( (Htmp + 0.667*dh2 ) - oe .gt. 0.0) then
+            !tmp1 = oc * ((Htmp + 0.667*dh2)-oe)/(we-oe)*oa * sqrt(2. * 9.81 * ( (Htmp + 0.667*dh2) - oe ) )
+             tmp1 = oc * oa * sqrt(2. * 9.81 * ( (Htmp + 0.667*dh2) - oe) )
+           else
+            tmp1 =0.0
+           endif
 
-           !determine the discharge based on current height
-           if(H > maxh) then  ! overtop condition, not good!
-              discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
-           else if (dh > 0.0 ) then              !! orifice and weir discharge
+           if(dh .gt. 0.0) then 
+            tmp2 = wc * wl * (dh ** (3./2.)) 
+           else
+            tmp2 =0.0
+           endif 
+
+           ! find dh3
+           if((H+0.667*dh2) > maxh) then  ! overtop condition, not good!
+              discharge =  tmp1 + tmp2 + (wc* dl * ((Htmp + 0.667*dh2)-maxh)**(3./2.)) !overtop
+           else 
               discharge = tmp1 + tmp2
-           else if ( (H+dh2*0.667) > oe ) then     !! only orifice flow,not full
-              discharge = oc * oa * sqrt(2. * 9.81 * ( (H+dh2*0.667) - oe ) )
-           else
-              discharge = 0.0
            endif
 
-           if (sap > 0.0) then
-              dh3 = ((Itdt_2_3 - discharge)/sap)*dt
-           else
-              dh3 = 0.0
-           endif
+           dh3 = dble(((Itdt_2_3 - discharge)/sap)*dt)
 
-           !-- determine dh and H
-           dh = (dh1/4.) + (0.75*dh3)
-           H = H + dh
+           H   = Htmp + ((0.25*dh1) + (0.75*dh3))
 
-           !-- compute final discharge
-           dh = H - we
+           if (H-Htmp .eq. 0.0 ) then
+              write(6,23) H,Htmp,((0.25*dh1) + (0.75*dh3))
+             23 format("DHZERO ",f16.8,2x,f16.8,2x,f12.8)
+          endif
+
+          !-- compute final discharge
+           dh = dble(H - we)
            if (dh > maxWeirDepth) then
-              dh = maxWeirDepth
+             dh = maxWeirDepth
            endif
-
-           tmp1 = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
-           tmp2 = wc * wl * (dh ** (3./2.))
-
-           !determine the discharge based on current height
-           if(H > maxh) then  ! overtop condition, not good!
-              discharge =  tmp1 + tmp2 + (wc* (wl*dl) * (H-maxh)**(3./2.)) !overtop
-           else if (dh > 0.0 ) then              !! orifice and overtop discharge
-              discharge = tmp1 + tmp2
-           else if ( H > oe ) then     !! only orifice flow,not full
-              discharge = oc * oa * sqrt(2. * 9.81 * ( H - oe ) )
+  
+           if ((dble(H)-oe) .gt. 0.0) then
+           !tmp1 = oc * (H-oe)/(we-oe)*oa * sqrt(2. * 9.81 * (H - oe) )
+            tmp1 = oc * oa * sqrt(2. * 9.81 * ( dble(H) - oe ) )
            else
-              discharge = 0.0
+            tmp1 = 0.0
            endif
 
+           if(dh .gt. 0.0) then 
+            tmp2 = wc * wl * (dh ** (3./2.)) 
+           else
+            tmp2 =0.0
+           endif 
+  
+             !determine the discharge based on current height
+           if(H > maxh) then  ! overtop condition, not good!
+                tmp3 =  (wc* dl * (dble(H)-maxh)**(3./2.)) !overtop
+                discharge =  tmp1 + tmp2 + tmp3
+           else
+                discharge = tmp1 + tmp2
+           endif
+ 
            qo1  = discharge  ! return the flow rate from reservoir
 
-        !#ifdef HYDRO_D
-        !#ifndef NCEP_WCOSS
-        !   ! Water balance check
-        !   qdiff_vol = (qi1+ql-qo1)*dt !m3
-        !   hdiff_vol = (H-Htmp)*sap    !m3
-        !22 format(f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f8.4,2x,f6.0,2x,f20.1,2x,f20.1)
-        !   open (unit=67, &
-        !     file='lake_massbalance_out.txt', status='unknown',position='append')
-        !   write(67,22) Htmp, H, qi1, ql, qo1, dt, qdiff_vol, hdiff_vol
-        !   close(67)
-        !#endif
-        !#endif
+        ! #ifdef HYDRO_D
+        ! #ifndef NCEP_WCOSS
 
-        !23 format('botof H dh orf wr Q',f8.4,2x,f8.4,2x,f8.3,2x,f8.3,2x,f8.2)
-        !24 format('ofonl H dh sap Q ',f8.4,2x,f8.4,2x,f8.0,2x,f8.2)
+            ! Water balance check
+            qdiff_vol = (qo1-qi1)*dt !m3 over time interval
+            hdiff_vol = (dble(H)-Htmp)*sap    !m3
 
+         !   open (unit=67, &
+         !     file='lake_massbalance_out.txt', status='unknown',position='append')
+         !   write(67,22) H,Htmp,qi1,qo1,ql,qdiff_vol,hdiff_vol,((dh1/4.) + (0.75*dh3))
+         !   close(67)
 
-        else   ! ELSE for LAKE_OPT....
-        endif  ! ENDIF for LAKE_OPT....
+           write(67,22) H,Htmp,qi1,qo1
+        22 format(f12.6,2x,f12.6,2x,f9.6,2x,f9.6)
+           close(67)
+
+       !  #endif
+       !  #endif
+
+!       else   ! ELSE for LAKE_OPT....
+!       endif  ! ENDIF for LAKE_OPT....
 
         return
 
