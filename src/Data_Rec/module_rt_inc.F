@@ -1,3 +1,13 @@
+module module_rt_inc
+   use overland_data
+   use module_subsurface_data
+   use module_subsurface_static_data
+   use module_subsurface_input
+   use module_subsurface_output
+   use module_reservoir, only: reservoir_container
+   use iso_fortran_env, only: int64
+   implicit none
+
    TYPE RT_FIELD
    type (overland_struct) :: overland
    type (subsurface_struct) :: subsurface
@@ -257,3 +267,4 @@
     REAL,    allocatable, DIMENSION(:,:,:) :: dist_lsm
 
    END TYPE RT_FIELD
+end module module_rt_inc

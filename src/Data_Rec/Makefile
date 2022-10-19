@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -6,11 +6,13 @@
 include ../macros
 
 OBJS = \
+	module_namelist_inc.o \
 	module_namelist.o \
+	module_rt_inc.o	\
 	module_RT_data.o \
 	module_gw_gw2d_data.o
 
-all:	$(OBJS) 
+all:	$(OBJS)
 
 .F.o:
 	@echo ""
@@ -21,6 +23,8 @@ all:	$(OBJS)
 
 # Dependencies:
 #
+module_namelist.o: module_namelist_inc.o
+module_RT_data.o: module_rt_inc.o
 
 clean:
 	rm -f *.o *.mod *.stb *~
