@@ -19,7 +19,7 @@ endif
 
 OBJS_NoahMP = ../IO_code/module_NoahMP_hrldas_driver.o
 
-OBJS = \
+OBJS := \
 	../IO_code/main_hrldas_driver.o \
 	../IO_code/module_hrldas_netcdf_io.o \
 	../phys/module_sf_noahmpdrv.o \
@@ -36,10 +36,21 @@ OBJS = \
 	../phys/surfex/mode_snow3l.o\
 	../phys/surfex/modd_snow_par.o\
 	../phys/surfex/ini_csts.o\
-	../phys/module_snowcro.o\
+	../phys/surfex/module_snowcro.o\
+	../phys/surfex/module_snowcro_intercept.o\
 	../phys/surfex/mode_thermos.o\
 	../phys/surfex/modd_surf_atm.o\
 	../phys/surfex/modd_snow_metamo.o
+
+# Check whether or not to build Crocus
+ifndef BUILD_CROCUS
+BUILD_CROCUS:=1
+endif
+ifeq ($(BUILD_CROCUS), 1)
+        OBJS := $(filter-out ../phys/surfex/module_snowcro_intercept.o, $(OBJS))
+else
+        OBJS := $(filter-out ../phys/surfex/module_snowcro.o, $(OBJS))
+endif
 
 CMD = hrldas.exe
 all:	$(CMD)

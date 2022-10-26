@@ -1,6 +1,7 @@
-# Makefile 
+# Makefile
 #
 CMD = Run/wrf_hydro.exe
+.PHONY: $(CMD)
 
 all: $(CMD)
 
@@ -24,8 +25,8 @@ $(CMD):
 	(cd LandModel; make ) \
 	fi
 
-debug:: 
-	@echo 'F90FLAGS := $$(DEBUGFLAGS) $$(F90FLAGS)' >> ./macros 
+debug::
+	@echo 'F90FLAGS := $$(DEBUGFLAGS) $$(F90FLAGS)' >> ./macros
 	@echo 'F90FLAGS := $$(DEBUGFLAGS) $$(F90FLAGS)' >> ./LandModel/user_build_options
 debug:: $(CMD)
 
@@ -33,7 +34,7 @@ install:
 	-rm -f ./Run/wrf_hydro.exe; \
 	mv LandModel/run/hrldas.exe  ./Run/wrf_hydro.exe
 test:
-	@echo "No libraries or utilities are built, skip testing." 
+	@echo "No libraries or utilities are built, skip testing."
 clean:
 	@if [ -d "LandModel_cpl" ]; then \
 	(cd LandModel_cpl; make clean) \
