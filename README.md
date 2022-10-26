@@ -24,6 +24,8 @@ For more information on how to contribute to this project please refer to our [c
 
 ## License
 The license and terms of use for this software can be found [here](LICENSE.txt).
+The Crocus snowpack module and related files are from the SURFEX surface model developed by Météo-France, the French national meteorological service.
+These files are under the [CeCILL-C](http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html) license.
 
 ## Acknowledgements
 Funding support for the development and application of the WRF-Hydro system has been provided by:
@@ -34,5 +36,3 @@ Funding support for the development and application of the WRF-Hydro system has 
 - The Colorado Water Conservation Board
 - Baron Advanced Meteorological Services
 - National Aeronautics and Space Administration (NASA)
-
- 
