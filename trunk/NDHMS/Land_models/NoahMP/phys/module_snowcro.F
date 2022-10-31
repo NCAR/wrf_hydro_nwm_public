@@ -1097,7 +1097,7 @@ DO JJ = 1,SIZE(ZSNOW)
     PSNOWSWE(JJ,JST)  = 0.
     PSNOWHEAT(JJ,JST) = 0.
     PSNOWRHO(JJ,JST)  = 999.
-    PSNOWTEMP(JJ,JST) = 0.
+    PSNOWTEMP(JJ,JST) = XTT
     PSNOWDZ(JJ,JST)   = 0.
   ENDDO  !  end loop unactive snow layers
 !
