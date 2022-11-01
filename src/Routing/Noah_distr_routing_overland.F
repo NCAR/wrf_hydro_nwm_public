@@ -647,7 +647,6 @@ end do
 
 
 #ifdef MPP_LAND
-    ! use double precision to solve the underflow problem.
     call MPP_LAND_COM_REAL(edge_adjust,XX,YY,99)
 #endif
     QBDRY = QBDRY - edge_adjust ! making this negative term more negative
