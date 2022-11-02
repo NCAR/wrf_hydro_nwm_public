@@ -1499,6 +1499,7 @@ CONTAINS
                    SNOW     (I,J) = PSNOWTOTSWEXY(I,J)
                    SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
                    ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
+                   CANWAT   (I,J) = undefined_value
 #ifdef WRF_HYDRO
                    if(present(ACCETRAN)) ACCETRAN(I,J) = 0.
                    if(present(ACCECAN))  ACCECAN(I,J)  = 0.
@@ -1507,6 +1508,24 @@ CONTAINS
                    if(present(SOILSAT))   SOILSAT(I,J) = undefined_value
 
 #endif
+                else  ! reset to undefined for non-crocus cells
+                  PSNOWSWEXY(I,1:act_level,J)   = undefined_value
+                  PSNOWRHOXY(I,1:act_level,J)   = undefined_value
+                  PSNOWHEATXY(I,1:act_level,J)  = undefined_value
+                  PSNOWGRAN1XY(I,1:act_level,J) = undefined_value
+                  PSNOWGRAN2XY(I,1:act_level,J) = undefined_value
+                  PSNOWHISTXY(I,1:act_level,J)  = undefined_value
+                  PSNOWAGEXY(I,1:act_level,J)   = undefined_value
+                  PSNOWLIQXY(I,1:act_level,J)   = undefined_value
+                  PSNOWTEMPXY(I,1:act_level,J)  = undefined_value
+                  PSNOWDZXY(I,1:act_level,J)    = undefined_value
+
+                  PSNOWALBXY(I,J)     = undefined_value
+                  PSNOWTHRUFALXY(I,J) = undefined_value
+                  FLOW_ICE(I,J)       = undefined_value
+                  FLOW_SNOW(I,J)      = undefined_value
+                  PSNOWHEIGHTXY(I,J)  = undefined_value
+                  PSNOWTOTSWEXY(I,J)  = undefined_value
                 endif
              end if ! crocus_opt /= 0
           ENDIF                                                         ! endif of land-sea test
