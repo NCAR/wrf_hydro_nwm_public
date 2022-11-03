@@ -1183,22 +1183,22 @@ module module_NoahMP_hrldas_driver
      FLOW_ICE       = undefined_real
      PSNOWAGEXY     = undefined_real
 
-     PSNOWLIQXY     = 0
-     PSNOWTEMPXY    = 0
-     PSNOWDZXY      = 0
-     PSNOWHEATXY    = 0
-     PSNOWRHOXY     = 0
-     PSNOWSWEXY     = 0
-     PSNOWGRAN1XY   = 0
-     PSNOWGRAN2XY   = 0
-     PSNOWHISTXY    = 0
-     PSNOWALBXY     = 0
-     PSNOWTHRUFALXY = 0
-     PSNOWHEIGHTXY  = 0
-     PSNOWTOTSWEXY  = 0
-     FLOW_ICE       = 0
-     FLOW_SNOW      = 0
-     PSNOWAGEXY     = 0
+     !PSNOWLIQXY     = 0.
+     !PSNOWTEMPXY    = 0.
+     !PSNOWDZXY      = 0.
+     !PSNOWHEATXY    = 0.
+     !PSNOWRHOXY     = 0.
+     !PSNOWSWEXY     = 0.
+     !PSNOWGRAN1XY   = 0.
+     !PSNOWGRAN2XY   = 0.
+     !PSNOWHISTXY    = 0.
+     !PSNOWALBXY     = 0.
+     !PSNOWTHRUFALXY = 0.
+     !PSNOWHEIGHTXY  = 0.
+     !PSNOWTOTSWEXY  = 0.
+     !FLOW_ICE       = 0.
+     !FLOW_SNOW      = 0.
+     !PSNOWAGEXY     = 0.
 
      WHERE(GLACINFO > 0.0) PSNOWALBXY=0.35
 
@@ -1210,6 +1210,7 @@ module module_NoahMP_hrldas_driver
         WHERE(GLACINFO > 0.0) PSNOWGRAN1XY(:,kk,:) = 0.0009
         WHERE(GLACINFO > 0.0) PSNOWGRAN2XY(:,kk,:) = 99    ! 1
         WHERE(GLACINFO > 0.0) PSNOWAGEXY  (:,kk,:) = 20000
+        WHERE(GLACINFO > 0.0) PSNOWHISTXY  (:,kk,:) = 0.
      enddo
 
      CALL INI_CSTS

@@ -1253,7 +1253,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.0001, 0.0001, 0.1, &                        !102-104
                                  0.01, 0.01, 0.01, &                           !105-107
                                  0.1, 0.0001, 0.01, &                          !108-110
-                                 0.01, 1.0, 0.1, &                             !111-113
+                                 0.01, 1000.0, 0.1, &                          !111-113
                                  0.1, 0.001, 0.001 ]                           !114-116
 
    ldasOutDict%addOffset(:) = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !1-10
@@ -1351,7 +1351,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  -9999.0,-9999.0,-9999.0,                 & !102-104
                                  -9999.0,-9999.0,-9999.0,                 & !105-107
                                  -9999.0,-9999.0,-9999.0,                 & !108-110
-                                 -9999.0, 9999.0,-9999.0,                 & !111-113
+                                 -9999.0, 9999000.0,-9999.0,                 & !111-113
                                  -9999.0,-9999.0,-9999.0 ]                  !114-116
 
    ldasOutDict%fillReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
@@ -1378,7 +1378,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,                 & !102-104
                               -9999.0,-9999.0,-9999.0,                 & !105-107
                               -9999.0,-9999.0,-9999.0,                 & !108-110
-                              -9999.0, 9999.0,-9999.0,                 & !111-113
+                              -9999.0, 9999000.0,-9999.0,                 & !111-113
                               -9999.0,-9999.0,-9999.0 ]                  !114-116
 
    ldasOutDict%validMinDbl(:) = [0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !1-5
@@ -1406,7 +1406,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.0d0, 0.0d0, 0.0d0, &                                   !102-104
                                  -1.0d2, 0.0d0, 0.0d0, &                                  !105-107
                                  0.0d0, 0.0d0, 0.0d0, &                                   !108-110
-                                 0.0d0, -2.0d9, 0.0d0, &                                  !111-113
+                                 0.0d0, -2.0d12, 0.0d0, &                                  !111-113
                                  0.0d0, 0.0d0, 0.0d0 ]                                    !114-116
 
    ldasOutDict%validMaxDbl(:) = [100.0d0, 100.0d0, 1.0d0, 20.0d0, 20.0d0, &             !1-5
@@ -1440,18 +1440,33 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
    ! Loop through and calculate missing/fill/min/max values that will be placed
    ! into the NetCDF attributes after scale_factor/add_offset are applied.
    do i=1,numLdasVars
-      ldasOutDict%fillComp(i) = &
-           nint((ldasOutDict%fillReal(i)     + ldasOutDict%addOffset(i)), 8) * &
-           nint(one_dbl / ldasOutDict%scaleFactor(i), 8)
-      ldasOutDict%missingComp(i) = &
-           nint((ldasOutDict%missingReal(i)  + ldasOutDict%addOffset(i)), 8) * &
-           nint(one_dbl / ldasOutDict%scaleFactor(i), 8)
-      ldasOutDict%validMinComp(i) = &
+      if (ldasOutDict%scaleFactor(i) .le. 1. .and. ldasOutDict%scaleFactor(i) .gt. 0.) then
+        ldasOutDict%fillComp(i) = &
+           nint((ldasOutDict%fillReal(i)     + ldasOutDict%addOffset(i)), 4) * &
+           nint(one_dbl / ldasOutDict%scaleFactor(i), 4)
+        ldasOutDict%missingComp(i) = &
+           nint((ldasOutDict%missingReal(i)  + ldasOutDict%addOffset(i)), 4) * &
+           nint(one_dbl / ldasOutDict%scaleFactor(i), 4)
+        ldasOutDict%validMinComp(i) = &
            nint((ldasOutDict%validMinDbl(i) + ldasOutDict%addOffset(i)) * &
-                nint(one_dbl / ldasOutDict%scaleFactor(i), 8), 8)
-      ldasOutDict%validMaxComp(i) = &
+                nint(one_dbl / ldasOutDict%scaleFactor(i), 4), 4)
+        ldasOutDict%validMaxComp(i) = &
            nint((ldasOutDict%validMaxDbl(i) + ldasOutDict%addOffset(i)) * &
-                nint(one_dbl / ldasOutDict%scaleFactor(i), 8), 8)
+                nint(one_dbl / ldasOutDict%scaleFactor(i), 4), 4)
+      else if (ldasOutDict%scaleFactor(i) .gt. 1.) then
+        ldasOutDict%fillComp(i) = &
+           nint( (ldasOutDict%fillReal(i) + ldasOutDict%addOffset(i)) * &
+                 (one_dbl / ldasOutDict%scaleFactor(i)), 4 )
+        ldasOutDict%missingComp(i) = &
+           nint( (ldasOutDict%missingReal(i) + ldasOutDict%addOffset(i)) * &
+                 (one_dbl / ldasOutDict%scaleFactor(i)), 4 )
+        ldasOutDict%validMinComp(i) = &
+           nint( (ldasOutDict%validMinDbl(i) + ldasOutDict%addOffset(i)) * &
+                 (one_dbl / ldasOutDict%scaleFactor(i)), 4 )
+        ldasOutDict%validMaxComp(i) = &
+           nint( (ldasOutDict%validMaxDbl(i) + ldasOutDict%addOffset(i)) * &
+                 (one_dbl / ldasOutDict%scaleFactor(i)), 4 )
+      end if
    end do
 
 end subroutine initLdasDict
