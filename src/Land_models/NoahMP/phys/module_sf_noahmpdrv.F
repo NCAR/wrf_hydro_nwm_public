@@ -85,7 +85,7 @@ CONTAINS
                MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL, &
                VIS_ICEALB  &
 #ifdef WRF_HYDRO
-               , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
+               , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR, ACCET &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
                )
@@ -311,6 +311,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCET       ! accumulated total evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT_TOP ! soil saturation in the top layer [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
@@ -594,6 +595,8 @@ CONTAINS
     REAL         :: SNDPTHH
     REAL         :: SNEQVOH
     CHARACTER(3) :: HSNOWMETAMO, HSNOWRAD
+
+    REAL,   DIMENSION( 1:NSOIL)    :: liq_frac
 
     ! crocus, assign mock local values, and initialize. These values should be in namelist.
     if (crocus_opt /= 0) then
@@ -1018,7 +1021,8 @@ CONTAINS
                                   ! move NOAHMP_GLACIER to after CROCUS
                                   ! for temperatre glacier, set top soil temp to 272
           ZP_TG(1) = 272.0
-
+          ! Why is this if block here? Not sure top condition would ever trigger  
+          ! given we are already in an if block requiring ZP_SNOWDZ(1,1) .gt. 0.0. (AD)
           IF (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0) THEN
           ELSE
             CALL SNOWCRO(HSNOWRES, OGLACIER, HIMPLICIT_WIND,                   & !(IN)
@@ -1051,7 +1055,7 @@ CONTAINS
              ALBOLD= ZP_SNOWALB(1)
              SNDPTHH = sum(ZP_SNOWDZ)
              SNEQVOH= sum(PSNOWSWEXY(I,:,J))
-             SWEH = sum(ZP_SNOWDZ)
+             SWEH = sum(ZP_SNOWDZ) ! duplicate of SNDPTHH?
              ZSNSOTH(-1)=-SNDPTHH/2
              zsnsoTH(0)=-SNDPTHH
              ZSNSOTH(1)=-SNDPTHH-0.1
@@ -1109,6 +1113,20 @@ CONTAINS
              TG=ZP_SNOWTEMP(1,1)
              STC   (      1:NSOIL)=273.16
 
+             ! If a crocus glacier cell has melted out, need to reset so NoahMP can take over.
+             if (SNDPTHH .eq. 0.0) then
+               print *, "Crocus glacier cell has melted out. Switching to NoahMP.", i, j
+               GLACR = 0
+               ! Resetting soil moisture to max possible for a soil (smc=1 while glacier).
+               ! This will not conserve mass, but avoids unphysical condition when we transition to NoahMP.
+               ! Scaling liquid content based on original ratio (likely small since frozen).
+               if (all(smc .gt. 0.)) then
+                 liq_frac = smh2o/smc
+                 smc = min(smc, parameters%smcmax)
+                 smh2o = smc*liq_frac
+               endif
+             end if
+
              !----------------
           ENDIF ! If not (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0)
                 ! If crocus is not running, use the original NOAH-MP glacier
@@ -1135,8 +1153,6 @@ CONTAINS
                , sfcheadrt(i,j)                                    &
 #endif
                )
-
-
        ENDIF
 
        IF ((crocus_opt == 0 .and. VEGTYP == ISICE_TABLE) .or. GLACR == 1) THEN
@@ -1204,7 +1220,7 @@ CONTAINS
       ELSE
          ICE=0 ! Neither sea ice or land ice.
 
-         if (crocus_opt /= 0) then
+         if (crocus_opt /= 0 .and. GLACINFOH == 1) then
             IF (PLAI .lt. -1000) THEN
                PLAI = 0.5            ! trude test. Glacier points does not have a LAI value (-1e+36). Give LAI a value.
             endif
@@ -1353,6 +1369,7 @@ CONTAINS
              if(present(ACCECAN)) ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
              if(present(ACCETRAN)) ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              if(present(ACCEDIR)) ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
+             if(present(ACCET)) ACCET  (I,J) = ACCECAN  (I,J) + ACCETRAN (I,J) + ACCEDIR  (I,J)
 
 	     ! Top 2 layer soil saturation
              if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)           = SUM(SMC(1:2) * DZS(1:2)) / SUM(parameters%smcmax(1:2) * DZS(1:2))
@@ -1499,33 +1516,15 @@ CONTAINS
                    SNOW     (I,J) = PSNOWTOTSWEXY(I,J)
                    SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
                    ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
-                   CANWAT   (I,J) = undefined_value
+                   CANWAT   (I,J) = 0. 
 #ifdef WRF_HYDRO
                    if(present(ACCETRAN)) ACCETRAN(I,J) = 0.
                    if(present(ACCECAN))  ACCECAN(I,J)  = 0.
                    if(present(ACCEDIR))  ACCEDIR(I,J)  = ACCEDIR(I,J) + (zp_evap(1)*DT) - (ESOIL*DT)
+                   if(present(ACCET))  ACCET(I,J)  =  ACCEDIR(I,J)
                    if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J) = undefined_value
                    if(present(SOILSAT))   SOILSAT(I,J) = undefined_value
-
 #endif
-                else  ! reset to undefined for non-crocus cells (-1e33 to match restarts)
-                  PSNOWSWEXY(I,1:act_level,J)   = -1.E33 !undefined_value
-                  PSNOWRHOXY(I,1:act_level,J)   = -1.E33 !undefined_value
-                  PSNOWHEATXY(I,1:act_level,J)  = -1.E33 !undefined_value
-                  PSNOWGRAN1XY(I,1:act_level,J) = -1.E33 !undefined_value
-                  PSNOWGRAN2XY(I,1:act_level,J) = -1.E33 !undefined_value
-                  PSNOWHISTXY(I,1:act_level,J)  = -1.E33 !undefined_value
-                  PSNOWAGEXY(I,1:act_level,J)   = -1.E33 !undefined_value
-                  PSNOWLIQXY(I,1:act_level,J)   = -1.E33 !undefined_value
-                  PSNOWTEMPXY(I,1:act_level,J)  = -1.E33 !undefined_value
-                  PSNOWDZXY(I,1:act_level,J)    = -1.E33 !undefined_value
-
-                  PSNOWALBXY(I,J)     = -1.E33 !undefined_value
-                  PSNOWTHRUFALXY(I,J) = -1.E33 !undefined_value
-                  FLOW_ICE(I,J)       = -1.E33 !undefined_value
-                  FLOW_SNOW(I,J)      = -1.E33 !undefined_value
-                  PSNOWHEIGHTXY(I,J)  = -1.E33 !undefined_value
-                  PSNOWTOTSWEXY(I,J)  = -1.E33 !undefined_value
                 endif
              end if ! crocus_opt /= 0
           ENDIF                                                         ! endif of land-sea test

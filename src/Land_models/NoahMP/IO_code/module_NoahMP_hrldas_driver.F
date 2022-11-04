@@ -61,6 +61,7 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
+   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCET ! accumulated total evap [mm]
    integer :: io_config_outputs=0
    integer :: t0OutputFlag=0
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
@@ -968,6 +969,7 @@ module module_NoahMP_hrldas_driver
    ALLOCATE ( ACCECAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated canopy evap [mm]
    ALLOCATE ( ACCETRAN  (XSTART:XEND,YSTART:YEND) )  ! accumulated transpiration [mm]
    ALLOCATE ( ACCEDIR  (XSTART:XEND,YSTART:YEND) )  ! accumulated direct soil evap [mm]
+   ALLOCATE ( ACCET  (XSTART:XEND,YSTART:YEND) )  ! accumulated total evap [mm]
 
    ALLOCATE ( SOILSAT_TOP  (XSTART:XEND,YSTART:YEND) )  ! top 2 layer soil saturation [fraction]
    ALLOCATE ( SOILSAT  (XSTART:XEND,YSTART:YEND) )  ! column integrated soil saturation [fraction]
@@ -979,6 +981,7 @@ module module_NoahMP_hrldas_driver
    ACCECAN = 0.0
    ACCETRAN = 0.0
    ACCEDIR = 0.0
+   ACCET = 0.0
 #endif
 
   COSZEN     = undefined_real
@@ -1166,39 +1169,47 @@ module module_NoahMP_hrldas_driver
 ! Crocus: Initialize glacier
 !----------------------------------------------------------------------
   if (crocus_opt /= 0) then
-     PSNOWLIQXY     = undefined_real
-     PSNOWTEMPXY    = undefined_real
-     PSNOWDZXY      = undefined_real
-     PSNOWHEATXY    = undefined_real
-     PSNOWRHOXY     = undefined_real
-     PSNOWSWEXY     = undefined_real
-     PSNOWGRAN1XY   = undefined_real
-     PSNOWGRAN2XY   = undefined_real
-     PSNOWHISTXY    = undefined_real
-     PSNOWALBXY     = undefined_real
-     PSNOWTHRUFALXY = undefined_real
-     PSNOWHEIGHTXY  = undefined_real
-     PSNOWTOTSWEXY  = undefined_real
-     FLOW_SNOW      = undefined_real
-     FLOW_ICE       = undefined_real
-     PSNOWAGEXY     = undefined_real
+     !PSNOWLIQXY     = undefined_real
+     !PSNOWTEMPXY    = undefined_real
+     !PSNOWDZXY      = undefined_real
+     !PSNOWHEATXY    = undefined_real
+     !PSNOWRHOXY     = undefined_real
+     !PSNOWSWEXY     = undefined_real
+     !PSNOWGRAN1XY   = undefined_real
+     !PSNOWGRAN2XY   = undefined_real
+     !PSNOWHISTXY    = undefined_real
+     !PSNOWALBXY     = undefined_real
+     !PSNOWTHRUFALXY = undefined_real
+     !PSNOWHEIGHTXY  = undefined_real
+     !PSNOWTOTSWEXY  = undefined_real
+     !FLOW_SNOW      = undefined_real
+     !FLOW_ICE       = undefined_real
+     !PSNOWAGEXY     = undefined_real
 
-     !PSNOWLIQXY     = 0.
-     !PSNOWTEMPXY    = 0.
-     !PSNOWDZXY      = 0.
-     !PSNOWHEATXY    = 0.
-     !PSNOWRHOXY     = 0.
-     !PSNOWSWEXY     = 0.
-     !PSNOWGRAN1XY   = 0.
-     !PSNOWGRAN2XY   = 0.
-     !PSNOWHISTXY    = 0.
-     !PSNOWALBXY     = 0.
-     !PSNOWTHRUFALXY = 0.
-     !PSNOWHEIGHTXY  = 0.
-     !PSNOWTOTSWEXY  = 0.
-     !FLOW_ICE       = 0.
-     !FLOW_SNOW      = 0.
-     !PSNOWAGEXY     = 0.
+! These should probably be kept initialized with an undefined value (above)
+! to allow tracking of cells that fall through the cracks in value updates 
+! (also worth noting that 0 is not a valid value for all of these variables).
+! However, since restarts are not currently water-masking 2d reals, this makes 
+! for odd value ranges in the LSM restarts so leaving as 0s for now.
+! On quick tests, the only one of these that changes answers if NOT initialized 
+! at 0 is PSNOWHISTXY so making sure that one is covered in value initialization
+! loop below in case we go back to undefined_real for these.
+     PSNOWLIQXY     = 0.
+     PSNOWTEMPXY    = 0.
+     PSNOWDZXY      = 0.
+     PSNOWHEATXY    = 0.
+     PSNOWRHOXY     = 0.
+     PSNOWSWEXY     = 0.
+     PSNOWGRAN1XY   = 0.
+     PSNOWGRAN2XY   = 0.
+     PSNOWHISTXY    = 0.
+     PSNOWALBXY     = 0.
+     PSNOWTHRUFALXY = 0.
+     PSNOWHEIGHTXY  = 0.
+     PSNOWTOTSWEXY  = 0.
+     FLOW_ICE       = 0.
+     FLOW_SNOW      = 0.
+     PSNOWAGEXY     = 0.
 
      WHERE(GLACINFO > 0.0) PSNOWALBXY=0.35
 
@@ -1549,6 +1560,7 @@ if (io_config_outputs .gt. 0) then
      ACCECAN = 0.0
      ACCEDIR = 0.0
      ACCETRAN = 0.0
+     ACCET = 0.0
      SFCRUNOFF = 0.0
      UDRUNOFF = 0.0
      ACSNOM = 0.0
@@ -1867,7 +1879,7 @@ end subroutine land_driver_ini
     MP_SNOW  = SNOWNCV, MP_GRAUP  = GRAUPELNCV, MP_HAIL = HAILNCV, &
     VIS_ICEALB=VIS_ICEALB &
 #ifdef WRF_HYDRO
-                , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
+                , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR, ACCET=ACCET  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
 #endif
                 )
@@ -2205,7 +2217,7 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,NPPXY,IVGTYP,87)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNXY,IVGTYP,88)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,APARXY,IVGTYP,89)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(ACCECAN+ACCEDIR+ACCETRAN),IVGTYP,90)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACCET,IVGTYP,90)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANWAT,IVGTYP,91)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILICE),IVGTYP,92)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93)

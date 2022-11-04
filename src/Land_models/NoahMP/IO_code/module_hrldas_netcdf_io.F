@@ -2877,7 +2877,7 @@ contains
     integer, dimension(3) :: nstart
     integer, dimension(3) :: ncount
 
-    where (vegtyp == ISWATER) !.and. .not. restart_flag)
+    where (vegtyp == ISWATER .and. .not. restart_flag)
        xdum = -1.E33
     elsewhere
        xdum = vardata
