@@ -85,7 +85,7 @@ CONTAINS
                MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL, &
                VIS_ICEALB  &
 #ifdef WRF_HYDRO
-               , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR, ACCET &         ! NEW output accumulator variables
+               , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
 #endif
                )
@@ -311,7 +311,6 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCECAN     ! accumulated canopy evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCETRAN    ! accumulated transpiration [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCEDIR     ! accumulated direct soil evap [mm]
-    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  ACCET       ! accumulated total evap [mm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT_TOP ! soil saturation in the top layer [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
@@ -1369,7 +1368,6 @@ CONTAINS
              if(present(ACCECAN)) ACCECAN  (I,J)                = ACCECAN(I,J) + ECAN * DT
              if(present(ACCETRAN)) ACCETRAN (I,J)                = ACCETRAN(I,J) + ETRAN * DT
              if(present(ACCEDIR)) ACCEDIR  (I,J)                = ACCEDIR(I,J) + ESOIL * DT
-             if(present(ACCET)) ACCET  (I,J) = ACCECAN  (I,J) + ACCETRAN (I,J) + ACCEDIR  (I,J)
 
 	     ! Top 2 layer soil saturation
              if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J)           = SUM(SMC(1:2) * DZS(1:2)) / SUM(parameters%smcmax(1:2) * DZS(1:2))
@@ -1521,7 +1519,6 @@ CONTAINS
                    if(present(ACCETRAN)) ACCETRAN(I,J) = 0.
                    if(present(ACCECAN))  ACCECAN(I,J)  = 0.
                    if(present(ACCEDIR))  ACCEDIR(I,J)  = ACCEDIR(I,J) + (zp_evap(1)*DT) - (ESOIL*DT)
-                   if(present(ACCET))  ACCET(I,J)  =  ACCEDIR(I,J)
                    if(present(SOILSAT_TOP)) SOILSAT_TOP (I,J) = undefined_value
                    if(present(SOILSAT))   SOILSAT(I,J) = undefined_value
 #endif
