@@ -1113,7 +1113,10 @@ CONTAINS
              STC   (      1:NSOIL)=273.16
 
              ! If a crocus glacier cell has melted out, need to reset so NoahMP can take over.
-             if (SNDPTHH .eq. 0.0) then
+             ! Note that NOAHMP_GLACIER call above updates SNDPTHH, so we are checking ZP_SNOWDZ instead.
+             ! Also note that Crocus can generate VERY small negative ZP_SNOWDZ, so we use a <= test.
+             ! The negative outputs should probably be caught and fixed in Crocus.
+             if (ZP_SNOWDZ(1,1) .le. 0.0) then
                print *, "Crocus glacier cell has melted out. Switching to NoahMP.", i, j
                GLACR = 0
                ! Resetting soil moisture to max possible for a soil (smc=1 while glacier).
