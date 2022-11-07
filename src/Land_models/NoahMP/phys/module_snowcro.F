@@ -2978,6 +2978,8 @@ DO JJ = 1,SIZE(PSNOWDZ,1)
      ! liquid water available for next layer from melting of snow
      ! which is assumed to be leaving the current layer (m):
      ZSNOWMELT(JJ,JST) = ZPHASE(JJ,JST) / (XLMTT*XRHOLW)
+     !AD: Numerical precision can cause melt to slightly exceed SWE... adding cap
+     ZSNOWMELT(JJ,JST) = min(ZSNOWMELT(JJ,JST), ZSNOWLWE(JJ,JST))
      !
      ! Cool off snow layer temperature due to melt:
      ZSNOWTEMP(JJ,JST) = PSNOWTEMP(JJ,JST) - ZPHASE(JJ,JST) / (PSCAP(JJ,JST)*PSNOWDZ(JJ,JST))
