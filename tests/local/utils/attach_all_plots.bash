@@ -10,6 +10,10 @@ if [[ ! -d $diffs ]]; then
     exit 0
 fi
 
+# set for repo authentication
+git config --global user.email "gaydos@ucar.edu"
+git config --global user.name "Andy Gaydos"
+
 cd $diffs
 
 for d in `ls -1`
