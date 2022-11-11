@@ -75,7 +75,7 @@ jobs:
 
       - name: Attach diff plots to PR
         if: ${{ always() }}
-         env: 
+        env: 
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           cd $GITHUB_WORKSPACE/candidate/tests/local/utils
