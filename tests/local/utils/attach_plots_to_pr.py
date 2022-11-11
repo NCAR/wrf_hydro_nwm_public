@@ -101,6 +101,7 @@ def runcmd(cmd, pwd=None, logError=True):
     except subprocess.CalledProcessError as e:
         if logError:
             logger.error(e)
+            logger.error(e.output)
         return None
 
 
@@ -260,4 +261,4 @@ def run():
 if __name__ == "__main__":
     if run():
         exit(0)
-    exit(-1)
+    exit(0))
