@@ -11,8 +11,8 @@ if [[ ! -d $diffs ]]; then
 fi
 
 # set for repo authentication
-git config --global user.email "gaydos@ucar.edu"
-git config --global user.name "Andy Gaydos"
+git config --global user.email "model.tester@ucar.edu"
+git config --global user.name "Model Tester"
 
 cd $diffs
 

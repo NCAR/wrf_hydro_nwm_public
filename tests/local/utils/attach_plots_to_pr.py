@@ -261,4 +261,4 @@ def run():
 if __name__ == "__main__":
     if run():
         exit(0)
-    exit(0)
+    exit(-1)

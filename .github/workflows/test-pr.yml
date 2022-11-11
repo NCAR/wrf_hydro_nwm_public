@@ -76,7 +76,7 @@ jobs:
       - name: Attach diff plots to PR
         if: ${{ always() }}
         env: 
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.SSH_TOKEN}}
         run: |
           cd $GITHUB_WORKSPACE/candidate/tests/local/utils
           bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
