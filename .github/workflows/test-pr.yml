@@ -80,6 +80,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/candidate/tests/local/utils
           bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
+          ls -Ral /tmp/wrf_hydro_nwm_public
+
+          ls /tmp
         
       - name: Archive test results to GitHub
         if: ${{ always() }}
