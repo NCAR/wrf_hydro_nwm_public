@@ -1,5 +1,6 @@
 import sys
 import time
+import os
 
 from wrfhydropy import *
 
@@ -40,6 +41,35 @@ def print_diffs(diffs):
             eprint('\n' + key + '\n')
             for a_diff in diff_set:
                 eprint(a_diff)
+
+
+def plot_diffs(output_dir, candidatename, referencename, testname):
+    """
+    Function to create diff plots
+    Args:
+        output_dir: The output directory for this configuration
+        candidatename: The name of the candidate run. Must match the name of the 
+                       model output directory
+        referencename: The name of the reference run. Must match the name of the 
+                       model output directory
+        testname: The name of the test being run. Plots will be placed in this
+                       named directory
+    """
+    candidate = output_dir / candidatename
+    reference = output_dir / referencename
+    plots = output_dir / "diff_plots" / testname
+    script_dir = output_dir / "../candidate_can_pytest/tests/local/utils"
+
+    gen_script = script_dir / "generate_diff_plots.py"
+    thresholds = script_dir / "thresholds.csv"
+
+    cmd = f"python {gen_script} -f ldas:ACCET,SNOWH,FIRA -f rtout -o {plots} " + \
+        f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
+        f"-n -t {thresholds}"
+
+    print(f"\nPlotting model diffs using command {cmd}\n", end="")
+
+    os.system(cmd)
 
 
 def make_sim(domain_dir,

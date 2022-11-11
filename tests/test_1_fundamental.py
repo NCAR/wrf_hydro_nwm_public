@@ -11,7 +11,7 @@ import wrfhydropy
 import xarray as xr
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from utilities import wait_job, print_diffs
+from utilities import wait_job, print_diffs, plot_diffs
 
 # #################################
 # Setup the test with a domain, a candidate, and a reference.
@@ -247,6 +247,7 @@ def test_ncores_candidate(output_dir, exe_cmd, ncores, xrcmp_n_cores):
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
         print_diffs(diffs)
+        plot_diffs(output_dir, 'run_candidate', 'ncores_candidate', 'ncores')
     assert has_diffs is False, \
         'Outputs for candidate run with ncores do not match outputs with ncores-1'
 
@@ -375,5 +376,6 @@ def test_perfrestart_candidate(output_dir, xrcmp_n_cores):
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
         print_diffs(diffs)
+        plot_diffs(output_dir, 'run_candidate', 'restart_candidate', 'restart' )
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'

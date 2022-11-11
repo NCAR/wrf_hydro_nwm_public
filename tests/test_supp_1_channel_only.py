@@ -11,7 +11,7 @@ import wrfhydropy
 import xarray as xr
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from utilities import print_diffs, wait_job
+from utilities import print_diffs, wait_job, plot_diffs
 
 EXCLUDE_VARS_CHAN_ONLY = [
     'stc1',
@@ -260,6 +260,8 @@ def test_channel_only_matches_full(
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
         print_diffs(diffs)
+        plot_diffs(output_dir, 'channel_only_candidate_full_model_run', 
+                    'channel_only_candidate_run', 'channel_only')
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run do not match outputs from candidate run'
 
@@ -358,6 +360,8 @@ def test_ncores_candidate_channel_only(
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
         print_diffs(diffs)
+        plot_diffs(output_dir, 'channel_only_candidate_ncores', 
+                    'channel_only_candidate_run', 'channel_only_ncores')
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run with ncores do not match outputs with ncores-1'
 
@@ -472,5 +476,7 @@ def test_perfrestart_candidate_channel_only(output_dir, xrcmp_n_cores):
     has_diffs = any(value != 0 for value in diffs.diff_counts.values())
     if has_diffs:
         print_diffs(diffs)
+        plot_diffs(output_dir, 'channel_only_candidate_run',
+                    'channel_only_candidate_restart', 'channel_only_restart' )
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'

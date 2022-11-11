@@ -535,14 +535,15 @@ def plot_timeseries(datasets, feature_id, outpath, file_type, variable, base_lab
     return True
 
 
-def run():
+def run(options=None):
     """
     Create plots based on the command line options
     Returns: True on success, False on error
 
     """
-    options = get_options()
-    if options is None:
+    if not options:
+        options = get_options()
+    if not options:
         return False
 
     for type in options.filetypes.keys():
