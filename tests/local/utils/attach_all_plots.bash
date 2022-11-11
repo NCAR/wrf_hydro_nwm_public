@@ -3,8 +3,14 @@
 PR=$1
 CONFIG=$2
 cwd=`pwd`
+diffs=$GITHUB_WORKSPACE/test_report/$CONFIG/diff_plots
 
-cd $GITHUB_WORKSPACE/test_report/$CONFIG/diff_plots
+if [[ ! -d $diffs ]]; then
+    echo "No diff plots to attach!"
+    exit 0
+fi
+
+cd $diffs
 
 for d in `ls -1`
 do
