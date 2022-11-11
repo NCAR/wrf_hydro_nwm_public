@@ -37,7 +37,7 @@ jobs:
       - name: Run script
         if: ${{ always() }}
         run: |
-          cd $GITHUB_WORKSPACE/candidate/tests/local
+          cd $GITHUB_WORKSPACE/candidate/tests/local/utils
           python attach_plots_to_pr.py -h
           echo "PR number:"
           echo $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
