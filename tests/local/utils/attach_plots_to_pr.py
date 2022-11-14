@@ -115,7 +115,7 @@ def clone_repo(repo, outdir, token=None):
     """
     try:
         if not os.path.isdir(outdir):
-            login = "" if token is None else f"{token}@"
+            login = "" if token is None else f"x-access-token:{token}@"
             runcmd(f"git clone https://{login}github.com/{repo}", TEMP_DIR, logError=False)
 
         logging.debug("Checking out latest images commit")
