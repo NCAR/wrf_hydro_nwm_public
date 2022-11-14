@@ -51,6 +51,7 @@ def get_options():
                         + " file containing a token")
     parser.add_argument("-r", "--repo", dest="repo", required=True, help="GHithub repository name")
     parser.add_argument("-p", "--pull", dest="pull", required=True, type=int, help="Pull request number")
+    parser.add_argument("--title", dest="title", default=None, help="Title to give to this set of plots")
 
     parser.add_argument("-d", dest="debug", action="store_true", default=False, help="Print debug messages")
 
@@ -199,7 +200,7 @@ def add_images(images, outdir, pull):
         return False
 
 
-def create_pull_comment(gh, repo, sha, images, pull):
+def create_pull_comment(gh, repo, sha, images, pull, title=None):
     """
     Add uploaded images to the pull request comments using the commit hash
     @param gh: The logged-in pygithub object
@@ -207,6 +208,7 @@ def create_pull_comment(gh, repo, sha, images, pull):
     @param sha: The commit hash from the uploaded image commit
     @param images: A list of images to attach
     @param pull: The pull request number
+    @param title: The title to give to this set of plots
     @return: True on success, False on error
     """
     try:
@@ -215,6 +217,10 @@ def create_pull_comment(gh, repo, sha, images, pull):
 
         logger.debug("Assembling comment images")
         comment = ""
+
+        if title:
+            comment += "## " + title + "\n"
+
         for img in images:
             img = os.path.basename(img)
             path = f"../blob/{sha}/images_{pull}/{img}"
@@ -250,7 +256,7 @@ def run():
     sha = add_images(options.images, outdir, options.pull)
     if not sha: return False
 
-    if not create_pull_comment(gh, options.repo, sha, options.images, options.pull):
+    if not create_pull_comment(gh, options.repo, sha, options.images, options.pull, options.title):
         return False
 
     logging.debug("Done")
