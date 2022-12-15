@@ -7571,7 +7571,9 @@ ENDIF   ! CROPTYPE == 0
 
    ! Negative soil moisture check
    IF ( ANY(SH2O < 0.0) ) THEN
-     write(*,*) "WARNING: Negative smc adjustment"
+#ifdef HYDRO_D
+     write(*,*) "WARNING (SSTEP): Negative smc adjustment"
+#endif
      ! WATMIN: in soilwater check this is a fixed value of 0.01 mm; why not smcdry?
      ! For this formulation, we convert 0.01mm to a soil water fraction per layer.
      ! So WATMIN = (0.01/1000.)/DZSNSO to convert to units of m/m for each layer.
@@ -7587,9 +7589,11 @@ ENDIF   ! CROPTYPE == 0
      WATMIN      = 0.00001/DZSNSO(NSOIL) ! fraction
      WMINUS      = MAX ((WATMIN-SH2O(NSOIL))*DZSNSO(NSOIL), 0.0 )  ! m
      SH2O(NSOIL) = MAX(WATMIN, SH2O(NSOIL))
+#ifdef HYDRO_D
      IF (WMINUS .ne. 0) then
-        write(*,*) "WARNING: SMC deficit - this water will be removed from subsurface runoff (meters).", WMINUS
+        write(*,*) "WARNING (SSTEP): SMC deficit - this water will be removed from subsurface runoff (meters).", WMINUS
      END IF
+#endif
    END IF
 
    SMC = SH2O + SICE

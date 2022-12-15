@@ -1166,39 +1166,47 @@ module module_NoahMP_hrldas_driver
 ! Crocus: Initialize glacier
 !----------------------------------------------------------------------
   if (crocus_opt /= 0) then
-     PSNOWLIQXY     = undefined_real
-     PSNOWTEMPXY    = undefined_real
-     PSNOWDZXY      = undefined_real
-     PSNOWHEATXY    = undefined_real
-     PSNOWRHOXY     = undefined_real
-     PSNOWSWEXY     = undefined_real
-     PSNOWGRAN1XY   = undefined_real
-     PSNOWGRAN2XY   = undefined_real
-     PSNOWHISTXY    = undefined_real
-     PSNOWALBXY     = undefined_real
-     PSNOWTHRUFALXY = undefined_real
-     PSNOWHEIGHTXY  = undefined_real
-     PSNOWTOTSWEXY  = undefined_real
-     FLOW_SNOW      = undefined_real
-     FLOW_ICE       = undefined_real
-     PSNOWAGEXY     = undefined_real
+     !PSNOWLIQXY     = undefined_real
+     !PSNOWTEMPXY    = undefined_real
+     !PSNOWDZXY      = undefined_real
+     !PSNOWHEATXY    = undefined_real
+     !PSNOWRHOXY     = undefined_real
+     !PSNOWSWEXY     = undefined_real
+     !PSNOWGRAN1XY   = undefined_real
+     !PSNOWGRAN2XY   = undefined_real
+     !PSNOWHISTXY    = undefined_real
+     !PSNOWALBXY     = undefined_real
+     !PSNOWTHRUFALXY = undefined_real
+     !PSNOWHEIGHTXY  = undefined_real
+     !PSNOWTOTSWEXY  = undefined_real
+     !FLOW_SNOW      = undefined_real
+     !FLOW_ICE       = undefined_real
+     !PSNOWAGEXY     = undefined_real
 
-     PSNOWLIQXY     = 0
-     PSNOWTEMPXY    = 0
-     PSNOWDZXY      = 0
-     PSNOWHEATXY    = 0
-     PSNOWRHOXY     = 0
-     PSNOWSWEXY     = 0
-     PSNOWGRAN1XY   = 0
-     PSNOWGRAN2XY   = 0
-     PSNOWHISTXY    = 0
-     PSNOWALBXY     = 0
-     PSNOWTHRUFALXY = 0
-     PSNOWHEIGHTXY  = 0
-     PSNOWTOTSWEXY  = 0
-     FLOW_ICE       = 0
-     FLOW_SNOW      = 0
-     PSNOWAGEXY     = 0
+! These should probably be kept initialized with an undefined value (above)
+! to allow tracking of cells that fall through the cracks in value updates 
+! (also worth noting that 0 is not a valid value for all of these variables).
+! However, since restarts are not currently water-masking 2d reals, this makes 
+! for odd value ranges in the LSM restarts so leaving as 0s for now.
+! On quick tests, the only one of these that changes answers if NOT initialized 
+! at 0 is PSNOWHISTXY so making sure that one is covered in value initialization
+! loop below in case we go back to undefined_real for these.
+     PSNOWLIQXY     = 0.
+     PSNOWTEMPXY    = 0.
+     PSNOWDZXY      = 0.
+     PSNOWHEATXY    = 0.
+     PSNOWRHOXY     = 0.
+     PSNOWSWEXY     = 0.
+     PSNOWGRAN1XY   = 0.
+     PSNOWGRAN2XY   = 0.
+     PSNOWHISTXY    = 0.
+     PSNOWALBXY     = 0.
+     PSNOWTHRUFALXY = 0.
+     PSNOWHEIGHTXY  = 0.
+     PSNOWTOTSWEXY  = 0.
+     FLOW_ICE       = 0.
+     FLOW_SNOW      = 0.
+     PSNOWAGEXY     = 0.
 
      WHERE(GLACINFO > 0.0) PSNOWALBXY=0.35
 
@@ -1210,6 +1218,7 @@ module module_NoahMP_hrldas_driver
         WHERE(GLACINFO > 0.0) PSNOWGRAN1XY(:,kk,:) = 0.0009
         WHERE(GLACINFO > 0.0) PSNOWGRAN2XY(:,kk,:) = 99    ! 1
         WHERE(GLACINFO > 0.0) PSNOWAGEXY  (:,kk,:) = 20000
+        WHERE(GLACINFO > 0.0) PSNOWHISTXY  (:,kk,:) = 0.
      enddo
 
      CALL INI_CSTS
@@ -2205,7 +2214,7 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,PSNXY,IVGTYP,88)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,APARXY,IVGTYP,89)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(ACCECAN+ACCEDIR+ACCETRAN),IVGTYP,90)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(CANLIQXY+CANICEXY),IVGTYP,91)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,CANWAT,IVGTYP,91)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILICE),IVGTYP,92)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT_TOP),IVGTYP,93)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,(SOILSAT),IVGTYP,94)

@@ -1353,8 +1353,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
    else if(nlst(1)%io_config_outputs .eq. 6) then
       ! Diagnostics
-      fileMeta%outFlag(:) = [0,0,0,0,0,0,0,0,0,0,& !1-10
-                             1,1,1,1,1,0,1,0,0,1,& !11-20
+      fileMeta%outFlag(:) = [0,0,0,0,0,0,1,0,0,0,& !1-10
+                             1,1,1,1,1,0,1,1,0,1,& !11-20
                              sfcflag,0,0,0,0,0,0,1,1,1,& !21-30
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,1,0,0,0,0,0,& !41-50
@@ -1362,13 +1362,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,0,0,1,&     !91-98
+                             1,1,1,1,1,1,1,1,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
-                             0,0,0,&               !108-110
-                             0,0,0,&               !111-113
-                             0,0,0]                !114
+                             1,1,0,&               !108-110
+                             1,0,0,&               !111-113
+                             1,1,1]                !114
    else
       call nwmCheck(diagFlag,1,'ERROR: Invalid IOC flag provided by namelist file.')
    endif
