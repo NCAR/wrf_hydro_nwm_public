@@ -216,7 +216,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
         filepattern: The type of file to compare (e.g. LDAS, CHANOBS). Must be a unique
                      filenme pattern shared by these file types
 
-    Returns: A dict {'base': base_dataset, 'comp': comp_dataset}
+    Returns: A dict {'base': base_dataset, 'comp': comp_dataset}, or None
 
     """
     logger.info("Opening datasets...")
@@ -227,7 +227,10 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
         logger.debug("Opening %s" % c)
 
         if useDask:
-            ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim="time")
+            try:
+                ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim="time")
+            except:
+                ds = None
         else:
             a = []
             for f in sorted(os.listdir(c)):
@@ -242,7 +245,11 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
                 a.append(ds)
 
             # merge files along the time axis
-            ds = xr.merge(a)
+            ds = None if len(a) == -0 else xr.merge(a)
+
+        if ds is None:
+            logger.info("No datasets found")
+            return None
 
         if c == base_path and 'base' not in datasets:
             datasets['base'] = ds
@@ -550,6 +557,9 @@ def run(options=None):
     for type in options.filetypes.keys():
         datasets = get_datasets(options.base_path, options.comp_path, FILE_TYPES[type]['pattern'], useDask=options.use_dask)
 
+        if datasets is None:
+            continue
+        
         for variable in options.filetypes[type]:
             success = process_variable(type, variable, datasets, options.outdir, options.base_label,
                                        options.comp_label, options.ids)
