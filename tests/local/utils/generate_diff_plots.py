@@ -384,8 +384,6 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
             axes[row, col].boxplot(data)
             num_nans = len(ds) - len(data)
 
-            print("%s, %s" % (len(ds),len(data) ))
-
             if num_nans > 0:
                 y = 0 if len(data) == 0 else data.min()
                 axes[row,col].text(1, y, f"                   # NaNs: {num_nans}")
