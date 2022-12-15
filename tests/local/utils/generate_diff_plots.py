@@ -245,7 +245,10 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
                 a.append(ds)
 
             # merge files along the time axis
-            ds = None if len(a) == -0 else xr.merge(a)
+            try:
+                xr.merge(a)
+            except:
+                ds = None
 
         if ds is None:
             logger.info("No datasets found")
@@ -559,7 +562,7 @@ def run(options=None):
 
         if datasets is None:
             continue
-        
+
         for variable in options.filetypes[type]:
             success = process_variable(type, variable, datasets, options.outdir, options.base_label,
                                        options.comp_label, options.ids)
