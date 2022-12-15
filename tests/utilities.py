@@ -72,7 +72,7 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
 
     cmd_gridded = cmd + " -f ldas:ACCET,SNOWH,FIRA -f rtout"
 
-    print(f"\nPlotting gridded model diffs using command {cmd_gridded}\n", end="")
+    print("\nPlotting gridded model diffs...")
     os.system(cmd_gridded)
 
     if feature_ids is None:
@@ -80,12 +80,12 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
 
     if 'channels' in feature_ids:
         cmd_feature = cmd + " -f chrtout -i '" + ",".join(feature_ids['channels']) + "'"
-        print(f"\nPlotting channel model diffs using command {cmd_feature}\n", end="")
+        print("\nPlotting channel model diffs...")
         os.system(cmd_feature)
 
     if 'lakes' in feature_ids:
         cmd_feature = cmd + " -f lakeout -i '" + ",".join(feature_ids['lakes']) + "'"
-        print(f"\nPlotting lake model diffs using command {cmd_feature}\n", end="")
+        print("\nPlotting lake model diffs...")
         os.system(cmd_feature)
 
 
