@@ -310,7 +310,8 @@ def main():
         domain_dir = output_dir.joinpath('example_case')
 
         if domain_tag == 'dev':
-            file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
+            #file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
+            file_id = '1OmshS_HKQmuV04pONw9JsNSFaCzSuHco'
             download_file_from_google_drive(file_id, str(output_dir.joinpath(
                 'gdrive_testcase.tar.gz')))
 

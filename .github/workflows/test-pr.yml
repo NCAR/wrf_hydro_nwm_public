@@ -60,9 +60,7 @@ jobs:
           docker run -e TRAVIS=1 -t --name test_container \
            -v $GITHUB_WORKSPACE/candidate:/home/docker/candidate \
            -v $GITHUB_WORKSPACE/reference:/home/docker/reference \
-           andygaydos/wrfhydro:modeltesting --config ${{ matrix.configuration }} --domain_tag dev
-
-        # wrfhydro/dev:modeltesting --config ${{ matrix.configuration }} --domain_tag dev
+           wrfhydro/dev:modeltesting:modeltesting --config ${{ matrix.configuration }} --domain_tag dev       
       
       - name: Copy test results from container
         if: ${{ always() }}
