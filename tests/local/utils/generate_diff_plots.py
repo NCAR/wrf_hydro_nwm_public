@@ -216,7 +216,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
         filepattern: The type of file to compare (e.g. LDAS, CHANOBS). Must be a unique
                      filenme pattern shared by these file types
 
-    Returns: A dict {'base': base_dataset, 'comp': comp_dataset}
+    Returns: A dict {'base': base_dataset, 'comp': comp_dataset}, or None
 
     """
     logger.info("Opening datasets...")
@@ -227,7 +227,10 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
         logger.debug("Opening %s" % c)
 
         if useDask:
-            ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim="time")
+            try:
+                ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim="time")
+            except:
+                ds = None
         else:
             a = []
             for f in sorted(os.listdir(c)):
@@ -242,7 +245,14 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
                 a.append(ds)
 
             # merge files along the time axis
-            ds = xr.merge(a)
+            try:
+                xr.merge(a)
+            except:
+                ds = None
+
+        if ds is None:
+            logger.info("No datasets found")
+            return None
 
         if c == base_path and 'base' not in datasets:
             datasets['base'] = ds
@@ -361,7 +371,7 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
     if range:
         start, end = (range[0], range[1])
         title += f"\n{start} to {end}"
-    if value_range:
+    if value_range and value_range[1] != value_range[0]:
         df = float(dataset[varname].max().compute())
         max_err = "{0:.4f}".format(df / (value_range[1] - value_range[0]) * 100)
         title += f"\nValue range {value_range[0]} to {value_range[1]}, Max error {max_err}%"
@@ -385,7 +395,8 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
             num_nans = len(ds) - len(data)
 
             if num_nans > 0:
-                axes[row,col].text(1, data.min(), f"                   # NaNs: {num_nans}")
+                y = 0 if len(data) == 0 else data.min()
+                axes[row,col].text(1, y, f"                   # NaNs: {num_nans}")
 
         axes[row,col].set_title(label, fontsize=30, weight='bold')
 
@@ -535,18 +546,22 @@ def plot_timeseries(datasets, feature_id, outpath, file_type, variable, base_lab
     return True
 
 
-def run():
+def run(options=None):
     """
     Create plots based on the command line options
     Returns: True on success, False on error
 
     """
-    options = get_options()
-    if options is None:
+    if not options:
+        options = get_options()
+    if not options:
         return False
 
     for type in options.filetypes.keys():
         datasets = get_datasets(options.base_path, options.comp_path, FILE_TYPES[type]['pattern'], useDask=options.use_dask)
+
+        if datasets is None:
+            continue
 
         for variable in options.filetypes[type]:
             success = process_variable(type, variable, datasets, options.outdir, options.base_label,

@@ -1,5 +1,6 @@
-   TYPE namelist_rt_field
-
+module module_namelist_inc
+   implicit none
+   type namelist_rt_field
        integer :: nsoil, SOLVEG_INITSWC
        real,allocatable,dimension(:) :: ZSOIL8
        real*8 :: out_dt, rst_dt
@@ -93,5 +94,5 @@
 !#endif
 
 
-   END TYPE namelist_rt_field
-
+   end type namelist_rt_field
+end module module_namelist_inc

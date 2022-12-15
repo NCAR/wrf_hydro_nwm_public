@@ -53,8 +53,8 @@ def run_tests(
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
-    candidate_source_dir = candidate_dir + '/trunk/NDHMS'
-    reference_source_dir = reference_dir + '/trunk/NDHMS'
+    candidate_source_dir = candidate_dir + '/src'
+    reference_source_dir = reference_dir + '/src'
 
     # Load modules and override nnodes/ncores if running on cheyenne
     hostname = socket.gethostname()

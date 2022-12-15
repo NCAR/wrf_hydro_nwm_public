@@ -1142,7 +1142,7 @@ subroutine disaggregateDomain(IX, JX, NSOIL, IXRT, JXRT, AGGFACTRT, &
                               SMCRT(IXXRT,JYYRT,KRT),SMCMAXRT(IXXRT,JYYRT,KRT)
                      call hydro_stop("In disaggregateDomain() - SMCMAX exceeded upon disaggregation3")
                   ELSE IF (SMCRT(IXXRT,JYYRT,KRT).LE.0.) THEN
-                     print *, "FATAL ERROR: SMCRT fully depleted upon disaggregation...", &
+                     print *, "SMCRT fully depleted upon disaggregation...", &
                          ixxrt,jyyrt,krt,&
                          "SMCRT=",SMCRT(IXXRT,JYYRT,KRT),"SH2OWGT=",SH2OWGT(IXXRT,JYYRT,KRT),&
                          "SH2O=",SH2OX(I,J,KRT)
