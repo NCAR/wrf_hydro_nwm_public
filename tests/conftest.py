@@ -396,6 +396,6 @@ def feature_ids(request):
     domain_dir = domain_dir / "testing_diff_feature_ids.json"
 
     try:
-        return json_loads(open(domain_dir).read())
+        return json.loads(open(domain_dir).read())
     except:
         return None
