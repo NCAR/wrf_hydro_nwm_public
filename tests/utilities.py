@@ -43,7 +43,7 @@ def print_diffs(diffs):
                 eprint(a_diff)
 
 
-def plot_diffs(output_dir, candidatename, referencename, testname):
+def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=None):
     """
     Function to create diff plots
     Args:
@@ -54,6 +54,8 @@ def plot_diffs(output_dir, candidatename, referencename, testname):
                        model output directory
         testname: The name of the test being run. Plots will be placed in this
                        named directory
+        feature_ids: A dict containing a list of channels and lake ids to create diff
+                       plots for, or None. If defined, should be {'channels': [], 'lakes': []}
     """
     candidate = output_dir / candidatename
     reference = output_dir / referencename
@@ -63,13 +65,28 @@ def plot_diffs(output_dir, candidatename, referencename, testname):
     gen_script = script_dir / "generate_diff_plots.py"
     thresholds = script_dir / "thresholds.csv"
 
-    cmd = f"python {gen_script} -f ldas:ACCET,SNOWH,FIRA -f rtout -o {plots} " + \
+
+    cmd = f"python {gen_script} -o {plots} " + \
         f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
         f"-n -t {thresholds}"
 
-    print(f"\nPlotting model diffs using command {cmd}\n", end="")
+    cmd_gridded = cmd + " -f ldas:ACCET,SNOWH,FIRA -f rtout"
 
-    os.system(cmd)
+    print(f"\nPlotting gridded model diffs using command {cmd_gridded}\n", end="")
+    os.system(cmd_gridded)
+
+    if feature_ids is None:
+        return
+
+    if 'channels' in feature_ids:
+        cmd_feature = cmd + " -f chrtout -i '" + ",".join(feature_ids['channels']) + "'"
+        print(f"\nPlotting channel model diffs using command {cmd_feature}\n", end="")
+        os.system(cmd_feature)
+
+    if 'lakes' in feature_ids:
+        cmd_feature = cmd + " -f lakeout -i '" + ",".join(feature_ids['lakes']) + "'"
+        print(f"\nPlotting lake model diffs using command {cmd_feature}\n", end="")
+        os.system(cmd_feature)
 
 
 def make_sim(domain_dir,

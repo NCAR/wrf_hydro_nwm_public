@@ -13,7 +13,7 @@ from utilities import print_diffs, plot_diffs
 EXCLUDE_VARS = ['reference_time']
 
 # regression question
-def test_regression_data(output_dir, xrcmp_n_cores):
+def test_regression_data(output_dir, xrcmp_n_cores, feature_ids):
     print("\nQuestion: The candidate run data values match the reference run?\n", end="")
     print('\n')
 
@@ -44,7 +44,7 @@ def test_regression_data(output_dir, xrcmp_n_cores):
     has_data_diffs = any(value != 0 for value in data_diffs.diff_counts.values())
     if has_data_diffs:
         print_diffs(data_diffs)
-        plot_diffs(output_dir, 'run_candidate', 'run_reference', 'regression_output')
+        plot_diffs(output_dir, 'run_candidate', 'run_reference', 'regression_output', feature_ids)
     assert has_data_diffs is False, \
         'Data values in outputs for candidate run do not match reference run'
 

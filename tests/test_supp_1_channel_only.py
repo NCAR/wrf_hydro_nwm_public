@@ -209,7 +209,8 @@ def test_run_candidate_channel_only(
 def test_channel_only_matches_full(
     candidate_channel_only_sim,
     output_dir,
-    xrcmp_n_cores
+    xrcmp_n_cores,
+    feature_ids
 ):
 
     if candidate_channel_only_sim.model.model_config.lower().find('nwm') < 0:
@@ -261,7 +262,7 @@ def test_channel_only_matches_full(
     if has_diffs:
         print_diffs(diffs)
         plot_diffs(output_dir, 'channel_only_candidate_full_model_run', 
-                    'channel_only_candidate_run', 'channel_only')
+                    'channel_only_candidate_run', 'channel_only', feature_ids)
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run do not match outputs from candidate run'
 
@@ -271,7 +272,8 @@ def test_ncores_candidate_channel_only(
     output_dir,
     ncores,
     exe_cmd,
-    xrcmp_n_cores
+    xrcmp_n_cores,
+    feature_ids
 ):
 
     candidate_channel_only_sim_file = \
@@ -361,12 +363,12 @@ def test_ncores_candidate_channel_only(
     if has_diffs:
         print_diffs(diffs)
         plot_diffs(output_dir, 'channel_only_candidate_ncores', 
-                    'channel_only_candidate_run', 'channel_only_ncores')
+                    'channel_only_candidate_run', 'channel_only_ncores', feature_ids)
     assert has_diffs is False, \
         'Outputs for candidate_channel_only run with ncores do not match outputs with ncores-1'
 
 
-def test_perfrestart_candidate_channel_only(output_dir, xrcmp_n_cores):
+def test_perfrestart_candidate_channel_only(output_dir, xrcmp_n_cores, feature_ids):
 
     candidate_channel_only_sim_file = \
         output_dir / 'channel_only_candidate_run' / 'WrfHydroSim.pkl'
@@ -477,6 +479,6 @@ def test_perfrestart_candidate_channel_only(output_dir, xrcmp_n_cores):
     if has_diffs:
         print_diffs(diffs)
         plot_diffs(output_dir, 'channel_only_candidate_run',
-                    'channel_only_candidate_restart', 'channel_only_restart' )
+                    'channel_only_candidate_restart', 'channel_only_restart', feature_ids )
     assert has_diffs is False, \
         'Outputs for candidate run do not match outputs from candidate restart run'

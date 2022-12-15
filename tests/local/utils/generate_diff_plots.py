@@ -361,7 +361,7 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
     if range:
         start, end = (range[0], range[1])
         title += f"\n{start} to {end}"
-    if value_range:
+    if value_range and value_range[1] != value_range[0]:
         df = float(dataset[varname].max().compute())
         max_err = "{0:.4f}".format(df / (value_range[1] - value_range[0]) * 100)
         title += f"\nValue range {value_range[0]} to {value_range[1]}, Max error {max_err}%"
@@ -384,8 +384,11 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
             axes[row, col].boxplot(data)
             num_nans = len(ds) - len(data)
 
+            print("%s, %s" % (len(ds),len(data) ))
+
             if num_nans > 0:
-                axes[row,col].text(1, data.min(), f"                   # NaNs: {num_nans}")
+                y = 0 if len(data) == 0 else data.min()
+                axes[row,col].text(1, y, f"                   # NaNs: {num_nans}")
 
         axes[row,col].set_title(label, fontsize=30, weight='bold')
 
