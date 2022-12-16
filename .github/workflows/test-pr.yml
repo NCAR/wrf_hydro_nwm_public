@@ -3,7 +3,7 @@ name: WRF-Hydro CI
 on:
   push:
     branches: [ master, v5.2.x ]
-  pull_request:
+  pull_request_target:
     branches: [ master, v5.2.x ]
 
   # Allows you to run this workflow manually from the Actions tab
