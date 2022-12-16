@@ -84,5 +84,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test-reports
-          path: ${{ github.workspace }}/test_report/**.html
-        
+          path: |
+            ${{ github.workspace }}/test_report/**.html
+            ${{ github.workspace }}/test_report/*/diff_plots
