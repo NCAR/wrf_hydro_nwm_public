@@ -646,7 +646,9 @@ contains
 #endif
     close(12)
 
-    call read_crocus_namelist(crocus_opts)
+    if (sys_cpl == 1) then
+       call read_crocus_namelist(crocus_opts)
+    endif
 ! #ifdef MPP_LAND
 !     endif
 ! #endif
