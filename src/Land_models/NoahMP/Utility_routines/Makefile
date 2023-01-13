@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -10,7 +10,7 @@ OBJS = \
 	module_model_constants.o \
 	module_wrf_utilities.o \
 	kwm_string_utilities.o
-	
+
 CPPHRLDAS = -D_HRLDAS_OFFLINE_
 
 
@@ -18,7 +18,7 @@ all:	$(OBJS)
 
 .F.o:
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(MODFLAG) $(FREESOURCE) $(*).F
 	@echo ""
 
 #
@@ -31,4 +31,3 @@ all:	$(OBJS)
 
 clean:
 	$(RM) *.o *.mod *.stb *~
-
