@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module kwm_grid_utilities
@@ -385,12 +385,12 @@ contains
 
 ! Compute the kernel
 
-! I'd rather do it in one step, going directly to my vector v, 
+! I'd rather do it in one step, going directly to my vector v,
 ! but I don't see how to be able to do that cleanly and still
 ! correct for the error (how much the sum differs from 1.0).
 
 ! First I compute the two-dimensional kernel array.
-    cval = 1./(twopi*sigsq) 
+    cval = 1./(twopi*sigsq)
     do i = 1, fsz
        x = float(hsz-i)
        do j = 1, fsz
@@ -442,7 +442,7 @@ contains
     real, dimension(ix,jx), intent(in)  :: slab1
     real, dimension(ix,jx), intent(out) :: slab2
     integer :: ie,je,i,j
-   
+
     IE=IX-1
     JE=JX-1
     DO I=2,IE
@@ -462,7 +462,7 @@ contains
     SLAB2(1,JX)=SLAB1(1,JE)
     SLAB2(IX,JX)=SLAB1(IE,JE)
     SLAB2(IX,1)=SLAB1(IE,1)
-   
+
   end subroutine crs2dot
 
 !KWM  SUBROUTINE MQD (NOBS, XC, YC, DAT, IX, JX, A1)
@@ -484,14 +484,14 @@ contains
 !KWM!         YC (nobs) :: 2nd coordinate of the observations
 !KWM!         IX        :: 1st dimension of first-guess and analysis arrays
 !KWM!         JX        :: 2nd dimension of first-guess and analysis arrays
-!KWM!         A1(ix,jx) :: dimension(ix,jx):: first guess; 
+!KWM!         A1(ix,jx) :: dimension(ix,jx):: first guess;
 !KWM!
 !KWM! ON EXIT:
 !KWM!         A1(ix,jx) :: Objective analysis
 !KWM!
 !KWM!  PROGRAMMED BY JIM BRESCH NCAR/UW    12/14/94
 !KWM!  Adapted to use blas routines by Kevin W. Manning.
-!KWM!  Further adapted, improved efficiency.  
+!KWM!  Further adapted, improved efficiency.
 !KWM!  Dropped into kwm modules package, October 2001.
 !KWM
 !KWM! As far as coordinate values:

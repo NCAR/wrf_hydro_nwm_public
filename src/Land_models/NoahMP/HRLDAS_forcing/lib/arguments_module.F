@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module arguments_module
@@ -278,7 +278,7 @@ contains
     else
 ! STRING is a default string value.
 ! Handle the case of optional unflagged string arguments.
-    
+
        if (numarg > 0) then
           if (harg(1)(1:1) == "-") then
              call print_help
@@ -326,7 +326,7 @@ contains
     integer :: nval, i, ierr
 
     call initialize
-    
+
     if (numarg /= 1) then
        write(*,'(/,"WARNING: A final command-line argument MUST be present.")')
        call print_help
@@ -359,7 +359,7 @@ contains
     enddo
 
   end subroutine argsub
-    
+
 !==============================================================================
 
   subroutine print_help
@@ -417,4 +417,3 @@ end module arguments_module
 !KWM  print*, 'flnm = ', trim(flnm)
 !KWM
 !KWMend program test1
-

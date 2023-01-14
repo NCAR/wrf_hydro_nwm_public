@@ -3,25 +3,25 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_HRLDAS_HYDRO
 
-! NDHMS  module   
+! NDHMS  module
 #ifdef MPP_LAND
     use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id, mpp_land_bcast_real1, IO_id, &
@@ -39,7 +39,7 @@ module module_HRLDAS_HYDRO
     integer :: numg, numl, numc, nump
     INTEGER, PARAMETER :: double=8
     real(kind=double), pointer :: r2p(:,:) , r1p(:)
-     
+
     integer ::  begl, endl, begc, endc, begp, endp
 
     real, allocatable, dimension(:,:) :: vg_test
@@ -67,7 +67,7 @@ CONTAINS
         integer :: i,j
 
         real*8 :: t1, t2, dact
-        integer :: clock_count_1, clock_count_2, clock_rate 
+        integer :: clock_count_1, clock_count_2, clock_rate
         save dact
 
 
@@ -95,7 +95,7 @@ CONTAINS
         end do
         call decompose_data_real(infxsrt,RT_DOMAIN(did)%infxsrt)
         call decompose_data_real(soldrain,RT_DOMAIN(did)%soldrain)
-	
+
 	if(nlst(did)%GWBASESWCRT == 3)&
         call decompose_data_real(qsgw,gw2d(did)%qsgw)
 #else
@@ -107,7 +107,7 @@ CONTAINS
         if(nlst(did)%GWBASESWCRT == 3) &
 	  gw2d(did)%qsgw = qsgw
 #endif
-  
+
 #ifdef MPP_LAND
 #ifdef HYDRO_D
         if(my_id .eq. IO_id) then
@@ -154,7 +154,7 @@ CONTAINS
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
 
-     return 
+     return
      end subroutine hrldas_cpl_HYDRO
 
     subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
@@ -181,7 +181,7 @@ CONTAINS
         did = 1
 
 
-        if(.not. RT_DOMAIN(did)%initialized) then  
+        if(.not. RT_DOMAIN(did)%initialized) then
            call MPP_LAND_INIT()
            nlst(did)%dt = dt
            nlst(did)%olddate(1:19) = olddate(1:19)
@@ -193,8 +193,8 @@ CONTAINS
 #endif
            allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
            nlst(did)%zsoil8(1:nlst(did)%nsoil) = zsoil(1:nlst(did)%nsoil)
-           
-           
+
+
            call HYDRO_ini(ntime,did,ix0=1,jx0=1)
 
            if(nlst(did)%rtFlag .eq. 0) return
@@ -206,7 +206,7 @@ CONTAINS
             endif
 
            RT_DOMAIN(did)%initialized = .true.
-   
+
            IF (nlst(did)%GWBASESWCRT .eq. 0 &
                .and. nlst(did)%SUBRTSWCRT .eq.0  &
                .and. nlst(did)%OVRTSWCRT .eq. 0 ) return
@@ -233,7 +233,7 @@ CONTAINS
                  where( SH2OX .le. 0.0001) SH2OX = 0.25
                  where( SMC .le. 0.0001) SMC = 0.25
               endif
-           endif 
+           endif
 #else
            sfcheadrt = rt_domain(did)%overland%control%surface_water_head_lsm
            infxsrt = rt_domain(did)%infxsrt
@@ -254,7 +254,7 @@ CONTAINS
 #endif
         endif
 
-     return 
+     return
      end subroutine hrldas_cpl_HYDRO_ini
 
      subroutine open_print_mpp(iunit)
@@ -263,11 +263,11 @@ CONTAINS
        character(len=16) fileout
        character(len=32) diag_prefix
 #ifdef NCEP_WCOSS
-       integer len, status 
+       integer len, status
 #endif
 
        if(open_unit_status == 999) return
-       open_unit_status = 999 
+       open_unit_status = 999
 
 
 #ifdef NCEP_WCOSS
@@ -295,10 +295,10 @@ CONTAINS
        diag_prefix = 'diag_hydro.'
 #endif
 
-#ifdef MPP_LAND  
-       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),my_id    
+#ifdef MPP_LAND
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),my_id
 #else
-       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),0    
+       write(fileout,'(a11,i0.5)') TRIM(diag_prefix),0
 #endif
        open(iunit,file=fileout,form="formatted")
      end subroutine open_print_mpp
@@ -306,7 +306,7 @@ CONTAINS
      subroutine getNameList(varName,pVar)
           implicit none
           integer :: pVar
-          integer :: did 
+          integer :: did
           character(len=*) :: varName
           did = 1
           if(varName .eq. "GWSPINCYCLES") then

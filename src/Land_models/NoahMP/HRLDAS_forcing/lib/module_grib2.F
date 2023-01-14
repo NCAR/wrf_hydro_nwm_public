@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_grib2
@@ -44,7 +44,7 @@ contains
     implicit none
     type (GribStruct), intent(in)  :: grib
     character(len=19), intent(out) :: validdate
-    ! 
+    !
     !Local:
     character(len=19) :: refdate
     integer :: fcst_time
@@ -125,7 +125,7 @@ contains
 
   subroutine fortran_decode_jpeg2000(buffer, buffer_length, decoded)
     implicit none
-    ! 
+    !
     ! Purpose:
     !      Take a character array <buffer> which contains a JPEG2000-encoded field,
     !      and return the decoded field as an integer array.  This subroutine is 
@@ -251,7 +251,7 @@ contains
           p2_seconds = 0
           call geth_newdate(valid_date, grib%sec1%hdate, grib%sec4%time)
           write(text3, '("Forecast valid time:  ", A, 1x, A)') valid_date(1:10), valid_date(12:19)
-          
+
        end select
     case (8)
        select case (grib%sec4%PDT_4_8%statistical_process)
@@ -298,7 +298,7 @@ contains
           case (13)
              p1_seconds = p1_seconds + (grib%sec4%PDT_4_8%length_of_time_range)
           end select
-          
+
        case (2)
           write(processing, '("Maximum in ", I6, 1x, A)') &
                grib%sec4%PDT_4_8%length_of_time_range, interpret_time_unit(grib%sec4%PDT_4_8%time_range_unit)
@@ -306,7 +306,7 @@ contains
           write(processing, '("Minimum in ", I6, 1x, A)') &
                grib%sec4%PDT_4_8%length_of_time_range, interpret_time_unit(grib%sec4%PDT_4_8%time_range_unit)
        case (4)
-          write(processing, '("Difference over ", I6, 1x, A)') & 
+          write(processing, '("Difference over ", I6, 1x, A)') &
               grib%sec4%PDT_4_8%length_of_time_range, interpret_time_unit(grib%sec4%PDT_4_8%time_range_unit)
        end select
     end select
@@ -422,7 +422,7 @@ contains
 
   subroutine unpack_next_grib2_section(isection, grib)
 
-    !  Returns the section number of the section just unpacked 
+    !  Returns the section number of the section just unpacked
     implicit none
     integer, intent(out) :: isection
     type(GribStruct), intent(inout) :: grib
@@ -597,7 +597,7 @@ contains
        !
        ! Significance of Reference Time
        !
-       select case (grib%sec1%srt) 
+       select case (grib%sec1%srt)
        case (0)
           write(*,'("  Analysis at time ",A)') grib%sec1%hdate
        case (1)
@@ -632,7 +632,7 @@ contains
 
     integer :: i
 
-    ! Temporary integers to hold 
+    ! Temporary integers to hold
     integer :: ila1
     integer :: ilo1
     integer :: ila2
@@ -745,7 +745,7 @@ contains
 
     case (30)
 
-       ! Lambert Conformal Grid 
+       ! Lambert Conformal Grid
 
        GT_3_30 => sec3%GT_3_30
 
@@ -976,7 +976,7 @@ contains
     sec4 => grib%sec4
 
     sec4%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
-    section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)  
+    section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
     if (section /= 4) then
        write(*,'("WARNING: Section 4:  We are lost!  ", I4)') section
        stop "FATAL ERROR: In module module_grib2.F -- Section 4: Problem"
@@ -1210,7 +1210,7 @@ contains
 
     case (40)
 
-       iref40 = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)     
+       iref40 = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
        sec5%DRT_5_40%reference_value = xref40
 
        sec5%DRT_5_40%binary_scale_factor = unpack_signed_integer(grib%buffer, 2, grib%iskip)
@@ -1292,7 +1292,7 @@ contains
     sec6 => grib%sec6
 
     sec6%size = unpack_unsigned_integer(grib%buffer, 4, grib%iskip)
-    section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)  
+    section   = unpack_unsigned_integer(grib%buffer, 1, grib%iskip)
     if (section /= 6) then
        write(*,'("WARNING: Section 6:  We are lost!  ", I8)') section
        stop "FATAL ERROR: In module module_grib2.F -- Section 6"
@@ -1307,7 +1307,7 @@ contains
        ! No bitmap.
        ! No action needed here.
     case (254)
-       ! Bitmap previously defined in this GRIB record. 
+       ! Bitmap previously defined in this GRIB record.
        ! No action needed here.  The previously-defined bitmap
        ! should still be stored and used as necessary.
     case (0)

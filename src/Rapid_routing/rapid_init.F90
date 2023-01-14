@@ -1,33 +1,33 @@
 !*******************************************************************************
-!Subroutine - rapid_init 
+!Subroutine - rapid_init
 !*******************************************************************************
 subroutine rapid_init
 
 !Purpose:
-!This subroutine allows to initialize RAPID for both regular runs and 
-!optimization runs, by performing slightly different tasks depending on what 
-!option is chosen.  
+!This subroutine allows to initialize RAPID for both regular runs and
+!optimization runs, by performing slightly different tasks depending on what
+!option is chosen.
 !Initialization tasks common to all RAPID options:
-!     -Read namelist file (sizes of domain, duration, file names, options, etc.)  
+!     -Read namelist file (sizes of domain, duration, file names, options, etc.)
 !     -Compute number of time steps based on durations
 !     -Allocate Fortran arrays
-!     -Create all PETSc and TAO objects 
+!     -Create all PETSc and TAO objects
 !     -Print information and warnings
 !     -Determine IDs for various computing cores
-!     -Compute helpful arrays 
+!     -Compute helpful arrays
 !     -Compute the network matrix
 !     -Initialize values of flow and volume for main procedure
 !Initialization tasks specific to Option 1
 !     -Copy main initial flow and vol to routing initial flow and vol
-!     -Read k and x 
+!     -Read k and x
 !     -Compute linear system matrix
 !Initialization tasks specific to Option 2
 !     -Copy main initial flow to optimization initial flow
 !     -Compute the observation matrix
 !     -Read kfac and Qobsbarrec
 !     -Set initial values for the vector pnorm
-!Author: 
-!Cedric H. David, 2012-2015. 
+!Author:
+!Cedric H. David, 2012-2015.
 
 
 !*******************************************************************************
@@ -38,7 +38,7 @@ use rapid_var, only :                                                          &
                    IV_riv_bas_id,IV_riv_index,IV_riv_loc1,IV_riv_tot_id,       &
                    IV_down,IV_nbup,IM_up,IM_index_up,IS_max_up,                &
                    IV_nz,IV_dnz,IV_onz,                                        &
-                   BS_opt_Qinit,BS_opt_Qfinal,BS_opt_influence,                & 
+                   BS_opt_Qinit,BS_opt_Qfinal,BS_opt_influence,                &
                    BS_opt_dam,BS_opt_for,BS_opt_hum,                           &
                    IS_opt_run,IS_opt_routing,IS_opt_phi,                       &
                    ZV_read_riv_tot,ZV_read_obs_tot,ZV_read_hum_tot,            &
@@ -75,20 +75,20 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/petsclog.h" 
+#include "finclude/petsclog.h"
 !PETSc log
 
 !*******************************************************************************
@@ -206,23 +206,23 @@ if (rank==0 .and. IS_opt_routing==3)                       print '(a70)',      &
 if (rank==0 .and. IS_opt_run==1)                           print '(a70)',      &
        'RAPID mode: computing flowrates                                        '
 if (rank==0 .and. IS_opt_run==2 .and. IS_opt_phi==1)       print '(a70)',      &
-       'RAPID mode: optimizing parameters, using phi1                          ' 
+       'RAPID mode: optimizing parameters, using phi1                          '
 if (rank==0 .and. IS_opt_run==2 .and. IS_opt_phi==2)       print '(a70)',      &
-       'RAPID mode: optimizing parameters, using phi2                          ' 
+       'RAPID mode: optimizing parameters, using phi2                          '
 if (rank==0)                                               print '(a10,a60)',  &
-       'Using    :', Vlat_file 
+       'Using    :', Vlat_file
 if (rank==0 .and. IS_opt_run==1)                           print '(a10,a60)',  &
-       'Using    :',k_file 
+       'Using    :',k_file
 if (rank==0 .and. IS_opt_run==1)                           print '(a10,a60)',  &
-       'Using    :',x_file 
+       'Using    :',x_file
 if (rank==0 .and. IS_opt_run==2)                           print '(a10,a60)',  &
-       'Using    :',kfac_file 
+       'Using    :',kfac_file
 call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)
 
 !-------------------------------------------------------------------------------
 !Calculate helpful arrays  !--LPR: hash-table used to increase efficiency-------
 !-------------------------------------------------------------------------------
-call rapid_arrays   
+call rapid_arrays
 !print *,'!!!LPR after rapid_arrays'
 
 !-------------------------------------------------------------------------------
@@ -250,12 +250,12 @@ read(30,*) ZV_read_riv_tot
 close(30)
 call VecSetValues(ZV_QoutinitM,IS_riv_bas,IV_riv_loc1,                          &
                   ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
-                  !here we use the output of a simulation as the intitial 
+                  !here we use the output of a simulation as the intitial
                   !flow rates.  The simulation has to be made on the entire
                   !domain, the initial value is taken only for the considered
                   !basin thanks to the vector IV_riv_index
 call VecAssemblyBegin(ZV_QoutinitM,ierr)
-call VecAssemblyEnd(ZV_QoutinitM,ierr)  
+call VecAssemblyEnd(ZV_QoutinitM,ierr)
 end if
 
 call VecSet(ZV_VinitM,ZS_V0,ierr)
@@ -277,7 +277,7 @@ end if
 if (IS_opt_run==1) then
 
 !-------------------------------------------------------------------------------
-!copy main initial values into routing initial values 
+!copy main initial values into routing initial values
 !-------------------------------------------------------------------------------
 call VecCopy(ZV_QoutinitM,ZV_QoutinitR,ierr)
 call VecCopy(ZV_VinitM,ZV_VinitR,ierr)
@@ -335,7 +335,7 @@ call rapid_obs_mat
 !Create observation matrix
 
 !-------------------------------------------------------------------------------
-!copy main initial values into optimization initial values 
+!copy main initial values into optimization initial values
 !-------------------------------------------------------------------------------
 call VecCopy(ZV_QoutinitM,ZV_QoutinitO,ierr)
 !copy initial main variables into initial optimization variables
@@ -348,9 +348,9 @@ read(22,*) ZV_read_riv_tot
 close(22)
 call VecSetValues(ZV_kfac,IS_riv_bas,IV_riv_loc1,                              &
                   ZV_read_riv_tot(IV_riv_index),INSERT_VALUES,ierr)
-                  !only looking at basin, doesn't have to be whole domain here 
+                  !only looking at basin, doesn't have to be whole domain here
 call VecAssemblyBegin(ZV_kfac,ierr)
-call VecAssemblyEnd(ZV_kfac,ierr)  
+call VecAssemblyEnd(ZV_kfac,ierr)
 !reads kfac and assigns to ZV_kfac
 
 if (IS_opt_phi==2) then
@@ -362,7 +362,7 @@ call VecSetValues(ZV_Qobsbarrec,IS_obs_bas,IV_obs_loc1,                        &
                   !here we only look at the observations within the basin
                   !studied
 call VecAssemblyBegin(ZV_Qobsbarrec,ierr)
-call VecAssemblyEnd(ZV_Qobsbarrec,ierr)  
+call VecAssemblyEnd(ZV_Qobsbarrec,ierr)
 !reads Qobsbarrec and assigns to ZV_Qobsbarrec
 end if
 

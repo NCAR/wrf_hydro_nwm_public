@@ -3,20 +3,20 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !2345678
@@ -80,7 +80,7 @@
           use config_base, only: nlst
           implicit none
           character(len=*) :: olddate, inFile
-          integer :: idim, jdim 
+          integer :: idim, jdim
           real, dimension(idim,jdim):: greenfrac
           integer:: mm, dd, did
           integer :: months
@@ -109,22 +109,22 @@
           integer :: i, j, mm2,daytot
           real :: ddfrac
           character(len=24), parameter :: name = "GREENFRAC"
-      
+
 !          units = "fraction"
 
           iret = nf_open(trim(fileName), NF_NOWRITE, ncid)
           if(iret /= 0) then
               write(6,*) "FATAL ERROR: failed to open file in get_greenfrac: ", trim(fileName)
               call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - failed to open file") 
-          endif 
-            
+          endif
+
           iret = nf_inq_varid(ncid,  trim(name),  varid)
           if (iret /= 0) then
              print*, 'name = "', trim(name)//'"'
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_inq_varid"
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - nf_inq_varid problem")
           endif
-      
+
           iret = nf_get_var_real(ncid, varid, xtmp)
           if (iret /= 0) then
 
@@ -132,14 +132,14 @@
              print*, "MODULE_NOAHLSM_HRLDAS_INPUT:  get_greenfrac_netcdf:  nf_get_var_real"
              call hydro_stop("In hrldas_drv_HYDRO.F get_greenfrac_netcdf() - nf_get_var_real problem")
           endif
-      
-      
-          if (mm.lt.12) then 
+
+
+          if (mm.lt.12) then
             mm2 = mm+1
           else
             mm2 = 1
                 end if
-      
+
           !DJG_DES Set up dates for daily interpolation...
                 if (mm.eq.1.OR.mm.eq.3.OR.mm.eq.5.OR.mm.eq.7.OR.mm.eq.8.OR.mm.eq.10.OR.mm.eq.12) then
                    daytot = 31
@@ -150,17 +150,17 @@
                 end if
                 ddfrac = float(dd)/float(daytot)
                 if (ddfrac.gt.1.0) ddfrac = 1.0   ! Assumes Feb. 29th change is same as Feb 28th
-      
+
 #ifdef HYDRO_D
                print *,"DJG_DES Made it past netcdf read...month = ",mm,mm2,dd,daytot,ddfrac
 #endif
-      
+
           do i = 1, idim
              do j = 1, jdim
                 array(i,j) = xtmp(i,j,mm)   !GREENFRAC in geogrid in units of fraction from month 1
                 array2(i,j) = xtmp(i,j,mm2)   !GREENFRAC in geogrid in units of fraction from month 1
                 diff(i,j) = array2(i,j) - array(i,j)
-                array3(i,j) = array(i,j) + ddfrac * diff(i,j) 
+                array3(i,j) = array(i,j) + ddfrac * diff(i,j)
              enddo
           enddo
           iret=nf_close(ncid)
@@ -179,12 +179,12 @@
           real,dimension(ix,jx,nsoil):: smc,stc,sh2ox
           real,dimension(ix,jx):: cmc, t1, weasd, snodep, lai, fpar ,SHDMIN,SHDMAX
           integer, dimension(ix,jx) ::    vegtyp
-          logical :: FNDSNOWH 
+          logical :: FNDSNOWH
 !yw          real, dimension(50) :: shdtbl
 !yw          data shdtbl /0.1,0.8,0.8,0.8,0.8,0.8,0.8,0.7,0.7,0.5,  &
 !yw              0.8,0.7,0.95,0.7,0.8,0,0.6,0.6,0.1, &
 !yw              0.6,0.6,0.6,0.3,0,0.5,0,0,           &
-!yw              0,0,0,0,0,0,0,0,0,0,0,0,0,          & 
+!yw              0,0,0,0,0,0,0,0,0,0,0,0,0,          &
 !yw              0,0,0,0,0,0,0,0,0,0/
 
 
@@ -197,23 +197,23 @@
               write(6,*) "initialization from the file  : ", trim(fileName)
 
 #endif
-          endif 
+          endif
 
            iret = nf_inq_varid(ncid,"VEGFRA",  varid)
-           if (iret == 0) then 
+           if (iret == 0) then
                iret = nf_get_var_real(ncid, varid, fpar)
                if(maxval(fpar) .gt. 10 .and. (maxval(fpar) .lt. 1000)) fpar = fpar/100.
            endif
 
            iret = nf_inq_varid(ncid,"SHDMIN",  varid)
-           if (iret == 0) then 
+           if (iret == 0) then
                iret = nf_get_var_real(ncid, varid, SHDMIN)
                if(maxval(SHDMIN) .gt. 10 .and. (maxval(SHDMIN) .lt. 1000)) SHDMIN = SHDMIN / 100.
            endif
-             
+
 
            iret = nf_inq_varid(ncid,"SHDMAX",  varid)
-           if (iret == 0) then 
+           if (iret == 0) then
               iret = nf_get_var_real(ncid, varid, SHDMAX)
                if(maxval(SHDMAX) .gt. 10 .and. (maxval(SHDMAX) .lt. 1000)) SHDMAX = SHDMAX / 100.
            endif
@@ -239,7 +239,7 @@
              FNDSNOWH = .true.
           else
              FNDSNOWH = .false.
-          endif  
+          endif
 
           iret = nf_inq_varid(ncid,"SNOW",  varid)
           if (iret == 0) then
@@ -248,13 +248,13 @@
 #endif
              iret = nf_get_var_real(ncid, varid, weasd)
              weasd = weasd * 1.0E-3    ! transfer the unit from mm to m
-          endif  
-         
-         
+          endif
+
+
 !         where(snodep < weasd) snodep = weasd * 10
-!            write(6,*) "SNOW(20,1)=",weasd(20,1) 
-!            write(6,*) "SNOWH(20,1)=",snodep(20,1) 
-          
+!            write(6,*) "SNOW(20,1)=",weasd(20,1)
+!            write(6,*) "SNOWH(20,1)=",snodep(20,1)
+
           iret = nf_inq_varid(ncid,"TSK",  varid)
           if (iret == 0) iret = nf_get_var_real(ncid, varid, t1)
 
@@ -272,7 +272,7 @@
 
           iret=nf_close(ncid)
 
-!yw    added for 
+!yw    added for
              where( abs(t1) .gt. 500) t1 = 282
              where( abs(stc) .gt. 500) stc = 282
              where( abs(SMC) .gt. 1) SMC = 0.25
@@ -280,11 +280,11 @@
              where( abs(SH2OX) .gt. 500) SH2OX = 0.25
 
 
- 
+
        end subroutine HYDRO_HRLDAS_ini
 
        subroutine getHydroNameList(varName,pVar)
-          use module_hrldas_HYDRO, only: getNameList 
+          use module_hrldas_HYDRO, only: getNameList
           implicit none
           integer ::  pVar
           character(len=*)  ::varName

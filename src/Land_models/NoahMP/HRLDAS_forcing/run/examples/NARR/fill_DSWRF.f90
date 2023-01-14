@@ -114,7 +114,7 @@ if (debug) print *, cza(testpt,i), data_out(testpt,i), data_in(testpt)     ! 178
   call baclose(lugbout+i,iret)
   if(iret/=0) stop 6
 
-end do 
+end do
 
 contains
 
@@ -128,7 +128,7 @@ subroutine get_cza(jday, gmthour, latrad, lonrad, cza)
 
   real :: gg, tc, declin, sha(maxpts)
   real, parameter :: pi = 3.14159265
-  
+
   ! Fractional day of the year, in radians
   gg = (360./365.25) * (JDAY+gmthour/24.) * pi/180.
 

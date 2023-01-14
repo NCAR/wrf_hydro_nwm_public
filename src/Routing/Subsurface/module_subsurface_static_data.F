@@ -2,13 +2,13 @@ module module_subsurface_static_data
     implicit none
 
     type subsurface_static_interface
-    
+
     integer :: ixrt
     integer :: jxrt
     integer :: nsoil
     real :: dt
-    integer :: rt_option 
- 
+    integer :: rt_option
+
     contains
         procedure :: init => subsurface_static_data_init
         procedure :: destroy => subsurface_static_data_destroy

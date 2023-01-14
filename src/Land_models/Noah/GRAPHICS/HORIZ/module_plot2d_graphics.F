@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_plot2d_graphics
@@ -76,7 +76,7 @@ contains
     call set(0., 1., 0., 1., 0., 1., 0., 1., 1)
     ! call gscr(1, 1, 0., 0., 0.)
     call pcseti("CC", 1)
-   
+
     if ( (fieldinfo%name == "SOIL_M") .or. (fieldinfo%name == "SOIL_T") .or. &
          (fieldinfo%name == "SOIL_W")) then
        write(txt, '(A, " -- Level ", I2)') trim(fieldinfo%name), fieldinfo%level
@@ -275,7 +275,7 @@ contains
     ! maxf = maxval(fld, mask=(fld/=-1.E33))
     ! minf = minval(fld, mask=(fld/=-1.E33))
 
-    ! Find contour minimum, contour maximum as an integer number of 
+    ! Find contour minimum, contour maximum as an integer number of
     ! contour_intervals from zero
 
     ncon = (cmax-cmin)/cint
@@ -343,7 +343,7 @@ contains
        !      polygon should remain transparent (i.e. not filled).
        !
        if (ifll.ge.1) then
-#ifdef dead          
+#ifdef dead
           if (ifll.le.nconarea.and.icoindcp(ifll).ge.0) then
              call gsfaci(icoindcp(ifll))
 #else
@@ -430,7 +430,7 @@ contains
              exit
           endif
        enddo
-       
+
        !call gscr(1, i+2, float(i)/float(n-1), float(i)/float(n-1), float(i)/float(n-1))
        !call gscr(1, i+2, float(i)/float(n-1), float(i)/float(n-1), float(i)/float(n-1))
     enddo
@@ -489,7 +489,7 @@ contains
           stringname = trim(string(idx:))
           stringname = downcase(trim(stringname))
           stringname = unblank(trim(stringname))
-          
+
           readlist_count = readlist_count + 1
           readlist_r(readlist_count) = float(r)/255.
           readlist_g(readlist_count) = float(g)/255.
@@ -521,7 +521,7 @@ contains
 ! Opens workstation 1 as a CGM workstation.
 ! Opens workstation 2 as a WISS.
 ! Defines a couple of colors, and sets a couple of NCAR Graphics parameters
-! 
+!
 ! If you want the gmeta file to be called something other than "gmeta",
 ! give this subroutine the optional argument.
     implicit none
@@ -540,7 +540,7 @@ contains
     call gopwk(2,120,3)
     call gacwk(1)
     call gacwk(2)
-    
+
     ! call define_color("white")
     ! call define_color("black")
     call gscr(1, 0, 1., 1., 1.) ! White
@@ -673,4 +673,3 @@ contains
 
 
 end module module_plot2d_graphics
-

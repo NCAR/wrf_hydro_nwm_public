@@ -1,11 +1,11 @@
 !*******************************************************************************
 !Subroutine - rapid_create_Qout_file
 !*******************************************************************************
-subroutine rapid_create_Qout_file(Qout_file) 
+subroutine rapid_create_Qout_file(Qout_file)
 
 !Purpose:
 !Create Qout_file from Fortran/netCDF.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -28,7 +28,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 character(len=100), intent(in):: Qout_file
 
@@ -36,7 +36,7 @@ character(len=100), intent(in):: Qout_file
 !*******************************************************************************
 !Open file
 !*******************************************************************************
-if (rank==0) then 
+if (rank==0) then
 
      IS_nc_status=NF90_CREATE(Qout_file,NF90_CLOBBER,IS_nc_id_fil_Qout)
      IS_nc_status=NF90_DEF_DIM(IS_nc_id_fil_Qout,'Time',NF90_UNLIMITED,        &
@@ -58,8 +58,7 @@ end if
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_create_Qout_file
-

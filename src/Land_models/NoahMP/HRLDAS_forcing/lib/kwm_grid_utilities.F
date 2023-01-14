@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module kwm_grid_utilities
@@ -97,20 +97,20 @@ contains
           endif
        enddo
     enddo
-    
+
     ! STL = ARRAY( I-1:I+2 , J-1:J+2 )
 
     ! if (ANY(STL<-1.E25)) then
     !    val = -1.E36
     !    return
     ! endif
-    
+
     ! Corner points missing are OK.  Any other points missing and we have a problem.
     if ((ANY(STL(:,2:3)<-1.E25)) .or. (ANY(STL(2:3,:)<-1.E25))) then
-    
+
     ! Barlage 20150522: if this is violated, send back the average if any points are
     !                   valid, this could prevent problems if close to source boundary
-    
+
       if (ANY(STL > -1.E25)) then
         val = sum(STL, MASK = STL > -1.E25)
         number_good = count(STL > -1.E25)
@@ -118,7 +118,7 @@ contains
       else
        val = -1.E36
       end if
-      
+
       return
     endif
 
@@ -149,7 +149,7 @@ contains
   end function bint_p
 
   REAL FUNCTION ONED(X,A,B,C,D) result(val)
-    ! Points B and C must have good data.  
+    ! Points B and C must have good data.
     ! Points A and D may have the no-data indication (value less than -1.E25)
     implicit none
     real, intent(in) :: X, A, B, C, D
@@ -177,7 +177,7 @@ contains
           val = (1.0-X)*(B+X*(0.5*(C-A)+X*(0.5*(C+A)-B)))+X*(C+(1.0-X)*(0.5 &
                *(B-D)+(1.0-X)*(0.5*(B+D)-C)))
        endif
-       
+
     endif
   END FUNCTION ONED
 
@@ -285,15 +285,15 @@ contains
    ! Purpose: Weighted average of sixteen surrounding grid point values
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    real function wt_sixteen_pt_average(array, nx, ny, x, y, msgvalin, msgvalout) result(val)
- 
+
       implicit none
-  
+
       ! Arguments
       integer, intent(in) :: nx, ny
       real, pointer, dimension(:,:) :: array
       real, intent(in) :: x, y               ! The location to interpolate to
       real, intent(in) :: msgvalin,msgvalout
-    
+
       ! Local variables
       integer :: i, j, ifx, ify
       integer :: arrayistart,arrayiend,arrayjstart,arrayjend
@@ -305,8 +305,8 @@ contains
 
       ifx = floor(x)
       ify = floor(y)
-  
-      ! First see whether the point is far enough within the array to 
+
+      ! First see whether the point is far enough within the array to
       !   allow for a sixteen point average. If not, fill with missing values.
       if (ifx < 2 .or. ifx > nx-2 .or. ify < 2 .or. ify > ny-2) then
          subset = msgvalin
@@ -334,12 +334,12 @@ contains
 !	 print *, array(ifx-1:ifx+2,ify-1:ify+2)
 !	 print *, subset
 !	 stop
-  
+
       sum_weight = 0.0
       pcoef = 2.0
       do i=1,4
          do j=1,4
-   
+
             if (subset(i,j) == msgvalin) then
                weights(i,j) = 0.0
             else
@@ -347,9 +347,9 @@ contains
                weights(i,j) = max(0., 2.0 - distance(i,j))  ! from WPS
 !               weights(i,j) = min(2.0,1.0/(max(0.1,distance(i,j)))**pcoef)  ! IDW looks strange
             end if
-    
+
             sum_weight = sum_weight + weights(i,j)
-   
+
          end do
       end do
       goto 1000
@@ -368,7 +368,7 @@ contains
 	 print *, subset(:,1)
 	 print *, sum_weight
 !	 stop
-1000 continue  
+1000 continue
       if (sum_weight == 0.0) then
          val = msgvalout
       else
@@ -381,9 +381,9 @@ contains
          val = sum / sum_weight
 !	 print *, val, sum_weight
       end if
- 
+
    end function wt_sixteen_pt_average
- 
+
 
   subroutine smdsm(FLD, ix, jx, npass)
 
@@ -568,12 +568,12 @@ contains
 
 ! Compute the kernel
 
-! I'd rather do it in one step, going directly to my vector v, 
+! I'd rather do it in one step, going directly to my vector v,
 ! but I don't see how to be able to do that cleanly and still
 ! correct for the error (how much the sum differs from 1.0).
 
 ! First I compute the two-dimensional kernel array.
-    cval = 1./(twopi*sigsq) 
+    cval = 1./(twopi*sigsq)
     do i = 1, fsz
        x = float(hsz-i)
        do j = 1, fsz
@@ -625,7 +625,7 @@ contains
     real, dimension(ix,jx), intent(in)  :: slab1
     real, dimension(ix,jx), intent(out) :: slab2
     integer :: ie,je,i,j
-   
+
     IE=IX-1
     JE=JX-1
     DO I=2,IE
@@ -645,7 +645,7 @@ contains
     SLAB2(1,JX)=SLAB1(1,JE)
     SLAB2(IX,JX)=SLAB1(IE,JE)
     SLAB2(IX,1)=SLAB1(IE,1)
-   
+
   end subroutine crs2dot
 
 end module kwm_grid_utilities

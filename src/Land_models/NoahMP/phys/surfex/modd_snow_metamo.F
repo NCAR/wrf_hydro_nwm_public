@@ -12,17 +12,17 @@
 !!                          to snow metamorphism!!
 !!    PURPOSE
 !!    -------
-!       The purpose of this declarative module is to specify  the 
+!       The purpose of this declarative module is to specify  the
 !     parameters related to the metamorphism parameterization of snow.
 !
 !!
 !!**  IMPLICIT ARGUMENTS
 !!    ------------------
-!!      None 
+!!      None
 !!
 !!    REFERENCE
 !!    ---------
-!!      
+!!
 !!
 !!    AUTHOR
 !!    ------
@@ -30,7 +30,7 @@
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original       02/2008                
+!!      Original       02/2008
 !-------------------------------------------------------------------------------
 !
 !*       0.   DECLARATIONS
@@ -59,16 +59,16 @@ REAL, PARAMETER        :: XVVISC6 = 60.         ! factor for viscosity adjusteme
 !                                                             (especially this one ; inconsistency with Crocus v2.4)
 REAL, PARAMETER        :: XVVISC7 = 10.         ! factor for viscosity adjustement to grain type - to be checked
 REAL, PARAMETER        :: XVRO11 = 250.  ! normalization term for density dependence of the viscosity calculation (UNIT : kg m-3)
-! 
+!
 ! Maximum value for TPSNOW%GRAN2
 REAL, PARAMETER                 :: XVGRAN1 = 99.
 REAL, PARAMETER                 :: XGRAN = 99.
 !
-INTEGER, PARAMETER            :: NVHIS1 = 1                
-INTEGER, PARAMETER            :: NVHIS2 = 2                
-INTEGER, PARAMETER            :: NVHIS3 = 3                
-INTEGER, PARAMETER            :: NVHIS4 = 4                
-INTEGER, PARAMETER            :: NVHIS5 = 5 
+INTEGER, PARAMETER            :: NVHIS1 = 1
+INTEGER, PARAMETER            :: NVHIS2 = 2
+INTEGER, PARAMETER            :: NVHIS3 = 3
+INTEGER, PARAMETER            :: NVHIS4 = 4
+INTEGER, PARAMETER            :: NVHIS5 = 5
 !
 ! Properties of fresh snow
 REAL, PARAMETER                 :: XNDEN1 = 17.12
@@ -85,56 +85,56 @@ REAL, PARAMETER                 :: XUPOURC = 100.
 !
 ! Parameters for Marbouty's function
 !
-REAL, PARAMETER                 :: XVTANG1 = 40.              
-REAL, PARAMETER                 :: XVTANG2 = 6.              
-REAL, PARAMETER                 :: XVTANG3 = 22.              
-REAL, PARAMETER                 :: XVTANG4 = .7               
-REAL, PARAMETER                 :: XVTANG5 = .3               
-REAL, PARAMETER                 :: XVTANG6 = 6.               
-REAL, PARAMETER                 :: XVTANG7 = 1.               
-REAL, PARAMETER                 :: XVTANG8 = .8               
-REAL, PARAMETER                 :: XVTANG9 = 16.              
-REAL, PARAMETER                 :: XVTANGA = .2               
-REAL, PARAMETER                 :: XVTANGB = .2               
-REAL, PARAMETER                 :: XVTANGC = 18.             
-REAL, PARAMETER                 :: XVRANG1 = 400.               
-REAL, PARAMETER                 :: XVRANG2 = 150.              
-REAL, PARAMETER                 :: XVGANG1 = 70.               
-REAL, PARAMETER                 :: XVGANG2 = 25.              
-REAL, PARAMETER                 :: XVGANG3 = 40.               
-REAL, PARAMETER                 :: XVGANG4 = 50.               
-REAL, PARAMETER                 :: XVGANG5 = .1               
-REAL, PARAMETER                 :: XVGANG6 = 15.              
-REAL, PARAMETER                 :: XVGANG7 = .1               
-REAL, PARAMETER                 :: XVGANG8 = .55              
-REAL, PARAMETER                 :: XVGANG9 = .65              
-REAL, PARAMETER                 :: XVGANGA = .2               
-REAL, PARAMETER                 :: XVGANGB = .85              
-REAL, PARAMETER                 :: XVGANGC = .15      
+REAL, PARAMETER                 :: XVTANG1 = 40.
+REAL, PARAMETER                 :: XVTANG2 = 6.
+REAL, PARAMETER                 :: XVTANG3 = 22.
+REAL, PARAMETER                 :: XVTANG4 = .7
+REAL, PARAMETER                 :: XVTANG5 = .3
+REAL, PARAMETER                 :: XVTANG6 = 6.
+REAL, PARAMETER                 :: XVTANG7 = 1.
+REAL, PARAMETER                 :: XVTANG8 = .8
+REAL, PARAMETER                 :: XVTANG9 = 16.
+REAL, PARAMETER                 :: XVTANGA = .2
+REAL, PARAMETER                 :: XVTANGB = .2
+REAL, PARAMETER                 :: XVTANGC = 18.
+REAL, PARAMETER                 :: XVRANG1 = 400.
+REAL, PARAMETER                 :: XVRANG2 = 150.
+REAL, PARAMETER                 :: XVGANG1 = 70.
+REAL, PARAMETER                 :: XVGANG2 = 25.
+REAL, PARAMETER                 :: XVGANG3 = 40.
+REAL, PARAMETER                 :: XVGANG4 = 50.
+REAL, PARAMETER                 :: XVGANG5 = .1
+REAL, PARAMETER                 :: XVGANG6 = 15.
+REAL, PARAMETER                 :: XVGANG7 = .1
+REAL, PARAMETER                 :: XVGANG8 = .55
+REAL, PARAMETER                 :: XVGANG9 = .65
+REAL, PARAMETER                 :: XVGANGA = .2
+REAL, PARAMETER                 :: XVGANGB = .85
+REAL, PARAMETER                 :: XVGANGC = .15
 !
 ! Parameters for snow metamorphism
 !
 REAL, PARAMETER                 :: XVDENT1 = 2314.81481
-REAL, PARAMETER                 :: XVDENT2 = 7.2338E-7 
-REAL, PARAMETER                 :: XVGRAN6 = 51.              
-REAL, PARAMETER                 :: XVVAP1 = -6000.            
-REAL, PARAMETER                 :: XVVAP2 = .4                
-REAL, PARAMETER                 :: XVDIAM1 = 4.E-4               
-REAL, PARAMETER                 :: XVDIAM2 = 5.E-4              
-REAL, PARAMETER                 :: XVDIAM3 = 3.E-4               
+REAL, PARAMETER                 :: XVDENT2 = 7.2338E-7
+REAL, PARAMETER                 :: XVGRAN6 = 51.
+REAL, PARAMETER                 :: XVVAP1 = -6000.
+REAL, PARAMETER                 :: XVVAP2 = .4
+REAL, PARAMETER                 :: XVDIAM1 = 4.E-4
+REAL, PARAMETER                 :: XVDIAM2 = 5.E-4
+REAL, PARAMETER                 :: XVDIAM3 = 3.E-4
 REAL, PARAMETER                 :: XVDIAM4 = 2.E-4
 REAL, PARAMETER                 :: XVDIAM5 = 1.E-4
-REAL, PARAMETER                 :: XVDIAM6 = 1.E-4               
-REAL, PARAMETER                 :: XVSPHE1 = 1.               
-REAL, PARAMETER                 :: XVSPHE2 = 11574.074             
-REAL, PARAMETER                 :: XVSPHE3 = .5               
-REAL, PARAMETER                 :: XVSPHE4 = .1               
-REAL, PARAMETER                 :: XVTAIL1 = 1.28E-17          
-REAL, PARAMETER                 :: XVTAIL2 = 4.22E-19         
-REAL, PARAMETER                 :: XVGRAT1 = 5.              
-REAL, PARAMETER                 :: XVGRAT2 = 15.             
-REAL, PARAMETER                 :: XVFI = 1.0417E-9                 
-REAL, PARAMETER                 :: XVTELV1 = 0.005 
+REAL, PARAMETER                 :: XVDIAM6 = 1.E-4
+REAL, PARAMETER                 :: XVSPHE1 = 1.
+REAL, PARAMETER                 :: XVSPHE2 = 11574.074
+REAL, PARAMETER                 :: XVSPHE3 = .5
+REAL, PARAMETER                 :: XVSPHE4 = .1
+REAL, PARAMETER                 :: XVTAIL1 = 1.28E-17
+REAL, PARAMETER                 :: XVTAIL2 = 4.22E-19
+REAL, PARAMETER                 :: XVGRAT1 = 5.
+REAL, PARAMETER                 :: XVGRAT2 = 15.
+REAL, PARAMETER                 :: XVFI = 1.0417E-9
+REAL, PARAMETER                 :: XVTELV1 = 0.005
 !
 INTEGER,PARAMETER               :: NVDENT1 = 3
 !
@@ -146,6 +146,3 @@ INTEGER :: NID_FILE
 REAL, DIMENSION(:,:,:), POINTER :: XDRDT0,XTAU,XKAPPA   ! field read
 !
 END MODULE MODD_SNOW_METAMO
-
-
-

@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_hd
@@ -83,7 +83,7 @@ contains
     start(2) = time_index
     nfcount(1) = DateStrLen
     nfcount(2) = 1
-    
+
     iret = nf90_get_var(ncid, varid, time_return, start, nfcount)
     if (iret /= 0) then
        write(*,'("netcdf_get_time:  NF90_GET_VAR:  ",A)') nf90_strerror(iret)

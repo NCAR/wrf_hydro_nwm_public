@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 MODULE module_sf_noahmp_groundwater
@@ -24,7 +24,7 @@ MODULE module_sf_noahmp_groundwater
 ! plus the routine to update soil moisture and water table due to those two fluxes
 ! according to the Miguez-Macho & Fan groundwater scheme (Miguez-Macho et al., JGR 2007).
 ! Module written by Gonzalo Miguez-Macho , U. de Santiago de Compostela, Galicia, Spain
-! November 2012 
+! November 2012
 !===============================================================================
 
 CONTAINS
@@ -72,11 +72,11 @@ CONTAINS
                                                        RIVERBED, &
                                                       RIVERCOND
 
-! IN and OUT 
+! IN and OUT
 
     REAL,     DIMENSION( ims:ime , 1:nsoil, jms:jme ), &
          &    INTENT(INOUT)   ::                          SMOIS, &
-         &                                                SH2OXY 
+         &                                                SH2OXY
 
 
     REAL,    DIMENSION( ims:ime, jms:jme )                     , &
@@ -94,9 +94,9 @@ CONTAINS
          &   INTENT(OUT)      ::                            QRF, &  !groundwater - river water flux
                                                         QSPRING     !water springing at the surface from groundwater convergence in the column
 
-!LOCAL  
-  
-  INTEGER                          :: I,J,K  
+!LOCAL
+
+  INTEGER                          :: I,J,K
   REAL, DIMENSION(       0:NSOIL)  :: ZSOIL !depth of soil layer-bottom [m]
   REAL,  DIMENSION(      1:NSOIL)  :: SMCEQ  !equilibrium soil water  content [m3/m3]
   REAL,  DIMENSION(      1:NSOIL)  :: SMC,SH2O
@@ -105,7 +105,7 @@ CONTAINS
                                                 ,WPLUS,WMINUS
   REAL,      DIMENSION( ims:ime, jms:jme )    :: QLAT
   INTEGER,   DIMENSION( ims:ime, jms:jme )    :: LANDMASK !-1 for water (ice or no ice) and glacial areas, 1 for land where the LSM does its soil moisture calculations.
-  
+
   REAL :: BEXP,DKSAT,PSISAT,SMCMAX,SMCWLT
 
     DELTAT = WTDDT * 60. !timestep in seconds for this calculation
@@ -138,8 +138,8 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
           IF(LANDMASK(I,J).GT.0)THEN
              IF(WTD(I,J) .GT. RIVERBED(I,J) .AND.  EQWTD(I,J) .GT. RIVERBED(I,J)) THEN
                RCOND = RIVERCOND(I,J) * EXP(PEXP(I,J)*(WTD(I,J)-EQWTD(I,J)))
-             ELSE    
-               RCOND = RIVERCOND(I,J)       
+             ELSE
+               RCOND = RIVERCOND(I,J)
              ENDIF
              QRF(I,J) = RCOND * (WTD(I,J)-RIVERBED(I,J)) * DELTAT/AREA(I,J)
 !for now, dont allow it to go from river to groundwater
@@ -249,7 +249,7 @@ END  SUBROUTINE WTABLE_mmf_noahmp
   REAL, DIMENSION(19)      :: KLATFACTOR
   DATA KLATFACTOR /2.,3.,4.,10.,10.,12.,14.,20.,24.,28.,40.,48.,2.,0.,10.,0.,20.,2.,2./
 
-  REAL,    PARAMETER :: PI = 3.14159265 
+  REAL,    PARAMETER :: PI = 3.14159265
   REAL,    PARAMETER :: FANGLE = 0.22754493   ! = 0.5*sqrt(0.5*tan(pi/8))
 
 itsh=max(its-1,ids)
@@ -284,10 +284,10 @@ jteh=min(jte,jde-2)
        DO I=itsh,iteh
           IF(LANDMASK(I,J).GT.0)THEN
                  Q=0.
-                             
+
                  Q  = Q + (KCELL(I-1,J+1)+KCELL(I,J)) &
                         * (HEAD(I-1,J+1)-HEAD(I,J))/SQRT(2.)
-                             
+
                  Q  = Q +  (KCELL(I-1,J)+KCELL(I,J)) &
                         *  (HEAD(I-1,J)-HEAD(I,J))
 
@@ -302,7 +302,7 @@ jteh=min(jte,jde-2)
 
                  Q  = Q +  (KCELL(I+1,J+1)+KCELL(I,J)) &
                         * (HEAD(I+1,J+1)-HEAD(I,J))/SQRT(2.)
-  
+
                  Q  = Q +  (KCELL(I+1,J)+KCELL(I,J)) &
                         * (HEAD(I+1,J)-HEAD(I,J))
 

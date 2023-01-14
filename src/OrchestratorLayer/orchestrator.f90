@@ -6,7 +6,7 @@ module orchestrator_base
   ! interface orchestrator_
   !    procedure orchestrator_init
   ! end interface orchestrator_
-  
+
   type orchestrator_
 
      !class(FluxAggregator_) :: flux_aggregator
@@ -17,19 +17,19 @@ module orchestrator_base
      !class(SpatialObject_) :: spatial_object
 
    contains
-     
+
      procedure, public, pass(self) :: init => orchestrator_init
 
   end type orchestrator_
 
   type(orchestrator_), save :: orchestrator
-  
+
 contains
 
   !We may want routines to access the various components
 
   subroutine orchestrator_init(self)
-    class (orchestrator_) :: self   
+    class (orchestrator_) :: self
 
     self%config = Configuration_()
 
@@ -37,7 +37,7 @@ contains
     ! Read configuration and decide how to assemble the various components
     ! Assuming IO_Manager_serial_ selected
     self%IO_manager = IOManager_()
-    
+
   end subroutine orchestrator_init
 
 end module orchestrator_base

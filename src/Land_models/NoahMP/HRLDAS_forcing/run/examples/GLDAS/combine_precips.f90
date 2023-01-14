@@ -62,6 +62,6 @@ if(iret/=0) stop 11
 
 call baclose(lugbout,iret)
 if(iret/=0) stop 12
- 
+
 
 end

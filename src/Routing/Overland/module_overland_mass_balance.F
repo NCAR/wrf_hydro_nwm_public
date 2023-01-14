@@ -11,12 +11,12 @@ implicit none
    ! holds variables used for mass balance
    type overland_mass_balance_struct
       ! mass balance
-      
+
       ! replaced with accumulated_change_in_soil_moisture
       !real(kind=8) :: dsmctot
       ! total difference in soil moisture each timestep
       real(kind=8) :: accumulated_change_in_soil_moisture
-      
+
       ! replaced with pre_soil_mosture_content
       !real(kind=8) :: smctot1     ! NEED VARIABLE INFO
       ! Pre time step soil moisture content accumulator  (mm) TODO verify unit
@@ -29,14 +29,14 @@ implicit none
 
       ! replaced with pre_infiltration_excess
       !real(kind=8) :: suminfxs1  ! NEED VARIABLE INFO
-      
+
       ! Pre time step infiltration excess accumulator    (mm) TODO verify unit
       ! FIX ME -- this variable was declared as real(kind=8) as mis match with parameter specification
       ! in Noah_distributed_routing.F:OverlandRouting matched it with parameter specified as real(kind=4)
       ! this caused an implicit cast to single percision float which was required as the value was then used
       ! in the sum_real mpi call which required single percision. Does this variable need to be a double?
       real :: pre_infiltration_excess
-      
+
       ! replaced with post_infiltration_excess
       !real(kind=8) :: suminfxsrt  ! NEED VARIABLE INFO
       ! Post time step infiltration excess accumulator   (mm) TODO verify unit
@@ -45,7 +45,7 @@ implicit none
       ! this caused an implicit cast to single percision float which was required as the value was then used
       ! in the sum_real mpi call which required single percision. Does this variable need to be a double?
       real :: post_infiltration_excess
-      
+
    contains
         procedure :: init => overland_mass_balance_init
         procedure :: destroy => overland_mass_balance_destroy

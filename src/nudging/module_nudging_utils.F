@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_nudging_utils
@@ -33,22 +33,22 @@ contains
 
 
 !===================================================================================================
-! Program Names: 
-!   functions: whichPack and whichLoop 
-! Author(s)/Contact(s): 
+! Program Names:
+!   functions: whichPack and whichLoop
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Identify indices in a vector which are TRUE, reutrns zero length vector
 !   if there are no matches.
-! History Log: 
+! History Log:
 !   6/04/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
-! Notes: 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
+! Notes:
 !   JLM: Recent catastrophic failure reported for pack on ifort, with work arround.
 !   JLM: https://software.intel.com/en-us/forums/topic/559308#comments
 
@@ -82,7 +82,7 @@ do ii=1,size(theMask)
       which = -9999
       return
    end if
-   if(theMask(ii)) then 
+   if(theMask(ii)) then
       which(nWhich)=ii
       nWhich = nWhich + 1
    endif
@@ -91,22 +91,22 @@ nWhich = nWhich-1
 end subroutine whichLoop
 
 !===================================================================================================
-! Program Names: 
+! Program Names:
 !   function: whUnique
-! Author(s)/Contact(s): 
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Identify THE index in a logical vector which is TRUE. Returns
 !   -1 if not unique or none are true.
-! History Log: 
+! History Log:
 !   6/04/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
-! Notes: 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
+! Notes:
 
 function whUnique(theMask, unsafe)
   implicit none
@@ -116,37 +116,37 @@ function whUnique(theMask, unsafe)
   integer, allocatable, dimension(:) :: whUniques
   integer :: i, nMatches
   if(present(unsafe)) then
-     !whUniques=pack( (/ (i, i=1,size(theMask)) /), mask= theMask)     
+     !whUniques=pack( (/ (i, i=1,size(theMask)) /), mask= theMask)
      !whUnique = whUniques(1)
-     whUnique=sum( (/ (i, i=1,size(theMask)) /), mask= theMask)     
-  else 
+     whUnique=sum( (/ (i, i=1,size(theMask)) /), mask= theMask)
+  else
      nMatches = sum( (/ (1, i=1,size(theMask)) /), mask= theMask )
      if (nMatches .gt. 1 .OR. nMatches .eq. 0) then
         whUnique=-1
-     else 
-        whUnique=sum( (/ (i, i=1,size(theMask)) /), mask= theMask)     
+     else
+        whUnique=sum( (/ (i, i=1,size(theMask)) /), mask= theMask)
      end if
   end if
 end function whUnique
 
 
 !===================================================================================================
-! Program Names: 
+! Program Names:
 !   function: whUnique
-! Author(s)/Contact(s): 
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Simply returns the first match, no check for uniques. On gfortran this
 !    was the fastest of the bunch even/especially for max indices on huge arrays.
-! History Log: 
+! History Log:
 !   6/04/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
-! Notes: 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
+! Notes:
 
 function whUniLoop(theMask)
   implicit none
@@ -163,21 +163,21 @@ function whUniLoop(theMask)
 end function whUniLoop
 
 !===================================================================================================
-! Program Names: 
+! Program Names:
 !   function: whInLoop
-! Author(s)/Contact(s): 
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Identify the indices of elements in a first vector which are present in the 
 !   second vector, returns 0 for no matches. This can be slow, it's a double do/for loop.
-! History Log: 
+! History Log:
 !   6/04/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
 ! Notes: Can be slow, use with caution.
 
 ! parallelize this? ||||||||||||||||||||||||||||||||||
@@ -222,26 +222,26 @@ end subroutine whichInLoop2
 
 
 !===================================================================================================
-! Program Names: 
+! Program Names:
 !   accum_nudging_time
-! Author(s)/Contact(s): 
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Tally up the total cpu or wall time used by nudging.
-! History Log: 
+! History Log:
 !   8/20/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 !   start, end: real times for end-diff timing & accumulation
 !   sectionLabel: prints a message with the timing for the section
 !      print*, 'Ndg: ' // sectionLabel // '(seconds ' // trim(clockType) // ' time):', diff
 !   optional - accum: accumulate this towards the overall time or simply print the above 
 !      message? Do not accum for nested sections of code, but still give the diagnostic.
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
-! Notes: 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
+! Notes:
 subroutine accum_nudging_time(start, end, sectionLabel, accum)
 implicit none
 real,              intent(in) :: start, end
@@ -265,28 +265,28 @@ end subroutine accum_nudging_time
 
 
 !===================================================================================================
-! Program Names: 
+! Program Names:
 !   nudging_timer
-! Author(s)/Contact(s): 
+! Author(s)/Contact(s):
 !   James L McCreight <jamesmcc><ucar><edu>
-! Abstract: 
+! Abstract:
 !   Return your choice of cpu time or wall time
-! History Log: 
+! History Log:
 !   8/20/15 -Created, JLM.
-! Usage: 
-! Parameters:  
+! Usage:
+! Parameters:
 ! Input Files:
-! Output Files: 
-! Condition codes: 
-! User controllable options: None. 
-! Notes: 
+! Output Files:
+! Condition codes:
+! User controllable options: None.
+! Notes:
 subroutine nudging_timer(time)
 implicit none
 real, intent(inout) :: time
-integer :: count 
+integer :: count
 if(clockType.eq.'cpu') call cpu_time(time)
 if(clockType.eq.'wall') then
-   call system_clock(count=count) 
+   call system_clock(count=count)
    time=real(count)
 end if
 end subroutine nudging_timer
@@ -294,4 +294,3 @@ end subroutine nudging_timer
 
 !===================================================================================================
 end module module_nudging_utils
-

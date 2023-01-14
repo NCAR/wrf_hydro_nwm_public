@@ -1,11 +1,11 @@
 !*******************************************************************************
-!Subroutine - rapid_close_Qhum_file 
+!Subroutine - rapid_close_Qhum_file
 !*******************************************************************************
 subroutine rapid_close_Qhum_file
 
 !Purpose:
 !Close Qhum_file from Fortran.
-!Author: 
+!Author:
 !Cedric H. David, 2014-2015.
 
 
@@ -20,7 +20,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 
 

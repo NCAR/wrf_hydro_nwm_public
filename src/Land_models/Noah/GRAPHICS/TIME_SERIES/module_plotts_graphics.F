@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_plotts_graphics
@@ -91,7 +91,7 @@ contains
     else
        stop "Too many colors."
     endif
-    
+
   end function color_index
 
   type(named_color) function get_x11_color(name) result (c)
@@ -142,7 +142,7 @@ contains
           stringname = trim(string(idx:))
           stringname = downcase(trim(stringname))
           stringname = unblank(trim(stringname))
-          
+
           readlist_count = readlist_count + 1
           readlist_r(readlist_count) = float(r)/255.
           readlist_g(readlist_count) = float(g)/255.
@@ -174,7 +174,7 @@ contains
 ! Opens workstation 1 as a CGM workstation.
 ! Opens workstation 2 as a WISS.
 ! Defines a couple of colors, and sets a couple of NCAR Graphics parameters
-! 
+!
 ! If you want the gmeta file to be called something other than "gmeta",
 ! give this subroutine the optional argument.
     implicit none
@@ -195,8 +195,8 @@ contains
     call gacwk(1)
     call gacwk(2)
     global_ncols = 0
-    
-    
+
+
     ! call define_color("white")
     ! call define_color("black")
     ! call gscr(1, 0, 1., 1., 1.) ! White

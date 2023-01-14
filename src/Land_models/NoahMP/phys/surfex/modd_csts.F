@@ -3,34 +3,34 @@
 !SFX_LIC version 1. See LICENSE, CeCILL-C_V1-en.txt and CeCILL-C_V1-fr.txt  
 !SFX_LIC for details. version 1.
 !     ###############
-      MODULE MODD_CSTS      
+      MODULE MODD_CSTS
 !     ###############
 !
-!!****  *MODD_CSTS* - declaration of Physic constants 
+!!****  *MODD_CSTS* - declaration of Physic constants
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this declarative module is to declare  the 
-!     Physics constants.    
+!       The purpose of this declarative module is to declare  the
+!     Physics constants.
 !
 !!
 !!**  IMPLICIT ARGUMENTS
 !!    ------------------
-!!      None 
+!!      None
 !!
 !!    REFERENCE
 !!    ---------
-!!          
+!!
 !!    AUTHOR
 !!    ------
 !!      V. Ducrocq   *Meteo France*
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    16/05/94  
-!!      J. Stein    02/01/95  add xrholw                    
+!!      Original    16/05/94
+!!      J. Stein    02/01/95  add xrholw
 !!      J.-P. Pinty 13/12/95  add XALPI,XBETAI,XGAMI
-!!      J. Stein    25/07/97  add XTH00                    
+!!      J. Stein    25/07/97  add XTH00
 !!      V. Masson   05/10/98  add XRHOLI
 !!      C. Mari     31/10/00  add NDAYSEC
 !!      J. Escobar     06/13  add XSURF_TIMY XSURF_TIMY_12 XSURF_EPSILON for REAL*4
@@ -39,7 +39,7 @@
 !*       0.   DECLARATIONS
 !             ------------
 !
-IMPLICIT NONE 
+IMPLICIT NONE
 REAL,SAVE :: XPI                ! Pi
 !
 REAL,SAVE :: XDAY,XSIYEA,XSIDAY ! day duration, sideral year duration,
@@ -48,7 +48,7 @@ REAL,SAVE :: XDAY,XSIYEA,XSIDAY ! day duration, sideral year duration,
 REAL,SAVE :: XKARMAN            ! von karman constant
 REAL,SAVE :: XLIGHTSPEED        ! light speed
 REAL,SAVE :: XPLANCK            ! Planck constant
-REAL,SAVE :: XBOLTZ             ! Boltzman constant 
+REAL,SAVE :: XBOLTZ             ! Boltzman constant
 REAL,SAVE :: XAVOGADRO          ! Avogadro number
 !
 REAL,SAVE :: XRADIUS,XOMEGA     ! Earth radius, earth rotation
@@ -71,9 +71,9 @@ REAL,SAVE :: XLVTT              ! Vaporization heat constant
 REAL,SAVE :: XLSTT              ! Sublimation heat constant
 REAL,SAVE :: XLMTT              ! Melting heat constant
 REAL,SAVE :: XESTT              ! Saturation vapor pressure  at triple point
-                                ! temperature  
-REAL,SAVE :: XALPW,XBETAW,XGAMW ! Constants for saturation vapor 
-                                !  pressure  function 
+                                ! temperature
+REAL,SAVE :: XALPW,XBETAW,XGAMW ! Constants for saturation vapor
+                                !  pressure  function
 REAL,SAVE :: XALPI,XBETAI,XGAMI ! Constants for saturation vapor
                                 !  pressure  function over solid ice
 REAL, SAVE        :: XTH00      ! reference value  for the potential
@@ -92,4 +92,3 @@ REAL,SAVE     :: XZ0ICEZ0SNOW, XRHOTHRESHOLD_ICE
 
 !
 END MODULE MODD_CSTS
-

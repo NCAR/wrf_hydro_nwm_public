@@ -11,17 +11,17 @@ CONTAINS
 !SFX_LIC for details. version 1.
 !   ######################################################################
     SUBROUTINE SURFACE_AERO_COND(PRI, PZREF, PUREF, PVMOD, PZ0,&
-                                     PZ0H, PAC, PRA, PCH           ) 
+                                     PZ0H, PAC, PRA, PCH           )
 !   ######################################################################
 !
-!!****  *SURFACE_AERO_COND*  
+!!****  *SURFACE_AERO_COND*
 !!
 !!    PURPOSE
 !!    -------
 !
 !     Computes the drag coefficients for heat and momentum near the ground
-!         
-!     
+!
+!
 !!**  METHOD
 !!    ------
 !
@@ -45,11 +45,11 @@ CONTAINS
 !!
 !!    MODD_CST
 !!
-!!      
+!!
 !!    REFERENCE
 !!    ---------
 !!
-!!      
+!!
 !!    AUTHOR
 !!    ------
 !!
@@ -57,7 +57,7 @@ CONTAINS
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    20/01/98 
+!!      Original    20/01/98
 !!                  02/04/01 (P Jabouille) limitation of Z0 with 0.5 PUREF
 !-------------------------------------------------------------------------------
 !
@@ -97,7 +97,7 @@ REAL, DIMENSION(:), INTENT(OUT)   :: PCH      ! drag coefficient for heat
 !
 REAL, DIMENSION(SIZE(PRI)) :: ZZ0, ZZ0H, ZMU,          &
                                ZFH, ZCHSTAR, ZPH, ZCDN, &
-                               ZSTA, ZDI, ZWORK1, ZWORK2, ZWORK3 
+                               ZSTA, ZDI, ZWORK1, ZWORK2, ZWORK3
 REAL, DIMENSION(SIZE(PRI)) :: ZVMOD
 !
 INTEGER                    :: JJ
@@ -132,7 +132,7 @@ DO JJ=1,SIZE(PRI)
   ZCHSTAR(JJ) = CHSTAR(ZMU(JJ))
   ZPH(JJ)     = PH(ZMU(JJ))
 !
-! 
+!
   ZCDN(JJ) = (XKARMAN/ZWORK1(JJ))**2.
 !
 !
@@ -144,13 +144,13 @@ DO JJ=1,SIZE(PRI)
                    +ZCHSTAR(JJ)*ZCDN(JJ)*15.                         &
                                 *ZWORK2(JJ)**ZPH(JJ)  &
                                 *ZFH(JJ) * SQRT(-ZSTA(JJ))           &
-                  ) 
+                  )
     PAC(JJ) = ZCDN(JJ)*(ZVMOD(JJ)-15.* ZSTA(JJ)*ZDI(JJ))*ZFH(JJ)
 
   ELSE
     ZDI(JJ) = SQRT(ZWORK3(JJ) + 5. * ZSTA(JJ) )
     PAC(JJ) = ZCDN(JJ)*ZVMOD(JJ)/(1.+15.*ZSTA(JJ)*ZDI(JJ)  &
-             / ZWORK3(JJ) /ZVMOD(JJ) )*ZFH(JJ)    
+             / ZWORK3(JJ) /ZVMOD(JJ) )*ZFH(JJ)
   ENDIF
 !
   PRA(JJ) = 1. / PAC(JJ)
@@ -166,17 +166,17 @@ END SUBROUTINE SURFACE_AERO_COND
 
 !   #################################################################
     SUBROUTINE SURFACE_CD(PRI, PZREF, PUREF, PZ0EFF, PZ0H,   &
-                              PCD, PCDN) 
+                              PCD, PCDN)
 !   #################################################################
 !
-!!****  *SURFACE_CD*  
+!!****  *SURFACE_CD*
 !!
 !!    PURPOSE
 !!    -------
 !
 !     Computes the drag coefficients for momentum near the ground
-!         
-!     
+!
+!
 !!**  METHOD
 !!    ------
 !
@@ -201,11 +201,11 @@ END SUBROUTINE SURFACE_AERO_COND
 !!    MODD_CST
 !!    MODD_GROUND_PAR
 !!
-!!      
+!!
 !!    REFERENCE
 !!    ---------
 !!
-!!      
+!!
 !!    AUTHOR
 !!    ------
 !!
@@ -213,7 +213,7 @@ END SUBROUTINE SURFACE_AERO_COND
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    20/01/98 
+!!      Original    20/01/98
 !!                  02/04/01 (P Jabouille) limitation of Z0 with 0.5 PUREF
 !-------------------------------------------------------------------------------
 !
@@ -250,7 +250,7 @@ REAL, DIMENSION(:), INTENT(OUT)   :: PCDN     ! neutral drag coefficient for mom
 !
 !
 REAL                       :: ZZ0EFF, ZZ0H, ZMU,     &
-                               ZCMSTAR, ZPM, ZCM, ZFM 
+                               ZCMSTAR, ZPM, ZCM, ZFM
 INTEGER                    :: JJ
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 
@@ -298,17 +298,17 @@ END SUBROUTINE SURFACE_CD
 
 !     #########
     SUBROUTINE SURFACE_RI(PTG, PQS, PEXNS, PEXNA, PTA, PQA,   &
-                               PZREF, PUREF, PDIRCOSZW, PVMOD, PRI )  
+                               PZREF, PUREF, PDIRCOSZW, PVMOD, PRI )
 !   ######################################################################
 !
-!!****  *SURFACE_RI*  
+!!****  *SURFACE_RI*
 !!
 !!    PURPOSE
 !!    -------
 !
 !     Computes the richardson number near the ground
-!         
-!     
+!
+!
 !!**  METHOD
 !!    ------
 !
@@ -325,11 +325,11 @@ END SUBROUTINE SURFACE_CD
 !!    MODD_CST
 !!    MODD_GROUND_PAR
 !!
-!!      
+!!
 !!    REFERENCE
 !!    ---------
 !!
-!!      
+!!
 !!    AUTHOR
 !!    ------
 !!
@@ -337,7 +337,7 @@ END SUBROUTINE SURFACE_CD
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    22/09/98 
+!!      Original    22/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.     DECLARATIONS
@@ -388,23 +388,23 @@ REAL, DIMENSION(SIZE(PVMOD)) :: ZVMOD
 !
 !       1.     Richardson number
 !              -----------------
-!                
+!
 !                                                 virtual potential        
-!                                                 temperature at the 
+!                                                 temperature at the
 !                                                 first atmospheric level and
 !                                                 at the surface
 !
 !IF (LHOOK) CALL DR_HOOK('SURFACE_RI',0,ZHOOK_HANDLE)
 !
-ZTHVA(:)=PTA(:)/PEXNA(:)*( 1.+(XRV/XRD-1.)*PQA(:) )   
+ZTHVA(:)=PTA(:)/PEXNA(:)*( 1.+(XRV/XRD-1.)*PQA(:) )
 ZTHVS(:)=PTG(:)/PEXNS(:)*( 1.+(XRV/XRD-1.)*PQS(:) )
-!                                                 
+!
 ZVMOD(:) = WIND_THRESHOLD(PVMOD(:),PUREF(:))
 !
                                                 ! Richardson's number
 PRI(:) = XG * PDIRCOSZW(:) * PUREF(:) * PUREF(:)              &
           * (ZTHVA(:)-ZTHVS(:)) / (0.5 * (ZTHVA(:)+ZTHVS(:)) )  &
-          / (ZVMOD(:)*ZVMOD(:)) /PZREF(:)  
+          / (ZVMOD(:)*ZVMOD(:)) /PZREF(:)
 !
 PRI(:) = MIN(PRI(:),XRIMAX)
 !
@@ -418,14 +418,14 @@ END SUBROUTINE SURFACE_RI
     FUNCTION WIND_THRESHOLD(PWIND,PUREF) RESULT(PWIND_NEW)
 !   ############################################################################
 !
-!!****  *WIND_THRESHOLD*  
+!!****  *WIND_THRESHOLD*
 !!
 !!    PURPOSE
 !!    -------
 !
 !     Set a minimum value to the wind for exchange coefficient computations.
 !     This minimum value depends on the forcing height
-!     
+!
 !!    AUTHOR
 !!    ------
 !!
@@ -433,7 +433,7 @@ END SUBROUTINE SURFACE_RI
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    09/2007 
+!!      Original    09/2007
 !-------------------------------------------------------------------------------
 !
 USE MODD_SURF_ATM, ONLY: XCISMIN, XVMODMIN, LALDTHRES
@@ -466,7 +466,7 @@ REAL, DIMENSION(SIZE(PWIND))     :: PWIND_NEW  ! modified wind
 !
 !IF (LHOOK) CALL DR_HOOK('WIND_THRESHOLD',0,ZHOOK_HANDLE)
 IF (.NOT.LALDTHRES) THEN
-!        
+!
 !  minimum value for exchange coefficients computations : 1m/s / 10m
    PWIND_NEW = MAX(PWIND , 0.1 * MIN(10.,PUREF) )
 ELSE

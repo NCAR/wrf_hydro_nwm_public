@@ -10,13 +10,13 @@ subroutine rapid_hsh_mat
 ! - IM_hsh_bas contains the index over the basin (JS_riv_bas) corresponding to
 !   each reach ID and is the same for each row
 !The choice of matrices to mimic hashtables is possible because the "keys" (i.e.
-!the reach IDs) are all integers, and the sparse structure allows to keep memory 
+!the reach IDs) are all integers, and the sparse structure allows to keep memory
 !usage minimal because the number of unique reach IDs is far inferior to the
-!maximum integer value of reach ID.  Implementing a C++ hashtable within Fortran 
-!would have required much more intrusive modifications to RAPID. 
-!Thank you to Chris A. Mattmann and to Si Liu who both suggested the use of 
+!maximum integer value of reach ID.  Implementing a C++ hashtable within Fortran
+!would have required much more intrusive modifications to RAPID.
+!Thank you to Chris A. Mattmann and to Si Liu who both suggested the use of
 !hashtables to decrease model setup time.
-!Author: 
+!Author:
 !Cedric H. David, 2015-2015.
 
 
@@ -38,23 +38,23 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 PetscInt, dimension(ncore)  :: IS_nz, IS_dnz, IS_onz
 PetscInt, dimension(IS_riv_tot) :: IV_tot_tmp1, IV_tot_tmp2
@@ -62,12 +62,12 @@ PetscInt, dimension(IS_riv_bas) :: IV_bas_tmp1, IV_bas_tmp2
 
 
 !*******************************************************************************
-!Check that reach IDs are within the allowed range 
+!Check that reach IDs are within the allowed range
 !*******************************************************************************
-write(temp_char2,'(i10)') IS_riv_id_max 
+write(temp_char2,'(i10)') IS_riv_id_max
 
 do JS_riv_tot=1,IS_riv_tot
-     if (IV_riv_tot_id(JS_riv_tot) > IS_riv_id_max) then 
+     if (IV_riv_tot_id(JS_riv_tot) > IS_riv_id_max) then
           write(temp_char,'(i10)') IV_riv_tot_id(JS_riv_tot)
           call PetscPrintf(PETSC_COMM_WORLD,                                   &
                            'ERROR: reach ID' // temp_char // ' in domain' //   &
@@ -75,7 +75,7 @@ do JS_riv_tot=1,IS_riv_tot
                            ' allowed of' // temp_char2 // char(10),ierr)
           stop
      end if
-     if (IV_riv_tot_id(JS_riv_tot) == 0) then 
+     if (IV_riv_tot_id(JS_riv_tot) == 0) then
           write(temp_char,'(i10)') JS_riv_tot
           call PetscPrintf(PETSC_COMM_WORLD,                                   &
                            'ERROR: reach ID located at index'// temp_char//    &
@@ -85,7 +85,7 @@ do JS_riv_tot=1,IS_riv_tot
 end do
 
 do JS_riv_bas=1,IS_riv_bas
-     if (IV_riv_bas_id(JS_riv_bas) > IS_riv_id_max) then 
+     if (IV_riv_bas_id(JS_riv_bas) > IS_riv_id_max) then
           write(temp_char,'(i10)') IV_riv_bas_id(JS_riv_bas)
           call PetscPrintf(PETSC_COMM_WORLD,                                   &
                            'ERROR: reach ID' // temp_char // ' in basin' //    &
@@ -93,7 +93,7 @@ do JS_riv_bas=1,IS_riv_bas
                            ' allowed of' // temp_char2 // char(10),ierr)
           stop
      end if
-     if (IV_riv_bas_id(JS_riv_bas) == 0) then 
+     if (IV_riv_bas_id(JS_riv_bas) == 0) then
           write(temp_char,'(i10)') JS_riv_bas
           call PetscPrintf(PETSC_COMM_WORLD,                                   &
                            'ERROR: reach ID located at index'// temp_char//    &
@@ -116,7 +116,7 @@ IS_dnz=0
 IS_onz=0
 
 IS_nz=IS_riv_tot
-do JS_riv_tot=1,IS_riv_tot 
+do JS_riv_tot=1,IS_riv_tot
      if (IV_riv_tot_id(JS_riv_tot) -1 >= IS_ownfirst .and.                     &
          IV_riv_tot_id(JS_riv_tot) -1 <  IS_ownlast) then
           IS_dnz=IS_dnz+1
@@ -141,7 +141,7 @@ IS_dnz=0
 IS_onz=0
 
 IS_nz=IS_riv_bas
-do JS_riv_bas=1,IS_riv_bas 
+do JS_riv_bas=1,IS_riv_bas
      if (IV_riv_bas_id(JS_riv_bas) -1 >= IS_ownfirst .and.                     &
          IV_riv_bas_id(JS_riv_bas) -1 <  IS_ownlast) then
           IS_dnz=IS_dnz+1

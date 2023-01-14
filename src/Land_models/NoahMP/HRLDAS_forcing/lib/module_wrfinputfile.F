@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_wrfinputfile
@@ -46,8 +46,8 @@ module module_wrfinputfile
 contains
 
   subroutine read_wrfinput_file(flnm, wrfinput, ierr)
-    ! 
-    ! Reads the wrfinput file identified by <flnm>, and fills out 
+    !
+    ! Reads the wrfinput file identified by <flnm>, and fills out
     ! the <wrfinput> structure with the appropriate values.
     !
     implicit none
@@ -108,7 +108,7 @@ contains
     allocate(wrfinput%ter(wrfinput%idim, wrfinput%jdim))
     call get_2d("HGT", ncid, wrfinput%ter, wrfinput%idim, wrfinput%jdim)
 
-    ! Get Land Use categories 
+    ! Get Land Use categories
     allocate(wrfinput%use(wrfinput%idim, wrfinput%jdim))
     call get_2d("IVGTYP", ncid, wrfinput%use, wrfinput%idim, wrfinput%jdim)
 
@@ -240,7 +240,7 @@ contains
 
   subroutine get_2d(name, ncid, array, idim, jdim)
     !
-    ! From the NetCDF unit <ncid>, read the variable named <name> with  
+    ! From the NetCDF unit <ncid>, read the variable named <name> with
     ! dimensions <idim> and <jdim>, filling the pre-dimensioned array <array>
     !
     implicit none

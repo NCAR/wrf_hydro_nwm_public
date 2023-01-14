@@ -3320,4 +3320,3 @@ end module module_lsm_forcing
       real, dimension(ix,jx):: infxsrt,soldrain
       call read_ldasout_seq(olddate,hgrid, indir, dt,ix,jx,infxsrt,soldrain)
     end subroutine read_forc_ldasout_seq
-

@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_modify_wrfinput
@@ -198,7 +198,7 @@ subroutine copy_replace(source_ncid, source_name, dest_ncid, dest_name)
   integer, dimension(NF90_MAX_VAR_DIMS) :: vcount
   integer, dimension(NF90_MAX_VAR_DIMS) :: source_dimids
   integer, dimension(NF90_MAX_VAR_DIMS) :: dest_dimids
-  
+
   integer :: j, destdim
 
 
@@ -272,7 +272,7 @@ subroutine copy_replace(source_ncid, source_name, dest_ncid, dest_name)
 
      iret = nf90_get_var(dest_ncid, dest_varid, dest_gone, start=vstart, count=vcount)
      call error_handler(iret, failure="Problem getting variable")
-     
+
      where (xdum < -1.E25) xdum = dest_gone
 
      iret = nf90_put_var(dest_ncid, dest_varid, xdum, start=vstart, count=vcount)
@@ -288,7 +288,7 @@ subroutine copy_replace(source_ncid, source_name, dest_ncid, dest_name)
   endif
 
 end subroutine copy_replace
-  
+
 subroutine copy_new(source_ncid, source_name, dest_ncid, dest_name)
   !
   ! Copy the variable named <source_name> from dataset <source_ncid> to
@@ -349,7 +349,7 @@ subroutine copy_new(source_ncid, source_name, dest_ncid, dest_name)
 
      iret = nf90_get_var(source_ncid, source_varid, xdum, start=vstart, count=vcount)
      call error_handler(iret, failure="Problem getting variable")
-     
+
      ! Put our destination dataset into define mode.
      iret = nf90_redef(dest_ncid)
      call error_handler(iret, failure="Problem putting dataset in define mode (redef)")
@@ -399,7 +399,7 @@ subroutine copy_new(source_ncid, source_name, dest_ncid, dest_name)
   endif
 
 end subroutine copy_new
-  
+
 subroutine copy_dataset(wrf_ncid, copy_ncid)
   use module_modify_wrfinput
   implicit none
@@ -474,7 +474,7 @@ subroutine copy_dataset(wrf_ncid, copy_ncid)
   iret = nf90_enddef(copy_ncid)
   call error_handler(iret, failure="Problem getting us out of define mode")
 
-  ! Copy all the data 
+  ! Copy all the data
 
   do i = 1, nvars
 
@@ -534,4 +534,3 @@ subroutine copy_dataset(wrf_ncid, copy_ncid)
   call error_handler(iret, failure="Problem closing copy_ncid.")
 
 end subroutine copy_dataset
-

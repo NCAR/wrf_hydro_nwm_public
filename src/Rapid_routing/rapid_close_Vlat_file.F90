@@ -1,11 +1,11 @@
 !*******************************************************************************
-!Subroutine - rapid_close_Vlat_file 
+!Subroutine - rapid_close_Vlat_file
 !*******************************************************************************
 subroutine rapid_close_Vlat_file
 
 !Purpose:
 !Close Qobs_file from Fortran/netCDF.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -21,7 +21,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 
 

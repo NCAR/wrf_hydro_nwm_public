@@ -68,7 +68,7 @@ if(check1) then
 
 end if
 
-if(check2) then 
+if(check2) then
 
   call baopenr(lugbin2,infile2,iret)
   if(iret/=0) stop 12
@@ -93,7 +93,7 @@ if(debug) print *, count(cza(:,4)<0.and.data_in2>0)
 
 ! START MESSING WITH THE INPUT DATA
 
-where(data_in1 <= 0 .or. cza(:,1) <= 0.0) 
+where(data_in1 <= 0 .or. cza(:,1) <= 0.0)
   data_in1 = 0.0
   cza(:,1) = 0.0
 end where
@@ -109,25 +109,25 @@ data_out(:,4) = data_in2
 data_out(:,2) = (2.0*data_in1 + data_in2)/3.0  ! default to linear interp
 data_out(:,3) = (data_in1 + 2.0*data_in2)/3.0
 
-where(data_in1 > critnrg .and. data_in2 <= critnrg .and. cza(:,1) > critcos) 
+where(data_in1 > critnrg .and. data_in2 <= critnrg .and. cza(:,1) > critcos)
   data_out(:,2) = cza(:,2)/cza(:,1) * data_in1   ! if sun sufficently high
   data_out(:,3) = cza(:,3)/cza(:,1) * data_in1   ! around sunset, use left value
 end where
 
-where(data_in1 <= critnrg .and. data_in2 > critnrg .and. cza(:,4) > critcos) 
+where(data_in1 <= critnrg .and. data_in2 > critnrg .and. cza(:,4) > critcos)
   data_out(:,2) = cza(:,2)/cza(:,4) * data_in2   ! if sun sufficently high
   data_out(:,3) = cza(:,3)/cza(:,4) * data_in2   ! around sunrise, use right value
 end where
 
 where(data_in1 > critnrg .and. data_in2 > critnrg .and. cza(:,1) > critcos .and. cza(:,4) > critcos)
-  data_out(:,3) = cza(:,3)/cza(:,4) * data_in2  ! mid-day with sufficient sun 
+  data_out(:,3) = cza(:,3)/cza(:,4) * data_in2  ! mid-day with sufficient sun
   data_out(:,2) = cza(:,2)/cza(:,1) * data_in1  !   so use zenith angle
 end where
 
 ! WRITE OUT NEW FILES
 
 do i = 1,4
-  
+
   where(data_out(:,i) <= 0 .or. cza(:,i) <= 0.0) data_out(:,i) = 0.0
 
   if(debug) print *, cza(testpt,i), data_out(testpt,i), data_in1(testpt), data_in2(testpt)
@@ -148,7 +148,7 @@ do i = 1,4
   call baclose(lugbout+i,iret)
   if(iret/=0) stop 6
 
-end do 
+end do
 
 if(debug) print *
 
@@ -164,7 +164,7 @@ subroutine get_cza(jday, gmthour, latrad, lonrad, cza)
 
   real :: gg, tc, declin, sha(maxpts)
   real, parameter :: pi = 3.14159265
-  
+
   ! Fractional day of the year, in radians
   gg = (360./365.25) * (JDAY+gmthour/24.) * pi/180.
 

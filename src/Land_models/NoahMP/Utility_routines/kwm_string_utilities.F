@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module kwm_string_utilities
@@ -68,7 +68,7 @@ contains
           return_string(j:j) = string(i:i)
        endif
     enddo
-    
+
   end function unblank
 
 !KWM  character function upcase(h)
@@ -87,7 +87,7 @@ contains
     implicit none
     character(len=*), intent(in) :: h
     integer :: i
-    
+
     return_string = " "
 
     do i = 1, len_trim(h)

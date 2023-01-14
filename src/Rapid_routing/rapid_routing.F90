@@ -9,8 +9,8 @@ subroutine rapid_routing(ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                            &
 !Performs flow calculation in each reach of a river network using the Muskingum
 !method (McCarthy 1938).  Also calculates the volume of each reach using a
 !simple first order approximation
-!Author: 
-!Cedric H. David, 2008-2015. 
+!Author:
+!Cedric H. David, 2008-2015.
 
 
 !*******************************************************************************
@@ -40,26 +40,26 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 Vec, intent(in)    :: ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                               &
-                      ZV_QoutinitR,ZV_VinitR 
+                      ZV_QoutinitR,ZV_VinitR
 Vec, intent(out)   :: ZV_QoutR,ZV_QoutbarR
 Vec                :: ZV_VR,ZV_VbarR
 
@@ -79,8 +79,8 @@ call VecGetLocalSize(ZV_QoutR,IS_localsize,ierr)
 !*******************************************************************************
 !Set mean values to zero initialize QoutprevR with QoutinitR
 !*******************************************************************************
-call VecSet(ZV_QoutbarR,0*ZS_one,ierr)                     !Qoutbar=0 
-!call VecSet(ZV_VbarR,0*ZS_one,ierr)                        !Vbar=0 
+call VecSet(ZV_QoutbarR,0*ZS_one,ierr)                     !Qoutbar=0
+!call VecSet(ZV_VbarR,0*ZS_one,ierr)                        !Vbar=0
 !set the means to zero at beginning of iterations over routing time step
 
 call VecCopy(ZV_QoutinitR,ZV_QoutprevR,ierr)               !QoutprevR=QoutinitR
@@ -89,7 +89,7 @@ call VecCopy(ZV_QoutinitR,ZV_QoutprevR,ierr)               !QoutprevR=QoutinitR
 
 
 !*******************************************************************************
-!Temporal loop 
+!Temporal loop
 !*******************************************************************************
 call VecGetArrayF90(ZV_C1,ZV_C1_p,ierr)
 call VecGetArrayF90(ZV_C2,ZV_C2_p,ierr)
@@ -100,10 +100,10 @@ do JS_R=1,IS_R
 !-------------------------------------------------------------------------------
 !Update mean
 !-------------------------------------------------------------------------------
-call VecAXPY(ZV_QoutbarR,ZS_one/IS_R,ZV_QoutprevR,ierr) 
+call VecAXPY(ZV_QoutbarR,ZS_one/IS_R,ZV_QoutprevR,ierr)
 !Qoutbar=Qoutbar+Qoutprev/IS_R
 
-!call VecAXPY(ZV_VbarR,ZS_one/IS_R,ZV_VprevR,ierr)       
+!call VecAXPY(ZV_VbarR,ZS_one/IS_R,ZV_VprevR,ierr)
 !Vbar=Vbar+Vprev/IS_R
 
 !-------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ do JS_riv_bas=1,IS_riv_bas
      ZV_QoutR_p(JS_riv_bas)=ZV_b_p(JS_riv_bas)                                 &
                             +sum(ZV_C1_p(JS_riv_bas)                           &
                                   *ZV_QoutR_p(IM_index_up(JS_riv_bas,1:        &
-                                   IV_nbup(IV_riv_index(JS_riv_bas))))) 
+                                   IV_nbup(IV_riv_index(JS_riv_bas)))))
 end do
 !Taking into account the knowledge of how many upstream locations exist.
 !Similar to exact preallocation of network matrix
@@ -210,7 +210,7 @@ call VecRestoreArrayF90(ZV_QoutRabsmax,ZV_QoutRabsmax_p,ierr)
 end if
 
 !-------------------------------------------------------------------------------
-!Calculation of V (this part can be commented to accelerate parameter 
+!Calculation of V (this part can be commented to accelerate parameter
 !estimation in calibration mode)
 !-------------------------------------------------------------------------------
 !call VecCopy(ZV_QoutR,ZV_VoutR,ierr)                      !Vout=Qout
@@ -233,7 +233,7 @@ end if
 !-------------------------------------------------------------------------------
 call VecCopy(ZV_QoutR,ZV_QoutprevR,ierr)              !Qoutprev=Qout
 !call VecCopy(ZV_VR,ZV_VprevR,ierr)                    !Vprev=V
-!reset previous 
+!reset previous
 
 
 !-------------------------------------------------------------------------------

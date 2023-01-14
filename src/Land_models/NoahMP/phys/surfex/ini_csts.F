@@ -7,7 +7,7 @@ CONTAINS
 !SFX_LIC version 1. See LICENSE, CeCILL-C_V1-en.txt and CeCILL-C_V1-fr.txt  
 !SFX_LIC for details. version 1.
 !     #########
-      SUBROUTINE INI_CSTS 
+      SUBROUTINE INI_CSTS
 !     ##################
 !
 !!****  *INI_CSTS * - routine to initialize the module MODD_CST
@@ -16,12 +16,12 @@ CONTAINS
 !!    -------
 !       The purpose of this routine is to initialize  the physical constants
 !     stored in  module MODD_CST.
-!      
+!
 !
 !!**  METHOD
 !!    ------
-!!      The physical constants are set to their numerical values 
-!!     
+!!      The physical constants are set to their numerical values
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -34,7 +34,7 @@ CONTAINS
 !!    REFERENCE
 !!    ---------
 !!      Book2 of the documentation (module MODD_CST, routine INI_CSTS)
-!!      
+!!
 !!
 !!    AUTHOR
 !!    ------
@@ -42,7 +42,7 @@ CONTAINS
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    18/05/94 
+!!      Original    18/05/94
 !!      J. Stein    02/01/95  add the volumic mass of liquid water
 !!      J.-P. Pinty 13/12/95  add the water vapor pressure over solid ice
 !!      J. Stein    29/06/97  add XTH00
@@ -73,7 +73,7 @@ USE MODD_CSTS
 !USE MODI_INI_SURF_CSTS
 !
 IMPLICIT NONE
-!  
+!
 !-------------------------------------------------------------------------------
 !
 !*       1.     FUNDAMENTAL CONSTANTS
@@ -82,7 +82,7 @@ IMPLICIT NONE
 LOGICAL               :: LREPROD_OPER,LMEBREC
 REAL           :: XEVERG_RSMIN, XEVERG_VEG, XANSFRACMEL,XTEMPANS
 REAL          :: XANSMIN, XANSMAX, XAGLAMIN, XAGLAMAX, XEMISSN, XUNDEF
-REAL          :: XVAGING_NOGLACIER, XVAGING_GLACIER 
+REAL          :: XVAGING_NOGLACIER, XVAGING_GLACIER
 
  CHARACTER(LEN=3) :: CDGAVG, CIMPLICIT_WIND,CQSAT,CCHARNOCK
  CHARACTER(LEN=4) :: CDGDIF
@@ -211,13 +211,13 @@ XALPI  = LOG(XESTT) + (XBETAI /XTT) + (XGAMI *LOG(XTT))
 ! * Reproductibility for SURFEX OPER
 !
 LREPROD_OPER = .FALSE. ! default
-LMEBREC            = .FALSE. 
+LMEBREC            = .FALSE.
 !
 !
 ! * Vegetation parameters for tropical forest
 !
-!XEVERG_RSMIN : old = 250. (Manzi 1993) but observations range 
-!               from 140 to 180. According to Delire et al. (1997) and 
+!XEVERG_RSMIN : old = 250. (Manzi 1993) but observations range
+!               from 140 to 180. According to Delire et al. (1997) and
 !               new tests over 6 local sites, 175. is recommended
 !               Should be the default after check with AROME/ALADIN
 !
@@ -257,7 +257,7 @@ IF(LMEBREC)THEN
 !
   XANSFRACMEL = 0.85 ! (-)
 !
-! Threeshold temperature above which the snow albedo starts to decrease 
+! Threeshold temperature above which the snow albedo starts to decrease
 !
   XTEMPANS = 268.15 ! (K)
 !
@@ -275,7 +275,7 @@ ENDIF
 
 !
 ! Use recommended settings for snow albedo (FALSE = ISBA default)
-! 
+!
 LMEBREC=.FALSE.
 !
 ! Fraction of maximum value of the albedo of snow that is reached for melting
@@ -291,7 +291,7 @@ XAGLAMIN = 0.8 ! orig 0.8 ! (-) trude test with 0.7
 XAGLAMAX = 0.85 ! (-)
 !
 ! Use recommended settings for snow albedo (FALSE = ISBA default)
-! 
+!
 LMEBREC=.FALSE.
 !
 ! Fraction of maximum value of the albedo of snow that is reached for melting
@@ -323,7 +323,7 @@ XVAGING_GLACIER   = 900.
 !
 !-------------------------------------------------------------------------------
 !
-END SUBROUTINE INI_CSTS 
+END SUBROUTINE INI_CSTS
 
 
 END MODULE MODI_INI_CSTS
