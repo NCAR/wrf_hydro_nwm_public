@@ -17,7 +17,7 @@ git config --global user.email "model.tester@ucar.edu"
 git config --global user.name "Model Tester"
 
 TOKEN=$IMAGE_TOKEN
-REPO=hydro-automerge/wrf_hydro_nwm_public_images
+REPO=andygaydos/wrf_hydro_nwm_public
 
 cd $diffs
 

@@ -34,6 +34,9 @@ logger.setLevel(logging.DEBUG)
 # location for writing temporary local files, e.g. the cloned repository
 TEMP_DIR = "/tmp"
 
+# The name of the images repository
+IMAGE_REPO = "hydro-automerge/wrf_hydro_nwm_public_images"
+
 # The name of the images branch and branch reference
 IMAGEREF = "images/image-ref"
 
@@ -251,7 +254,7 @@ def run():
     reponame = options.repo.split("/")[-1]
     outdir = f"{TEMP_DIR}/{reponame}"
 
-    if not clone_repo(options.repo, outdir, token=options.token): return False
+    if not clone_repo(IMAGE_REPO, outdir, token=options.token): return False
 
     sha = add_images(options.images, outdir, options.pull)
     if not sha: return False
