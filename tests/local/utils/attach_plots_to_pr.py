@@ -34,6 +34,9 @@ logger.setLevel(logging.DEBUG)
 # location for writing temporary local files, e.g. the cloned repository
 TEMP_DIR = "/tmp"
 
+# The name of the images repository
+IMAGE_REPO = "hydro-automerge/wrf_hydro_nwm_public_images"
+
 # The name of the images branch and branch reference
 IMAGEREF = "images/image-ref"
 
@@ -223,7 +226,7 @@ def create_pull_comment(gh, repo, sha, images, pull, title=None):
 
         for img in images:
             img = os.path.basename(img)
-            path = f"../blob/{sha}/images_{pull}/{img}"
+            path = f"https://github.com/{IMAGE_REPO}/blob/{sha}/images_{pull}/{img}"
             comment += f"![alt text]({path}?raw=true)\n"
 
         logger.debug("Adding comment to pull request")
@@ -248,10 +251,10 @@ def run():
     gh = login(options.token)
     if not gh: return False
 
-    reponame = options.repo.split("/")[-1]
+    reponame = IMAGE_REPO.split("/")[-1]
     outdir = f"{TEMP_DIR}/{reponame}"
 
-    if not clone_repo(options.repo, outdir, token=options.token): return False
+    if not clone_repo(IMAGE_REPO, outdir, token=options.token): return False
 
     sha = add_images(options.images, outdir, options.pull)
     if not sha: return False

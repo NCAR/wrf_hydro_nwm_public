@@ -16,11 +16,14 @@ title="Difference plots for configuration '$CONFIG'"
 git config --global user.email "model.tester@ucar.edu"
 git config --global user.name "Model Tester"
 
+TOKEN=$IMAGE_TOKEN
+REPO=andygaydos/wrf_hydro_nwm_public
+
 cd $diffs
 
 for d in `ls -1`
 do
         if [[ -d $d && `ls -1 $d` ]]; then
-            python $cwd/attach_plots_to_pr.py -r NCAR/wrf_hydro_nwm_public -p $PR -d -t "$GITHUB_TOKEN" --title "$title" $d/* 
+            python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" $d/* 
         fi
 done
