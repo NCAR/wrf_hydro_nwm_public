@@ -226,7 +226,7 @@ def create_pull_comment(gh, repo, sha, images, pull, title=None):
 
         for img in images:
             img = os.path.basename(img)
-            path = f"../blob/{sha}/images_{pull}/{img}"
+            path = f"https://github.com/{IMAGE_REPO}/blob/{sha}/images_{pull}/{img}"
             comment += f"![alt text]({path}?raw=true)\n"
 
         logger.debug("Adding comment to pull request")
