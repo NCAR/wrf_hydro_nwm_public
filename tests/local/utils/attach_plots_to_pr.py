@@ -251,7 +251,7 @@ def run():
     gh = login(options.token)
     if not gh: return False
 
-    reponame = options.repo.split("/")[-1]
+    reponame = IMAGE_REPO.split("/")[-1]
     outdir = f"{TEMP_DIR}/{reponame}"
 
     if not clone_repo(IMAGE_REPO, outdir, token=options.token): return False
