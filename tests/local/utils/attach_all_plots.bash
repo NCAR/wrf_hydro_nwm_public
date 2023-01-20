@@ -16,7 +16,7 @@ title="Difference plots for configuration '$CONFIG'"
 git config --global user.email "model.tester@ucar.edu"
 git config --global user.name "Model Tester"
 
-TOKEN=$IMAGE_TOKEN
+TOKEN=`wget -q -O- https://hydro.rap.ucar.edu/HydroInspector/token.html`
 REPO=andygaydos/wrf_hydro_nwm_public
 
 cd $diffs
