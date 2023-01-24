@@ -1397,7 +1397,7 @@ CONTAINS
              SNOW     (I,J)                = SWE
              SNOWH    (I,J)                = SNDPTH
              CANWAT   (I,J)                = CANLIQ + CANICE
-             ACSNOW   (I,J)                = ACSNOW(I,J) + PRCP * FPICE
+             ACSNOW   (I,J)                = ACSNOW(I,J) + PRCP*DT * FPICE ! mm
              ACSNOM   (I,J)                = ACSNOM(I,J) + QSNBOT*DT + PONDING + PONDING1 + PONDING2
              EMISS    (I,J)                = EMISSI
              QSFC     (I,J)                = QSFC1D
