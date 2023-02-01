@@ -189,6 +189,8 @@ if (WRF_HYDRO_NUOPC STREQUAL "1" )
         add_definitions(-DWRF_HYDRO_NUOPC)
 endif (WRF_HYDRO_NUOPC STREQUAL "1")
 
+option(BUILD_CROCUS "Build Crocus" ON)
+
 message("=============================================================")
 
 #set compile flags based on compiler id
