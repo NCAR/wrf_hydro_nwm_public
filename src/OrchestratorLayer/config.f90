@@ -1085,7 +1085,7 @@ contains
     type(crocus_options), intent(OUT) :: opt
     integer, intent(IN), optional :: f_in
     character(len=15) :: filename = "namelist.hrldas"
-    logical :: f_exists, f_opened
+    logical :: f_exists
     integer :: crocus_opt, act_lev
     integer :: ierr, f_local
     namelist /CROCUS_nlist/ &
@@ -1093,14 +1093,14 @@ contains
 
     ! check if file is opened
     if (present(f_in)) then
-       rewind(30)
+       rewind(f_in)
        read(f_in, NML=CROCUS_nlist, iostat=ierr)
     else
        ! check that file exists
        inquire(file=filename, exist=f_exists)
        if (f_exists .eqv. .false.) &
            call hydro_stop (" FATAL ERROR: namelist.hrldas does not exist")
-       open(f_local, file=filename, form="FORMATTED", iostat=ierr)
+       open(newunit=f_local, file=filename, form="FORMATTED", iostat=ierr)
        read(f_local, NML=CROCUS_nlist, iostat=ierr)
        close(f_local)
     end if
