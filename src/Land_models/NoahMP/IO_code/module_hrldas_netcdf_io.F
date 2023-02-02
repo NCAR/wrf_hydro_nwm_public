@@ -3037,7 +3037,7 @@ contains
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
        iswater, vegtyp, act_level)
-
+    use iso_fortran_env, only : compiler_version
     implicit none
 #include <netcdf.inc>
 
@@ -3122,6 +3122,7 @@ contains
          ierr = nf90_def_dim(ncid, "glacier_levels", act_level, dimid_glacier_layers)
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "TITLE", "RESTART FILE FROM HRLDAS "//version)
+    ierr = nf90_put_att(ncid, NF90_GLOBAL, "compiler_version", compiler_version())
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "missing_value", -1.E33)
 
     date19(1:19) = "0000-00-00_00:00:00"
