@@ -3,8 +3,8 @@
 ## This script takes one optional argument:
 ## a file which sets the environment variables
 ## to use in the compile. The template for
-## this file is trunk/NDHMS/setEnvar.sh. Please
-## copy that file to trunk/NDHMS, make copies
+## this file is src/setEnvar.sh. Please
+## copy that file to src, make copies
 ## for your favorite compile configurations, and
 ## pass the appropriate file name to this script
 ## as desired.

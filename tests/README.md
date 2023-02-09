@@ -99,7 +99,7 @@ optional arguments:
   -h, --help            show this help message and exit
   --config CONFIG [CONFIG ...]
                         <Required> The configuration(s) to test, must be one
-                        listed in trunk/NDHMS/hydro_namelist.json keys.
+                        listed in src/hydro_namelist.json keys.
   --compiler COMPILER   <Required> compiler, options are intel or gfort
   --output_dir OUTPUT_DIR
                         <Required> test output directory
