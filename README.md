@@ -1,6 +1,6 @@
 #  WRF-Hydro® <img src=".github/images/wrf_hydro_symbol_logo_2017_09.png" width=100 align="left" />
 
-[![Build Status](https://travis-ci.org/NCAR/wrf_hydro_nwm_public.svg?branch=master)](https://travis-ci.org/NCAR/wrf_hydro_nwm_public)
+[![Build Status](https://github.com/NCAR/wrf_hydro_nwm_public/actions/workflows/test-pr.yml/badge.svg?branch=main)](https://github.com/NCAR/wrf_hydro_nwm_public/actions/workflows/test-pr.yml)
 [![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3625237.svg)](https://doi.org/10.5281/zenodo.3625237)
 
