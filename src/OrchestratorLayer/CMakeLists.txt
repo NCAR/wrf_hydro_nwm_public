@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 # build the orchestrator static library
 add_library(hydro_orchestrator STATIC
         config.f90

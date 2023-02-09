@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 3.0)
-cmake_policy(SET CMP0074 NEW)
+cmake_policy(SET CMP0074 NEW)			# use xxxx_ROOT env vars
 
 # set project name and version numbers
 project (WRF_Hydro)
 set (WRF_Hydro_VERSION_MAJOR 5)
-set (WRF_Hydro_VERSION_MINOR 2)
-set (WRF_Hydro_VERSION_PATCH dev)
-set (National_Water_Model_VERSION_MAJOR 2)
-set (National_Water_Model_VERSION_MINOR 1)
-set (National_Water_Model_VERSION_PATCH dev)
+set (WRF_Hydro_VERSION_MINOR 3)
+set (WRF_Hydro_VERSION_PATCH 0)
+set (National_Water_Model_VERSION_MAJOR 3)
+set (National_Water_Model_VERSION_MINOR 0)
+set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
 enable_language (Fortran)

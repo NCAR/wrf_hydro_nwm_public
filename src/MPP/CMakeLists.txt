@@ -1,10 +1,8 @@
-cmake_minimum_required (VERSION 3.0)
-
 add_library(hydro_mpp STATIC
 	CPL_WRF.F
 	module_mpp_GWBUCKET.F
 	module_mpp_ReachLS.F
-	mpp_land.F          
+	mpp_land.F
 	hashtable.F
 )
 

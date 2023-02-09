@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 add_library(hydro_routing STATIC
 	module_UDMAP.F
 	module_channel_routing.F
@@ -16,7 +14,7 @@ add_library(hydro_routing STATIC
 	module_RT.F
 	Noah_distr_routing.F
 	Noah_distr_routing_overland.F
-	Noah_distr_routing_subsurface.F        
+	Noah_distr_routing_subsurface.F
 )
 
 target_link_libraries(hydro_routing PUBLIC hydro_mpp)

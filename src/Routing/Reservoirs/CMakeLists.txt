@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 add_library(hydro_routing_reservoirs STATIC
 	module_reservoir.F
 	module_reservoir_read_timeslice_data.F
