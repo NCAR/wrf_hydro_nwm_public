@@ -4,8 +4,8 @@ tests/
 # Testing: Just do it.
 Please use and help to improve the testing, including this documentation.
 
-You are responsible for your code passing these tests on multiple domains, 
-you should use it on machines where you run, not just via Travis CI.  
+You are responsible for your code passing these tests on multiple domains,
+you should use it on machines where you run, not just via Travis CI.
 
 
 # Why testing?
@@ -25,8 +25,8 @@ test CONUS with PRs).*
 A *candidate* takes a *test*. When a candidate "passes" all its tests,
 it generally becomes the new reference for the next candidate.
 
-The *reference* is commonly known as 'upstream master' in git parlance, at
-least when testing is applied for merging code to upstream master. But the
+The *reference* is commonly known as 'upstream' in git parlance, at
+least when testing is applied for merging code to upstream. But the
 tests can compare any two repo states, including uncommitted states.
 
 In most cases the candidate will not change the output of model relative to the
@@ -48,14 +48,14 @@ without affecting the model state at a later time? Illustration:
 state1   ->   state2     ->  state3
                  \                  =?
 	              (restart)->  state3'
-```     
+```
 * Regression: Does the candidate output match that of the reference?
 * Metadata Regression: Does the candidate metadata match that of the reference?
 * NaN Check: Check for NaNs in output.
 
 
 # Technical overview
-Core: `pytest` & `wrfhydropy`  
+Core: `pytest` & `wrfhydropy`
 User Interface: `tests/local/run_tests.py`
 
 ## `pytest`
@@ -73,7 +73,7 @@ The python API for wrf-hydro, facilitates building objects/classes like
 provide methods for evaluation and comparing outputs. The model-side and
 domain-side JSON namelist files used by `wrfhydropy` are key to establishing
 model "configurations" which can be applied to any domain. These are key
-capabilities for flexible testing.  
+capabilities for flexible testing.
 
 TODO: Explain the JSON namelists.
 
@@ -150,7 +150,7 @@ python run_tests.py \
     --reference_dir /home/docker/wrf_hydro_nwm_public_upstream \
     --domain_dir /croton_NY
 ```
-This can be adapted to other platorms.... 
+This can be adapted to other platorms....
 
 
 # Requirements / Software Stack
@@ -165,13 +165,13 @@ The following two envionments come "ready to go":
 
 
 ## Docker
-The two containers [`wrfhydro/dev:conda`](https://github.com/NCAR/wrf_hydro_docker/blob/master/dev/conda/Dockerfile) and  [`wrfhydro/dev:modeltesting`](https://github.com/NCAR/wrf_hydro_docker/blob/master/dev/modeltesting/Dockerfile) contain the full software stack required to run testing.
+The two containers [`wrfhydro/dev:conda`](https://github.com/NCAR/wrf_hydro_docker/blob/main/dev/conda/Dockerfile) and  [`wrfhydro/dev:modeltesting`](https://github.com/NCAR/wrf_hydro_docker/blob/main/dev/modeltesting/Dockerfile) contain the full software stack required to run testing.
 
 
 ## Cheyenne
 To activate a common python virtual envionment for model testing on cheyenne:
 ```
-(368) jamesmcc@cheyenne3[999]:~> deactivate 
+(368) jamesmcc@cheyenne3[999]:~> deactivate
 jamesmcc@cheyenne3[1000]:~> source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate
 (wrf_hydro_nwm_test) jamesmcc@cheyenne3[1001]:~>
 ```
