@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 # build the various sup-projects
 add_subdirectory("MPP")
 add_subdirectory("utils")

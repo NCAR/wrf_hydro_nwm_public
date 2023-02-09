@@ -1,8 +1,6 @@
-cmake_minimum_required (VERSION 3.0)
-
 add_library(hydro_routing_reservoirs_levelpool STATIC
 	module_levelpool.F
-	module_levelpool_state.F       
+	module_levelpool_state.F
 	module_levelpool_properties.F
 )
 

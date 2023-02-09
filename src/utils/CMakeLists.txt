@@ -1,6 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
-
-# read version numbers for wrf_hydro_version and nwm_version from 
+# read version numbers for wrf_hydro_version and nwm_version from
 # ../.version and ../.nwm_version
 file (STRINGS "../.version" WRF_HYDRO_VERSION)
 if (NWM_META AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../.nwm_version)
@@ -17,5 +15,5 @@ add_definitions (-DWRF_HYDRO_VERSION="${WRF_HYDRO_VERSION}")
 # build the version static library
 add_library(hydro_utils STATIC
 	module_version.F
-	module_hydro_stop.F	
+	module_hydro_stop.F
 )

@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 add_library(crocus_surfex STATIC
   ini_csts.F
   modd_csts.F

@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.0)
-
 ### Library Prerequisites
 if (NOT TARGET esmf)
   find_package(ESMF MODULE REQUIRED)
