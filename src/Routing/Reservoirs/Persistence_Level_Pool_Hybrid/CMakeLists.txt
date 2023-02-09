@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 add_library(hydro_routing_reservoirs_hybrid STATIC
 	module_persistence_levelpool_hybrid.F

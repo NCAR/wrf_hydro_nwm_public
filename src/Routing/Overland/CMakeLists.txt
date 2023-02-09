@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 add_library(hydro_routing_overland STATIC
 	module_overland_control.F  

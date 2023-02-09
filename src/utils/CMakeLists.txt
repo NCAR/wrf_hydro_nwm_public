@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 # read version numbers for wrf_hydro_version and nwm_version from 
 # ../.version and ../.nwm_version
