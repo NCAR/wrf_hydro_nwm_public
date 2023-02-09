@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 add_library(noah_util STATIC
 	kwm_string_utilities.F

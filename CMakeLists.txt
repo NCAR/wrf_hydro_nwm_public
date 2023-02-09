@@ -1,18 +1,8 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
+cmake_policy(SET CMP0074 NEW)
 
-if (NOT CMAKE_C_COMPILER)
-	set (CMAKE_C_COMPILER "mpicc")
-endif (NOT CMAKE_C_COMPILER)
-if (NOT CMAKE_CXX_COMPILER)
-	set (CMAKE_CXX_COMPILER "mpicxx")
-endif (NOT CMAKE_CXX_COMPILER)
-if (NOT CMAKE_Fortran_COMPILER)
-	set (CMAKE_Fortran_COMPILER "mpif90")
-endif (NOT CMAKE_Fortran_COMPILER)
-
+# set project name and version numbers
 project (WRF_Hydro)
-
-#set version numbers
 set (WRF_Hydro_VERSION_MAJOR 5)
 set (WRF_Hydro_VERSION_MINOR 2)
 set (WRF_Hydro_VERSION_PATCH dev)
@@ -20,12 +10,16 @@ set (National_Water_Model_VERSION_MAJOR 2)
 set (National_Water_Model_VERSION_MINOR 1)
 set (National_Water_Model_VERSION_PATCH dev)
 
-# set cmake to work with fortran
+# set cmake to work with MPI Fortran
 enable_language (Fortran)
+find_package(MPI REQUIRED)
+add_compile_options(${MPI_Fortran_COMPILE_FLAGS})
+include_directories(${MPI_Fortran_INCLUDE_PATH})
+link_directories(${MPI_Fortran_LIBRARIES})
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
-#try to find the installed MPI library
-#enable if compiler wrappers dont find MPI libraries
-#find_package(MPI REQUIRED)
 
 #message ("-- MPI Include directories: " ${MPI_INCLUDE_PATH} )
 #message ("-- MPI C COMPILER : " ${MPI_C_COMPILER} )
@@ -34,6 +28,7 @@ enable_language (Fortran)
 #message ("-- MPI COMPILE FLAGS : " ${MPI_COMPILE_FLAGS} )
 #message ("-- MPI LINK FLAGS : " ${MPI_LINK_FLAGS} )
 #message ("-- MPI Fortran LINK FLAGS : " ${MPI_Fortran_LINK_FLAGS} )
+#message ("-- MPI Fortran LINK LIBRARIES : " ${MPI_Fortran_LIBRARIES} )
 #message ("-- MPI LIBRARY : " ${MPI_LIBRARY} )
 #message ("-- MPI EXTRA LIBRARY : " ${MPI_EXTRA_LIBRARY} )
 #message ("-- MPI LIBRARIES : " ${MPI_LIBRARIES} )
@@ -42,13 +37,13 @@ enable_language (Fortran)
 # that contains FindNetCDF.cmake
 set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/src/cmake-modules)
 
-#try to find the installed NETCDF library
+# try to find the installed NETCDF library
 set (NETCDF_F90 "YES")
 set (NETCDF_F77 "YES")
 find_package(NetCDF REQUIRED)
 message("-- NetCDF Include Dir: ${NETCDF_INCLUDES}")
 
-#set user controled enviorment variables
+# set user controled enviorment variables
 set (HYDRO_LSM $ENV{HYDRO_LSM} CACHE STRING "Name of the Land Surface Model to Use")
 
 # set enviorment variables if they have not been set
@@ -57,7 +52,7 @@ if ("${HYDRO_LSM}" STREQUAL "")
 	message ("-- Setting LSM to: NoahMP")
 endif ("${HYDRO_LSM}" STREQUAL "")
 
-#get the variables defined by setEnvar.sh
+# get the variables defined by setEnvar.sh
 set (WRF_HYDRO $ENV{WRF_HYDRO} CACHE STRING "WRF environment variable. Always set to 1 for WRF-Hydro")
 set (HYDRO_D $ENV{HYDRO_D} CACHE STRING "Print additional debug information in WRF-Hydro")
 set (WRF_HYDRO_RAPID $ENV{WRF_HYDRO_RAPID} CACHE STRING "WRF-Hydro coupling to RAPID routing model 0=off 1=on")
@@ -198,11 +193,14 @@ message("=============================================================")
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     # set compile flags for gfortran
     message ( "-- Using gfortran")
-    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4 -fallow-argument-mismatch")
+    set (CMAKE_Fortran_FLAGS "-cpp -O2 -g -w -ffree-form -ffree-line-length-none -fconvert=big-endian -frecord-marker=4")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
-    message ( "Using ifort")
+    message ( "-- Using ifort")
     set (CMAKE_Fortran_FLAGS "-fpp -O2 -g -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+elseif ((CMAKE_Fortran_COMPILER_ID MATCHES "PGI.*") OR (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC.*"))
+	message ("-- Using PGI / NVHPC")
+	set (CMAKE_Fortran_FLAGS "-Mpreprocess -O2 -Mfree -byteswapio -Kieee ")
 else (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
     message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
@@ -222,6 +220,5 @@ include_directories(AFTER ${PROJECT_BINARY_DIR}/mods)
 include_directories(AFTER ${MPI_INCLUDE_PATH})
 include_directories(AFTER ${NETCDF_INCLUDES})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
-
 
 add_subdirectory("src")

@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 add_library(hydro_mpp STATIC
 	CPL_WRF.F
@@ -7,3 +7,5 @@ add_library(hydro_mpp STATIC
 	mpp_land.F          
 	hashtable.F
 )
+
+target_link_libraries(hydro_mpp ${MPI_Fortran_LIBRARIES})
