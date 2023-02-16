@@ -1,8 +1,8 @@
-# Makefile 
+# Makefile
 
 all:
-	(cd ../../; make -f Makefile.comm)
-	(make)
+	(cd ../../; $(MAKE) -f Makefile.comm)
+	($(MAKE))
 
 clean:
-	(cd ../../; make -f Makefile.comm clean)
+	(cd ../../; $(MAKE) -f Makefile.comm clean)

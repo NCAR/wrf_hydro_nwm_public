@@ -5,7 +5,7 @@
 .SUFFIXES: .o .F
 LIS_ROOT = ../../../..
 
-LIS_MOD = -I ../../mod -I$(LIS_ROOT)/make
+LIS_MOD = -I ../../mod -I$(LIS_ROOT)/$(MAKE)
 include $(LIS_ROOT)/make/configure.lis
 include ../../macros
 

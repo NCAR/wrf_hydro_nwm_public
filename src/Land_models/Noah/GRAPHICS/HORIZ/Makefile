@@ -27,7 +27,7 @@ CMD=	plt2d.exe
 
 
 # Lines from here on down should not need to be changed.  They are the
-# actual rules which make uses to build $(CMD).
+# actual rules which $(MAKE) uses to build $(CMD).
 #
 
 all:	$(CMD)

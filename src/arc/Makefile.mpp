@@ -1,37 +1,37 @@
 # Makefile
 
 all:
-	(make -f Makefile.comm HYDRO_drv)
+	($(MAKE) -f Makefile.comm HYDRO_drv)
 
 basic:
-	make -C MPP
-	make -C IO
-	make -C utils
-	make -C OrchestratorLayer
-	make -C Debug_Utilities
+	$(MAKE) -C MPP
+	$(MAKE) -C IO
+	$(MAKE) -C utils
+	$(MAKE) -C OrchestratorLayer
+	$(MAKE) -C Debug_Utilities
 
 routing_modules: basic
-	make -C Routing/Overland
-	make -C Routing/Subsurface
-	make -C Routing/Reservoirs
+	$(MAKE) -C Routing/Overland
+	$(MAKE) -C Routing/Subsurface
+	$(MAKE) -C Routing/Reservoirs
 
 routing: routing_modules basic
-	make -C Data_Rec
-	make -C Routing
+	$(MAKE) -C Data_Rec
+	$(MAKE) -C Routing
 
 HYDRO_drv: basic routing_modules routing
-	make -C HYDRO_drv
+	$(MAKE) -C HYDRO_drv
 
 clean:
-	(cd IO; make -f Makefile clean)
-	(cd OrchestratorLayer; make -f Makefile clean)
-	(cd utils     ; make -f Makefile clean)
-	make -C Routing/Overland clean
-	make -C Routing/Subsurface clean
-	make -C Routing/Reservoirs clean
-	(cd Data_Rec; make -f Makefile clean)
-	(cd HYDRO_drv; make -f Makefile clean)
-	(cd MPP; make -f Makefile clean)
-	make -C Debug_Utilities/ clean
-	(cd Routing;    make -f Makefile clean)
+	(cd IO; $(MAKE) -f Makefile clean)
+	(cd OrchestratorLayer; $(MAKE) -f Makefile clean)
+	(cd utils     ; $(MAKE) -f Makefile clean)
+	$(MAKE) -C Routing/Overland clean
+	$(MAKE) -C Routing/Subsurface clean
+	$(MAKE) -C Routing/Reservoirs clean
+	(cd Data_Rec; $(MAKE) -f Makefile clean)
+	(cd HYDRO_drv; $(MAKE) -f Makefile clean)
+	(cd MPP; $(MAKE) -f Makefile clean)
+	$(MAKE) -C Debug_Utilities/ clean
+	(cd Routing;    $(MAKE) -f Makefile clean)
 	(rm -f lib/*.a */*.mod */*.o CPL/*/*.o CPL/*/*.mod)

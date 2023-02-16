@@ -1,5 +1,5 @@
 all:
-	( cd ..; make )
+	( cd ..; $(MAKE) )
 
 clean:
-	( cd ..; make clean )
+	( cd ..; $(MAKE) clean )

@@ -11,10 +11,10 @@ MODFLAG := $(MODFLAG) -I ../../mod
 all: mod
 
 ../../MPP/mpp_land.mod:
-		make -C ../../MPP
+		$(MAKE) -C ../../MPP
 
 ../../utils/module_hydro_stop.mod:
-		make -C ../../utils
+		$(MAKE) -C ../../utils
 
 mod: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	#Build each sub module then build the module that depends on all sub modules
@@ -31,9 +31,9 @@ mod: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	@cp *.mod ../../mod
 
 	#Build the modules
-	make -C Level_Pool
-	make -C Persistence_Level_Pool_Hybrid
-	make -C RFC_Forecasts
+	$(MAKE) -C Level_Pool
+	$(MAKE) -C Persistence_Level_Pool_Hybrid
+	$(MAKE) -C RFC_Forecasts
 
 
 test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
@@ -43,9 +43,9 @@ test: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_rfc_time_series_data.F
 
 
-	make -C Level_Pool
-	make -C Persistence_Level_Pool_Hybrid
-	make -C RFC_Forecasts
+	$(MAKE) -C Level_Pool
+	$(MAKE) -C Persistence_Level_Pool_Hybrid
+	$(MAKE) -C RFC_Forecasts
 
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) reservoir_tests.F
 
@@ -78,6 +78,6 @@ clean:
 	rm -f *.mod
 	rm -f reservoir_tests
 
-	make -C Level_Pool clean
-	make -C Persistence_Level_Pool_Hybrid clean
-	make -C RFC_Forecasts clean
+	$(MAKE) -C Level_Pool clean
+	$(MAKE) -C Persistence_Level_Pool_Hybrid clean
+	$(MAKE) -C RFC_Forecasts clean

@@ -28,5 +28,5 @@ all:	$(OBJS)
 #
 
 clean:
-	rm -f *.o *.mod *.stb *~
-	cd ../..; make -f Makefile.comm clean
+	rm -f *.o $(MAKE)  *.stb *~
+	cd ../..; $(MAKE) -f Makefile.comm clean
