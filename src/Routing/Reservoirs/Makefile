@@ -23,12 +23,12 @@ mod: ../../MPP/module_mpp_land.mod ../../utils/module_hydro_stop.mod
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_timeslice_data.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_reservoir_read_rfc_time_series_data.F
 
-	ar -r ../../lib/libHYDRO.a module_reservoir_utilities.o
-	ar -r ../../lib/libHYDRO.a module_reservoir.o
-	ar -r ../../lib/libHYDRO.a module_reservoir_read_timeslice_data.o
-	ar -r ../../lib/libHYDRO.a module_reservoir_read_rfc_time_series_data.o
+	ar -cr ../../lib/libHYDRO.a module_reservoir_utilities.o \
+	                            module_reservoir.o \
+	                            module_reservoir_read_timeslice_data.o \
+	                            module_reservoir_read_rfc_time_series_data.o
 
-	cp *.mod ../../mod
+	@cp *.mod ../../mod
 
 	#Build the modules
 	make -C Level_Pool

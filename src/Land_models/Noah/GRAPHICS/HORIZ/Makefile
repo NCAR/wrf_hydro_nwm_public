@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .o .exe
 OBJS=	module_plot2d_graphics.o \
 	module_2ddata.o \
@@ -14,8 +14,8 @@ OBJS=	module_plot2d_graphics.o \
 #FFLAGS=-free
 
 F90=	pgf90
-FFLAGS=-Mfree 
-LIBS2 = -L${PGI}/linux86/5.2/lib -lpgftnrtl -lpgc 
+FFLAGS=-Mfree
+LIBS2 = -L${PGI}/linux86/5.2/lib -lpgftnrtl -lpgc
 
 RM = 	rm -f
 NCARGLIBS=	-L/usr/local/ncarg/lib -L/usr/X11R6/lib \
@@ -32,7 +32,7 @@ CMD=	plt2d.exe
 
 all:	$(CMD)
 
-.F.o:
+%.o: %.F
 	@echo ""
 	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).F
 

@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .f90
@@ -12,6 +12,7 @@ OBJS = \
 	geometry.o
 
 all:	$(OBJS)
+	ar -cr ../../../lib/libHYDRO.a $(OBJS)
 
 #module_RT.o: module_RT.F
 #	@echo ""
@@ -19,16 +20,15 @@ all:	$(OBJS)
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG)  $(*).f
 #	$(RMD) $(*).f
 #	@echo ""
-#	cp *.mod ../mod
+#	@cp *.mod ../mod
 
-.f90.o:
+%.o: %.f90
 	@echo "Data structures Makefile:"
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
 	$(COMPILER90) $(CPPINVOKE) -o $(@) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../../../OrchestratorLayer $(*).f90
 #	$(RMD) $(*).f
 	@echo ""
-	ar -r ../../../lib/libHYDRO.a $(@)
-	cp *.mod ../../../mod
+	@cp *.mod ../../../mod
 
 #
 # Dependencies:
@@ -37,5 +37,5 @@ all:	$(OBJS)
 
 # orchestrator.o: ig.o
 
-clean:	
+clean:
 	rm -f *.o *.mod *.stb *~ *.f

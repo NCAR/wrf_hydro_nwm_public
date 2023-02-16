@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.c .o .F
 OBJS=	rdmet.o \
 	rdsom_mem.o \
@@ -26,7 +26,7 @@ FINCLUDES=	-I. -I$(NETCDF)/include
 LIBS=	-L$(NETCDF)/lib -lnetcdf -L$(BZDIR) -lbz2 \
 	-L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c \
 	-L/usr/X11R6/lib -lX11 \
-	-L/usr/lib/gcc/i386-redhat-linux/3.4.6 -lg2c 
+	-L/usr/lib/gcc/i386-redhat-linux/3.4.6 -lg2c
 
 RM = 	rm -f
 CMD=	okmeso_statistics.exe
@@ -39,7 +39,7 @@ all:	$(CMD)
 $(CMD):	$(OBJS)
 	$(FC) -o $(CMD) $(OBJS) $(LIBS)
 
-.F.o:
+%.o: %.F
 	$(FC) -c $(FINCLUDES) $(FFLAGS) $(<)
 
 .c.o:

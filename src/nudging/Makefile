@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -13,21 +13,13 @@ OBJS = \
 
 
 all:	$(OBJS)
+	ar -cr ../lib/libHYDRO.a $(OBJS)
 
-#module_RT.o: module_RT.F
-#	@echo ""
-#	$(CPP) $(CPPFLAGS) $(*).F > $(*).f
-#	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG)  $(*).f
-#	$(RMD) $(*).f
-#	@echo ""
-#	cp *.mod ../mod
-
-.F.o:
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(NETCDF_INC) $(*).F
 	@echo ""
-	ar -r ../lib/libHYDRO.a $(@)
-	cp *.mod ../mod
+	@cp *.mod ../mod
 
 #
 # Dependencies:

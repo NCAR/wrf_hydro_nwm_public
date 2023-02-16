@@ -34,6 +34,13 @@ surfex/%.o:
 module_sf_noahmpdrv.o:	module_sf_noahmplsm.o module_sf_noahmp_glacier.o module_sf_noahmp_groundwater.o $(SUR_OBJS)
 module_sf_noahmp_groundwater.o: module_sf_noahmplsm.o
 
+surfex/ini_csts.o: surfex/modd_csts.o
+surfex/mode_thermos.o: surfex/modd_snow_par.o
+surfex/mode_surf_coefs.o: surfex/mode_thermos.o
+surfex/mode_snow3l.o: surfex/modd_snow_par.o
+surfex/module_snowcro.o: surfex/mode_surf_coefs.o surfex/tridiag_ground_snowcro.o
+
+
 #
 # This command cleans up object (etc) files:
 #

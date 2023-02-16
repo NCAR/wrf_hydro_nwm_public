@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -11,15 +11,16 @@ MODFLAG =       -I./ -I ../../MPP -I ../../mod
 
 OBJS = \
 	module_hrldas_HYDRO.o \
-	hrldas_drv_HYDRO.o    
-all:	$(OBJS) 
+	hrldas_drv_HYDRO.o
 
-.F.o:
+all:	$(OBJS)
+	ar -cr ../../lib/libHYDRO.a $(OBJS)
+
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).F
 	@echo ""
-	ar -r ../../lib/libHYDRO.a $(@)
-	cp *.mod ../../mod
+	@cp *.mod ../../mod
 
 #
 # Dependencies:

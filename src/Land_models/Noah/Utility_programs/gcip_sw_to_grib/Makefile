@@ -36,8 +36,8 @@ swap4f.o:	../../HRLDAS_COLLECT_DATA/lib/swap4f.F
 module_date_utilities.o:	../../Utility_routines/module_date_utilities.F
 	$(COMPILERF90) -c $(F90FLAGS) $(FREESOURCE) $(<)
 
-.F.o:
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(*).F 
+%.o: %.F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(*).F
 
 
 neat:

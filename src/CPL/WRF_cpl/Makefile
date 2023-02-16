@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -7,19 +7,20 @@
 
 include ../../macros
 
-MODFLAG =       -I./ -I ../../MPP -I ../../mod 
+MODFLAG =       -I./ -I ../../MPP -I ../../mod
 
 WRF_ROOT = ../../..
 OBJS = \
 	module_wrf_HYDRO.o \
-	wrf_drv_HYDRO.o    
-all:	$(OBJS) 
+	wrf_drv_HYDRO.o
 
-.F.o:
+all:	$(OBJS)
+	ar -r ../../lib/libHYDRO.a $(OBJS)
+
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $(*).F
 	@echo ""
-	ar -r ../../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:

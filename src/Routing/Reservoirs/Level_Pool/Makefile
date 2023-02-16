@@ -16,12 +16,12 @@ mod:
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_state.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool.F
 	$(COMPILER90) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) module_levelpool_tests.F
-	ar -r ../../../lib/libHYDRO.a module_levelpool_properties.o
-	ar -r ../../../lib/libHYDRO.a module_levelpool_state.o
-	ar -r ../../../lib/libHYDRO.a module_levelpool.o
-	ar -r ../../../lib/libHYDRO.a module_levelpool_tests.o
+	ar -cr ../../../lib/libHYDRO.a module_levelpool_properties.o \
+	                               module_levelpool_state.o \
+	                               module_levelpool.o \
+	                               module_levelpool_tests.o
 
-	cp *.mod ../../../mod
+	@cp *.mod ../../../mod
 
 clean:
 	rm -f *.o

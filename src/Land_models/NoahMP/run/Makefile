@@ -42,6 +42,18 @@ OBJS := \
 	../phys/surfex/modd_surf_atm.o\
 	../phys/surfex/modd_snow_metamo.o
 
+# we don't need to link these specifically (they come from libhydro.a) but we
+# need to wait for them to be done so that libhydro.a is fully-built
+HYDRO_OBJS := \
+	../../../Routing/module_HYDRO_utils.o \
+	../../../Routing/Noah_distr_routing.o \
+	../../../Routing/Noah_distr_routing_overland.o \
+	../../../Routing/Noah_distr_routing_subsurface.o \
+	../../../Routing/module_channel_routing.o \
+	../../../Routing/module_noah_chan_param_init_rt.o \
+	../../../Routing/module_NWM_io.o \
+	../../../Routing/module_UDMAP.o
+
 # Check whether or not to build Crocus
 ifndef BUILD_CROCUS
 BUILD_CROCUS:=1
@@ -56,7 +68,7 @@ CMD = hrldas.exe
 all:	$(CMD)
 
 ### default we create the exe based on NoahMP
-hrldas.exe: $(OBJS)
+hrldas.exe: $(OBJS) $(HYDRO_OBJS)
 	@echo ""
 	echo "${TAO_FORTRAN_LIB} ${TAO_LIB} ${PETSC_LIB} ${PHDF5_INC} -Wl,-rpath,${TACC_HDF5_LIB} -L${TACC_HDF5_LIB} -lhdf5 -lz"
 # We have to include the modules built in ../IO_code

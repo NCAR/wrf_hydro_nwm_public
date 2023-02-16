@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .f90
@@ -7,17 +7,18 @@ include ../macros
 
 OBJS = \
 	netcdf_layer.o
-all:	$(OBJS)
 
-.f90.o:
+all:	$(OBJS)
+	ar -r ../lib/libHYDRO.a $(OBJS)
+
+%.o: %.f90
 	@echo ""
 # $(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(*).f
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../mod $(*).f90
 #	$(RMD) $(*).f
 	@echo ""
-	ar -r ../lib/libHYDRO.a $(@)
-	cp *.mod ../mod
+	@cp *.mod ../mod
 
 #
 # Dependencies:

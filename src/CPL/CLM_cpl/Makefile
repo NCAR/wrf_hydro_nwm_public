@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
@@ -13,19 +13,20 @@ MODFLAG =       -I./ -I ../../MPP -I ../../mod
 
 OBJS = \
 	module_clm_HYDRO.o \
-	clm_drv_HYDRO.o    
-all:	$(OBJS) 
+	clm_drv_HYDRO.o
 
-.F.o:
+all:	$(OBJS)
+	ar -cr ../../lib/libHYDRO.a $(OBJS)
+
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(CLM_MOD) $(*).F
 	@echo ""
-	ar -r ../../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:
 #
 
 clean:
-	rm -f *.o *.mod *.stb *~ 
+	rm -f *.o *.mod *.stb *~
 	cd ../..; make -f Makefile.comm clean

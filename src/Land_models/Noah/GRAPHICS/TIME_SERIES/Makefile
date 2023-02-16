@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .o .exe
 OBJS=	module_plotts_graphics.o \
 	module_ptdata.o \
@@ -30,13 +30,13 @@ CMD=	pltts.exe
 
 all:	$(CMD)
 
-.F.o:
+%.o: %.F
 	@echo ""
 	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).F
 
 $(CMD):	$(OBJS)
 	$(F90) -o $(@) -I$(NETCDF)/include $(FFLAGS) $(OBJS) \
-	-L$(NETCDF)/lib -lnetcdf $(NCARGLIBS) 
+	-L$(NETCDF)/lib -lnetcdf $(NCARGLIBS)
 
 clean:
 	$(RM) *.o *~ *.exe *.mod

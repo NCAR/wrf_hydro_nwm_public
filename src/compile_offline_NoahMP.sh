@@ -52,7 +52,9 @@ make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelis
 
 #for debugging and testing
 #make debug; make install; make test
-make && make install
+NJOBS=${WRF_HYDRO_MAKE_JOBS:-4}
+echo "Building WRF-Hydro with $NJOBS Make jobs"
+make -j $NJOBS && make install
 
 if [[ $? -eq 0 ]]; then
     echo

@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .c .o
 
 include ../../user_build_options
@@ -26,7 +26,7 @@ OBJS=	module_grib2.o \
 	module_grib.o \
 	module_grib_common.o \
 	module_wrfinputfile.o \
-	module_geo_em.o 
+	module_geo_em.o
 
 CMD=	libsmda.a
 
@@ -48,7 +48,7 @@ io_f.o:	io_f.c
 decode_jpeg2000.o:	decode_jpeg2000.c
 	$(CC) -c $(INCJASPER) $(<)
 
-.F.o:
+%.o: %.F
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(GRIBCODE_OPT) $(BZIP_CPP) -c $(FREESOURCE) $(F90FLAGS) $(NETCDFMOD) $(*).F
 

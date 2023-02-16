@@ -13,13 +13,13 @@ OBJS = \
 	module_gw_gw2d_data.o
 
 all:	$(OBJS)
+	ar -cr ../lib/libHYDRO.a $(OBJS)
 
-.F.o:
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I../mod $(*).F
 	@echo ""
-	ar -r ../lib/libHYDRO.a $(@)
-	cp *.mod ../mod
+	@cp *.mod ../mod
 
 # Dependencies:
 #

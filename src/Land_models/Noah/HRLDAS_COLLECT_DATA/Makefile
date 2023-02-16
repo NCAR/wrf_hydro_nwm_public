@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .c .o .exe
 
 include ../user_build_options
@@ -18,7 +18,7 @@ all:	lib/libsmda.a $(CMD)
 lib/libsmda.a:
 	(cd lib; make)
 
-.F.o:
+%.o: %.F
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) -I./lib $(MODFLAG)./lib $(*).F
 

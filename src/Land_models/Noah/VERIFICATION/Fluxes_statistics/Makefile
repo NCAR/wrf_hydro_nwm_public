@@ -23,14 +23,14 @@ INCLUDES= -I. -I$(NETCDF)/include
 LIBS=	-L$(NETCDF)/lib -lnetcdf \
 	-L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c \
 	-L/usr/X11R6/lib -lX11 \
-	-L/usr/lib/gcc/i386-redhat-linux/3.4.6 -lg2c 
+	-L/usr/lib/gcc/i386-redhat-linux/3.4.6 -lg2c
 
 all: $(CMD)
 
 $(CMD): $(OBJS)
 	$(F90) $(FFLAGS) -o $(CMD) $(INCLUDES) $(OBJS) $(LIBS)
 
-.F.o:
+%.o: %.F
 	$(F90) $(FFLAGS) $(INCLUDES) -c $(<)
 
 clean:

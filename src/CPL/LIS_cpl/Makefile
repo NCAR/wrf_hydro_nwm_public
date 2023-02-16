@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 #
 
 .SUFFIXES:
@@ -14,17 +14,18 @@ MODFLAG =       -I./ -I ../../MPP -I ../../mod
 OBJS = \
 	module_lis_HYDRO.o\
 	lis_drv_HYDRO.o
-all:	$(OBJS) 
 
-.F.o:
+all:	$(OBJS)
+	ar -r ../../lib/libHYDRO.a $(OBJS)
+
+%.o: %.F
 	@echo ""
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I../../mod $(LIS_MOD) -I$(MOD_ESMF) $(*).F
 	@echo ""
-	ar -r ../../lib/libHYDRO.a $(@)
 
 #
 # Dependencies:
 #
 
 clean:
-	rm -f *.o *.mod *.stb *~ 
+	rm -f *.o *.mod *.stb *~
