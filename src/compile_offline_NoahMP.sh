@@ -52,9 +52,9 @@ make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelis
 
 #for debugging and testing
 #make debug; make install; make test
-NJOBS=${WRF_HYDRO_MAKE_JOBS:-4}
-echo "Building WRF-Hydro with $NJOBS Make jobs"
-make -j $NJOBS && make install
+export WRF_HYDRO_MAKE_JOBS=${WRF_HYDRO_MAKE_JOBS:-4}
+echo "Building WRF-Hydro with $WRF_HYDRO_MAKE_JOBS Make jobs"
+make -j $WRF_HYDRO_MAKE_JOBS && make install
 
 if [[ $? -eq 0 ]]; then
     echo
@@ -86,7 +86,7 @@ fi
 echo
 echo '*****************************************************************'
 echo "The environment variables used in the compile:"
-grepStr="(WRF_HYDRO)|(HYDRO_D)|(SPATIAL_SOIL)|(WRF_HYDRO_RAPID)|(HYDRO_REALTIME)|(NCEP_WCOSS)|(WRF_HYDRO_NUDGING)|(NETCDF)"
+grepStr="(WRF_HYDRO)|(HYDRO_D)|(SPATIAL_SOIL)|(WRF_HYDRO_RAPID)|(HYDRO_REALTIME)|(NCEP_WCOSS)|(WRF_HYDRO_NUDGING)|(NETCDF)|(WRF_HYDRO_MAKE_JOBS)"
 printenv | egrep -w "${grepStr}" | sort
 
 exit 0
