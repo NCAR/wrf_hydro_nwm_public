@@ -13,7 +13,7 @@ all:	$(OBJS)
 
 %.o: %.f90
 	@echo ""
-# $(CPP) $(CPPFLAGS) -I$(NETCDFINC) $(*).F > $(*).f
+# $(CPP) $(CPPFLAGS) -I$(NETCDFINC) $< > $(*).f
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) -I../mod $(*).f
 	$(COMPILER90) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../mod $(*).f90
 #	$(RMD) $(*).f

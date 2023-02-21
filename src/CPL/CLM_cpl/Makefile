@@ -20,7 +20,7 @@ all:	$(OBJS)
 
 %.o: %.F
 	@echo ""
-	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(CLM_MOD) $(*).F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I ../../mod $(CLM_MOD) $<
 	@echo ""
 
 #

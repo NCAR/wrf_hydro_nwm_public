@@ -31,7 +31,7 @@ arguments_module.o:
 
 %.o: %.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $<
 
 
 hrldas_extract_point: hrldas_extract_point.o

@@ -15,7 +15,7 @@ all:	$(OBJS)
 
 #module_RT.o: module_RT.F
 #	@echo ""
-#	$(CPP) $(CPPFLAGS) $(*).F > $(*).f
+#	$(CPP) $(CPPFLAGS) $< > $(*).f
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG)  $(*).f
 #	$(RMD) $(*).f
 #	@echo ""
@@ -24,7 +24,7 @@ all:	$(OBJS)
 %.o: %.f90
 	@echo "Orchestrator Makefile:"
 #	$(COMPILER90) -o $(@) $(F90FLAGS) $(MODFLAG) $(*).f
-	$(COMPILER90) $(CPPINVOKE) -o $(@) $(CPPFLAGS) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).f90
+	$(COMPILER90) $(CPPINVOKE) -o $(@) $(CPPFLAGS) $(FPPFLAGS) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
 #	$(RMD) $(*).f
 	@echo ""
 	@cp *.mod ../mod

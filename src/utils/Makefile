@@ -22,7 +22,7 @@ all:	$(OBJS)
 ## The insertion of compile-time constants strangely requires the capital F in the extension.
 %.o: %.F
 	@echo "Utils Makefile:"
-	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $(*).F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) $<
 	@echo ""
 	@cp *.mod ../mod
 

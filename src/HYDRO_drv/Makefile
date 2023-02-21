@@ -13,7 +13,7 @@ all:	$(OBJS)
 
 %.o: %.F
 	@echo ""
-	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../mod $(*).F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) $(MODFLAG) -I$(NETCDFINC) -I../mod $<
 	@echo ""
 	@cp *.mod ../mod
 

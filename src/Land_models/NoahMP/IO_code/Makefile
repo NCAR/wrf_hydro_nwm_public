@@ -17,34 +17,34 @@ all:	$(OBJS_NoahMP) $(OBJS)
 
 NoahMP : $(OBJS_NoahMP) $(OBJS)
 
-module_NoahMP_hrldas_driver.o: ../../../HYDRO_drv/module_HYDRO_drv.o \
+module_NoahMP_hrldas_driver.o: module_NoahMP_hrldas_driver.F \
+							   ../../../HYDRO_drv/module_HYDRO_drv.o \
 							   ../../../Data_Rec/module_namelist.o \
-							   ../../../Data_Rec/module_RT_data.o \
-							   module_NoahMP_hrldas_driver.F
+							   ../../../Data_Rec/module_RT_data.o
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(MODFLAG) -I. \
-	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod $(NETCDFMOD) $(*).F
+	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod $(NETCDFMOD) $<
 	@echo ""
 
-main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o \
+main_hrldas_driver.o: main_hrldas_driver.F \
+                      ../../../OrchestratorLayer/orchestrator.o \
                       ../data_structures/state.o \
-					  ../phys/surfex/modd_csts.o \
-					  main_hrldas_driver.F
+					  ../phys/surfex/modd_csts.o
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
-	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $(*).F
+	-I../phys -I../phys/surfex -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $<
 #	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
 #	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I ../../../mod -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I ../../../mod -I../Utility_routines $(MODFLAG) $(NETCDFMOD) $<
 	@echo ""
 
 %.o: %.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(FREESOURCE) $<
 	@echo ""
 
 #

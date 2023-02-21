@@ -18,7 +18,7 @@ all:	$(OBJS)
 
 %.o: %.F
 	@echo ""
-	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(NETCDF_INC) $(*).F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(NETCDF_INC) $<
 	@echo ""
 
 #

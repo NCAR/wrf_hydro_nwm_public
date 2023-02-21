@@ -34,7 +34,7 @@ all:	$(CMD)
 
 %.o: %.F
 	@echo ""
-	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).F
+	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $<
 
 $(CMD):	$(OBJS)
 	$(F90) -o $(@) -I$(NETCDF)/include $(FFLAGS) $(OBJS) \

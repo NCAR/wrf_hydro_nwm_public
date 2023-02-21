@@ -1,21 +1,21 @@
-# Makefile 
+# Makefile
 #
 .SUFFIXES:
 .SUFFIXES: .o .F
 
 include ../user_build_options
 
-OBJS =  CPL_WRF.o mpp_land.o 
+OBJS =  CPL_WRF.o mpp_land.o
 
 all:	$(OBJS)
 mpp_land.o: mpp_land.F
 	@echo ""
-	rm -f $(*).o $(*).mod 
-	$(COMPILERF90) $(F90FLAGS) $(FREESOURCE) -c $(*).F
+	rm -f $(*).o $(*).mod
+	$(COMPILERF90) $(F90FLAGS) $(FREESOURCE) -c $<
 
 CPL_WRF.o: CPL_WRF.F
 	@echo ""
-	rm -f $(*).o $(*).mod 
-	$(COMPILERF90) $(F90FLAGS) $(FREESOURCE) -c $(*).F
+	rm -f $(*).o $(*).mod
+	$(COMPILERF90) $(F90FLAGS) $(FREESOURCE) -c $<
 clean:
-	rm -f  *.o *.mod 
+	rm -f  *.o *.mod

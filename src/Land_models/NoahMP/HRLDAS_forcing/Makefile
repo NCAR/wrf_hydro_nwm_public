@@ -20,7 +20,7 @@ lib/libsmda.a:
 
 %.o: %.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPP_NETCDF4_COMPRESS) $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) -c $(NETCDFMOD) -I./lib -I./lib $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPP_NETCDF4_COMPRESS) $(FREESOURCE) $(F90FLAGS) $(LDFLAGS) -c $(NETCDFMOD) -I./lib -I./lib $<
 
 $(CMD):	lib/libsmda.a $(OBJS)
 	(cd lib; $(MAKE))

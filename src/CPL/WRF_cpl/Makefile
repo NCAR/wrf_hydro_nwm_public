@@ -19,7 +19,7 @@ all:	$(OBJS)
 
 %.o: %.F
 	@echo ""
-	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $(*).F
+	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -I$(NETCDFINC) -o $(@) $(F90FLAGS) $(MODFLAG) -I$(WRF_ROOT)/frame -I$(WRF_ROOT)/main -I$(WRF_ROOT)/external/esmf_time_f90 $<
 	@echo ""
 
 #
