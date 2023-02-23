@@ -196,9 +196,9 @@ CONTAINS
      rt_domain(did)%INFXSWGT_TR    = 0.0
      allocate( rt_domain(did)%SH2OWGT_TR     (IXRT,JXRT,NTRACER) )
      rt_domain(did)%SH2OWGT_TR     = 0.0
-     allocate( rt_domain(did)%QSUBRT_TR      (IXRT,JXRT) )
+     allocate( rt_domain(did)%QSUBRT_TR      (IXRT,JXRT,NTRACER) )
      rt_domain(did)%QSUBRT_TR      = 0.0
-     allocate( rt_domain(did)%QSUBBDRYRT_TR  (IXRT,JXRT) )
+     allocate( rt_domain(did)%QSUBBDRYRT_TR  (IXRT,JXRT,NTRACER) )
      rt_domain(did)%QSUBBDRYRT  = 0.0
      allocate( rt_domain(did)%q_sfcflx_x_tr  (IXRT,JXRT) )
      rt_domain(did)%q_sfcflx_x_tr  = 0.0
@@ -1195,6 +1195,19 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
       allocate (rt_domain(did)%qin_gwsubbas_tr (rt_domain(did)%numbasns))    !wt var
                 rt_domain(did)%z_gwsubbas_tr = 0
                 rt_domain(did)%qin_gwsubbas_tr = 0                           !wt var
+     !------new vars for partial mixing in GW buckets------
+      allocate (rt_domain(did)%z_gwsubbas_passive   (rt_domain(did)%numbasns  ))
+      allocate (rt_domain(did)%z_gwsubbas_active    (rt_domain(did)%numbasns  ))
+      allocate (rt_domain(did)%z_gwsubbas_passive_tr(rt_domain(did)%numbasns  ))
+      allocate (rt_domain(did)%z_gwsubbas_active_tr (rt_domain(did)%numbasns  ))
+      allocate (rt_domain(did)%cm_gwsubbas (rt_domain(did)%numbasns  ))
+                rt_domain(did)%z_gwsubbas_passive    = 0.1    !unit:m
+                rt_domain(did)%z_gwsubbas_active     = 0.0
+                rt_domain(did)%z_gwsubbas_passive_tr = 0.0
+                rt_domain(did)%z_gwsubbas_active_tr  = 0.0
+                rt_domain(did)%cm_gwsubbas           = 0.1
+     !------end new vars for partila mixing in GW buckets------
+
       
       !Temporary hardwire...
       rt_domain(did)%z_gwsubbas = 0.05   ! This gets updated with spun-up GW level in GWBUCKPARM.TBL

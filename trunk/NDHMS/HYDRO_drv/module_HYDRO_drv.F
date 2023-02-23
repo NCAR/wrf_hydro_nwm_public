@@ -812,6 +812,9 @@ integer :: i, jj, ii
 integer                                               :: wvtflag_pass
 real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx)  :: runoff1x_in_tr, runoff2x_in_tr
 real, dimension(RT_DOMAIN(did)%numbasns)              :: qout_gwsubbas_tr_pass, qin_gwsubbas_tr_pass, z_gwsubbas_tmp_tr
+!----local vars needed for partial mixing for GW bucket-----
+integer                                               :: pmopt_pass
+real, dimension(RT_DOMAIN(did)%numbasns)              :: z_gwsubbas_tmp_passive, z_gwsubbas_tmp_active,z_gwsubbas_tmp_passive_tr, z_gwsubbas_tmp_active_tr, cm_gwsubbas_tmp
 !-----------------------------------------------------
 
 !------------------------------------------------------------------
@@ -834,7 +837,40 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
 
       if(nlst_rt(did)%UDMP_OPT .eq. 1) then
         if (nlst_rt(did)%wvtflag .gt. 0) then
-         call simp_gw_buck_nhd(                                             &
+          if (nlst_rt(did)%PMOPT .gt. 10 .and. nlst_rt(did)%PMOPT .lt. 20) then
+            call simp_gw_buck_nhd(                                             &
+              RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
+              RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
+              RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
+              nlst_rt(did)%DT,              RT_DOMAIN(did)%INFXSWGT,        &
+              RT_DOMAIN(did)%INFXSRT,       RT_DOMAIN(did)%SOLDRAIN,        &
+              rt_domain(did)%overland%properties%distance_to_neighbor(:,:,9),   rt_domain(did)%dist_lsm(:,:,9), &
+              RT_DOMAIN(did)%gw_buck_coeff, RT_DOMAIN(did)%gw_buck_exp,     &
+              RT_DOMAIN(did)%z_max,         RT_DOMAIN(did)%z_gwsubbas,      &
+              RT_DOMAIN(did)%qout_gwsubbas, RT_DOMAIN(did)%qin_gwsubbas,    &
+              nlst_rt(did)%GWBASESWCRT,     nlst_rt(did)%OVRTSWCRT,         &
+#ifdef MPP_LAND
+              RT_DOMAIN(did)%LNLINKSL,                                      &
+#else
+              RT_DOMAIN(did)%numbasns,                                      &
+#endif
+              rt_domain(did)%basns_area,                                    &
+              rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only &
+              ,wvtflag_pass = nlst_rt(did)%wvtflag,                         & !wt var
+              runoff1x_in_tr = RT_DOMAIN(did)%INFXSRT_TR,                   & !wt var
+              runoff2x_in_tr = RT_DOMAIN(did)%SOLDRAIN_TR,                  & !wt var
+              z_gwsubbas_tmp_tr = RT_DOMAIN(did)%z_gwsubbas_tr,             & !wt var
+              qout_gwsubbas_tr_pass = RT_DOMAIN(did)%qout_gwsubbas_tr,      & !wt var
+              qin_gwsubbas_tr_pass = RT_DOMAIN(did)%qin_gwsubbas_tr         & !wt var
+              ,pmopt_pass  = nlst_rt(did)%PMOPT,                            & !pm gw vars
+              z_gwsubbas_tmp_passive = RT_DOMAIN(did)%z_gwsubbas_passive,   & !pm gw vars
+              z_gwsubbas_tmp_active  = RT_DOMAIN(did)%z_gwsubbas_active,    & !pm gw vars
+              z_gwsubbas_tmp_passive_tr= RT_DOMAIN(did)%z_gwsubbas_passive_tr,   & !pm gw vars
+              z_gwsubbas_tmp_active_tr = RT_DOMAIN(did)%z_gwsubbas_active_tr,    & !pm gw vars
+              cm_gwsubbas_tmp          = RT_DOMAIN(did)%cm_gwsubbas              & !pm gw vars
+              )
+          else
+            call simp_gw_buck_nhd(                                             &
               RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
               RT_DOMAIN(did)%ixrt,          RT_DOMAIN(did)%jxrt,            &
               RT_DOMAIN(did)%numbasns,      nlst_rt(did)%AGGFACTRT,         &
@@ -859,6 +895,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               qout_gwsubbas_tr_pass = RT_DOMAIN(did)%qout_gwsubbas_tr,      & !wt var
               qin_gwsubbas_tr_pass = RT_DOMAIN(did)%qin_gwsubbas_tr         & !wt var
               )
+          end if
         else
          call simp_gw_buck_nhd(                                             &
               RT_DOMAIN(did)%ix,            RT_DOMAIN(did)%jx,              &
@@ -879,8 +916,8 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
               rt_domain(did)%basns_area,                                    &
               rt_domain(did)%nhdBuckMask,   nlst_rt(did)%channelBucket_only )
 
-       end if
-       else
+        end if
+      else
           call simp_gw_buck(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx,RT_DOMAIN(did)%ixrt,&
              RT_DOMAIN(did)%jxrt,RT_DOMAIN(did)%numbasns,RT_DOMAIN(did)%gnumbasns,& 
              RT_DOMAIN(did)%basns_area,&
@@ -895,7 +932,7 @@ if (nlst_rt(did)%GWBASESWCRT.ge.1) then     ! Switch to activate/specify GW/Base
              RT_DOMAIN(did)%gw_buck_coeff,RT_DOMAIN(did)%gw_buck_exp, &
              RT_DOMAIN(did)%z_max,&
              nlst_rt(did)%GWBASESWCRT,nlst_rt(did)%OVRTSWCRT)
-        endif
+      endif
 
 !! JLM: There's *perhaps* a better location for this output above.
 !! If above is better, remove this when runtime output options are avail. 

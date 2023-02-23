@@ -5967,6 +5967,15 @@ end subroutine mpp_output_chrt
             if(nlst_rt(did)%UDMP_OPT .eq. 1) then
                iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_links/),varid)
                if (nlst_rt(did)%NTRACER .gt. 1) iret = nf_def_var(ncid,"z_gwsubbas_tr",NF_FLOAT,1,(/dimid_links/),varid)     !wt calc
+               !-----partial mixing in gw buckets-------------
+               if (nlst_rt(did)%PMOPT .gt. 10 .and. nlst_rt(did)%PMOPT .lt. 20) then
+                 iret = nf_def_var(ncid,"z_gwsubbas_passive",   NF_FLOAT,1,(/dimid_links/),varid)
+                 iret = nf_def_var(ncid,"z_gwsubbas_active",    NF_FLOAT,1,(/dimid_links/),varid)
+                 iret = nf_def_var(ncid,"z_gwsubbas_passive_tr",NF_FLOAT,1,(/dimid_links/),varid)
+                 iret = nf_def_var(ncid,"z_gwsubbas_active_tr", NF_FLOAT,1,(/dimid_links/),varid)
+                 iret = nf_def_var(ncid,"cm_gwsubbas",          NF_FLOAT,1,(/dimid_links/),varid)
+               end if
+               !-----end for partial mixing in gw buckets-----
             else
                iret = nf_def_var(ncid,"z_gwsubbas",NF_FLOAT,1,(/dimid_basns/),varid)
             endif
@@ -6226,6 +6235,35 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
                  )
          end if
 !--------------------------------------------
+!--------partial mixing for GW bucket-----------
+         if (nlst_rt(did)%PMOPT .gt. 10 .and. nlst_rt(did)%PMOPT .lt. 20) then
+           call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas_passive, "z_gwsubbas_passive"  &
+#ifdef MPP_LAND   
+                 ,rt_domain(did)%gnlinksl  &
+#endif
+                 )
+           call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas_active, "z_gwsubbas_active"  &
+#ifdef MPP_LAND   
+                 ,rt_domain(did)%gnlinksl  &
+#endif
+                 )
+           call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas_passive_tr, "z_gwsubbas_passive_tr"  &
+#ifdef MPP_LAND   
+                 ,rt_domain(did)%gnlinksl  &
+#endif
+                 )
+           call w_rst_crt_reach(ncid,rt_domain(did)%z_gwsubbas_active_tr, "z_gwsubbas_active_tr"  &
+#ifdef MPP_LAND   
+                 ,rt_domain(did)%gnlinksl  &
+#endif   
+                 )
+            call w_rst_crt_reach(ncid,rt_domain(did)%cm_gwsubbas, "cm_gwsubbas"  &
+#ifdef MPP_LAND   
+                 ,rt_domain(did)%gnlinksl  &
+#endif   
+                 )
+         end if
+!------- end partial mixing for GW bucket-------
          else
             call w_rst_gwbucket_real(ncid,rt_domain(did)%numbasns,rt_domain(did)%gnumbasns, &
                  rt_domain(did)%basnsInd, rt_domain(did)%z_gwsubbas,"z_gwsubbas" )
@@ -6959,6 +6997,15 @@ if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
          if(nlst_rt(did)%UDMP_OPT .eq. 1) then
             call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas,"z_gwsubbas",rt_domain(did)%GNLINKSL)
             if (nlst_rt(did)%NTRACER .gt. 1) call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas_tr,"z_gwsubbas_tr",rt_domain(did)%GNLINKSL)    !wt calc
+            !-----partial mixing for gw bucket-------------
+            if (nlst_rt(did)%PMOPT .gt. 10 .and. nlst_rt(did)%PMOPT .lt. 20) then
+              call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas_passive,"z_gwsubbas_passive",rt_domain(did)%GNLINKSL)
+              call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas_active,"z_gwsubbas_active",rt_domain(did)%GNLINKSL)
+              call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas_passive_tr,"z_gwsubbas_passive_tr",rt_domain(did)%GNLINKSL)
+              call read_rst_crt_reach_nc(ncid,rt_domain(did)%z_gwsubbas_active_tr,"z_gwsubbas_active_tr",rt_domain(did)%GNLINKSL)
+              call read_rst_crt_reach_nc(ncid,rt_domain(did)%cm_gwsubbas,"cm_gwsubbas",rt_domain(did)%GNLINKSL)
+            end if
+            !-----end for partial mixing for gw bucket-----
          else 
             call read_rst_gwbucket_real(ncid,rt_domain(did)%z_gwsubbas,rt_domain(did)%numbasns,&
                  rt_domain(did)%gnumbasns,rt_domain(did)%basnsInd, "z_gwsubbas")
