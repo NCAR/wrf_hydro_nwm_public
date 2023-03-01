@@ -27,7 +27,6 @@ use module_hydro_stop, only: HYDRO_stop
 
 implicit none
 
-
 !========================
 ! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
 ! How observations from the past are carried forward.
