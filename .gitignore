@@ -17,6 +17,7 @@ src/Land_models/Noah/user_build_options
 src/LandModel
 src/LandModel_cpl
 src/Land_models/NoahMP/MPP
+build/
 README.md
 /.idea
 *__pycache__*
