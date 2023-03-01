@@ -26,7 +26,7 @@ use module_RT_data,  only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
 
 implicit none
-#include <netcdf.inc>
+
 
 !========================
 ! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
@@ -1201,7 +1201,6 @@ use module_mpp_land
 #endif
 
 implicit none
-#include <netcdf.inc>
 
 !! These are the names used in module_HYDRO_io.F: SUBROUTINE READ_CHROUTING1
 real,    dimension(:),  intent(in) :: inCHLAT, inCHLON, inCHANLEN
