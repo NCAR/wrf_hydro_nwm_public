@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_grib_common
@@ -184,10 +184,10 @@ module module_grib_common
      type (GT_3_30_Struct) :: GT_3_30
   end type Section3Struct
 
-!  type PDT_4_0_Struct 
+!  type PDT_4_0_Struct
 !  end type PDT_4_0_Struct
 
-  type PDT_4_8_Struct 
+  type PDT_4_8_Struct
      integer :: end_year
      integer :: end_month
      integer :: end_day
@@ -318,7 +318,7 @@ contains
   integer function unpack_signed_integer(buffer, nbytes, iskip) RESULT (signed_integer)
     implicit none
     !
-    ! Purpose:  
+    ! Purpose:
     !      From a string of bytes in a buffer array, unpack a stream of bytes into an 
     !      integer variable, with the a priori knowledge that this stream of bytes
     !      represents a signed integer, the sign indicated by the first bit in the stream. 
@@ -369,7 +369,7 @@ contains
   integer function unpack_unsigned_integer(buffer, nbytes, iskip) RESULT (unsigned_integer)
     implicit none
     !
-    ! Purpose:  
+    ! Purpose:
     !      From a string of bytes in a buffer array, unpack a stream of bytes into an 
     !      integer variable, with the a priori knowledge that this stream of bytes
     !      represents an _unsigned_ integer.  The <iskip> indicator is then incremented 

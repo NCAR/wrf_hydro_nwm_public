@@ -190,7 +190,7 @@ contains
       return  ! bail out
     endif
 
-    call get_file_dimension(fileName=nlst(did)%geo_static_flnm,& 
+    call get_file_dimension(fileName=nlst(did)%geo_static_flnm,&
       ix=nx_global(1),jx=ny_global(1))
     call MPP_LAND_INIT(nx_global(1),ny_global(1))
 
@@ -444,7 +444,7 @@ contains
           infxsrt=rt_domain(did)%infxsrt,soldrain=rt_domain(did)%soldrain)
       endif
     endif
-  
+
     ! Call the WRF-HYDRO run routine
     call HYDRO_exe(did=did)
 

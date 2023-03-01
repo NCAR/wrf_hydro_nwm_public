@@ -57,7 +57,7 @@ program vectorize_wrfinput
 
   iret = nf90_inquire(ncid_in,ndims, nvars, natts)
    if(iret/=0) print*, "Problem getting number attributes"
-  
+
   do iloc = 1, natts
     iret = nf90_inq_attname(ncid_in,NF90_GLOBAL, iloc, attname)
      if(iret/=0) print*, "Problem getting attribute name"
@@ -84,7 +84,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(1), ivgtyp_in)
    if(iret/=0) print*, "Problem getting variable"
-  
+
 !!!!!
 ! ISLTYP
 !!!!!
@@ -94,7 +94,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(2), isltyp_in)
    if(iret/=0) print*, "Problem getting variable"
-  
+
 !!!!!
 ! HGT
 !!!!!
@@ -104,7 +104,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(3), hgt_in)
    if(iret/=0) print*, "Problem getting variable"
-  
+
 !!!!!
 ! XLAT
 !!!!!
@@ -114,7 +114,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(4), xlat_in)
    if(iret/=0) print*, "Problem getting variable"
-  
+
 !!!!!
 ! XLONG
 !!!!!
@@ -124,7 +124,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(5), xlong_in)
    if(iret/=0) print*, "Problem getting variable"
-  
+
 !!!!!
 ! TMN
 !!!!!
@@ -134,7 +134,7 @@ program vectorize_wrfinput
 
   iret = nf90_get_var(ncid_in, varid_in(6), tmn_in)
    if(iret/=0) print*, "Problem getting variable"
-    
+
   iloc = 0
   do ilat = 1,2632
   do ilon = 1,1795
@@ -254,9 +254,9 @@ program vectorize_wrfinput
 
   iret = nf90_close(ncid_out)
    if(iret/=0) print*, "Problem closing output file"
-  
+
   iret = nf90_close(ncid_in)
    if(iret/=0) print*, "Problem closing input file"
-  
-    
+
+
 end program

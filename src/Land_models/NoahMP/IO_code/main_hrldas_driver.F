@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program noah_hrldas_driver
@@ -35,16 +35,16 @@ program noah_hrldas_driver
   use forcing
   use geometry
   use orchestrator_base
-  
+
   implicit none
   integer :: ITIME, NTIME
   type(state_type) :: state
-  
+
   call orchestrator%init()
-  
+
   call land_driver_ini(NTIME, state)
-  
-#ifdef WRF_HYDRO   
+
+#ifdef WRF_HYDRO
   do ITIME = 1, NTIME
 #else
   do ITIME = 0, NTIME
@@ -56,5 +56,5 @@ program noah_hrldas_driver
   !Pass state for destruction
   call hydro_finish()
 #endif
-     
+
 end program noah_hrldas_driver

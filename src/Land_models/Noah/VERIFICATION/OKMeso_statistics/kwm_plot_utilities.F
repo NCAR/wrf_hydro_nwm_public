@@ -3,7 +3,7 @@
 !
 ! This is very much a work in progress.
 !
-! A lot of this has been adapted from Mark Stoelinga's RIP program, 
+! A lot of this has been adapted from Mark Stoelinga's RIP program,
 ! which is highly recommended.
 !
 module kwm_plot_utilities
@@ -13,7 +13,7 @@ module kwm_plot_utilities
 
 
   ! NCO:  number of already-defined and named colors
-  integer :: nco 
+  integer :: nco
 
   type named_color
      character(len=20) :: name
@@ -85,7 +85,7 @@ contains
 ! Opens workstation 1 as a CGM workstation.
 ! Opens workstation 2 as a WISS.
 ! Defines a couple of colors, and sets a couple of NCAR Graphics parameters
-! 
+!
 ! If you want the gmeta file to be called something other than "gmeta",
 ! give this subroutine the optional argument.
     implicit none
@@ -133,7 +133,7 @@ contains
 !****************************************************************************************
 
   subroutine gset_named_color(NAME)
-    ! Calls NCAR-Graphics subroutine GSCR to set the next color index 
+    ! Calls NCAR-Graphics subroutine GSCR to set the next color index
     ! to the rgb values indicated by the color named NAME.
 
     ! Side effects:  Associate RGB values with a color index NCO.
@@ -487,7 +487,7 @@ contains
 
 !KWM    print*, 'usq = ', usq(1:numcon)
 
-! Number of areas for filling is one plus the number of contours, 
+! Number of areas for filling is one plus the number of contours,
 ! i.e., the contours define the boundaries between areas.
     nconarea = numcon+1
 
@@ -521,7 +521,7 @@ contains
     nco = nco - 1
     icomax = nco
 !
-! USIT is now our list of color names and associated rgb values in 
+! USIT is now our list of color names and associated rgb values in
 ! our color sequence.  Color values in USIT correspond to USQ
 
 ! Note that we haven't actually called GSCR to assign RGB values to
@@ -846,7 +846,7 @@ contains
     elseif (val.ge.valcon(numcon)) then
        if (usit(nsq)%name /= "transparent" ) c = usit(nsq)
     else
-       ! Interpolate from USIT rgb values (associated with RSQ 
+       ! Interpolate from USIT rgb values (associated with RSQ
        ! floating-point values) to a new color c.
 
        do isq=1,nsq-1
@@ -1477,7 +1477,7 @@ contains
 !****************************************************************************************
 
   subroutine set_gscr_color_indices(is,ie,seqstr)
-    ! Set all the ncargks color indices between IS and IE to the 
+    ! Set all the ncargks color indices between IS and IE to the
     ! colors listed in the SEQSTR
 
     implicit none
@@ -1711,8 +1711,8 @@ contains
     iymin = floor   ( (10.0**(real(-expn))) * ymin )
     iymax = ceiling ( (10.0**(real(-expn))) * ymax )
     irange = (iymax-iymin)
-  
-    ! If we've got too many steps between iymin and iymax, 
+
+    ! If we've got too many steps between iymin and iymax,
     ! then shift to the next power-of-ten for our scaling.
     if (irange > 20) then
        iymin = floor  (real(iymin)*0.1)
@@ -1761,7 +1761,7 @@ contains
     if (present(line_width)) then
        call gslwsc(line_width_save)
     endif
-    
+
   end subroutine line_in_color_integer
 
   subroutine line_in_color_string(x1, y1, x2, y2, color, line_width)
@@ -1797,7 +1797,7 @@ contains
     if (present(line_width)) then
        call gslwsc(line_width_save)
     endif
-    
+
   end subroutine line_in_color_string
 
 !****************************************************************************************
@@ -1809,7 +1809,7 @@ contains
     ! At the end of the routine, the original color and line_width settings are
     ! restored.
     !
-    ! Values more negative than -1.E25 are considered bad data.  
+    ! Values more negative than -1.E25 are considered bad data.
     !    if (on_missing == "SKIP") then
     !        Skip over bad data, connecting all good data points in order.
     !    else if (on_missing == "BREAK") then

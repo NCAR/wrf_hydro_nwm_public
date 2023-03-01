@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program create_forcing
@@ -34,7 +34,7 @@ program create_forcing
   type (geo_em_type) :: geo_em
 
 
-  integer, parameter :: MAXTEMPLATE = 10      
+  integer, parameter :: MAXTEMPLATE = 10
 
   type DataBuffer
      character(len=256)                         :: label
@@ -91,7 +91,7 @@ program create_forcing
   type (DataBuffer) :: lai
 
   integer, pointer, dimension(:,:)   :: tempint    ! temporary array
-  
+
   real , dimension(4) :: dzs, zs
 
   integer :: i, j
@@ -152,7 +152,7 @@ program create_forcing
 
 
 
-  namelist /files/ startdate, enddate, DataDir, OutputDir, & 
+  namelist /files/ startdate, enddate, DataDir, OutputDir, &
        geo_em_flnm,                                        &
        rainfall_interp, full_ic_frq, rescale_shortwave,    &
        update_snow, forcing_height_2d,                     &
@@ -164,7 +164,7 @@ program create_forcing
        PCPfile_secondary, Hfile_template, WEASDfile_template,&
        CANWTfile_template, SKINTfile_template, STfile_template, &
        SMfile_template, Zfile_template, LANDSfile_template
-       
+
 
   full_ic_frq        = 0
   rainfall_interp    = 1
@@ -222,7 +222,7 @@ program create_forcing
      write(*,*)
      stop
   endif
-  read(12,files) 
+  read(12,files)
   close(12)
 
 !--------------------------------------------------------------------------
@@ -375,7 +375,7 @@ program create_forcing
      call process(date, PCP1current, PCP1prev, PCP1post, geo_em, expand_loop)
      call process(date, PCP2current, PCP2prev, PCP2post, geo_em, expand_loop)
      if(forcing_height_2d) call process(date, Hcurrent, Hprev, Hpost, geo_em, expand_loop)
-     
+
      call open_netcdf_for_output( &
           trim(OutputDir)//date(1:4)//date(6:7)//date(9:10)//date(12:13)//".LDASIN_DOMAIN"//hgrid, &
           ncid, version, geo_em%idim, geo_em%jdim, geo_em, .false.)
@@ -396,7 +396,7 @@ program create_forcing
      ! If the sun isn't up, there shouldn't be any SW.
      ! This may be a little extreme (ignores atmospheric refraction effects, e.g.); it 
      ! causes an awfully abrupt terminator.  Will have to consider.
-     
+
      if (truncate_sw) &
        call nighttime_SW(SW1current%hdate, SW1current%field, geo_em%idim, geo_em%jdim, geo_em)
 
@@ -422,7 +422,7 @@ program create_forcing
       	 stop
        end if
      end if
-     
+
      call output_databuffer(ncid,    Tcurrent)
      call output_databuffer(ncid,    Qcurrent)
      call output_databuffer(ncid,    Pcurrent)
@@ -459,7 +459,7 @@ program create_forcing
              ncid, version, geo_em%idim, geo_em%jdim, geo_em, .true.)
 
            call output_timestring_to_netcdf(ncid, date)
-   
+
            where(geo_em%use == geo_em%iswater .or. geo_em%use == geo_em%islake) geo_em%tmn = -1.e36
 
            call output_to_netcdf(ncid,     "XLAT", "degree_north", geo_em%lat, geo_em%idim, geo_em%jdim)
@@ -615,7 +615,7 @@ program create_forcing
   deallocate(geo_em%ter, stat=ierr)
   deallocate(geo_em%use, stat=ierr)
   deallocate(geo_em%veg, stat=ierr)
-  
+
   call grib2_clear_parameter_table
 
 
@@ -633,7 +633,7 @@ contains
     character(len=64) :: val
     integer :: vcount
 
-    ! 
+    !
     ! Open the file
     !
     open(12, file=filename, status='old', form='formatted', iostat=ierr)
@@ -779,8 +779,8 @@ contains
     !
     ! Copy the databuffer type from <in> to <out>
     !
-    ! We do this to be explicit in allocating new memory for 
-    ! pointer array <out%field>, and copying the data from 
+    ! We do this to be explicit in allocating new memory for
+    ! pointer array <out%field>, and copying the data from
     ! <in%field> to <out%field> (instead of merely pointing
     ! <out%field> => <in%field>
     implicit none
@@ -804,7 +804,7 @@ contains
        nullify(out%field)
     endif
 
-    
+
   end subroutine copy_data_buffer
 
 !==============================================================================
@@ -836,9 +836,9 @@ contains
 
 
     ! The fatality level in the DataBuffer structure indicates what sort
-    ! of errors are fatal and what sort of errors we want to try to 
+    ! of errors are fatal and what sort of errors we want to try to
     ! recover from.
-    ! 
+    !
     ! fatality==0 means that any problem is a fatal error, and we stop.
     !
     ! fatality==2 means that if we cannot find a matching file, and we
@@ -1004,7 +1004,7 @@ contains
        deallocate(datastruct%data)
        nullify(datastruct%data)
 
-! Barlage 20140529: comment the following 
+! Barlage 20140529: comment the following
 !       if ( (current%label(1:6) == "STEMP_") .or. (current%label(1:6) == "SMOIS_") ) then
 !          where (geo_em%use == geo_em%iswater) current%field=-1.E36
 !       endif
@@ -1024,7 +1024,7 @@ contains
        return
 
     endif
-    
+
     ! We did not find data.  Let's try to temporally interpolate.
 
     ! A "prev" buffer must exist for us.  Check that.
@@ -1040,7 +1040,7 @@ contains
        endif
 
        write(*,'("Field label= ",A)') trim(current%label)
-       write(*,'("No previous data.")') 
+       write(*,'("No previous data.")')
        stop "FATAL ERROR: No previous data"
     endif
 
@@ -1088,7 +1088,7 @@ contains
        endif
 
        if (current%label == "RAINRATE") then
-          ! Don't temporally interpolate the rain rate.  
+          ! Don't temporally interpolate the rain rate.
           allocate(current%field(size(prev%field,1), size(prev%field,2)))
           ! Take the "post" field, because that field should be the accumulation
           ! between "prev" and "post"
@@ -1149,7 +1149,7 @@ contains
     nullify(datastruct%data)
 
     if (current%label == "RAINRATE") then
-       ! Don't temporally interpolate the rain rate.  
+       ! Don't temporally interpolate the rain rate.
        ! Simply carry the previous value forward.
        allocate(current%field(size(prev%field,1), size(prev%field,2)))
        current%field = post%field
@@ -1157,7 +1157,7 @@ contains
        call temporal_interpolation(prev, post, current)
     endif
 
-    ! We have the data we want, and prev and post are both up-to-date, 
+    ! We have the data we want, and prev and post are both up-to-date,
     ! so we can exit.
 
   end subroutine process
@@ -1166,11 +1166,11 @@ contains
 !==============================================================================
 
   subroutine expand_9pt_input(data, nx, ny, maxloop)
-  
-  ! This routine checks for missing data in the input forcing and 
+
+  ! This routine checks for missing data in the input forcing and
   !  expands using a 9pt average; Added to deal with input data such
   !  as NLDAS which doesn't have any values over water
-  
+
     implicit none
     integer,                    intent(in)      :: nx
     integer,                    intent(in)      :: ny
@@ -1606,7 +1606,7 @@ contains
     description = " "
 
 ! Barlage: is it necessary to read external grib tables? why not just read namelist table for this info 20150518
-!   
+!
 !    call grib_parameter_text_information(grib, name, units, description)
 ! Barlage: move assignment up 20150518
 !    datastruct%desc   = description
@@ -1623,7 +1623,7 @@ contains
 
     datastruct%nx = grib%mapinfo%nx
     datastruct%ny = grib%mapinfo%ny
-    
+
     call map_init(datastruct%proj)
 !KWM    datastruct%proj%lat1 = grib%mapinfo%lat1
 !KWM    if (grib%mapinfo%lon1 > 180) then
@@ -1636,7 +1636,7 @@ contains
 
        call map_set(PROJ_LATLON, datastruct%proj, lat1=grib%mapinfo%lat1, lon1=grib%mapinfo%lon1, &
             latinc=grib%mapinfo%dy, loninc=grib%mapinfo%dx, knowni=1.0, knownj=1.0)
-       
+
     else if (grib%mapinfo%hproj == "LC") then
 
        call map_set(PROJ_LC, datastruct%proj, lat1=grib%mapinfo%lat1, lon1=grib%mapinfo%lon1, &
@@ -1675,7 +1675,7 @@ contains
        endif
        datastruct%hdate(15:16) = "00"
        ! TEST:  Set zero data values to missing data for GCIP SW fields
-       ! where (datastruct%data <= 0) datastruct%data = -1.E36 
+       ! where (datastruct%data <= 0) datastruct%data = -1.E36
     endif
 
 !MB: want mm units in v3.7
@@ -1725,14 +1725,14 @@ contains
           if (processing(1:12) == "Accumulation") then
              oldmax = maxval(datastruct%data, mask=(datastruct%data > -1.E25))
              write(*,'(13x, "Maxval adjusted from ", F12.6)', advance="no") oldmax
-             where (datastruct%data > -1.E25) 
+             where (datastruct%data > -1.E25)
                 datastruct%data = datastruct%data * (1.0 / float(p2_seconds - p1_seconds))
              endwhere
              newmax = maxval(datastruct%data, mask=(datastruct%data > -1.E25))
              write(*,'(" to ", F12.6, ":    factor of ", I8)') newmax, NINT(oldmax/newmax)
              ! Change the units to mm/s, reflecting the rescaling we just did.
              datastruct%units = "mm/s"
-          else 
+          else
              stop "FATAL ERROR: Precip Problem A?"
           endif
        elseif ( (datastruct%units == "kg/m^2/s") ) then ! For example, GLDAS; MB v3.7
@@ -1999,7 +1999,7 @@ subroutine open_netcdf_for_output(output_flnm, ncid, version, ix, jx, geo_em, in
 
   ierr = nf90_put_att(ncid, NF90_GLOBAL, "MAP_PROJ", geo_em%proj%code)
   call error_handler(ierr, "Problem nf90_put_att MAP_PROJ")
- 
+
   if (init) then
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "GRID_ID", geo_em%grid_id)
@@ -2010,13 +2010,13 @@ subroutine open_netcdf_for_output(output_flnm, ncid, version, ix, jx, geo_em, in
 
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISLAKE", geo_em%islake)
     call error_handler(ierr, "Problem nf90_put_att ISLAKE")
-  
+
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISURBAN", geo_em%isurban)
     call error_handler(ierr, "Problem nf90_put_att ISURBAN")
-  
+
     ierr = nf90_put_att(ncid, NF90_GLOBAL, "ISICE", geo_em%isice)
     call error_handler(ierr, "Problem nf90_put_att ISICE")
-  
+
   end if
 
 !
@@ -2041,7 +2041,7 @@ subroutine output_timestring_to_netcdf(ncid, hdate)
   implicit none
   integer,                     intent(in) :: ncid
   character(len=*),            intent(in) :: hdate
-  
+
   integer,          parameter                :: DateStrLen = 19
   character(len=1), dimension(DateStrLen, 1) :: output_hdate
   integer                                    :: dimid_datestrlen
@@ -2054,7 +2054,7 @@ subroutine output_timestring_to_netcdf(ncid, hdate)
   do i = 1, len(hdate)
      output_hdate(i,1) = hdate(i:i)
   enddo
-  
+
   ierr = nf90_inq_dimid(ncid, "Time", dimid_time)
   call error_handler(ierr, "OUTPUT_TIMESTRING_TO_NETCDF: Problem finding dimension 'Time'")
 
@@ -2135,12 +2135,12 @@ subroutine output_to_netcdf_soil(ncid, name, units, array1, array2, array3, arra
   character(len=*), intent(in) :: units
   integer, intent(in) :: idim, jdim, nsoil
   real, dimension(idim,jdim), intent(in) :: array1, array2, array3, array4
-  
+
   real, dimension(idim,jdim,nsoil) :: array3d
 
   integer :: varid, ierr
   integer :: dimid_time, dimid_ix, dimid_jx, dimid_kx
-  
+
   array3d(:,:,1) = array1
   array3d(:,:,2) = array2
   array3d(:,:,3) = array3
@@ -2297,7 +2297,7 @@ end subroutine fillsm
 !==============================================================================
 
 subroutine interp_rainfall_nearest_neighbor(datastruct, newarr, mix, mjx, geo_em)
-  ! 
+  !
   ! Fill array <newarr> with rainfall data from <datastruct>
   !
   use module_input_data_structure
@@ -2397,14 +2397,14 @@ subroutine interp_rainfall(datastruct, newarr, mix, mjx, geo_em)
   ! field's grid cells to various WRF grid cells as necessary.
 
   ! We recompute the mapping information every time, in case our source grid has changed.
-     
+
   ILOOP : do i = 1, datastruct%nx
      JLOOP : do j = 1, datastruct%ny
         ! Compute (x,y) in WRF grid of point (gx,gy) in precip grid.
 !KWM        call datastruct_xytoll(float(i), float(j), xlat, xlon, datastruct)
         call ij_to_latlon(datastruct%proj, float(i), float(j), xlat, xlon)
         call latlon_to_ij(geo_em%proj, xlat, xlon, x, y)
-        ! Now X and Y are the x and y coordinates in the WRF 
+        ! Now X and Y are the x and y coordinates in the WRF
         ! grid of the RAINFALL point i, j.
 
         if ((x > -2) .and. (y > -2) .and. (x < mix+2) .and. (y < mjx+2)) then
@@ -2552,7 +2552,7 @@ subroutine another_interp_rainfall(datastruct, newarr, mix, mjx, geo_em)
            call ij_to_latlon(datastruct%proj, float(i), float(j), xlat, xlon)
            call latlon_to_ij(geo_em%proj, xlat, xlon, mxa(i,j), mya(i,j))
 
-           ! Now MX and MY are the x and y coordinates in the WRF 
+           ! Now MX and MY are the x and y coordinates in the WRF
            ! grid of the RAINFALL point i, j.
 
         if ((mxa(i,j) > -2) .and. (mya(i,j) > -2) .and. (mxa(i,j) < mix+2) .and. (mya(i,j) < mjx+2)) then
@@ -2801,4 +2801,3 @@ end subroutine close_flnm
 
 !==============================================================================
 !==============================================================================
-

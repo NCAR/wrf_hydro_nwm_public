@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_hrldas_netcdf_io
@@ -77,10 +77,10 @@ contains
 
     ! Check that output directory OUTDIR exists and is writable, by
     ! trying to open a test file in that directory.  Include a random
-    ! number in the test file name, to greatly reduce the chance of 
-    ! collision with existing file names.  This assumes that the 
-    ! intrinsic random_seed routine, called without argument, will seed 
-    ! the random number generator based on something like system time 
+    ! number in the test file name, to greatly reduce the chance of
+    ! collision with existing file names.  This assumes that the
+    ! intrinsic random_seed routine, called without argument, will seed
+    ! the random number generator based on something like system time
     ! or hardware noise.
 
     integer,          intent(in) :: rank
@@ -227,7 +227,7 @@ contains
     integer :: i
     integer :: rank
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
 #else
@@ -289,7 +289,7 @@ contains
 
     ierr = nf90_get_att(ncid, NF90_GLOBAL, "MMINLU", llanduse)
     call error_handler(ierr, failure="READ_HRLDAS_HDRINFO:  Problems finding global attribute 'MMINLU'")
-    
+
     ! IBM XLF seems to need something like this:
     do i = 1, 256
        if (ichar(llanduse(i:i)) == 0) llanduse(i:i) = " "
@@ -350,7 +350,7 @@ contains
     real, dimension(xstart:xend,ystart:yend) :: xdum
     integer :: rank
 
-#ifdef _PARALLEL_  
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
 #else
@@ -487,7 +487,7 @@ contains
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
-    logical, intent(in) :: fatal_if_error 
+    logical, intent(in) :: fatal_if_error
     integer, intent(out) :: ierr
 
     units = " "
@@ -543,7 +543,7 @@ contains
     ! FATAL_IF_ERROR:  an input code value:
     !      .TRUE. if an error in reading the data should stop the program.
     !      Otherwise the, IERR error flag is set, but the program continues.
-    logical, intent(in) :: fatal_if_error 
+    logical, intent(in) :: fatal_if_error
     integer, intent(out) :: ierr
     real, intent(out) :: layer_bottom
     real, intent(out) :: layer_top
@@ -601,7 +601,7 @@ contains
     integer,                                           intent(in)  :: nsoil
     real,    dimension(nsoil),                         intent(in)  :: sldpth
     character(len=*),                                  intent(in)  :: target_date
-    
+
     integer,                                           intent(out) :: ldasin_version
     real,    dimension(xstart:xend,ystart:yend,nsoil), intent(out) :: smc
     real,    dimension(xstart:xend,ystart:yend,nsoil), intent(out) :: stc
@@ -760,7 +760,7 @@ contains
     integer :: ierr
     integer :: rank
 
-#ifdef _PARALLEL_    
+#ifdef _PARALLEL_
     call MPI_COMM_RANK(HYDRO_COMM_WORLD, rank, ierr)
     if (ierr /= MPI_SUCCESS) stop "MPI_COMM_RANK"
 #else
@@ -786,7 +786,7 @@ contains
 
        if (dst_centerpoint(k) < src_centerpoint(1)) then
           ! If the center of the destination layer is closer to the surface than
-          ! the center of the topmost source layer, then simply set the 
+          ! the center of the topmost source layer, then simply set the
           ! value of the destination layer equal to the topmost source layer:
           if (rank == 0) then
              print'("Shallow destination layer:  Taking destination layer at ",F7.4, " from source layer at ", F7.4)', &
@@ -798,7 +798,7 @@ contains
 
        if (dst_centerpoint(k) > src_centerpoint(nvar)) then
           ! If the center of the destination layer is deeper than
-          ! the center of the deepest source layer, then simply set the 
+          ! the center of the deepest source layer, then simply set the
           ! value of the destination layer equal to the deepest source layer:
           if (rank == 0) then
              print'("Deep destination layer:  Taking destination layer at ",F7.4, " from source layer at ", F7.4)', &
@@ -860,7 +860,7 @@ contains
        var(:,:,k) = (src(:,:,ktop)*fraction) + (src(:,:,kbottom)*(1.0-fraction))
 
     enddo KLOOP
-     
+
   end subroutine init_interp
 
 !---------------------------------------------------------------------------------------------------------
@@ -988,7 +988,7 @@ contains
 
           ! Copy nextread to lastread
           lastread = nextread
-       
+
           ! Clear nextread
           call nullify_inputstruct(nextread)
        endif
@@ -1523,7 +1523,7 @@ contains
 
     output_count_remember = output_count_remember + 1
     if (output_count_remember == split_output_count) then
-       output_count_remember = 0 
+       output_count_remember = 0
        ierr = nf90_close(ncid_remember)
        call error_handler(ierr, failure="Problem nf90_close for output file")
     else
@@ -1547,7 +1547,7 @@ contains
     if (define_mode_remember) then
        call make_var_att_2d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
             NF90_FLOAT , trim(name) , trim(description) , trim(units) )
-    else 
+    else
        ixpar = size(array,1)
        jxpar = size(array,2)
        call put_var_2d (ncid_remember , output_count_remember+1 , vegtyp_remember , iswater_remember , &
@@ -1587,7 +1587,7 @@ contains
     if (define_mode_remember) then
        call make_var_att_3d ( ncid_remember , dimid_ix_remember , dimid_jx_remember , dimid_times_remember , &
             NF90_FLOAT , dimid_layers_remember, trim(name) , trim(description) , trim(units) )
-    else 
+    else
 
        ixpar = size(array,1)
        jxpar = size(array,2)
@@ -1783,7 +1783,7 @@ contains
     restart_filename_remember = " "
     iswater_remember   = -999999
     xstartpar_remember = -999999
-    
+
   end subroutine finalize_restart_file
 
 !---------------------------------------------------------------------------------------------------------
@@ -1959,7 +1959,7 @@ contains
     else
        local_description = "-"
     endif
-    
+
 #ifdef _PARALLEL_
     ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -2033,7 +2033,7 @@ contains
     else
        local_description = "-"
     endif
-    
+
 #ifdef _PARALLEL_
     ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -2110,7 +2110,7 @@ contains
     else
        local_description = "-"
     endif
-    
+
 #ifdef _PARALLEL_
     ierr = nf90_open_par(trim(output_flnm), NF90_WRITE, HYDRO_COMM_WORLD, MPI_INFO_NULL, ncid)
 #else
@@ -2273,7 +2273,7 @@ contains
        endif
 
 #ifdef _HRLDAS_URBAN_
-       
+
        ierr = nf90_get_att(ncid, NF90_GLOBAL, "UCMCALL", read_ucmcall)
        call error_handler(ierr, "Problem getting UCMCALL as attribute of restart file")
        if (read_ucmcall /= ucmcall) then
@@ -2311,7 +2311,7 @@ contains
        ! Get the time stamp from the restart file.
        ierr = nf90_inq_varid(ncid, "Times", varid)
        call error_handler(ierr, "Problem finding variable in restart file: 'Times'")
-       
+
        ierr = nf90_get_var(ncid, varid, olddate)
        call error_handler(ierr, "Problem finding variable in restart file: 'Times'")
 
@@ -2382,7 +2382,7 @@ contains
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "Problem closing restart file")
-    
+
   end subroutine get_from_restart_2d_float
 
 !-----------------------------------------------------------------------------------------
@@ -2437,7 +2437,7 @@ contains
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "Problem closing restart file")
-    
+
   end subroutine get_from_restart_2d_integer
 
 !-----------------------------------------------------------------------------------------
@@ -2492,7 +2492,7 @@ contains
 
     ierr = nf90_close(ncid)
     call error_handler(ierr, "Problem closing restart file")
-    
+
   end subroutine get_from_restart_3d
 
 !-----------------------------------------------------------------------------------------

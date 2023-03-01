@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module kwm_date_utilities
@@ -23,7 +23,7 @@ contains
   subroutine geth_newdate (ndate, odate, idt)
     implicit none
 
-!  From old date ('YYYY-MM-DD HH:MM:SS.ffff') and 
+!  From old date ('YYYY-MM-DD HH:MM:SS.ffff') and
 !  delta-time, compute the new date.
 
 !  on entry     -  odate  -  the old hdate.
@@ -379,7 +379,7 @@ contains
        else if (nlen.eq.13) then
           write(ndate,13) yrnew, monew, dynew, hrnew
 13        format(i4,'-',i2.2,'-',i2.2,'_',i2.2)
-          
+
        else if (nlen.eq.10) then
           write(ndate,10) yrnew, monew, dynew
 10        format(i4,'-',i2.2,'-',i2.2)
@@ -387,7 +387,7 @@ contains
        end if
 
        if (olen.ge.11) ndate(11:11) = sp
-       
+
     else
 
        if (nlen.gt.20) then
@@ -406,7 +406,7 @@ contains
        else if (nlen.eq.10) then
           write(ndate,210) yrnew, monew, dynew, hrnew
 210       format(i4,i2.2,i2.2,i2.2)
-          
+
        else if (nlen.eq.8) then
           write(ndate,8) yrnew, monew, dynew
 8         format(i4,i2.2,i2.2)
@@ -421,7 +421,7 @@ contains
   subroutine geth_idts (newdate, olddate, idt)
     implicit none
 
-!  From 2 input mdates ('YYYY-MM-DD HH:MM:SS.ffff'), 
+!  From 2 input mdates ('YYYY-MM-DD HH:MM:SS.ffff'),
 !  compute the time difference.
 
 !  on entry     -  newdate  -  the new hdate.
@@ -550,7 +550,7 @@ contains
              end if
           end if
        end if
-       
+
 !  Break down new hdate into parts
 
        read(ndate(6:7),  '(i2)') monew
@@ -585,7 +585,7 @@ contains
              end if
           end if
        end if
-       
+
 !  Break down new hdate into parts
 
        read(ndate(5:6),  '(i2)') monew
@@ -793,7 +793,7 @@ contains
     integer, intent(in) :: year ! Four-digit year
 
     nfeb = 28 ! By default, February has 28 days ...
-    if (mod(year,4).eq.0) then  
+    if (mod(year,4).eq.0) then
        nfeb = 29  ! But every four years, it has 29 days ...
        if (mod(year,100).eq.0) then
           nfeb = 28  ! Except every 100 years, when it has 28 days ...

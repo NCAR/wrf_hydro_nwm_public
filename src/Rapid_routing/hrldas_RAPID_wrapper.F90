@@ -44,7 +44,7 @@ CONTAINS
 !    use rapid_main , only : rapid_ini
     implicit none
     integer :: ntime
- 
+
     if (rank==0) then
       print *,'RAPID initialized = ',initialized
       if(initialized)  return  !If not first time initialization
@@ -55,7 +55,7 @@ CONTAINS
       call rapid_ini(ntime)
       initialized = .True.
     end if
-    
+
     call PetscLogStageRegister('Read Comp Write',stage,ierr)
     call PetscLogStagePush(stage,ierr)
   end subroutine hrldas_RAPID_ini
@@ -102,11 +102,11 @@ CONTAINS
     end if
 
     call rapid_main(1,runoff,ii,jj,Qout_nc_file)
-    
+
     !--LPR: add to test runoff in RESTART run mode, can remove this later-----------
     !if(cnt_rapid_run == 2) then
     !    write(81,*) runoff
-    !endif    
+    !endif
 
   end subroutine hrldas_RAPID_exe
 
@@ -123,13 +123,13 @@ CONTAINS
           May take a while depending on size of river network ... &
           ... Wait ...'
       call rapid_init
-    end if    
+    end if
 
   end subroutine rapid_ini
 
 
 
-!--------------RAPID coupler: gridded runoff to vector runoff-----------------------  
+!--------------RAPID coupler: gridded runoff to vector runoff-----------------------
   subroutine rapid_runoff_to_inflow(ZM_runoff,ZV_Vlat,cnt_rapid_run)
     implicit none
 
@@ -167,9 +167,9 @@ CONTAINS
         end do
         close(88)
         print *,' LPR CHECK river 30000 ',IV_riv_bas_id(30000),ZV_areakm(30000), &
-                IV_i_index(30000),IV_j_index(30000)        
+                IV_i_index(30000),IV_j_index(30000)
         !---------END OPTION 1----------------------------------
-         
+
         !---------OPTION 2: Area-weighted coupling----------------------
 
         !--------END OPTION 2-----------------------------------
@@ -196,7 +196,7 @@ CONTAINS
       print *, '***** LPR: RAPID coupling successful! **********************'
       print *, '************************************************************'
     end if
-        
+
     !------write to PETSC vector---------------------------
     if (rank==0) then
       print *,' number of river reaches  = ',IS_riv_bas

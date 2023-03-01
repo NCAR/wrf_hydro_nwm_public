@@ -4,7 +4,7 @@
 subroutine rapid_arrays
 
 !Purpose:
-!Create arrays from input files that are useful for RAPID. 
+!Create arrays from input files that are useful for RAPID.
 !for all simulations, RAPID can run on a subset of all available river reaches
 !of the domain.
 !Three Fortran vectors are useful here:
@@ -13,44 +13,44 @@ subroutine rapid_arrays
 !   located in Vlat_file using the 1-based ZV_read_riv_tot
 ! - IV_riv_bas_loc1(IS_riv_bas) allows to know where to ad dthe flow values in
 !   the current modeling domain using the 0-based ZV_Qout
-!When human-induced option is activated, the flow entering each given river ID 
-!is read from a file and added to the inflow the corresponding river.  
-!Three Fortran vectors are useful here: 
+!When human-induced option is activated, the flow entering each given river ID
+!is read from a file and added to the inflow the corresponding river.
+!Three Fortran vectors are useful here:
 ! - IV_hum_bas_id(IS_hum_bas) allows to know the IDs of the humand-induced flows
-!   locations into the subbasin 
-! - IV_hum_index(IS_hum_bas) allows to know where the flow values are 
+!   locations into the subbasin
+! - IV_hum_index(IS_hum_bas) allows to know where the flow values are
 !   located in Qhum_file using the 1-based ZV_read_hum_tot
 ! - IV_hum_loc1(IS_hum_bas) allows to know where to add the flow values
 !   in the current modeling domain using the 0-based ZV_Qhum
-!When forcing option is activated, the flow exiting each given river ID is 
-!read from a file and added to the inflow of its downstream river.  
-!Three Fortran vectors are useful here: 
+!When forcing option is activated, the flow exiting each given river ID is
+!read from a file and added to the inflow of its downstream river.
+!Three Fortran vectors are useful here:
 ! - IV_for_bas_id(IS_for_bas) allows to know the IDs of the forcing locations
-!   flowing into the subbasin 
-! - IV_for_index(IS_for_bas) allows to know where the flow values are 
+!   flowing into the subbasin
+! - IV_for_index(IS_for_bas) allows to know where the flow values are
 !   located in Qfor_file using the 1-based ZV_read_for_tot
 ! - IV_for_loc2(IS_for_bas) allows to know where to add the flow values
 !   in the current modeling domain using the 0-based ZV_Qfor
-!When dam option is activated, the flow exiting each given river ID is 
-!obtained from a model and added to the inflow of its downstream river.  
-!Four Fortran vectors are useful here: 
+!When dam option is activated, the flow exiting each given river ID is
+!obtained from a model and added to the inflow of its downstream river.
+!Four Fortran vectors are useful here:
 ! - IV_dam_bas_id(IS_dam_bas) allows to know the IDs of the dam locations
-!   in the subbasin 
-! - IV_dam_index(IS_dam_bas) allows to know where the flow values are 
+!   in the subbasin
+! - IV_dam_index(IS_dam_bas) allows to know where the flow values are
 !   located in dam model array using the 1-based ZV_read_dam_tot
 ! - IV_dam_loc2(IS_dam_bas) allows to know where to add the flow values
 !   in the current modeling domain using the 0-based ZV_Qdam
-! - IV_dam_pos(IS_dam_bas) allows to know where to read the flow values for the 
+! - IV_dam_pos(IS_dam_bas) allows to know where to read the flow values for the
 !   dam model in the current modeling domain using the 0-based ZV_Qdam
-!When RAPID is run in optimization mode, the flow measured at each given river   
-!ID is read from a file and compared to computations.  
-!Three Fortran vectors are useful here: 
-! - IV_obs_bas_id(IS_obs_bas) allows to know the IDs of the observations 
-! - IV_obs_index(IS_obs_bas) allows to know where the flow values are 
+!When RAPID is run in optimization mode, the flow measured at each given river
+!ID is read from a file and compared to computations.
+!Three Fortran vectors are useful here:
+! - IV_obs_bas_id(IS_obs_bas) allows to know the IDs of the observations
+! - IV_obs_index(IS_obs_bas) allows to know where the flow values are
 !   located in Qobs_file using the 1-based ZV_read_obs_tot
 ! - IV_obs_loc1(IS_obs_bas) allows to know where to put the flow values
 !   in the current modeling domain using the 0-based ZV_Qobs
-!Author: 
+!Author:
 !Cedric H. David, 2014-2015.
 
 
@@ -109,30 +109,30 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/petsclog.h" 
+#include "finclude/petsclog.h"
 !PETSc log
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 
 
 !*******************************************************************************
-!Relationship between entire domain and study basin 
+!Relationship between entire domain and study basin
 !*******************************************************************************
 
 !-------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ end do
 close(11)
 
 !-------------------------------------------------------------------------------
-!Populate hashtable-like matrices 
+!Populate hashtable-like matrices
 !-------------------------------------------------------------------------------
 call rapid_hsh_mat
 
@@ -176,7 +176,7 @@ do JS_riv_bas=1,IS_riv_bas
      ZS_val=-999
      call MatGetValues(ZM_hsh_tot,                                             &
                        IS_one,rank,                                            &
-                       IS_one,IV_riv_bas_id(JS_riv_bas)-1,                     & 
+                       IS_one,IV_riv_bas_id(JS_riv_bas)-1,                     &
                        ZS_val,ierr)
      CHKERRQ(ierr)
      JS_riv_tot=int(ZS_val)
@@ -189,11 +189,11 @@ do JS_riv_bas=1,IS_riv_bas
                            ' not included in domain' // char(10),ierr)
           stop
      end if
-end do 
-!vector with (Fortran, 1-based) indexes corresponding to reaches of basin 
+end do
+!vector with (Fortran, 1-based) indexes corresponding to reaches of basin
 !within whole network
-!IV_riv_index has two advantages.  1) it is needed in order to read inflow  
-!data (Vlat for ex).  2) It allows to avoid one other nested loop in the 
+!IV_riv_index has two advantages.  1) it is needed in order to read inflow
+!data (Vlat for ex).  2) It allows to avoid one other nested loop in the
 !following, which reduces tremendously the computation time.
 
 !-------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ do JS_up=1, IV_nbup(IV_riv_index(JS_riv_bas2))
      ZS_val=-999
      call MatGetValues(ZM_hsh_bas,                                             &
                        IS_one,rank,                                            &
-                       IS_one,IM_up(IV_riv_index(JS_riv_bas2),JS_up)-1,        & 
+                       IS_one,IM_up(IV_riv_index(JS_riv_bas2),JS_up)-1,        &
                        ZS_val,ierr)
      CHKERRQ(ierr)
      JS_riv_bas=int(ZS_val)
@@ -225,8 +225,8 @@ end do
 !Optional, display IV_riv_loc1, IV_riv_index, and IM_index_up
 !-------------------------------------------------------------------------------
 !if (rank==0) then
-!     print *, IV_riv_loc1 
-!     print *, IV_riv_index 
+!     print *, IV_riv_loc1
+!     print *, IV_riv_index
 !     do JS_riv_bas=1,IS_riv_bas
 !          print *, IM_index_up(JS_riv_bas,:)
 !     end do
@@ -299,14 +299,14 @@ do JS_riv_bas=1,IS_riv_bas
      if (IV_hum_use_id(JS_hum_use)==IV_riv_bas_id(JS_riv_bas)) then
           JS_hum_bas=JS_hum_bas+1
           IV_hum_bas_id(JS_hum_bas)=IV_riv_bas_id(JS_riv_bas)
-     end if 
+     end if
 end do
 end do
 
 end if
 
 !-------------------------------------------------------------------------------
-!Populate IV_hum_index 
+!Populate IV_hum_index
 !-------------------------------------------------------------------------------
 do JS_hum_bas=1,IS_hum_bas
 do JS_hum_tot=1,IS_hum_tot
@@ -323,7 +323,7 @@ do JS_hum_bas=1,IS_hum_bas
 do JS_riv_bas=1,IS_riv_bas
      if (IV_riv_bas_id(JS_riv_bas)==IV_hum_bas_id(JS_hum_bas)) then
           IV_hum_loc1(JS_hum_bas)=JS_riv_bas-1
-     end if 
+     end if
 end do
 end do
 
@@ -338,7 +338,7 @@ if (rank==0 .and. IS_hum_bas>0) then
      print *, '        IV_hum_index    =', IV_hum_index
      print *, '        IV_hum_loc1     =', IV_hum_loc1
 end if
-!Warning about human-induced flows 
+!Warning about human-induced flows
 
 !-------------------------------------------------------------------------------
 !End if human-induced is used
@@ -383,12 +383,12 @@ do JS_for_use=1,IS_for_use
           if (IV_for_use_id(JS_for_use)==IV_riv_tot_id(JS_riv_tot)) then
 
      do JS_riv_bas=1,IS_riv_bas
-          if (IV_down(JS_riv_tot)==IV_riv_bas_id(JS_riv_bas)) then 
+          if (IV_down(JS_riv_tot)==IV_riv_bas_id(JS_riv_bas)) then
                IS_for_bas=IS_for_bas+1
           end if
      end do
 
-          end if 
+          end if
      end do
 end do
 
@@ -420,13 +420,13 @@ do JS_for_use=1,IS_for_use
           if (IV_for_use_id(JS_for_use)==IV_riv_tot_id(JS_riv_tot)) then
 
      do JS_riv_bas=1,IS_riv_bas
-          if (IV_down(JS_riv_tot)==IV_riv_bas_id(JS_riv_bas)) then 
+          if (IV_down(JS_riv_tot)==IV_riv_bas_id(JS_riv_bas)) then
                JS_for_bas=JS_for_bas+1
                IV_for_bas_id(JS_for_bas)=IV_for_use_id(JS_for_use)
           end if
      end do
 
-          end if 
+          end if
      end do
 end do
 
@@ -498,7 +498,7 @@ read(19,*) IV_dam_use_id
 close(19)
 
 !-------------------------------------------------------------------------------
-!Calculate IS_dam_bas 
+!Calculate IS_dam_bas
 !-------------------------------------------------------------------------------
 write(temp_char,'(i10)') IS_dam_tot
 call PetscPrintf(PETSC_COMM_WORLD,'         Total number of dam IDs in ' //    &
@@ -514,7 +514,7 @@ do JS_dam_use=1,IS_dam_use
 do JS_riv_bas=1,IS_riv_bas
      if (IV_dam_use_id(JS_dam_use)==IV_riv_tot_id(IV_riv_index(JS_riv_bas)))then
           IS_dam_bas=IS_dam_bas+1
-     end if 
+     end if
 end do
 end do
 
@@ -547,14 +547,14 @@ do JS_riv_bas=1,IS_riv_bas
      if (IV_dam_use_id(JS_dam_use)==IV_riv_tot_id(IV_riv_index(JS_riv_bas)))then
           JS_dam_bas=JS_dam_bas+1
           IV_dam_bas_id(JS_dam_bas)=IV_riv_tot_id(IV_riv_index(JS_riv_bas))
-     end if 
+     end if
 end do
 end do
 
 end if
 
 !-------------------------------------------------------------------------------
-!Populate IV_dam_index 
+!Populate IV_dam_index
 !-------------------------------------------------------------------------------
 do JS_dam_bas=1,IS_dam_bas
 do JS_dam_tot=1,IS_dam_tot
@@ -574,7 +574,7 @@ do JS_riv_tot=1,IS_riv_tot
 
 if (IV_riv_bas_id(JS_riv_bas)==IV_down(JS_riv_tot)) then
           IV_dam_loc2(JS_dam_bas)=JS_riv_bas-1
-end if 
+end if
           end do
      end if
 end do
@@ -605,7 +605,7 @@ end if
 
 if (rank==0 .and. IS_dam_tot>0) then
      print *, '        IV_dam_pos      =', IV_dam_pos
-end if 
+end if
 !Warning about forcing downstream basins
 
 !-------------------------------------------------------------------------------
@@ -615,7 +615,7 @@ end if
 
 
 !*******************************************************************************
-!If optimization mode is selected 
+!If optimization mode is selected
 !*******************************************************************************
 if (IS_opt_run==2) then
 
@@ -647,7 +647,7 @@ do JS_obs_use=1,IS_obs_use
      do JS_riv_bas=1,IS_riv_bas
           if (IV_obs_use_id(JS_obs_use)==IV_riv_bas_id(JS_riv_bas)) then
                IS_obs_bas=IS_obs_bas+1
-          end if 
+          end if
      end do
 end do
 
@@ -691,18 +691,18 @@ end do
 !Optional - Display vectors
 !-------------------------------------------------------------------------------
 !if (rank==0) then
-!     print *, 'IV_obs_index=', IV_obs_index 
-!     print *, 'IV_obs_loc1  =', IV_obs_loc1 
+!     print *, 'IV_obs_index=', IV_obs_index
+!     print *, 'IV_obs_loc1  =', IV_obs_loc1
 !end if
 
 !-------------------------------------------------------------------------------
-!End if optimization mode is selected 
+!End if optimization mode is selected
 !-------------------------------------------------------------------------------
 end if
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 call PetscPrintf(PETSC_COMM_WORLD,'Arrays created'//char(10),ierr)
 call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)

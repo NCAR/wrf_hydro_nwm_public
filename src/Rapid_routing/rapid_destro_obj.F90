@@ -1,14 +1,14 @@
 !*******************************************************************************
 !Subroutine - rapid_destro_obj
 !*******************************************************************************
-subroutine rapid_destro_obj 
+subroutine rapid_destro_obj
 
 !Purpose:
-!All PETSc and TAO objects need be destroyed (requirement of both mathematical 
+!All PETSc and TAO objects need be destroyed (requirement of both mathematical
 !libraries).  PETSc and TAO also need be finalized.  This is what's done here
 !Note: only finilized here, need to add destroy of vectors.
-!Author: 
-!Cedric H. David, 2008-2015. 
+!Author:
+!Cedric H. David, 2008-2015.
 
 
 !*******************************************************************************
@@ -42,22 +42,22 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
 
 #ifndef NO_TAO
-#include "finclude/taosolver.h" 
+#include "finclude/taosolver.h"
 !TAO solver
 #endif
 
@@ -144,4 +144,4 @@ call VecScatterDestroy(vecscat,ierr)
 call PetscFinalize(ierr)
 
 
-end subroutine rapid_destro_obj 
+end subroutine rapid_destro_obj

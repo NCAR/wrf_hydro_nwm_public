@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !
@@ -61,7 +61,7 @@ program plt2d
   do while (nowdate <= plot_enddate)
      print*, 'Date = ', nowdate
 
-     do 
+     do
         call read_plotinfo_namelist(namelist_filename, namelist_fortran_unit, ierr, fldname, soil_level)
         if (ierr /= 0) exit
 
@@ -74,7 +74,7 @@ program plt2d
            fldptr = fldptr - fldptr2
            nullify(fldptr2)
         endif
-     
+
         call draw_field(fldptr, gridinfo%idim, gridinfo%jdim, gridinfo)
         nullify(fldptr)
 
@@ -84,7 +84,7 @@ program plt2d
   enddo
 
   call close_ncargks()
-  
+
 end program plt2d
 
 !
@@ -110,7 +110,7 @@ subroutine read_fileinfo_namelist(namelist_filename, namelist_fortran_unit, &
 
   open(namelist_fortran_unit, file=namelist_filename, status='old', form='formatted', action='read')
 
-  read(namelist_fortran_unit, file_info) 
+  read(namelist_fortran_unit, file_info)
 
 end subroutine read_fileinfo_namelist
 
@@ -147,7 +147,7 @@ subroutine read_plotinfo_namelist(namelist_filename, namelist_fortran_unit, ierr
      open(namelist_fortran_unit, file=namelist_filename, status='old', form='formatted', action='read')
   endif
 
-  read(namelist_fortran_unit, plot_info, iostat=ierr) 
+  read(namelist_fortran_unit, plot_info, iostat=ierr)
   if (ierr/=0) then
      close(namelist_fortran_unit)
      return
@@ -197,11 +197,10 @@ end subroutine read_plotinfo_namelist
 !KWM
 !KWM  call getset(xl, xr, xb, xt, wl, wr, wb, wt, ml)
 !KWM  call set(xl, xr, xb, xt, 1.0, float(gridinfo%idim), 1.0, float(gridinfo%jdim), ml)
-!KWM  
+!KWM
 !KWM
 !KWMend subroutine plotmap
 !KWM
 !
 ! ############################################################################################################
 !
-

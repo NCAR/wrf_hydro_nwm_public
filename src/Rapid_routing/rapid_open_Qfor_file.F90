@@ -1,11 +1,11 @@
 !*******************************************************************************
 !Subroutine - rapid_open_Qfor
 !*******************************************************************************
-subroutine rapid_open_Qfor_file(Qfor_file) 
+subroutine rapid_open_Qfor_file(Qfor_file)
 
 !Purpose:
 !Open Qfor_file from Fortran.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -24,7 +24,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 character(len=100), intent(in):: Qfor_file
 
@@ -36,8 +36,7 @@ if (rank==0) open(34,file=Qfor_file,status='old')
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_open_Qfor_file
-

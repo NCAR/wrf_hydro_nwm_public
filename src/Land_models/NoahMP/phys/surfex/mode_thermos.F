@@ -10,12 +10,12 @@
 !!
 !!    PURPOSE
 !!    -------
-!      
+!
 !
 !!
 !!**  IMPLICIT ARGUMENTS
 !!    ------------------
-!!       NONE          
+!!       NONE
 !!
 !!    REFERENCE
 !!    ---------
@@ -27,13 +27,13 @@
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    28/08/94 
+!!      Original    28/08/94
 !!      Modified    01/2006 : sea flux parameterization.
 !!      B. Decharme 05/2013 : Qsat function of XTT
 !!                            so, Qsat=Qsati if Tg <= XTT and inversely
 !!      S. Belamari 03/2014 : new formula (QSAT_SEAWATER2) for sat. air pressure
 !!                            over seawater (with explicit salinity dependency)
-!!                            
+!!
 !--------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -55,7 +55,7 @@ INTERFACE DPSAT
 END INTERFACE
 
 INTERFACE QSAT
-  MODULE PROCEDURE QSATW_0D         
+  MODULE PROCEDURE QSATW_0D
   MODULE PROCEDURE QSATW_1D
   MODULE PROCEDURE QSATW_2D
 END INTERFACE
@@ -96,7 +96,7 @@ IMPLICIT NONE
 !
 !
 REAL, INTENT(IN)                :: PT     ! Temperature (Kelvin)
-REAL                            :: PPSAT  ! saturation vapor 
+REAL                            :: PPSAT  ! saturation vapor
                                           ! specific humidity
                                           ! with respect to
                                           ! water (kg/kg)
@@ -118,7 +118,7 @@ ZGAM  = XGAMW
 IF(CQSAT=='NEW'.AND.PT<=XTT)THEN
  ZALP  = XALPI
  ZBETA = XBETAI
- ZGAM  = XGAMI       
+ ZGAM  = XGAMI
 ENDIF
 !
 PPSAT = EXP( ZALP - ZBETA/PT - ZGAM*LOG(PT) )
@@ -168,7 +168,7 @@ IF(CQSAT=='NEW')THEN
  WHERE(PT<=XTT)
    ZALP  (:) = XALPI
    ZBETA (:) = XBETAI
-   ZGAM  (:) = XGAMI 
+   ZGAM  (:) = XGAMI
  ENDWHERE
 ENDIF
 !
@@ -230,7 +230,7 @@ IF(CQSAT=='NEW')THEN
  WHERE(PT(:,:)<=XTT)
    ZALP  (:,:) = XALPI
    ZBETA (:,:) = XBETAI
-   ZGAM  (:,:) = XGAMI 
+   ZGAM  (:,:) = XGAMI
  ENDWHERE
 ENDIF
 !
@@ -269,7 +269,7 @@ IMPLICIT NONE
 !
 REAL, DIMENSION(:), INTENT(IN) :: PT      ! Temperature (Kelvin)
 !
-REAL, DIMENSION(SIZE(PT))      :: PDPSAT  
+REAL, DIMENSION(SIZE(PT))      :: PDPSAT
 !
 REAL, DIMENSION(SIZE(PT))      :: ZBETA, ZGAM
 !
@@ -288,7 +288,7 @@ ZGAM (:) = XGAMW
 IF(CQSAT=='NEW')THEN
  WHERE(PT<=XTT)
    ZBETA (:) = XBETAI
-   ZGAM  (:) = XGAMI 
+   ZGAM  (:) = XGAMI
  ENDWHERE
 ENDIF
 !
@@ -308,26 +308,26 @@ END FUNCTION DPSAT_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -338,11 +338,11 @@ END FUNCTION DPSAT_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -351,7 +351,7 @@ END FUNCTION DPSAT_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -366,16 +366,16 @@ IMPLICIT NONE
 !
 REAL, INTENT(IN)                :: PT     ! Temperature (Kelvin)
 REAL, INTENT(IN)                :: PP     ! Pressure (Pa)
-REAL                            :: PQSAT  ! saturation vapor 
+REAL                            :: PQSAT  ! saturation vapor
                                                         ! specific humidity
                                                         ! with respect to
                                                         ! water (kg/kg)
 !
 !*       0.2   Declarations of local variables
 !
-REAL                           :: ZFOES  ! saturation vapor 
+REAL                           :: ZFOES  ! saturation vapor
                                                         ! pressure
-                                                        ! (Pascal) 
+                                                        ! (Pascal)
 !
 REAL                           :: ZWORK1
 REAL                           :: ZWORK2
@@ -410,26 +410,26 @@ END FUNCTION QSATW_0D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -440,11 +440,11 @@ END FUNCTION QSATW_0D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -453,7 +453,7 @@ END FUNCTION QSATW_0D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -479,10 +479,10 @@ REAL, DIMENSION(SIZE(PT))                   :: PQSAT  ! saturation vapor
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZFOES  ! saturation vapor 
                                                         ! pressure
-                                                        ! (Pascal) 
+                                                        ! (Pascal)
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZWORK1
-REAL                                        :: ZWORK2 
+REAL                                        :: ZWORK2
 !REAL(KIND=JPRB) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
 !
@@ -519,26 +519,26 @@ END FUNCTION QSATW_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -549,11 +549,11 @@ END FUNCTION QSATW_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -562,7 +562,7 @@ END FUNCTION QSATW_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -580,7 +580,7 @@ REAL, DIMENSION(:,:), INTENT(IN)              :: PT     ! Temperature
                                                         ! (Kelvin)
 REAL, DIMENSION(:,:), INTENT(IN)              :: PP     ! Pressure
                                                         ! (Pa)
-!                                                        
+!
 INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL   :: KMASK
 !                                                KMASK = Number of soil moisture layers (DIF option)
 INTEGER,               INTENT(IN), OPTIONAL   :: KL
@@ -607,7 +607,7 @@ IF(PRESENT(KMASK).AND.PRESENT(KL))THEN
   IMASK(:)=KMASK(:)
   INL=KL
 ELSE
-  IMASK(:)=SIZE(PT,2)  
+  IMASK(:)=SIZE(PT,2)
   INL=SIZE(PT,2)
 ENDIF
 !
@@ -615,7 +615,7 @@ ENDIF
 PQSAT(:,:)=XUNDEF
 ZFOES(:,:)=0.0
 !
-!  
+!
 !*       1.    COMPUTE SATURATION VAPOR PRESSURE
 !              ---------------------------------
 !
@@ -644,27 +644,27 @@ END FUNCTION QSATW_2D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
+!       The purpose of this function is to compute the saturation vapor
 !     pressure from temperature over saline seawater
-!      
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
+!!    pressure of the triple point es(Tt) (XESTT), i.e
 !!    The reduction due to salinity is compute with the factor 0.98 (reduction of 2%)
-!!     
+!!
 !!         es(T)= 0.98*EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -675,11 +675,11 @@ END FUNCTION QSATW_2D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!      Zeng, X., Zhao, M., and Dickinson, R. E., 1998 : Intercomparaison of bulk
 !!      aerodynamic algorithm for the computation of sea surface fluxes using
 !!      TOGA COARE and TAO data. Journal of Climate, vol 11, n°10, pp 2628--2644
@@ -691,7 +691,7 @@ END FUNCTION QSATW_2D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    6/04/2005 
+!!      Original    6/04/2005
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -717,7 +717,7 @@ REAL, DIMENSION(SIZE(PT))                   :: PQSAT  ! saturation vapor
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZFOES  ! saturation vapor 
                                                         ! pressure
-                                                        ! (Pascal) 
+                                                        ! (Pascal)
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZWORK1
 REAL                                        :: ZWORK2
@@ -730,7 +730,7 @@ ZFOES (:) = PSAT(PT(:))
 ZFOES (:) = 0.98*ZFOES(:)
 ! vapor pressure reduction of 2% over saline seawater could have a significant 
 ! impact on the computation of surface latent heat flux under strong wind 
-! conditions (Zeng et al, 1998). 
+! conditions (Zeng et al, 1998).
 !
 ZWORK1(:) = ZFOES(:)/PP(:)
 ZWORK2    = XRD/XRV
@@ -757,9 +757,9 @@ END FUNCTION QSATSEAW_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
+!       The purpose of this function is to compute the saturation vapor
 !     pressure from temperature over saline seawater
-!      
+!
 !
 !!**  METHOD
 !!    ------
@@ -768,7 +768,7 @@ END FUNCTION QSATSEAW_1D
 !!    (1980).
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -777,7 +777,7 @@ END FUNCTION QSATSEAW_1D
 !!    IMPLICIT ARGUMENTS
 !!    ------------------
 !!      Module MODD_CST : contains physical constants
-!!      
+!!
 !!    REFERENCE
 !!    ---------
 !!      Weiss, R.F., and Price, B.A., 1980 : Nitrous oxide solubility in water
@@ -790,7 +790,7 @@ END FUNCTION QSATSEAW_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    19/03/2014 
+!!      Original    19/03/2014
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
@@ -858,28 +858,28 @@ END FUNCTION QSATSEAW2_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
 !!
 !!      Finally, dqsat / dT  (T) is computed.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -890,11 +890,11 @@ END FUNCTION QSATSEAW2_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -903,13 +903,13 @@ END FUNCTION QSATSEAW2_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
 !              ------------
 !
-USE MODD_CSTS       
+USE MODD_CSTS
 !
 IMPLICIT NONE
 !
@@ -933,9 +933,9 @@ REAL, DIMENSION(SIZE(PT))                   :: PDQSAT ! derivative according
 !
 !*       0.2   Declarations of local variables
 !
-REAL, DIMENSION(SIZE(PT))  :: ZFOES  ! saturation vapor 
+REAL, DIMENSION(SIZE(PT))  :: ZFOES  ! saturation vapor
                                                           ! pressure
-                                                          ! (Pascal) 
+                                                          ! (Pascal)
 !
 REAL                       :: ZWORK1
 REAL, DIMENSION(SIZE(PT))  :: ZWORK2
@@ -975,28 +975,28 @@ END FUNCTION DQSATW_O_DT_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPW) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAW) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMW) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
 !!
 !!      Finally, dqsat / dT  (T) is computed.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -1007,11 +1007,11 @@ END FUNCTION DQSATW_O_DT_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPW   : Constant for saturation vapor pressure function
 !!        XBETAW  : Constant for saturation vapor pressure function
-!!        XGAMW   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMW   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -1020,13 +1020,13 @@ END FUNCTION DQSATW_O_DT_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
 !              ------------
 !
-USE MODD_CSTS       
+USE MODD_CSTS
 !
 IMPLICIT NONE
 !
@@ -1052,7 +1052,7 @@ REAL,    DIMENSION(SIZE(PT))                    :: PDQSAT ! derivative according
 !
 REAL, DIMENSION(SIZE(PT))                       :: ZFOES  ! saturation vapor 
                                                           ! pressure
-                                                          ! (Pascal) 
+                                                          ! (Pascal)
 !
 REAL                      :: ZWORK1
 REAL, DIMENSION(SIZE(PT)) :: ZWORK2
@@ -1092,26 +1092,26 @@ END FUNCTION DQSATI_O_DT_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPI) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPI) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAI) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMI) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -1122,11 +1122,11 @@ END FUNCTION DQSATI_O_DT_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPI   : Constant for saturation vapor pressure function
 !!        XBETAI  : Constant for saturation vapor pressure function
-!!        XGAMI   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMI   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -1135,13 +1135,13 @@ END FUNCTION DQSATI_O_DT_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
 !              ------------
 !
-USE MODD_CSTS       
+USE MODD_CSTS
 !
 IMPLICIT NONE
 !
@@ -1161,7 +1161,7 @@ REAL, DIMENSION(SIZE(PT))                   :: PQSAT  ! saturation vapor
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZFOES  ! saturation vapor 
                                                         ! pressure
-                                                        ! (Pascal) 
+                                                        ! (Pascal)
 !
 REAL, DIMENSION(SIZE(PT))                   :: ZWORK1
 REAL                                        :: ZWORK2
@@ -1199,26 +1199,26 @@ END FUNCTION QSATI_1D
 !!
 !!    PURPOSE
 !!    -------
-!       The purpose of this function is to compute the saturation vapor 
-!     pressure from temperature 
-!      
+!       The purpose of this function is to compute the saturation vapor
+!     pressure from temperature
+!
 !
 !!**  METHOD
 !!    ------
 !!       Given temperature T (PT), the saturation vapor pressure es(T)
 !!    (FOES(PT)) is computed by integration of the Clapeyron equation
 !!    from the triple point temperature Tt (XTT) and the saturation vapor 
-!!    pressure of the triple point es(Tt) (XESTT), i.e  
-!!     
+!!    pressure of the triple point es(Tt) (XESTT), i.e
+!!
 !!         es(T)= EXP( alphaw - betaw /T - gammaw Log(T) )
-!!  
+!!
 !!     with :
-!!       alphaw (XALPI) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt) 
+!!       alphaw (XALPI) = LOG(es(Tt))+ betaw/Tt + gammaw Log(Tt)
 !!       betaw (XBETAI) = Lv(Tt)/Rv + gammaw Tt
 !!       gammaw (XGAMI) = (Cl -Cpv) /Rv
 !!
 !!      Then, the specific humidity at saturation is deduced.
-!!  
+!!
 !!
 !!    EXTERNAL
 !!    --------
@@ -1229,11 +1229,11 @@ END FUNCTION QSATI_1D
 !!      Module MODD_CST : comtains physical constants
 !!        XALPI   : Constant for saturation vapor pressure function
 !!        XBETAI  : Constant for saturation vapor pressure function
-!!        XGAMI   : Constant for saturation vapor pressure function  
-!!      
+!!        XGAMI   : Constant for saturation vapor pressure function
+!!
 !!    REFERENCE
 !!    ---------
-!!      Book2 of documentation of Meso-NH 
+!!      Book2 of documentation of Meso-NH
 !!
 !!
 !!    AUTHOR
@@ -1242,14 +1242,14 @@ END FUNCTION QSATI_1D
 !!
 !!    MODIFICATIONS
 !!    -------------
-!!      Original    21/09/98 
+!!      Original    21/09/98
 !-------------------------------------------------------------------------------
 !
 !*       0.    DECLARATIONS
 !              ------------
 !
 USE MODD_SNOW_PAR,  ONLY : XUNDEF
-USE MODD_CSTS       
+USE MODD_CSTS
 !
 IMPLICIT NONE
 !
@@ -1260,12 +1260,12 @@ REAL, DIMENSION(:,:), INTENT(IN)            :: PT     ! Temperature
                                                       ! (Kelvin)
 REAL, DIMENSION(:,:), INTENT(IN)            :: PP     ! Pressure
                                                       ! (Pa)
-!                                                        
+!
 INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL   :: KMASK
 !                                                KMASK = Number of soil moisture layers (DIF option)
 INTEGER,               INTENT(IN), OPTIONAL   :: KL
 !                                                KL = Max number of soil moisture layers (DIF option)
-!                                                      
+!
 REAL, DIMENSION(SIZE(PT,1),SIZE(PT,2))      :: PQSAT  ! saturation vapor 
                                                       ! specific humidity
                                                       ! with respect to
@@ -1284,17 +1284,17 @@ INTEGER         :: INL
 !IF (LHOOK) CALL DR_HOOK('MODE_THERMOS:QSATI_2D',0,ZHOOK_HANDLE)
 !
 IF(PRESENT(KMASK))THEN
-  IMASK(:)=KMASK(:)    
+  IMASK(:)=KMASK(:)
   INL=KL
 ELSE
-  IMASK(:)=SIZE(PT,2)  
+  IMASK(:)=SIZE(PT,2)
   INL=SIZE(PT,2)
 ENDIF
 !
 PQSAT(:,:)=XUNDEF
 ZFOES(:,:)=0.0
 !
-!  
+!
 !*       1.    COMPUTE SATURATION VAPOR PRESSURE
 !              ---------------------------------
 !

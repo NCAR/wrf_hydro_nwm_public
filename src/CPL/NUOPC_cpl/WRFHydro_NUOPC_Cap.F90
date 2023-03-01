@@ -9,15 +9,15 @@
 !!
 !! @section Overview Overview
 !!
-!! The Weather Research and Forecasting Hydrological (WRF-Hydro) model is a 
-!! hydrometerological forecasting model developed and maintained by the 
-!! National Center for Atmospheric Research (NCAR). The WRF-Hydro cap wraps 
-!! the WRF-Hydro model with NUOPC compliant interfaces. The result is a 
-!! WRF-Hydro model capable of coupling with other models using National 
+!! The Weather Research and Forecasting Hydrological (WRF-Hydro) model is a
+!! hydrometerological forecasting model developed and maintained by the
+!! National Center for Atmospheric Research (NCAR). The WRF-Hydro cap wraps
+!! the WRF-Hydro model with NUOPC compliant interfaces. The result is a
+!! WRF-Hydro model capable of coupling with other models using National
 !! Unified Operational Prediction Capability (NUOPC).
 !!
-!! This page documents the technical design of the specialized NUOPC model and 
-!! the WRF-Hydro gluecode. For generic NUOPC model documentation please see 
+!! This page documents the technical design of the specialized NUOPC model and
+!! the WRF-Hydro gluecode. For generic NUOPC model documentation please see
 !! the NUOPC reference manual: https://www.earthsystemcog.org/projects/nuopc/refmans.
 !!
 !!
@@ -67,8 +67,8 @@
 !!
 !! @subsection InitializeP3 InitializeP3
 !!
-!! During initialize phase 3 import and export fields are realized if they are 
-!! connected through NUOPC. Realized fields are created on the WRF-Hydro grid. 
+!! During initialize phase 3 import and export fields are realized if they are
+!! connected through NUOPC. Realized fields are created on the WRF-Hydro grid.
 !!
 !! @subsection DataInitialize DataInitialize
 !!
@@ -79,7 +79,7 @@
 !! @subsection SetClock SetClock
 !!
 !! During set clock the cap creates a new clock using the timestep configured
-!! in te WRF-Hydro configuration file. The restart write time step is also 
+!! in te WRF-Hydro configuration file. The restart write time step is also
 !! created and the restart write time accumulation tracker is reset to zero.
 !!
 !!
@@ -175,20 +175,20 @@
 !! WRF-Hydro diagnostics output is written to standard out. To increase the
 !! diagnostic output compile WRF-Hydro with -DHYDRO_D.
 !!
-!! WRF-Hydro writes several output files.  Please see the 
+!! WRF-Hydro writes several output files.  Please see the
 !! [WRF-Hydro documentation] (https://www.ral.ucar.edu/projects/wrf_hydro).
 !!
 !! @section Dependencies Dependencies
 !!
 !! Dependencies
-!! - [ESMF v7.0.0+] (https://www.earthsystemcog.org/projects/esmf/) 
+!! - [ESMF v7.0.0+] (https://www.earthsystemcog.org/projects/esmf/)
 !! - [NetCDF v4.3.0+] (http://www.unidata.ucar.edu/software/netcdf/docs/)
 !! - [NetCDF FORTRAN] (http://www.unidata.ucar.edu/software/netcdf/docs/building_netcdf_fortran.html)
 !!
 !! @subsection ESMF ESMF
 !!
-!! See the [ESMF User's Guide] 
-!! (http://www.earthsystemmodeling.org/esmf_releases/public/last/ESMF_usrdoc). 
+!! See the [ESMF User's Guide]
+!! (http://www.earthsystemmodeling.org/esmf_releases/public/last/ESMF_usrdoc).
 !!
 !! @section BuildingAndInstalling Building and Installing
 !!
@@ -200,8 +200,8 @@
 !! - nuopcinstall
 !! - nuopcclean
 !!
-!! The build system in [Makefile] (@ref Makefile) wraps the WRF-Hydro build 
-!! system and adds the nuopc, nuopcinstall, and nuopcclean targets. Before 
+!! The build system in [Makefile] (@ref Makefile) wraps the WRF-Hydro build
+!! system and adds the nuopc, nuopcinstall, and nuopcclean targets. Before
 !! building make sure to configure the internal model.
 !!
 !! To build and install into the current directory run:
@@ -219,7 +219,7 @@
 !!
 !! @section References
 !!
-!! - [WRF-Hydro] (https://www.ral.ucar.edu/projects/wrf_hydro) 
+!! - [WRF-Hydro] (https://www.ral.ucar.edu/projects/wrf_hydro)
 !! - [ESPS] (https://www.earthsystemcog.org/projects/esps)
 !! - [ESMF] (https://www.earthsystemcog.org/projects/esmf)
 !! - [NUOPC] (https://www.earthsystemcog.org/projects/nuopc/)
@@ -1059,7 +1059,7 @@ module WRFHydro_NUOPC
           "_imp_D"//trim(nStr)//"_"//trim(currTimeStr), rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return
       call NUOPC_SetTimestamp(is%wrap%NStateImp(1), time=currTime, rc=rc)
-      if (ESMF_STDERRORCHECK(rc)) return  ! bail out      
+      if (ESMF_STDERRORCHECK(rc)) return  ! bail out
       importUpdated = .TRUE.
     elseif (is%wrap%init_import.eq.FILLV_MODEL) then
       if (is%wrap%memr_import.eq.MEMORY_COPY) then
@@ -1215,7 +1215,7 @@ module WRFHydro_NUOPC
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! override timestep
-    if (is%wrap%timeStepInt /= 0) then 
+    if (is%wrap%timeStepInt /= 0) then
       call ESMF_TimeIntervalSet(timestep, &
         s=is%wrap%timeStepInt, rc=rc)
       if (ESMF_STDERRORCHECK(rc)) return  ! bail out

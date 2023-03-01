@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 MODULE module_sf_noahlsm
@@ -305,7 +305,7 @@ CONTAINS
 !   SOILM      TOTAL SOIL COLUMN MOISTURE CONTENT (FROZEN+UNFROZEN) (M)
 !   Q1         Effective mixing ratio at surface (kg kg-1), used for
 !              diagnosing the mixing ratio at 2 meter for coupled model
-!   SMAV       Soil Moisture Availability for each layer, as a fraction 
+!   SMAV       Soil Moisture Availability for each layer, as a fraction
 !              between SMCWLT and SMCMAX.
 !  Documentation for SNOTIME1 and SNOABL2 ?????
 !  What categories of arguments do these variables fall into ????
@@ -355,7 +355,7 @@ CONTAINS
       real, intent(in)                       :: qlowbdry
       integer, intent(in)                    :: gwsoilcpl
       !BF end
-      
+
       REAL, INTENT(IN)   :: SHDMIN,SHDMAX,DT,DQSDT2,LWDN,PRCP,PRCPRAIN,     &
                             Q2,Q2SAT,SFCPRS,SFCSPD,SFCTMP, SNOALB,          &
                             SOLDN,SOLNET,TBOT,TH2,ZLVL,                            &
@@ -896,7 +896,7 @@ CONTAINS
       ET(K) = ET(K) * LVH2O
       ENDDO
       ETT = ETT * LVH2O
-      
+
       ETPND1=ETPND1 * LVH2O
 
       ESNOW = ESNOW * LSUBS
@@ -1498,7 +1498,7 @@ CONTAINS
 ! ----------------------------------------------------------------------
 
   SUBROUTINE FAC2MIT(SMCMAX,FLIMIT)
-    IMPLICIT NONE		
+    IMPLICIT NONE
     REAL, INTENT(IN)  :: SMCMAX
     REAL, INTENT(OUT) :: FLIMIT
 
@@ -2882,7 +2882,7 @@ CONTAINS
                     DWSAT,DKSAT,SMCMAX,BEXP,RUNOFF1,                    &
                     RUNOFF2,DT,SMCWLT,SLOPE,KDT,FRZFACT,SICE,AI,BI,CI,  &
                     SFHEAD1RT,INFXS1RT, &
-		    gwsoilcpl, qlowbdry) 
+		    gwsoilcpl, qlowbdry)
          CALL SSTEP (SH2OFG,SH2O,DUMMY,RHSTT,RHSCT,DT,NSOIL,SMCMAX,     &
                         CMCMAX,RUNOFF3,ZSOIL,SMC,SICE,AI,BI,CI,INFXS1RT)
          DO K = 1,NSOIL
@@ -3609,10 +3609,10 @@ CONTAINS
       BURIAL = 7.0*Z0BRD - SNOWH
       IF(BURIAL.LE.0.0007) THEN
         Z0EFF = Z0S
-      ELSE      
+      ELSE
         Z0EFF = BURIAL/7.0
       ENDIF
-      
+
       Z0 = (1.- SNCOVR)* Z0BRD + SNCOVR * Z0EFF
 
 ! ----------------------------------------------------------------------
@@ -3933,17 +3933,17 @@ select case(gwsoilcpl)
 case(2)
         if(K .eq. nsoil) then
          NUMER = (WDF2 * DSMDZ2) - qLowBdry - (WDF * DSMDZ) - WCND + ET (K)  
-  else 
+  else
         ! withdrawal has positive sign (e.g. ET), replenishment has negative sign (e.g. qlowbdry)
          NUMER = (WDF2 * DSMDZ2) + SLOPX * WCND2- (WDF * DSMDZ)         &
                  - WCND+ ET (K)
   end if
 
-case default  
- 
+case default
+
          NUMER = (WDF2 * DSMDZ2) + SLOPX * WCND2- (WDF * DSMDZ)         &
                  - WCND+ ET (K)
- 
+
 
 end select
 ! ----------------------------------------------------------------------
@@ -3962,13 +3962,13 @@ end select
 !BF gwsoil coupling
 select case (gwsoilcpl)
  case(2)
-            RUNOFF2 = -qLowBdry  
+            RUNOFF2 = -qLowBdry
 
  case default
 	    RUNOFF2 = SLOPX * WCND2
 
 end select
-	    
+
          END IF
          IF (K .ne. NSOIL) THEN
             WDF = WDF2

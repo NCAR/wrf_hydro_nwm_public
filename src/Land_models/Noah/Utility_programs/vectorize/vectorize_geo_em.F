@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program vectorize_geo_em
@@ -55,7 +55,7 @@ program vectorize_geo_em
   character(len=256) :: dumstr
 
   namelist/vectorize_namelist/ keep_lu_list, full_geo_em, vector_directory
-  
+
   ! Default values
   keep_lu_list = -99999
   landuse_count = 0
@@ -105,7 +105,7 @@ program vectorize_geo_em
 
   iret = nf90_get_var(ncid_in, varid_in(1), lu_index)
   call error_handler(iret, "Problem getting variable 'LU_INDEX'")
-  
+
 !!!!!
 ! XLAT
 !!!!!
@@ -115,7 +115,7 @@ program vectorize_geo_em
 
   iret = nf90_get_var(ncid_in, varid_in(2), xlat_in)
   call error_handler(iret, "Problem getting variable 'XLAT_M'")
-  
+
 !!!!!
 ! XLONG
 !!!!!
@@ -125,7 +125,7 @@ program vectorize_geo_em
 
   iret = nf90_get_var(ncid_in, varid_in(3), xlon_in)
   call error_handler(iret, "Problem getting variable 'XLONG_M'")
-  
+
 !!!!!
 ! GREENFRAC
 !!!!!
@@ -147,7 +147,7 @@ program vectorize_geo_em
   allocate ( xlat_out  ( west_east_new , south_north_new , 1 ) )
   allocate ( xlon_out  ( west_east_new , south_north_new , 1 ) )
   allocate ( green_out ( west_east_new , south_north_new , 12, 1 ) )
-  
+
   iloc = 0
   do ilat = 1,south_north_old
      do ilon = 1,west_east_old
@@ -191,7 +191,7 @@ program vectorize_geo_em
 
   iret = nf90_inquire(ncid_in,ndims, nvars, natts)
   call error_handler(iret, "Problem getting number attributes")
-  
+
   do iloc = 1, natts
 
     iret = nf90_inq_attname(ncid_in,NF90_GLOBAL, iloc, attname)
@@ -317,10 +317,10 @@ program vectorize_geo_em
 
   iret = nf90_close(ncid_out)
   call error_handler(iret, "Problem closing output file")
-  
+
   iret = nf90_close(ncid_in)
   call error_handler(iret, "Problem closing input file")
-    
+
 end program
 
 !-----------------------------------------------------------------------------

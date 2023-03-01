@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program consolidate
@@ -36,7 +36,7 @@ program consolidate
   type (geo_em_type) :: geo_em
 
 
-  integer, parameter :: MAXTEMPLATE = 10      
+  integer, parameter :: MAXTEMPLATE = 10
 
   type DataBuffer
      character(len=256)                         :: label
@@ -135,7 +135,7 @@ program consolidate
   character(len=256), dimension(MAXTEMPLATE) :: PCPfile_primary
 
 
-  namelist /files/ startdate, enddate, & 
+  namelist /files/ startdate, enddate, &
        DataDir, full_ic_frq, rainfall_interp, rescale_shortwave, wrfinput_flnm, &
        geo_em_flnm, Tfile_template, Ufile_template, Vfile_template,             &
        Pfile_template, Qfile_template, LWfile_template, SWfile_secondary,       &
@@ -191,7 +191,7 @@ program consolidate
      write(*,*)
      stop
   endif
-  read(12,files) 
+  read(12,files)
   close(12)
 
 !--------------------------------------------------------------------------
@@ -505,7 +505,7 @@ program consolidate
   deallocate(wrfinput%use, stat=ierr)
   deallocate(wrfinput%veg, stat=ierr)
   deallocate(geo_em%veg, stat=ierr)
-  
+
   call grib2_clear_parameter_table
 
 
@@ -523,7 +523,7 @@ contains
     character(len=64) :: val
     integer :: vcount
 
-    ! 
+    !
     ! Open the file
     !
     open(12, file=filename, status='old', form='formatted', iostat=ierr)
@@ -670,8 +670,8 @@ contains
     !
     ! Copy the databuffer type from <in> to <out>
     !
-    ! We do this to be explicit in allocating new memory for 
-    ! pointer array <out%field>, and copying the data from 
+    ! We do this to be explicit in allocating new memory for
+    ! pointer array <out%field>, and copying the data from
     ! <in%field> to <out%field> (instead of merely pointing
     ! <out%field> => <in%field>
     implicit none
@@ -695,7 +695,7 @@ contains
        nullify(out%field)
     endif
 
-    
+
   end subroutine copy_data_buffer
 
 !==============================================================================
@@ -720,9 +720,9 @@ contains
     integer :: jdim
 
     ! The fatality level in the DataBuffer structure indicates what sort
-    ! of errors are fatal and what sort of errors we want to try to 
+    ! of errors are fatal and what sort of errors we want to try to
     ! recover from.
-    ! 
+    !
     ! fatality==0 means that any problem is a fatal error, and we stop.
     !
     ! fatality==2 means that if we cannot find a matching file, and we
@@ -831,7 +831,7 @@ contains
        return
 
     endif
-    
+
     ! We did not find data.  Let's try to temporally interpolate.
 
     ! A "prev" buffer must exist for us.  Check that.
@@ -847,7 +847,7 @@ contains
        endif
 
        write(*,'("Field label= ",A)') trim(current%label)
-       write(*,'("No previous data.")') 
+       write(*,'("No previous data.")')
        stop
     endif
 
@@ -895,7 +895,7 @@ contains
        endif
 
        if (current%label == "RAINRATE") then
-          ! Don't temporally interpolate the rain rate.  
+          ! Don't temporally interpolate the rain rate.
           allocate(current%field(size(prev%field,1), size(prev%field,2)))
           ! Take the "post" field, because that field should be the accumulation
           ! between "prev" and "post"
@@ -955,7 +955,7 @@ contains
     nullify(datastruct%data)
 
     if (current%label == "RAINRATE") then
-       ! Don't temporally interpolate the rain rate.  
+       ! Don't temporally interpolate the rain rate.
        ! Simply carry the previous value forward.
        allocate(current%field(size(prev%field,1), size(prev%field,2)))
        current%field = post%field
@@ -963,7 +963,7 @@ contains
        call temporal_interpolation(prev, post, current)
     endif
 
-    ! We have the data we want, and prev and post are both up-to-date, 
+    ! We have the data we want, and prev and post are both up-to-date,
     ! so we can exit.
 
   end subroutine process
@@ -1368,7 +1368,7 @@ contains
 
     datastruct%nx = grib%mapinfo%nx
     datastruct%ny = grib%mapinfo%ny
-    
+
     call map_init(datastruct%proj)
 !KWM    datastruct%proj%lat1 = grib%mapinfo%lat1
 !KWM    if (grib%mapinfo%lon1 > 180) then
@@ -1421,7 +1421,7 @@ contains
        endif
        datastruct%hdate(15:16) = "00"
        ! TEST:  Set zero data values to missing data for GCIP SW fields
-       ! where (datastruct%data <= 0) datastruct%data = -1.E36 
+       ! where (datastruct%data <= 0) datastruct%data = -1.E36
     endif
 
 !KWM    if (description == "Plant Canopy Surface Water") then
@@ -1447,14 +1447,14 @@ contains
           if (processing(1:12) == "Accumulation") then
              oldmax = maxval(datastruct%data, mask=(datastruct%data > -1.E25))
              write(*,'(13x, "Maxval adjusted from ", F12.6)', advance="no") oldmax
-             where (datastruct%data > -1.E25) 
+             where (datastruct%data > -1.E25)
                 datastruct%data = datastruct%data * (1.0 / float(p2_seconds - p1_seconds))
              endwhere
              newmax = maxval(datastruct%data, mask=(datastruct%data > -1.E25))
              write(*,'(" to ", F12.6, ":    factor of ", I8)') newmax, NINT(oldmax/newmax)
              ! Change the units to mm/s, reflecting the rescaling we just did.
              datastruct%units = "mm s{-1}"
-          else 
+          else
              stop "Precip Problem A?"
           endif
        else
@@ -1734,7 +1734,7 @@ subroutine output_timestring_to_netcdf(ncid, hdate)
   implicit none
   integer,                     intent(in) :: ncid
   character(len=*),            intent(in) :: hdate
-  
+
   integer,          parameter                :: DateStrLen = 19
   character(len=1), dimension(DateStrLen, 1) :: output_hdate
   integer                                    :: dimid_datestrlen
@@ -1747,7 +1747,7 @@ subroutine output_timestring_to_netcdf(ncid, hdate)
   do i = 1, len(hdate)
      output_hdate(i,1) = hdate(i:i)
   enddo
-  
+
   ierr = nf90_inq_dimid(ncid, "Time", dimid_time)
   call error_handler(ierr, "OUTPUT_TIMESTRING_TO_NETCDF: Problem finding dimension 'Time'")
 
@@ -1853,7 +1853,7 @@ end subroutine fillsm
 !==============================================================================
 
 subroutine interp_rainfall_nearest_neighbor(datastruct, newarr, mix, mjx, wrfinput)
-  ! 
+  !
   ! Fill array <newarr> with rainfall data from <datastruct>
   !
   use module_input_data_structure
@@ -1938,14 +1938,14 @@ subroutine interp_rainfall(datastruct, newarr, mix, mjx, wrfinput)
   ! field's grid cells to various WRF grid cells as necessary.
 
   ! We recompute the mapping information every time, in case our source grid has changed.
-     
+
   ILOOP : do i = 1, datastruct%nx
      JLOOP : do j = 1, datastruct%ny
         ! Compute (x,y) in WRF grid of point (gx,gy) in precip grid.
 !KWM        call datastruct_xytoll(float(i), float(j), xlat, xlon, datastruct)
         call ij_to_latlon(datastruct%proj, float(i), float(j), xlat, xlon)
         call latlon_to_ij(wrfinput%proj, xlat, xlon, x, y)
-        ! Now X and Y are the x and y coordinates in the WRF 
+        ! Now X and Y are the x and y coordinates in the WRF
         ! grid of the RAINFALL point i, j.
 
         if ((x > -2) .and. (y > -2) .and. (x < mix+2) .and. (y < mjx+2)) then
@@ -2094,7 +2094,7 @@ subroutine another_interp_rainfall(datastruct, newarr, mix, mjx, wrfinput)
            call ij_to_latlon(datastruct%proj, float(i), float(j), xlat, xlon)
            call latlon_to_ij(wrfinput%proj, xlat, xlon, mxa(i,j), mya(i,j))
 
-           ! Now MX and MY are the x and y coordinates in the WRF 
+           ! Now MX and MY are the x and y coordinates in the WRF
            ! grid of the RAINFALL point i, j.
 
         if ((mxa(i,j) > -2) .and. (mya(i,j) > -2) .and. (mxa(i,j) < mix+2) .and. (mya(i,j) < mjx+2)) then
@@ -2343,4 +2343,3 @@ end subroutine close_flnm
 
 !==============================================================================
 !==============================================================================
-

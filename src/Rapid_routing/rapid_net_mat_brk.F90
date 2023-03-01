@@ -5,11 +5,11 @@ subroutine rapid_net_mat_brk
 
 !Purpose:
 !This subroutine modifies the network and transboundary matrices based on a list
-!of river IDs. 
-!The connectivity is broken between each given river ID and its downstream 
+!of river IDs.
+!The connectivity is broken between each given river ID and its downstream
 !river.
-!Author: 
-!Cedric H. David, 2013-2015. 
+!Author:
+!Cedric H. David, 2013-2015.
 
 
 !*******************************************************************************
@@ -32,16 +32,16 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
@@ -55,7 +55,7 @@ if (BS_opt_for) then
 !-------------------------------------------------------------------------------
 !Breaks Net matrix connectivity in case forcing used is inside basin studied
 !-------------------------------------------------------------------------------
-if (IS_for_bas>0) then 
+if (IS_for_bas>0) then
 call PetscPrintf(PETSC_COMM_WORLD,'Modifying network matrix'//char(10),ierr)
 end if
 
@@ -93,7 +93,7 @@ do JS_for_bas=1,IS_for_bas
           !Writes information on connection that was just broken in stdout
 
           end if
-     end do 
+     end do
 
           end if
      end do
@@ -111,7 +111,7 @@ call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)
 !-------------------------------------------------------------------------------
 if (IS_opt_routing==3) then
 
-if (IS_for_bas>0) then 
+if (IS_for_bas>0) then
 call PetscPrintf(PETSC_COMM_WORLD,'Modifying transboundary matrix'//           &
                  char(10),ierr)
 end if
@@ -136,7 +136,7 @@ if ((JS_riv_bas < IS_ownfirst+1 .or.  JS_riv_bas >=IS_ownlast+1) .and.         &
 end if
 
           end if
-     end do 
+     end do
 
           end if
      end do
@@ -164,7 +164,7 @@ if (BS_opt_dam) then
 !-------------------------------------------------------------------------------
 !Breaks matrix connectivity in case dam model is used inside basin studied
 !-------------------------------------------------------------------------------
-if (IS_dam_bas>0) then 
+if (IS_dam_bas>0) then
 call PetscPrintf(PETSC_COMM_WORLD,'Modifying network matrix'//char(10),ierr)
 end if
 
@@ -191,7 +191,7 @@ do JS_dam_bas=1,IS_dam_bas
           end do
           !Breaks connection for traditional Muskingum method
 
-          
+
           write(temp_char,'(i10)') IV_riv_bas_id(JS_riv_bas)
           call PetscPrintf(PETSC_COMM_WORLD,                                   &
                            '         connection broken downstream of reach ID' &
@@ -203,7 +203,7 @@ do JS_dam_bas=1,IS_dam_bas
           !Writes information on connection that was just broken in stdout
 
           end if
-     end do 
+     end do
 
           end if
      end do
@@ -221,7 +221,7 @@ call PetscPrintf(PETSC_COMM_WORLD,'--------------------------'//char(10),ierr)
 !-------------------------------------------------------------------------------
 if (IS_opt_routing==3) then
 
-if (IS_dam_bas>0) then 
+if (IS_dam_bas>0) then
 call PetscPrintf(PETSC_COMM_WORLD,'Modifying transboundary matrix'//           &
                  char(10),ierr)
 end if
@@ -246,7 +246,7 @@ if ((JS_riv_bas < IS_ownfirst+1 .or.  JS_riv_bas >=IS_ownlast+1) .and.         &
 end if
 
           end if
-     end do 
+     end do
 
           end if
      end do

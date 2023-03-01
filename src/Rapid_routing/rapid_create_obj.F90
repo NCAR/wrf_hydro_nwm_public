@@ -1,12 +1,12 @@
 !*******************************************************************************
 !Subroutine - rapid_create_obj
 !*******************************************************************************
-subroutine rapid_create_obj 
+subroutine rapid_create_obj
 
 !Purpose:
-!All PETSc and TAO objects need be created (requirement of both mathematical 
+!All PETSc and TAO objects need be created (requirement of both mathematical
 !libraries).  PETSc and TAO also need be initialized.  This is what's done here.
-!Author: 
+!Author:
 !Cedric H. David, 2008-2015.
 
 
@@ -41,22 +41,22 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
 
 #ifndef NO_TAO
-#include "finclude/taosolver.h" 
+#include "finclude/taosolver.h"
 !TAO solver
 #endif
 
@@ -102,7 +102,7 @@ call MatCreate(PETSC_COMM_WORLD,ZM_Obs,ierr)
 call MatSetSizes(ZM_Obs,PETSC_DECIDE,PETSC_DECIDE,IS_riv_bas,IS_riv_bas,ierr)
 call MatSetFromOptions(ZM_Obs,ierr)
 call MatSetUp(ZM_Obs,ierr)
-!These matrices are all square of size IS_riv_bas.  PETSC_DECIDE allows PETSc 
+!These matrices are all square of size IS_riv_bas.  PETSC_DECIDE allows PETSc
 !to determine the local sizes on its own. MatSetFromOptions allows to use many
 !different options at runtime, such as "-mat_type aijmumps".
 
@@ -182,7 +182,7 @@ call VecSetFromOptions(ZV_p,ierr)
 
 call VecDuplicate(ZV_p,ZV_pnorm,ierr)
 call VecDuplicate(ZV_p,ZV_pfac,ierr)
- 
+
 
 !Vectors and objects useful for PETSc programming-------------------------------
 call VecDuplicate(ZV_k,ZV_one,ierr)
@@ -190,7 +190,7 @@ call VecSet(ZV_one,ZS_one,ierr)
 !this is a vector with ones a each row, used for computations
 
 call VecScatterCreateToZero(ZV_k,vecscat,ZV_SeqZero,ierr)
-!create scatter context from a distributed vector to a sequential vector on the 
+!create scatter context from a distributed vector to a sequential vector on the
 !zeroth processor.  Also creates the vector ZV_SeqZero
 
 
@@ -201,7 +201,7 @@ call TaoInitialize(PETSC_NULL_CHARACTER,ierr)
 
 call TaoCreate(PETSC_COMM_WORLD,tao,ierr)
 call TaoSetType(tao,'tao_nm',ierr)
-!Create TAO App 
+!Create TAO App
 
 call VecDuplicate(ZV_p,ZV_1stIndex,ierr)
 call VecSetValues(ZV_1stIndex,IS_one,0*IS_one,ZS_one,INSERT_VALUES,ierr)

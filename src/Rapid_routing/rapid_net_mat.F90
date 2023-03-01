@@ -4,13 +4,13 @@
 subroutine rapid_net_mat
 
 !Purpose:
-!This creates a sparse network matrix.  "1" is recorded at Net(i,j) if the reach 
+!This creates a sparse network matrix.  "1" is recorded at Net(i,j) if the reach
 !in column j flows into the reach in line i. If some connections are missing
-!between the subbasin and the entire domain, gives warnings.  
-!A transboundary matrix is also created whose elements in the diagonal blocks 
-!are all null and the elements in the off-diagonal blocks are equal to those of 
-!the network matrix. 
-!Author: 
+!between the subbasin and the entire domain, gives warnings.
+!A transboundary matrix is also created whose elements in the diagonal blocks
+!are all null and the elements in the off-diagonal blocks are equal to those of
+!the network matrix.
+!Author:
 !Cedric H. David, 2008-2015.
 
 
@@ -33,16 +33,16 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
@@ -70,21 +70,21 @@ if (IM_index_up(JS_riv_bas2,JS_up)/=0) then
      !Here JS_riv_bas is determined upstream of JS_riv_bas2
      !both IS_riv_bas2 and IS_riv_bas are used here because the location
      !of nonzeros depends on row and column in an parallel matrix
-     
-     IV_nz(JS_riv_bas2)=IV_nz(JS_riv_bas2)+1 
+
+     IV_nz(JS_riv_bas2)=IV_nz(JS_riv_bas2)+1
      !The size of IV_nz is IS_riv_bas, IV_nz is the same across computing cores
 
      if ((JS_riv_bas >=IS_ownfirst+1 .and.  JS_riv_bas< IS_ownlast+1) .and.    &
          (JS_riv_bas2>=IS_ownfirst+1 .and. JS_riv_bas2< IS_ownlast+1)) then
-          IV_dnz(JS_riv_bas2)=IV_dnz(JS_riv_bas2)+1 
+          IV_dnz(JS_riv_bas2)=IV_dnz(JS_riv_bas2)+1
      end if
      if ((JS_riv_bas < IS_ownfirst+1 .or.  JS_riv_bas >=IS_ownlast+1) .and.    &
          (JS_riv_bas2>=IS_ownfirst+1 .and. JS_riv_bas2< IS_ownlast+1)) then
-          IV_onz(JS_riv_bas2)=IV_onz(JS_riv_bas2)+1 
+          IV_onz(JS_riv_bas2)=IV_onz(JS_riv_bas2)+1
      end if
-     !The size of IV_dnz and of IV_onz is IS_riv_bas. The values of IV_dnz and 
-     !IV_onz are not the same across computing cores.  For each core, the  
-     !only the values located in the range (IS_ownfirst+1:IS_ownlast) are 
+     !The size of IV_dnz and of IV_onz is IS_riv_bas. The values of IV_dnz and
+     !IV_onz are not the same across computing cores.  For each core, the
+     !only the values located in the range (IS_ownfirst+1:IS_ownlast) are
      !correct but only these are used in the preallocation below.
 
 end if
@@ -164,9 +164,9 @@ if (IM_index_up(JS_riv_bas2,JS_up)/=0) then
      call MatSetValues(ZM_A  ,IS_one,JS_riv_bas2-1,IS_one,JS_riv_bas-1,        &
                        0*ZS_one,INSERT_VALUES,ierr)
      CHKERRQ(ierr)
-     !zeros (instead of -C1is) are used here on the off-diagonal of ZM_A because 
-     !C1is are not yet computed, because ZM_A will later be populated based on 
-     !ZM_Net, and because ZM_Net may be later modified for forcing or dams. 
+     !zeros (instead of -C1is) are used here on the off-diagonal of ZM_A because
+     !C1is are not yet computed, because ZM_A will later be populated based on
+     !ZM_Net, and because ZM_Net may be later modified for forcing or dams.
      !Also when running RAPID in optimization mode, it is necessary to recreate
      !ZM_A from scratch every time the parameters C1is are updated
 
@@ -214,9 +214,9 @@ if (IM_index_up(JS_riv_bas2,JS_up)/=0) then
      call MatSetValues(ZM_TC1,IS_one,JS_riv_bas2-1,IS_one,JS_riv_bas-1,        &
                        0*ZS_one,INSERT_VALUES,ierr)
      CHKERRQ(ierr)
-     !zeros (instead of C1is) are used here everywhere in ZM_TC1 because 
-     !C1is are not yet computed, because ZM_TC1 will later be populated based on 
-     !ZM_T, and because ZM_T may be later modified for forcing or dams. 
+     !zeros (instead of C1is) are used here everywhere in ZM_TC1 because
+     !C1is are not yet computed, because ZM_TC1 will later be populated based on
+     !ZM_T, and because ZM_T may be later modified for forcing or dams.
      !Also when running RAPID in optimization mode, it is necessary to recreate
      !ZM_TC1 from scratch every time the parameters C1is are updated
 
@@ -242,7 +242,7 @@ do JS_riv_tot=1,IS_riv_tot
      ZS_val=-999
      call MatGetValues(ZM_hsh_bas,                                             &
                        IS_one,rank,                                            &
-                       IS_one,IV_riv_tot_id(JS_riv_tot)-1,                     & 
+                       IS_one,IV_riv_tot_id(JS_riv_tot)-1,                     &
                        ZS_val,ierr)
      CHKERRQ(ierr)
      JS_riv_bas2=int(ZS_val)
@@ -257,7 +257,7 @@ do JS_riv_tot=1,IS_riv_tot
 ZS_val=-999
 call MatGetValues(ZM_hsh_bas,                                                  &
                   IS_one,rank,                                                 &
-                  IS_one,IV_down(JS_riv_tot)-1,                                & 
+                  IS_one,IV_down(JS_riv_tot)-1,                                &
                   ZS_val,ierr)
 CHKERRQ(ierr)
 JS_riv_bas=int(ZS_val)
@@ -280,7 +280,7 @@ do JS_up=1,IV_nbup(JS_riv_tot)
 ZS_val=-999
 call MatGetValues(ZM_hsh_bas,                                                  &
                   IS_one,rank,                                                 &
-                  IS_one,IM_up(JS_riv_tot,JS_up)-1,                            & 
+                  IS_one,IM_up(JS_riv_tot,JS_up)-1,                            &
                   ZS_val,ierr)
 CHKERRQ(ierr)
 JS_riv_bas=int(ZS_val)

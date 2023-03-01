@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program ldasout_timeseries
@@ -43,7 +43,7 @@ program ldasout_timeseries
   call init_ncargks("test.cgm")
 
   loopcount = 0
-  do 
+  do
      call read_plotinfo_namelist(namelist_fortran_unit, ierr)
      if (ierr /= 0) exit
      loopcount = loopcount + 1
@@ -214,7 +214,7 @@ subroutine read_fileinfo_namelist(namelist_fortran_unit, ldasout_flnm_template, 
 
   open(namelist_fortran_unit, file="namelist.pltts", status='old', form='formatted', action='read')
 
-  read(namelist_fortran_unit, file_info) 
+  read(namelist_fortran_unit, file_info)
 
   pltts_parameter%startdate = plot_startdate
   pltts_parameter%enddate = plot_enddate
@@ -258,13 +258,13 @@ subroutine read_plotinfo_namelist(namelist_fortran_unit, ierr)
      open(namelist_fortran_unit, file="namelist.pltts", status='old', form='formatted', action='read')
   endif
 
-  read(namelist_fortran_unit, plot_info, iostat=ierr) 
+  read(namelist_fortran_unit, plot_info, iostat=ierr)
   if (ierr/=0) then
      print*, 'Read ierr = ', ierr
      close(namelist_fortran_unit)
      return
   endif
-  
+
   if (ts_lat > -1.E25) then
      pltts_parameter%latitude = ts_lat
   endif

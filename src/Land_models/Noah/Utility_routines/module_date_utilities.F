@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module Module_Date_utilities
@@ -459,7 +459,7 @@ contains
 
     implicit none
 
-    !  From 2 input mdates ('YYYY-MM-DD HH:MM:SS.ffff'), 
+    !  From 2 input mdates ('YYYY-MM-DD HH:MM:SS.ffff'),
     !  compute the time difference.
 
     !  on entry     -  newdate  -  the new hdate.
@@ -687,7 +687,7 @@ contains
     opass = .true.
 
     !  Check that the month of NDATE makes sense.
-    
+
     if ((monew.gt.12).or.(monew.lt.1)) then
        write(*,*) 'GETH_IDTS:  Month of NDATE = ', monew
        npass = .false.
@@ -853,7 +853,7 @@ contains
     integer, intent(in) :: year ! Four-digit year
 
     nfeb = 28 ! By default, February has 28 days ...
-    if (mod(year,4).eq.0) then  
+    if (mod(year,4).eq.0) then
        nfeb = 29  ! But every four years, it has 29 days ...
        if (mod(year,100).eq.0) then
           nfeb = 28  ! Except every 100 years, when it has 28 days ...

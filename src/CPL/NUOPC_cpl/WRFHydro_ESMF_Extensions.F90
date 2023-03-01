@@ -366,7 +366,7 @@ contains
     type(ESMF_FileStatus_Flag), intent(in),  optional :: status
     integer,                    intent(in),  optional :: timeslice
     type(ESMF_IOFmt_Flag),      intent(in),  optional :: iofmt
-    logical,                    intent(in),  optional :: relaxedflag 
+    logical,                    intent(in),  optional :: relaxedflag
     logical,                    intent(in),  optional :: nclScript
     type(MapDesc),              intent(in),  optional :: map
     integer,                    intent(out), optional :: rc
@@ -415,7 +415,7 @@ contains
 !     If {\tt .true.}, then no error is returned even if the call cannot write
 !     the file due to library limitations. Default is {\tt .false.}.
 !   \item[{[nclScript]}]
-!     If {\tt .true.} then NUOPC will write an NCL script that can be used to 
+!     If {\tt .true.} then NUOPC will write an NCL script that can be used to
 !     generate grid graphics. Default is {\tt .false.}.
 !   \item[{[map]}]
 !     Derived type including the map name and boundary coordinates.
@@ -604,7 +604,7 @@ contains
   title,nclFile,uniformRect,writeCorners,rc)
 ! ! ARGUMENTS
     character(len=*),intent(in)          :: gridFile
-    character(len=*),intent(in)          :: mapName         
+    character(len=*),intent(in)          :: mapName
     real,intent(in)                      :: minCoords(2)
     real,intent(in)                      :: maxCoords(2)
     character(len=*),intent(in),optional :: title
@@ -1220,8 +1220,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Check NetCDF file for varname
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1283,8 +1283,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF variable into ESMF field
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1320,8 +1320,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF var into ESMF array
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1382,7 +1382,7 @@ contains
         msg="Cannot read NetCDF because rank is not supported", &
         CONTEXT, rcToReturn=rc)
       return
-    endif 
+    endif
 
   end subroutine
 #undef METHOD
@@ -1403,8 +1403,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF variable into I4 array
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1511,8 +1511,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF variable into I8 array
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1619,8 +1619,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF variable into R4 array
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1727,8 +1727,8 @@ contains
     integer, intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Read NetCDF variable into R8 array
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1834,8 +1834,8 @@ contains
     integer, intent(out),optional        :: rc
 ! !DESCRIPTION:
 !   Write ESMF state information to PET Logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1877,8 +1877,8 @@ contains
     integer,intent(out),optional :: rc
 ! !DESCRIPTION:
 !   Write ESMF state information to PET Logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -1913,8 +1913,8 @@ contains
 
     call ESMF_StateGet(state, nestedFlag=nestedFlag, &
       itemCount=itemCount, name=stateName, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, PASSTHRU)) return  ! bail out  
-   
+    if (ESMF_LogFoundError(rcToCheck=rc, PASSTHRU)) return  ! bail out
+
     if (itemCount > 0 ) then
 
       allocate(itemNameList(itemCount),itemTypeList(itemCount),stat=stat)
@@ -1981,8 +1981,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write ESMF state connection to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2058,8 +2058,8 @@ contains
     integer, intent(out), optional         :: rc
 ! !DESCRIPTION:
 !   Write ESMF grid information to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2155,7 +2155,7 @@ contains
     do tileIndex=1,tileCount
     do dimIndex=1,dimCount
       write (logMsg,"(A,A,A,4(I0,A))") trim(llabel)//": ", &
-        trim(gridName), &       
+        trim(gridName), &
         " (tile,dim,minIndexPTile,maxIndexPTile)=(", &
         tileIndex,",",dimIndex,",", &
         minIndexPTile(dimIndex,tileIndex),",", &
@@ -2186,8 +2186,8 @@ contains
     integer,intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Write ESMF field information to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2227,8 +2227,8 @@ contains
     integer,intent(out),optional         :: rc
 ! !DESCRIPTION:
 !   Write ESMF field information to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2334,8 +2334,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write ESMF field local vals to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2355,7 +2355,7 @@ contains
     endif
 
     call ESMF_FieldGet(field,array=array,name=fieldName,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, PASSTHRU)) return  ! bail out    
+    if (ESMF_LogFoundError(rcToCheck=rc, PASSTHRU)) return  ! bail out
 
     call WRFHYDRO_ESMF_LogArrayLclVal(array,fieldName=fieldName,label=llabel,rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, PASSTHRU)) return  ! bail out
@@ -2378,8 +2378,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write ESMF array local vals to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2528,8 +2528,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I41D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2579,8 +2579,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I42D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2630,8 +2630,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I43D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2681,8 +2681,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I81D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2732,8 +2732,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I82D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2783,8 +2783,8 @@ contains
     integer, intent(out), optional             :: rc
 ! !DESCRIPTION:
 !   Write I83D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2834,8 +2834,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R41D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2885,8 +2885,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R41D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2936,8 +2936,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R43D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -2987,8 +2987,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R81D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -3038,8 +3038,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R81D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -3089,8 +3089,8 @@ contains
     integer, intent(out), optional          :: rc
 ! !DESCRIPTION:
 !   Write R83D array local vals to log
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !
@@ -3139,8 +3139,8 @@ contains
     integer, intent(out),optional        :: rc
 ! !DESCRIPTION:
 !   Write ESMF CplList to PET logs
-!   
-!   The arguments are:                     
+!
+!   The arguments are:
 !   \begin{description}
 !   \end{description}
 !

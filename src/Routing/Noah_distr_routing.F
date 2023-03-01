@@ -1337,4 +1337,3 @@ subroutine time_seconds(i3)
         time_array(7) + 0.001 * time_array(8)
     return
 end subroutine time_seconds
-

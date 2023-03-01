@@ -1,7 +1,7 @@
 module io_manager_base
   use netcdf_layer_base
   implicit none
-  
+
   type :: IOManager_
      logical :: parallel = .false.
      class(NetCDF_layer_),allocatable :: netcdf_layer
@@ -11,7 +11,7 @@ module io_manager_base
   interface IOManager_
      module procedure IOManager_init
   end interface IOManager_
-    
+
 contains
 
   type(IOManager_) function IOManager_init(parallel)
@@ -32,7 +32,7 @@ contains
        allocate(NetCDF_parallel_ :: IOManager_init%netcdf_layer)
        IOManager_init%netcdf_layer%open_file => nf90_open
     end if
-    
+
   end function IOManager_init
-  
+
 end module io_manager_base

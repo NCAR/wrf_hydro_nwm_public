@@ -4,9 +4,9 @@
 module rapid_var
 
 !Purpose:
-!Module where all the variables are defined. 
-!Author: 
-!Cedric H. David, 2008-2015. 
+!Module where all the variables are defined.
+!Author:
+!Cedric H. David, 2008-2015.
 
 
 implicit none
@@ -15,24 +15,24 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and Fortran90-specific vectors 
-#include "finclude/petscmat.h"    
+!vectors, and Fortran90-specific vectors
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-!#include "finclude/petsclog.h" 
+!#include "finclude/petsclog.h"
 !Profiling log
 
 #ifndef NO_TAO
-#include "finclude/taosolver.h" 
+#include "finclude/taosolver.h"
 !TAO solver
 #endif
 
@@ -43,7 +43,7 @@ implicit none
 logical :: BS_opt_Qinit
 !.false. --> no read initial flow    .true. --> read initial flow
 logical :: BS_opt_Qfinal
-!.false. --> no write final flow     .true. --> write final flow 
+!.false. --> no write final flow     .true. --> write final flow
 logical :: BS_opt_hum
 !.false. --> no human-induced flows  .true. --> human-induced flows
 logical :: BS_opt_for
@@ -80,13 +80,13 @@ character(len=120) :: hum_tot_id_file
 character(len=120) :: hum_use_id_file
 !unit 15 - file with all the IDs of the reaches used
 character(len=120) :: for_tot_id_file
-!unit 16 - file with all the IDs where flows can be used as forcing to their 
-!corresponding downstream reach  
+!unit 16 - file with all the IDs where flows can be used as forcing to their
+!corresponding downstream reach
 character(len=120) :: for_use_id_file
-!unit 17 - file with all the IDs of the reaches used 
+!unit 17 - file with all the IDs of the reaches used
 character(len=120) :: dam_tot_id_file
-!unit 18 - file with all the IDs of the reaches where the dam model runs and 
-!flows to their corresponding downstream reach  
+!unit 18 - file with all the IDs of the reaches where the dam model runs and
+!flows to their corresponding downstream reach
 character(len=120) :: dam_use_id_file
 !unit 19 - file with all the IDs of the reaches used
 
@@ -94,7 +94,7 @@ character(len=120) :: k_file
 !unit 20 - file with values for k (possibly from previous param. estim.)
 character(len=120) :: x_file
 !unit 21 - file with values for x (possibly from previous param. estim.)
-character(len=120) :: kfac_file  
+character(len=120) :: kfac_file
 !unit 22 - file with kfac for all reaches of the domain
 character(len=120) :: xfac_file
 !unit 23 - file with xfac for all reaches of the domain
@@ -102,7 +102,7 @@ character(len=120) :: xfac_file
 character(len=120) :: Qinit_file
 !unit 30 - file where initial flowrates can be stored to run the model with them
 character(len=120) :: Qfinal_file
-!unit 31 - file where final flowrates can be stored at the end of model run 
+!unit 31 - file where final flowrates can be stored at the end of model run
 character(len=120) :: Vlat_file
 
 character(len=120) :: Qobs_file
@@ -113,7 +113,7 @@ character(len=120) :: Qfor_file
 character(len=120) :: Qobsbarrec_file
 !unit 35 - file where the reciprocal (1/xi) of the average obs are stored.
 character(len=120) :: Qhum_file
-!unit 36 - file where human-induced flowrates are stored.  These flows are added 
+!unit 36 - file where human-induced flowrates are stored.  These flows are added
 !upstream.
 
 character(len=120) :: V_file
@@ -122,11 +122,11 @@ character(len=120) :: babsmax_file
 !unit 42 - file where the maximum of the absolute values of the right-hand-side
 !are stored
 character(len=120) :: QoutRabsmin_file
-!unit 43 - file where the minimum of the absolute values of the instantaneous 
-!flows are stored 
+!unit 43 - file where the minimum of the absolute values of the instantaneous
+!flows are stored
 character(len=120) :: QoutRabsmax_file
-!unit 44 - file where the maximum of the absolute values of the instantaneous 
-!flows are stored 
+!unit 44 - file where the maximum of the absolute values of the instantaneous
+!flows are stored
 character(len=120) :: Qout_file
 
 
@@ -140,7 +140,7 @@ PetscScalar :: ZS_dtM
 PetscInt :: IS_M
 !Number of time steps within the main precedure
 PetscInt :: JS_M
-!Index of main procedure 
+!Index of main procedure
 
 PetscScalar :: ZS_TauO
 !Duration of optimization procedure, in seconds
@@ -149,28 +149,28 @@ PetscScalar :: ZS_dtO
 PetscInt :: IS_O
 !Number of time steps within the optimization precedure
 PetscInt :: JS_O
-!Index of optimization procedure 
+!Index of optimization procedure
 
 PetscScalar :: ZS_TauR
 !Duration of river routing procedure, in seconds
-PetscScalar :: ZS_dtR  
-!Time step of river routing procedure, in seconds  
+PetscScalar :: ZS_dtR
+!Time step of river routing procedure, in seconds
 PetscInt :: IS_R
 !Number of time steps within the river routing procedure
 PetscInt :: JS_R
 !Index of river routing procedure
 
 PetscScalar :: ZS_dtF
-!Time step of forcing data, in seconds  
+!Time step of forcing data, in seconds
 PetscScalar :: ZS_dtH
-!Time step of human-induced data, in seconds  
+!Time step of human-induced data, in seconds
 
 PetscInt :: IS_RpO, JS_RpO
 !Number routing procedures needed per optimization time step, and index
 PetscInt :: IS_RpM, JS_RpM
-!Number routing procedures needed per main time step, and index 
+!Number routing procedures needed per main time step, and index
 PetscInt :: IS_RpF
-!Number routing procedures needed per forcing time step 
+!Number routing procedures needed per forcing time step
 PetscInt :: IS_RpH
 !Number routing procedures needed per human-induced time step
 
@@ -188,7 +188,7 @@ PetscInt, dimension(:), allocatable :: IV_riv_tot_id
 PetscInt, dimension(:), allocatable :: IV_down
 !vector of the downstream river reach of each river reach
 PetscInt, dimension(:), allocatable :: IV_nbup
-!vector of the number of direct upstream river reach of each river reach 
+!vector of the number of direct upstream river reach of each river reach
 PetscInt :: IS_max_up
 !maximum number of upstream river reaches for each river reach
 PetscInt, dimension(:,:), allocatable :: IM_up
@@ -199,22 +199,22 @@ PetscInt :: IS_row,IS_col
 !index of rows and columns used to fill up the network matrix
 PetscInt,dimension (:,:), allocatable :: IM_index_up
 !matrix with the index of the upstream river reaches of each river reach
-!index goes from 1 to IS_riv_bas 
+!index goes from 1 to IS_riv_bas
 PetscInt, dimension(:),allocatable :: IV_riv_bas_id
 !unique IDs in riv_bas_id_file, of length IS_riv_bas
 PetscInt, dimension(:), allocatable :: IV_riv_index
 !indexes (Fortran, 1-based) of the reaches in the _riv within the whole network
 !size IS_riv_bas
 PetscInt,dimension(:), allocatable :: IV_riv_loc1
-!vector giving the zero-base index corresponding to the river reaches within 
+!vector giving the zero-base index corresponding to the river reaches within
 !the _riv studied only, to be used in VecSetValues. size IS_riv_bas
 Mat :: ZM_hsh_tot
-!flat matrix with size IS_riv_id_max*ncore that serves a hashtable-like purpose 
-!in which the index over the domain (JS_riv_tot) is stored at the location of 
+!flat matrix with size IS_riv_id_max*ncore that serves a hashtable-like purpose
+!in which the index over the domain (JS_riv_tot) is stored at the location of
 !each reach ID. Each row contains the exact same data.
 Mat :: ZM_hsh_bas
-!flat matrix with size IS_riv_id_max*ncore that serves a hashtable-like purpose 
-!in which the index over the basin (JS_riv_bas) is stored at the location of 
+!flat matrix with size IS_riv_id_max*ncore that serves a hashtable-like purpose
+!in which the index over the basin (JS_riv_bas) is stored at the location of
 !each reach ID. Each row contains the exact same data.
 PetscInt :: IS_riv_id_max=1000000000
 !Maximum value allowed for the unique integer IDs corresponding to each reach
@@ -224,22 +224,22 @@ PetscInt :: IS_riv_id_max=1000000000
 !*******************************************************************************
 PetscInt :: IS_obs_tot, JS_obs_tot
 !total number of reaches that have observations (gaged reaches), corresponds to
-!the number of lines in obs_tot_id_file 
+!the number of lines in obs_tot_id_file
 PetscInt :: IS_obs_use, JS_obs_use
 !Number of gages available in obs_use_id_file
 PetscInt :: IS_obs_bas, JS_obs_bas
-!Number of gages within _riv studied.  Will be calculated based on 
+!Number of gages within _riv studied.  Will be calculated based on
 !obs_tot_id_file, obs_use_id_file and riv_bas_id_file
 PetscInt, dimension(:), allocatable :: IV_obs_tot_id
 !vector where are stored the river ID of each gage available
 PetscInt, dimension(:), allocatable :: IV_obs_use_id
 !vector where are stored the river ID of each gage used in current run
 PetscInt, allocatable, dimension(:) :: IV_obs_index
-!vector where the Fortran 1-based indexes of the gages within the Qobs_file. 
+!vector where the Fortran 1-based indexes of the gages within the Qobs_file.
 !Will be allocated size IS_obs_bas
 PetscInt, allocatable, dimension(:) :: IV_obs_loc1
-!vector where the C (0-based) vector indexes of where gages are. This is 
-!within the _riv only, not all domain. Will be used in VecSet.  Will be 
+!vector where the C (0-based) vector indexes of where gages are. This is
+!within the _riv only, not all domain. Will be used in VecSet.  Will be
 !allocated size IS_obs_bas
 
 
@@ -247,7 +247,7 @@ PetscInt, allocatable, dimension(:) :: IV_obs_loc1
 !Declaration of variables - Human-induced flow variables
 !*******************************************************************************
 PetscInt :: IS_hum_tot, JS_hum_tot
-!total number of reaches where human-induced flow data are available. 
+!total number of reaches where human-induced flow data are available.
 PetscInt :: IS_hum_use, JS_hum_use
 !total number of reaches where human-induced will be used if in sub_riv
 PetscInt :: IS_hum_bas, JS_hum_bas
@@ -260,11 +260,11 @@ PetscInt, dimension(:), allocatable :: IV_hum_use_id
 PetscInt, dimension(:), allocatable :: IV_hum_bas_id
 !IDs of the reaches where human-indeced flow data to be used is in sub_riv
 PetscInt, allocatable, dimension(:) :: IV_hum_index
-!vector where the Fortran 1-based indexes of the human-induced flow data are 
-!stored. This is of size IS_hum_bas and its elements belong to [1,IS_hum_tot]. 
+!vector where the Fortran 1-based indexes of the human-induced flow data are
+!stored. This is of size IS_hum_bas and its elements belong to [1,IS_hum_tot].
 PetscInt, allocatable, dimension(:) :: IV_hum_loc1
-!vector where the C (0-based) vector indexes of where the above human-induced 
-!flow data are going to be applied. This is of size IS_hum_bas and its elements 
+!vector where the C (0-based) vector indexes of where the above human-induced
+!flow data are going to be applied. This is of size IS_hum_bas and its elements
 !belong to [0,IS_riv_bas-1]. Applied on the river ID itself.
 
 
@@ -272,7 +272,7 @@ PetscInt, allocatable, dimension(:) :: IV_hum_loc1
 !Declaration of variables - Forcing flow variables
 !*******************************************************************************
 PetscInt :: IS_for_tot, JS_for_tot
-!total number of reaches where forcing flow data are available. 
+!total number of reaches where forcing flow data are available.
 PetscInt :: IS_for_use, JS_for_use
 !total number of reaches where forcing will be used if in sub_riv
 PetscInt :: IS_for_bas, JS_for_bas
@@ -285,11 +285,11 @@ PetscInt, dimension(:), allocatable :: IV_for_use_id
 PetscInt, dimension(:), allocatable :: IV_for_bas_id
 !IDs of the reaches where forcing flow data to be used is in sub_riv
 PetscInt, allocatable, dimension(:) :: IV_for_index
-!vector where the Fortran 1-based indexes of the forcing flow data are 
-!available. This is of size IS_for_bas and its elements belong to [1,IS_for_tot] 
+!vector where the Fortran 1-based indexes of the forcing flow data are
+!available. This is of size IS_for_bas and its elements belong to [1,IS_for_tot]
 PetscInt, allocatable, dimension(:) :: IV_for_loc2
-!vector where the C (0-based) vector indexes of where the above forcing 
-!flow data are going to be applied. This is of size IS_for_bas and its elements 
+!vector where the C (0-based) vector indexes of where the above forcing
+!flow data are going to be applied. This is of size IS_for_bas and its elements
 !belong to [0,IS_riv_bas-1]. Applied on the river ID downstream.
 
 
@@ -297,12 +297,12 @@ PetscInt, allocatable, dimension(:) :: IV_for_loc2
 !Declaration of variables - dam model flow variables
 !*******************************************************************************
 PetscInt :: IS_dam_tot, JS_dam_tot
-!total number of reaches where dam model flow data are available. 
+!total number of reaches where dam model flow data are available.
 PetscInt :: IS_dam_use, JS_dam_use
 !total number of reaches where dam model will be used if in sub_riv
 PetscInt :: IS_dam_bas, JS_dam_bas
 !number of reaches forced by observations, within _riv. Calculated on the fly
-!from dam_tot_id_file, dam_use_id_file and riv_bas_id_file. 
+!from dam_tot_id_file, dam_use_id_file and riv_bas_id_file.
 PetscInt, dimension(:), allocatable :: IV_dam_tot_id
 !IDs of the reaches where dam model flow data are available
 PetscInt, dimension(:), allocatable :: IV_dam_use_id
@@ -310,22 +310,22 @@ PetscInt, dimension(:), allocatable :: IV_dam_use_id
 PetscInt, dimension(:), allocatable :: IV_dam_bas_id
 !IDs of the reaches where dam model flow data to be used is in sub_riv
 PetscInt, allocatable, dimension(:) :: IV_dam_index
-!vector where the Fortran 1-based indexes of the dam model flow data are 
-!available. This is of size IS_dam_bas and its elements belong to [1,IS_dam_tot] 
+!vector where the Fortran 1-based indexes of the dam model flow data are
+!available. This is of size IS_dam_bas and its elements belong to [1,IS_dam_tot]
 PetscInt, allocatable, dimension(:) :: IV_dam_loc2
 !vector where the C (0-based) vector indexes of where the above dam model
-!flow data are going to be applied. This is of size IS_dam_bas and its elements 
+!flow data are going to be applied. This is of size IS_dam_bas and its elements
 !belong to [0,IS_riv_bas-1]. Applied on the river ID downstream.
 PetscInt, allocatable, dimension(:) :: IV_dam_pos
-!vector where the Fortran 1-based vector indexes of where flows will be given to 
-!the above dam model. This is of size IS_dam_tot and its elements belong to 
-![1,IS_riv_bas] except when a dam ID is outside of basin studied where it is 0. 
+!vector where the Fortran 1-based vector indexes of where flows will be given to
+!the above dam model. This is of size IS_dam_tot and its elements belong to
+![1,IS_riv_bas] except when a dam ID is outside of basin studied where it is 0.
 !Applied on the river ID itself.
 
 PetscScalar, allocatable, dimension(:) :: ZV_Qin_dam,ZV_Qin_dam_prev
 PetscScalar, allocatable, dimension(:) :: ZV_Qout_dam,ZV_Qout_dam_prev
 PetscScalar, allocatable, dimension(:) :: ZV_Qin_dam0,ZV_Qout_dam0
-!Fortran vectors where the inflows and outflows for the dam module are saved. 
+!Fortran vectors where the inflows and outflows for the dam module are saved.
 !These will be allocated to size IS_dam_tot
 
 
@@ -335,7 +335,7 @@ PetscScalar, allocatable, dimension(:) :: ZV_Qin_dam0,ZV_Qout_dam0
 Mat :: ZM_Net
 !Network matrix
 Mat :: ZM_A
-!Matrix used to solve linear system 
+!Matrix used to solve linear system
 Mat :: ZM_T
 !Transboundary matrix
 Mat :: ZM_TC1
@@ -346,9 +346,9 @@ Logical :: BS_logical
 Vec :: ZV_k,ZV_x
 !Muskingum expression constants vectors, k in seconds, x has no dimension
 Vec :: ZV_p, ZV_pnorm,ZV_pfac
-!vector of the problem parameters, p=(k,x).  normalized version and 
+!vector of the problem parameters, p=(k,x).  normalized version and
 !corresponding factors p=pnorm*pfac
-Vec :: ZV_C1,ZV_C2,ZV_C3,ZV_Cdenom 
+Vec :: ZV_C1,ZV_C2,ZV_C3,ZV_Cdenom
 !Muskingum method constants (last is the common denominator, for calculations)
 Vec :: ZV_b,ZV_babsmax,ZV_bhat
 !Used for linear system A*Qout=b
@@ -356,7 +356,7 @@ Vec :: ZV_b,ZV_babsmax,ZV_bhat
 !Input variables (contribution)
 Vec :: ZV_Qext,ZV_Qfor,ZV_Qlat,ZV_Qhum,ZV_Qdam
 !flowrates Qext is the sum of forced and lateral
-Vec :: ZV_Vext,ZV_Vfor,ZV_Vlat 
+Vec :: ZV_Vext,ZV_Vfor,ZV_Vlat
 !volumes (same as above)
 
 !Main only variables
@@ -411,7 +411,7 @@ PetscScalar :: ZS_k,ZS_x
 
 
 !*******************************************************************************
-!Declaration of variables - routing parameters and initial values 
+!Declaration of variables - routing parameters and initial values
 !*******************************************************************************
 PetscScalar :: ZS_V0=10000,ZS_Qout0=0
 !values to be used in the intitial state of V and Qout for river routing
@@ -428,9 +428,9 @@ KSP :: ksp
 PC :: pc
 !preconditioner object
 PetscMPIInt :: rank
-!integer where the number of each processor is stored, 0 will be main processor 
+!integer where the number of each processor is stored, 0 will be main processor
 PetscMPIInt :: ncore
-!integer where the number of cores used is stored 
+!integer where the number of cores used is stored
 VecScatter :: vecscat
 !Allows for scattering and gathering vectors from in parallel environement
 PetscLogEvent :: stage
@@ -439,7 +439,7 @@ PetscLogEvent :: stage
 PetscInt :: IS_ksp_iter, IS_ksp_iter_max
 !integer where the number of iterations in KSP is solved
 PetscInt :: IS_one=1
-!integer of value 1.  to be used in MatSetValues and VecSet. Directly using 
+!integer of value 1.  to be used in MatSetValues and VecSet. Directly using
 !the value 1 in the functions crashes PETSc
 PetscScalar :: ZS_one=1
 !Scalars of values 1 and 0, same remark as above
@@ -448,7 +448,7 @@ PetscScalar :: ZS_val
 Vec :: ZV_one
 !vector with only ones, useful for creation of matrices here
 Vec :: ZV_SeqZero
-!Sequential vector of size IS_riv_bas, allows for gathering data on zeroth 
+!Sequential vector of size IS_riv_bas, allows for gathering data on zeroth
 !precessor before writing in file
 
 PetscScalar,dimension(:), allocatable :: ZV_read_riv_tot
@@ -472,7 +472,7 @@ character(len=10) :: temp_char,temp_char2
 !then use PetscPrintf
 
 PetscInt, dimension(:), allocatable :: IV_nz, IV_dnz, IV_onz
-!number of nonzero elements per row for network matrix.  nz for sequential, dnz 
+!number of nonzero elements per row for network matrix.  nz for sequential, dnz
 !and onz for distributed matrix (diagonal and off-diagonal elements)
 PetscInt :: IS_ownfirst, IS_ownlast
 !Ownership of each processor
@@ -487,7 +487,7 @@ TaoSolver :: tao
 TaoSolverTerminationReason :: reason
 !TAO terminate reason object
 Vec :: ZV_1stIndex, ZV_2ndIndex
-!ZV_1stIndex=[1;0], ZV_2ndIndex=[0,1].  Used with VecDot to extract first and 
+!ZV_1stIndex=[1;0], ZV_2ndIndex=[0,1].  Used with VecDot to extract first and
 !second indexes of the vector of parameter
 #endif
 
@@ -530,7 +530,7 @@ namelist /NL_namelist/                                                         &
                        ZS_TauM,ZS_dtM,ZS_TauO,ZS_dtO,ZS_TauR,ZS_dtR,           &
                        ZS_dtF,ZS_dtH,                                          &
                        ZS_phifac,IS_strt_opt
- 
+
 character(len=120) :: namelist_file
 !unit 88 - Namelist
 

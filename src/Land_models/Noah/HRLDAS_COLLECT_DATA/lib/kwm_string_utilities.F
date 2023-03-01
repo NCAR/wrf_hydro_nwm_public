@@ -48,7 +48,7 @@ contains
           return_string(j:j) = string(i:i)
        endif
     enddo
-    
+
   end function unblank
 
 !KWM  character function upcase(h)
@@ -67,7 +67,7 @@ contains
     implicit none
     character(len=*), intent(in) :: h
     integer :: i
-    
+
     return_string = " "
 
     do i = 1, len_trim(h)
