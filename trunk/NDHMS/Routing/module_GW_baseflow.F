@@ -272,8 +272,8 @@ contains
                 if (abs(z_gwsubbas_passive_diff(bas)) <= 1.0E-10) then
                   call calculate_wt_ratio(z_gwsubbas_active_tr(bas)+z_gwsubbas_active_diff(bas)*PROPOR_qin,z_gwsubbas_active_new(bas), PROPOR_active)
                   net_perc_in_tr(bas)  = net_perc(bas)*cm_gwsubbas_tmp(bas)*PROPOR_active
-                  call calculate_wt_ratio(z_gwsubbas_passive_tr(bas) + net_perc_in_tr(bas)/basns_area(bas),z_gwsubbas_passive_new(bas)+net_perc(bas)*cm_gwsubbas_tmp(bas), PROPOR_passive)
-                  net_perc_out_tr(bas) = net_perc(bas)*cm_gwsubbas_tmp(bas)*PROPOR_passive
+                  call calculate_wt_ratio(z_gwsubbas_passive_tr(bas) + net_perc_in_tr(bas)/basns_area(bas),z_gwsubbas_passive_new(bas)+net_perc(bas)*cm_gwsubbas_tmp(bas)/basns_area(bas), PROPOR_passive)
+                  net_perc_out_tr(bas) = net_perc(bas)*cm_gwsubbas_tmp(bas)*PROPOR_passive*cm_gwsubbas_tmp(bas)
                   z_gwsubbas_passive_tr(bas) = z_gwsubbas_passive_tr(bas) + (net_perc_in_tr(bas)-net_perc_out_tr(bas))/basns_area(bas)
                   z_gwsubbas_active_tr(bas)  = z_gwsubbas_active_tr(bas) + z_gwsubbas_active_diff(bas)*PROPOR_qin - (net_perc_in_tr(bas)-net_perc_out_tr(bas))/basns_area(bas)
                   call calculate_wt_ratio(z_gwsubbas_passive_tr(bas), z_gwsubbas_passive_new(bas), PROPOR_passive)

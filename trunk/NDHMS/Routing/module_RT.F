@@ -1205,7 +1205,7 @@ if(nlst_rt(did)%UDMP_OPT .eq. 1) then
                 rt_domain(did)%z_gwsubbas_active     = 0.0
                 rt_domain(did)%z_gwsubbas_passive_tr = 0.0
                 rt_domain(did)%z_gwsubbas_active_tr  = 0.0
-                rt_domain(did)%cm_gwsubbas           = 0.1
+                rt_domain(did)%cm_gwsubbas           = 0.05    !was 0.1
      !------end new vars for partila mixing in GW buckets------
 
       
