@@ -135,7 +135,7 @@ contains
     else
        n = size(keys)
     end if
-    
+
     this%n_buckets = n
     allocate(this%buckets(n))
 
@@ -224,7 +224,7 @@ contains
     if (.not. allocated(this%buckets)) return
 
     do i = 1, size(this%buckets)
-       if (associated(this%buckets(i)%next)) then 
+       if (associated(this%buckets(i)%next)) then
           call this%buckets(i)%next%node_clear()
           deallocate(this%buckets(i)%next)
           if(allocated(this%buckets(i)%kv)) then

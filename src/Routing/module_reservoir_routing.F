@@ -65,7 +65,7 @@ subroutine read_reservoir_obs(domainId)
    diagFlag = 0
 #endif
 
-   ! Sync up processes. 
+   ! Sync up processes.
    if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
       call mpp_land_sync()
@@ -75,7 +75,7 @@ subroutine read_reservoir_obs(domainId)
    ! Check to ensure the namelist option for reading in the reservoir discharge data
    ! has been set to 1. If not, return back to the main calling program.
    if(nlst(domainId)%reservoir_data_ingest .eq. 0) then
-       ! No reservoir realtime data requested. 
+       ! No reservoir realtime data requested.
        return
    endif
 

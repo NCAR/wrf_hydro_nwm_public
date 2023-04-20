@@ -3,20 +3,20 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_CLM_HYDRO
@@ -29,7 +29,7 @@ module module_CLM_HYDRO
     use subgridAveMod, only: c2g_1d, c2g_2d
 
 
-! NDHMS  module   
+! NDHMS  module
      use module_mpp_land, only: global_nx, global_ny, decompose_data_real, &
                  write_io_real, my_id
     use module_hydro_stop, only: HYDRO_stop
@@ -40,7 +40,7 @@ module module_CLM_HYDRO
     integer :: numg, numl, numc, nump
     INTEGER, PARAMETER :: double=8
     real(kind=double), pointer :: r2p(:,:) , r1p(:)
-     
+
     integer ::  begl, endl, begc, endc, begp, endp
     real(kind=double), allocatable, dimension(:) :: clm_g1d
     real(kind=double), allocatable, dimension(:,:) :: clm_g2d
@@ -105,7 +105,7 @@ CONTAINS
         ix = rt_domain(did)%ix
         jx = rt_domain(did)%jx
 
-        ! get the initial data from CLM 
+        ! get the initial data from CLM
             call get_proc_global(numg, numl, numc, nump)
 
             call get_proc_bounds(begg, endg, begl, endl, begc, endc, begp, endp)
@@ -136,7 +136,7 @@ CONTAINS
 
 #endif
 
-            r1p => clm3%g%l%c%cwf%qflx_drain  
+            r1p => clm3%g%l%c%cwf%qflx_drain
             call c2g_1d(begc, endc, begl, endl, begg, endg, r1p(begc:endc), clm_g1d, &
                 'urbanf', 'unity')
             call clm2ND2d(clm_g1d,nn,RT_DOMAIN(did)%SOLDRAIN,ix,jx)
@@ -144,8 +144,8 @@ CONTAINS
 
 #ifdef HYDRO_D
             write(6,*) "finish qflx_drain "
-#endif 
-            r2p =>clm3%g%l%c%ces%t_soisno 
+#endif
+            r2p =>clm3%g%l%c%ces%t_soisno
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
@@ -156,7 +156,7 @@ CONTAINS
             write(6,*) "finish t_soisno   "
 #endif
 
-            r2p => clm3%g%l%c%cws%h2osoi_vol  
+            r2p => clm3%g%l%c%cws%h2osoi_vol
                 call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d,nn,nlevgrnd,zsoi(1:nlevgrnd), &
@@ -167,17 +167,17 @@ CONTAINS
 
 #endif
 
-            r2p => clm3%g%l%c%cws%h2osoi_liq  
+            r2p => clm3%g%l%c%cws%h2osoi_liq
             call c2g_2d(begc, endc, begl, endl, begg, endg, nlevgrnd, r2p(begc:endc,1:nlevgrnd), clm_g2d, &
                 'urbanh', 'unity')
             call clm2ND3d (clm_g2d, nn,nlevgrnd,zsoi(1:nlevgrnd), &
                      ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX)
             RT_DOMAIN(did)%SH2OX =  RT_DOMAIN(did)%SH2OX /1000.
- #ifdef HYDRO_D  
+ #ifdef HYDRO_D
             write(6,*) "finish h2osoi_liq "
 
-            write(6,*) "before call HYDRO_exe" 
+            write(6,*) "before call HYDRO_exe"
 
 #endif
 
@@ -185,24 +185,24 @@ CONTAINS
             call HYDRO_exe(did)
 
 #ifdef HYDRO_D
-            write(6,*) "after call HYDRO_exe" 
+            write(6,*) "after call HYDRO_exe"
 
 #endif
 ! add for update the CLM state variable.
 
            clm_lev = 10
 
-            r2p =>clm3%g%l%c%ces%t_soisno 
+            r2p =>clm3%g%l%c%ces%t_soisno
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
                      ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%STC)
             call g2c_2d(begc, endc, begl, endl, begg, endg,clm_lev,r2p(begc:endc,1:clm_lev), clm_g2d, &
                 'urbanh', 'unity')
 
-            
 
 
-            r2p => clm3%g%l%c%cws%h2osoi_vol  
+
+            r2p => clm3%g%l%c%cws%h2osoi_vol
             call Toclm3d (clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
                      ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)), &
                      RT_DOMAIN(did)%SMC)
@@ -211,7 +211,7 @@ CONTAINS
 
 
 
-            r2p => clm3%g%l%c%cws%h2osoi_liq  
+            r2p => clm3%g%l%c%cws%h2osoi_liq
             call Toclm3d(clm_g2d,nn,clm_lev,zsoi(1:clm_lev), &
                      ix,jx, nlst(did)%nsoil,abs(rt_domain(did)%subsurface%properties%zsoil(1:nlst(did)%nsoil)),&
                      RT_DOMAIN(did)%SH2OX*1000)
@@ -230,7 +230,7 @@ CONTAINS
             write(6,*) "end of drive ndhms"
 #endif
 
-     return 
+     return
      end subroutine clm_cpl_HYDRO
 
       subroutine Toclm3d (v1d_out,nn,kk1,z1_in,ix,jx,kk2,z2,v2_in)
@@ -245,8 +245,8 @@ CONTAINS
           REAL ,dimension(kk1):: z1
 
           z1 = z1_in
-         
-! v1 is the out from interp3D 
+
+! v1 is the out from interp3D
              call Interp3D (z2,v2_in,kk2,z1,v1,ix,jx,kk1)
 
 
@@ -259,7 +259,7 @@ CONTAINS
       end subroutine Toclm3d
 
       subroutine Toclm2d(v1,ix,jx,v1d_out,nn)
-         use module_mpp_land, only: my_id,IO_id,mpp_land_bcast_real 
+         use module_mpp_land, only: my_id,IO_id,mpp_land_bcast_real
          implicit none
          integer ix,jx, nn
          real v1(ix,jx)
@@ -288,14 +288,14 @@ CONTAINS
 #endif
          return
       end subroutine Toclm2d
-      
+
       subroutine TO1d(vg2d,v1d,nx,ny)
          implicit none
          integer nx,ny, n, i,j
          real vg2d(nx,ny)
          real v1d(nx*ny)
-             do j = 1,ny 
-             do i = 1,nx 
+             do j = 1,ny
+             do i = 1,nx
                 n = (j-1)*nx + i
                 v1d(n) = vg2d(i,j)
              enddo
@@ -313,11 +313,11 @@ CONTAINS
           real(kind=double), dimension(kk1) :: z1_in
           real, dimension(kk1) :: z1
           real, dimension(kk2) :: z2
-        
- 
+
+
           z1 = z1_in
 
-          do k = 1, kk1 
+          do k = 1, kk1
              call clm2ND2d(v1d_in(:,k),nn,v1(:,:,k),ix,jx)
           end do
              call Interp3D (z1(1:kk1),v1,kk1,z2(1:kk2),vout,ix,jx,kk2)
@@ -328,7 +328,7 @@ CONTAINS
 
       subroutine clm2ND2d (v1d_in,nn,vout,ix,jx)
           use clmtype, only: grlnd
-          use module_mpp_land, only: my_id,IO_id,mpp_land_bcast_real 
+          use module_mpp_land, only: my_id,IO_id,mpp_land_bcast_real
           implicit none
           integer :: ix,jx,nn, n
           real vout(ix,jx)
@@ -348,12 +348,12 @@ CONTAINS
             ! need to stop
           endif
           call gather_1d_real(v1d_in,nn,g1d,gni*gnj)
-!  transfer 1d   to 2d 
+!  transfer 1d   to 2d
 
           if(my_id.eq.IO_id) then
              do j = 1,gnj
              do i = 1,gni
-                n = (j-1)*gni + i  
+                n = (j-1)*gni + i
                 v2d_g(i,j) = g1d(n)
              enddo
              enddo
@@ -362,7 +362,7 @@ CONTAINS
 !         if(my_id .eq. 0) then
 !            call output_nc(v2d_g,gni,gnj, "test", "test.nc")
 !         endif
-           
+
 ! domain decomposition
           call decompose_data_real(v2d_g,vout)
 
@@ -372,7 +372,7 @@ CONTAINS
       subroutine Interp3D (z1,v1,kk1,z,vout,ix,jx,kk)
 !  input: z1,v1,kk1,z,ix,jx,kk
 !  output: vout
-!  interpolate based on soil layer: z1 and z 
+!  interpolate based on soil layer: z1 and z
 !  z :  soil layer of output variable.
 !  z1: array of soil layers of input variable.
          implicit none
@@ -382,7 +382,7 @@ CONTAINS
 
 !        write(6,*) "k, kk1 ", k, kk1
 !        write(6,*) "z1(kk1), z(k) ", z1(kk1), z(k)
-       
+
          do j = 1, jx
             do i = 1, ix
               do k = 1, kk
@@ -401,7 +401,7 @@ CONTAINS
          real:: outV, outZ, w1, w2
 
          if(outZ .le. inZ(1)) then
-             if(inZ(2) .eq. inZ(1)) then 
+             if(inZ(2) .eq. inZ(1)) then
                 write(6,*) "FATAL ERROR: inZ(2)=inZ(1) ", inZ(2),inZ(1)
                !stop 99
                stop("In module_clm_HYDRO.F interpLayer() - inZ(2)=inZ(1)")
@@ -411,21 +411,21 @@ CONTAINS
              outV = inV(1)*w1-inV(2)*w2
              return
          elseif(outZ .ge. inZ(inK)) then
-             if(inZ(inK-1) .eq. inZ(inK)) then 
+             if(inZ(inK-1) .eq. inZ(inK)) then
                 write(6,*) "FATAL ERROR: inZ(inK-1)=inZ(inK) ", inZ(inK-1),inZ(inK)
                 !stop 99
                 stop("FATAL ERROR: In module_clm_HYDRO.F interpLayer() - inZ(inK-1)=inZ(inK)")
              end if
-             w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1)) 
+             w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1))
              w2 = (outZ-inZ(inK))  /(inZ(inK)-inZ(inK-1))
              outV = inV(inK)*w1 -inV(inK-1)* w2
              return
-         else  
+         else
             do k = 2, inK
              if((inZ(k) .ge. outZ).and.(inZ(k-1) .le. outZ) ) then
                 k1  = k-1
                 k2 = k
-             if(inZ(k1) .eq. inZ(k2)) then 
+             if(inZ(k1) .eq. inZ(k2)) then
                 write(6,*) "FATAL ERROR: inZ(k1)=inZ(k2) ", inZ(k1),inZ(k2)
                 !stop 99
                 stop("FATAL ERROR: In module_clm_HYDRO.F interpLayer()- inZ(k1)=inZ(k2)") 
@@ -433,8 +433,8 @@ CONTAINS
                 w1 = (outZ-inZ(k1))/(inZ(k2)-inZ(k1))
                 w2 = (inZ(k2)-outZ)/(inZ(k2)-inZ(k1))
                 outV = inV(k2)*w1 + inV(k1)*w2
-                return 
-             end if 
+                return
+             end if
             end do
          endif
       end subroutine interpLayer
@@ -448,11 +448,11 @@ CONTAINS
       integer cmdate
 
       cpl_land_dt  = 1.0* get_step_size()
-      
-      call get_curr_date(yr, mo, da, sec)     
 
-    
-      hr = sec/3600 
+      call get_curr_date(yr, mo, da, sec)
+
+
+      hr = sec/3600
 
       sec = mod(sec,3600)
       mn = sec/60
@@ -461,7 +461,7 @@ CONTAINS
 
       if(yr .lt. 1000) yr = 2000+yr
       write(cpl_outdate(1:4),'(I4)') yr
-     
+
       if(mo .lt. 10 ) then
          write(cpl_outdate(5:7),'("-0",I1)') mo
       else
@@ -473,7 +473,7 @@ CONTAINS
       else
          write(cpl_outdate(8:10),'("-",I2)') da
       endif
-          
+
       if(hr .lt. 10 ) then
          write(cpl_outdate(11:13),'("_0",I1)') hr
       else
@@ -491,11 +491,11 @@ CONTAINS
       else
          write(cpl_outdate(17:19),'(":",I2)') ss
       endif
-          
-          
-          
+
+
+
 !      write(cpl_outdate,'(I4,"-",I2,"-",I2,"_",I2,":",I2,":",I2)' )     &
-!            yr, mo, da, hr, mn, ss 
+!            yr, mo, da, hr, mn, ss
 
 #ifdef HYDRO_D
       write(6,*) "cpl_outdate = ",cpl_outdate
@@ -571,12 +571,12 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanf') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_shadewall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_road_perv .or. ctype(c) == icol_road_imperv) then
                 scale_c2l(c) = 3.0
              else if (ctype(c) == icol_roof) then
@@ -588,7 +588,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbans') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = (3.0 * canyon_hwr(l)) / (2.*canyon_hwr(l) + 1.)
@@ -605,7 +605,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanh') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = spval
@@ -629,12 +629,12 @@ CONTAINS
              l = clandunit(c)
              g = cgridcell(c)
              if(wtgcell(c) .ne. 0) then
-                carr(c) = garr(g) 
+                carr(c) = garr(g)
              endif
           end if
     end do
     end subroutine g2c_1d
-   
+
     subroutine gather_1d_real(l1d,lnn,g1d,gnn)
        use spmdGathScatMod
        use clmtype   , only : grlnd, nameg
@@ -655,7 +655,7 @@ CONTAINS
        g1d = gp_yw
        deallocate(lp_yw)
        deallocate(gp_yw)
-    end subroutine gather_1d_real 
+    end subroutine gather_1d_real
 
     subroutine scatter_1d_r(l1d,lnn,g1d,gnn)
        use spmdGathScatMod, only: scatter_1darray_real
@@ -673,7 +673,7 @@ CONTAINS
        allocate(lp_yw(begg:endg) )
        allocate(gp_yw(gnn) )
 
-       
+
        gp_yw(:) = g1d(:)
 
 
@@ -682,11 +682,11 @@ CONTAINS
        call scatter_1darray_real(lp_yw, gp_yw, grlnd)
 
 
-       l1d = lp_yw(begg:endg) 
+       l1d = lp_yw(begg:endg)
 
        deallocate(lp_yw)
        deallocate(gp_yw)
-    end subroutine scatter_1d_r 
+    end subroutine scatter_1d_r
 
       subroutine output_nc(array,idim,jdim, var_name, file_name)
       implicit none
@@ -784,12 +784,12 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanf') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_shadewall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_road_perv .or. ctype(c) == icol_road_imperv) then
                 scale_c2l(c) = 3.0
              else if (ctype(c) == icol_roof) then
@@ -801,7 +801,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbans') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = (3.0 * canyon_hwr(l)) / (2.*canyon_hwr(l) + 1.)
@@ -818,7 +818,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanh') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = spval
@@ -856,12 +856,12 @@ CONTAINS
                 g = cgridcell(c)
                    !garr(g,j) = garr(g,j) + carr(c,j) * scale_c2l(c) * scale_l2g(l) * wtgcell(c)
                    !w_yw = scale_c2l(c) * scale_l2g(l) * wtgcell(c)
-                   w_yw = scale_c2l(c) * scale_l2g(l) 
-                   if(w_yw .ne. 0) then 
+                   w_yw = scale_c2l(c) * scale_l2g(l)
+                   if(w_yw .ne. 0) then
                       ! carr(c,j) =  garr(g,j) / w_yw *sumwt(g)
                       yw_r = garr(g,j) / w_yw
                       if(abs(yw_r - carr(c,j)) .lt. 400 .and. yw_r .ne. 0 ) then
-                         carr(c,j) =  garr(g,j) / w_yw 
+                         carr(c,j) =  garr(g,j) / w_yw
                       endif
                    endif
             end if
@@ -941,12 +941,12 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanf') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_shadewall) then
-                scale_c2l(c) = 3.0 * canyon_hwr(l) 
+                scale_c2l(c) = 3.0 * canyon_hwr(l)
              else if (ctype(c) == icol_road_perv .or. ctype(c) == icol_road_imperv) then
                 scale_c2l(c) = 3.0
              else if (ctype(c) == icol_roof) then
@@ -958,7 +958,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbans') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = (3.0 * canyon_hwr(l)) / (2.*canyon_hwr(l) + 1.)
@@ -975,7 +975,7 @@ CONTAINS
        end do
     else if (c2l_scale_type == 'urbanh') then
        do c = lbc,ubc
-          l = clandunit(c) 
+          l = clandunit(c)
           if (ltype(l) == isturb) then
              if (ctype(c) == icol_sunwall) then
                 scale_c2l(c) = spval
@@ -1013,13 +1013,13 @@ CONTAINS
                     g = cgridcell(c)
                     !garr(g,j) = garr(g,j) + carr(c,j) * scale_c2l(c) * scale_l2g(l) * wtgcell(c)
                     !w_yw = scale_c2l(c) * scale_l2g(l) * wtgcell(c)
-                    w_yw = scale_c2l(c) * scale_l2g(l) 
-                    if(w_yw .ne. 0) then 
+                    w_yw = scale_c2l(c) * scale_l2g(l)
+                    if(w_yw .ne. 0) then
                     if(abs(garr(g,j)) .gt. minv .and. abs(garr(g,j)) .lt. maxv) then 
                        ! carr(c,j) =  garr(g,j) / w_yw *sumwt(g)
-                             yw_r =  garr(g,j) / w_yw 
+                             yw_r =  garr(g,j) / w_yw
                              if(yw_r .gt. 0) then
-                                carr(c,j) =  garr(g,j) / w_yw 
+                                carr(c,j) =  garr(g,j) / w_yw
                              endif
                     endif
                     endif

@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program vectorize_ldasin
@@ -110,7 +110,7 @@ program vectorize_ldasin
   character(len=256) :: dumstr
 
   namelist/vectorize_namelist/ keep_lu_list, full_geo_em, vector_directory
-  
+
   ! Default values
   keep_lu_list = -99999
   landuse_count = 0
@@ -223,7 +223,7 @@ program vectorize_ldasin
   call read_var_2d(ncid_in, "LWDOWN",   varid_in(8), lwdown_in(:,:,1),   west_east_old, south_north_old)
 
   ! Optional variables:
-  
+
   call read_var_2d_optional(ncid_in, "WEASD",    FOUND_WEASD,    varid_in(9),  weasd_in(:,:,1),    west_east_old, south_north_old)
   call read_var_2d_optional(ncid_in, "VEGFRA",   FOUND_VEGFRA,   varid_in(10), vegfra_in(:,:,1),   west_east_old, south_north_old)
   call read_var_2d_optional(ncid_in, "CANWAT",   FOUND_CANWAT,   varid_in(11), canwat_in(:,:,1),   west_east_old, south_north_old)
@@ -641,7 +641,7 @@ subroutine read_var_2d(ncid, name, varid, array, idim, jdim)
   integer,                    intent(in)  :: jdim
   integer,                    intent(out) :: varid
   real, dimension(idim,jdim), intent(out) :: array   ! Assumed-shape array
-  
+
   integer :: iret
 
   iret = nf90_inq_varid ( ncid, name, varid )
@@ -665,7 +665,7 @@ subroutine read_var_2d_optional(ncid, name, found, varid, array, idim, jdim)
   logical,                    intent(out) :: found
   integer,                    intent(out) :: varid
   real, dimension(idim,jdim), intent(out) :: array   ! Assumed-shape array
-  
+
   integer :: iret
 
   iret = nf90_inq_varid ( ncid, name, varid )
@@ -706,4 +706,3 @@ end subroutine define_var
 
 !-----------------------------------------------------------------------------
 !-----------------------------------------------------------------------------
-

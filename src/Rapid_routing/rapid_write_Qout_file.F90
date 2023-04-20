@@ -5,7 +5,7 @@ subroutine rapid_write_Qout_file
 
 !Purpose:
 !Write into Qout_file from Fortran/netCDF.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -25,25 +25,25 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/petsclog.h" 
+#include "finclude/petsclog.h"
 !PETSc log
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 
 
@@ -76,7 +76,7 @@ if (rank==0) call VecRestoreArrayF90(ZV_SeqZero,ZV_pointer,ierr)
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_write_Qout_file

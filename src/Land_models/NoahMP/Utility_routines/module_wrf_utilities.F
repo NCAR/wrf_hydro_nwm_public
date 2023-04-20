@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !WRF:DRIVER_LAYER:UTIL
@@ -36,7 +36,7 @@ SUBROUTINE wrf_error_fatal( str )
   write(78,*) 'FATAL ERROR: ',trim(str)
   call flush(78)
   close(78)
-#else 
+#else
   write(6,*) 'FATAL ERROR: ',trim(str)
   call flush(6)
 #endif
@@ -45,19 +45,20 @@ SUBROUTINE wrf_error_fatal( str )
 END SUBROUTINE wrf_error_fatal
 
 SUBROUTINE wrf_abort
+  use module_cpl_land
   integer ierr
   CALL MPI_ABORT(HYDRO_COMM_WORLD,1,ierr)
   call MPI_finalize(ierr)
   STOP 'wrf_abort'
 END SUBROUTINE wrf_abort
 
-SUBROUTINE wrf_debug( level , str ) 
-  IMPLICIT NONE 
-  CHARACTER*(*) str 
-  INTEGER , INTENT (IN) :: level 
-  CALL wrf_message( str ) 
-  RETURN 
-END SUBROUTINE wrf_debug 
+SUBROUTINE wrf_debug( level , str )
+  IMPLICIT NONE
+  CHARACTER*(*) str
+  INTEGER , INTENT (IN) :: level
+  CALL wrf_message( str )
+  RETURN
+END SUBROUTINE wrf_debug
 
 subroutine wrf_dm_bcast_real(rval, ival)
   implicit none

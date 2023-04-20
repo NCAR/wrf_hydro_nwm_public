@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_grib1
@@ -56,7 +56,7 @@ contains
 
 !=================================================================================
 !=================================================================================
-  
+
   subroutine grib1_time_information(grib, reference_date, valid_date, process, processing, p1_seconds, p2_seconds)
     implicit none
     type (GribStruct),  intent(in)  :: grib
@@ -143,7 +143,7 @@ contains
     case (20)
        level_type = "Isothermal level"
        level_units = "K"
-       level_value = grib%g1sec1%levelval 
+       level_value = grib%g1sec1%levelval
     case (100)
        level_type = "Isobaric level"
        level_units = "Pa"
@@ -267,7 +267,7 @@ contains
     case (244)
        level_type = "Convective cloud layer"
     end select
-    
+
   end subroutine grib1_level_information
 
 !=================================================================================
@@ -430,7 +430,7 @@ contains
        else
           sec2%orientation = 1
        endif
-       
+
        ! Skip those last four bytes:
        iskip = iskip + (4*8)
 
@@ -466,13 +466,13 @@ contains
        else
           sec2%j_scan_direction = -1
        endif
-       
+
        if ( btest(sec2%scanning_mode, 5) ) then
           sec2%orientation = -1
        else
           sec2%orientation = 1
        endif
-       
+
        idum          = unpack_signed_integer(buffer, 3, iskip)
        sec2%latin1 = real(idum)*1.E-3
        idum          = unpack_signed_integer(buffer, 3, iskip)
@@ -517,13 +517,13 @@ contains
        else
           sec2%j_scan_direction = -1
        endif
-       
+
        if ( btest(sec2%scanning_mode, 5) ) then
           sec2%orientation = -1
        else
           sec2%orientation = 1
        endif
-       
+
        if (sec2%center==0) then
           sec2%latin1 = 60.0
        else
@@ -707,7 +707,7 @@ contains
        mapinfo%xlonc    = -1.E33
        mapinfo%truelat1 = -1.E33
        mapinfo%truelat2 = -1.E33
-    case (3) ! Lambert Conformal 
+    case (3) ! Lambert Conformal
        mapinfo%hproj = "LC"
        mapinfo%supmap_jproj = 3
        mapinfo%nx   = sec2%nx
@@ -792,7 +792,7 @@ contains
           write(*,'("grib%g1sec2%i_scan_direction = ", I12)') grib%g1sec2%i_scan_direction
           stop "GRIB1_SGUP_NOBITMAP:   Problem recognizing grib%g1sec2%i_scan_direction"
        endif
-       
+
        if (grib%g1sec2%j_scan_direction == 1) then
           array = DFAC * (dble(grib%g1sec4%reference_value) + (dble(IX)*BFAC))
        elseif (grib%g1sec2%j_scan_direction == -1) then
@@ -847,7 +847,7 @@ contains
 ! GRIB%G1SEC4%nbits : The number of bits per data value.
 
 
-! 1) There are fewer than NDAT data values, because a bitmap was used.  
+! 1) There are fewer than NDAT data values, because a bitmap was used.
 !    Compute the number of data values (NBM).  There are 11 extra bytes
 !    in the header section 4.  NBM equals the total number of data bits (not
 !    counting the header bits), minus the number of unused buts, and then
@@ -905,7 +905,7 @@ contains
        write(*,'("grib%g1sec2%j_scan_direction = ", I12)') grib%g1sec2%j_scan_direction
        stop "GRIB1_SGUP_BITMAP:  Problem recognizing grib%g1sec2%j_scan_direction"
     endif
-       
+
 
 
 ! Unpack the data according to packing parameters DFAC, BFAC, and XEC4(1), 
@@ -964,7 +964,7 @@ contains
     case (3) ! Average
        ! Average from (reference_time + p1) to (reference time + p2)
        call geth_newdate(validdate, refdate, tfac*(sec1%p1+sec1%p2)/2)
-    case(4) ! Accumulation from refdate + P1 to refdate + P2, 
+    case(4) ! Accumulation from refdate + P1 to refdate + P2,
        ! valid at refdate + P2
        ! call geth_newdate(fdate,     refdate, tfac*sec1(17))
        call geth_newdate(validdate, refdate, tfac*sec1%p2)

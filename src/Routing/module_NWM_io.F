@@ -8,8 +8,7 @@ module module_NWM_io
 use module_version, only: get_code_version, get_nwm_version
 use orchestrator_base
 use module_hydro_stop, only: HYDRO_stop
-
-use iso_fortran_env, only: int64
+use iso_fortran_env, only: int64, compiler_version
 
 implicit none
 
@@ -700,6 +699,8 @@ subroutine output_chrt_NWM(domainId)
       ! Write global attributes.
       iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -1340,7 +1341,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,1,0,0,0,0,0,& !41-50
                              0,0,0,0,0,0,0,0,0,0,& !51-60
-                             1,0,1,1,1,1,0,1,0,1,& !61-70
+                             1,0,1,1,1,1,0,1,1,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              0,0,0,0,0,1,1,1,&     !91-98
@@ -1359,7 +1360,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,0,0,0,0,0,0,& !31-40
                              0,0,0,0,1,0,0,0,0,0,& !41-50
                              0,0,0,0,0,0,0,0,1,1,& !51-60
-                             1,0,1,1,1,1,1,1,0,1,& !61-70
+                             1,0,1,1,1,1,1,1,1,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
                              1,1,1,1,1,1,1,1,&     !91-98
@@ -1421,6 +1422,8 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          ! Write global attributes
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LDASOUT file.')
+         iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,"compiler_version",compiler_version())
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LDASOUT file.')
          iret = nf90_put_att(ftnNoahMP,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -2032,6 +2035,8 @@ subroutine output_rt_NWM(domainId,iGrid)
       ! Write global attributes
       iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -2778,6 +2783,8 @@ subroutine output_lakes_NWM(domainId,iGrid)
       ! Write global attributes.
       iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -3357,6 +3364,8 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       ! Write global attributes
       iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into RT_DOMAIN file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -3828,6 +3837,8 @@ subroutine output_lsmOut_NWM(domainId)
       ! Write global attributes
       iret = nf90_put_att(ftn,NF90_GLOBAL,'TITLE',trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place TITLE attribute into LSMOUT file.')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_initialization_time',trim(fileMeta%initTime))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to place model init time attribute into LSMOUT file.')
       iret = nf90_put_att(ftn,NF90_GLOBAL,'model_output_valid_time',trim(fileMeta%validTime))
@@ -4806,6 +4817,8 @@ subroutine output_chanObs_NWM(domainId)
       ! Write global attributes.
          iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+         iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+         call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
          iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
          call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
          iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))
@@ -5471,6 +5484,8 @@ subroutine output_gw_NWM(domainId,iGrid)
       ! Write global attributes.
       iret = nf90_put_att(ftn,NF90_GLOBAL,"TITLE",trim(fileMeta%title))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create TITLE attribute')
+      iret = nf90_put_att(ftn,NF90_GLOBAL,"compiler_version",compiler_version())
+      call nwmCheck(diagFlag,iret,'ERROR: Unable to create compiler_version attribute')
       iret = nf90_put_att(ftn,NF90_GLOBAL,"featureType",trim(fileMeta%fType))
       call nwmCheck(diagFlag,iret,'ERROR: Unable to create featureType attribute')
       !iret = nf90_put_att(ftn,NF90_GLOBAL,"proj4",trim(fileMeta%proj4))

@@ -42,7 +42,7 @@ if(iret/=0) stop 5
 
 call baclose(lugbout1,iret)
 if(iret/=0) stop 6
- 
+
 
 ! CREATE FAKE V AND SET TO ZERO
 
@@ -58,6 +58,6 @@ if(iret/=0) stop 8
 
 call baclose(lugbout2,iret)
 if(iret/=0) stop 9
- 
+
 
 end

@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_geo_em
@@ -64,7 +64,7 @@ contains
   subroutine read_geo_em_file(flnm, geo_em, ierr)
 
 !---------------------------------------------------------------
-!  At the moment, all we need from the geo_em file is the 
+!  At the moment, all we need from the geo_em file is the
 !  array of monthly green vegetation fractions.
 !
 !  We also read projection/grid information, to ensure that
@@ -159,20 +159,20 @@ contains
     call get_2d("SOILTEMP", ncid, geo_em%tmn, geo_em%idim, geo_em%jdim)
     geo_em%tmn = geo_em%tmn - 0.0065 * geo_em%ter
 
-! Get Land Use categories 
+! Get Land Use categories
     allocate(geo_em%use(geo_em%idim, geo_em%jdim))
     call get_2d("LU_INDEX", ncid, geo_em%use, geo_em%idim, geo_em%jdim)
 
-! Create XLAND 
+! Create XLAND
     allocate(geo_em%msk(geo_em%idim, geo_em%jdim))
     where(geo_em%use .eq. geo_em%iswater .or.  geo_em%use .eq. geo_em%islake) geo_em%msk = 2
     where(geo_em%use .ne. geo_em%iswater .and. geo_em%use .ne. geo_em%islake) geo_em%msk = 1
 
-! Create SEAICE 
+! Create SEAICE
     allocate(geo_em%ice(geo_em%idim, geo_em%jdim))
     geo_em%ice = 0.0
 
-! Get Soil categories 
+! Get Soil categories
 !   soil is a problem since real does some manipulation, so we need to read the % data
 
     iret = nf90_get_att(ncid, NF90_GLOBAL, "ISOILWATER" , iswater_soil)
@@ -181,7 +181,7 @@ contains
     allocate(soil_top_cat(geo_em%idim, geo_em%jdim, 16))  ! potential problem with hardcoding 16?
     call get_soil_cat(ncid, soil_top_cat, geo_em%idim, geo_em%jdim, 16)
     allocate(geo_em%soi(geo_em%idim, geo_em%jdim))
-    
+
       DO i = 1 , geo_em%idim
          DO j = 1 , geo_em%jdim
             dominant_value = soil_top_cat(i,j,1)
@@ -200,7 +200,7 @@ contains
             geo_em%soi(i,j) = dominant_index
          END DO
       END DO
-    
+
     where(geo_em%use .eq. geo_em%iswater .or.  geo_em%use .eq. geo_em%islake) geo_em%soi = 14
     where(geo_em%use .ne. geo_em%iswater .and. geo_em%use .ne. geo_em%islake .and. geo_em%soi .eq. 14) geo_em%soi = 8
 
@@ -356,7 +356,7 @@ contains
       array = -1.e36
       return
     end if
-    
+
     ierr = nf90_get_var(ncid, varid, array)
     call error_handler(ierr, "STOP:  Problem getting "//trim(name)//" from geo_em file")
 
@@ -383,7 +383,7 @@ contains
 
   subroutine get_2d(name, ncid, array, idim, jdim)
     !
-    ! From the NetCDF unit <ncid>, read the variable named <name> with  
+    ! From the NetCDF unit <ncid>, read the variable named <name> with
     ! dimensions <idim> and <jdim>, filling the pre-dimensioned array <array>
     !
     implicit none

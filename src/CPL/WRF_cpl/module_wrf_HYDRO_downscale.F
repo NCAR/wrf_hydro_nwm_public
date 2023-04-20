@@ -3,20 +3,20 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_WRF_HYDRO
@@ -34,13 +34,13 @@ module module_WRF_HYDRO
     USE module_domain, ONLY : domain, domain_clock_get
 
     implicit none
-     
+
     !yw   added for check soil moisture and soiltype
     integer ::  checkSOIL_flag
 
 !
-! added to consider the adaptive time step from WRF model. 
-    real    :: dtrt0  
+! added to consider the adaptive time step from WRF model.
+    real    :: dtrt0
     integer ::  mm0, itime
 
 
@@ -48,7 +48,7 @@ module module_WRF_HYDRO
 
 CONTAINS
 
-!wrf_cpl_HYDRO_finescale will not call the off-line lsm 
+!wrf_cpl_HYDRO_finescale will not call the off-line lsm
     subroutine wrf_cpl_HYDRO_finescale(HYDRO_dt,grid,its,ite,jts,jte)
        use module_NoahMP_hrldas_driver, only: noah_timestep , land_driver_ini
        implicit none
@@ -64,7 +64,7 @@ CONTAINS
         integer ntime
 
         integer :: i,j
-        
+
 
 !output flux and state variable
 
@@ -79,10 +79,10 @@ CONTAINS
 
         ntime = 1
 
-    
+
             nlst(did)%dt = HYDRO_dt
 
-        itime = itime + 1 
+        itime = itime + 1
         if(.not. RT_DOMAIN(did)%initialized) then
            itime = 1
 
@@ -124,7 +124,7 @@ CONTAINS
                mm0 = mm
             endif
 
-            dtrt0 = nlst(did)%dtrt  
+            dtrt0 = nlst(did)%dtrt
         endif
 
             if((mm0*nlst(did)%dtrt) .ne. HYDRO_dt) then   ! WRF model time step changed.
@@ -138,7 +138,7 @@ CONTAINS
                endif
             endif
 
-#ifdef HYDRO_D 
+#ifdef HYDRO_D
         write(6,*) "mm, nlst(did)%dt = ",mm, nlst(did)%dt
 #endif
 
@@ -158,7 +158,7 @@ subroutine wrf2l_finemesh(,its,ite,jts,jte, T_PHY0,U_PHY0,V_PHY0,p_hyd_w0,RAINBL
           emiss0, albedo0   )
        use module_NoahMP_hrldas_driver, only: P8W, T_PHY, U_PHY, V_PHY, QV_CURR, RAINBL_tmp, LAI, VEGFRA, finemesh,finemesh_factor, &
               emiss,albedo
-       
+
        implicit none
        real, domain(:,:),INTENT(IN) :: T_PHY0,U_PHY0,V_PHY0,p_hyd_w0,RAINBL0,QV_CURR0,LAI0,VEGFRA0, &
              emiss0, albedo0, TSK0,HFX0, QFX0,LH0,GRDFLX0,SMSTAV0,SMSTOT0,SFCRUNOFF0, UDRUNOFF0, SNOWC0, SMOIS0, SH2O0, &
@@ -247,10 +247,10 @@ subroutine wrf2finegrid(wrfGrid,fineGrid,ix,jx,AGGFACTRT)
    real, dimension(:,:), intent(out)::fineGrid
    integer:: i,j,ii,jj,ix,jx, AGGFACTRT
    do j = 1, jx
-      do i = 1, ix 
+      do i = 1, ix
               do ii       =AGGFACTRT-1,0,-1
               do jj       =AGGFACTRT-1,0,-1
-                  IXXRT=I*AGGFACTRT-ii       
+                  IXXRT=I*AGGFACTRT-ii
                   JYYRT=J*AGGFACTRT-jj
                   fineGrid(ixxrt,jyyrt) = wrfGrid(i,j)
               enddo
@@ -265,11 +265,11 @@ subroutine finegrid2wrf(fineGrid,wrfGrid,ix,jx,AGGFACTRT)
    real, dimension(:,:), intent(in)::fineGrid
    integer:: i,j,ii,jj,ix,jx, AGGFACTRT
    do j = 1, jx
-      do i = 1, ix 
+      do i = 1, ix
               wrfGrid(k,j) = 0.0
               do ii       =AGGFACTRT-1,0,-1
               do jj       =AGGFACTRT-1,0,-1
-                  IXXRT=I*AGGFACTRT-ii       
+                  IXXRT=I*AGGFACTRT-ii
                   JYYRT=J*AGGFACTRT-jj
                   wrfGrid(i,j) = wrfGrid(i,j) + fineGrid(ixxrt,jyyrt)
               enddo
@@ -286,7 +286,7 @@ end subroutine finegrid2wrf
       subroutine wrf2lsm (z1,v1,kk1,z,vout,ix,jx,kk,vegtyp)
 !  input: z1,v1,kk1,z,ix,jx,kk
 !  output: vout
-!  interpolate based on soil layer: z1 and z 
+!  interpolate based on soil layer: z1 and z
 !  z :  soil layer of output variable.
 !  z1: array of soil layers of input variable.
          implicit none
@@ -294,7 +294,7 @@ end subroutine finegrid2wrf
          integer:: kk1, ix,jx,kk, vegtyp(ix,jx)
          real :: z1(kk1), z(kk), v1(ix,kk1,jx),vout(ix,jx,kk)
 
-       
+
          do j = 1, jx
             do i = 1, ix
                 do k = 1, kk
@@ -308,7 +308,7 @@ end subroutine finegrid2wrf
       subroutine lsm2wrf (z1,v1,kk1,z,vout,ix,jx,kk,vegtyp)
 !  input: z1,v1,kk1,z,ix,jx,kk
 !  output: vout
-!  interpolate based on soil layer: z1 and z 
+!  interpolate based on soil layer: z1 and z
 !  z :  soil layer of output variable.
 !  z1: array of soil layers of input variable.
          implicit none
@@ -316,7 +316,7 @@ end subroutine finegrid2wrf
          integer:: kk1, ix,jx,kk, vegtyp(ix,jx)
          real :: z1(kk1), z(kk), v1(ix,jx,kk1),vout(ix,kk,jx)
 
-       
+
          do j = 1, jx
             do i = 1, ix
                  do k = 1, kk
@@ -339,11 +339,11 @@ end subroutine finegrid2wrf
              outV = inV(1)*w1-inV(2)*w2
              return
          elseif(outZ .ge. inZ(inK)) then
-             w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1)) 
+             w1 = (outZ-inZ(inK-1))/(inZ(inK)-inZ(inK-1))
              w2 = (outZ-inZ(inK))  /(inZ(inK)-inZ(inK-1))
              outV = inV(inK)*w1 -inV(inK-1)* w2
              return
-         else  
+         else
             do k = 2, inK
              if((inZ(k) .ge. outZ).and.(inZ(k-1) .le. outZ) ) then
                 k1  = k-1
@@ -351,8 +351,8 @@ end subroutine finegrid2wrf
                 w1 = (outZ-inZ(k1))/(inZ(k2)-inZ(k1))
                 w2 = (inZ(k2)-outZ)/(inZ(k2)-inZ(k1))
                 outV = inV(k2)*w1 + inV(k1)*w2
-                return 
-             end if 
+                return
+             end if
             end do
          endif
       end subroutine interpLayer

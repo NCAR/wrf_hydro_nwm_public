@@ -4,8 +4,8 @@
 ## a file which sets the environment variables
 ## to use in the compile (clearning any inherited
 ## from the calling envionrment first). The template
-## fo this file is trunk/NDHMS/setEnvar.sh. Please
-## copy that file to trunk/NDHMS, make copies
+## fo this file is src/setEnvar.sh. Please
+## copy that file to src, make copies
 ## for your favorite compile configurations, and
 ## pass the appropriate file name to this script
 ## as desired.
@@ -26,7 +26,7 @@ if [[ ! -z $env_file ]]; then
 
     echo "configure: Sourcing $env_file for the compile options."
     source $env_file
-    
+
 else
     echo "configure: Using the compile options in the calling environment."
 fi
@@ -51,14 +51,14 @@ ln -sf CPL/NoahMP_cpl LandModel_cpl
 make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
 #for debugging and testing
-#make debug; make install; make test 
-make; make install
+#make debug; make install; make test
+make && make install
 
 if [[ $? -eq 0 ]]; then
     echo
     echo '*****************************************************************'
     echo "Make was successful"
-else 
+else
     echo
     echo '*****************************************************************'
     echo "Make NOT successful"
@@ -79,7 +79,7 @@ else
     # If it's an nwm version (nwm release branch), grab the nwm versions from elsewhere.
     echo 'NWM version: not populating with generic templates'
 fi
-    
+
 
 echo
 echo '*****************************************************************'

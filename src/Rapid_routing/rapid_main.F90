@@ -3,9 +3,9 @@
 !*******************************************************************************
 subroutine rapid_main(ITIME,runoff,ii,jj,Qout_nc_file)
 !Purpose:
-!Allows to route water through a river network, and to estimate optimal 
-!parameters using the inverse method 
-!Author: 
+!Allows to route water through a river network, and to estimate optimal
+!parameters using the inverse method
+!Author:
 !Cedric H. David, 2008-2015.
 !Peirong Lin, modified starting from June 2014 to satisfy WRF-Hydro needs
 
@@ -49,24 +49,24 @@ external rapid_phiroutine
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/petsclog.h" 
+#include "finclude/petsclog.h"
 !PETSc log
 
 #ifndef NO_TAO
-#include "finclude/taosolver.h" 
+#include "finclude/taosolver.h"
 !TAO solver
 #endif
 
@@ -86,7 +86,7 @@ Qout_file = Qout_nc_file !---LPR: new output filename defined by Wrapper-------
 !call rapid_init
 
 !*******************************************************************************
-!OPTION 1 - use to calculate flows and volumes and generate output data 
+!OPTION 1 - use to calculate flows and volumes and generate output data
 !*******************************************************************************
 if (IS_opt_run==1) then
 
@@ -96,7 +96,7 @@ if (IS_opt_run==1) then
 call rapid_create_Qout_file(Qout_file)
 
 !-------------------------------------------------------------------------------
-!Open files          
+!Open files
 !-------------------------------------------------------------------------------
 call rapid_open_Qout_file(Qout_file)
 !---LPR: IMPORTANT uncomment this sentence because runoff is NOT read from Vlat
@@ -121,7 +121,7 @@ if (BS_opt_dam .and. IS_dam_bas>0) then
 end if
 
 !-------------------------------------------------------------------------------
-!Read, compute and write          
+!Read, compute and write
 !-------------------------------------------------------------------------------
 !---LPR: IMPORTANT uncomment the next two->defined in RAPID initialization stage
 !call PetscLogStageRegister('Read Comp Write',stage,ierr)
@@ -137,57 +137,57 @@ IV_nc_count2=(/IS_riv_bas,1/)
 !do JS_M=1,IS_M
 !do JS_RpM=1,IS_RpM
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Read/set surface and subsurface volumes 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Read/set surface and subsurface volumes
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !call rapid_read_Vlat_file  !---LPR: do not read Vlat file, but get Vlat from WRF-Hydro
 
 !---LPR: IMPORTANT new subroutine added in the Wrapper-----------------
-call rapid_runoff_to_inflow(ZM_runoff,ZV_Vlat,cnt_rapid_run) 
+call rapid_runoff_to_inflow(ZM_runoff,ZV_Vlat,cnt_rapid_run)
 !---LPR: IMPORTANT new subroutine added in the Wrapper-----------------
 
 call VecCopy(ZV_Vlat,ZV_Qlat,ierr)            !Qlat=Vlat
 call VecScale(ZV_Qlat,1/ZS_TauR,ierr)         !Qlat=Qlat/TauR
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Read/set upstream forcing
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_for .and. IS_for_bas>0                                              &
                    .and. mod((JS_M-1)*IS_RpM+JS_RpM,IS_RpF)==1) then
 
 call rapid_read_Qfor_file
 
-end if 
+end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Run dam model based on previous values of QoutbarR and Qext to get Qdam
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_dam .and. IS_dam_bas>0) then
 
 call rapid_get_Qdam
 
 end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Read/set human induced flows 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Read/set human induced flows
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_hum .and. IS_hum_bas>0                                              &
                    .and. mod((JS_M-1)*IS_RpM+JS_RpM,IS_RpH)==1) then
 
 call rapid_read_Qhum_file
 
-end if 
+end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !calculation of Qext
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call VecCopy(ZV_Qlat,ZV_Qext,ierr)                            !Qext=Qlat
 if (BS_opt_for) call VecAXPY(ZV_Qext,ZS_one,ZV_Qfor,ierr)     !Qext=Qext+1*Qfor
 if (BS_opt_dam) call VecAXPY(ZV_Qext,ZS_one,ZV_Qdam,ierr)     !Qext=Qext+1*Qdam
 if (BS_opt_hum) call VecAXPY(ZV_Qext,ZS_one,ZV_Qhum,ierr)     !Qext=Qext+1*Qhum
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Routing procedure
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call PetscTime(ZS_time1,ierr)
 call rapid_routing(ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                                  &
                    ZV_QoutinitR,ZV_VinitR,                                     &
@@ -195,20 +195,20 @@ call rapid_routing(ZV_C1,ZV_C2,ZV_C3,ZV_Qext,                                  &
 call PetscTime(ZS_time2,ierr)
 ZS_time3=ZS_time3+ZS_time2-ZS_time1
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Update variables
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call VecCopy(ZV_QoutR,ZV_QoutinitR,ierr)
 call VecCopy(ZV_VR,ZV_VinitR,ierr)
-     
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!write outputs         
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!write outputs
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call rapid_write_Qout_file
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Update netCDF location         
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Update netCDF location
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (rank==0) IV_nc_start(2)=IV_nc_start(2)+1
 !do not comment out if writing directly from the routing subroutine
 
@@ -231,7 +231,7 @@ call PetscSynchronizedFlush(PETSC_COMM_WORLD,ierr)
 call PetscPrintf(PETSC_COMM_WORLD,'Output data created'//char(10),ierr)
 
 !-------------------------------------------------------------------------------
-!Close files          
+!Close files
 !-------------------------------------------------------------------------------
 call rapid_close_Qout_file
 !---LPR: IMPORTANT uncomment setence below-------
@@ -247,7 +247,7 @@ end if
 
 
 !*******************************************************************************
-!OPTION 2 - Optimization 
+!OPTION 2 - Optimization
 !*******************************************************************************
 if (IS_opt_run==2) then
 #ifndef NO_TAO

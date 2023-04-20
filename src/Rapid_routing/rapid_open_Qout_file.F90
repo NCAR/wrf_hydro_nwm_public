@@ -1,11 +1,11 @@
 !*******************************************************************************
 !Subroutine - rapid_open_Qout_file
 !*******************************************************************************
-subroutine rapid_open_Qout_file(Qout_file) 
+subroutine rapid_open_Qout_file(Qout_file)
 
 !Purpose:
 !Open Qout_file from Fortran/netCDF.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -25,7 +25,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 character(len=100), intent(in):: Qout_file
 
@@ -33,7 +33,7 @@ character(len=100), intent(in):: Qout_file
 !*******************************************************************************
 !Open file
 !*******************************************************************************
-if (rank==0) then 
+if (rank==0) then
      close(99)
      open(99,file=Qout_file,status='old')
      close(99)
@@ -43,8 +43,7 @@ end if
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_open_Qout_file
-

@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 
@@ -117,7 +117,7 @@ contains
     call lltoxy_generic(lat, lon, x, y, &
          mapinfo%projection, mapinfo%dxm*1.E-3, mapinfo%lat1, mapinfo%lon1, 1.0, 1.0, &
          mapinfo%xlonc, mapinfo%truelat1, mapinfo%truelat2)
-    
+
   end subroutine lltoxy_hrldas
 
 !------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ contains
     call xytoll_generic(x, y, lat, lon, &
          mapinfo%projection, mapinfo%dxm*1.E-3, mapinfo%lat1, mapinfo%lon1, 1.0, 1.0, &
          mapinfo%xlonc, mapinfo%truelat1, mapinfo%truelat2)
-    
+
   end subroutine xytoll_hrldas
 
 !------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ program hrldas_extract_point
   type(hrldas_mapinfo_type) :: mapinfo
 
   character(len=10) :: nowdate, startdate, enddate
-  
+
 
   arguments_help = '(" [-lat <latitude>] [-lon <longitude>] ",/,&
        &"              [-x <x-coordinate>] [-y <y-coordinate>]",/,&
@@ -233,7 +233,7 @@ program hrldas_extract_point
         write(*,'(/,"  ***** X/y specified.  Do not specify lat/lon *****")')
         call print_help
      endif
-  else 
+  else
      write(*,'(/,"  ***** Point not specified.                         *****")')
      write(*,'(  "  ***** Specify desired point in lat/lon or in x/y.  *****")')
      call print_help
@@ -276,7 +276,7 @@ program hrldas_extract_point
              x, y, lat, lon
 
      endif
-  
+
      ival = int(x)
      jval = int(y)
 
@@ -305,7 +305,7 @@ program hrldas_extract_point
      call geth_newdate(nowdate, nowdate, 1)
 
   enddo TIMELOOP
-  
+
 end program hrldas_extract_point
 
 !------------------------------------------------------------------------------
@@ -486,7 +486,7 @@ subroutine loop_through_variable_list(ncid, ival, jval, nowdate, outunit)
         ierr = nf90_get_var(ncid, varid, idata, start(1:ndims))
         call handle_error(ierr, "Trying to get variable "//trim(varname))
         write(outunit, '(I18)', advance="no") idata
-        
+
      else if (xtype == NF90_CHAR) then
         ierr = nf90_get_var(ncid, varid, hdata, start, array_count)
         call handle_error(ierr, "Trying to get variable "//trim(varname))
@@ -508,4 +508,3 @@ subroutine loop_through_variable_list(ncid, ival, jval, nowdate, outunit)
   write(outunit,*)
 
 end subroutine loop_through_variable_list
-

@@ -1,8 +1,6 @@
-cmake_minimum_required (VERSION 2.8)
-
 add_library(hydro_noahmp_cpl STATIC
 	module_hrldas_HYDRO.F
-	hrldas_drv_HYDRO.F       
+	hrldas_drv_HYDRO.F
 )
 
 target_link_libraries(hydro_noahmp_cpl PUBLIC hydro_mpp)

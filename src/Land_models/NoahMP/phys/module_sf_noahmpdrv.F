@@ -1397,7 +1397,7 @@ CONTAINS
              SNOW     (I,J)                = SWE
              SNOWH    (I,J)                = SNDPTH
              CANWAT   (I,J)                = CANLIQ + CANICE
-             ACSNOW   (I,J)                = ACSNOW(I,J) + PRCP * FPICE
+             ACSNOW   (I,J)                = ACSNOW(I,J) + PRCP*DT * FPICE ! mm
              ACSNOM   (I,J)                = ACSNOM(I,J) + QSNBOT*DT + PONDING + PONDING1 + PONDING2
              EMISS    (I,J)                = EMISSI
              QSFC     (I,J)                = QSFC1D
@@ -1517,7 +1517,7 @@ CONTAINS
                    SNOW     (I,J) = PSNOWTOTSWEXY(I,J)
                    SNOWH    (I,J) = PSNOWHEIGHTXY(I,J)
                    ACSNOM   (I,J) = FLOW_ICE(I,J)+FLOW_SNOW(I,J)
-                   CANWAT   (I,J) = 0. 
+                   CANWAT   (I,J) = 0.
 #ifdef WRF_HYDRO
                    if(present(ACCETRAN)) ACCETRAN(I,J) = 0.
                    if(present(ACCECAN))  ACCECAN(I,J)  = 0.

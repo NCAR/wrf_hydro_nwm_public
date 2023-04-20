@@ -8,8 +8,8 @@ subroutine rapid_phiroutine(tao,ZV_pnorm,ZS_phi,IS_dummy,ierr)
 !Calculates a cost function phi as a function of model parameters, using means
 !over a given period of time.  The cost function represents the square error
 !between calculated flows and observed flows where observations are available.
-!Author: 
-!Cedric H. David, 2008-2015. 
+!Author:
+!Cedric H. David, 2008-2015.
 
 
 !*******************************************************************************
@@ -42,25 +42,25 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/taosolver.h" 
+#include "finclude/taosolver.h"
 !TAO solver
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 Vec, intent(in) :: ZV_pnorm
 TaoSolver, intent(inout)  :: tao
@@ -70,7 +70,7 @@ PetscInt, intent (in) :: IS_dummy
 
 
 !*******************************************************************************
-!Set linear system corresponding to current ZV_pnorm and set initial flowrates  
+!Set linear system corresponding to current ZV_pnorm and set initial flowrates
 !*******************************************************************************
 ZS_phi=0
 !initialize phi to zero
@@ -94,7 +94,7 @@ if (IS_opt_routing==3) call KSPSetType(ksp,KSPPREONLY,ierr)!default=preonly
 
 
 !*******************************************************************************
-!Set initial values to assure subroutine always starts from same conditions 
+!Set initial values to assure subroutine always starts from same conditions
 !*******************************************************************************
 
 !-------------------------------------------------------------------------------
@@ -141,53 +141,53 @@ IV_nc_count=(/IS_riv_tot,1/)
 
 do JS_O=1,IS_O
 
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 !calculate mean daily flow
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 call VecSet(ZV_QoutbarO,0*ZS_one,ierr)                 !QoutbarO=0
 
 do JS_RpO=1,IS_RpO   !loop needed here since Vlat is more frequent than Qobs
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Read/set surface and subsurface volumes 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Read/set surface and subsurface volumes
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call rapid_read_Vlat_file
 
 call VecCopy(ZV_Vlat,ZV_Qlat,ierr)            !Qlat=Vlat
 call VecScale(ZV_Qlat,1/ZS_TauR,ierr)         !Qlat=Qlat/TauR
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Read/set upstream forcing
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_for .and. IS_for_bas>0                                              &
                    .and. mod((JS_O-1)*IS_RpO+JS_RpO,IS_RpF)==1) then
 
 call rapid_read_Qfor_file
 
-end if 
+end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !Run dam model based on previous values of QoutbarR and Qext to get Qdam
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_dam .and. IS_dam_bas>0) then
 
 call rapid_get_Qdam
 
 end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Read/set human induced flows 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Read/set human induced flows
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if (BS_opt_hum .and. IS_hum_bas>0                                              &
                    .and. mod((JS_O-1)*IS_RpO+JS_RpO,IS_RpH)==1) then
 
 call rapid_read_Qhum_file
 
-end if 
+end if
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !calculation of Qext
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 call VecCopy(ZV_Qlat,ZV_Qext,ierr)                            !Qext=Qlat
 if (BS_opt_for) call VecAXPY(ZV_Qext,ZS_one,ZV_Qfor,ierr)     !Qext=Qext+1*Qfor
 if (BS_opt_dam) call VecAXPY(ZV_Qext,ZS_one,ZV_Qdam,ierr)     !Qext=Qext+1*Qdam
@@ -208,33 +208,33 @@ call VecCopy(ZV_QoutR,ZV_QoutinitR,ierr)
 call VecAXPY(ZV_QoutbarO,ZS_one/IS_RpO,ZV_QoutbarR,ierr)
 !Qoutbar=QoutbarO+QoutbarR/IS_RpO
 
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-!Update netCDF location         
-!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!Update netCDF location
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IV_nc_start(2)=IV_nc_start(2)+1
 
 
 enddo                !end of loop to account for forcing more frequent than obs
 
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 !Calculate objective function for current day
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 call rapid_read_Qobs_file
 
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 !Objective function #1 - for current day - square error
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 if (IS_opt_phi==1) then
 call VecWAXPY(ZV_temp1,-ZS_one,ZV_Qobs,ZV_QoutbarO,ierr)  !temp1=Qoutbar-Qobs
-call VecScale(ZV_temp1,ZS_phifac,ierr)                    !if phi too big      
+call VecScale(ZV_temp1,ZS_phifac,ierr)                    !if phi too big
 call MatMult(ZM_Obs,ZV_temp1,ZV_temp2,ierr)               !temp2=Obs*temp1
 call VecDot(ZV_temp1,ZV_temp2,ZS_phitemp,ierr)            !phitemp=temp1.temp2
 !result phitemp=(Qoutbar-Qobs)^T*Obs*(Qoutbar-Qobs)
 end if
 
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 !Objective function #2 - for current day - square error normalized by avg flow
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 if (IS_opt_phi==2) then
 call VecWAXPY(ZV_temp1,-ZS_one,ZV_Qobs,ZV_QoutbarO,ierr)  !temp1=Qoutbar-Qobs
 call VecPointWiseMult(ZV_temp1,ZV_temp1,ZV_Qobsbarrec,ierr)!temp1=temp1.*Qobsbarrec
@@ -243,16 +243,16 @@ call VecDot(ZV_temp1,ZV_temp2,ZS_phitemp,ierr)            !phitemp=temp1.temp2
 !result phitemp=[(Qoutbar-Qobs).*Qobsbarrec]^T*Obs*[(Qoutbar-Qobs).*Qobsbarrec]
 end if
 
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 !adds daily objective function to total objective function
-!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + 
+!- + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - + - +
 ZS_phi=ZS_phi+ZS_phitemp
 !increments phi for each time step during the desired period of optimization
 
 enddo
 
 !-------------------------------------------------------------------------------
-!Close files 
+!Close files
 !-------------------------------------------------------------------------------
 call rapid_close_Vlat_file
 call rapid_close_Qobs_file

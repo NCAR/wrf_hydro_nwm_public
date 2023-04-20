@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_llxy_generic
@@ -282,7 +282,7 @@ contains
        tt2 = tan((pi2 - rflt  )*0.5)    ! Tangent Term 2.
        ct1 = -cos(flat1) * re/confac   ! cosine Term 1.
 
-       ! Calculate the (projected) distance from the pole to 
+       ! Calculate the (projected) distance from the pole to
        ! the reference lat/lon.
        drp = ct1 * (tt2/tt1)**confac
        ! Now from the pole to the reference y along the center lon.
@@ -321,7 +321,7 @@ contains
        dii = drp * sin(rcln-rfln)
        di = dii + ((x-refx)*dskm)
        ! Calculate the Big Messy quantity as would be done for LC
-       ! projections.  This quantity is different in value, same 
+       ! projections.  This quantity is different in value, same
        ! in purpose of BM above
        bm = (1.0/re) * sqrt(di*di + dj*dj) / (1.0 + cos(pi2-flat1))
        !  Calculate the desired latitude in radians

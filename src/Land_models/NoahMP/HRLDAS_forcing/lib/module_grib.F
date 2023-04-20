@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_grib
@@ -50,7 +50,7 @@ contains
     !      ierr:      An error flag.  ierr == 0 -- File opened successfully.
     !                                 ierr == 1 -- There was some problem opening the file.
     !                                 ierr == 2 -- The specified file does not exist.
-    ! 
+    !
     ! Side effects:
     !      - File <filename> is opened for reading
     !      - The file stream pointer for <filename>, contained within structure <fd>,
@@ -70,7 +70,7 @@ contains
        ierr = 2
        return
     endif
-    
+
     call c_gribopen(trim(filename)//char(0), fd, ierr)
 
   end subroutine gribopen
@@ -89,7 +89,7 @@ contains
 
   subroutine getgrib(fd, grib, ierr)
     implicit none
-    ! 
+    !
     ! Purpose:
     !      Read a single grib record, but do no unpacking and no interpretation
     !      of header information beyond the size and edition nuber from GRIB 
@@ -164,13 +164,13 @@ contains
   subroutine findgrib(fd, grib, iloc)
     implicit none
     ! Purpose:
-    !      Seek in an open GRIB file for the string "GRIB", which 
+    !      Seek in an open GRIB file for the string "GRIB", which
     !      indicates the beginning of a GRIB record.
     ! Input:
     !      fd: A file stream pointer to a file opened by subroutine GRIBOPEN
     !
     ! Output:
-    !      iloc:  The location (by byte count) in the file stream <fd> 
+    !      iloc:  The location (by byte count) in the file stream <fd>
     !             at the beginning of this particular GRIB record.  Or,
     !             a negative number indicating a read problem (probably we 
     !             hit the end of the file.
@@ -204,7 +204,7 @@ contains
        return
     endif
 
-    do while ( h4 /= "GRIB") 
+    do while ( h4 /= "GRIB")
        ! Adjust our buffer and read one more byte
        h4(1:3) = h4(2:4)
        call io_fread(fd, h4(4:4), 1, iread, ierr)
@@ -220,7 +220,7 @@ contains
 
     !
     !   To have got this far, we must have found the beginning of a GRIB
-    !   record.  
+    !   record.
     !
 
     !
@@ -299,12 +299,12 @@ contains
 
   subroutine grib_next_field(fd, grib, ierr)
     implicit none
-    ! 
+    !
     ! Purpose:
     !      Unpack the next field in a GRIB file.  The field may already be
     !      available in <grib%buffer>; if not, we read from the file into 
     !      <grib%buffer>.
-    ! 
+    !
 
     integer(kind=8), intent(in) :: fd
     type (GribStruct), intent(inout) :: grib
@@ -321,7 +321,7 @@ contains
           ! print*, 'Try to read a new record'
           ! Get the next complete GRIB record (which may contain more than one field,
           ! which is why we have the complication of the outer do loop here).
-          call getgrib(fd, grib, ierr) 
+          call getgrib(fd, grib, ierr)
           if (ierr /= 0) return
        else
           ! See if we're at "7777"  If so, deallocate things and read a new record.
@@ -438,7 +438,7 @@ contains
 
 !=================================================================================
 !=================================================================================
-  
+
   subroutine grib_time_information(grib, reference_date, valid_date, process, processing, p1_seconds, p2_seconds)
     implicit none
     type (GribStruct),  intent(in)  :: grib
@@ -448,7 +448,7 @@ contains
     character(len=256), intent(out) :: processing
     integer,            intent(out) :: p1_seconds
     integer,            intent(out) :: p2_seconds
-    
+
     select case (grib%edition)
     case default
        write(*,'("WARNING: MODULE_GRIB:  GRIB_TIME_INFORMATION:  Unrecognized grib%edition", I10)') grib%edition
@@ -458,7 +458,7 @@ contains
     case (2)
        call grib2_time_information(grib, reference_date, valid_date, process, processing, p1_seconds, p2_seconds)
     end select
-    
+
   end subroutine grib_time_information
 
 !=================================================================================
@@ -466,12 +466,12 @@ contains
 
   subroutine grib_valid_date(grib, validdate)
     ! Hmmmm.  This could also be a subfunction of unpacking
-    ! GRIB2 section 4 (GRIB1 Section 1), and making <validdate> 
+    ! GRIB2 section 4 (GRIB1 Section 1), and making <validdate>
     ! an element of <grib> at the top level
     implicit none
     type (GribStruct), intent(in)  :: grib
     character(len=19), intent(out) :: validdate
-    ! 
+    !
 
     select case (grib%edition)
     case default

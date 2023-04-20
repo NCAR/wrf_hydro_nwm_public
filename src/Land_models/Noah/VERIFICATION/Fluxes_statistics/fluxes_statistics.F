@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 program fluxes_statistics
@@ -319,7 +319,7 @@ program fluxes_statistics
 
      call gsln(1)
      nowdate = startdate
-     
+
      ! QFX_Corrected
      do while ( nowdate(1:13) < enddate(1:13) )
         call geth_newdate(nowdate(1:13), nowdate(1:13), 1)
@@ -368,7 +368,7 @@ program fluxes_statistics
      call set ( xl , xr , xb , xt , 0.0 , 1.0 , 0.0 , 1.0 , 1 )
      call perim(0,0,0,0)
      call pchiqu(0.525, 0.95, "QFX:  Station "//textsta, 0.0075, 0.0, 0.0)
-     
+
      xl = frame_left   + (frame_right-frame_left  )*0.15
      xr = frame_left   + (frame_right-frame_left  )*0.95
      xb = frame_bottom + (frame_top  -frame_bottom)*0.10
@@ -411,7 +411,7 @@ program fluxes_statistics
            station_qfx_bias = station_qfx_bias + (hrldas_qfx(ista,itime) - qfx_old(ista, itime+1))
            station_qfx_rmse = station_qfx_rmse + (hrldas_qfx(ista,itime) - qfx_old(ista, itime+1))**2
            station_qfx_count = station_qfx_count + 1
-           
+
            xxarray(station_qfx_count) = float(itime)
            yyarray(station_qfx_count) = qfx_old(ista,itime+1)
            zzarray(station_qfx_count) = hrldas_qfx(ista,itime)
@@ -493,7 +493,7 @@ program fluxes_statistics
      call line_in_color(xarray_diurnal(0), 400.0, xarray_diurnal(24), 400.0, color_index("gray90"))
      call gasetc("XLF", "(I2.2)")
      call periml(24, 0, 6, 0)
-  
+
      call connect_the_dots(xarray_diurnal, (/station_qfxoavg,station_qfxoavg(0)/), 25, color="blue")
      call connect_the_dots(xarray_diurnal, (/station_qfxoavg_old,station_qfxoavg_old(0)/), 25, color="green")
      call connect_the_dots(xarray_diurnal, (/station_qfxmavg,station_qfxmavg(0)/), 25, color="red")
@@ -618,7 +618,7 @@ program fluxes_statistics
      call line_in_color(xarray_diurnal(0), 300.0, xarray_diurnal(24), 300.0, color_index("gray90"))
      call line_in_color(xarray_diurnal(0), 400.0, xarray_diurnal(24), 400.0, color_index("gray90"))
      call periml(24,0,6,0)
-  
+
      call connect_the_dots(xarray_diurnal, (/station_hfxoavg,station_hfxoavg(0)/), 25, color="blue")
      call connect_the_dots(xarray_diurnal, (/station_hfxmavg,station_hfxmavg(0)/), 25, color="red")
 
@@ -649,7 +649,7 @@ program fluxes_statistics
   hfxrmse = sqrt(hfxrmse/float(hfxcount))
 
   ! Plot our average diurnal cycle.
-  
+
   call gsplci(color_index("black"))
   call set (0., 1., 0., 1., 0., 1., 0., 1., 1)
   call pchiqu(0.5*(.15+.9), 0.93, "Observed QFX (solid), Corrected Observed QFX (dot), HRLDAS QFX (dash)", 0.013, 0., 0.)
@@ -658,7 +658,7 @@ program fluxes_statistics
   call gasetc("YLF", '(F5.0)')
   call periml(8, 3, 6, 0)
   call line_in_color(0., 0., 24., 0., color_index("gray90"))
-  
+
   call gsln(1)
   call connect_the_dots(xarray_diurnal, (/qfxoavg_old,qfxoavg_old(0)/), 25)
 
@@ -706,7 +706,7 @@ program fluxes_statistics
   call periml(8, 3, 6, 0)
 
   call line_in_color(0., 0., 24., 0., color_index("gray90"))
-  
+
   call gsln(1)
   call connect_the_dots(xarray_diurnal, (/hfxoavg,hfxoavg(0)/), 25)
 
@@ -728,7 +728,7 @@ program fluxes_statistics
 
   call periml(8, 3, 6, 0)
 
-  
+
   call gsln(1)
   call connect_the_dots(xarray_diurnal, (/hfxbias, hfxbias(0)/), 25)
 
@@ -852,7 +852,7 @@ subroutine read_ihop(fluxobs_directory, &
 
   ! Skip 4 header lines
   read(iunit,'(///)')
-  READLOOP : do 
+  READLOOP : do
 
 !
 ! Fore some reason, I'm having a hard time reading this file with
@@ -862,13 +862,13 @@ subroutine read_ihop(fluxobs_directory, &
 ! Anyway, the read into character string Hrd_LEc is done because some bad data
 ! values in the file are encoded as the string "NaN".  Arrgh!
 !
-        
+
 
      if (ista == 10) then
         read(iunit,*, iostat=ierr) idum, idum, idum, idum, idum, rdyyyy, &
              rdmm, rddd, rdhhmmss, idum, idum, rd_rsw, rd_rlw, rt_T, rd_P, rd_MR, &
              rd_SPD, rd_U, rd_V, rd_rainacc, rd_rainr, rd_Rnet, rd_Rpar, &
-             rd_Tsfc, rd_LE, Hrd_LEc, rd_H, rd_Gsfc 
+             rd_Tsfc, rd_LE, Hrd_LEc, rd_H, rd_Gsfc
      else
         read(iunit,*, iostat=ierr) idum, idum, idum, idum, idum, rdyyyy, &
               rdmm, rddd, rdhhmmss, idum, rd_rsw, rd_rlw, rt_T, rd_P, rd_MR, &
@@ -933,7 +933,7 @@ subroutine read_namelist(fluxobs_directory, ldasout_directory)
      stop
   endif
 
-  read(11, nml=fluxstats, iostat=ierr) 
+  read(11, nml=fluxstats, iostat=ierr)
   if (ierr /= 0) then
      write(*,'("***** ERROR EXIT *****",/)')
      write(*,'(3x, "Problem reading namelist file:", /, 6x, A,/)') "'"//"namelist.fluxstats"//"'"
@@ -944,7 +944,7 @@ subroutine read_namelist(fluxobs_directory, ldasout_directory)
   close(11)
 
   print*, 'fluxobs_directory = "'//trim(fluxobs_directory)//'"'
-  
+
 end subroutine read_namelist
 
 !--------------------------------------------------------------------------------
@@ -1017,7 +1017,7 @@ subroutine draw_scatter(abbr1, abbr2, obs, mdl, ndim, bias, rmse, correlation, l
   call gagetr("XMN", hold_xmn)
   call gagetr("YMN", hold_ymn)
 
-  
+
   iblue  = color_index("blue")
   ired   = color_index("red")
   iblack = color_index("black")
@@ -1050,7 +1050,7 @@ subroutine draw_scatter(abbr1, abbr2, obs, mdl, ndim, bias, rmse, correlation, l
 
   write(text,'("Corr:  ", F10.4)') correlation
   call pchiqu(0.17, 0.816, trim(text), text_scale2, 0.0, -1.0)
-  
+
   minrange = min(minval(mdl,mask=(mdl>-1.E25)), minval(obs,mask=(obs>-1.E25)))
   maxrange = max(maxval(mdl,mask=(mdl>-1.E25)), maxval(obs,mask=(obs>-1.E25)))
   call find_good_range(minrange, maxrange, expn, irange)
@@ -1112,7 +1112,7 @@ subroutine flux_stats(obs, mdl, ndim, bias, rmse, correlation, lsra, lsrb)
 
   integer :: n
   integer :: ndat
-  
+
   real (kind=8) :: sumx, sumy, sumxx, sumxy, sumyy, sxx, sxy, syy
 
   bias = 0.0

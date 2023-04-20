@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 subroutine swap4f(in,nn)
@@ -39,7 +39,7 @@ subroutine swap4f(in,nn)
      ia = in(i+(nbytes-1):i:-1)
      in(i:i+(nbytes-1)) = ia
   enddo
-	
+
 #endif
 end
 !KWM -------------------------------------------------------------------------
@@ -102,8 +102,8 @@ end
 !KWM	data l/32/,u/127/
 !KWM	do 10 i=1,in
 !KWM	n(i)=m(i)
-!KWM	if(n(i).lt.  l) n(i)=l  
-!KWM	if(n(i).gt.  u) n(i)=u   
+!KWM	if(n(i).lt.  l) n(i)=l
+!KWM	if(n(i).gt.  u) n(i)=u
 !KWM   10	continue
 !KWM	return
 !KWM#endif

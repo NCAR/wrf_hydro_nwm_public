@@ -165,6 +165,7 @@ USE MODE_SNOW3L
 ! this module is not used anymore
 ! USE MODI_GREGODSTRATI
 
+use ieee_arithmetic, only: isnan => ieee_is_nan
 
 !
 IMPLICIT NONE

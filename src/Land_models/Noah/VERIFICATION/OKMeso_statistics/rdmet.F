@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 subroutine rdmet(okmeso_met, nstation, station, idate, pcp, Tair_out, TS05_out, TS10_out, TS30_out)
@@ -166,7 +166,7 @@ subroutine rdmet(okmeso_met, nstation, station, idate, pcp, Tair_out, TS05_out, 
            if (PRES > 0) PRES = PRES * 1.E2
 
            ! Convert RELH to Qv:
-           
+
            call RHtoQV( RELH, Tair, PRES, Qv )
 
            ! Convert WSPD and WDIR to U and V
@@ -175,7 +175,7 @@ subroutine rdmet(okmeso_met, nstation, station, idate, pcp, Tair_out, TS05_out, 
 
            ! Don't allow negative Short-Wave radiation.
 
-           SRAD = max(SRAD,0.0) 
+           SRAD = max(SRAD,0.0)
 
            pcp(i) = rain
 
@@ -183,7 +183,7 @@ subroutine rdmet(okmeso_met, nstation, station, idate, pcp, Tair_out, TS05_out, 
            TS05_out(i) = TS05
            TS10_out(i) = TS10
            TS30_out(i) = TS30
-           
+
            exit StnLoop
         endif
 
@@ -244,5 +244,5 @@ subroutine SDtoUV(WSPD, WDIR, U, V)
      u = -999
      v = -999
   endif
-  
+
 end subroutine SDtoUV

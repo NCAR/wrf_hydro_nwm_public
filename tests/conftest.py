@@ -42,7 +42,7 @@ def pytest_addoption(parser):
         required=True,
         action='store',
         help=("The configuration to test, "
-              "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
+              "must be one listed in src/hydro_namelist.json keys.")
     )
 
     # Optional args

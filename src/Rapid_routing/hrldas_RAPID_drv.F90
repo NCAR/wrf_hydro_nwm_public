@@ -12,7 +12,7 @@ program main_program
 
   do ITIME=1,NTIME
     call hrldas_RAPID_exe(runoff,ii,jj)
-  end do  
+  end do
 ! end loop for calling RAPID programs
-   
-  end 
+
+  end

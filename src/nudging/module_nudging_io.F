@@ -26,7 +26,6 @@ use module_RT_data,  only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
 
 implicit none
-#include <netcdf.inc>
 
 !========================
 ! lastObs structure, corresponding to nudgingLastObs.YYYY-mm-dd_HH:MM:ss.nc
@@ -177,10 +176,10 @@ iRet = nf90_get_att(ncid, nf90_global, 'sliceTimeResolutionMinutes', sliceResolu
 if (iRet /= nf90_NoErr) errStatus=errStatus+1
 
 ! variables
-call get_1d_netcdf_text(ncid, 'stationId', gageId,        caller, &
+call get_1d_netcdf(ncid, 'stationId', gageId,        caller, &
                         fatalErr, errStatusOut)
 errStatus=errStatus+errStatusOut
-call get_1d_netcdf_text(ncid, 'time',      gageTime,      caller, &
+call get_1d_netcdf(ncid, 'time',      gageTime,      caller, &
                         fatalErr, errStatusOut)
 errStatus=errStatus+errStatusOut
 call get_1d_netcdf_real(ncid, 'discharge', gageDischarge, caller, &
@@ -461,7 +460,7 @@ if (iRet /= nf90_NoErr) then
    call hydro_stop("read_nudging_param_file")
 endif
 
-call get_1d_netcdf_text(ncid, 'stationId', gageId,  caller, .TRUE., errStatus)
+call get_1d_netcdf(ncid, 'stationId', gageId,  caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'R',         gageR,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'G',         gageG,   caller, .TRUE., errStatus)
 call get_1d_netcdf_real(ncid, 'tau',       gageTau, caller, .TRUE., errStatus)
@@ -1201,7 +1200,6 @@ use module_mpp_land
 #endif
 
 implicit none
-#include <netcdf.inc>
 
 !! These are the names used in module_HYDRO_io.F: SUBROUTINE READ_CHROUTING1
 real,    dimension(:),  intent(in) :: inCHLAT, inCHLON, inCHANLEN
@@ -1289,7 +1287,7 @@ if(my_id .eq. io_id) then
    write(*,'("geo_finegrid_flnm: ''", A, "''")') trim(nlst(did)%geo_finegrid_flnm)
 #endif
 
-   iret = nf_open(trim(nlst(1)%geo_finegrid_flnm), NF_NOWRITE, ncstatic)
+   iret = nf90_open(trim(nlst(1)%geo_finegrid_flnm), nf90_NOWRITE, ncstatic)
 
    if (iret /= 0) then
       write(*,'("Problem opening geo_finegrid file: ''", A, "''")') &
@@ -1302,15 +1300,15 @@ if(my_id .eq. io_id) then
 
    if(projInfo_flag.eq.1) then !if/then hires_georef
       ! Get projection information from finegrid netcdf file
-      iret = NF_INQ_VARID(ncstatic,'lambert_conformal_conic',varid)
+      iret = nf90_inq_varid(ncstatic,'lambert_conformal_conic',varid)
       if(iret .eq. 0) &
-           iret = NF_GET_ATT_REAL(ncstatic, varid, 'longitude_of_central_meridian', long_cm)
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'latitude_of_projection_origin', lat_po)
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_easting', fe)
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'false_northing', fn)
-      iret = NF_GET_ATT_REAL(ncstatic, varid, 'standard_parallel', sp)
+           iret = nf90_get_att(ncstatic, varid, 'longitude_of_central_meridian', long_cm)
+      iret = nf90_get_att(ncstatic, varid, 'latitude_of_projection_origin', lat_po)
+      iret = nf90_get_att(ncstatic, varid, 'false_easting', fe)
+      iret = nf90_get_att(ncstatic, varid, 'false_northing', fn)
+      iret = nf90_get_att(ncstatic, varid, 'standard_parallel', sp)
    end if  !endif hires_georef
-   iret = nf_close(ncstatic)
+   iret = nf90_close(ncstatic)
 
 
    ! Create the channel connectivity file
@@ -1333,119 +1331,119 @@ if(my_id .eq. io_id) then
 #endif
 
    ! Dimension definitions
-   iret = nf_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)
+   iret = nf90_def_dim(ncid, "nStreamCells", nStreamCells, streamCellDimID)
 
    ! Variable definitions
    ! LATITUDE - float
-   iret = nf_def_var(ncid, "LATITUDE", NF_FLOAT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid,varid, 'long_name',     22, 'Upstream cell latitude')
-   iret = nf_put_att_text(ncid,varid, 'standard_name',  8, 'LATITUDE')
-   iret = nf_put_att_text(ncid,varid, 'units',          5, 'deg North')
+   iret = nf90_def_var(ncid, "LATITUDE", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid,varid, 'long_name', 'Upstream cell latitude')
+   iret = nf90_put_att(ncid,varid, 'standard_name', 'LATITUDE')
+   iret = nf90_put_att(ncid,varid, 'units', 'deg North')
 
    ! LONGITUDE - float
-   iret = nf_def_var(ncid, "LONGITUDE", NF_FLOAT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'long_name',     23, 'Upstream cell longitude')
-   iret = nf_put_att_text(ncid, varid, 'standard_name',  9, 'LONGITUDE')
-   iret = nf_put_att_text(ncid, varid, 'units',          8, 'deg East')
+   iret = nf90_def_var(ncid, "LONGITUDE", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Upstream cell longitude')
+   iret = nf90_put_att(ncid, varid, 'standard_name', 'LONGITUDE')
+   iret = nf90_put_att(ncid, varid, 'units', 'deg East')
 
    ! CHANLEN - float
    ! JLM: should check if pour points have chanLen, should they?
-   iret = nf_def_var(ncid, "CHANLEN", NF_FLOAT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      1,'m')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 58, &
+   iret = nf90_def_var(ncid, "CHANLEN", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units','m')
+   iret = nf90_put_att(ncid, varid, 'long_name', &
         'distance between stream cell center points with downstream')
-   iret = nf_put_att_real(ncid, varid, 'missing_value', NF_REAL, 1, -9E15)
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9E15)
 
 
 
    ! FROM_NODE - integer
-   iret = nf_def_var(ncid, "FROM_NODE", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'index')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 19, 'Upstream cell index')
-   iret = nf_put_att_int(ncid, varid, 'missing_value', NF_INT, 1, -9999)
+   iret = nf90_def_var(ncid, "FROM_NODE", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'index')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Upstream cell index')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9999)
 
    ! TO_NODE - integer
-   iret = nf_def_var(ncid, "TO_NODE", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'index')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 21, 'Downstream cell index')
-   iret = nf_put_att_int(ncid, varid, 'missing_value', NF_INT, 1, -9999)
+   iret = nf90_def_var(ncid, "TO_NODE", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'index')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Downstream cell index')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9999)
 
    ! CHANXI - integer
-   iret = nf_def_var(ncid, "CHANXI", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'index')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 34, 'Upstream cell x index on fine grid')
-   iret = nf_put_att_int(ncid, varid, 'missing_value', NF_INT, 1, -9999)
+   iret = nf90_def_var(ncid, "CHANXI", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'index')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Upstream cell x index on fine grid')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9999)
 
    ! CHANYJ - integer
-   iret = nf_def_var(ncid, "CHANYJ", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'index')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 34, 'Upstream cell y index on fine grid')
-   iret = nf_put_att_int(ncid, varid, 'missing_value', NF_INT, 1, -9999)
+   iret = nf90_def_var(ncid, "CHANYJ", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'index')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Upstream cell y index on fine grid')
+   iret = nf90_put_att(ncid, varid, 'missing_value', -9999)
 
    ! TYPEL - integer
-   iret = nf_def_var(ncid, "TYPEL", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'code')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 80, &
+   iret = nf90_def_var(ncid, "TYPEL", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'code')
+   iret = nf90_put_att(ncid, varid, 'long_name', &
         'Link Type 0 is channel 1 is pour point crit depth downstream 2 is reservoir lake')
 
    ! LAKENODE - integer
-   iret = nf_def_var(ncid, "LAKENODE", NF_INT, 1, (/ streamCellDimID /), varid)
-   iret = nf_put_att_text(ncid, varid, 'units',      5, 'index')
-   iret = nf_put_att_text(ncid, varid, 'long_name', 32, 'Index of lake in downstream cell')
+   iret = nf90_def_var(ncid, "LAKENODE", 1, (/ streamCellDimID /), varid)
+   iret = nf90_put_att(ncid, varid, 'units', 'index')
+   iret = nf90_put_att(ncid, varid, 'long_name', 'Index of lake in downstream cell')
 
 
    ! Projection information
    if(projInfo_flag .eq. 1) then
-      iret = nf_def_var(ncid, "lambert_conformal_conic", NF_INT, 0, 0, varid)
-      iret = nf_put_att_text(ncid, varid, 'grid_mapping_name', 23, 'lambert_conformal_conic')
-      iret = nf_put_att_real(ncid, varid, 'longitude_of_central_meridian', NF_FLOAT, 1, long_cm)
-      iret = nf_put_att_real(ncid, varid, 'latitude_of_projection_origin', NF_FLOAT, 1, lat_po)
-      iret = nf_put_att_real(ncid, varid, 'false_easting',                 NF_FLOAT, 1, fe)
-      iret = nf_put_att_real(ncid, varid, 'false_northing',                NF_FLOAT, 1, fn)
-      iret = nf_put_att_real(ncid, varid, 'standard_parallel',             NF_FLOAT, 2, sp)
+      iret = nf90_def_var(ncid, "lambert_conformal_conic", 0, 0, varid)
+      iret = nf90_put_att(ncid, varid, 'grid_mapping_name', 'lambert_conformal_conic')
+      iret = nf90_put_att(ncid, varid, 'longitude_of_central_meridian', long_cm)
+      iret = nf90_put_att(ncid, varid, 'latitude_of_projection_origin', lat_po)
+      iret = nf90_put_att(ncid, varid, 'false_easting', fe)
+      iret = nf90_put_att(ncid, varid, 'false_northing', fn)
+      iret = nf90_put_att(ncid, varid, 'standard_parallel', sp)
    end if
 
    ! End NCDF definition section
-   iret = nf_enddef(ncid)
+   iret = nf90_enddef(ncid)
 
    ! Put data in to the file
 
    ! Data for the dim? JLM: no, seems pointless index, if not necessary
-   !iret = nf_inq_varid(ncid,"nStreamCells", varid)
-   !iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), 1:nStreamCells - or however you)
+   !iret = nf90_inq_varid(ncid,"nStreamCells", varid)
+   !iret = nf90_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), 1:nStreamCells - or however you)
 
    ! Reals
-   iret = nf_inq_varid(ncid, "LATITUDE", varid)
-   iret = nf_put_vara_real(ncid, varid, (/1/), (/ nStreamCells /), CHLAT)
+   iret = nf90_inq_varid(ncid, "LATITUDE", varid)
+   iret = nf90_put_var(ncid, varid, CHLAT, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "LONGITUDE", varid)
-   iret = nf_put_vara_real(ncid, varid, (/1/), (/ nStreamCells /), CHLON)
+   iret = nf90_inq_varid(ncid, "LONGITUDE", varid)
+   iret = nf90_put_var(ncid, varid, CHLON, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "CHANLEN", varid)
-   iret = nf_put_vara_real(ncid, varid, (/1/), (/ nStreamCells /), CHANLEN)
+   iret = nf90_inq_varid(ncid, "CHANLEN", varid)
+   iret = nf90_put_var(ncid, varid, CHANLEN, (/1/), (/ nStreamCells /))
 
    ! Integers
-   iret = nf_inq_varid(ncid, "FROM_NODE", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), FROM_NODE)
+   iret = nf90_inq_varid(ncid, "FROM_NODE", varid)
+   iret = nf90_put_var(ncid, varid, FROM_NODE, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "TO_NODE", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), TO_NODE)
+   iret = nf90_inq_varid(ncid, "TO_NODE", varid)
+   iret = nf90_put_var(ncid, varid, TO_NODE, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "CHANXI", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), CHANXI)
+   iret = nf90_inq_varid(ncid, "CHANXI", varid)
+   iret = nf90_put_var(ncid, varid, CHANXI, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "CHANYJ", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), CHANYJ)
+   iret = nf90_inq_varid(ncid, "CHANYJ", varid)
+   iret = nf90_put_var(ncid, varid, CHANYJ, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "TYPEL", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), TYPEL)
+   iret = nf90_inq_varid(ncid, "TYPEL", varid)
+   iret = nf90_put_var(ncid, varid, TYPEL, (/1/), (/ nStreamCells /))
 
-   iret = nf_inq_varid(ncid, "LAKENODE", varid)
-   iret = nf_put_vara_int(ncid, varid, (/1/), (/ nStreamCells /), LAKENODE)
+   iret = nf90_inq_varid(ncid, "LAKENODE", varid)
+   iret = nf90_put_var(ncid, varid, LAKENODE, (/1/), (/ nStreamCells /))
 
 
    ! Close the file
-   iret = nf_close(ncid)
+   iret = nf90_close(ncid)
 
 #ifdef MPP_LAND
 endif
@@ -1562,7 +1560,7 @@ end if
 end subroutine get_1d_netcdf_real
 
 
-subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
+subroutine get_1d_netcdf(ncid, varName, var, callingRoutine, fatal_if_error, errStatus)
 implicit none
 character(len=*), dimension(:), intent(out) :: var
 integer,                        intent(in)  :: ncid !! the file identifier
@@ -1574,17 +1572,17 @@ integer :: varId, iRet
 errStatus=0
 iRet = nf90_inq_varid(ncid, varName, varid)
 if (iret /= nf90_NoErr) then
-   print*, trim(callingRoutine) // ": get_1d_netcdf_text: variable: " // trim(varName)
-   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   print*, trim(callingRoutine) // ": get_1d_netcdf: variable: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf")
    errStatus=errStatus+1
 end if
 iRet = nf90_get_var(ncid, varid, var)
 if (iret /= nf90_NoErr) then
-   print*, trim(callingRoutine) // ": get_1d_netcdf_text: values: " // trim(varName)
-   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
+   print*, trim(callingRoutine) // ": get_1d_netcdf: values: " // trim(varName)
+   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf")
    errStatus=errStatus+1
 end if
-end subroutine get_1d_netcdf_text
+end subroutine get_1d_netcdf
 
 
 !==============================================================================

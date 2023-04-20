@@ -1,12 +1,12 @@
 !*******************************************************************************
-!Subroutine - rapid_final 
+!Subroutine - rapid_final
 !*******************************************************************************
 subroutine rapid_final
 
 !Purpose:
-!This subroutine allows to finalize RAPID for both regular runs and 
-!optimization runs, by performing slightly different tasks depending on what 
-!option is chosen.  
+!This subroutine allows to finalize RAPID for both regular runs and
+!optimization runs, by performing slightly different tasks depending on what
+!option is chosen.
 !Finalization Initialization tasks specific to Option 1
 !     -Output final instantaneous flow
 !     -Output babsmax, QoutRabsmin and QoutRabsmax
@@ -14,9 +14,9 @@ subroutine rapid_final
 !     -N/A
 !Finalization tasks common to all RAPID options:
 !     -Prints some information about the types of objects used during simulation
-!     -Destroy all PETSc and TAO objects 
-!Author: 
-!Cedric H. David, 2012-2015. 
+!     -Destroy all PETSc and TAO objects
+!Author:
+!Cedric H. David, 2012-2015.
 
 
 !*******************************************************************************
@@ -40,20 +40,20 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
-#include "finclude/petsclog.h" 
+#include "finclude/petsclog.h"
 !PETSc log
 
 
@@ -71,7 +71,7 @@ call VecScatterBegin(vecscat,ZV_QoutR,ZV_SeqZero,                              &
 call VecScatterEnd(vecscat,ZV_QoutR,ZV_SeqZero,                                &
                         INSERT_VALUES,SCATTER_FORWARD,ierr)
 call VecGetArrayF90(ZV_SeqZero,ZV_pointer,ierr)
-if (rank==0) then 
+if (rank==0) then
      open(31,file=Qfinal_file)
      do JS_riv_bas=1,IS_riv_bas
           write(31,*) ZV_pointer(JS_riv_bas)
@@ -90,7 +90,7 @@ call VecScatterBegin(vecscat,ZV_babsmax,ZV_SeqZero,                            &
 call VecScatterEnd(vecscat,ZV_babsmax,ZV_SeqZero,                              &
                         INSERT_VALUES,SCATTER_FORWARD,ierr)
 call VecGetArrayF90(ZV_SeqZero,ZV_pointer,ierr)
-if (rank==0) then 
+if (rank==0) then
      open(42,file=babsmax_file)
      do JS_riv_bas=1,IS_riv_bas
           write(42,*) ZV_pointer(JS_riv_bas)
@@ -101,7 +101,7 @@ call VecRestoreArrayF90(ZV_SeqZero,ZV_pointer,ierr)
 end if
 
 !-------------------------------------------------------------------------------
-!Output minimum absolute values of instantaneous flow 
+!Output minimum absolute values of instantaneous flow
 !-------------------------------------------------------------------------------
 if (BS_opt_influence) then
 call VecScatterBegin(vecscat,ZV_QoutRabsmin,ZV_SeqZero,                        &
@@ -109,7 +109,7 @@ call VecScatterBegin(vecscat,ZV_QoutRabsmin,ZV_SeqZero,                        &
 call VecScatterEnd(vecscat,ZV_QoutRabsmin,ZV_SeqZero,                          &
                         INSERT_VALUES,SCATTER_FORWARD,ierr)
 call VecGetArrayF90(ZV_SeqZero,ZV_pointer,ierr)
-if (rank==0) then 
+if (rank==0) then
      open(43,file=QoutRabsmin_file)
      do JS_riv_bas=1,IS_riv_bas
           write(43,*) ZV_pointer(JS_riv_bas)
@@ -120,7 +120,7 @@ call VecRestoreArrayF90(ZV_SeqZero,ZV_pointer,ierr)
 end if
 
 !-------------------------------------------------------------------------------
-!Output maximum absolute values of instantaneous flow 
+!Output maximum absolute values of instantaneous flow
 !-------------------------------------------------------------------------------
 if (BS_opt_influence) then
 call VecScatterBegin(vecscat,ZV_QoutRabsmax,ZV_SeqZero,                        &
@@ -128,7 +128,7 @@ call VecScatterBegin(vecscat,ZV_QoutRabsmax,ZV_SeqZero,                        &
 call VecScatterEnd(vecscat,ZV_QoutRabsmax,ZV_SeqZero,                          &
                         INSERT_VALUES,SCATTER_FORWARD,ierr)
 call VecGetArrayF90(ZV_SeqZero,ZV_pointer,ierr)
-if (rank==0) then 
+if (rank==0) then
      open(44,file=QoutRabsmax_file)
      do JS_riv_bas=1,IS_riv_bas
           write(44,*) ZV_pointer(JS_riv_bas)
@@ -152,13 +152,13 @@ call VecGetType(ZV_k,temp_char,ierr)
 call PetscPrintf(PETSC_COMM_WORLD,'type of vector: '//temp_char//char(10),ierr)
 call MatGetType(ZM_A,temp_char,ierr)
 call PetscPrintf(PETSC_COMM_WORLD,'type of matrix: '//temp_char//char(10),ierr)
-if (IS_opt_routing==1 .or. IS_opt_routing==3) then 
+if (IS_opt_routing==1 .or. IS_opt_routing==3) then
      call KSPGetType(ksp,temp_char,ierr)
 else
      temp_char='No KSP'
 end if
 call PetscPrintf(PETSC_COMM_WORLD,'type of KSP   : '//temp_char//char(10),ierr)
-if (IS_opt_routing==1 .or. IS_opt_routing==3) then 
+if (IS_opt_routing==1 .or. IS_opt_routing==3) then
      call KSPGetPC(ksp,pc,ierr)
      call PCGetType(pc,temp_char,ierr)
 else

@@ -26,7 +26,7 @@ configs = [
 # -----------------------------------
 domain_paths = [pathlib.PosixPath(pp) for pp in domain_paths]
 this_path = pathlib.PosixPath(os.getcwd())
-code_path = this_path.parent.parent / 'trunk/NDHMS/'
+code_path = this_path.parent.parent / 'src/'
 
 def get_nlst_file_meta(
     namelist: dict,
@@ -39,7 +39,7 @@ def get_nlst_file_meta(
         if type(value) is not str:
             return False
 
-        # Convert to pathlib object, kee        
+        # Convert to pathlib object, kee
         the_file_rel = pathlib.PosixPath(value)
         the_file_abs = dom_dir / the_file_rel
 
@@ -51,7 +51,7 @@ def get_nlst_file_meta(
             print('            ' + str(the_file_abs))
             if the_file_abs.exists() is False:
                 raise ValueError("The file does not exist: " + str(the_file_abs))
-            
+
             meta_path_rel = the_file_rel
             the_cmd = 'meta_path=' + str(meta_path_rel) + ".md5"
             the_cmd += ' && data_path=' + str(the_file_abs)
@@ -69,7 +69,7 @@ def get_nlst_file_meta(
 
         if the_file_abs.exists() is False:
             raise ValueError("The file does not exist: " + str(the_file_abs))
-        
+
         # The sub process command is executed in the root of the meta path,
         # use the relative data path/
         meta_path_rel = the_file_rel
@@ -90,29 +90,29 @@ def get_nlst_file_meta(
             shell=True,
             executable='/bin/bash'
         )
-        
+
         return True
 
     _ = iterutils.remap(namelist, visit=visit_file)
 
-    
+
 for dd in domain_paths:
 
     print('')
     print('Domain: ' + str(dd))
 
     domain_tag = dd.name
-    
+
     for cc in configs:
 
         # Make a meta data output dir for each configuration.
         config_dir = (this_path / domain_tag) / cc
-        
+
         # Create the namelists
         domain_nlsts = ['hydro_namelists.json', 'hrldas_namelists.json']
         code_nlsts = ['hydro_namelist_patches.json', 'hrldas_namelist_patches.json']
         file_names = ['hydro.namelist', 'namelist.hrldas']
-        
+
         for code, dom, ff in zip(domain_nlsts, code_nlsts, file_names):
 
             domain_namelists = JSONNamelist(dd / dom)
@@ -129,15 +129,13 @@ for dd in domain_paths:
                 print('    Config: ' + str(cc))
 
             print('        Namelist: ' + str(ff))
-            
+
             repo_namelists = JSONNamelist(code_path / code)
-            repo_config = repo_namelists.get_config(cc)               
+            repo_config = repo_namelists.get_config(cc)
             patched_namelist = repo_config.patch(domain_config)
 
             # Write them out for completeness.
-            patched_namelist.write(str(config_dir / ff))         
-            
+            patched_namelist.write(str(config_dir / ff))
+
             # This function does the work.
             get_nlst_file_meta(patched_namelist, dd)
-
-

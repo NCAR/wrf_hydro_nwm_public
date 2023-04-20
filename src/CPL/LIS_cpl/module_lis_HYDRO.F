@@ -3,24 +3,24 @@
 !  Abstract:
 !  History Log:
 !  <brief list of changes to this source file>
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_lis_HYDRO
-    use noah271_lsmMod, only : noah271_struc 
+    use noah271_lsmMod, only : noah271_struc
 !   use LIS_coreMod, only : LIS_rc, LIS_domain, LIS_masterproc, &
 !         LIS_ews_ind, LIS_ewe_ind, LIS_nss_ind, LIS_nse_ind
     use LIS_coreMod
@@ -34,12 +34,12 @@ module module_lis_HYDRO
        use config_base, only : nlst
        use module_HYDRO_drv, only: HYDRO_ini, HYDRO_exe
 
-!!! temp use 
+!!! temp use
        use module_yw, only: SFHEAD1RT,INFXS1RT, soldrain
     contains
 
     subroutine lis_cpl_HYDRO(n)
-       
+
 
 
         implicit none
@@ -123,7 +123,7 @@ module module_lis_HYDRO
         else
            write(cpl_outdate(15:17),'(I2,":")') LIS_rc%mn
         endif
-       
+
         if(LIS_rc%ss .lt. 10) then
            write(cpl_outdate(18:19),'("0",I1)') LIS_rc%ss
         else
@@ -141,15 +141,15 @@ module module_lis_HYDRO
             jts = LIS_nss_ind(LIS_rc%nnest,my_id+1)
             jte = LIS_nse_ind(LIS_rc%nnest,my_id+1)
 
-!           write(6,*) "LIS_ews_ind",LIS_ews_ind 
-!           write(6,*) "LIS_ewe_ind",LIS_ewe_ind 
-!           write(6,*) "LIS_nss_ind",LIS_nss_ind 
-!           write(6,*) "LIS_nse_ind",LIS_nse_ind 
+!           write(6,*) "LIS_ews_ind",LIS_ews_ind
+!           write(6,*) "LIS_ewe_ind",LIS_ewe_ind
+!           write(6,*) "LIS_nss_ind",LIS_nss_ind
+!           write(6,*) "LIS_nse_ind",LIS_nse_ind
 
         if(.not. RT_DOMAIN(did)%initialized) then
 !           write(6,*) "yyyywww step 3"
 #ifdef HYDRO_D
-            write(6,*) "ix,jx, cpl_land_dt",ix,jx, LIS_rc%ts  
+            write(6,*) "ix,jx, cpl_land_dt",ix,jx, LIS_rc%ts
 
 !           write(6,*) "yyyywww step 4 before HYDRO_ini= "
             write(6,*) "its,ite,jts,jte", its,ite,jts,jte
@@ -174,7 +174,7 @@ module module_lis_HYDRO
             endif
 !           write(6,*) "yyyywww step 5 my_id= ", my_id
 
-            nlst(did)%dt = LIS_rc%ts   
+            nlst(did)%dt = LIS_rc%ts
 
 !         write(6,*) "LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)", &
 !                LIS_rc%gnc(n),LIS_rc%gnr(n),LIS_rc%glbnch_red(n)
@@ -196,24 +196,24 @@ module module_lis_HYDRO
 !       write(6,*) "size(noah271_struc(n)%noah%smc(1)),n,ix,jx" , size(noah271_struc(n)%noah%smc(1)),n,ix,jx
 !       write(6,*) "nlst(did)%nsoil = ", nlst(did)%nsoil
 
-            ! get the initial data from LIS 
+            ! get the initial data from LIS
             do k = 1 , nlst(did)%nsoil
                 call lis2HYDRO(RT_DOMAIN(did)%SMC(:,:,k),noah271_struc(n)%noah%smc(k),size(noah271_struc(n)%noah%smc(k)),n,ix,jx)
                 call lis2HYDRO(RT_DOMAIN(did)%stc(:,:,k),noah271_struc(n)%noah%stc(k),size(noah271_struc(n)%noah%stc(k)), n,ix,jx)
                 call lis2HYDRO(RT_DOMAIN(did)%SH2OX(:,:,k),noah271_struc(n)%noah%sh2o(k),size(noah271_struc(n)%noah%sh2o(k)),n,ix,jx)
             enddo
-       
-#ifdef HYDRO_D       
+
+#ifdef HYDRO_D
         write(6,*) "NDHMS lis date ", LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss 
 #endif
 !       write(11,*) "RT_DOMAIN(did)%stc",RT_DOMAIN(did)%stc(:,:,1)
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
-!       call land_finish() 
+!       call land_finish()
 
         call lis2HYDRO(RT_DOMAIN(did)%infxsrt(:,:),INFXS1RT,size(INFXS1RT),n,ix,jx)
         call lis2HYDRO(RT_DOMAIN(did)%soldrain(:,:),SOLDRAIN,size(SOLDRAIN),n,ix,jx)
-        
-    
+
+
         call HYDRO_exe(did)
 
 ! add for update the land surface model state variable.
@@ -226,7 +226,7 @@ module module_lis_HYDRO
 
         call HYDRO2lis_2d(rt_domain(did)%overland%control%surface_water_head_lsm(:,:),SFHEAD1RT,size(SFHEAD1RT),n,ix,jx)
 
-     return 
+     return
      end subroutine lis_cpl_HYDRO
 
      subroutine HYDRO2lis_2d(var,v1d,size1,n,ix,jx)
@@ -238,14 +238,14 @@ module module_lis_HYDRO
 
 !        call LIS_gather_gridded_output(n, p1,tmpVar)
           do r=1,jx
-             do c=1,ix                
+             do c=1,ix
                 if(LIS_domain(n)%gindex(c,r).ne.-1) then
                    v1d(LIS_domain(n)%gindex(c,r)) = var(c,r)
                 endif
              enddo
           enddo
 
-     end subroutine HYDRO2lis_2d        
+     end subroutine HYDRO2lis_2d
 
      subroutine lis2HYDRO(var,v1d,size1,n,ix,jx)
         implicit none
@@ -253,7 +253,7 @@ module module_lis_HYDRO
         real, dimension(ix,jx) :: var
 !       real, dimension(jx,ix) :: tmpVar
         real ::  v1d (size1)
-  
+
 
 !       do i = 1, ix
 !          tmpVar(:,i) = Var(i,:)
@@ -261,13 +261,13 @@ module module_lis_HYDRO
 !       call LIS_gather_tiled_vector_output(n,v1d,tmpVar)
 
           do r=1,jx
-             do c=1,ix                
+             do c=1,ix
                 if(LIS_domain(n)%gindex(c,r).ne.-1) then
                    var(c,r) = v1d(LIS_domain(n)%gindex(c,r))
                 endif
              enddo
           enddo
-         
+
       end subroutine  lis2HYDRO
 
 end module module_lis_HYDRO

@@ -2,23 +2,23 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
-module module_grib2_tables 
+module module_grib2_tables
 
   type table_entry_struct
      integer                   :: product_discipline
@@ -71,7 +71,7 @@ contains
 #else
     open(iunit, file=trim(table_filename), status='old', form='formatted', action='read', iostat=ierr)
 #endif
-     
+
     if (ierr /= 0) then
        write(*,'(/," ***** ERROR *****",/)')
        write(*,'(" ***** Problem opening file ''", A, "''")') trim(table_filename)
@@ -81,7 +81,7 @@ contains
 
     READ_TABLE : do
 #ifndef NCEP_WCOSS
-       
+
 #else
        read(iunit, '(A200)', iostat=ierr) string
 #endif
@@ -141,10 +141,10 @@ contains
 
 ! Local
     type(table_entry_struct), pointer:: table_pointer
-    
+
     ! Start us off by pointing to the top of the table.
     table_pointer => table
-    
+
     ! Seek for the end of the table.
     do while (associated(table_pointer%next))
        table_pointer => table_pointer%next
@@ -169,11 +169,11 @@ contains
 !=================================================================================
   subroutine grib2_clear_parameter_table
     implicit none
-    
+
 ! Local
     type(table_entry_struct), pointer:: table_pointer
     type(table_entry_struct), pointer:: next_pointer
-    
+
     ! Start us off by pointing to the top of the table.
     table_pointer => table
 
@@ -269,23 +269,23 @@ contains
     case default
        write(text,'("Unrecognized type of surface", I4)') surface_type_code
     case (1)
-       write(text,'("Level:  Ground or water surface")') 
+       write(text,'("Level:  Ground or water surface")')
     case (2)
-       write(text,'("Level:  Cloud base level")') 
+       write(text,'("Level:  Cloud base level")')
     case (3)
-       write(text,'("Level:  Cloud top level")') 
+       write(text,'("Level:  Cloud top level")')
     case (4)
-       write(text,'("Level:  0~S~o~N~C isotherm level")') 
+       write(text,'("Level:  0~S~o~N~C isotherm level")')
     case (5)
-       write(text,'("Level:  Adiabatic lifting condensation level")') 
+       write(text,'("Level:  Adiabatic lifting condensation level")')
     case (6)
-       write(text,'("Level:  Maximum wind level")') 
+       write(text,'("Level:  Maximum wind level")')
     case (7)
-       write(text,'("Level:  Tropopause")') 
+       write(text,'("Level:  Tropopause")')
     case (8)
-       write(text,'("Level:  Nominal top of atmosphere")') 
+       write(text,'("Level:  Nominal top of atmosphere")')
     case (9)
-       write(text,'("Level:  Sea bottom")') 
+       write(text,'("Level:  Sea bottom")')
     case (20)
        write(text,'("Level:  Isothermal level ")')
        units = "K"
@@ -293,7 +293,7 @@ contains
        write(text,'("Level:  Isobaric surface ")')
        units = "Pa"
     case (101)
-       write(text,'("Level:  Mean sea level")') 
+       write(text,'("Level:  Mean sea level")')
     case (102)
        write(text,'("Level:  Height MSL ")')
        units = "m"

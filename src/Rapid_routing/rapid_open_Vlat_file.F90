@@ -1,11 +1,11 @@
 !*******************************************************************************
 !Subroutine - rapid_open_Vlat_file
 !*******************************************************************************
-subroutine rapid_open_Vlat_file(Vlat_file) 
+subroutine rapid_open_Vlat_file(Vlat_file)
 
 !Purpose:
 !Open Vlat_file from Fortran/netCDF.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -25,7 +25,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 character(len=100), intent(in):: Vlat_file
 
@@ -33,7 +33,7 @@ character(len=100), intent(in):: Vlat_file
 !*******************************************************************************
 !Open file
 !*******************************************************************************
-if (rank==0) then 
+if (rank==0) then
      open(99,file=Vlat_file,status='old')
      close(99)
      IS_nc_status=NF90_OPEN(Vlat_file,NF90_NOWRITE,IS_nc_id_fil_Vlat)
@@ -42,8 +42,7 @@ end if
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_open_Vlat_file
-

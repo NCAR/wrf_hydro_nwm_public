@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 MODULE module_sf_urban
@@ -87,7 +87,7 @@ MODULE module_sf_urban
    REAL, DIMENSION(1:24)           :: ahdiuprf        ! ah diurnal profile, tloc: 1-24
    REAL, DIMENSION(1:24)           :: hsequip_tbl
 
-   INTEGER                         :: allocate_status 
+   INTEGER                         :: allocate_status
 
 !   INTEGER                         :: num_roof_layers
 !   INTEGER                         :: num_wall_layers
@@ -124,7 +124,7 @@ MODULE module_sf_urban
 ! Input Data from WRF [MKS unit]:
 !
 !     UTYPE  [-]     : Urban type. 1=Commercial/Industrial; 2=High-intensity residential; 
-!                    : 3=low-intensity residential 
+!                    : 3=low-intensity residential
 !     TA     [K]     : Potential temperature at 1st wrf level (absolute temp)
 !     QA     [kg/kg] : Mixing ratio at 1st atmospheric level
 !     UA     [m/s]   : Wind speed at 1st atmospheric level
@@ -134,15 +134,15 @@ MODULE module_sf_urban
 !                      single solar downward can be used instead.
 !                      SSG = SSGD + SSGQ
 !     LSOLAR [-]     : Indicating the input type of solar downward radiation
-!                      True: both direct and diffusive solar radiation 
+!                      True: both direct and diffusive solar radiation
 !                      are available
 !                      False: only total downward ridiation is available.
 !     SSGD   [W/m/m] : Direct solar radiation at a flat surface
 !                      if SSGD is not available, one can assume a ratio SRATIO
-!                      (e.g., 0.7), so that SSGD = SRATIO*SSG 
+!                      (e.g., 0.7), so that SSGD = SRATIO*SSG
 !     SSGQ   [W/m/m] : Diffuse solar radiation at a flat surface
 !                      If SSGQ is not available, SSGQ = SSG - SSGD
-!     LLG    [W/m/m] : Long wave downward radiation at a flat surface 
+!     LLG    [W/m/m] : Long wave downward radiation at a flat surface
 !     RAIN   [mm/h]  : Precipitation
 !     RHOO   [kg/m/m/m] : Air density
 !     ZA     [m]     : First atmospheric level
@@ -162,10 +162,10 @@ MODULE module_sf_urban
 !     SH  [W/m/m/]       : Sensible heat flux, = FLXTH*RHOO*CPP
 !     LH  [W/m/m]        : Latent heat flux, = FLXHUM*RHOO*ELL
 !     LH_INEMATIC [kg/m/m/sec]: Moisture Kinematic flux, = FLXHUM*RHOO
-!     SW  [W/m/m]        : Upward shortwave radiation flux, 
+!     SW  [W/m/m]        : Upward shortwave radiation flux,
 !                          = SSG-SNET*697.7*60. (697.7*60.=100.*100.*4.186)
 !     ALB [-]            : Time-varying albedo
-!     LW  [W/m/m]        : Upward longwave radiation flux, 
+!     LW  [W/m/m]        : Upward longwave radiation flux,
 !                          = LNET*697.7*60.-LLG
 !     G   [W/m/m]        : Heat Flux into the Ground
 !     RN  [W/m/m]        : Net radiation
@@ -269,7 +269,7 @@ MODULE module_sf_urban
 !     Kusaka et al. (2001) Bound.-Layer Meteor., vol.101, p329-358
 !
 ! History:
-!     2006/06          modified by H. Kusaka (Univ. Tsukuba), M. Tewari 
+!     2006/06          modified by H. Kusaka (Univ. Tsukuba), M. Tewari
 !     2005/10/26,      modified by Fei Chen, Mukul Tewari
 !     2003/07/21 WRF , modified  by H. Kusaka of CRIEPI (NCAR/MMM)
 !     2001/08/26 PhD , modified  by H. Kusaka of CRIEPI (Univ.Tsukuba)
@@ -320,7 +320,7 @@ MODULE module_sf_urban
    LOGICAL, INTENT(IN) :: LSOLAR  ! logical    [true=both, false=SSG only]
 
 !  The following variables are also model configuration variables, but are 
-!  defined in the URBAN.TBL and in the contains statement in the top of 
+!  defined in the URBAN.TBL and in the contains statement in the top of
 !  the module_urban_init, so we should not declare them here.
 
   INTEGER, INTENT(IN) :: num_roof_layers
@@ -366,7 +366,7 @@ MODULE module_sf_urban
    REAL, INTENT(INOUT) :: CHC_URB
 
 !-------------------------------------------------------------------------------
-! O: output variables from Urban to LSM 
+! O: output variables from Urban to LSM
 !-------------------------------------------------------------------------------
 
    REAL, INTENT(OUT) :: TS     ! surface potential temperature    [K]
@@ -381,7 +381,7 @@ MODULE module_sf_urban
    REAL, INTENT(OUT) :: RN     ! net radition                     [W/m/m]
    REAL, INTENT(OUT) :: PSIM   ! similality stability shear function for momentum
    REAL, INTENT(OUT) :: PSIH   ! similality stability shear function for heat
-   REAL, INTENT(OUT) :: GZ1OZ0   
+   REAL, INTENT(OUT) :: GZ1OZ0
    REAL, INTENT(OUT) :: U10    ! u at 10m                         [m/s]
    REAL, INTENT(OUT) :: V10    ! u at 10m                         [m/s]
    REAL, INTENT(OUT) :: TH2    ! potential temperature at 2 m     [K]
@@ -421,15 +421,15 @@ MODULE module_sf_urban
 
    REAL :: ZR, Z0C, Z0HC, ZDC, SVF, R, RW, HGT, AH
    REAL :: SIGMA_ZED
-   REAL :: CAPR, CAPB, CAPG, AKSR, AKSB, AKSG, ALBR, ALBB, ALBG 
+   REAL :: CAPR, CAPB, CAPG, AKSR, AKSB, AKSG, ALBR, ALBB, ALBG
    REAL :: EPSR, EPSB, EPSG, Z0R,  Z0B,  Z0G,  Z0HB, Z0HG
    REAL :: TRLEND,TBLEND,TGLEND
    REAL :: T1VR, T1VC,TH2V
    REAL :: RLMO_URB
    REAL :: AKANDA_URBAN
-   
+
    REAL :: TH2X                                                !m
-   
+
    INTEGER :: BOUNDR, BOUNDB, BOUNDG
    INTEGER :: CH_SCHEME, TS_SCHEME
 
@@ -486,7 +486,7 @@ MODULE module_sf_urban
    REAL :: FAI        ! Latitude [rad]
    REAL :: CNT,SNT
    REAL :: PS         ! Surface Pressure [hPa]
-   REAL :: TAV        ! Vertial Temperature [K] 
+   REAL :: TAV        ! Vertial Temperature [K]
 
    REAL :: XXX, X, Z0, Z0H, CD, CH
    REAL :: XXX2, PSIM2, PSIH2, XXX10, PSIM10, PSIH10
@@ -494,7 +494,7 @@ MODULE module_sf_urban
 
    REAL :: TRP, TBP, TGP, TCP, QCP, TST, QST
 
-   INTEGER :: iteration, K 
+   INTEGER :: iteration, K
    INTEGER :: tloc
 
 #ifdef _HRLDAS_URBAN_
@@ -520,9 +520,9 @@ MODULE module_sf_urban
                    ALBG,EPSR,EPSB,EPSG,Z0R,Z0B,Z0G,Z0HB,Z0HG,     &
                    BETR,BETB,BETG,TRLEND,TBLEND,TGLEND,           &
 !for BEP
-                   NUMDIR, STREET_DIRECTION, STREET_WIDTH,        & 
-                   BUILDING_WIDTH, NUMHGT, HEIGHT_BIN,            & 
-                   HPERCENT_BIN,                                  & 
+                   NUMDIR, STREET_DIRECTION, STREET_WIDTH,        &
+                   BUILDING_WIDTH, NUMHGT, HEIGHT_BIN,            &
+                   HPERCENT_BIN,                                  &
 !end BEP
                    BOUNDR,BOUNDB,BOUNDG,CH_SCHEME,TS_SCHEME,      &
                    AKANDA_URBAN)
@@ -581,7 +581,7 @@ MODULE module_sf_urban
      BB = 0.4 * ZR / ( XLB * alog( ( ZR - ZDC ) / Z0C ) )
      UC=UR*EXP(-BB*(1.-ZC/ZR))
    ELSE
-     ! PRINT *, 'Warning ZR + 2m  is larger than the 1st WRF level' 
+     ! PRINT *, 'Warning ZR + 2m  is larger than the 1st WRF level'
      ZC=ZA/2.
      UC=UA/2.
    END IF
@@ -680,32 +680,32 @@ MODULE module_sf_urban
 
    ! Alternative option for MOST using SFCDIF routine from Noah
    ! Virtual temperatures needed by SFCDIF
-   T1VR = TRP* (1.0+ 0.61 * QA) 
+   T1VR = TRP* (1.0+ 0.61 * QA)
    TH2V = (TA + ( 0.0098 * ZA)) * (1.0+ 0.61 * QA)
-  
+
    ! note that CHR_URB contains UA (=CHR_MOS*UA)
    RLMO_URB=0.0
    CALL SFCDIF_URB (ZA,Z0R,T1VR,TH2V,UA,AKANDA_URBAN,CMR_URB,CHR_URB,RLMO_URB,CDR)
    ALPHAR =  RHO*CP*CHR_URB
    CHR=ALPHAR/RHO/CP/UA
 
-   IF(RAIN > 1.) BETR=0.7  
+   IF(RAIN > 1.) BETR=0.7
 
-   IF (TS_SCHEME == 1) THEN 
+   IF (TS_SCHEME == 1) THEN
 
 !-------------------------------------------------------------------------------
 ! TR  Solving Non-Linear Equation by Newton-Rapson
-! TRL Solving Heat Equation by Tri Diagonal Matrix Algorithm  
+! TRL Solving Heat Equation by Tri Diagonal Matrix Algorithm
 !-------------------------------------------------------------------------------
-!      TSC=TRP-273.15                          
+!      TSC=TRP-273.15
 !      ES=EXP(19.482-4303.4/(TSC+243.5))        ! WMO
 !      ES=6.11*10.**(TETENA*TSC/(TETENB+TSC))   ! Tetens
 !      DESDT=( 6.1078*(2500.-2.4*TSC)/ &        ! Tetens
-!            (0.46151*(TSC+273.15)**2.) )*10.**(7.5*TSC/(237.3+TSC)) 
+!            (0.46151*(TSC+273.15)**2.) )*10.**(7.5*TSC/(237.3+TSC))
 !      ES=6.11*EXP((2.5*10.**6./461.51)*(TRP-273.15)/(273.15*TRP) ) ! Clausius-Clapeyron 
 !      DESDT=(2.5*10.**6./461.51)*ES/(TRP**2.)                      ! Clausius-Clapeyron
-!      QS0R=0.622*ES/(PS-0.378*ES) 
-!      DQS0RDTR = DESDT*0.622*PS/((PS-0.378*ES)**2.) 
+!      QS0R=0.622*ES/(PS-0.378*ES)
+!      DQS0RDTR = DESDT*0.622*PS/((PS-0.378*ES)**2.)
 !      DQS0RDTR = 17.269*(273.15-35.86)/((TRP-35.86)**2.)*QS0R
 
 !    TRP=350.
@@ -714,8 +714,8 @@ MODULE module_sf_urban
 
        ES=6.11*EXP( (2.5*10.**6./461.51)*(TRP-273.15)/(273.15*TRP) )
        DESDT=(2.5*10.**6./461.51)*ES/(TRP**2.)
-       QS0R=0.622*ES/(PS-0.378*ES) 
-       DQS0RDTR = DESDT*0.622*PS/((PS-0.378*ES)**2.) 
+       QS0R=0.622*ES/(PS-0.378*ES)
+       DQS0RDTR = DESDT*0.622*PS/((PS-0.378*ES)**2.)
 
        RR=EPSR*(RX-SIG*(TRP**4.)/60.)
        HR=RHO*CP*CHR*UA*(TRP-TA)*100.
@@ -729,7 +729,7 @@ MODULE module_sf_urban
        DELERDTR = RHO*EL*CHR*UA*BETR*DQS0RDTR*100.
        DG0RDTR =  2.*AKSR/DZR(1)
 
-       DFDT = DRRDTR - DHRDTR - DELERDTR - DG0RDTR 
+       DFDT = DRRDTR - DHRDTR - DELERDTR - DG0RDTR
        DTR = F/DFDT
 
        TR = TRP - DTR
@@ -746,7 +746,7 @@ MODULE module_sf_urban
    ELSE
 
      ES=6.11*EXP( (2.5*10.**6./461.51)*(TRP-273.15)/(273.15*TRP) )
-     QS0R=0.622*ES/(PS-0.378*ES)        
+     QS0R=0.622*ES/(PS-0.378*ES)
 
      RR=EPSR*(RX-SIG*(TRP**4.)/60.)
      HR=RHO*CP*CHR*UA*(TRP-TA)*100.
@@ -763,7 +763,7 @@ MODULE module_sf_urban
    FLXHUMR=ELER/RHO/EL/100.
 
 !-------------------------------------------------------------------------------
-!  Wall and Road 
+!  Wall and Road
 !-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
@@ -777,12 +777,12 @@ MODULE module_sf_urban
    ! CALL mos(XXXC,ALPHAC,CDC,BHC,RIBC,Z,Z0C,UA,TA,TCP,RHO)
    ! Virtual temperatures needed by SFCDIF routine from Noah
 
-   T1VC = TCP* (1.0+ 0.61 * QA) 
+   T1VC = TCP* (1.0+ 0.61 * QA)
    RLMO_URB=0.0
    CALL SFCDIF_URB(ZA,Z0C,T1VC,TH2V,UA,AKANDA_URBAN,CMC_URB,CHC_URB,RLMO_URB,CDC)
    ALPHAC =  RHO*CP*CHC_URB
 
-   IF (CH_SCHEME == 1) THEN 
+   IF (CH_SCHEME == 1) THEN
 
      Z=ZDC
      BHB=LOG(Z0B/Z0HB)/0.4
@@ -813,7 +813,7 @@ MODULE module_sf_urban
 
 !-------------------------------------------------------------------------------
 !  TB, TG  Solving Non-Linear Simultaneous Equation by Newton-Rapson
-!  TBL,TGL Solving Heat Equation by Tri Diagonal Matrix Algorithm  
+!  TBL,TGL Solving Heat Equation by Tri Diagonal Matrix Algorithm
 !-------------------------------------------------------------------------------
 
 !    TBP=350.
@@ -836,15 +836,15 @@ MODULE module_sf_urban
      DO ITERATION=1,20
 #endif
 
-       ES=6.11*EXP( (2.5*10.**6./461.51)*(TBP-273.15)/(273.15*TBP) ) 
+       ES=6.11*EXP( (2.5*10.**6./461.51)*(TBP-273.15)/(273.15*TBP) )
        DESDT=(2.5*10.**6./461.51)*ES/(TBP**2.)
-       QS0B=0.622*ES/(PS-0.378*ES) 
+       QS0B=0.622*ES/(PS-0.378*ES)
        DQS0BDTB=DESDT*0.622*PS/((PS-0.378*ES)**2.)
 
-       ES=6.11*EXP( (2.5*10.**6./461.51)*(TGP-273.15)/(273.15*TGP) ) 
+       ES=6.11*EXP( (2.5*10.**6./461.51)*(TGP-273.15)/(273.15*TGP) )
        DESDT=(2.5*10.**6./461.51)*ES/(TGP**2.)
-       QS0G=0.622*ES/(PS-0.378*ES)        
-       DQS0GDTG=DESDT*0.22*PS/((PS-0.378*ES)**2.) 
+       QS0G=0.622*ES/(PS-0.378*ES)
+       DQS0GDTG=DESDT*0.22*PS/((PS-0.378*ES)**2.)
 
        RG1=EPSG*( RX*VFGS          &
        +EPSB*VFGW*SIG*TBP**4./60.  &
@@ -915,12 +915,12 @@ MODULE module_sf_urban
        DG0GDTB=0.
 
        F = SB + RB - HB - ELEB - G0B
-       FX = DRBDTB - DHBDTB - DELEBDTB - DG0BDTB 
+       FX = DRBDTB - DHBDTB - DELEBDTB - DG0BDTB
        FY = DRBDTG - DHBDTG - DELEBDTG - DG0BDTG
 
        GF = SG + RG - HG - ELEG - G0G
        GX = DRGDTB - DHGDTB - DELEGDTB - DG0GDTB
-       GY = DRGDTG - DHGDTG - DELEGDTG - DG0GDTG 
+       GY = DRGDTG - DHGDTG - DELEGDTG - DG0GDTG
 
 #ifdef _HRLDAS_URBAN_
        DTB = converge_coefficient * (GF*FY-F*GY)/(FX*GY-GX*FY)
@@ -997,14 +997,14 @@ MODULE module_sf_urban
    ELSE
 
 !-------------------------------------------------------------------------------
-!  TB, TG  by Force-Restore Method 
+!  TB, TG  by Force-Restore Method
 !-------------------------------------------------------------------------------
 
        ES=6.11*EXP((2.5*10.**6./461.51)*(TBP-273.15)/(273.15*TBP) )
-       QS0B=0.622*ES/(PS-0.378*ES)       
+       QS0B=0.622*ES/(PS-0.378*ES)
 
        ES=6.11*EXP((2.5*10.**6./461.51)*(TGP-273.15)/(273.15*TGP) )
-       QS0G=0.622*ES/(PS-0.378*ES)        
+       QS0G=0.622*ES/(PS-0.378*ES)
 
        RG1=EPSG*( RX*VFGS             &
        +EPSB*VFGW*SIG*TBP**4./60.     &
@@ -1086,7 +1086,7 @@ MODULE module_sf_urban
    LW    = LLG - (LNET*697.7*60.) ! Upward longwave radiation   [W/m/m]
    SW    = SSG - (SNET*697.7*60.) ! Upward shortwave radiation  [W/m/m]
    ALB   = 0.
-   IF( ABS(SSG) > 0.0001) ALB = SW/SSG ! Effective albedo [-] 
+   IF( ABS(SSG) > 0.0001) ALB = SW/SSG ! Effective albedo [-]
    G = -FLXG*697.7*60.            ! [W/m/m]
    RN = (SNET+LNET)*697.7*60.     ! Net radiation [W/m/m]
 
@@ -1098,7 +1098,7 @@ MODULE module_sf_urban
 !  diagnostic GRID AVERAGED  PSIM  PSIH  TS QS --> WRF
 !------------------------------------------------------
 
-   Z0 = Z0C 
+   Z0 = Z0C
    Z0H = Z0HC
    Z = ZA - ZDC
 
@@ -1175,7 +1175,7 @@ MODULE module_sf_urban
 !   TH2 = TS + (TA-TS)*(PSIT2/PSIT)   ! potential temp at 2 m [K]
 !  TH2 = TS + (TA-TS)*(PSIT2/PSIT)   ! Fei: this seems to be temp (not potential) at 2 m [K]
 !Fei: consistant with M-O theory
-   TH2 = TS + (TA-TS) *(CHS/CHS2) 
+   TH2 = TS + (TA-TS) *(CHS/CHS2)
 
    Q2 = QS + (QA-QS)*(PSIT2/PSIT)    ! humidity at 2 m       [-]
 
@@ -1205,7 +1205,7 @@ MODULE module_sf_urban
    INTEGER             :: NEWT
    INTEGER, PARAMETER  :: NEWT_END=10
 
-   IF(RIB <= -15.) RIB=-15. 
+   IF(RIB <= -15.) RIB=-15.
 
    IF(RIB < 0.) THEN
 
@@ -1269,7 +1269,7 @@ MODULE module_sf_urban
    CD=US*US/UA**2.            ! CD
    ALPHA=RHO*CP*0.4*US/PSIH   ! RHO*CP*CH*U
 
-   RETURN 
+   RETURN
    END SUBROUTINE mos
 !===============================================================================
 !
@@ -1291,14 +1291,14 @@ MODULE module_sf_urban
    IF(RIB <= -15.) RIB=-15.
 
    IF(RIB >= 0.0) THEN
-      IF(RIB >= 0.142857) THEN 
+      IF(RIB >= 0.142857) THEN
          XX=0.714
-      ELSE 
+      ELSE
          XX=RIB*LOG(Z/Z0)/(1.-7.*RIB)
-      END IF 
+      END IF
       CH=0.16/0.74/(LOG(Z/Z0)+7.*MIN(XX,0.714))**2.
       CD=0.16/(LOG(Z/Z0)+7.*MIN(XX,0.714))**2.
-   ELSE 
+   ELSE
       CMB=7.4*A2*9.4*SQRT(Z/Z0)
       CHB=5.3*A2*9.4*SQRT(Z/Z0)
       CH=A2/0.74*(1.-9.4*RIB/(1.+CHB*SQRT(-RIB)))
@@ -1307,7 +1307,7 @@ MODULE module_sf_urban
 
    ALPHA=RHO*CP*CH*UA
 
-   RETURN 
+   RETURN
    END SUBROUTINE louis79
 !===============================================================================
 !
@@ -1321,19 +1321,19 @@ MODULE module_sf_urban
    REAL, PARAMETER     :: CP=0.24
    REAL, INTENT(IN)    :: Z, Z0, UA, RHO
    REAL, INTENT(OUT)   :: ALPHA, CD
-   REAL, INTENT(INOUT) :: RIB 
-   REAL                :: A2, FM, FH, CH, CHH 
+   REAL, INTENT(INOUT) :: RIB
+   REAL                :: A2, FM, FH, CH, CHH
 
    A2=(0.4/ALOG(Z/Z0))**2.
 
    IF(RIB <= -15.) RIB=-15.
 
-   IF(RIB >= 0.0) THEN 
+   IF(RIB >= 0.0) THEN
       FM=1./((1.+(2.*5.*RIB)/SQRT(1.+5.*RIB)))
       FH=1./(1.+(3.*5.*RIB)*SQRT(1.+5.*RIB))
       CH=A2*FH
       CD=A2*FM
-   ELSE 
+   ELSE
       CHH=5.*3.*5.*A2*SQRT(Z/Z0)
       FM=1.-(2.*5.*RIB)/(1.+3.*5.*5.*A2*SQRT(Z/Z0+1.)*(-RIB))
       FH=1.-(3.*5.*RIB)/(1.+CHH*SQRT(-RIB))
@@ -1392,11 +1392,11 @@ MODULE module_sf_urban
       B(K) = CAP*DZ(K)/DELT + 2.*AKS/(DZ(K-1)+DZ(K)) + 2.*AKS/(DZ(K)+DZ(K+1)) 
       C(K) = -2.*AKS/(DZ(K)+DZ(K+1))
       D(K) = CAP*DZ(K)/DELT*TSL(K)
-   END DO 
+   END DO
 
    IF(BOUND == 1) THEN                  ! Flux=0
       A(KM) = -2.*AKS/(DZ(KM-1)+DZ(KM))
-      B(KM) = CAP*DZ(KM)/DELT + 2.*AKS/(DZ(KM-1)+DZ(KM))  
+      B(KM) = CAP*DZ(KM)/DELT + 2.*AKS/(DZ(KM-1)+DZ(KM))
       C(KM) = 0.0
       D(KM) = CAP*DZ(KM)/DELT*TSL(KM)
    ELSE                                 ! T=constant
@@ -1404,7 +1404,7 @@ MODULE module_sf_urban
       B(KM) = CAP*DZ(KM)/DELT + 2.*AKS/(DZ(KM-1)+DZ(KM)) + 2.*AKS/(DZ(KM)+DZEND) 
       C(KM) = 0.0
       D(KM) = CAP*DZ(KM)/DELT*TSL(KM) + 2.*AKS*TSLEND/(DZ(KM)+DZEND)
-   END IF 
+   END IF
 
    P(1) = -C(1)/B(1)
    Q(1) =  D(1)/B(1)
@@ -1412,19 +1412,19 @@ MODULE module_sf_urban
    DO K=2,KM
       P(K) = -C(K)/(A(K)*P(K-1)+B(K))
       Q(K) = (-A(K)*Q(K-1)+D(K))/(A(K)*P(K-1)+B(K))
-   END DO 
+   END DO
 
    X(KM) = Q(KM)
 
    DO K=KM-1,1,-1
       X(K) = P(K)*X(K+1)+Q(K)
-   END DO 
+   END DO
 
    DO K=1,KM
       TSL(K) = X(K)
-   END DO 
+   END DO
 
-   RETURN 
+   RETURN
    END SUBROUTINE multi_layer
 !===============================================================================
 !
@@ -1444,7 +1444,7 @@ MODULE module_sf_urban
                          BOUNDR,BOUNDB,BOUNDG,CH_SCHEME,TS_SCHEME,     & ! out
                          AKANDA_URBAN)                                   ! out
 
-   INTEGER, INTENT(IN)  :: UTYPE 
+   INTEGER, INTENT(IN)  :: UTYPE
 
    REAL, INTENT(OUT)    :: ZR,Z0C,Z0HC,ZDC,SVF,R,RW,HGT,AH,              &
                            CAPR,CAPB,CAPG,AKSR,AKSB,AKSG,ALBR,ALBB,ALBG, &
@@ -1460,7 +1460,7 @@ MODULE module_sf_urban
    INTEGER,                     INTENT(OUT) :: NUMHGT
    REAL,    DIMENSION(MAXHGTS), INTENT(OUT) :: HEIGHT_BIN
    REAL,    DIMENSION(MAXHGTS), INTENT(OUT) :: HPERCENT_BIN
-   
+
 !end BEP
 
    INTEGER, INTENT(OUT) :: BOUNDR,BOUNDB,BOUNDG,CH_SCHEME,TS_SCHEME
@@ -1552,7 +1552,7 @@ MODULE module_sf_urban
    INTEGER :: num_roof_layers
    INTEGER :: num_wall_layers
    INTEGER :: num_road_layers
-   INTEGER :: dummy 
+   INTEGER :: dummy
    REAL    :: DHGT, HGT, VFWS, VFGS
 
    REAL, allocatable, dimension(:) :: ROOF_WIDTH
@@ -1595,7 +1595,7 @@ MODULE module_sf_urban
    CALL wrf_error_fatal('ERROR OPEN URBPARM.TBL')
    ENDIF
 
-   READLOOP : do 
+   READLOOP : do
       read(11,'(A512)', iostat=iostatus) string
       if (iostatus /= 0) exit READLOOP
       if (string(1:1) == "#") cycle READLOOP
@@ -1603,7 +1603,7 @@ MODULE module_sf_urban
       indx = index(string,":")
       if (indx <= 0) cycle READLOOP
       name = trim(adjustl(string(1:indx-1)))
-      
+
       ! Here are the variables we expect to be defined in the URBPARM.TBL:
       if (name == "Number of urban categories") then
          read(string(indx+1:),*) icate
@@ -1614,11 +1614,11 @@ MODULE module_sf_urban
             if(allocate_status /= 0)CALL wrf_error_fatal('Error allocating SIGMA_ZED_TBL in urban_param_init')
             ALLOCATE( Z0C_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating Z0C_TBL in urban_param_init')
-            ALLOCATE( Z0HC_TBL(ICATE), stat=allocate_status ) 
+            ALLOCATE( Z0HC_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating Z0HC_TBL in urban_param_init')
             ALLOCATE( ZDC_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating ZDC_TBL in urban_param_init')
-            ALLOCATE( SVF_TBL(ICATE), stat=allocate_status ) 
+            ALLOCATE( SVF_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating SVF_TBL in urban_param_init')
             ALLOCATE( R_TBL(ICATE), stat=allocate_status )
             if(allocate_status /= 0) CALL wrf_error_fatal('Error allocating R_TBL in urban_param_init')
@@ -1849,13 +1849,13 @@ MODULE module_sf_urban
             numhgt_tbl(k) = numhgt_tbl(k) + 1
             height_bin_tbl(numhgt_tbl(k), k) = dummy_hgt
             hpercent_bin_tbl(numhgt_tbl(k),k) = dummy_pct
-            
+
          enddo HEIGHTLOOP
          pctsum = sum ( hpercent_bin_tbl(:,k) , mask=(hpercent_bin_tbl(:,k)>-1.E25 ) )
          if ( pctsum /= 100.) then
             write (*,'(//,"Building height percentages for category ", I2, " must sum to 100.0")') k
             write (*,'("Currently, they sum to ", F6.2,/)') pctsum
-            CALL wrf_error_fatal('pctsum is not equal to 100.') 
+            CALL wrf_error_fatal('pctsum is not equal to 100.')
          endif
       else if ( name == "Z0R") then
          read(string(indx+1:),*) Z0R_tbl(1:icate)
@@ -1885,7 +1885,7 @@ MODULE module_sf_urban
          read(string(indx+1:),*) hsequip_tbl(1:24)
       else if (name == "HSEQUIP_SCALE_FACTOR") then
          read(string(indx+1:),*) hsesf_tbl(1:icate)
-!end BEP         
+!end BEP
       else
          CALL wrf_error_fatal('URBPARM.TBL: Unrecognized NAME = "'//trim(name)//'" in Subr URBAN_PARAM_INIT')
       endif
@@ -1912,7 +1912,7 @@ MODULE module_sf_urban
       BETG_TBL(LC) = 0.0
 
       ! The following urban canyon geometry parameters are following Macdonald's (1998) formulations
-      
+
       ! Lambda_P :: Plan areal fraction, which corresponds to R for a 2-d canyon.
       ! Lambda_F :: Frontal area index, which corresponds to HGT for a 2-d canyon
       ! Cd       :: Drag coefficient ( 1.2 from Grimmond and Oke, 1998 )
@@ -1922,7 +1922,7 @@ MODULE module_sf_urban
       Lambda_P = R_TBL(LC)
       Lambda_F = HGT_TBL(LC)
       Cd         = 1.2
-      alpha_macd = 4.43 
+      alpha_macd = 4.43
       beta_macd  = 1.0
 
 
@@ -2013,7 +2013,7 @@ MODULE module_sf_urban
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)                    :: TDEEP0_URB
    INTEGER, DIMENSION( ims:ime, jms:jme ), INTENT(IN)                 :: IVGTYP
    LOGICAL , INTENT(IN) :: restart
- 
+
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TR_URB2D
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TB_URB2D
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TG_URB2D
@@ -2098,7 +2098,7 @@ MODULE module_sf_urban
       LH_URB2D(I,J)=0.
       G_URB2D(I,J)=0.
       RN_URB2D(I,J)=0.
-      
+
 !m
       FRC_URB2D(I,J)=0.
       UTYPE_URB2D(I,J)=0
@@ -2111,17 +2111,17 @@ MODULE module_sf_urban
             IF( IVGTYP(I,J) == 31) THEN
                UTYPE_URB2D(I,J) = 3  ! low-intensity residential
                UTYPE_URB = UTYPE_URB2D(I,J)  ! low-intensity residential
-               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB) 
+               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB)
             ENDIF
             IF( IVGTYP(I,J) == 32) THEN
                UTYPE_URB2D(I,J) = 2  ! high-intensity
                UTYPE_URB = UTYPE_URB2D(I,J)  ! high-intensity
-               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB) 
+               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB)
             ENDIF
             IF( IVGTYP(I,J) == 33) THEN
                UTYPE_URB2D(I,J) = 1  !  Commercial/Industrial/Transportation
                UTYPE_URB = UTYPE_URB2D(I,J)  !  Commercial/Industrial/Transportation
-               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB) 
+               FRC_URB2D(I,J) = FRC_URB_TBL(UTYPE_URB)
             ENDIF
 
 
@@ -2192,7 +2192,7 @@ MODULE module_sf_urban
         TGL_URB3D(I,K,J)=TLAYER0_URB(I,K,J)+0.
 #endif
       END DO
-      
+
 ! multi-layer urban
 !      IF( sf_urban_physics .EQ. 2)THEN
        IF((SF_URBAN_PHYSICS.eq.2).OR.(SF_URBAN_PHYSICS.eq.3)) THEN
@@ -2229,9 +2229,9 @@ MODULE module_sf_urban
         SFR_URB3D(I,K,J)=0.
         SFG_URB3D(I,K,J)=0.
       ENDDO
-       
-       ENDIF 
-              
+
+       ENDIF
+
       if (SF_URBAN_PHYSICS.EQ.3) then
          LF_AC_URB3D(I,J)=0.
          SF_AC_URB3D(I,J)=0.
@@ -2325,7 +2325,7 @@ MODULE module_sf_urban
        TS=0.5*(TS1+TS2)
 
        ES=6.11*EXP( (2.5*10.**6./461.51)*(TS-273.15)/(273.15*TS) )
-       QS0=0.622*ES/(PS-0.378*ES) 
+       QS0=0.622*ES/(PS-0.378*ES)
        R=EPS*(RX-SIG*(TS**4.)/60.)
        H=RHO*CP*CH*UA*(TS-TA)*100.
        ELE=RHO*EL*CH*UA*BET*(QS0-QA)*100.
@@ -2445,7 +2445,7 @@ SUBROUTINE SFCDIF_URB (ZLM,Z0,THZ0,THLM,SFCSPD,AKANDA,AKMS,AKHS,RLMO,CD)
 ! KCL/TL Try Kanda approach instead (Kanda et al. 2007, JAMC)
 !      ZT = EXP (ZILFC * SQRT (USTAR * Z0))* Z0
       ZT = EXP (2.0-AKANDA*(SQVISC**2 * USTAR * Z0)**0.25)* Z0
-      
+
       ZSLU = ZLM + ZU
 
       ZSLT = ZLM + ZT
@@ -2465,7 +2465,7 @@ SUBROUTINE SFCDIF_URB (ZLM,Z0,THZ0,THLM,SFCSPD,AKANDA,AKMS,AKHS,RLMO,CD)
 
          ZETAT = ZT * RLMO
          IF (ILECH .eq. 0) THEN
-            IF (RLMO .lt. 0.0)THEN 
+            IF (RLMO .lt. 0.0)THEN
                XLU4 = 1. -16.* ZETALU
                XLT4 = 1. -16.* ZETALT
                XU4 = 1. -16.* ZETAU

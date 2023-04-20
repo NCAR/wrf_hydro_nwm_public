@@ -2,13 +2,13 @@
 !Subroutine - rapid_routing_param
 !*******************************************************************************
 subroutine rapid_routing_param(ZV_k,ZV_x,                                      &
-                               ZV_C1,ZV_C2,ZV_C3,ZM_A) 
+                               ZV_C1,ZV_C2,ZV_C3,ZM_A)
 
 !Purpose:
-!Calculates the Muskingum method (McCarthy 1938) parameters C1, C2 and C3.  
-!Also calculates the matrix A used for linear system solver. 
-!Author: 
-!Cedric H. David, 2010-2015. 
+!Calculates the Muskingum method (McCarthy 1938) parameters C1, C2 and C3.
+!Also calculates the matrix A used for linear system solver.
+!Author:
+!Cedric H. David, 2010-2015.
 
 
 !*******************************************************************************
@@ -26,30 +26,30 @@ implicit none
 !*******************************************************************************
 !Includes
 !*******************************************************************************
-#include "finclude/petscsys.h"       
+#include "finclude/petscsys.h"
 !base PETSc routines
-#include "finclude/petscvec.h"  
+#include "finclude/petscvec.h"
 #include "finclude/petscvec.h90"
-!vectors, and vectors in Fortran90 
-#include "finclude/petscmat.h"    
+!vectors, and vectors in Fortran90
+#include "finclude/petscmat.h"
 !matrices
-#include "finclude/petscksp.h"    
+#include "finclude/petscksp.h"
 !Krylov subspace methods
-#include "finclude/petscpc.h"     
+#include "finclude/petscpc.h"
 !preconditioners
 #include "finclude/petscviewer.h"
 !viewers (allows writing results in file for example)
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 Vec, intent(in)    :: ZV_k,ZV_x
-Vec, intent(out)   :: ZV_C1,ZV_C2,ZV_C3,ZM_A 
+Vec, intent(out)   :: ZV_C1,ZV_C2,ZV_C3,ZM_A
 
 
 !*******************************************************************************
-!Calculation of the Muskingum method constants (C1,C2,C3) and of the matrix A 
+!Calculation of the Muskingum method constants (C1,C2,C3) and of the matrix A
 !used in the linear system A*Qout=b
 !*******************************************************************************
 call VecCopy(ZV_x,ZV_Cdenom,ierr)
@@ -93,8 +93,7 @@ call MatDiagonalScale(ZM_TC1,ZV_C1,ZV_one,ierr)            !TC1=diag(C1)*TC1
 end if
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_routing_param
-

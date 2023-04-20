@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !WRF:MODEL_LAYER:CONSTANTS
@@ -65,7 +65,7 @@
    REAL    , PARAMETER :: cvovcp       = 1./cpovcv
    REAL    , PARAMETER :: rvovrd       = r_v/r_d
 
-   REAL    , PARAMETER :: reradius     = 1./6370.0e03 
+   REAL    , PARAMETER :: reradius     = 1./6370.0e03
 
    REAL    , PARAMETER :: asselin      = .025
 !   REAL    , PARAMETER :: asselin      = .0
@@ -148,7 +148,7 @@
        REAL , PARAMETER ::  wght=0.35
        REAL , PARAMETER ::  wpc=0.075
        REAL , PARAMETER ::  z0land=0.10
-#ifdef HWRF 
+#ifdef HWRF
        REAL , PARAMETER ::  z0max=0.01
 #else
        REAL , PARAMETER ::  z0max=0.008

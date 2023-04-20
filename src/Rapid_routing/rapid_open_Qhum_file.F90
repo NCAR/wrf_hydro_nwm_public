@@ -1,11 +1,11 @@
 !*******************************************************************************
 !Subroutine - rapid_open_Qhum
 !*******************************************************************************
-subroutine rapid_open_Qhum_file(Qhum_file) 
+subroutine rapid_open_Qhum_file(Qhum_file)
 
 !Purpose:
 !Open Qhum_file from Fortran.
-!Author: 
+!Author:
 !Cedric H. David, 2014-2015.
 
 
@@ -24,7 +24,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 character(len=100), intent(in):: Qhum_file
 
@@ -36,8 +36,7 @@ if (rank==0) open(36,file=Qhum_file,status='old')
 
 
 !*******************************************************************************
-!End 
+!End
 !*******************************************************************************
 
 end subroutine rapid_open_Qhum_file
-

@@ -82,9 +82,9 @@ which changes the answer must be isolated as much as possible into its own pull 
 #### Bug fixes
 All bug fixes must address a specific [GitHub
 issue](https://github.com/NCAR/wrf_hydro_nwm_public/issues). Only issues labeled with ["community
-dev"](https://github.com/NCAR/wrf_hydro_nwm_public/labels/community%20dev) are open to community 
-contributions. The majority of issues will be open to community contributions, but some cases may 
-require more careful handling. Issues without the "community dev" label are either still being 
+dev"](https://github.com/NCAR/wrf_hydro_nwm_public/labels/community%20dev) are open to community
+contributions. The majority of issues will be open to community contributions, but some cases may
+require more careful handling. Issues without the "community dev" label are either still being
 investigated, are of broad scope, or involve changes to code that is actively being developed internally.
 
 All code changes to address issues must be submitted using a pull request, and the corresponding
@@ -109,46 +109,45 @@ harmony among the various NCAR, NOAA, and WRF-Hydro community research efforts.
 
 ### Checklist for new feature contributions
 #### You should have the following to submit a new feature contribution to the WRF-Hydro code base:
-1. A WRF-Hydro team point of contact (POC). Early in your development process, it is always a good idea 
-to reach out to the WRF-Hydro team and find a good POC for your new feature. This person will help 
-keep you informed of new developments as they may relate to your feature, advise you on which branches 
-to keep current with (if other than master), and provide pointers on requirements.
-2. New feature code integrated in with the latest WRF-Hydro master branch (or other as advised by your 
-WRF-Hydro POC). This merged code should exist in your own fork, but can be in your own master branch or 
+1. A WRF-Hydro team point of contact (POC). Early in your development process, it is always a good idea
+to reach out to the WRF-Hydro team and find a good POC for your new feature. This person will help
+keep you informed of new developments as they may relate to your feature, advise you on which branches
+to keep current with (if other than main), and provide pointers on requirements.
+2. New feature code integrated in with the latest WRF-Hydro main branch (or other as advised by your
+WRF-Hydro POC). This merged code should exist in your own fork, but can be in your own main branch or
 a separate feature branch.
-   * *TIP #1*: It is always a good strategy to pull the latest WRF-Hydro master code into your branch 
-fairly often throughout your development cycle. Leaving months of code changes to merge at the end of 
-your development cycle can result in lots of merge conflicts, time-consuming manual edits, and higher 
+   * *TIP #1*: It is always a good strategy to pull the latest WRF-Hydro main code into your branch
+fairly often throughout your development cycle. Leaving months of code changes to merge at the end of
+your development cycle can result in lots of merge conflicts, time-consuming manual edits, and higher
 potential for making errors.
-   * *TIP #2*: New code should follow the 
-[WRF-Hydro code contribution guidelines](https://github.com/NCAR/wrf_hydro_nwm_public/blob/master/.github/CONTRIBUTING.md).
-3. Documentation for your new feature. This should include (1) a simple summary in the release notes 
-(added to [NEWS.md](https://github.com/NCAR/wrf_hydro_nwm_public/blob/master/NEWS.md)), and (2) a 
-detailed description of the new feature suitable to be included within the 
-[WRF-Hydro Technical Description](https://ral.ucar.edu/sites/default/files/public/projects/wrf_hydro/technical-description-user-guide/wrf-hydro-v5.1.1-technical-description.pdf), 
-included as a new markdown document in the 
-[Doc](https://github.com/NCAR/wrf_hydro_nwm_public/tree/master/trunk/NDHMS/Doc) 
+   * *TIP #2*: New code should follow the
+[WRF-Hydro code contribution guidelines](https://github.com/NCAR/wrf_hydro_nwm_public/blob/main/.github/CONTRIBUTING.md).
+3. Documentation for your new feature. This should include (1) a simple summary in the release notes
+(added to [NEWS.md](https://github.com/NCAR/wrf_hydro_nwm_public/blob/main/NEWS.md)), and (2) a
+detailed description of the new feature suitable to be included within the
+[WRF-Hydro Technical Description](https://ral.ucar.edu/sites/default/files/public/projects/wrf_hydro/technical-description-user-guide/wrf-hydro-v5.1.1-technical-description.pdf),
+included as a new markdown document in the
+[Doc](https://github.com/NCAR/wrf_hydro_nwm_public/tree/main/trunk/NDHMS/Doc)
 folder.
-4. An updated 
-[standalone test case](https://ral.ucar.edu/projects/wrf_hydro/testcases) demonstrating how 
-your new feature works, based on one of the existing WRF-Hydro test cases (e.g., Croton). If you cannot 
-adapt an existing test case and need to create something new, please consult with your POC. The test 
+4. An updated
+[standalone test case](https://ral.ucar.edu/projects/wrf_hydro/testcases) demonstrating how
+your new feature works, based on one of the existing WRF-Hydro test cases (e.g., Croton). If you cannot
+adapt an existing test case and need to create something new, please consult with your POC. The test
 case should include:
    * Domain and parameter files
    * Namelists
    * Example forcings if needed (idealized forcing use is OK)
    * Test case documentation
 5. Testing - you must clearly demonstrate that your new feature:
-   * Does no harm to the existing code (e.g., produces identical solutions EXCEPT when the new feature is 
+   * Does no harm to the existing code (e.g., produces identical solutions EXCEPT when the new feature is
 activated by a namelist or parameter setting).
-   * Fixes a documented issue (reference existing issue in the 
+   * Fixes a documented issue (reference existing issue in the
 [WRF-Hydro GitHub issue tracking](https://github.com/NCAR/wrf_hydro_nwm_public/issues) - this could also be a feature request).
-   * If model performance is improved, for example through more efficient IO, memory utilization, or other 
+   * If model performance is improved, for example through more efficient IO, memory utilization, or other
 software-specific improvements, it must be demonstrable and measurable.
-   * *TIP*: All pull requests go through automated CI testing, but for a new feature it is important to do 
-thorough testing ahead of time so you have a good sense of the model impacts and can explain/justify them. 
+   * *TIP*: All pull requests go through automated CI testing, but for a new feature it is important to do
+thorough testing ahead of time so you have a good sense of the model impacts and can explain/justify them.
 Do not wait until automated CI testing to test your new feature.
-6. A pull request from a branch on your fork to the WRF-Hydro master branch (or other as advised by your 
-WRF-Hydro POC). Make sure to also follow the specific 
-[WRF-Hydro pull request guidelines](https://github.com/NCAR/wrf_hydro_nwm_public/blob/master/.github/PULL_REQUEST_TEMPLATE.md).
-
+6. A pull request from a branch on your fork to the WRF-Hydro main branch (or other as advised by your
+WRF-Hydro POC). Make sure to also follow the specific
+[WRF-Hydro pull request guidelines](https://github.com/NCAR/wrf_hydro_nwm_public/blob/main/.github/PULL_REQUEST_TEMPLATE.md).

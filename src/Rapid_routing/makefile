@@ -13,7 +13,7 @@
 #*******************************************************************************
 
 #-------------------------------------------------------------------------------
-#Default RAPID - includes optimization with TAO 
+#Default RAPID - includes optimization with TAO
 #-------------------------------------------------------------------------------
 #FPPFLAGS=
 #include ${TAO_DIR}/conf/tao_base
@@ -26,8 +26,6 @@ include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
 #include ${PETSC_DIR}/lib/petsc/conf/variables
 #include ${PETSC_DIR}/lib/petsc/conf/rules
-#PETSC_FC_INCLUDES=-I/work/02151/peirongl/_code_wrfhydro/wrf_hydro_model/trunk/NDHMS/petsc-3.6.2/include/
-#PETSC_LIB=-L/work/02151/peirongl/_code_wrfhydro/wrf_hydro_model/trunk/NDHMS/petsc-3.6.2/lib/
 
 #*******************************************************************************
 #Location of netCDF include and lib directories
@@ -37,13 +35,13 @@ NETCDF_INCLUDE=-I ${TACC_NETCDF_INC}
 
 
 #*******************************************************************************
-#makefile instructions 
+#makefile instructions
 #*******************************************************************************
 
 #-------------------------------------------------------------------------------
 #Test that environment variables are properly read by make
 #-------------------------------------------------------------------------------
-dummy: 
+dummy:
 	echo ${FLINKER} ${FPPFLAGS}
 
 #-------------------------------------------------------------------------------
@@ -122,7 +120,7 @@ rapid:	rapid_main.o \
 	hrldas_RAPID_wrapper.o \
 	hrldas_RAPID_drv.o \
 	${TAO_FORTRAN_LIB} ${TAO_LIB} ${PETSC_LIB} ${NETCDF_LIB}
-	${RM} *.o *.mod 
+	${RM} *.o *.mod
 #	ln -sf ../src/rapid ../run/rapid
 #	ln -sf ../src/rapid ../rtk/rapid
 #----LPR: uncomment the link because no RAPID executable will be generated when
@@ -138,7 +136,7 @@ rapid_destro_obj.o: 	rapid_destro_obj.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_destro_obj.F90 ${PETSC_FC_INCLUDES} ${TAO_INCLUDE}
 
 rapid_phiroutine.o: 	rapid_phiroutine.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_phiroutine.F90 ${PETSC_FC_INCLUDES} ${TAO_INCLUDE} 
+	${FLINKER} ${FPPFLAGS} -c rapid_phiroutine.F90 ${PETSC_FC_INCLUDES} ${TAO_INCLUDE}
 
 rapid_routing.o: 	rapid_routing.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_routing.F90 ${PETSC_FC_INCLUDES} ${NETCDF_INCLUDE}
@@ -161,10 +159,10 @@ rapid_net_mat.o: 	rapid_net_mat.F90 rapid_var.mod
 rapid_hsh_mat.o: 	rapid_hsh_mat.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_hsh_mat.F90 ${PETSC_FC_INCLUDES}
 
-rapid_get_Qdam.o: 	rapid_get_Qdam.F90 rapid_var.mod 
+rapid_get_Qdam.o: 	rapid_get_Qdam.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_get_Qdam.F90 ${PETSC_FC_INCLUDES}
 
-rapid_set_Qext0.o: 	rapid_set_Qext0.F90 rapid_var.mod 
+rapid_set_Qext0.o: 	rapid_set_Qext0.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_set_Qext0.F90 ${PETSC_FC_INCLUDES}
 
 rapid_close_Qfor_file.o: 	rapid_close_Qfor_file.F90 rapid_var.mod
@@ -177,10 +175,10 @@ rapid_close_Qobs_file.o: 	rapid_close_Qobs_file.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_close_Qobs_file.F90
 
 rapid_close_Vlat_file.o: 	rapid_close_Vlat_file.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_close_Vlat_file.F90 ${NETCDF_INCLUDE} 
+	${FLINKER} ${FPPFLAGS} -c rapid_close_Vlat_file.F90 ${NETCDF_INCLUDE}
 
 rapid_close_Qout_file.o: 	rapid_close_Qout_file.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_close_Qout_file.F90 ${NETCDF_INCLUDE} 
+	${FLINKER} ${FPPFLAGS} -c rapid_close_Qout_file.F90 ${NETCDF_INCLUDE}
 
 rapid_read_Qfor_file.o: 	rapid_read_Qfor_file.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_read_Qfor_file.F90 ${PETSC_FC_INCLUDES}
@@ -198,13 +196,13 @@ rapid_write_Qout_file.o: 	rapid_write_Qout_file.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_write_Qout_file.F90 ${PETSC_FC_INCLUDES} ${NETCDF_INCLUDE}
 
 rapid_open_Qfor_file.o: 	rapid_open_Qfor_file.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_open_Qfor_file.F90 
+	${FLINKER} ${FPPFLAGS} -c rapid_open_Qfor_file.F90
 
 rapid_open_Qhum_file.o: 	rapid_open_Qhum_file.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_open_Qhum_file.F90 
+	${FLINKER} ${FPPFLAGS} -c rapid_open_Qhum_file.F90
 
 rapid_open_Qobs_file.o: 	rapid_open_Qobs_file.F90 rapid_var.mod
-	${FLINKER} ${FPPFLAGS} -c rapid_open_Qobs_file.F90 
+	${FLINKER} ${FPPFLAGS} -c rapid_open_Qobs_file.F90
 
 rapid_open_Vlat_file.o: 	rapid_open_Vlat_file.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_open_Vlat_file.F90 ${NETCDF_INCLUDE}
@@ -220,12 +218,12 @@ rapid_create_obj.o: 	rapid_create_obj.F90 rapid_var.mod
 
 rapid_arrays.o:	rapid_arrays.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_arrays.F90 ${PETSC_FC_INCLUDES}
-	
+
 rapid_read_namelist.o:	rapid_read_namelist.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c rapid_read_namelist.F90
-	
+
 rapid_var.o rapid_var.mod:	rapid_var.F90
-	${FLINKER} ${FPPFLAGS} -c rapid_var.F90 ${PETSC_FC_INCLUDES} ${TAO_INCLUDE} 
+	${FLINKER} ${FPPFLAGS} -c rapid_var.F90 ${PETSC_FC_INCLUDES} ${TAO_INCLUDE}
 
 hrldas_RAPID_wrapper.mod hrldas_RAPID_wrapper.o:     hrldas_RAPID_wrapper.F90 rapid_var.mod
 	${FLINKER} ${FPPFLAGS} -c hrldas_RAPID_wrapper.F90  ${PETSC_FC_INCLUDES} ${TAO_INCLUDE}
@@ -236,10 +234,9 @@ rapid_main.o:   rapid_main.F90 rapid_var.mod hrldas_RAPID_wrapper.mod
 
 hrldas_RAPID_drv.o:     hrldas_RAPID_drv.F90 hrldas_RAPID_wrapper.mod
 	${FLINKER} ${FPPFLAGS} -c hrldas_RAPID_drv.F90  ${PETSC_FC_INCLUDE} ${TAO_INCLUDE}
-	
+
 #-------------------------------------------------------------------------------
 #Clean
 #-------------------------------------------------------------------------------
 clean::
 	${RM} *.o *.mod rapid ../run/rapid ../rtk/rapid
-

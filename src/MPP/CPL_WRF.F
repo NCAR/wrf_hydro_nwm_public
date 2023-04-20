@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !   This is used as a coupler with the WRF model.
@@ -28,7 +28,7 @@ MODULE MODULE_CPL_LAND
 
   integer, public :: HYDRO_COMM_WORLD = MPI_COMM_NULL
   integer my_global_id
- 
+
   integer total_pe_num
   integer global_ix,global_jx
 
@@ -60,12 +60,12 @@ MODULE MODULE_CPL_LAND
       integer ierr
       logical mpi_inited
       integer istart,iend,jstart,jend
-      
+
       integer :: xx, ndim
       integer, dimension(0:1) :: dims, coords
       logical cyclic(0:1), reorder
       data cyclic/.false.,.false./  ! not cyclic
-      data reorder/.false./   
+      data reorder/.false./
 
       CALL mpi_initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
@@ -110,20 +110,20 @@ MODULE MODULE_CPL_LAND
 	  dims(1) = dims(1)+1
 	endif
       enddo
-      
+
       ndim = 2
       np_up_down = dims(0)
       np_left_right = dims(1)
 
       call MPI_Cart_create(HYDRO_COMM_WORLD, ndim, dims, &
                           cyclic, reorder, cartGridComm, ierr)
-     
+
       call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
-     
+
       p_up_down = coords(0)
       p_left_right = coords(1)
 
-      initialized = .false.  ! land model need to be initialized. 
+      initialized = .false.  ! land model need to be initialized.
       return
   END subroutine CPL_LAND_INIT
 
@@ -132,18 +132,18 @@ MODULE MODULE_CPL_LAND
         integer,allocatable,dimension(:,:) :: tmp_info
         integer  ierr, i,size, tag
         integer mpp_status(MPI_STATUS_SIZE)
-        tag  = 9 
+        tag  = 9
         size =  9
 
         if(my_global_id .eq. 0) then
-           do i = 1, total_pe_num-1 
+           do i = 1, total_pe_num-1
              call mpi_recv(node_info(:,i+1),size,MPI_INTEGER,  &
                 i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
            enddo
         else
            call mpi_send(node_info(:,my_global_id+1),size,   &
                MPI_INTEGER,0,tag,HYDRO_COMM_WORLD,ierr)
-        endif 
+        endif
 
         call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
 
@@ -159,16 +159,16 @@ MODULE MODULE_CPL_LAND
      subroutine find_left()
           implicit none
           integer i
-          
+
           node_info(2,my_global_id+1) = -1
 
-          do i = 1, total_pe_num 
+          do i = 1, total_pe_num
                if( (node_info(8,i).eq.node_info(8,my_global_id+1)) .and. &
                    (node_info(9,i).eq.node_info(9,my_global_id+1)) .and. &
                    ((node_info(7,i)+1).eq.node_info(6,my_global_id+1)) ) then
                    node_info(2,my_global_id+1) = i - 1
                    return
-               endif 
+               endif
           end do
      return
      end subroutine find_left
@@ -176,16 +176,16 @@ MODULE MODULE_CPL_LAND
      subroutine find_right()
           implicit none
           integer i
-          
+
           node_info(3,my_global_id+1) = -1
 
-          do i = 1, total_pe_num 
+          do i = 1, total_pe_num
                if( (node_info(8,i).eq.node_info(8,my_global_id+1)) .and. &
                    (node_info(9,i).eq.node_info(9,my_global_id+1)) .and. &
                    ((node_info(6,i)-1).eq.node_info(7,my_global_id+1)) ) then
                    node_info(3,my_global_id+1) = i - 1
                    return
-               endif 
+               endif
           end do
      return
      end subroutine find_right
@@ -193,16 +193,16 @@ MODULE MODULE_CPL_LAND
      subroutine find_up()
           implicit none
           integer i
-          
+
           node_info(4,my_global_id+1) = -1
 
-          do i = 1, total_pe_num 
+          do i = 1, total_pe_num
                if( (node_info(6,i).eq.node_info(6,my_global_id+1)) .and. &
                    (node_info(7,i).eq.node_info(7,my_global_id+1)) .and. &
                    ((node_info(8,i)-1).eq.node_info(9,my_global_id+1)) ) then
                    node_info(4,my_global_id+1) = i - 1
                    return
-               endif 
+               endif
           end do
      return
      end subroutine find_up
@@ -210,16 +210,16 @@ MODULE MODULE_CPL_LAND
      subroutine find_down()
           implicit none
           integer i
-          
+
           node_info(5,my_global_id+1) = -1
 
-          do i = 1, total_pe_num 
+          do i = 1, total_pe_num
                if( (node_info(6,i).eq.node_info(6,my_global_id+1)) .and. &
                    (node_info(7,i).eq.node_info(7,my_global_id+1)) .and. &
                    ((node_info(9,i)+1).eq.node_info(8,my_global_id+1)) ) then
                    node_info(5,my_global_id+1) = i - 1
                    return
-               endif 
+               endif
           end do
      return
      end subroutine find_down

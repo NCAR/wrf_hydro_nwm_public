@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 !*****************************************************************************!
@@ -149,7 +149,7 @@ contains
     implicit none
 
 ! Input:
-    character(len=*), intent(in) :: flnm 
+    character(len=*), intent(in) :: flnm
 
 ! Output:
     integer, intent(out) :: gribunit
@@ -205,7 +205,7 @@ contains
 
 ! Local variables
     integer :: ierr ! Error flag returned from call to CCLOSE.
-    
+
     call cclose(gribunit, 0, ierr)
     if (ierr /= 0) then
        write(*,'(/,"***** ERROR *****")')
@@ -315,7 +315,7 @@ contains
     integer :: itmp
 
     ! Final packing of all sections, before the write.
-    ! These should stay in this order:  
+    ! These should stay in this order:
     !      gribsec1_pack, gribsec2_pack, gribsec4_pack, gribsec0_pack
     ! because the other packing needs to be done before we know the final
     ! size of the grib record to go into GRIB section 0.
@@ -407,7 +407,7 @@ contains
           i = i + 1
        endif
     enddo
-    
+
     if (DO_BYTE_SWAP) then
        if (mod(output_size,4) == 0) then
           call swap4f(output_buffer, output_size)
@@ -436,7 +436,7 @@ contains
   subroutine gribsec1_clear
     implicit none
     newsec1 = 0
-    
+
     sec1_ptv = -999999
     sec1_cid = -999999
     sec1_pid = -999999
@@ -548,7 +548,7 @@ contains
 
 ! Local variables:
     integer :: iskip
-    integer :: totsize 
+    integer :: totsize
 
     totsize = 8 + sec1_size + sec2_size + sec3_size + sec4_size + 4
     iskip = 0
@@ -783,7 +783,7 @@ contains
        enddo
 
     else if (sec2_scm == 1) then
-       
+
        do i = ist, ien, inc
           do j = jst, jen, jnc
              if (lbm(i,j)) then
@@ -1053,7 +1053,7 @@ contains
        write(*, '("sec2_gty = ", I12)') sec2_gty
        stop "Unrecognized grid type in GRIBSEC2_PACK"
     end select
-    
+
   end subroutine gribsec2_pack
 
 
@@ -1076,7 +1076,7 @@ contains
     integer :: iskip, numunused, bmod, i, j, ist, ien, inc, jst, jen, jnc
 
     if (sec4_nbt == 0) then
-       ! We have a constant field.  Zero bits needed (sec4_nbt==0) 
+       ! We have a constant field.  Zero bits needed (sec4_nbt==0)
        ! to pack each datum.
        sec4_size = 12
        allocate(newsec4((sec4_size+3)/4))
@@ -1096,7 +1096,7 @@ contains
           stop
        endif
        call sbenc(newsec4, sec4_rfa, 0, iskip, 7)
-          
+
        call sbenc(newsec4, sec4_rfb, 0, iskip, 24)        ! Bytes 8-10
        call sbenc(newsec4, 0, 0, iskip, 8)                ! Byte 11
        call sbenc(newsec4, 0, 0, iskip, 8)                ! Byte 12
@@ -1169,7 +1169,7 @@ contains
           sec4_size = sec4_size + 1
           numunused = numunused + 8
        endif
-       
+
        if (mod(((size(gribiarr)*sec4_nbt)+numunused),16) /= 8) then
           print*, 'numused = ', size(gribiarr)*sec4_nbt
           print*, 'sec4_size = ', sec4_size
@@ -1200,7 +1200,7 @@ contains
 
     call sbenc(newsec4, sec4_rfb, 0, iskip, 24) ! Bytes 8-10
     call sbenc(newsec4, sec4_nbt, 0, iskip, 8)
-    
+
     if ((sec2_inc == 1) .or. (sec2_inc < -999998)) then
        ist = 1
        ien = size(gribiarr,1)
@@ -1254,7 +1254,7 @@ contains
        enddo
 
     else if (sec2_scm == 1) then
-       
+
        do i = ist, ien, inc
           do j = jst, jen, jnc
              if (lbm(i,j)) then
@@ -1282,7 +1282,7 @@ contains
        enddo
 
     else if (sec2_scm == 1) then
-       
+
        do i = ist, ien, inc
           do j = jst, jen, jnc
              call sbenc(newsec4, iarr(i,j), -999999, iskip, sec4_nbt)
@@ -1501,7 +1501,7 @@ contains
        endif
     endif
 
-! Find the maximum difference between the original data and the 
+! Find the maximum difference between the original data and the
 ! unpacking of the packed data.
     testdiff = maxval(abs(((rval+dble(iarr)*eval)*dval)-xarr))
     ! print*, '     Maximum abs(value), difference = ', xmax, testdiff
@@ -1563,7 +1563,7 @@ contains
           Dsave = D
           tsave = (m-xm)
        endif
-       
+
     enddo
 
     if (found) then
@@ -1724,7 +1724,7 @@ PROGRAM  sw_to_grib
   hdate = "2000-00-00_00:00:00.0000"
   hdate(3:4)  = Fname(indxs+1:indxs+2) ! yy
   hdate(6:7)  = Fname(indxs+3:indxs+4) ! mm
-  
+
   print*, 'hdate = ', hdate
   print*, 'nmdays = ', nmdays(hdate)
   DAYLOOP : do icount = 1, nmdays(hdate)
@@ -1737,7 +1737,7 @@ PROGRAM  sw_to_grib
      hdate(6:7)  = Fname(indxs+3:indxs+4) ! mm
      write(hdate(9:10), '(I2.2)') icount
      if ( hdate(1:4) > "2050" ) hdate(1:2) = "19"
-  
+
      print*, 'Hdate = ', Hdate
 
      if (hdate(1:7) < "2001-07") then
@@ -1826,7 +1826,7 @@ PROGRAM  sw_to_grib
 
         call write_grib(gribunit)
         call close_newgrib(gribunit)
-     
+
      enddo
   enddo DAYLOOP
 
@@ -1887,4 +1887,3 @@ subroutine getdata(Fname, Fluxi, Nlon, Nlat, Nhours, icount)
 !KWM  endif
 
 end subroutine getdata
-

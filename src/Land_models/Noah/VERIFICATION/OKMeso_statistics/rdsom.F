@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_ver
@@ -95,7 +95,7 @@ program ver
 
      ! Get corresponding HRLDAS results from HRLDAS files
      call rdhrldas(station, stnlat, stnlon, nstation, nowdate, sm(1:4,1:nstation,indx))
-     
+
   enddo DATELOOP
 
   ! Make some plots
@@ -150,7 +150,7 @@ subroutine pltsm(stn, wc, sm, nlev, ndim, startdate, stnlat, stnlon, stnx, stny)
      else if (n == 2) then
         call set(.1, .9, .15, .4, 1., float(ndim), 0., 0.5, 1)
      endif
-        
+
      call periml(0,0,5,1)
 
      call gsplci(color_index("blue"))
@@ -219,7 +219,7 @@ subroutine rdgeomeso(station, nstation, stnlat, stnlon, maxstn, iverbose)
   enddo RDLOOP
   close(iunit)
 end subroutine rdgeomeso
-  
+
 
 subroutine rdsom(stn, idate, wc)
   implicit none
@@ -246,9 +246,9 @@ subroutine rdsom(stn, idate, wc)
   write(flnm, &
        '("/wig/kmanning/HRLDAS_WRFDRIVER/VERIFICATION/OKMeso_SoilMoisture_SOM/",A8,".som")') &
    idate(1:8)
-  
+
   open(iunit, file=trim(flnm), status='old', form='formatted', action='read')
-  
+
   RDLOOP : do
      read(iunit, '(A256)', iostat=ierr) string
      if (ierr /= 0) exit RDLOOP
@@ -411,7 +411,7 @@ subroutine rdhrldas(stn, stnlat, stnlon, nstation, idate, sm)
   write(flnm, &
    '("/scholar2/kmanning/VERY_TEMPORARY_HRLDAS/Run_3.2/",A10,".LDASOUT_DOMAIN1")') idate(1:10)
 
-  
+
   iret = nf_open(flnm, NF_WRITE, ncid)
   if (iret /= 0) then
      write(*,'("Problem opening flnm: ''", A, "''")') &
@@ -473,5 +473,3 @@ subroutine rdhrldas(stn, stnlat, stnlon, nstation, idate, sm)
   enddo
 
 end subroutine rdhrldas
-
-

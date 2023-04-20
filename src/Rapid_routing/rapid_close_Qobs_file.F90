@@ -1,11 +1,11 @@
 !*******************************************************************************
-!Subroutine - rapid_close_Qobs_file 
+!Subroutine - rapid_close_Qobs_file
 !*******************************************************************************
 subroutine rapid_close_Qobs_file
 
 !Purpose:
 !Close Qobs_file from Fortran.
-!Author: 
+!Author:
 !Cedric H. David, 2013-2015.
 
 
@@ -20,7 +20,7 @@ implicit none
 
 
 !*******************************************************************************
-!Intent (in/out), and local variables 
+!Intent (in/out), and local variables
 !*******************************************************************************
 
 

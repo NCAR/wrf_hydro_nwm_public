@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 2.8)
-
 add_library(noahmp_data STATIC
         forcing.f90
         geometry.f90

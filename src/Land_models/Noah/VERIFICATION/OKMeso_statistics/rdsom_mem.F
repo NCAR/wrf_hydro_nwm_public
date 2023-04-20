@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 module module_ver
@@ -752,7 +752,7 @@ subroutine pltsm(stn, wc, sm, st, nlev, ndim, startdate, stnlat, stnlon, stnx, s
   character(len=256) :: text
   character(len=10)  :: enddate
   logical :: pd
-  
+
   real :: wcmean, smmean
   integer :: wccount, smcount
 
@@ -821,7 +821,7 @@ subroutine pltsm(stn, wc, sm, st, nlev, ndim, startdate, stnlat, stnlon, stnx, s
      else if (n == 2) then
         call set(.1, .9, .15, .4, 0., float(ndim-1)/24., 0., 0.5, 1)
      endif
-        
+
      call periml((ndim-1)/24,0,5,1)
 
      if (flag(n,1) == 1) then
@@ -862,11 +862,11 @@ subroutine pltsm(stn, wc, sm, st, nlev, ndim, startdate, stnlat, stnlon, stnx, s
            else
               call gsplci(color_index("gray90"))
            endif
-           
+
         endif
      enddo
      call plotif(0., 0., 2)
-     
+
      call gsplci(color_index("red"))
      smmean = 0.
      smcount = 0
@@ -940,7 +940,7 @@ subroutine pltsm(stn, wc, sm, st, nlev, ndim, startdate, stnlat, stnlon, stnx, s
   call set(0., 1., 0., 1., 0., 1., 0., 1., 1)
   call pchiqu(0.56, 0.85, "Soil T: ", 0.012, 0., -1.)
   call pchiqu(0.56, 0.82, "Soil T: ", 0.012, 0., -1.)
-  
+
 
 
 
@@ -951,7 +951,7 @@ subroutine pltsm(stn, wc, sm, st, nlev, ndim, startdate, stnlat, stnlon, stnx, s
      else if (n == 2) then
         call set(.1, .9, .15, .4, 0., float(ndim-1)/24., 275., 305., 1)
      endif
-        
+
      call periml((ndim-1)/24,0,5,1)
 
   call gflas3(2)
@@ -1083,7 +1083,7 @@ subroutine rdgeomeso(okmeso_soil_dir, station, nstation, stnlat, stnlon, maxstn,
   enddo RDLOOP
   close(iunit)
 end subroutine rdgeomeso
-  
+
 
 subroutine rdsom(okmeso_soil_dir, stn, idate, wc)
   implicit none
@@ -1105,9 +1105,9 @@ subroutine rdsom(okmeso_soil_dir, stn, idate, wc)
 
 
   write(flnm, '(A,"/",A8,".som")') okmeso_soil_dir, idate(1:8)
-  
+
   open(iunit, file=trim(flnm), status='old', form='formatted', action='read')
-  
+
   RDLOOP : do
      read(iunit, '(A256)', iostat=ierr) string
      if (ierr /= 0) exit RDLOOP
@@ -1178,7 +1178,7 @@ subroutine rdhrldas(ldasout_dir, stn, stnlat, stnlon, nstation, idate, sm, st)
   endif
 
   call netcdf_open(trim(tmpflnm), nfstruct)
-  
+
   ! Read a soil-moisture field
 
   call netcdf_get_field_3d(nfstruct, "SOIL_M", 1, smptr)
@@ -1241,7 +1241,7 @@ subroutine qc_sm(wc, flag, indx)
 
   ! Find the first unflagged value.
   jm = 1
-  do while (flag(jm) == 1) 
+  do while (flag(jm) == 1)
      jm = jm + 1
      if (jm > indx) exit
   enddo
@@ -1253,10 +1253,10 @@ subroutine qc_sm(wc, flag, indx)
 
      ! Find the next unflagged value.
      jp = jm + 1
-     if (jp > indx) exit TIMELOOP 
-     do while (flag(jp) == 1) 
+     if (jp > indx) exit TIMELOOP
+     do while (flag(jp) == 1)
         jp = jp + 1
-        if (jp > indx) exit TIMELOOP 
+        if (jp > indx) exit TIMELOOP
      enddo
 
      if ((wc(jp) == val1) .or. (wc(jp) == val2)) then
@@ -1299,7 +1299,7 @@ subroutine qc_sm(wc, flag, indx)
      do i = 2, indx
 
         if ((wc(n,i) >= 0).and.(wc(n,i-1)>=0) ) then
-           
+
            if (abs(wc(n,i)-wc(n,i-1)) < 5.E-3) then
            ! if there's no (little) change:
 
@@ -1349,7 +1349,7 @@ subroutine read_namelist(okmeso_soil_dir, okmeso_met_dir, ldasout_dir, startdate
   okmeso_met_dir  = "UNSPECIFIED"
   ldasout_dir     = "UNSPECIFIED"
 
-  
+
   namelist /okmeso/ okmeso_soil_dir, okmeso_met_dir, ldasout_dir, &
        statistics_startdate, statistics_enddate
 
@@ -1369,4 +1369,3 @@ subroutine read_namelist(okmeso_soil_dir, okmeso_met_dir, ldasout_dir, startdate
   enddate   = statistics_enddate
 
 end subroutine read_namelist
-
