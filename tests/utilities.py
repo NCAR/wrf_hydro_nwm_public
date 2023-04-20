@@ -66,7 +66,7 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
     thresholds = script_dir / "thresholds.csv"
 
 
-    cmd = f"python {gen_script} -o {plots} " + \
+    cmd = f"python {gen_script} -o {plots} -d " + \
         f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
         f"-n -t {thresholds}"
 

@@ -246,7 +246,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
 
             # merge files along the time axis
             try:
-                xr.merge(a)
+                ds = xr.merge(a)
             except:
                 ds = None
 
@@ -258,6 +258,8 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
             datasets['base'] = ds
         else:
             datasets['comp'] = ds
+
+        logger.debug("Found %s times" % len(ds['time']))
 
     return datasets
 
