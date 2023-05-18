@@ -70,7 +70,9 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
         f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
         f"-n -t {thresholds}"
 
-    cmd_gridded = cmd + " -f ldas:ACCET,SNOWH,FIRA -f rtout"
+    ldas_vars = ['ACCET','SFCRNOF','UGDRNOFF','SOIL_M','SNEQV','FSA','FIRA','TRAD','GRDFLX','LH','HFX']
+
+    cmd_gridded = cmd + " -f ldas:" + (",".join(ldas_vars)) + " -f rtout"
 
     print("\nPlotting gridded model diffs...")
     os.system(cmd_gridded)
@@ -86,6 +88,11 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
     if 'lakes' in feature_ids:
         cmd_feature = cmd + " -f lakeout -i '" + ",".join(feature_ids['lakes']) + "'"
         print("\nPlotting lake model diffs...")
+        os.system(cmd_feature)
+
+    if 'gwout' in feature_ids:
+        cmd_feature = cmd + " -f gwout -i '" + ",".join(feature_ids['gwout']) + "'"
+        print("\nPlotting gwout model diffs...")
         os.system(cmd_feature)
 
 

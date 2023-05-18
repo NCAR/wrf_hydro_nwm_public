@@ -3,7 +3,11 @@
 # This script concatenates all model output files for the given
 # file type(s), across the time dimension, and creates difference
 # statistics plots for each gridded point (heatmap) or feature
-# point (boxplot)
+# point (boxplot).
+#
+# Note this script assumes that gridded files have (at least)
+# x, y, and time dimensions (named as such), and point files
+# have a feature_id dimension
 #
 ###########################################################
 
@@ -38,6 +42,11 @@ warnings.filterwarnings("ignore", message="invalid value encountered in divide")
 
 GRIDDED = "gridded"
 FEATURE = "feature"
+
+FEATURE_ID = "feature_id"
+TIME = "time"
+XCOORD = "x"
+YCOORD= "y"
 
 # stats to calculate. Keys must be handled in get_stat() function below
 STATS = {
@@ -180,9 +189,9 @@ def get_options():
             toks = toks[1].split(",")
             for v in toks:
                 if v not in FILE_TYPES[type]['variables']:
-                    print(f"ERROR: Unknown variable {v} for file type {type}")
-                    return None
-                vars.append(v)
+                    print(f"ERROR: Unknown variable {v} for file type {type}. Skipping.")
+                else:
+                    vars.append(v)
         else:
             vars = FILE_TYPES[type]['variables']
 
@@ -228,7 +237,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
 
         if useDask:
             try:
-                ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim="time")
+                ds = xr.open_mfdataset("%s/*%s*" % (c, filepattern), combine="nested", concat_dim=TIME)
             except:
                 ds = None
         else:
@@ -239,8 +248,8 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
 
                 for v in ds.variables:
                     if v not in ds.coords:
-                        if 'time' not in ds[v].dims:
-                            ds[v] = ds[v].expand_dims(dim='time')
+                        if TIME not in ds[v].dims:
+                            ds[v] = ds[v].expand_dims(dim=TIME)
 
                 a.append(ds)
 
@@ -259,7 +268,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
         else:
             datasets['comp'] = ds
 
-        logger.debug("Found %s times" % len(ds['time']))
+        logger.debug("Found %s times" % len(ds[TIME]))
 
     return datasets
 
@@ -283,8 +292,18 @@ def create_diff(datasets, variable, threshold=0):
     base = datasets['base']
     comp = datasets['comp']
     diff = base
+    basev = base[variable]
+    compv = comp[variable]
 
-    diff[f"{variable}_diff"] = xr.where(np.abs(base[variable] - comp[variable]) < threshold, 0, (base[variable] - comp[variable]))
+    # choose top layer if there's an extra dimension
+    for dim in basev.dims:
+        if dim not in [TIME, XCOORD, YCOORD, FEATURE_ID]:
+            basev = basev.sel({dim:0})
+            compv = compv.sel({dim:0})
+
+    d = basev.data - compv.data
+    diff[f"{variable}_diff"] = basev
+    diff[f"{variable}_diff"].data = xr.where(np.abs(d) < threshold, 0, d)
 
     return diff[[f"{variable}_diff"]]
 
@@ -301,22 +320,22 @@ def get_stat(dataset, variable, stat):
     """
     da = None
     # minimum non-NAN values at a point required for sum statistics
-    times = dataset.dims['time']-1
+    times = dataset.dims[TIME]-1
 
     if stat == "min":
-        da = dataset[variable].min(dim="time")
+        da = dataset[variable].min(dim=TIME)
     elif stat == "max":
-        da = dataset[variable].max(dim="time")
+        da = dataset[variable].max(dim=TIME)
     elif stat == "sum":
-        da = dataset[variable].sum(dim="time", min_count=times)
+        da = dataset[variable].sum(dim=TIME, min_count=times)
     elif stat == "abssum":
         da = dataset[variable]
         da.data = np.abs(da.data)
-        da = da.sum(dim="time", min_count=times)
+        da = da.sum(dim=TIME, min_count=times)
     elif stat == "mean":
-        da = dataset[variable].mean(dim="time")
+        da = dataset[variable].mean(dim=TIME)
     elif stat == "std":
-        da = dataset[variable].std(dim="time")
+        da = dataset[variable].std(dim=TIME)
     else:
         logger.error(f"Unknown statistic: {stat}")
 
@@ -481,8 +500,8 @@ def process_variable(type, variable, datasets, outdir, base_label, comp_label, i
 
     range = get_range(datasets, variable)
 
-    start = str(diff['time'].values[0])[:19]
-    end = str(diff['time'].values[-1])[:19]
+    start = str(diff[TIME].values[0])[:19]
+    end = str(diff[TIME].values[-1])[:19]
     label = FILE_TYPES[type]['variables'][variable]['label']
     units = FILE_TYPES[type]['variables'][variable]['units']
 
@@ -493,9 +512,9 @@ def process_variable(type, variable, datasets, outdir, base_label, comp_label, i
                                   range=[start, end], value_range=range)
 
     if ids is not None and tp['datatype'] == FEATURE \
-            and 'feature_id' in datasets['base'].variables and 'feature_id' in datasets['comp'].variables:
+            and FEATURE_ID in datasets['base'].variables and FEATURE_ID in datasets['comp'].variables:
         for i in ids:
-            if int(i) in datasets['base']['feature_id']:
+            if int(i) in datasets['base'][FEATURE_ID]:
                 plot_timeseries(datasets, int(i), outdir, type, variable, base_label, comp_label)
 
     return success
@@ -518,11 +537,11 @@ def plot_timeseries(datasets, feature_id, outpath, file_type, variable, base_lab
     """
     logger.debug(f"Plotting timeseries for feature id '{feature_id}'")
 
-    base = datasets['base'][variable].sel(feature_id=feature_id)
-    comp = datasets['comp'][variable].sel(feature_id=feature_id)
+    base = datasets['base'][variable].sel({FEATURE_ID: feature_id})
+    comp = datasets['comp'][variable].sel({FEATURE_ID: feature_id})
 
-    start = str(base['time'].values[0])[:19]
-    end = str(base['time'].values[-1])[:19]
+    start = str(base[TIME].values[0])[:19]
+    end = str(base[TIME].values[-1])[:19]
     label = FILE_TYPES[file_type]['variables'][variable]['label']
     units = FILE_TYPES[file_type]['variables'][variable]['units']
 
