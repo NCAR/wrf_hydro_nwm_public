@@ -16,9 +16,9 @@ CPPHRLDAS = -D_HRLDAS_OFFLINE_
 
 all:	$(OBJS)
 
-.F.o:
+%.o: %.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(MODFLAG) $(FREESOURCE) $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(MODFLAG) $(FREESOURCE) $<
 	@echo ""
 
 #

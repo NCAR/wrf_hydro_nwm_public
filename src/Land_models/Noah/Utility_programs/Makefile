@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .c .o .exe
 
 include ../user_build_options
@@ -13,7 +13,7 @@ include ../user_build_options
 CMD=	hrldas_extract_point gribextract gribedition gribbyte modify_wrfinput geth_newdate
 
 all: $(CMD)
-	( cd gcip_sw_to_grib; make )
+	( cd gcip_sw_to_grib; $(MAKE) )
 
 #
 # Compile the module_date_utilities from the Utility_routines directory
@@ -29,9 +29,9 @@ arguments_module.o:
 	@echo ""
 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c ../HRLDAS_COLLECT_DATA/lib/$(*).F
 
-.F.o:
+%.o: %.F
 	@echo ""
-	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $(*).F
+	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(FREESOURCE) $(F90FLAGS) -c $(NETCDFMOD) $(MODFLAG). $<
 
 
 hrldas_extract_point: hrldas_extract_point.o
@@ -65,9 +65,9 @@ hrldas_extract_point.o:	lccone.o
 
 clean:
 	$(RM) *.o *~ $(CMD) *.mod
-	( cd gcip_sw_to_grib; make clean )
+	( cd gcip_sw_to_grib; $(MAKE) clean )
 neat:
 	$(RM) *.o *~ *.mod
-	( cd gcip_sw_to_grib; make neat )
+	( cd gcip_sw_to_grib; $(MAKE) neat )
 #
 

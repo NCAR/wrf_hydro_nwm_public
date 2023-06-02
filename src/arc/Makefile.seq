@@ -1,36 +1,36 @@
-# Makefile 
+# Makefile
 
 all:
-	(make -f Makefile BASIC)
+	($(MAKE) -f Makefile BASIC)
 
 BASIC:
-	(cd Data_Rec     ; make -f Makefile)
-	(cd Routing; make -f Makefile)
+	(cd Data_Rec     ; $(MAKE) -f Makefile)
+	(cd Routing; $(MAKE) -f Makefile)
         ifeq ($(WRF_HYDRO_NUDGING),-DWRF_HYDRO_NUDGING)
-	(cd nudging; make -f Makefile)
+	(cd nudging; $(MAKE) -f Makefile)
         endif
-	(cd HYDRO_drv;   make -f Makefile)
+	(cd HYDRO_drv;   $(MAKE) -f Makefile)
 
 LIS:
-	(make -f Makefile BASIC)
-	(cd LIS_cpl  ;   make -f Makefile)
+	($(MAKE) -f Makefile BASIC)
+	(cd LIS_cpl  ;   $(MAKE) -f Makefile)
 
 CLM:
-	(make -f Makefile BASIC)
-	(cd CLM_cpl  ;   make -f Makefile)
+	($(MAKE) -f Makefile BASIC)
+	(cd CLM_cpl  ;   $(MAKE) -f Makefile)
 
 WRF:
-	(make -f Makefile BASIC)
-	(cd WRF_cpl  ;   make -f Makefile)
+	($(MAKE) -f Makefile BASIC)
+	(cd WRF_cpl  ;   $(MAKE) -f Makefile)
 
 HYDRO:
-	(make -f Makefile BASIC)
+	($(MAKE) -f Makefile BASIC)
 
 clean:
-	(cd Data_Rec; make -f Makefile clean)
-	(cd HYDRO_drv; make -f Makefile clean)
+	(cd Data_Rec; $(MAKE) -f Makefile clean)
+	(cd HYDRO_drv; $(MAKE) -f Makefile clean)
         ifeq ($(WRF_HYDRO_NUDGING),-DWRF_HYDRO_NUDGING)
-	(cd nudging; make -f Makefile clean)
+	(cd nudging; $(MAKE) -f Makefile clean)
         endif
-	(cd Routing;    make -f Makefile clean)
+	(cd Routing;    $(MAKE) -f Makefile clean)
 	(rm -f lib/*.a */*.mod CPL/*/*.o CPL/*/*.mod)

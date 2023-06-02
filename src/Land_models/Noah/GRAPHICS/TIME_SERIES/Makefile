@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-.SUFFIXES:	
+.SUFFIXES:
 .SUFFIXES:	.F .o .exe
 OBJS=	module_plotts_graphics.o \
 	module_ptdata.o \
@@ -25,18 +25,18 @@ CMD=	pltts.exe
 
 
 # Lines from here on down should not need to be changed.  They are the
-# actual rules which make uses to build $(CMD).
+# actual rules which $(MAKE) uses to build $(CMD).
 #
 
 all:	$(CMD)
 
-.F.o:
+%.o: %.F
 	@echo ""
-	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $(*).F
+	$(F90) $(CPPINVOKE) $(CPPFLAGS) -c -I$(NETCDF)/include $(FFLAGS) $(MODDIR) $<
 
 $(CMD):	$(OBJS)
 	$(F90) -o $(@) -I$(NETCDF)/include $(FFLAGS) $(OBJS) \
-	-L$(NETCDF)/lib -lnetcdf $(NCARGLIBS) 
+	-L$(NETCDF)/lib -lnetcdf $(NCARGLIBS)
 
 clean:
 	$(RM) *.o *~ *.exe *.mod

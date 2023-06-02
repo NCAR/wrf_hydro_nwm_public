@@ -18,10 +18,10 @@ all: $(OBJS)
 #
 # Dependencies:
 #
+ini_csts.o: modd_csts.o
 mode_snow3l.o: modd_snow_par.o modd_csts.o modd_snow_metamo.o
 mode_thermos.o: modd_csts.o modd_snow_par.o
 mode_surf_coefs.o: modd_surf_atm.o mode_thermos.o
-ini_csts.o: modd_csts.o
 module_snowcro.o: mode_snow3l.o modd_snow_par.o modd_csts.o modd_snow_metamo.o modd_surf_atm.o \
 	mode_thermos.o mode_surf_coefs.o tridiag_ground_snowcro.o
 module_snowcro_intercept.o:

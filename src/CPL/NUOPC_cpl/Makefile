@@ -173,7 +173,7 @@ build_model:
 	$(call checkdir, $(MODEL_DIR))
 	mkdir -p $(MODEL_LIBDIR)
 	mkdir -p $(MODEL_MODDIR)
-	make -C $(MODEL_DIR) -f $(MODEL_MK)
+	$(MAKE) -C $(MODEL_DIR) -f $(MODEL_MK)
 
 $(MODEL_MODS): build_model
 
@@ -347,7 +347,7 @@ nuopcdistclean: nuopcclean
 	@echo "Cleaning Model build..."
 	@echo ""
 	$(call checkdir, $(MODEL_DIR))
-	make -C $(MODEL_DIR) -f $(MODEL_MK) clean
+	$(MAKE) -C $(MODEL_DIR) -f $(MODEL_MK) clean
 
 # #########
 # Clean Cap
