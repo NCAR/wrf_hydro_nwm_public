@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Checkout candidate (pull request / push)
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: candidate
 
@@ -36,14 +36,14 @@ jobs:
 
       - name: Checkout reference (pull request)
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: reference
 
       - name: Checkout reference (push)
         if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.before }}
           path: reference
@@ -67,7 +67,7 @@ jobs:
 
       - name: Archive test results to GitHub
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: test-reports
           path: ${{ github.workspace }}/test_report/**.html
