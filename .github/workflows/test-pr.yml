@@ -85,3 +85,30 @@ jobs:
           path: |
             ${{ github.workspace }}/test_report/**.html
             ${{ github.workspace }}/test_report/*/diff_plots
+
+  CMake_Testing:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate (pull request / push)
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/checkout@v3
+        with:
+          path: cmake_candidate
+
+      - name: Checkout candidate (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: gh repo clone ${{ github.repository }} cmake_candidate && cd cmake_candidate && gh pr checkout -R ${{ github.repository }} ${{ github.event.inputs.pr }}
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+      - name: Build CMake
+        run: cmake -j
+      - name: Test CMake
+        run: ctest
