@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.12)
 cmake_policy(SET CMP0074 NEW)			# use xxxx_ROOT env vars
 
 # set project name and version numbers
@@ -154,25 +154,25 @@ if (NCEP_WCOSS STREQUAL "1" )
 	add_definitions(-DNCEP_WCOSS)
 endif (NCEP_WCOSS STREQUAL "1")
 
-#set -DNCEP_WCOSS from env
+#set -DNWM_META from env
 message ("NWM_META = " ${NWM_META} )
 if (NWM_META STREQUAL "1" )
         add_definitions(-DNWM_META)
 endif (NWM_META STREQUAL "1")
 
-#set -DSPATIAL_SOIL from env
+#set -DWRF_HYDRO_NUDGING from env
 message ("WRF_HYDRO_NUDGING = " ${WRF_HYDRO_NUDGING} )
 if (WRF_HYDRO_NUDGING STREQUAL "1" )
 	add_definitions(-DWRF_HYDRO_NUDGING)
 endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
-#set -DSPATIAL_SOIL from env
+#set -DOUTPUT_CHAN_CONN from env
 message ("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
 if (OUTPUT_CHAN_CONN STREQUAL "1" )
 	add_definitions(-DOUTPUT_CHAN_CONN)
 endif (OUTPUT_CHAN_CONN STREQUAL "1")
 
-#set -DSPATIAL_SOIL from env
+#set -DPRECIP_DOUBLE from env
 message ("PRECIP_DOUBLE = " ${PRECIP_DOUBLE} )
 if (PRECIP_DOUBLE STREQUAL "1" )
 	add_definitions(-DPRECIP_DOUBLE)
