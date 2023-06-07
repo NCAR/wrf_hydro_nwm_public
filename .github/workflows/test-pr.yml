@@ -65,9 +65,23 @@ jobs:
         if: ${{ always() }}
         run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
 
+      - name: Checkout Github API
+        if: ${{ always() }}
+        run: |
+          pip install pygithub
+
+      - name: Attach diff plots to PR
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/tests/local/utils
+          bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
+
+
       - name: Archive test results to GitHub
         if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
           name: test-reports
-          path: ${{ github.workspace }}/test_report/**.html
+          path: |
+            ${{ github.workspace }}/test_report/**.html
+            ${{ github.workspace }}/test_report/*/diff_plots
