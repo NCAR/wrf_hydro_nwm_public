@@ -15,6 +15,7 @@ set (National_Water_Model_VERSION_MINOR 0)
 set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
+enable_testing()
 find_package(MPI REQUIRED)
 add_compile_options(${MPI_Fortran_COMPILE_FLAGS})
 include_directories(${MPI_Fortran_INCLUDE_PATH})
@@ -246,3 +247,4 @@ include_directories(AFTER ${NETCDF_INCLUDES_F90})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
 
 add_subdirectory("src")
+add_subdirectory("tests/ctests")
