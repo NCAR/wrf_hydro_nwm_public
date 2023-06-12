@@ -31,7 +31,7 @@ debug::
 debug:: $(CMD)
 
 install:
-	-rm -f ./Run/wrf_hydro.exe; \
+	-rm -f ./Run/wrf_hydro.exe
 	mv LandModel/run/hrldas.exe  ./Run/wrf_hydro.exe
 test:
 	@echo "No libraries or utilities are built, skip testing."
