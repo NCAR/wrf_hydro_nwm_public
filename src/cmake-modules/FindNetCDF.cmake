@@ -32,6 +32,8 @@ endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
 find_path (NETCDF_INCLUDES netcdf.h HINTS NETCDF_DIR "$ENV{NETCDF}/include" ENV NETCDF_DIR)
 
+find_path (NETCDF_MODULES netcdf.mod HINTS NETCDF_DIR "$ENV{NETCDF}/mod" ENV NETCDF_MOD "/usr/lib64/gfortran/modules")
+
 find_library(NETCDF_LIBRARIES NAMES netcdf PATHS "$ENV{NETCDF}/lib" ENV NETCDF_LIB)
 
 find_library (NETCDF_LIBRARIES_C NAMES netcdf PATHS "$ENV{NETCDF}/lib" ENV NETCDF_LIB)
@@ -46,7 +48,7 @@ get_filename_component (NetCDF_lib_dirs "${NETCDF_LIBRARIES_C}" PATH)
 macro (NetCDF_check_interface lang header libs)
   if (NETCDF_${lang})
     find_path (NETCDF_INCLUDES_${lang} NAMES ${header}
-      HINTS "${NETCDF_INCLUDES}" NO_DEFAULT_PATH)
+      HINTS "${NETCDF_INCLUDES}" "${NETCDF_MODULES}" NO_DEFAULT_PATH)
     find_library (NETCDF_LIBRARIES_${lang} NAMES ${libs}
       HINTS "${NetCDF_lib_dirs}" NO_DEFAULT_PATH)
     mark_as_advanced (NETCDF_INCLUDES_${lang} NETCDF_LIBRARIES_${lang})

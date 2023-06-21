@@ -44,7 +44,7 @@ set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/src/cmake-modules)
 set (NETCDF_F90 "YES")
 set (NETCDF_F77 "YES")
 find_package(NetCDF REQUIRED)
-message("-- NetCDF Include Dir: ${NETCDF_INCLUDES}")
+message("-- NetCDF Include Dir(s): ${NETCDF_INCLUDES_F77} ${NETCDF_INCLUDES_F90}")
 
 # set user controled enviorment variables
 set (HYDRO_LSM $ENV{HYDRO_LSM} CACHE STRING "Name of the Land Surface Model to Use")
@@ -240,7 +240,9 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/mods)
 #add common include directores need in the build
 include_directories(AFTER ${PROJECT_BINARY_DIR}/mods)
 include_directories(AFTER ${MPI_INCLUDE_PATH})
-include_directories(AFTER ${NETCDF_INCLUDES})
+# include_directories(AFTER ${NETCDF_INCLUDES})  # NOTE: We don't need the C include for netCDF
+include_directories(AFTER ${NETCDF_INCLUDES_F77})
+include_directories(AFTER ${NETCDF_INCLUDES_F90})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
 
 add_subdirectory("src")

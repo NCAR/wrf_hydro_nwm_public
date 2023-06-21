@@ -51,6 +51,12 @@ if [[ ! -e ${NETCDF_LIB}/libnetcdff.a ]]; then
     echo "NETCDFLIB       =       -L${NETCDF_LIB} -lnetcdf" >> macros.tmp 
 fi
  
+# add any additional F90 flags that came out of nf-config (most likely separate module/library path)
+if command -v nf-config &> /dev/null; then             # ignore if nf-config isn't available
+    echo "F90FLAGS        +=      $(nf-config --fflags)" >> macros.tmp 
+    echo "NETCDFLIB       +=      $(nf-config --flibs)" >> macros.tmp
+fi
+
 ###################################
 ## File/dir setups
 if [[ -e macros ]]; then rm -f macros; fi
