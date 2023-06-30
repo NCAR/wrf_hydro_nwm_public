@@ -605,7 +605,7 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
-    ! the following two vars have xstart:xend,ystart:yend dimesions
+    ! the following two vars have xstart:xend,ystart:yend bounds
     real,    dimension(:,:), intent(out), allocatable :: glact
     real,    dimension(:,:), intent(out), allocatable :: vis_icealb
 
@@ -3017,7 +3017,7 @@ contains
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
     integer, dimension(global_nx,global_ny) :: gvegtyp
-    ! the following three vars have ixpar, jxpar dimensions
+    ! the following three vars have ixpar, jxpar bounds
     integer, dimension(:,:), allocatable, intent(in) :: glacinfo
     real,    dimension(:,:), allocatable, intent(in) :: glact
     real,    dimension(:,:), allocatable, intent(in) :: vis_icealb
