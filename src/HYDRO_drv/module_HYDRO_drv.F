@@ -990,7 +990,7 @@ else
        ,RT_DOMAIN(did)%lake_index,RT_DOMAIN(did)%link_location,&
        RT_DOMAIN(did)%mpp_nlinks,RT_DOMAIN(did)%nlinks_index, &
        RT_DOMAIN(did)%yw_mpp_nlinks  &
-       , RT_DOMAIN(did)%LNLINKSL,RT_DOMAIN(did)%LLINKID &
+       , RT_DOMAIN(did)%LNLINKSL &
        , rt_domain(did)%gtoNode,rt_domain(did)%toNodeInd,rt_domain(did)%nToInd  &
 #endif
        , rt_domain(did)%CH_LNKRT_SL   &

@@ -1518,7 +1518,8 @@ end subroutine get_albedo12m_netcdf
    implicit none
    integer, intent(in) :: gnumbasns, numbasns
    integer(kind=int64), intent(in),  dimension(numbasns) :: basnsInd
-   real,    intent(out), dimension(numbasns) :: gw_buck_coeff, gw_buck_exp, gw_buck_loss
+   real,    intent(out), dimension(numbasns) :: gw_buck_coeff, gw_buck_exp
+   real,    intent(out), dimension(:), allocatable :: gw_buck_loss
    real,    intent(out), dimension(numbasns) :: z_max, z_gwsubbas, basns_area
    integer, intent(out), dimension(numbasns) :: bas_id
    real, dimension(gnumbasns) :: tmp_buck_coeff, tmp_buck_exp, tmp_buck_loss

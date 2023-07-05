@@ -605,8 +605,9 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
-    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: glact
-    real,    dimension(xstart:xend,ystart:yend), intent(out), optional :: vis_icealb
+    ! the following two vars have xstart:xend,ystart:yend bounds
+    real,    dimension(:,:), intent(out), allocatable :: glact
+    real,    dimension(:,:), intent(out), allocatable :: vis_icealb
 
     character(len=256) :: units
     integer :: ierr
@@ -3016,9 +3017,10 @@ contains
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
     integer, dimension(global_nx,global_ny) :: gvegtyp
-    integer, dimension(ixpar,jxpar), optional, intent(in) :: glacinfo
-    real,    dimension(ixpar,jxpar), optional, intent(in) :: glact
-    real,    dimension(ixpar,jxpar),           intent(in) :: vis_icealb
+    ! the following three vars have ixpar, jxpar bounds
+    integer, dimension(:,:), allocatable, intent(in) :: glacinfo
+    real,    dimension(:,:), allocatable, intent(in) :: glact
+    real,    dimension(:,:), allocatable, intent(in) :: vis_icealb
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then
