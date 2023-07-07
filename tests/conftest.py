@@ -2,6 +2,7 @@ import pathlib
 import shutil
 import pytest
 import wrfhydropy
+import json
 
 
 def pytest_addoption(parser):
@@ -41,7 +42,7 @@ def pytest_addoption(parser):
         required=True,
         action='store',
         help=("The configuration to test, "
-              "must be one listed in trunk/NDHMS/hydro_namelist.json keys.")
+              "must be one listed in src/hydro_namelist.json keys.")
     )
 
     # Optional args
@@ -385,3 +386,16 @@ def ncores(request):
 @pytest.fixture(scope="session")
 def xrcmp_n_cores(request):
     return int(request.config.getoption("--xrcmp_n_cores"))
+
+
+@pytest.fixture(scope="session")
+def feature_ids(request):
+    domain_dir = request.config.getoption("--domain_dir")
+
+    domain_dir = pathlib.Path(domain_dir)
+    domain_dir = domain_dir / "testing_diff_feature_ids.json"
+
+    try:
+        return json.loads(open(domain_dir).read())
+    except:
+        return None

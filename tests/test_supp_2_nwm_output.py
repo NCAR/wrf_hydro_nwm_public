@@ -12,7 +12,6 @@ import wrfhydropy
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utilities import print_diffs, wait_job
 
-
 def test_run_reference_nwm_output_sim(
     reference_sim,
     reference_nwm_output_sim,

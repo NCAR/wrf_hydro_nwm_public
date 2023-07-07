@@ -40,7 +40,7 @@ def run_tests(
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
             output_dir: The directory to hold test outputs
             scheduler: Use PBSCheyenne scheduler?
-            exe_cmd: Optional. The MPI dependent run command which zeroth variable for ncores. 
+            exe_cmd: Optional. The MPI dependent run command which zeroth variable for ncores.
             ncores: Optional. The number of cores to use if running on cheyenne
             nnodes: Optional. The number of nodes to use if running on cheyenne
             account: Options. The account number to use if running on cheyenne
@@ -53,8 +53,8 @@ def run_tests(
     """
 
     # Pytest wants the actual source code directory, not the top level repo directory
-    candidate_source_dir = candidate_dir + '/trunk/NDHMS'
-    reference_source_dir = reference_dir + '/trunk/NDHMS'
+    candidate_source_dir = candidate_dir + '/src'
+    reference_source_dir = reference_dir + '/src'
 
     # Load modules and override nnodes/ncores if running on cheyenne
     hostname = socket.gethostname()
@@ -136,7 +136,7 @@ def main():
         required=True,
         nargs='+',
         help="<Required> The configuration(s) to test, "
-        "must be one listed in trunk/NDHMS/hydro_namelist.json keys."
+        "must be one listed in src/hydro_namelist.json keys."
     )
 
     parser.add_argument(
@@ -150,7 +150,7 @@ def main():
         required=True,
         help='<Required> test output directory'
     )
-    
+
     parser.add_argument(
         '--candidate_dir',
         required=True,
