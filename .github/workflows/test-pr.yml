@@ -103,10 +103,13 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: gh repo clone ${{ github.repository }} cmake_candidate && cd cmake_candidate && gh pr checkout -R ${{ github.repository }} ${{ github.event.inputs.pr }}
 
+      - name: pwd
+        run: pwd
+      - name: ls
+        run: ls
+
       - name: Configure CMake
         run: |
-          pwd
-          ls
           mkdir -p build
           cd build
           cmake ..
