@@ -105,21 +105,20 @@ jobs:
 
       - name: pwd
         run: pwd
-      - name: ls
-        run: ls
-      - name: cd cmake_candidate
-        run: cd cmake_candidate
+      - name: GITHUB_WORKSPACE ls
+        run: ls ${GITHUB_WORKSPACE}
+      - name: cd ${GITHUB_WORKSPACE}
+        run: cd ${GITHUB_WORKSPACE}
       - name: ls II
         run: ls
-      - name: ls III
-        run: ls ..
-      - name: ls IV
-        run: ls ../..
+      - name: pwd II
+        run: pwd
+      - name: mkdir
+        run: mkdir -p build
+      - name: cd build
+        run: cd build
       - name: Configure CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake ..
+        run: cmake ..
       - name: Build CMake
         run: cmake -j
       - name: Test CMake
