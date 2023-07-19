@@ -107,7 +107,10 @@ jobs:
         run: pwd
       - name: ls
         run: ls
-
+      - name: cd cmake_candidate
+        run: cd cmake_candidate
+      - name: ls II
+        run: ls
       - name: Configure CMake
         run: |
           mkdir -p build
