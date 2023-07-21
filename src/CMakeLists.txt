@@ -103,18 +103,27 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
     if (WRF_HYDRO_NUDGING STREQUAL "1")
         target_link_libraries(wrfhydro.exe hydro_nudging)
-         add_dependencies(wrfhydro.exe hydro_nudging)
+        add_dependencies(wrfhydro.exe hydro_nudging)
     endif (WRF_HYDRO_NUDGING STREQUAL "1")
+
+    # bash commands to copy namelists to the Run directory
+    set(BASH_CP_HRLDAS_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/namelist.hrldas ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/namelist.hrldas ${CMAKE_BINARY_DIR}/Run \; fi\;")
+    set(BASH_CP_HYDRO_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/hydro.namelist ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run \; fi\;")
 
     add_custom_command(TARGET wrfhydro.exe POST_BUILD
         COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
-        COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-        COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
-        COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/* ${CMAKE_BINARY_DIR}/Run
+        COMMAND cp ${PROJECT_SOURCE_DIR}/tests/ctests/run_dir_makefile.mk ${CMAKE_BINARY_DIR}/Run/Makefile
+        # copy tables
         COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-        COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
         COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
         COMMAND cp ${PROJECT_SOURCE_DIR}/src/Land_models/NoahMP/run/*.TBL ${CMAKE_BINARY_DIR}/Run
+        # copy namelists
+        COMMAND bash -c "${BASH_CP_HRLDAS_NML}"
+        COMMAND bash -c "${BASH_CP_HYDRO_NML}"
+        # copy and setup executables
+        COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+        COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
+        COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
         COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
         COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro.exe
     )
