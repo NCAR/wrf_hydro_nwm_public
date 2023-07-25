@@ -749,11 +749,11 @@ contains
           print*, "reset DTRT_TER=nlst(did)%DT "
           DTRT_TER=nlst(did)%DT
     endif
-    if(nlst(did)%DT/DTRT_TER .ne. real(int(nlst(did)%DT) / int(DTRT_TER)) ) then
+    if (modulo(nlst(did)%DT, DTRT_TER) /= 0) then
          print*, "nlst(did)%DT,  DTRT_TER = ",nlst(did)%DT,  DTRT_TER
          call hydro_stop("module_namelist: DT not a multiple of DTRT_TER")
     endif
-    if(nlst(did)%DT/DTRT_CH .ne. real(int(nlst(did)%DT) / int(DTRT_CH)) ) then
+    if (modulo(nlst(did)%DT, DTRT_CH) /= 0) then
          print*, "nlst(did)%DT,  DTRT_CH = ",nlst(did)%DT,  DTRT_CH
          call hydro_stop("module_namelist: DT not a multiple of DTRT_CH")
     endif

@@ -430,7 +430,7 @@ contains
     real, pointer,   dimension(:,:)   :: dum2d_ptr
 #endif
     integer, volatile :: ncid, dimid, varid, ierr
-    real, allocatable, dimension(:,:) :: dum2d
+    real, allocatable, dimension(:,:), volatile :: dum2d
     character(len=256) :: units
     integer :: i
     integer :: rank
@@ -1320,7 +1320,7 @@ contains
     integer, intent(in) :: ncid
     integer, intent(in) :: xstart, xend, ystart, yend
 #ifdef MPP_LAND
-    real, dimension(xstart:xend,ystart:yend), intent(inout) :: array
+    real, dimension(:,:), intent(inout) :: array
 #else
     real, dimension(xstart:xend,ystart:yend), intent(out) :: array
 #endif
@@ -1332,7 +1332,7 @@ contains
     logical, intent(in) :: fatal_if_error
     integer, intent(out), volatile :: ierr
 #ifdef MPP_LAND
-    real:: g_array(global_nx,global_ny)
+    real, volatile :: g_array(global_nx,global_ny)
 #endif
 
     ierr = 0
