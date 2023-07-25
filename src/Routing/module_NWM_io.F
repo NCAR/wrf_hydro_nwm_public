@@ -232,13 +232,6 @@ subroutine output_chrt_NWM(domainId)
          gsize = rt_domain(domainId)%gnlinks
       endif
 
-      ! Sync all processes up.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
-
       if(myId .eq. 0) then
          ! Allocate memory for output.
          allocate(g_chlon(gsize))
@@ -328,13 +321,6 @@ subroutine output_chrt_NWM(domainId)
       if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
          allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
          qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
-      endif
-
-      ! Sync everything up before the next step.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
       endif
 
       ! Loop through all the local links on this processor. For lake_type
@@ -1015,13 +1001,6 @@ subroutine output_chrt_NWM(domainId)
 
    endif ! End if we are on master processor.
 
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    ! Deallocate all memory.
    if(myId .eq. 0) then
       deallocate(varOutReal)
@@ -1160,13 +1139,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 #else
    diagFlag = 0
 #endif
-
-   ! Sync up processes.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
 
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
@@ -1391,13 +1363,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
 
    if(varInd .eq. 1) then
       ! We are on the first variable, we need to create the output file with
@@ -1688,13 +1653,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       end if ! End if we are on the I/O processor.
    endif ! End if we are on the first variable
 
-   ! Sync up all processes
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    ! Place data into NetCDF file. This involves a few steps:
    ! 1.) Allocate an integer array of local grid size.
    ! 2.) Allocate an integer array of global grid size.
@@ -1727,13 +1685,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       globalOutComp = fileMeta%fillComp(varInd)
       globalOutReal = fileMeta%fillReal(varInd)
 
-      ! Sync up processes
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
-
       varRealTmp = varReal
       ! Reset any missing values that may exist.
       where ( varRealTmp .eq. fileMeta%modelNdv ) varRealTmp = fileMeta%fillReal(varInd)
@@ -1755,12 +1706,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
          else
             localCompTmp = NINT((varRealTmp(:,zTmp,:)-fileMeta%addOffset(varInd))/fileMeta%scaleFactor(varInd))
          endif
-         ! Sync all processes up.
-         if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-            call mpp_land_sync()
-#endif
-         endif
+
          if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
             call write_IO_int(localCompTmp,globalCompTmp)
@@ -1770,25 +1716,13 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
             globalCompTmp = localCompTmp
             globalRealTmp = varRealTmp(:,zTmp,:)
          endif
-         ! Sync all processes up.
-         if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-            call mpp_land_sync()
-#endif
-         endif
+
          ! Place output into global array to be written to NetCDF file.
          if(myId .eq. 0) then
             globalOutComp(:,zTmp,:) = globalCompTmp
             globalOutReal(:,zTmp,:) = globalRealTmp
          endif
       end do
-
-      ! Sync up processes
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
 
       ! Write array out to NetCDF file.
       if(myId .eq. 0) then
@@ -1825,13 +1759,6 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       deallocate(localCompTmp)
       deallocate(varRealTmp)
 
-   endif
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
    endif
 
    if(myId .eq. 0) then
@@ -2274,13 +2201,6 @@ subroutine output_rt_NWM(domainId,iGrid)
 
    endif ! End if statement if on I/O ID
 
-   ! Synce up processes.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    ! Loop through each variable, collect local routing grid variables into a
    ! global routing grid and output through the master I/O process.
    do iTmp2=1,fileMeta%numVars
@@ -2315,13 +2235,6 @@ subroutine output_rt_NWM(domainId,iGrid)
             ! Initialize arrays to prescribed NDV value.
             localCompTmp = fileMeta%fillComp(iTmp2)
             localRealTmp = fileMeta%fillReal(iTmp2)
-
-            ! Sync up processes
-            if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-               call mpp_land_sync()
-#endif
-            endif
 
             ! Loop through output array and convert floating point values to
             ! integers via scale_factor/add_offset.
@@ -2376,13 +2289,6 @@ subroutine output_rt_NWM(domainId,iGrid)
             else
                globalOutComp(:,zTmp,:) = localCompTmp
                globalOutReal(:,zTmp,:) = localRealTmp
-            endif
-
-            ! Sync up processes
-            if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-               call mpp_land_sync()
-#endif
             endif
          end do ! End looping through levels
 
@@ -2578,13 +2484,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
    if(mppFlag .eq. 1) then
       gSize = rt_domain(domainId)%NLAKES
 
-      ! Sync all processes up.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
-
       allocate(g_lakeLon(gsize))
       allocate(g_lakeLat(gsize))
       allocate(g_lakeElev(gsize))
@@ -2617,13 +2516,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeType = RT_DOMAIN(domainID)%final_reservoir_type
       g_lake_assimilated_value = RT_DOMAIN(domainID)%reservoir_assimilated_value
       g_lake_assimilated_source_file = RT_DOMAIN(domainID)%reservoir_assimilated_source_file
-
-      ! Sync everything up before the next step.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
 
       ! Collect arrays from various processors through MPI, and
       ! assemble into global arrays previously allocated.
@@ -2666,13 +2558,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
       g_lakeType = RT_DOMAIN(domainId)%final_reservoir_type
       g_lake_assimilated_value = RT_DOMAIN(domainID)%reservoir_assimilated_value
       g_lake_assimilated_source_file = RT_DOMAIN(domainID)%reservoir_assimilated_source_file
-   endif
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
    endif
 
    ! Calculate datetime information.
@@ -3108,13 +2993,6 @@ subroutine output_lakes_NWM(domainId,iGrid)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to close LAKE file.')
 
    endif ! End if we are on master processor.
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
 
    ! Deallocate all memory
    if(myId .eq. 0) then
@@ -3646,13 +3524,6 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
 
    endif ! End if statement if on I/O ID
 
-! Synce up processes.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    if(myId .eq. 0) then
       ! Close the output file
       iret = nf90_close(ftn)
@@ -3738,13 +3609,6 @@ subroutine output_lsmOut_NWM(domainId)
    diagFlag = 0
 #endif
 
-   ! Sync up processes.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    ! If we are running over MPI, determine which processor number we are on.
    ! If not MPI, then default to 0, which is the I/O ID.
    if(mppFlag .eq. 1) then
@@ -3816,13 +3680,6 @@ subroutine output_lsmOut_NWM(domainId)
 
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
 
    if(myId .eq. 0) then
       ! We are on the I/O node. Create output file.
@@ -4049,13 +3906,6 @@ subroutine output_lsmOut_NWM(domainId)
 
    end if ! End if we are on the I/O processor.
 
-   ! Sync up all processes
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
-   endif
-
    ! Allocate temporary local memory
    allocate(localRealTmp(rt_domain(domainId)%ix,rt_domain(domainId)%jx))
 
@@ -4068,13 +3918,6 @@ subroutine output_lsmOut_NWM(domainId)
             allocate(globalOutReal(global_nx,global_ny))
          else
             allocate(globalOutReal(1,1))
-         endif
-
-         ! Sync up processes
-         if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-            call mpp_land_sync()
-#endif
          endif
 
          ! Loop through the local array and convert floating point values
@@ -4134,24 +3977,12 @@ subroutine output_lsmOut_NWM(domainId)
             enddo
          enddo
          ! Collect local 2D arrays to global 2D array
-         ! Sync all processes up.
-         if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-            call mpp_land_sync()
-#endif
-         endif
          if(mppFlag .eq. 1) then
 #ifdef MPP_LAND
             call write_IO_real(localRealTmp,globalOutReal)
 #endif
          else
             globalOutReal = localRealTmp
-         endif
-         ! Sync all processes up.
-         if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-            call mpp_land_sync()
-#endif
          endif
 
          ! Write array out to NetCDF file
@@ -4257,13 +4088,6 @@ implicit none
          gSize = rt_domain(domainId)%gnlinks
       endif
 
-      ! Sync all processes up.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
-
       if(myId .eq. 0) then
          allocate(g_STRMFRXSTPTS(gSize))
          allocate(g_outInd(gSize))
@@ -4292,13 +4116,6 @@ implicit none
       allocate(frxstPtsLocal(RT_DOMAIN(domainId)%NLINKS))
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       frxstPtsLocal = rt_domain(domainId)%STRMFRXSTPTS
-
-      ! Sync everything up before the next step.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
 
       ! Loop through all the local links on this processor. For lake_type
       ! of 2, we need to manually set the streamflow values
@@ -4637,13 +4454,6 @@ subroutine output_chanObs_NWM(domainId)
          gSize = rt_domain(domainId)%gnlinks
       endif
 
-      ! Sync all processes up.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
-
       if(myId .eq. 0) then
          allocate(g_STRMFRXSTPTS(gSize))
          allocate(g_outInd(gSize))
@@ -4676,13 +4486,6 @@ subroutine output_chanObs_NWM(domainId)
       allocate(frxstPtsLocal(RT_DOMAIN(domainId)%NLINKS))
       strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
       frxstPtsLocal = rt_domain(domainId)%STRMFRXSTPTS
-
-      ! Sync everything up before the next step.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
 
       ! Loop through all the local links on this processor. For lake_type
       ! of 2, we need to manually set the streamflow values
@@ -5338,12 +5141,6 @@ subroutine output_gw_NWM(domainId,iGrid)
    ! Collect and assemble local groundwater bucket arrays to a global array for
    ! output.
    if(mppFlag .eq. 1) then
-      ! Sync all processes up.
-      if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-         call mpp_land_sync()
-#endif
-      endif
 
       if(myId .eq. 0) then
          allocate(g_qin_gwsubbas(rt_domain(domainId)%gnumbasns))
@@ -5407,13 +5204,6 @@ subroutine output_gw_NWM(domainId,iGrid)
          fileMeta%outFlag(3) = 1
          g_qloss_gwsubbas = rt_domain(domainId)%qloss_gwsubbas
       endif
-   endif
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
    endif
 
    ! Calculate datetime information.
@@ -5674,13 +5464,6 @@ subroutine output_gw_NWM(domainId,iGrid)
       ! Close the output file
       iret = nf90_close(ftn)
       call nwmCheck(diagFlag,iret,'ERROR: Unable to close GWOUT file.')
-   endif
-
-   ! Sync all processes up.
-   if(mppFlag .eq. 1) then
-#ifdef MPP_LAND
-      call mpp_land_sync()
-#endif
    endif
 
    ! Deallocate all memory
