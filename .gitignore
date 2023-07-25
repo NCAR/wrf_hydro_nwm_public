@@ -1,4 +1,6 @@
 *.o
+*.so
+*.so.*
 *.mod
 *.lst
 *~
@@ -25,3 +27,4 @@ README.md
 *.log
 compile_options.sh
 .DS_Store
+.vscode
