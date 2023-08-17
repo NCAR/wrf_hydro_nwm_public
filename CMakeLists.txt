@@ -23,6 +23,8 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
+# enable ctests
+enable_testing()
 
 #message ("-- MPI Include directories: " ${MPI_INCLUDE_PATH} )
 #message ("-- MPI C COMPILER : " ${MPI_C_COMPILER} )
@@ -246,3 +248,4 @@ include_directories(AFTER ${NETCDF_INCLUDES_F90})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
 
 add_subdirectory("src")
+add_subdirectory("tests/ctests")
