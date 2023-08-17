@@ -50,3 +50,23 @@ available options are described in the following table.
 |------------------------------------|-------------------------------------------------------------------------------|
 | `-DWRF_HYDRO_NUOPC=1`              | Coupling with NUOPC, this option is not currently supported                   |
 | `-DWRF_HYDRO_RAPID=1`              | Coupling with the RAPID routing model, this option is not currently supported |
+
+
+### Testing with CMake
+To run CTests run the following in the CMake build directory.
+```
+$ ctest
+```
+
+To build the Croton, NY testcase in the CMake build's `Run` directory use the following command.
+```
+$ make croton
+```
+The script defaults to the gridded testcase, but the others can also be chosen.
+```
+$ make croton-gridded
+$ make croton-gridded-no-lakes
+$ make croton-nwm
+$ make croton-reach
+$ make croton-reach-lakes
+```
