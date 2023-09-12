@@ -1,0 +1,403 @@
+.. vim: syntax=rst
+.. include:: meta.rest
+
+.. _section-6.0:
+
+6. Description of Output Files from WRF-Hydro
+=============================================
+
+This chapter describes the output files from Version 5.x of WRF-Hydro.
+
+The user has several options to allow flexibility when outputting from
+the WRF-Hydro modeling system. All of the options to control outputs are
+located in the hydro.namelist file that the user edits prior to running a
+simulation. Prior to turning specific file options on, there are a few
+high-level namelist options (flags) that help control the quantity of
+variables each file will produce, along with some flexibility on the level
+of compression files contain.
+
+   .. rubric:: ``io_form_outputs``:
+
+   This flag directs the output to utilize optional internal netCDF compression
+   and the use of optional scale_factor/add_offset attributes to pack variables
+   from floating point to integer. However, the user also has the flexibility
+   to turn these optional features off. For additional information on these
+   “packing” attributes, consult the netCDF documentation for a more in-depth
+   explanation
+   (http://www.unidata.ucar.edu/software/netcdf/docs/index.html). It should
+   be noted that the use of internal compression adds time to output files
+   being produced. This may become costly for large-scale modeling
+   applications. Tests have indicated a cost of 15-25% additional time
+   spent producing output variables when internal netCDF compression is
+   utilized, depending on the number of output files being produced.
+   However, without the use of compression, it is possible file sizes could
+   become large depending on the application. It is also important to note
+   that a value of ``0`` will result in the code deferring to old output
+   routines used in version 3.0 of WRF-Hydro. For these outputs, the user
+   is encouraged to read the documentation for that version of the code.
+   The following values for the ``io_form_outputs`` option are available:
+
+      ``0`` - Defer to old output routines for version 3.0 of WRF-Hydro
+      (NOTE:this is the ONLY option that is supported when running with
+      the Noah LSM)
+
+      ``1`` - Utilize internal netCDF compression in conjunction with
+      scale_factor/add_offset byte packing
+
+      ``2`` - Utilize scale_factor/add_offset byte packing without internal
+      netCDF compression
+
+      ``3`` - Utilize internal netCDF compression without
+      scale_factor/add_offset byte packing.
+
+      ``4`` - No internal netCDF compression and no scale_factor/add_offset
+      byte packing.
+
+   .. rubric:: ``io_config_outputs``:
+
+   This flag offers different sets of output variables for each file. This
+   offers the user some flexibility to the number of output variables being
+   produced. *NOTE*: This flag has no effect when ``io_form_outputs = 0``.
+
+   .. rubric:: ``t0OutputFlag``:
+
+   This flag controls if output files are produced on the initial timestep
+   of the model simulation. It is important to note that some variables are
+   initialized to missing values and may translate to missing values in the
+   output files for the initial time step. However, these files may offer
+   useful information to the user for diagnosing purposes.
+
+   .. rubric:: ``output_channelBucket_influx``:
+
+   This flag controls the creation of output variables specific to running
+   a channel-only configuration of the model. These variables provide useful
+   information on flow coming into channel links located in the simulation
+   domain, which can be used for diagnosing purposes. *Note*: this value must
+   be zero for running a gridded channel routing configuration of the model.
+
+An overview of available model output files is shown in :ref:`Figure 6.1 <figure-6.1>`.
+For a detailed table of each variable contained within each output file, see
+the *WRF-Hydro Output Variable Matrix V5* located on our website
+(`https://ral.ucar.edu/projects/wrf_hydro <https://ral.ucar.edu/projects/wrf_hydro/pre-processing-tools>`__)
+for details. There is no optimal combination of namelist options to use
+for outputs. Flexibility was given to the user as end applications will
+vary from one user to another. While a combination of many output
+variables with compression may work for a one-time model simulation,
+having fewer variables with less time spent on compression may be more
+suitable for a user that is operations driven. Future code upgrades will
+allow further flexibility on the exact variables to output for each
+file.
+
+.. figure:: media/wrfhydro-outputs.png
+   :name: figure-6.1
+   :figwidth: 90%
+   :width: 90%
+   :align: center
+
+   **Figure 6.1** WRF-Hydro output files organized by model physics
+   component. See the Key for files specific to a certain channel
+   configuration.
+
+Please note a proper land spatial metadata file is highly encouraged
+when producing land surface output from the simulations. This file is
+specified by the ``LAND_SPATIAL_META_FLNM`` option in the hydro.namelist
+file. This file contains several geospatial variables and attributes
+which are translated to output files that meet CF compliance
+(http://cfconventions.org/). This file can be created using the
+*WRF-Hydro GIS Pre-processing Toolkit* associated with this release. For
+gridded output files, coordinate variable data and attributes are used
+from the spatial metadata file for the output variables. Additionally,
+geospatial attributes, which can help the user display data in GIS
+applications are located within the metadata file. These attributes
+translate to the output files during the output creation process. For
+the 2D high resolution routing output files (``RT_DOMAIN``, ``CHRTOUT_GRID``),
+geospatial attributes and coordinate variables are translated from the
+Fulldom_hires.nc file if they are detected. For point output files
+(``CHRTOUT_GRID``, ``CHANOBS_DOMAIN``, ``LAKEOUT_DOMAIN``), the geospatial
+attributes and coordinate variables have been hard-coded to be latitude
+and longitude for this version of the code.
+
+Each output file will potentially contain some set of attributes and
+variables that contain temporal and geospatial information useful to the
+user. Again, it is worth noting that the lack of a land spatial metadata
+file, or proper attributes in the :file:`Fulldom_hires.nc` file will result
+in a less comprehensive output file in terms of metadata. Each output file
+will contain a time dimension and variable that specifies the number of
+timesteps located in the output file, along with a numeric value for
+each timestep in the form of minutes since EPOCH. A ``reference_time``
+dimension (usually 1 in dimension size) and variable exist. This
+variable will contain the model initialization in minutes since EPOCH.
+
+Gridded output files will contain an `x` and `y` coordinate dimension and
+variable that will contain the center-point coordinate values for either
+the routing grid, or land surface grid in the model projected space. For
+example, on a Lambert Conformal modeling domain, these values would be
+in meters. Gridded output files will also contain a ``CRS`` variable,
+which contains useful geospatial metadata attributes about the modeling
+domain. Output files for points, river channel links, or lakes will
+contain latitude, longitude, and elevation variables to offer metadata
+about each location in the output file.
+
+Additionally, output files at points will contain a feature_id variable
+that will list either a global ID value associated with that point, or a
+predefined ID value extracted from an input file. For example, with 2D
+gridded channel routing, each channel pixel cell has an ID value that
+ranges from `1-n` where `n` is the global number of channel pixel cells.
+However, with reach-based routing, each channel reach may have a
+predefined link ID value specified via the :file:`Route_Link.nc` file. All files
+contain ``model_initialization_time`` and ``model_output_valid_time`` character
+attributes to offer additional time information about the output file.
+For files that were produced with ``io_form_outputs`` options of ``1`` or ``2``,
+standard netCDF variable attributes ``scale_factor`` and add_``offset are
+present to help users and netCDF APIs unpack integer data back to
+floating point for visualization and analysis. For a more in-depth
+description of netCDF CF compliant output, please visit
+http://cfconventions.org.
+
+Two output files that do not necessarily follow the above mentioned
+format will be the groundwater output (``GWOUT_DOMAIN``) file and
+:file:`frxst_pts_out.txt` text file. Groundwater output are representative of a
+spatial region, as opposed to points or fixed pixel cells. Future code
+upgrades will attempt to incorporate additional spatial information
+about groundwater buckets. The :file:`frxst_pts_out.txt` text file is a simple
+ASCII text file, not netCDF.
+
+The following output files are available to the user, depending on their
+run configuration:
+
+   1. Land surface model output
+
+   2. Land surface diagnostic output
+
+   3. Streamflow output at all channel reaches/cells
+
+   4. Streamflow output at forecast points or gage reaches/cells
+
+   5. Streamflow on the 2D high resolution routing grid (gridded channel
+      routing only)
+
+   6. Terrain routing variables on the 2D high resolution routing grid
+
+   7. Lake output variables
+
+   8. Ground water output variables
+
+   9. A text file of streamflow output at either forecast points or gage
+      locations (:file:`frxst_pts_out.txt`)
+
+The output files will be described below.
+
+File naming convention of output files: ``YYYY`` = year, ``MM`` = month,
+``DD`` = day, ``HH`` = hour, ``MM`` = minutes, ``DOMAINX`` = the domain
+number that is specified in the hydro.namelist input file (also matches
+the domain number of the geogrid input file)
+
+.. rubric:: 1. Land surface model output
+
+\
+   :file:`{YYYYMMDDHHMM}.LDASOUT_DOMAIN{X}`
+
+   For this output file, land surface model variables are written to a
+   multi-dimensional netCDF file. Output is produced on the land surface
+   grid, most variables coming directly from the land surface model. The `x`
+   and `y` dimensions of the output file match those of the geogrid input
+   file and the land spatial metadata file. The ``soil_layers_stag`` and
+   ``snow_layers`` dimensions specify the number of soil and snow layers
+   being produced by the land surface model. The names and definitions for
+   each output variable in the LSM output file are generally consistent
+   with those output from standard Noah or Noah-MP LSM coupled to WRF. The
+   output frequency of this file is dictated ``OUTPUT_TIMESTEP`` specified in
+   :file:`namelist.hrldas`.
+
+.. rubric:: 2. Land surface diagnostic output
+
+\
+   :file:`{YYYYMMDDHHMM}.LSMOUT_DOMAIN{X}`
+
+   Variables for this output file will not change with varying values of
+   ``io_config_outputs`` as there is a limited set of land surface states
+   produced for this output file. In general, the user will not desire this
+   output file as the regular land surface output files contain a larger
+   amount of land surface output. However, for examining model state and
+   flux passing between the LSM and the routing routines, this file could
+   contain potentially valuable information that would assist in those
+   efforts. Some of these states include soil moisture, soil temperature,
+   infiltration excess, and surface head. Like the land surface output
+   files, output variables in this output file will match the land surface
+   grid. The output frequency of this file is dictated by ``OUTPUT_TIMESTEP``
+   specified in :file:`namelist.hrldas`.
+
+.. rubric:: 3. Streamflow output at all channel reaches/cells
+
+\
+   :file:`{YYYYMMDDHHMM}.CHRTOUT_DOMAIN{X}`
+
+   The ``CHRTOUT_DOMAIN`` option in the :file:`hydro.namelist` is used to
+   activate this output. This output file will produce a set of streamflow
+   (and related) variables for each channel location in the modeling domain.
+   For 2D gridded routing on the channel network, this is every pixel cell
+   on the high-resolution modeling domain classified as a channel pixel cell.
+   Forreach-based routing, this is every channel reach defined in the
+   :file:`Route_Link.nc` file. If the user desires to limit the number of
+   streamflow points, the ``order_to_write`` option in :file:`hydro.namelist`
+   will reduce the number of points based on the Strahler order number.
+   Otherwise, all points will be outputted to the file. Each file will
+   contain a ``latitude``, ``longitude``, ``elevation``, and ``order`` variable
+   to describe basic information on each channel point. The ``CRS`` projection
+   variable has been hard-coded (as it is with all other point output
+   files) as the coordinate variables for point files are in
+   latitude/longitude.
+
+.. rubric:: 4. Streamflow output at forecast points or gage reaches/cells
+
+\
+   :file:`{YYYYMMDDHHMM}.CHANOBS_DOMAIN{X}`
+
+   The ``CHANOBS_DOMAIN`` option in the hydro.namelist is used to activate this
+   output. This output file is very similar to the regular streamflow
+   output file format. The key difference is output only occurs at
+   predefined forecast points or gage locations. For 2D gridded channel
+   routing, the user defines forecast points during the setup of their
+   modeling domain. Under this configuration, streamflow will be produced
+   at those points. It is worth noting output points can be constrained by
+   the ``order_to_write`` as they are in the regular streamflow output files.
+   For reach-based routing, it is possible to create outputs at a set of
+   predefined gage points in the :file:`Route_Link.nc` file. Within the
+   :file:`Route_Link.nc` file, a variable called ``gages`` of type character will
+   need to be created by the user containing a string for each channel
+   reach that contains a gage. This variable is of length ``feature_id`` (see
+   description of the Route_Link.nc file in Appendix :ref:`A9 <section-a9>`),
+   and size 15. If a channel reach does not contain a gage, the string
+   stays empty. For example, ``"               "`` would represent a channel
+   reach with no gage, and ``" 07124000"`` would contain a gage labeled
+   “07124000”. It is up to the user to create this variable and populate it with
+   character strings if there is a desire to connect gage locations to channel
+   reaches. If no locations are found, the output code will simply bypass
+   creating this output file. Like the other point files, similar
+   geospatial information will be placed into the output files.
+
+.. rubric:: 5. Streamflow on the 2D high resolution routing grid
+
+\
+   :file:`{YYYYMMDDHHMM}.CHRTOUT_GRID{X}`
+
+   The ``CHRTOUT_GRID`` option in the :file"`hydro.namelist` is used to activate this
+   output. This output file is a 2D file created from streamflow with 2D gridded
+   channel routing. Currently, this file is not available for reach-based
+   routing as channel routing does not occur on the channel grid. Output
+   occurs on the high resolution channel routing grid, which means file
+   sizes may be large depending on the size of your domain. In addition to
+   geospatial metadata and coordinate variables, an ``index`` variable is
+   created on the 2D grid producing a global index value for each channel
+   pixel cell on the grid. The main motivation behind creating this file is
+   for easy spatial visualization of the streamflow occurring across the
+   modeling domain.
+
+.. rubric:: 6. Terrain routing variables on the 2D high resolution routing grid
+
+\
+   :file:`{YYYYMMDDHHMM}.RTOUT_DOMAIN{X}`
+
+   The ``RTOUT_DOMAIN`` option in the :file:`hydro.namelist` is used to activate this
+   output. This output file is a 2D file created on the high resolution routing
+   grid. The primary variables created for this file are overland and
+   subsurface routing components that may be of interest to the user. The
+   format is very similar to the 2D streamflow file. Due to the shear size
+   of these data layers, care should be used in deciding when to output
+   high-resolution terrain data.
+
+.. rubric:: 7. Lake output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.LAKEOUT_DOMAIN{X}`
+
+   The ``outlake`` option in the :file:`hydro.namelist` will activate this output.
+   This file is a point output file containing lake/reservoir inflow,
+   outflow and elevation values for each lake/reservoir object created in
+   the modeling domain. The format follows that of the other point output
+   files in terms of geospatial metadata. If no lake/reservoir objects were
+   created in the modeling domain, no output will be created.
+
+.. rubric:: 8. Ground water output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.GWOUT_DOMAIN{X}``
+
+   The ``output_gw`` option in the :file:`hydro.namelist` will activate this output.
+   When groundwater buckets are activated in the model simulations, it is
+   possible to output bucket inflow/outflow/depth states via netCDF files.
+   One important note to reiterate for these output files is that they will
+   not contain the same geospatial metadata as other point files. Each
+   element in the output array represents a spatial groundwater bucket that
+   covers a region that is neither a single pixel cell or point on the
+   modeling domain. For these reasons, this is the only netCDF output file
+   that will not contain full geospatial metadata and coordinate variables.
+
+.. rubric:: 9. :file:`frxst_pts_out.txt`
+
+\
+   The ``frxst_pts_out`` option in the :file:`hydro.namelist` will activate this
+   output. The forecast points text file is a unique output file that distills
+   modeled streamflow and stage down to a simple text file with the
+   following columns:
+
+      -  column 1 : time (in seconds) into simulation
+
+      -  column 2 : date and time as YYYY-MM-DD_HH:MM:SS
+
+      -  column 3 : station number index (same as ``feature_id`` in netCDF files)
+
+      -  column 4 : station longitude (in decimal degrees)
+
+      -  column 5 : station latitude (in decimal degrees)
+
+      -  column 6 : streamflow discharge (in cubic meters per second)
+
+      -  column 7 : streamflow discharge (in cubic feet per second)
+
+      -  column 8 : flow depth/river stage (in meters above channel bottom)
+
+                    *Note*: Column 8 is not active for reach-based routing.
+
+   Each row in the text file is representative of a predefined forecast
+   point (2D gridded channel routing only) or a gage point (reach-based
+   routing). It is worth noting that the number of points will be reduced
+   (as with CHANOBS and CHRTOUT) if the user specifies a higher
+   ``order_to_write`` namelist option.
+
+Once output files are generated, the user should inspect the files using
+the :program:`ncdump` netCDF utility for displaying the contents of a netCDF
+file. With the exception of groundwater output files, the forecast
+points text file, and any files generated using ``io_form_outputs`` of 0,
+the user should see some baseline variables and attributes. A ``crs``
+variable will be present indicating the projection coordinate system for
+the output files. If these files are missing in the 2D files, it is
+possible the Fulldom_hires.nc or land spatial metadata file does not
+contain the necessary ``crs`` variable. The same logic can be applied to
+the ``x`` and ``y`` coordinate variables in the 2D output files. The
+omission of these indicates they were not present in the input files
+prior to running the model. For additional help indicating potential
+issues with the output code, please inspect the standard output from the
+model. Specifically, look for any ":output:`WARNING`" messages that may indicate
+why files have not appeared or metadata is missing. For example,
+":output:`WARNING: Unable to locate the crs variable. No crs variable or \
+attributes will be created.`" would indicate the model was unable to locate
+the ``crs`` variable in one of the input files.
+
+
+.. note::
+   **Additional Notes:**
+
+   -  The output descriptions above may not be fully accurate when running
+      with the Noah LSM, which is not actively in development and we
+      therefore support only in a deprecated state. New and improved output
+      routines (e.g., with CF compliance, scale/offset/compression options,
+      augmented metadata) only work with the Noah-MP LSM, while the Noah
+      LSM relies on deprecated output routines. See Appendix
+      :ref:`A2 <section-a2>` for more details on running with the Noah LSM.
+
+   -  For proper QGIS display of the 2D variables, the user will need to
+      rename netCDF output files to include a “.nc” at the end as some
+      versions of QGIS struggle to properly read in information from a
+      netCDF file without this extension. Future upgrades will
+      automatically add this file extension into the filenames.

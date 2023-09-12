@@ -1,0 +1,17 @@
+.. |version_short| replace:: 5.4
+.. |version_long| replace:: 5.4.0
+
+.. role:: center
+    :class: center
+
+.. role:: underline
+    :class: underline
+
+.. role:: file
+    :class: filename
+
+.. role:: program
+    :class: program
+
+.. role:: output
+    :class: filename
