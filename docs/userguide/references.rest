@@ -1,0 +1,160 @@
+.. vim: syntax=rst
+
+REFERENCES
+==========
+
+Below are cited references in an alphabetical listing by author.
+
+Ball, J. T., I. E. Woodrow, and J. A. Berry (1987), A model predicting
+stomatal conductance and its contribution to the control of
+photosynthesis under different environmental conditions, in Process in
+Photosynthesis Research, vol. 1, edited by J. Biggins, pp. 221–234,
+Martinus Nijhoff, Dordrecht, Netherlands.
+
+Bowling, L.C., D.P. Lettenmaier, B. Nijssen, L.P. Graham and
+co-authors, 2003: Simulation of high latitude hydrological processes in
+the Torne-Kalix basin: PILPS Phase 2(c) 1: Experiment description and
+summary intercomparisons. Global and Planet. Change
+
+Brun, E., Martin, E., Simon, V., Gendre, C., and Coléou, C.: An energy and
+mass model of snow cover suitable for operational avalanche forecasting, J.
+Glaciol., 35, 333-342, https://doi.org/10.3189/S0022143000009254, 1989.
+
+Brun, E., David, P., Sudul, M., and Brunot, G.: A numer- ical model to simulate
+snow-cover stratigraphy for operational avalanche forecasting, J. Glaciol., 38,
+13-22, https://doi.org/10.3189/S0022143000009552, 1992.
+
+Brun, E., Martin, E., and Spiridonov, V.: Coupling a multi- layered snow model
+with a GCM, Ann. Glaciol., 25, 66-72,
+https://doi.org/10.3189/S0260305500013811, 1997.
+
+Bryan, F. O., B. G. Kauffman, W. G. Large, and P. R. Gent (1996). The
+NCAR CSM flux coupler, NCAR Tech. Note 424, 50 pp. [Available from NCAR,
+Boulder, CO 80307]
+
+Chen, F., K.E. Mitchell, J. Schaake, Y. Xue, H.-L. Pan, V. Koren,
+Q.Y. Duan, M. Ek and A. Betts, 1996: Modeling of land-surface
+evaporation by four schemes and comparison with FIFE observations. J.
+Geophys. Res., 101, 7251-7268.
+
+Chen, F., Z. Janic and K.E. Mitchell, 1997: Impact of atmospheric
+surface-layer parameterizations in the new land-surface scheme of the
+NCEP mesoscale Eta model. Bound.-Layer Meteorol., 85, 391-421.
+
+Chen, F. and K.E. Mitchell, 1999: Using the GEWEX/ISLSCP forcing
+data to simulate global soil moisture fields and hydrological cycle for
+1987-1988, J. Meteorol. Soc. Japan, 77, 167-182.
+
+Dickinson, R. E., M. Shaikh, R. Bryant, and L. Graumlich (1998),
+Interactive canopies for a climate model, J. Clim., 11, 2823-2836,
+doi:10.1175/1520-0442.
+
+Dirmeyer, P.A., A.J. Dolman, N. Sato, 1999: The pilot phase of
+the Global Soil Wetness Project. Bull. Am. Meteorol. Soc., 80(5),
+851-878.
+
+Eidhammer, T., A. Booth, S. Decker, L. Li, M. Barlage., D. Gochis., R.
+Rasmussen, K. Melvold., A. Nesje and S Sobolowski (2021), Mass balance and
+hydrological modeling of the Hardangerjøkulen ice cap in south-central Norway,
+Hydrol. Earth Syst. Sci. 25, 4275-4297,
+https://doi.org/10.5194/hess-25-4275-2021.
+
+Ek, M.B., K.E. Mitchell, Y. Lin, E. Rogers, P. Grunmann, V.
+Koren, G. Gayno, and J.D. Tarpley, 2003: Implementation of Noah land
+surface model advances in the NCEP operational mesoscale Eta model.
+Submitted to J. Geophys. Res., Aug., 2003.
+
+Gerbaux, M., Genthon, C., Etchevers, P., Vincent, C., and Dedieu, J.: Surface
+mass balance of glacier in the French Alps: Dis- tributed modeling sensitivity
+to climate change, J. Glaciol., 175, 561-572,
+https://doi.org/10.3189/172756505781829133, 2005.
+
+Gochis, D.J. and F. Chen, 2003: Hydrological enhancements to the
+community Noah land surface model. NCAR Technical Note, NCAR/TN-454+STR,
+68 pgs.
+
+Jones, P. W. (1999). First- and Second-Order Conservative Remapping
+Schemes for Grids in Spherical Coordinates, Monthly Weather Review,
+Volume 127, 2204-2210.
+
+Julien, P.Y., B. Saghafian and F.L. Ogden, 1995: Raster-based
+hydrological modeling of spatially-varied surface runoff. Water Resour.
+Bull., AWRA, 31(3), 523-536.
+
+Koren, V., J.C. Schaake, K.E. Mitchell, Q.Y. Duan, F. Chen and J.
+Baker, 1999: A parameterization of snowpack and frozen ground intended for
+NCEP weather and climate models. J. Geophys. Res., 104(D16),
+19,569-19,585.
+
+LDAS, 2003: Land Data Assimilation Systems (LDAS). World Wide Web
+Homepage. Available online at: http://ldas.gsfc.nasa.gov/
+
+Mahrt, L. and H.-L. Pan, 1984: A two-layer model of soil
+hydrology. Bound.-Layer Meteorol., 29, 1-20, 1984.
+
+Niu, G.-Y., et al. (2011), The community Noah land surface model with
+multiparameterization options (Noah-MP): 1. Model description and
+evaluation with local-scale measurements, J. Geophys. Res. 116, D12109,
+doi: 10.1029/2010JD015139.
+
+Niu, G.-Y., and Z.-L. Yang (2004), The effects of canopy processes on
+snow surface energy and mass balances, J. Geophys. Res., 109, D23111,
+doi:10.1029/2004JD004884.
+
+Niu, G.-Y., Z.-L. Yang, R. E. Dickinson, L. E. Gulden, and H. Su (2007),
+Development of a simple groundwater model for use in climate models and
+evaluation with Gravity Recovery and Climate Experiment data, J.
+Geophys. Res., 112, D07103, doi:10.1029/2006JD007522.
+
+Ogden, F.L., 1997: CASC2D Reference Manual. Dept. of Civil and
+Evniron. Eng. U-37, U. Connecticut, 106 pp.
+
+Pan, H.-L. and L. Mahrt, 1987: Interaction between soil hydrology
+and boundary-layer development, Bound.-Layer Meteorol., 38, 185-202.
+
+Skamarock, W. C., J. B. Klemp, J. Dudhia, D. O. Gill, D. M.
+Barker, W. Wang, and J. G. Powers, 2005: A Description of the Advanced
+Research WRF Version 2. NCAR Technical Note NCAR/TN-468+STR,
+doi:10.5065/D6DZ069T.
+
+Vionnet, V., Brun, E., Morin, S., Boone, A., Faroux, S., Le Moigne, P., Martin,
+E., and Willemet, J.-M.: The detailed snowpack scheme Crocus and its
+implementation in SURFEX v7.2, Geosci. Model Dev., 5, 773-791,
+https://doi.org/10.5194/gmd-5-773- 2012, 2012.
+
+Wigmosta, M.S. L.W. Vail and D.P. Lettenmaier, 1994: A
+distributed hydrology-vegetation model for complex terrain. Water
+Resour. Res., 30(6), 1665-1679.
+
+Wigmosta, M.S. and D.P. Lettenmaier, 1999: A comparison of
+simplified methods for routing topographically driven subsurface flow.
+Water Resour. Res., 35(1), 255-264.
+
+Wood, E.F., D.P. Lettenmaier, X. Kian, D. Lohmann, A. Boone, S.
+Chang, F.Chen, Y. Dai, R.E. Dickinson, Q. Duan, M. Ek, Y.M. Gusev, F.
+Habets, P. Irannejad, R. Koster, K.E. Mitchell, O.N. Nasonova, J.
+Noilhan, J. Schaake, A. Schlosser, Y. Shao, A.B. Shmakin, D. Verseghy,
+K. Warrach, P. Wetzel, Y. Xue, Z.-L. Yang, and Q.-C. Zeng, 1998: The
+project for intercomparison of land-surface parameterization schemes
+(PILPS) phase 2(c) Red-Arkansas river basin experiment: 1. Experiment
+description and summary intercomparisons, Global Planet. Change, 19,
+115-135.
+
+Yang, Z.-L., and G.-Y. Niu (2003), The versatile integrator of surface
+and atmosphere processes (VISA) part I: Model description, Global
+Planet. Change, 38, 175–189, doi:10.1016/S0921-8181(03)00028-6.
+
+ESMF (Earth System Modeling Framework)
+https://www.earthsystemcog.org/projects/esmf/
+
+USGS Global Land Cover Characterization
+https://www.usgs.gov/centers/eros/science/usgs-eros-archive-landcover-products-global-land-cover-characterization-glcc-0?qt-science_center_objects=0#qt-science_center_objectsTableLegend:Appendix3
+https://edcftp.cr.usgs.gov/project/glcc/globdoc2_0.html#app3
+
+IGBP_MODIS_BU+tundra Landcover Class Legend
+
+ftp://ftp.emc.ncep.noaa.gov/mmb/gcp/ldas/noahlsm/README
+
+NCL (NCAR Command Language) https://www.ncl.ucar.edu/
+
+CDO (Climate Data Operators) https://code.mpimet.mpg.de/projects/cdo/

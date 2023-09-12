@@ -1,0 +1,356 @@
+.. vim: syntax=rst
+.. include:: meta.rest
+
+4. Streamflow Nudging Data Assimilation
+=======================================
+
+This chapter describes streamflow nudging and data assimilation in
+Version 5.0 and beyond of WRF-Hydro. Streamflow nudging was introduced
+in v1.1 of the National Water Model (NWM). The community WRF-Hydro model
+source code and the NWM source code have merged as of Version 5.0 of
+WRF-Hydro. See Appendix :ref:`A15 <section-a15>` for more
+information on the NWM.
+
+4.1 Streamflow Nudging Data Assimilation Overview
+-------------------------------------------------
+
+For the National Water Model (NWM), a simple nudging data assimilation
+(DA) scheme has been developed to correct modeled stream flows to (or
+towards) observed values. The capability is only currently supported
+under the NWM configuration, but could be extended to NCAR reach-based
+routing, and potentially other kinds of routing, in the future.
+Specifically, the nudging capability introduces an interface for stream
+discharge observations to be applied to the Muskingum-Cunge streamflow
+routing solution.
+
+.. _section-4.2:
+
+4.2 Nudging Formulation
+-----------------------
+
+There are several motivations for performing DA. For the NWM analysis
+and assimilation cycle, the motivation is to improve model simulation
+and forecast initial conditions. Nudging is a simple and computationally
+inexpensive method of data assimilation where an observed state is
+inserted into the model with some uncertainty. When the observed value
+is inserted into the model without uncertainty, the method is referred
+to as “direct insertion”.
+
+Nudging works well locally to observations, both in space and time. Away
+from observations, in space and time, the method has limited success.
+For example, our application applies nudging data assimilation on a
+channel network with the advantage that the corrections are propagated
+downstream with the network flow. However, if no spatial or temporal
+smoothing of the corrections are included with the nudging method,
+upstream errors soon propagate past observed points when in the forecast
+(away from the observations, into the future). Various assumptions can
+be made to smooth the nudge (or correction) in space and/or time but
+these are highly parameterized and require tuning. In the NWM we have
+avoided spatial smoothing and have opted to pursue a very limited
+temporal-interpolation approach.
+
+The basic nudging equation solves `e_j`, the nudge, `e`, on a spatial
+element `j`,
+
+.. _equation-4.1:
+.. rst-class:: center
+.. math::
+   e_{j} = \frac{q_{n}*w_{n}^{2}(j,t)*(Q_{n} - {\widehat{Q}}_{n})}{w_{n}^{2}(j,t)}
+    \qquad (4.1)
+
+The numerator is the sum, over the `N_j` observations affecting element
+`j`, of the product of each observations' quality coefficient, `q_n`,
+the model error, :math:`Q_{n} - {\widehat{Q}}_{n}`, and the squared
+weights. The weights is where most of the action happens.
+
+The weights determine how the nudge is interpolated in both space and
+time (`j,t`). The weights term `w_n(j,t)` in the above equation is
+solved for observation `n` as a function of both space, `j`, and time,
+`t`. It is expressed as the product of separate spatial and temporal
+weight terms:
+
+.. _equation-4.2:
+.. rst-class:: center
+.. math::
+    w_{n}(j,t) = w_{n_{s}}(j)\ *\ w_{n_{t}}(t,j)
+    \qquad (4.2)
+
+The temporal weight term takes the following piecewise form in our
+application:
+
+.. _equation-4.3:
+.. rst-class:: center
+.. math::
+    w_{n_t}(t,j) = w_{n_s} \begin{cases}
+    10^{10} * (1/10)^{\frac{\left| t-\widehat{t} \right|}{tau_j / 10}} &:\text{if} \ \left| t-\widehat{t} \right| \leq tau_j \\
+    e^{-a_j*(t-\widehat{t})} &:\text{if} \ \left| t-\widehat{t} \right| \gt tau_j
+    \end{cases} \qquad (4.3)
+
+The spatial weight term is of the following form:
+
+.. _equation-4.4:
+.. rst-class:: center
+.. math::
+    w_{n_s} = \begin{cases}
+    \frac{R_{n}^2 - d_{jn}^{2}}{R_{n}^2 + d_{jn}^2} &: \text{if} R_n > d_{jn} \\
+    0 &: \text{otherwise}
+    \end{cases} \qquad (4.4)
+
+
+The parameters specified in version 1.2 of the NWM (equivalent to this
+WRF-Hydro version 5) are:
+
+.. rst-class:: center
+
+    | *tau = 15 minutes*
+    | *a = 120 minutes*
+    | *R = 0.25 meters*
+
+for all gages (all `j`) in CONUS (the parameter files are discussed
+below). The very short `R` means that nudging is applied locally, only
+to the reach where the observation is associated. There is currently no
+spatial smoothing. This is partly because spatial smoothing is assumed
+to be computationally intensive and has not been completely implemented.
+The `tau = 15` means that within 15 minutes of an observation we are
+heavily weighting the observation and `a = 120` means that nudging to
+the observation relaxes with e-folding time of two hours moving away
+from the observation.
+
+The Muskingum-Cunge equation in Section 3.6.2 has the form:
+
+.. _equation-4.5:
+.. rst-class:: center
+.. math::
+   Q_{d}^{c} = C1{\,Q}_{u}^{p} + C2\,Q_{u}^{c} + {C3\,Q}_{d}^{p} + \left( \frac{q_{l}\,dt}{D} \right)
+   \qquad (4.5)
+
+In V1.0 of the NWM, nudging was applied into this equation in the
+following manner
+
+.. _equation-4.6:
+.. rst-class:: center
+.. math::
+   Q_{d}^{c} = C1{\,Q}_{u}^{p} + C2\,Q_{u}^{c} + {C3\,(Q}_{d}^{p} + N_{d}^{p}) + \left( \frac{q_{l}\,dt}{D} \right)
+   \qquad (4.6)
+
+where the discharge solution (`Q`) at the current time (`c`) at the
+downstream (`d`) reach was solved by applying the nudge from the
+previous timestep (`N_{d}^{p}`) to adjust the discharge of
+downstream reach at the previous (`p`) time. Experiments indicated
+undesirable side effects of introducing a discontinuity (the previous
+nudge) in discharge between the upstream (`u`) link and the downstream
+(`d`) link in this solution. With v1.2 of the NWM (equivalent to v5.0
+WRF-Hydro), the equation was modified to include the nudge in the
+upstream terms of the solution as well, at both the previous and current
+times:
+
+.. _equation-4.7:
+.. rst-class:: center
+.. math::
+    Q_{d}^{c} = C1{(Q}_{u}^{p} + N_{d}^{p}) + C2{(Q}_{u}^{c} + N_{d}^{p}) + {C3(Q}_{d}^{p} + N_{d}^{p}) + \left( \frac{q_{l}\,dt}{D} \right)
+    \qquad (4.7)
+
+This is the form of the equation currently used for nudging which aims
+to reduce the discontinuity in space between the upstream and downstream
+reaches. Experiments revealed that this formulation, significantly
+reduced the difference between modeled and observed discharge and hence
+the nudging magnitudes (over long time series of assimilated
+observations). Note that the nudge is only applied to the upstream reach
+during the solution of the downstream reach and is not applied in the
+output values of the upstream reach.
+
+This change in the nudging formulation also promotes the previous
+downstream nudge to a prognostic variable. Whereas
+`Q_{d}^{p} + N_{d}^{p}` was simply the previous downstream
+streamflow value after the nudge (already a prognostic model variable),
+adding the previous downstream nudge to the upstream solutions requires
+having the previous nudge available. Therefore, the previous downstream
+nudge values gets written to the nudgingLastObs files (described in
+:ref:`Section 4.3 <section-4.3>`), which are the restart files for
+the nudging routine.
+
+There are a variety of experimental nudging options and features in the
+nudging section of the hydro.namelist which are incomplete or unused at
+this time. There are also nudging features used in a limited capacity by
+the NWM which are not described here. As development of these options
+evolves, they will be documented in future versions of WRF-Hydro.
+
+.. _section-4.3:
+
+4.3 Nudging Workflow
+--------------------
+
+Figure 4.1 provides an overview of the nuding workflow at the file
+level. Descriptions are provided for each of the files shown in the
+diagram.
+
+.. figure:: media/nudging-workflow.svg
+   :align: center
+   :scale: 125%
+
+   **Figure 4.1:** The nudging workflow at the file level.
+
+4.3.1 Input Files
+~~~~~~~~~~~~~~~~~
+
+.. rubric:: Discharge observations and :file:`nudgingTimeSliceObs/` :
+
+Discharge observations from the real world enter the WRF-Hydro system through the
+:file:`nugingTimeSliceObs/` directory.
+
+The individual observation files used for streamflow nudging are stored
+in this directory, each with the the following naming convention
+:file:`YYYY-mm-dd_HH:MM:SS.RRmin.usgsTimeSlice.ncdf`.
+
+The first part of the filename, ``YYYY-mm-dd_HH:MM:SS``, identifies the
+center of the “slice of time” in which observations are found (from year
+down to second). ``RR`` indicates the resolution, or total width of the time
+slice. Currently this resolution is a **hard-coded** parameter in the model.
+It is set to 15 minutes as this is the most common reporting frequency
+for USGS gages in the USA. The “usgsTimeSlice” part of the filename is
+fixed and is legacy of the fact that these files were originally
+designed for USGS observations. However, any discharge observations can
+be placed into this format.
+
+The format of a an example timeslice observation file is given by an
+:program:`ncdump -h` in :ref:`Figure A15.1 <figure-a15.1>` in
+:ref:`Appendix A15 <section-a15>`. Of the three-dimensional variables,
+two are character lengths and only the ``stationIdInd`` dimension is
+variable (unlimited). The ``stationIdInd`` variable has dimensions of the
+number of individual stream gages contained in the file by the fixed
+width of the strings (``stationIdStrLen=15``). The variable metadata
+describes the contents. The ``stationId`` variable is the “USGS station
+identifier of length 15”. While the character type of the variable and
+the length of 15 are both fixed, identifiers are not limited to those
+used by the USGS. Custom identifiers can be used and are described later
+in this section when the gages variable in the :file:`Route_Link.nc` file is
+described. The variable ``discharge_quality`` is simply a multiplier. This
+value is stored as a short integer for space concerns and only takes
+values from zero to one hundred. Internally in the model, this variable
+is scaled by 100 and used as a floating point variable between zero and
+one. The ``queryTime`` variable is not used by the model and is optional. It
+may be useful in situations when the files are updated in real-time.
+Similarly, the metadata field ``fileUpdateTimeUTC`` can be useful but is not
+required by the model. The remaining two metadata fields are both
+required by the model: ``sliceCenterTimeUTC`` and ``sliceTimeResolutionMinutes``
+ensure that the file and the model are operating under the same time
+location and resolution assumptions. An example of generating timeslice
+files from USGS observations using the R language is given in the help
+for the rwrfhydro function :command:`WriteNcTimeSlice`.
+
+.. rubric:: :file:`hydro.namelist`:
+
+When WRF-Hydro is compiled with nudging on, the :file:`hydro.namelist`
+file is required to contain ``&NUDGING_nlist``. The nudging namelist is
+found at the bottom of the :file:`hydro.namelist` file either in the :file:`Run/`
+directory after compilation or in the :file:`template/HYDRO/` directory.
+The namelist governs the run-time options to the nudging code. These run-time
+options are detailed in :ref:`Section 4.5 <section-4.5>` below and in
+:ref:`Appendix A5 <section-a5>`.
+
+.. rubric:: :file:`Route_Link.nc`:
+
+Collocation of streamflow gages and reach elements is achieved
+by the gages field in the Route_Link.nc file (see Sections
+:ref:`3.6 <section-3.6>` and :ref:`5.4 <section-5.4>`). Each reach
+element may have a single gage identified with it as specific by a
+fixed-width 15 character string in the gages field. A blank entry
+indicates no gage is present on the reach. The gages field in
+:file:`Route_Link.nc` tells the nudging module where to apply the observed
+values to the stream network. Gages which appear in the observation
+files but not in the :file:`Route_Link.nc` file do not cause a problem, they are
+simply skipped and their identifiers collected and printed to the file
+:file:`NWIS_gages_not_in_RLAndParams.txt` file, described later. The number of
+non-blank routelink gages must match the number of gages supplied in the
+nudging parameters file, described next.
+
+.. rubric:: :file:`nudgingParams.nc`:
+
+:ref:`Figure A15.2 <figure-a15.2>` in Appendix :ref:`A15 <section-a15>` shows
+the structure of the :file:`nudgingParams.nc` file for a small domain. Some
+of the parameters in the file are explained in detail in Section
+:ref:`4.2 <section-4.2>` and some are placeholders for capabilities
+which have not been developed.
+
+4.3.2 Output Files
+~~~~~~~~~~~~~~~~~~
+
+When the code is compiled with the nudging compile-time option on (see
+next section), four types of output files contain nudging information.
+Some files are different than when compiled without nudging while other
+files are unique outputs for the nuding option.
+
+.. rubric:: :file:`YYYYmmddHHMM.CHRTOUT_DOMAIN1`:
+
+The nudging code affects the values written to the “CHRTOUT” files.
+If valid observations are available, the (modeled) streamflow variable is
+changed by the assimilated observations. When the model is compiled to enable
+nudging, the variable ``nudge`` also appears in the file. The nudge value is
+calculated as in Section :ref:`4.2 <section-4.2>`.
+
+.. rubric:: :file:`nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc`:
+
+These files are unique to the nudging compile and are the restart files
+for the nudging component of the model. A restart file is not required,
+nudging can be run from a cold start. This file can contain multiple variables,
+only the ``nudge`` variable is described in this documentation.
+
+.. rubric:: :file:`NWIS_gages_not_in_RLAndParams.txt`:
+
+These files are unique to nudging and report the unique gages found in the
+observation time slice files which were not present in the :file:`Route_Link.nc`
+file. These are gages which may have the opportunity to be assimilated (provided
+they could be located in the domain). There is only one such file per run, written
+at the end of the run.
+
+.. rubric:: Standard output and :file:`hydro_diag.*` files:
+
+The nudging routines write various messages. The ultimate destination of these
+can be compiler dependent. The nudging code aims to preface all its messages with ``Ndg:``
+and all its warnings with ``Ndg: WARNING:``.
+
+4.4 Nudging compile-time option
+-------------------------------
+
+The nuding capability is only available when the code is compiled with
+the environment variable set:
+
+``WRF_HYDRO_NUDGING=1``
+
+.. _section-4.5:
+
+4.5 Nudging run-time options
+----------------------------
+
+:ref:`Appendix A5 <section-a5>` presents an annotated :file:`hydro.namelist`
+file. There are two Fortran namelists contained within that file. The nudging
+run-time options are contained the ``NUDGING_nlist`` which is the second namelist
+in the document. Only some run time options listed in the namelist are
+documented at this time.
+
++-----------------------------------+---------------------------------------+
+| **Documented/Supported Options**  | **Undocumented/Unsupported Options**  |
++===================================+=======================================+
+| ``timeSlicePath``                 | ``nLastObs``                          |
+|                                   |                                       |
+| ``nudgingParamFile``              | ``persistBias``                       |
+|                                   |                                       |
+| ``nudgingLastObsFile``            | ``biasWindowBeforeT0``                |
+|                                   |                                       |
+| ``readTimesliceParallel``         | ``maxAgePairsBiasPersist``            |
+|                                   |                                       |
+| ``temporalPersistence``           | ``minNumPairsBiasPersist``            |
+|                                   |                                       |
+|                                   | ``invDistTimeWeightBias``             |
+|                                   |                                       |
+|                                   | ``noConstInterfBias``                 |
++-----------------------------------+---------------------------------------+
+
+Details on the meaning and usage of the options are given in
+:ref:`Appendix A5 <section-a5>`, in both the comments which are part of the namelist
+itself and by the blue annotations added to the namelists. The supported options
+are fairly straight forward in their usage. It is worth noting that the
+specfication of the :file:`nudgingLastObsFile` does not behave the same way as
+the specification of the LSM or hydro restart files. The unsupported
+nudging options have to do with mostly experimental methods for forecast
+bias correction which have been investigated.

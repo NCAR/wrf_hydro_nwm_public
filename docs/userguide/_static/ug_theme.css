@@ -1,0 +1,29 @@
+.wy-nav-content {
+    max-width: 1000px !important;
+}
+
+.center {
+    text-align: center;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+.filename {
+    font-family: Courier, "Courier New", monospace;
+    white-space: pre-wrap;
+}
+
+.program {
+    font-family: Courier, "Courier New", monospace;
+    white-space: pre-wrap;
+    color: greenyellow;
+    background-color: black;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: normal;
+}
