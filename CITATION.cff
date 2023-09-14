@@ -1,0 +1,93 @@
+authors:
+  - family-names: McCreight
+    given-names: James
+    # orcid:
+  - family-names: FitzGerald
+    given-names: Katelyn
+    # orcid:
+  - family-names: Cabell
+    given-names: Ryan
+    # orcid:
+  - family-names: Fersch
+    given-names: Benjamin
+    # orcid:
+  - family-names: Johnson
+    given-names: Donald
+    # github-names: donaldwj
+    # orcid:
+  - family-names: Dugger
+    given-names: Aubrey
+    # orcid:
+  # - family-names:
+  #   given-names: laurareads
+    # orcid:
+  - family-names: Rasmussen
+    given-names: Soren
+    # orcid:
+  - family-names: Rosen
+    given-names: Dan
+    # orcid:
+  - family-names: McAllister
+    given-names: Molly
+    # orcid:
+  - family-names: Karsten
+    given-names: Logan
+    # github-names: logankarsten
+    # orcid:
+  - family-names: Dunlap
+    given-names: Rocky
+    # orcid:
+  # - family-names:
+  #   given-names: Nels
+    # orcid:
+  - family-names: Fanfarillo
+    given-names: Alessandro
+    # orcid:
+  - family-names: RafieeiNasab
+    given-names: Arezoo
+    # github-names: arezoorn
+    # orcid:
+  - family-names: Mattern
+    given-names: David
+    # orcid:
+  - family-names: Barlage
+    given-names: Michael
+    # orcid:
+  # - family-names:
+  #   given-names: champham
+    # orcid:
+  - family-names: Valayamkunnath
+    given-names: Prasanth
+    # orcid:
+  - family-names: Lahmers
+    given-names: Tim
+    # orcid:
+  - family-names: Heldmyer
+    given-names: Aaron
+    # github: aheldmyer
+    # orcid:
+cff-version: 1.2.0
+date-released: "2021-01-29"
+title: "WRF-Hydro"
+repository-code: "https://github.com/NCAR/wrf_hydro_nwm_public"
+version: 5.3.0
+url: "https://ral.ucar.edu/projects/wrf_hydro"
+keywords:
+  - "hydrologic model"
+  - "hydrology"
+  - "hydrometeorology"
+license-url: "https://github.com/NCAR/wrf_hydro_nwm_public/blob/main/LICENSE.txt"
+identifiers:
+  - description: "This is the archived snapshot of all versions of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.3625237
+  - description: "This is the archived snapshot of version v5.2.0 of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.4479912
+  - description: "This is the archived snapshot of version v5.1.2 of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.3678643
+  - description: "This is the archived snapshot of version v5.1.1 of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.3625238
+message: "Please cite this software using the metadata from this file."
