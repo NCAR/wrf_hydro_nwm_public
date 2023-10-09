@@ -141,22 +141,18 @@ contains
       return
    end  subroutine log_map2d
 
-
-   !old subroutine MPP_LAND_INIT(flag, ew_numprocs, sn_numprocs)
    subroutine MPP_LAND_INIT(in_global_nx,in_global_ny)
 !    ### initialize the land model logically based on the two D method.
 !    ### Call this function directly if it is nested with WRF.
       implicit none
       integer, optional :: in_global_nx, in_global_ny
       integer :: ierr, provided
-      integer :: ew_numprocs, sn_numprocs  ! input the processors in x and y direction.
       logical mpi_inited
 
-      global_nx = in_global_nx
-      global_ny = in_global_ny
-
-      ! left_right_np = ew_numprocs
-      ! up_down_np  = sn_numprocs
+      if (present(in_global_nx) .and. present(in_global_ny)) then
+         global_nx = in_global_nx
+         global_ny = in_global_ny
+      end if
 
       call mpi_initialized( mpi_inited, ierr )
       if ( .not. mpi_inited ) then
