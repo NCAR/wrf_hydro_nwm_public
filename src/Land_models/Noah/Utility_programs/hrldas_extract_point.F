@@ -1,24 +1,3 @@
-!  Program Name:
-!  Author(s)/Contact(s):
-!  Abstract:
-!  History Log:
-!
-!  Usage:
-!  Parameters: <Specify typical arguments passed>
-!  Input Files:
-!        <list file names and briefly describe the data they include>
-!  Output Files:
-!        <list file names and briefly describe the information they include>
-!
-!  Condition codes:
-!        <list exit condition or error codes returned >
-!        If appropriate, descriptive troubleshooting instructions or
-!        likely causes for failures could be mentioned here with the
-!        appropriate error code
-!
-!  User controllable options: <if applicable>
-
-
 module module_hrldas_netcdf
   use netcdf
   implicit none
@@ -434,7 +413,7 @@ subroutine loop_through_variable_list(ncid, ival, jval, nowdate, outunit)
      multi_layer = .FALSE.
 
 !------------------------------------------------------------------------------
-! Loop over the number of dimensions on the variable, making sure we get the 
+! Loop over the number of dimensions on the variable, making sure we get the
 ! right indices in the right order.
 !------------------------------------------------------------------------------
      do idim = 1, ndims
