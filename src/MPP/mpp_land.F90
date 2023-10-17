@@ -14,7 +14,7 @@ MODULE MODULE_MPP_LAND
    integer, public :: global_nx, global_ny, local_nx,local_ny
    integer, public :: global_rt_nx, global_rt_ny
    integer, public :: local_rt_nx,local_rt_ny,rt_AGGFACTRT
-   integer, public :: numprocs   ! total process, get by mpi initialization.
+   integer, public :: numprocs   ! total process, get by MPI initialization.
    integer :: local_startx, local_starty
    integer :: local_startx_rt, local_starty_rt, local_endx_rt, local_endy_rt
 
@@ -66,8 +66,8 @@ contains
       data cyclic/.false.,.false./  ! not cyclic
       data reorder/.false./
 
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+      call MPI_Comm_rank( HYDRO_COMM_WORLD, my_id, ierr )
+      call MPI_Comm_size( HYDRO_COMM_WORLD, numprocs, ierr )
 
       call getNX_NY(numprocs, left_right_np,up_down_np)
       if(my_id.eq.IO_id) then
@@ -111,7 +111,7 @@ contains
       call MPI_Cart_create(HYDRO_COMM_WORLD, ndim, dims, &
          cyclic, reorder, cartGridComm, ierr)
 
-      call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
+      call MPI_Cart_get(cartGridComm, 2, dims, cyclic, coords, ierr)
 
       p_up_down = coords(0)
       p_left_right = coords(1)
@@ -133,17 +133,17 @@ contains
          global_ny = in_global_ny
       end if
 
-      call mpi_initialized( mpi_inited, ierr )
+      call MPI_Initialized( mpi_inited, ierr )
       if ( .not. mpi_inited ) then
-         call MPI_INIT_THREAD( MPI_THREAD_FUNNELED, provided, ierr )
-         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
-         call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
-         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
+         call MPI_Init_thread( MPI_THREAD_FUNNELED, provided, ierr )
+         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Init failed")
+         call MPI_Comm_dup(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+         if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Comm_dup failed")
       endif
 
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
-      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed")
+      call MPI_Comm_rank( HYDRO_COMM_WORLD, my_id, ierr )
+      call MPI_Comm_size( HYDRO_COMM_WORLD, numprocs, ierr )
+      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Comm_rank and/or MPI_Comm_size failed")
 
       !     create 2d logical mapping of the CPU.
       call log_map2d()
@@ -224,26 +224,26 @@ contains
          if(right_id .ge. 0) then  !   ### send to right first.
             tag = 11
             size = ny
-            call mpi_send(in_out_data(nx-1,:),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(nx-1,:),size,MPI_REAL,   &
                right_id,tag,HYDRO_COMM_WORLD,ierr)
          end if
          if(left_id .ge. 0) then !   receive from left
             tag = 11
             size = ny
-            call mpi_recv(in_out_data(1,:),size,MPI_REAL,  &
+            call MPI_Recv(in_out_data(1,:),size,MPI_REAL,  &
                left_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
 
          if(left_id .ge. 0 ) then !   ### send to left second.
             size = ny
             tag = 21
-            call mpi_send(in_out_data(2,:),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(2,:),size,MPI_REAL,   &
                left_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(right_id .ge. 0) then !   receive from  right
             tag = 21
             size = ny
-            call mpi_recv(in_out_data(nx,:),size,MPI_REAL,&
+            call MPI_Recv(in_out_data(nx,:),size,MPI_REAL,&
                right_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
 
@@ -252,13 +252,13 @@ contains
          if(right_id .ge. 0) then !   ### send to right first.
             tag = 11
             size = 2*ny
-            call mpi_send(in_out_data(nx-1:nx,:),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(nx-1:nx,:),size,MPI_REAL,   &
                right_id,tag,HYDRO_COMM_WORLD,ierr)
          end if
          if(left_id .ge. 0) then !   receive from left
             tag = 11
             size = 2*ny
-            call mpi_recv(data_r,size,MPI_REAL,left_id,tag, &
+            call MPI_Recv(data_r,size,MPI_REAL,left_id,tag, &
                HYDRO_COMM_WORLD,mpp_status,ierr)
             in_out_data(1,:) = in_out_data(1,:) + data_r(1,:)
             in_out_data(2,:) = in_out_data(2,:) + data_r(2,:)
@@ -267,13 +267,13 @@ contains
          if(left_id .ge. 0 ) then !   ### send to left second.
             size = 2*ny
             tag = 21
-            call mpi_send(in_out_data(1:2,:),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(1:2,:),size,MPI_REAL,   &
                left_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(right_id .ge. 0) then !   receive from  right
             tag = 21
             size = 2*ny
-            call mpi_recv(in_out_data(nx-1:nx,:),size,MPI_REAL,&
+            call MPI_Recv(in_out_data(nx-1:nx,:),size,MPI_REAL,&
                right_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
       endif   ! end if black for flag.
@@ -291,26 +291,26 @@ contains
          if(right_id .ge. 0) then  !   ### send to right first.
             tag = 11
             size = ny
-            call mpi_send(in_out_data(nx-1,:),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(nx-1,:),size,MPI_DOUBLE_PRECISION,   &
                right_id,tag,HYDRO_COMM_WORLD,ierr)
          end if
          if(left_id .ge. 0) then !   receive from left
             tag = 11
             size = ny
-            call mpi_recv(in_out_data(1,:),size,MPI_DOUBLE_PRECISION,  &
+            call MPI_Recv(in_out_data(1,:),size,MPI_DOUBLE_PRECISION,  &
                left_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
 
          if(left_id .ge. 0 ) then !   ### send to left second.
             size = ny
             tag = 21
-            call mpi_send(in_out_data(2,:),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(2,:),size,MPI_DOUBLE_PRECISION,   &
                left_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(right_id .ge. 0) then !   receive from  right
             tag = 21
             size = ny
-            call mpi_recv(in_out_data(nx,:),size,MPI_DOUBLE_PRECISION,&
+            call MPI_Recv(in_out_data(nx,:),size,MPI_DOUBLE_PRECISION,&
                right_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
 
@@ -319,13 +319,13 @@ contains
          if(right_id .ge. 0) then !   ### send to right first.
             tag = 11
             size = 2*ny
-            call mpi_send(in_out_data(nx-1:nx,:),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(nx-1:nx,:),size,MPI_DOUBLE_PRECISION,   &
                right_id,tag,HYDRO_COMM_WORLD,ierr)
          end if
          if(left_id .ge. 0) then !   receive from left
             tag = 11
             size = 2*ny
-            call mpi_recv(data_r,size,MPI_DOUBLE_PRECISION,left_id,tag, &
+            call MPI_Recv(data_r,size,MPI_DOUBLE_PRECISION,left_id,tag, &
                HYDRO_COMM_WORLD,mpp_status,ierr)
             in_out_data(1,:) = in_out_data(1,:) + data_r(1,:)
             in_out_data(2,:) = in_out_data(2,:) + data_r(2,:)
@@ -334,13 +334,13 @@ contains
          if(left_id .ge. 0 ) then !   ### send to left second.
             size = 2*ny
             tag = 21
-            call mpi_send(in_out_data(1:2,:),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(1:2,:),size,MPI_DOUBLE_PRECISION,   &
                left_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(right_id .ge. 0) then !   receive from  right
             tag = 21
             size = 2*ny
-            call mpi_recv(in_out_data(nx-1:nx,:),size,MPI_DOUBLE_PRECISION,&
+            call MPI_Recv(in_out_data(nx-1:nx,:),size,MPI_DOUBLE_PRECISION,&
                right_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
       endif   ! end if black for flag.
@@ -368,7 +368,7 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 1
-               call mpi_recv(s_r,2,MPI_INTEGER,i, &
+               call MPI_Recv(s_r,2,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                local_nx_size(i+1) = s_r(1)
                local_ny_size(i+1) = s_r(2)
@@ -381,7 +381,7 @@ contains
          tag =  1
          s_r(1) = local_nx
          s_r(2) = local_ny
-         call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
+         call MPI_Send(s_r,2,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
@@ -391,7 +391,7 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 2
-               call mpi_recv(s_r,2,MPI_INTEGER,i, &
+               call MPI_Recv(s_r,2,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                local_rt_nx_size(i+1) = s_r(1)
                local_rt_ny_size(i+1) = s_r(2)
@@ -404,7 +404,7 @@ contains
          tag =  2
          s_r(1) = rt_nx
          s_r(2) = rt_ny
-         call mpi_send(s_r,2,MPI_INTEGER, IO_id,     &
+         call MPI_Send(s_r,2,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
@@ -424,26 +424,26 @@ contains
          if(up_id .ge. 0 ) then !   ### send to up first.
             tag = 31
             size = nx
-            call mpi_send(in_out_data(:,ny-1),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(:,ny-1),size,MPI_REAL,   &
                up_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(down_id .ge. 0 ) then !   receive from down
             tag = 31
             size = nx
-            call mpi_recv(in_out_data(:,1),size,MPI_REAL, &
+            call MPI_Recv(in_out_data(:,1),size,MPI_REAL, &
                down_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
 
          if(down_id .ge. 0 ) then !   send down.
             tag = 41
             size = nx
-            call mpi_send(in_out_data(:,2),size,MPI_REAL,      &
+            call MPI_Send(in_out_data(:,2),size,MPI_REAL,      &
                down_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(up_id .ge. 0 ) then !   receive from upper
             tag = 41
             size = nx
-            call mpi_recv(in_out_data(:,ny),size,MPI_REAL, &
+            call MPI_Recv(in_out_data(:,ny),size,MPI_REAL, &
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
 
@@ -452,13 +452,13 @@ contains
          if(up_id .ge. 0 ) then !   ### send to up first.
             tag = 31
             size = nx*2
-            call mpi_send(in_out_data(:,ny-1:ny),size,MPI_REAL,   &
+            call MPI_Send(in_out_data(:,ny-1:ny),size,MPI_REAL,   &
                up_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(down_id .ge. 0 ) then !   receive from down
             tag = 31
             size = nx*2
-            call mpi_recv(data_r,size,MPI_REAL, &
+            call MPI_Recv(data_r,size,MPI_REAL, &
                down_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
             in_out_data(:,1) = in_out_data(:,1) + data_r(:,1)
             in_out_data(:,2) = in_out_data(:,2) + data_r(:,2)
@@ -467,13 +467,13 @@ contains
          if(down_id .ge. 0 ) then !   send down.
             tag = 41
             size = nx*2
-            call mpi_send(in_out_data(:,1:2),size,MPI_REAL,      &
+            call MPI_Send(in_out_data(:,1:2),size,MPI_REAL,      &
                down_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(up_id .ge. 0 ) then !   receive from upper
             tag = 41
             size = nx * 2
-            call mpi_recv(in_out_data(:,ny-1:ny),size,MPI_REAL, &
+            call MPI_Recv(in_out_data(:,ny-1:ny),size,MPI_REAL, &
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
       endif  ! end of block  flag
@@ -492,26 +492,26 @@ contains
          if(up_id .ge. 0 ) then !   ### send to up first.
             tag = 31
             size = nx
-            call mpi_send(in_out_data(:,ny-1),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(:,ny-1),size,MPI_DOUBLE_PRECISION,   &
                up_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(down_id .ge. 0 ) then !   receive from down
             tag = 31
             size = nx
-            call mpi_recv(in_out_data(:,1),size,MPI_DOUBLE_PRECISION, &
+            call MPI_Recv(in_out_data(:,1),size,MPI_DOUBLE_PRECISION, &
                down_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
          endif
 
          if(down_id .ge. 0 ) then !   send down.
             tag = 41
             size = nx
-            call mpi_send(in_out_data(:,2),size,MPI_DOUBLE_PRECISION,      &
+            call MPI_Send(in_out_data(:,2),size,MPI_DOUBLE_PRECISION,      &
                down_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(up_id .ge. 0 ) then !   receive from upper
             tag = 41
             size = nx
-            call mpi_recv(in_out_data(:,ny),size,MPI_DOUBLE_PRECISION, &
+            call MPI_Recv(in_out_data(:,ny),size,MPI_DOUBLE_PRECISION, &
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
 
@@ -520,13 +520,13 @@ contains
          if(up_id .ge. 0 ) then !   ### send to up first.
             tag = 31
             size = nx*2
-            call mpi_send(in_out_data(:,ny-1:ny),size,MPI_DOUBLE_PRECISION,   &
+            call MPI_Send(in_out_data(:,ny-1:ny),size,MPI_DOUBLE_PRECISION,   &
                up_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(down_id .ge. 0 ) then !   receive from down
             tag = 31
             size = nx*2
-            call mpi_recv(data_r,size,MPI_DOUBLE_PRECISION, &
+            call MPI_Recv(data_r,size,MPI_DOUBLE_PRECISION, &
                down_id,tag,HYDRO_COMM_WORLD, mpp_status,ierr)
             in_out_data(:,1) = in_out_data(:,1) + data_r(:,1)
             in_out_data(:,2) = in_out_data(:,2) + data_r(:,2)
@@ -535,13 +535,13 @@ contains
          if(down_id .ge. 0 ) then !   send down.
             tag = 41
             size = nx*2
-            call mpi_send(in_out_data(:,1:2),size,MPI_DOUBLE_PRECISION,      &
+            call MPI_Send(in_out_data(:,1:2),size,MPI_DOUBLE_PRECISION,      &
                down_id,tag,HYDRO_COMM_WORLD,ierr)
          endif
          if(up_id .ge. 0 ) then !   receive from upper
             tag = 41
             size = nx * 2
-            call mpi_recv(in_out_data(:,ny-1:ny),size,MPI_DOUBLE_PRECISION, &
+            call MPI_Recv(in_out_data(:,ny-1:ny),size,MPI_DOUBLE_PRECISION, &
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
       endif  ! end of block  flag
@@ -594,7 +594,7 @@ contains
             ! block receive  from other node.
             if(i.ne.my_id) then
                tag = 1
-               call mpi_recv(r_s,2,MPI_INTEGER,i, &
+               call MPI_Recv(r_s,2,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                startx(i+1) = r_s(1)
                starty(i+1) = r_s(2)
@@ -602,7 +602,7 @@ contains
          end do
       else
          tag =  1
-         call mpi_send(r_s,2,MPI_INTEGER, IO_id,     &
+         call MPI_Send(r_s,2,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
@@ -665,8 +665,8 @@ contains
 
       if(my_id .eq. IO_id) then
 
-         ! allocate the buffer to hold data as required by mpi_scatterv
-         ! be careful with the index range if using array prepared for mpi in fortran (offset_vectors)
+         ! allocate the buffer to hold data as required by MPI_Scatterv
+         ! be careful with the index range if using array prepared for MPI in fortran (offset_vectors)
          allocate(send_buff(0: (global_nx*global_ny) -1),stat = ierr)
 
          ! for each sub region in the global buffer linearize the data and place it in the
@@ -695,15 +695,15 @@ contains
 
          ! send the to each process size_vector(mpi_rank+1) data elements
          ! and store the results in out_buff
-         call mpi_scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, &
+         call MPI_Scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, &
             out_buff, size_vectors(my_id+1), MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
 
          ! remove the send buffer
          deallocate(send_buff)
 
       else
-         ! other processes only need to make mpi_scatterv call
-         call mpi_scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, &
+         ! other processes only need to make MPI_Scatterv call
+         call MPI_Scatterv(send_buff, size_vectors, offset_vectors, MPI_REAL, &
             out_buff, local_nx*local_ny, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
       end if
 
@@ -729,13 +729,13 @@ contains
             else
                ! send data to the rest process.
                size = local_nx_size(i+1)*local_ny_size(i+1)
-               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Send(in_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_INTEGER, i,tag,HYDRO_COMM_WORLD,ierr)
             end if
          end do
       else
          size = local_nx*local_ny
-         call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
+         call MPI_Recv(out_buff,size,MPI_INTEGER,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
    end subroutine decompose_data_int
@@ -748,7 +748,7 @@ contains
       if(my_id .ne. IO_id) then
          size = local_nx*local_ny
          tag = 2
-         call mpi_send(in_buff,size,MPI_INTEGER, IO_id,     &
+         call MPI_Send(in_buff,size,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
@@ -761,7 +761,7 @@ contains
             else
                size = local_nx_size(i+1)*local_ny_size(i+1)
                tag = 2
-               call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Recv(out_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             end if
          end do
@@ -786,7 +786,7 @@ contains
       if(my_id .ne. IO_id) then
          lenSize = imageHead(my_id+1)*len(in(1))  !! some times necessary for character arrays?
          if(lenSize .eq. 0) return
-         call mpi_send(in,lenSize,MPI_CHARACTER,IO_id,tag,HYDRO_COMM_WORLD,ierr)
+         call MPI_Send(in,lenSize,MPI_CHARACTER,IO_id,tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs-1
             lenSize  = imageHead(i+1)*len(in(1))  !! necessary?
@@ -800,7 +800,7 @@ contains
             if(i .eq. IO_id) then
                out(theStart:theEnd) = in(1:imageHead(i+1))
             else
-               call mpi_recv(out(theStart:theEnd),lenSize,&
+               call MPI_Recv(out(theStart:theEnd),lenSize,&
                   MPI_CHARACTER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             end if
          end do
@@ -826,7 +826,7 @@ contains
       if(my_id .ne. IO_id) then
          size = local_nx*local_ny
          tag = 2
-         call mpi_send(in_buff,size,MPI_REAL, IO_id,     &
+         call MPI_Send(in_buff,size,MPI_REAL, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
@@ -839,7 +839,7 @@ contains
             else
                size = local_nx_size(i+1)*local_ny_size(i+1)
                tag = 2
-               call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Recv(out_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             end if
          end do
@@ -854,7 +854,7 @@ contains
 !       if(my_id .ne. IO_id) then
 !          size = local_rt_nx*local_rt_ny
 !          tag = 2
-!          call mpi_send(in_buff,size,MPI_REAL, IO_id,     &
+!          call MPI_Send(in_buff,size,MPI_REAL, IO_id,     &
 !             tag,HYDRO_COMM_WORLD,ierr)
 !       else
 !          do i = 0, numprocs - 1
@@ -869,7 +869,7 @@ contains
 !             else
 !                size = local_rt_nx_size(i+1)*local_rt_ny_size(i+1)
 !                tag = 2
-!                call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+!                call MPI_Recv(out_buff(ibegin:iend,jbegin:jend),size,&
 !                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 !             end if
 !          end do
@@ -887,14 +887,14 @@ contains
 
             if(my_id .eq. IO_id) then
 
-               ! allocate the buffer to hold data as required by mpi_scatterv
+               ! allocate the buffer to hold data as required by MPI_Scatterv
                ! (this will be larger than out_buff due to halo cell overlap)
-               ! be careful with the index range if using array prepared for mpi in fortran (offset_vectors)
+               ! be careful with the index range if using array prepared for MPI in fortran (offset_vectors)
                allocate(recv_buff(0: sum(size_vectors_rt) -1),stat = ierr)
 
                ! recieve from each process size_vector(mpi_rank+1) data elements
                ! and store the results in recv_buffer
-               call mpi_gatherv(in_buff, size_vectors_rt(my_id+1), MPI_REAL, &
+               call MPI_Gatherv(in_buff, size_vectors_rt(my_id+1), MPI_REAL, &
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_REAL, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
 
@@ -918,8 +918,8 @@ contains
                deallocate(recv_buff)
 
             else
-               ! other processes only need to make mpi_gatherv call
-               call mpi_gatherv(in_buff, local_rt_nx*local_rt_ny, MPI_REAL, &
+               ! other processes only need to make MPI_Gatherv call
+               call MPI_Gatherv(in_buff, local_rt_nx*local_rt_ny, MPI_REAL, &
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_REAL, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
             end if
@@ -936,14 +936,14 @@ contains
 
             if(my_id .eq. IO_id) then
 
-               ! allocate the buffer to hold data as required by mpi_scatterv
+               ! allocate the buffer to hold data as required by MPI_Scatterv
                ! (this will be larger than out_buff due to halo cell overlap)
-               ! be careful with the index range if using array prepared for mpi in fortran (offset_vectors)
+               ! be careful with the index range if using array prepared for MPI in fortran (offset_vectors)
                allocate(recv_buff(0: sum(size_vectors_rt) -1),stat = ierr)
 
                ! recieve from each process size_vector(mpi_rank+1) data elements
                ! and store the results in recv_buffer
-               call mpi_gatherv(in_buff, size_vectors_rt(my_id+1), MPI_REAL, &
+               call MPI_Gatherv(in_buff, size_vectors_rt(my_id+1), MPI_REAL, &
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_REAL, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
 
@@ -967,8 +967,8 @@ contains
                deallocate(recv_buff)
 
             else
-               ! other processes only need to make mpi_gatherv call
-               call mpi_gatherv(in_buff, local_rt_nx*local_rt_ny, MPI_INTEGER, &
+               ! other processes only need to make MPI_Gatherv call
+               call MPI_Gatherv(in_buff, local_rt_nx*local_rt_ny, MPI_INTEGER, &
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_INTEGER, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
             end if
@@ -983,7 +983,7 @@ contains
 !       if(my_id .ne. IO_id) then
 !          size = local_rt_nx*local_rt_ny
 !          tag = 2
-!          call mpi_send(in_buff,size,MPI_INTEGER, IO_id,     &
+!          call MPI_Send(in_buff,size,MPI_INTEGER, IO_id,     &
 !             tag,HYDRO_COMM_WORLD,ierr)
 !       else
 !          do i = 0, numprocs - 1
@@ -998,7 +998,7 @@ contains
 !             else
 !                size = local_rt_nx_size(i+1)*local_rt_ny_size(i+1)
 !                tag = 2
-!                call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+!                call MPI_Recv(out_buff(ibegin:iend,jbegin:jend),size,&
 !                   MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 !             end if
 !          end do
@@ -1014,7 +1014,7 @@ contains
       if(my_id .ne. IO_id) then
          size = local_rt_nx*local_rt_ny
          tag = 2
-         call mpi_send(in_buff,size,MPI_INTEGER8, IO_id,     &
+         call MPI_Send(in_buff,size,MPI_INTEGER8, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
@@ -1029,7 +1029,7 @@ contains
             else
                size = local_rt_nx_size(i+1)*local_rt_ny_size(i+1)
                tag = 2
-               call mpi_recv(out_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Recv(out_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_INTEGER8,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             end if
          end do
@@ -1039,7 +1039,7 @@ contains
    subroutine mpp_land_bcast_log1(inout)
       logical inout
       integer ierr
-      call mpi_bcast(inout,1,MPI_LOGICAL,   &
+      call MPI_Bcast(inout,1,MPI_LOGICAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_log1
 
@@ -1048,7 +1048,7 @@ contains
       integer size
       integer inout(size)
       integer ierr
-      call mpi_bcast(inout,size,MPI_INTEGER,   &
+      call MPI_Bcast(inout,size,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int
 
@@ -1056,7 +1056,7 @@ contains
       integer size
       integer(kind=int64) inout(size)
       integer ierr
-      call mpi_bcast(inout,size,MPI_INTEGER8,   &
+      call MPI_Bcast(inout,size,MPI_INTEGER8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int8
 
@@ -1065,7 +1065,7 @@ contains
       integer(kind=int64) inout(:)
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_INTEGER8,   &
+      call MPI_Bcast(inout,len,MPI_INTEGER8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int8_1d
 
@@ -1074,7 +1074,7 @@ contains
       integer inout(:)
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_INTEGER,   &
+      call MPI_Bcast(inout,len,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int1d
 
@@ -1084,13 +1084,13 @@ contains
       integer, intent(in) :: rootId
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,len,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int1d_root
 
    subroutine mpp_land_bcast_int1(inout)
       integer inout
       integer ierr
-      call mpi_bcast(inout,1,MPI_INTEGER,   &
+      call MPI_Bcast(inout,1,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int1
 
@@ -1098,13 +1098,13 @@ contains
       integer inout
       integer ierr
       integer, intent(in) :: rootId
-      call mpi_bcast(inout,1,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,1,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_int1_root
 
    subroutine mpp_land_bcast_logical(inout)
       logical ::  inout
       integer ierr
-      call mpi_bcast(inout,1,MPI_LOGICAL,   &
+      call MPI_Bcast(inout,1,MPI_LOGICAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_logical
 
@@ -1112,20 +1112,20 @@ contains
       logical ::  inout
       integer, intent(in) :: rootId
       integer ierr
-      call mpi_bcast(inout,1,MPI_LOGICAL,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,1,MPI_LOGICAL,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_logical_root
 
    subroutine mpp_land_bcast_real1(inout)
       real inout
       integer ierr
-      call mpi_bcast(inout,1,MPI_REAL,   &
+      call MPI_Bcast(inout,1,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real1
 
    subroutine mpp_land_bcast_real1_double(inout)
       real*8 inout
       integer ierr
-      call mpi_bcast(inout,1,MPI_REAL8, &
+      call MPI_Bcast(inout,1,MPI_REAL8, &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real1_double
 
@@ -1134,7 +1134,7 @@ contains
       real inout(:)
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_real,   &
+      call MPI_Bcast(inout,len,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real_1d
 
@@ -1144,7 +1144,7 @@ contains
       integer, intent(in) :: rootId
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_real,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,len,MPI_REAL,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real_1d_root
 
    subroutine mpp_land_bcast_real8_1d(inout)
@@ -1152,7 +1152,7 @@ contains
       real*8 inout(:)
       integer ierr
       len = size(inout,1)
-      call mpi_bcast(inout,len,MPI_double,   &
+      call MPI_Bcast(inout,len,MPI_DOUBLE,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real8_1d
 
@@ -1161,7 +1161,7 @@ contains
       ! real inout(size1)
       real , dimension(:) :: inout
       integer ierr, len
-      call mpi_bcast(inout,size1,MPI_real,   &
+      call MPI_Bcast(inout,size1,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_real
 
@@ -1172,7 +1172,7 @@ contains
       length1 = size(inout,1)
       length2 = size(inout,2)
       do k = 1, length2
-         call mpi_bcast(inout(:,k),length1,MPI_INTEGER,   &
+         call MPI_Bcast(inout(:,k),length1,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
       end do
    end subroutine mpp_land_bcast_int2d
@@ -1184,7 +1184,7 @@ contains
       length1 = size(inout,1)
       length2 = size(inout,2)
       do k = 1, length2
-         call mpi_bcast(inout(:,k),length1,MPI_real,   &
+         call MPI_Bcast(inout(:,k),length1,MPI_REAL,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
       end do
    end subroutine mpp_land_bcast_real2
@@ -1198,7 +1198,7 @@ contains
       length3 = size(inout,3)
       do k = 1, length3
          do j = 1, length2
-            call mpi_bcast(inout(:,j,k), length1, MPI_real, &
+            call MPI_Bcast(inout(:,j,k), length1, MPI_REAL, &
                IO_id, HYDRO_COMM_WORLD, ierr)
          end do
       end do
@@ -1208,7 +1208,7 @@ contains
       integer size
       real*8 inout(size)
       integer ierr
-      call mpi_bcast(inout,size,MPI_REAL8,   &
+      call MPI_Bcast(inout,size,MPI_REAL8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_rd
 
@@ -1216,7 +1216,7 @@ contains
       integer size
       character inout(*)
       integer ierr
-      call mpi_bcast(inout,size,MPI_CHARACTER,   &
+      call MPI_Bcast(inout,size,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_char
 
@@ -1225,7 +1225,7 @@ contains
       character inout(*)
       integer, intent(in) :: rootId
       integer ierr
-      call mpi_bcast(inout,size,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,size,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_char_root
 
    subroutine mpp_land_bcast_char1d(inout)
@@ -1233,7 +1233,7 @@ contains
       integer :: lenSize
       integer :: ierr
       lenSize = size(inout,1)*len(inout)
-      call mpi_bcast(inout,lenSize,MPI_CHARACTER,   &
+      call MPI_Bcast(inout,lenSize,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_char1d
 
@@ -1243,7 +1243,7 @@ contains
       integer :: lenSize
       integer :: ierr
       lenSize = size(inout,1)*len(inout)
-      call mpi_bcast(inout,lenSize,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
+      call MPI_Bcast(inout,lenSize,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_char1d_root
 
    subroutine mpp_land_bcast_char1(inout)
@@ -1251,7 +1251,7 @@ contains
       character(len=*) inout
       integer ierr
       len = LEN_TRIM(inout)
-      call mpi_bcast(inout,len,MPI_CHARACTER,   &
+      call MPI_Bcast(inout,len,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine mpp_land_bcast_char1
 
@@ -1420,13 +1420,13 @@ contains
             else
                ! send data to the rest process.
                size = (iend-ibegin+1)*(jend-jbegin+1)
-               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Send(in_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_REAL, i,tag,HYDRO_COMM_WORLD,ierr)
             end if
          end do
       else
          size = nx*ny
-         call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
+         call MPI_Recv(out_buff,size,MPI_REAL,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
    end subroutine decompose_RT_real
@@ -1455,13 +1455,13 @@ contains
             else
                ! send data to the rest process.
                size = (iend-ibegin+1)*(jend-jbegin+1)
-               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Send(in_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_INTEGER, i,tag,HYDRO_COMM_WORLD,ierr)
             end if
          end do
       else
          size = nx*ny
-         call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
+         call MPI_Recv(out_buff,size,MPI_INTEGER,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
    end subroutine decompose_RT_int
@@ -1490,13 +1490,13 @@ contains
             else
                ! send data to the rest process.
                size = (iend-ibegin+1)*(jend-jbegin+1)
-               call mpi_send(in_buff(ibegin:iend,jbegin:jend),size,&
+               call MPI_Send(in_buff(ibegin:iend,jbegin:jend),size,&
                   MPI_INTEGER8, i,tag,HYDRO_COMM_WORLD,ierr)
             end if
          end do
       else
          size = nx*ny
-         call mpi_recv(out_buff,size,MPI_INTEGER8,IO_id, &
+         call MPI_Recv(out_buff,size,MPI_INTEGER8,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
    end subroutine decompose_RT_int8
@@ -1546,8 +1546,8 @@ contains
       integer :: ierr, status
       integer i
 
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+      call MPI_Comm_rank( HYDRO_COMM_WORLD, my_id, ierr )
+      call MPI_Comm_size( HYDRO_COMM_WORLD, numprocs, ierr )
 
       if(numprocs .ne. total_pe) then
          write(6,*) "FATAL ERROR: In wrf_LAND_set_INIT() - numprocs .ne. total_pe ",numprocs, total_pe
@@ -1610,7 +1610,7 @@ contains
 
    subroutine getMy_global_id()
       integer ierr
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
+      call MPI_Comm_rank( HYDRO_COMM_WORLD, my_id, ierr )
    end subroutine getMy_global_id
 
    subroutine MPP_CHANNEL_COM_REAL(Link_location,ix,jy,Link_V,size,flag)
@@ -1834,14 +1834,14 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 101
-               call mpi_recv(r1,1,MPI_INTEGER,i, &
+               call MPI_Recv(r1,1,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                if(max <= r1) max = r1
             end if
          end do
       else
          tag =  101
-         call mpi_send(v,1,MPI_INTEGER, IO_id,     &
+         call MPI_Send(v,1,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
       call mpp_land_bcast_int1(max)
@@ -1858,14 +1858,14 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 101
-               call mpi_recv(r1,1,MPI_REAL,i, &
+               call MPI_Recv(r1,1,MPI_REAL,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                if(max <= r1) max = r1
             end if
          end do
       else
          tag =  101
-         call mpi_send(v,1,MPI_REAL, IO_id,     &
+         call MPI_Send(v,1,MPI_REAL, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
       call mpp_land_bcast_real1(max)
@@ -1881,14 +1881,14 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 109
-               call mpi_recv(r1,1,MPI_INTEGER,i, &
+               call MPI_Recv(r1,1,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                if(v .ne. r1) v = -99
             end if
          end do
       else
          tag =  109
-         call mpi_send(v,1,MPI_INTEGER, IO_id,     &
+         call MPI_Send(v,1,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
       call mpp_land_bcast_int1(v)
@@ -1927,11 +1927,11 @@ contains
                !block receive  from other node.
 
                tag = 109
-               call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
+               call MPI_Recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 119
 
-               call mpi_recv(tmp_v(1:message_len),message_len,MPI_REAL,i,  &
+               call MPI_Recv(tmp_v(1:message_len),message_len,MPI_REAL,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                do k = 1,message_len
@@ -1960,10 +1960,10 @@ contains
          end do
       else
          tag =  109
-         call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
+         call MPI_Send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 119
-         call mpi_send(v,nlinks,MPI_REAL,IO_id,   &
+         call MPI_Send(v,nlinks,MPI_REAL,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
 
       end if
@@ -2001,11 +2001,11 @@ contains
                !block receive  from other node.
 
                tag = 109
-               call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
+               call MPI_Recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 119
 
-               call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER,i,  &
+               call MPI_Recv(tmp_v(1:message_len),message_len,MPI_INTEGER,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                do k = 1,message_len
@@ -2034,10 +2034,10 @@ contains
          end do
       else
          tag =  109
-         call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
+         call MPI_Send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 119
-         call mpi_send(v,nlinks,MPI_INTEGER,IO_id,   &
+         call MPI_Send(v,nlinks,MPI_INTEGER,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
       if(allocated(tmp_map)) deallocate(tmp_map)
@@ -2075,10 +2075,10 @@ contains
                !block receive  from other node.
 
                tag = 109
-               call mpi_recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
+               call MPI_Recv(tmp_map(1:message_len),message_len,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 119
-               call mpi_recv(tmp_v(1:message_len),message_len,MPI_INTEGER8,i,  &
+               call MPI_Recv(tmp_v(1:message_len),message_len,MPI_INTEGER8,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                do k = 1,message_len
@@ -2107,10 +2107,10 @@ contains
          end do
       else
          tag =  109
-         call mpi_send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
+         call MPI_Send(map_l2g,nlinks,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 119
-         call mpi_send(v,nlinks,MPI_INTEGER8,IO_id,   &
+         call MPI_Send(v,nlinks,MPI_INTEGER8,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
       if(allocated(tmp_map)) deallocate(tmp_map)
@@ -2131,10 +2131,10 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 129
-               call mpi_recv(nodelist,nlakes,MPI_INTEGER,i, &
+               call MPI_Recv(nodelist,nlakes,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 139
-               call mpi_recv(recv(:),nlakes,MPI_REAL,i,  &
+               call MPI_Recv(recv(:),nlakes,MPI_REAL,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                do k = 1,nlakes
@@ -2147,10 +2147,10 @@ contains
          end do
       else
          tag =  129
-         call mpi_send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
+         call MPI_Send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 139
-         call mpi_send(v,nlakes,MPI_REAL,IO_id,   &
+         call MPI_Send(v,nlakes,MPI_REAL,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
    end subroutine write_lake_real
@@ -2171,10 +2171,10 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 129
-               call mpi_recv(nodelist,nlakes,MPI_INTEGER,i, &
+               call MPI_Recv(nodelist,nlakes,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 139
-               call mpi_recv(recv(:),in_len,MPI_CHARACTER,i,  &
+               call MPI_Recv(recv(:),in_len,MPI_CHARACTER,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                do k = 1,nlakes
@@ -2187,10 +2187,10 @@ contains
          end do
       else
          tag =  129
-         call mpi_send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
+         call MPI_Send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 139
-         call mpi_send(v,in_len,MPI_CHARACTER,IO_id,   &
+         call MPI_Send(v,in_len,MPI_CHARACTER,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
    end subroutine write_lake_char
@@ -2207,7 +2207,7 @@ contains
 99    continue
       call mpp_land_bcast_int1(ierr2)
       if(ierr2 .ne. 0) return
-      call mpi_bcast(out,size,MPI_REAL,   &
+      call MPI_Bcast(out,size,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
    end subroutine read_rst_crt_r
 
@@ -2228,13 +2228,13 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+               call MPI_Recv(recv,nsize,MPI_INTEGER,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                vin(:) = vin(:) + recv(:)
             endif
          end do
       else
-         call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+         call MPI_Send(vin,nsize,MPI_INTEGER,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
@@ -2249,7 +2249,7 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+               call MPI_Recv(recv,nsize,MPI_INTEGER,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(recv(k) .ne. flag) then
@@ -2259,7 +2259,7 @@ contains
             endif
          end do
       else
-         call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+         call MPI_Send(vin,nsize,MPI_INTEGER,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
@@ -2274,7 +2274,7 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_INTEGER8,i,  &
+               call MPI_Recv(recv,nsize,MPI_INTEGER8,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(recv(k) .ne. flag) then
@@ -2284,7 +2284,7 @@ contains
             endif
          end do
       else
-         call mpi_send(vin,nsize,MPI_INTEGER8,IO_id,   &
+         call MPI_Send(vin,nsize,MPI_INTEGER8,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int8_1d(vin)
@@ -2309,14 +2309,14 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_DOUBLE_PRECISION,i,  &
+               call MPI_Recv(recv,nsize,MPI_DOUBLE_PRECISION,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                vin(:) = vin(:) + recv(:)
             endif
          end do
          v = vin
       else
-         call mpi_send(vin,nsize,MPI_DOUBLE_PRECISION,IO_id,   &
+         call MPI_Send(vin,nsize,MPI_DOUBLE_PRECISION,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_real(nsize,v)
@@ -2329,10 +2329,10 @@ contains
 !
 !     if ( my_id .eq. IO_id ) then
 !           g_ix = ix
-!        call mpi_reduce( MPI_IN_PLACE, g_ix, 4, MPI_INTEGER, &
+!        call MPI_Reduce( MPI_IN_PLACE, g_ix, 4, MPI_INTEGER, &
 !             MPI_SUM, 0, HYDRO_COMM_WORLD, ierr )
 !     else
-!        call mpi_reduce( ix,       0,      4, MPI_INTEGER, &
+!        call MPI_Reduce( ix,       0,      4, MPI_INTEGER, &
 !             MPI_SUM,  0, HYDRO_COMM_WORLD, ierr )
 !     endif
 !      call mpp_land_bcast_int1(g_ix)
@@ -2362,24 +2362,24 @@ contains
             if(i .ne. my_id) then
                !block receive  from other node.
                tag = 202
-               call mpi_recv(index_s,2,MPI_INTEGER,i, &
+               call MPI_Recv(index_s,2,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
 
                tag = 203
                e = index_s(2)
                s = index_s(1)
                size = e - s + 1
-               call mpi_recv(vg(s:e),size,MPI_REAL,  &
+               call MPI_Recv(vg(s:e),size,MPI_REAL,  &
                   i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             endif
          end do
       else
          tag =  202
-         call mpi_send(index_s,2,MPI_INTEGER, IO_id,     &
+         call MPI_Send(index_s,2,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
 
          tag =  203
-         call mpi_send(vl,size,MPI_REAL,IO_id,   &
+         call MPI_Send(vl,size,MPI_REAL,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
@@ -2390,7 +2390,7 @@ contains
       real:: inout, send
       integer :: ierr
       send = inout
-      CALL MPI_ALLREDUCE(send,inout,1,MPI_REAL,MPI_SUM,HYDRO_COMM_WORLD,ierr)
+      call MPI_Allreduce(send,inout,1,MPI_REAL,MPI_SUM,HYDRO_COMM_WORLD,ierr)
    end subroutine sum_real1
 
    subroutine sum_double(inout)
@@ -2398,8 +2398,8 @@ contains
       real*8:: inout, send
       integer :: ierr
       send = inout
-      !yw CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE,MPI_SUM,HYDRO_COMM_WORLD,ierr)
-      CALL MPI_ALLREDUCE(send,inout,1,MPI_DOUBLE_PRECISION,MPI_SUM,HYDRO_COMM_WORLD,ierr)
+      !yw call MPI_Allreduce(send,inout,1,MPI_DOUBLE,MPI_SUM,HYDRO_COMM_WORLD,ierr)
+      call MPI_Allreduce(send,inout,1,MPI_DOUBLE_PRECISION,MPI_SUM,HYDRO_COMM_WORLD,ierr)
    end subroutine sum_double
 
    subroutine mpp_chrt_nlinks_collect(nlinks)
@@ -2413,14 +2413,14 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0,numprocs -1
             if(i .ne. my_id) then
-               call mpi_recv(mpp_nlinks(i+1),1,MPI_INTEGER,i, &
+               call MPI_Recv(mpp_nlinks(i+1),1,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
             else
                mpp_nlinks(i+1) = 0
             end if
          end do
       else
-         call mpi_send(nlinks,1,MPI_INTEGER, IO_id,     &
+         call MPI_Send(nlinks,1,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
 
@@ -2494,13 +2494,13 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0,numprocs -1
             if(i .ne. my_id) then
-               call mpi_recv(buf,nlinks,MPI_INTEGER,i, &
+               call MPI_Recv(buf,nlinks,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                vinout = vinout + buf
             end if
          end do
       else
-         call mpi_send(vinout,nlinks,MPI_INTEGER, IO_id,     &
+         call MPI_Send(vinout,nlinks,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vinout)
@@ -2523,11 +2523,11 @@ contains
          do i = 0,numprocs -1
             if(i .ne. my_id) then
                tag = 120
-               call mpi_recv(lsize,1,MPI_INTEGER,i, &
+               call MPI_Recv(lsize,1,MPI_INTEGER,i, &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                if(lsize .gt. 0) then
                   tag = 121
-                  call mpi_recv(tmpBuf(1:lsize),lsize,MPI_INTEGER,i, &
+                  call MPI_Recv(tmpBuf(1:lsize),lsize,MPI_INTEGER,i, &
                      tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                   do k = 1, lsize
                      m = tmpBuf(k)
@@ -2546,11 +2546,11 @@ contains
             end if
          end do
          tag = 120
-         call mpi_send(lsize,1,MPI_INTEGER, IO_id,     &
+         call MPI_Send(lsize,1,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          if(lsize .gt. 0) then
             tag = 121
-            call mpi_send(tmpIn(1:lsize),lsize,MPI_INTEGER, IO_id,     &
+            call MPI_Send(tmpIn(1:lsize),lsize,MPI_INTEGER, IO_id,     &
                tag,HYDRO_COMM_WORLD,ierr)
          endif
       endif
@@ -2569,12 +2569,12 @@ contains
 
       tag = 29
       if(my_id .ne. IO_id) then
-         call mpi_send(in,nsize,MPI_INTEGER, IO_id,     &
+         call MPI_Send(in,nsize,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
             if(i .ne. IO_id) then
-               call mpi_recv(tmp,nsize,&
+               call MPI_Recv(tmp,nsize,&
                   MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
@@ -2597,12 +2597,12 @@ contains
 
       tag = 29
       if(my_id .ne. IO_id) then
-         call mpi_send(in,nsize,MPI_INTEGER8, IO_id,     &
+         call MPI_Send(in,nsize,MPI_INTEGER8, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
             if(i .ne. IO_id) then
-               call mpi_recv(tmp,nsize,&
+               call MPI_Recv(tmp,nsize,&
                   MPI_INTEGER8,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
@@ -2634,7 +2634,7 @@ contains
       allocate(prev(nsize))
 
       if (my_id == IO_id) prev = in0
-      call mpi_bcast(prev, nsize, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
+      call MPI_Bcast(prev, nsize, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
 
       if (my_id == IO_id) then
          adjustment = in
@@ -2642,7 +2642,7 @@ contains
          adjustment = in - prev
       end if
 
-      call mpi_allreduce(adjustment, in, nsize, MPI_REAL, MPI_SUM, HYDRO_COMM_WORLD, ierr)  ! TODO: check ierr!
+      call MPI_Allreduce(adjustment, in, nsize, MPI_REAL, MPI_SUM, HYDRO_COMM_WORLD, ierr)  ! TODO: check ierr!
 
       deallocate(adjustment)
       deallocate(prev)
@@ -2663,12 +2663,12 @@ contains
 
       tag = 29
       if(my_id .ne. IO_id) then
-         call mpi_send(in,in_len,MPI_CHARACTER, IO_id,     &
+         call MPI_Send(in,in_len,MPI_CHARACTER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
             if(i .ne. IO_id) then
-               call mpi_recv(tmp,in_len,&
+               call MPI_Recv(tmp,in_len,&
                   MPI_CHARACTER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(in0(k) .ne. tmp(k)) in(k) = tmp(k)
@@ -2692,19 +2692,19 @@ contains
 
       if(my_id .ne. IO_id) then
          tag = 29
-         call mpi_send(in,nsize,MPI_REAL, IO_id,     &
+         call MPI_Send(in,nsize,MPI_REAL, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
          tag = 30
-         call mpi_send(lake_index,nsize,MPI_INTEGER, IO_id,     &
+         call MPI_Send(lake_index,nsize,MPI_INTEGER, IO_id,     &
             tag,HYDRO_COMM_WORLD,ierr)
       else
          do i = 0, numprocs - 1
             if(i .ne. IO_id) then
                tag = 29
-               call mpi_recv(tmp,nsize,&
+               call MPI_Recv(tmp,nsize,&
                   MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                tag = 30
-               call mpi_recv(lake_index,nsize,&
+               call MPI_Recv(lake_index,nsize,&
                   MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(lake_index(k) .gt. 0) in(k) = tmp(k)
@@ -2729,7 +2729,7 @@ contains
       if(my_id .eq. IO_id) then
          do i = 0, numprocs - 1
             if(i .ne. my_id) then
-               call mpi_recv(recv,nsize,MPI_INTEGER,i,  &
+               call MPI_Recv(recv,nsize,MPI_INTEGER,i,  &
                   tag,HYDRO_COMM_WORLD,mpp_status,ierr)
                do k = 1, nsize
                   if(recv(k) .eq. flag) vin(k) = flag
@@ -2744,7 +2744,7 @@ contains
             endif
          end do
       else
-         call mpi_send(vin,nsize,MPI_INTEGER,IO_id,   &
+         call MPI_Send(vin,nsize,MPI_INTEGER,IO_id,   &
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
@@ -2753,13 +2753,13 @@ contains
    subroutine mpp_land_abort()
       implicit none
       integer ierr
-      CALL MPI_ABORT(HYDRO_COMM_WORLD,1,IERR)
+      call MPI_Abort(HYDRO_COMM_WORLD,1,ierr)
    end subroutine mpp_land_abort ! mpp_land_abort
 
    subroutine mpp_land_sync()
       implicit none
       integer ierr
-      call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
+      call MPI_Barrier( HYDRO_COMM_WORLD ,ierr)
       if(ierr .ne. 0) call mpp_land_abort()
    end subroutine mpp_land_sync ! mpp_land_sync
 
@@ -2770,10 +2770,10 @@ contains
       integer:: ierr, tag
       tag=2
       if(my_id .eq. fromImage) &
-         call mpi_send(scalar, 1, MPI_REAL, &
+         call MPI_Send(scalar, 1, MPI_REAL, &
          toImage, tag, HYDRO_COMM_WORLD, ierr)
       if(my_id .eq. toImage) &
-         call mpi_recv(scalar, 1, MPI_REAL, &
+         call MPI_Recv(scalar, 1, MPI_REAL, &
          fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
    end subroutine mpp_comm_scalar_real
 
@@ -2785,10 +2785,10 @@ contains
       tag=2
       length=len(scalar)
       if(my_id .eq. fromImage) &
-         call mpi_send(scalar, length, MPI_CHARACTER, &
+         call MPI_Send(scalar, length, MPI_CHARACTER, &
          toImage, tag, HYDRO_COMM_WORLD, ierr)
       if(my_id .eq. toImage) &
-         call mpi_recv(scalar, length, MPI_CHARACTER, &
+         call MPI_Recv(scalar, length, MPI_CHARACTER, &
          fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
    end subroutine mpp_comm_scalar_char
 
@@ -2800,14 +2800,14 @@ contains
       integer:: ierr, tag
       integer:: my_id, numprocs
       tag=2
-      call MPI_COMM_RANK(HYDRO_COMM_WORLD,my_id,ierr)
-      call MPI_COMM_SIZE(HYDRO_COMM_WORLD,numprocs,ierr)
+      call MPI_Comm_rank(HYDRO_COMM_WORLD,my_id,ierr)
+      call MPI_Comm_size(HYDRO_COMM_WORLD,numprocs,ierr)
       if(numprocs > 1) then
          if(my_id .eq. fromImage) &
-            call mpi_send(vector, size(vector), MPI_REAL, &
+            call MPI_Send(vector, size(vector), MPI_REAL, &
             toImage, tag, HYDRO_COMM_WORLD, ierr)
          if(my_id .eq. toImage) &
-            call mpi_recv(vector, size(vector), MPI_REAL, &
+            call MPI_Recv(vector, size(vector), MPI_REAL, &
             fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
       endif
    end subroutine mpp_comm_1d_real
@@ -2820,15 +2820,15 @@ contains
       integer:: ierr, tag, totalLength
       integer:: my_id,numprocs
       tag=2
-      call MPI_COMM_RANK(HYDRO_COMM_WORLD,my_id,ierr)
-      call MPI_COMM_SIZE(HYDRO_COMM_WORLD,numprocs,ierr)
+      call MPI_Comm_rank(HYDRO_COMM_WORLD,my_id,ierr)
+      call MPI_Comm_size(HYDRO_COMM_WORLD,numprocs,ierr)
       totalLength=len(vector(1))*size(vector,1)
       if(numprocs > 1) then
          if(my_id .eq. fromImage) &
-            call mpi_send(vector, totalLength, MPI_CHARACTER, &
+            call MPI_Send(vector, totalLength, MPI_CHARACTER, &
             toImage, tag, HYDRO_COMM_WORLD, ierr)
          if(my_id .eq. toImage) &
-            call mpi_recv(vector, totalLength, MPI_CHARACTER, &
+            call MPI_Recv(vector, totalLength, MPI_CHARACTER, &
             fromImage, tag, HYDRO_COMM_WORLD, mpp_status, ierr)
       endif
    end subroutine mpp_comm_1d_char
