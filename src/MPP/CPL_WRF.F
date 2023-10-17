@@ -67,17 +67,17 @@ MODULE MODULE_CPL_LAND
       data cyclic/.false.,.false./  ! not cyclic
       data reorder/.false./
 
-      CALL mpi_initialized( mpi_inited, ierr )
+      call MPI_Initialized( mpi_inited, ierr )
       if ( .NOT. mpi_inited ) then
-        call mpi_init(ierr)
-        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_INIT failed")
-        call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
-        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_DUP failed")
+        call MPI_Init(ierr)
+        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Init failed")
+        call MPI_Comm_dup(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+        if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Comm_dup failed")
       endif
 
-      call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_global_id, ierr )
-      call MPI_COMM_SIZE( HYDRO_COMM_WORLD, total_pe_num, ierr )
-      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_COMM_RANK and/or MPI_COMM_SIZE failed")
+      call MPI_Comm_rank( HYDRO_COMM_WORLD, my_global_id, ierr )
+      call MPI_Comm_size( HYDRO_COMM_WORLD, total_pe_num, ierr )
+      if (ierr /= MPI_SUCCESS) call fatal_error_stop("MPI Error: MPI_Comm_rank and/or MPI_Comm_size failed")
 
       allocate(node_info(9,total_pe_num))
 
@@ -118,7 +118,7 @@ MODULE MODULE_CPL_LAND
       call MPI_Cart_create(HYDRO_COMM_WORLD, ndim, dims, &
                           cyclic, reorder, cartGridComm, ierr)
 
-      call MPI_CART_GET(cartGridComm, 2, dims, cyclic, coords, ierr)
+      call MPI_Cart_get(cartGridComm, 2, dims, cyclic, coords, ierr)
 
       p_up_down = coords(0)
       p_left_right = coords(1)
@@ -137,21 +137,21 @@ MODULE MODULE_CPL_LAND
 
         if(my_global_id .eq. 0) then
            do i = 1, total_pe_num-1
-             call mpi_recv(node_info(:,i+1),size,MPI_INTEGER,  &
+             call MPI_Recv(node_info(:,i+1),size,MPI_INTEGER,  &
                 i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
            enddo
         else
-           call mpi_send(node_info(:,my_global_id+1),size,   &
+           call MPI_Send(node_info(:,my_global_id+1),size,   &
                MPI_INTEGER,0,tag,HYDRO_COMM_WORLD,ierr)
         endif
 
-        call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
+        call MPI_Barrier( HYDRO_COMM_WORLD ,ierr)
 
         size = 9 * total_pe_num
-        call mpi_bcast(node_info,size,MPI_INTEGER,   &
+        call MPI_Bcast(node_info,size,MPI_INTEGER,   &
             0,HYDRO_COMM_WORLD,ierr)
 
-        call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
+        call MPI_Barrier( HYDRO_COMM_WORLD ,ierr)
 
      return
      end  subroutine send_info

@@ -47,8 +47,8 @@ END SUBROUTINE wrf_error_fatal
 SUBROUTINE wrf_abort
   use module_cpl_land
   integer ierr
-  CALL MPI_ABORT(HYDRO_COMM_WORLD,1,ierr)
-  call MPI_finalize(ierr)
+  call MPI_Abort(HYDRO_COMM_WORLD,1,ierr)
+  call MPI_Finalize(ierr)
   STOP 'wrf_abort'
 END SUBROUTINE wrf_abort
 
