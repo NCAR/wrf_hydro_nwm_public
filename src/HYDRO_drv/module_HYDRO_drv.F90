@@ -1821,7 +1821,7 @@ subroutine HYDRO_finish()
     close(78)
 #endif
     call mpp_land_sync()
-    call MPI_finalize(ierr)
+    call MPI_Finalize(ierr)
     stop
 #else
 
