@@ -72,7 +72,7 @@ module module_lis_HYDRO
 #endif
         if(nlst(did)%nsoil < 1) then
            write(6,*) "FATAL ERROR: nsoil is less than 1"
-           call hydro_stop("In module_lis_HYDRO.F module_lis_HYDRO() - nsoil is less than 1") 
+           call hydro_stop("In module_lis_HYDRO.F module_lis_HYDRO() - nsoil is less than 1")
         endif
         allocate(nlst(did)%zsoil8(nlst(did)%nsoil))
         nlst(did)%zsoil8(1) = -noah271_struc(n)%lyrthk(1)
@@ -85,15 +85,15 @@ module module_lis_HYDRO
 
 #endif
 
-        CALL mpi_initialized( mpi_inited, ierr )
+        call MPI_Initialized( mpi_inited, ierr )
         if ( .NOT. mpi_inited ) then
-           call MPI_INIT( ierr )  ! stand alone land model.
+           call MPI_Init( ierr )  ! stand alone land model.
            if (ierr /= MPI_SUCCESS) stop "MPI_INIT"
-           call MPI_COMM_DUP(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
+           call MPI_Comm_dup(MPI_COMM_WORLD, HYDRO_COMM_WORLD, ierr)
            if (ierr /= MPI_SUCCESS) stop "MPI_COMM_DUP"
         endif
-        call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-        call MPI_COMM_SIZE( HYDRO_COMM_WORLD, numprocs, ierr )
+        call MPI_Comm_rank( HYDRO_COMM_WORLD, my_id, ierr )
+        call MPI_Comm_size( HYDRO_COMM_WORLD, numprocs, ierr )
       endif
 
         if(nlst(did)%rtFlag .eq. 0) return
@@ -204,7 +204,7 @@ module module_lis_HYDRO
             enddo
 
 #ifdef HYDRO_D
-        write(6,*) "NDHMS lis date ", LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss 
+        write(6,*) "NDHMS lis date ", LIS_rc%yr, LIS_rc%mo, LIS_rc%da, LIS_rc%hr, LIS_rc%mn, LIS_rc%ss
 #endif
 !       write(11,*) "RT_DOMAIN(did)%stc",RT_DOMAIN(did)%stc(:,:,1)
 !       write(12,*) "noah271_struc(n)%noah%stc(1)",noah271_struc(n)%noah%stc(1)
