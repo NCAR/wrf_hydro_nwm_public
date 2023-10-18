@@ -27,7 +27,6 @@ contains
     name = trim(grib1_parameter_table(sec1%parameter)%abbr)
     units = trim(grib1_parameter_table(sec1%parameter)%units)
     description = trim(grib1_parameter_table(sec1%parameter)%name)
-    return
 
   end subroutine grib1_parameter_text_information
 
@@ -350,7 +349,6 @@ contains
     write(sec1%hdate, '(I4.4,"-",I2.2,"-",I2.2,"_",I2.2,":",I2.2,":",I2.2)') &
          sec1%year, sec1%month, sec1%day, sec1%hour, sec1%minute, 00
 
-    return
   end subroutine grib1_unpack_sec1
 
 !=================================================================================
@@ -612,7 +610,7 @@ contains
 
   subroutine grib1_unpack_sec5(buffer, buffsize, iskip)
     implicit none
-    ! Real simple.  Just check for the "7777" flag which marks the end of the 
+    ! Real simple.  Just check for the "7777" flag which marks the end of the
     ! GRIB1 record.
     integer,                               intent(in)    :: buffsize
     character(len=1), dimension(buffsize), intent(in)    :: buffer
@@ -891,7 +889,7 @@ contains
 
 
 
-! Unpack the data according to packing parameters DFAC, BFAC, and XEC4(1), 
+! Unpack the data according to packing parameters DFAC, BFAC, and XEC4(1),
 ! and masked by the bitmap BITMAP.
     nn = 0
     do i = 1, ndat

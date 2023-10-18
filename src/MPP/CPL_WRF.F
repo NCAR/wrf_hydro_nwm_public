@@ -104,7 +104,6 @@ MODULE MODULE_CPL_LAND
       p_left_right = coords(1)
 
       initialized = .false.  ! land model need to be initialized.
-      return
   END subroutine CPL_LAND_INIT
 
      subroutine send_info()
@@ -133,7 +132,6 @@ MODULE MODULE_CPL_LAND
 
         call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
 
-     return
      end  subroutine send_info
 
      subroutine find_left()
@@ -150,7 +148,6 @@ MODULE MODULE_CPL_LAND
                    return
                endif
           end do
-     return
      end subroutine find_left
 
      subroutine find_right()
@@ -167,7 +164,6 @@ MODULE MODULE_CPL_LAND
                    return
                endif
           end do
-     return
      end subroutine find_right
 
      subroutine find_up()
@@ -184,7 +180,6 @@ MODULE MODULE_CPL_LAND
                    return
                endif
           end do
-     return
      end subroutine find_up
 
      subroutine find_down()
@@ -201,7 +196,6 @@ MODULE MODULE_CPL_LAND
                    return
                endif
           end do
-     return
      end subroutine find_down
 
     ! stop the job due to the fatal error.
@@ -212,6 +206,5 @@ MODULE MODULE_CPL_LAND
         call flush(error_unit)
         CALL MPI_Abort(HYDRO_COMM_WORLD, 1, ierr)
         call MPI_Finalize(ierr)
-        return
     end  subroutine fatal_error_stop
 END MODULE MODULE_CPL_LAND
