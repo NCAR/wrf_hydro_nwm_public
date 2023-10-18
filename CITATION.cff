@@ -1,13 +1,13 @@
 authors:
   - family-names: McCreight
     given-names: James
-    # orcid:
+    orcid: 0000-0001-6018-425X
   - family-names: FitzGerald
     given-names: Katelyn
-    # orcid:
+    orcid: 0000-0003-4184-1917
   - family-names: Cabell
     given-names: Ryan
-    # orcid:
+    orcid: 0000-0002-3623-5130
   - family-names: Fersch
     given-names: Benjamin
     # orcid:
@@ -17,13 +17,16 @@ authors:
     # orcid:
   - family-names: Dugger
     given-names: Aubrey
-    # orcid:
+    orcid: 0000-0001-8250-4218
   # - family-names:
-  #   given-names: laurareads
+    # given-names: laurareads
     # orcid:
   - family-names: Rasmussen
     given-names: Soren
-    # orcid:
+    orcid: 0000-0003-3899-1463
+  - family-names: Eidhammer
+    given-names: Trude
+    orcid: 0000-0003-2281-9351
   - family-names: Rosen
     given-names: Dan
     # orcid:
@@ -38,15 +41,15 @@ authors:
     given-names: Rocky
     # orcid:
   # - family-names:
-  #   given-names: Nels
+    # given-names: Nels
     # orcid:
   - family-names: Fanfarillo
     given-names: Alessandro
-    # orcid:
+    orcid: 0000-0003-3487-7452
   - family-names: RafieeiNasab
     given-names: Arezoo
     # github-names: arezoorn
-    # orcid:
+    orcid: 0000-0002-8607-294X
   - family-names: Mattern
     given-names: David
     # orcid:
@@ -54,18 +57,18 @@ authors:
     given-names: Michael
     # orcid:
   # - family-names:
-  #   given-names: champham
+    # given-names: champham
     # orcid:
   - family-names: Valayamkunnath
     given-names: Prasanth
-    # orcid:
+    orcid: 0000-0003-2270-0780
   - family-names: Lahmers
     given-names: Tim
     # orcid:
   - family-names: Heldmyer
     given-names: Aaron
     # github: aheldmyer
-    # orcid:
+    orcid: 0000-0001-8608-4927
 cff-version: 1.2.0
 date-released: "2021-01-29"
 title: "WRF-Hydro"
