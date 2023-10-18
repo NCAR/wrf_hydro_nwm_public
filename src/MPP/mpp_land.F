@@ -118,7 +118,6 @@ contains
       np_up_down = up_down_np
       np_left_right = left_right_np
 
-      return
    end  subroutine log_map2d
 
    subroutine MPP_LAND_INIT(in_global_nx,in_global_ny)
@@ -148,7 +147,6 @@ contains
 
       !     create 2d logical mapping of the CPU.
       call log_map2d()
-      return
    end   subroutine MPP_LAND_INIT
 
 
@@ -213,7 +211,6 @@ contains
       write(6,*) "my_id=",my_id,"global_nx=",global_nx
       write(6,*) "my_id=",my_id,"global_nx=",global_ny
 #endif
-      return
    end  subroutine MPP_LAND_PAR_INI
 
    subroutine MPP_LAND_LR_COM(in_out_data,NX,NY,flag)
@@ -281,7 +278,6 @@ contains
          endif
       endif   ! end if black for flag.
 
-      return
    end subroutine MPP_LAND_LR_COM
 
    subroutine MPP_LAND_LR_COM8(in_out_data,NX,NY,flag)
@@ -349,7 +345,6 @@ contains
          endif
       endif   ! end if black for flag.
 
-      return
    end subroutine MPP_LAND_LR_COM8
 
 
@@ -413,7 +408,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
-      return
    end  subroutine get_local_size
 
 
@@ -483,7 +477,6 @@ contains
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
       endif  ! end of block  flag
-      return
    end  subroutine MPP_LAND_UB_COM
 
    subroutine MPP_LAND_UB_COM8(in_out_data,NX,NY,flag)
@@ -552,7 +545,6 @@ contains
                up_id,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
          endif
       endif  ! end of block  flag
-      return
    end  subroutine MPP_LAND_UB_COM8
 
    subroutine calculate_start_p()
@@ -623,7 +615,6 @@ contains
       local_endx_rt   = local_startx_rt + local_rt_nx -1
       local_endy_rt   = local_starty_rt + local_rt_ny -1
 
-      return
    end subroutine calculate_start_p
 
    subroutine calculate_offset_vectors()
@@ -652,7 +643,6 @@ contains
          last_offset = last_offset + size_vectors_rt(i)
       end do
 
-      return
    end subroutine calculate_offset_vectors
 
    subroutine decompose_data_real3d (in_buff,out_buff,klevel)
@@ -717,7 +707,6 @@ contains
             out_buff, local_nx*local_ny, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
       end if
 
-      return
    end subroutine decompose_data_real
 
 
@@ -749,7 +738,6 @@ contains
          call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
-      return
    end subroutine decompose_data_int
 
    subroutine write_IO_int(in_buff,out_buff)
@@ -778,7 +766,6 @@ contains
             end if
          end do
       end if
-      return
    end subroutine write_IO_int
 
    subroutine write_IO_char_head(in, out, imageHead)
@@ -857,7 +844,6 @@ contains
             end if
          end do
       end if
-      return
    end subroutine write_IO_real
 
 !   subroutine write_IO_RT_real_prev(in_buff,out_buff)
@@ -888,7 +874,6 @@ contains
 !             end if
 !          end do
 !       end if
-!       return
 !    end subroutine write_IO_RT_real_prev
 
    subroutine write_IO_RT_real (in_buff,out_buff)
@@ -938,7 +923,6 @@ contains
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_REAL, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
             end if
-            return
    end subroutine write_IO_RT_real
 
    subroutine write_IO_RT_int (in_buff,out_buff)
@@ -988,7 +972,6 @@ contains
                                 recv_buff, size_vectors_rt, offset_vectors_rt, MPI_INTEGER, &
                                 IO_id, HYDRO_COMM_WORLD, ierr)
             end if
-            return
    end subroutine write_IO_RT_int
 
 !    subroutine write_IO_RT_int (in_buff,out_buff)
@@ -1020,7 +1003,6 @@ contains
 !             end if
 !          end do
 !       end if
-!       return
 !    end subroutine write_IO_RT_int
 
    subroutine write_IO_RT_int8(in_buff,out_buff)
@@ -1052,7 +1034,6 @@ contains
             end if
          end do
       end if
-      return
    end subroutine write_IO_RT_int8
 
    subroutine mpp_land_bcast_log1(inout)
@@ -1060,7 +1041,6 @@ contains
       integer ierr
       call mpi_bcast(inout,1,MPI_LOGICAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_log1
 
 
@@ -1070,7 +1050,6 @@ contains
       integer ierr
       call mpi_bcast(inout,size,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int
 
    subroutine mpp_land_bcast_int8(size,inout)
@@ -1079,7 +1058,6 @@ contains
       integer ierr
       call mpi_bcast(inout,size,MPI_INTEGER8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int8
 
    subroutine mpp_land_bcast_int8_1d(inout)
@@ -1089,7 +1067,6 @@ contains
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_INTEGER8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int8_1d
 
    subroutine mpp_land_bcast_int1d(inout)
@@ -1099,7 +1076,6 @@ contains
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int1d
 
    subroutine mpp_land_bcast_int1d_root(inout, rootId)
@@ -1109,7 +1085,6 @@ contains
       integer ierr
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int1d_root
 
    subroutine mpp_land_bcast_int1(inout)
@@ -1117,7 +1092,6 @@ contains
       integer ierr
       call mpi_bcast(inout,1,MPI_INTEGER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int1
 
    subroutine mpp_land_bcast_int1_root(inout, rootId)
@@ -1125,7 +1099,6 @@ contains
       integer ierr
       integer, intent(in) :: rootId
       call mpi_bcast(inout,1,MPI_INTEGER,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_int1_root
 
    subroutine mpp_land_bcast_logical(inout)
@@ -1133,7 +1106,6 @@ contains
       integer ierr
       call mpi_bcast(inout,1,MPI_LOGICAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_logical
 
    subroutine mpp_land_bcast_logical_root(inout, rootId)
@@ -1141,7 +1113,6 @@ contains
       integer, intent(in) :: rootId
       integer ierr
       call mpi_bcast(inout,1,MPI_LOGICAL,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_logical_root
 
    subroutine mpp_land_bcast_real1(inout)
@@ -1149,7 +1120,6 @@ contains
       integer ierr
       call mpi_bcast(inout,1,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real1
 
    subroutine mpp_land_bcast_real1_double(inout)
@@ -1157,7 +1127,6 @@ contains
       integer ierr
       call mpi_bcast(inout,1,MPI_REAL8, &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real1_double
 
    subroutine mpp_land_bcast_real_1d(inout)
@@ -1167,7 +1136,6 @@ contains
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_real,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real_1d
 
    subroutine mpp_land_bcast_real_1d_root(inout, rootId)
@@ -1177,7 +1145,6 @@ contains
       integer ierr
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_real,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real_1d_root
 
    subroutine mpp_land_bcast_real8_1d(inout)
@@ -1187,7 +1154,6 @@ contains
       len = size(inout,1)
       call mpi_bcast(inout,len,MPI_double,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real8_1d
 
    subroutine mpp_land_bcast_real(size1,inout)
@@ -1197,7 +1163,6 @@ contains
       integer ierr, len
       call mpi_bcast(inout,size1,MPI_real,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_real
 
    subroutine mpp_land_bcast_int2d(inout)
@@ -1210,7 +1175,6 @@ contains
          call mpi_bcast(inout(:,k),length1,MPI_INTEGER,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
       end do
-      return
    end subroutine mpp_land_bcast_int2d
 
    subroutine mpp_land_bcast_real2(inout)
@@ -1223,7 +1187,6 @@ contains
          call mpi_bcast(inout(:,k),length1,MPI_real,   &
             IO_id,HYDRO_COMM_WORLD,ierr)
       end do
-      return
    end subroutine mpp_land_bcast_real2
 
    subroutine mpp_land_bcast_real3d(inout)
@@ -1239,7 +1202,6 @@ contains
                IO_id, HYDRO_COMM_WORLD, ierr)
          end do
       end do
-      return
    end subroutine mpp_land_bcast_real3d
 
    subroutine mpp_land_bcast_rd(size,inout)
@@ -1248,7 +1210,6 @@ contains
       integer ierr
       call mpi_bcast(inout,size,MPI_REAL8,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_rd
 
    subroutine mpp_land_bcast_char(size,inout)
@@ -1257,7 +1218,6 @@ contains
       integer ierr
       call mpi_bcast(inout,size,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_char
 
    subroutine mpp_land_bcast_char_root(size,inout,rootId)
@@ -1266,7 +1226,6 @@ contains
       integer, intent(in) :: rootId
       integer ierr
       call mpi_bcast(inout,size,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_char_root
 
    subroutine mpp_land_bcast_char1d(inout)
@@ -1276,7 +1235,6 @@ contains
       lenSize = size(inout,1)*len(inout)
       call mpi_bcast(inout,lenSize,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_char1d
 
    subroutine mpp_land_bcast_char1d_root(inout,rootId)
@@ -1286,7 +1244,6 @@ contains
       integer :: ierr
       lenSize = size(inout,1)*len(inout)
       call mpi_bcast(inout,lenSize,MPI_CHARACTER,rootId,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_char1d_root
 
    subroutine mpp_land_bcast_char1(inout)
@@ -1296,7 +1253,6 @@ contains
       len = LEN_TRIM(inout)
       call mpi_bcast(inout,len,MPI_CHARACTER,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine mpp_land_bcast_char1
 
    subroutine MPP_LAND_COM_REAL(in_out_data,NX,NY,flag)
@@ -1309,7 +1265,6 @@ contains
       call MPP_LAND_LR_COM(in_out_data,NX,NY,flag)
       call MPP_LAND_UB_COM(in_out_data,NX,NY,flag)
 
-      return
    end subroutine MPP_LAND_COM_REAL
 
    subroutine MPP_LAND_COM_REAL8(in_out_data,NX,NY,flag)
@@ -1322,7 +1277,6 @@ contains
       call MPP_LAND_LR_COM8(in_out_data,NX,NY,flag)
       call MPP_LAND_UB_COM8(in_out_data,NX,NY,flag)
 
-      return
    end subroutine MPP_LAND_COM_REAL8
 
    subroutine MPP_LAND_COM_INTEGER(data,NX,NY,flag)
@@ -1338,7 +1292,6 @@ contains
       call MPP_LAND_UB_COM(in_out_data,NX,NY,flag)
       data = in_out_data + 0
 
-      return
    end subroutine MPP_LAND_COM_INTEGER
 
 
@@ -1355,7 +1308,6 @@ contains
       call MPP_LAND_UB_COM(in_out_data,NX,NY,flag)
       data = in_out_data + 0
 
-      return
    end subroutine MPP_LAND_COM_INTEGER8
 
    subroutine read_restart_3(unit,nz,out)
@@ -1366,7 +1318,6 @@ contains
       do i = 1,nz
          call decompose_data_real (buf3(:,:,i),out(:,:,i))
       end do
-      return
    end subroutine read_restart_3
 
    subroutine read_restart_2(unit,out)
@@ -1379,7 +1330,6 @@ contains
       if(ierr2 .ne. 0) return
 
       call decompose_data_real (buf2,out)
-      return
    end subroutine read_restart_2
 
    subroutine read_restart_rt_2(unit,out)
@@ -1393,7 +1343,6 @@ contains
 
       call decompose_RT_real(buf2,out, &
          global_rt_nx,global_rt_ny,local_rt_nx,local_rt_ny)
-      return
    end subroutine read_restart_rt_2
 
    subroutine read_restart_rt_3(unit,nz,out)
@@ -1409,7 +1358,6 @@ contains
          call decompose_RT_real (buf3(:,:,i),out(:,:,i),&
             global_rt_nx,global_rt_ny,local_rt_nx,local_rt_ny)
       end do
-      return
    end subroutine read_restart_rt_3
 
    subroutine write_restart_3(unit,nz,in)
@@ -1420,7 +1368,6 @@ contains
          call write_IO_real(in(:,:,i),buf3(:,:,i))
       end do
       if(my_id.eq.IO_id) write(unit) buf3
-      return
    end subroutine write_restart_3
 
    subroutine write_restart_2(unit,in)
@@ -1429,7 +1376,6 @@ contains
          in(local_nx,local_ny)
       call write_IO_real(in,buf2)
       if(my_id.eq.IO_id) write(unit) buf2
-      return
    end subroutine write_restart_2
 
    subroutine write_restart_rt_2(unit,in)
@@ -1438,7 +1384,6 @@ contains
          in(local_rt_nx,local_rt_ny)
       call write_IO_RT_real(in,buf2)
       if(my_id.eq.IO_id) write(unit) buf2
-      return
    end subroutine write_restart_rt_2
 
    subroutine write_restart_rt_3(unit,nz,in)
@@ -1449,7 +1394,6 @@ contains
          call write_IO_RT_real(in(:,:,i),buf3(:,:,i))
       end do
       if(my_id.eq.IO_id) write(unit) buf3
-      return
    end subroutine write_restart_rt_3
 
    subroutine decompose_RT_real (in_buff,out_buff,g_nx,g_ny,nx,ny)
@@ -1485,7 +1429,6 @@ contains
          call mpi_recv(out_buff,size,MPI_REAL,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
-      return
    end subroutine decompose_RT_real
 
    subroutine decompose_RT_int (in_buff,out_buff,g_nx,g_ny,nx,ny)
@@ -1521,7 +1464,6 @@ contains
          call mpi_recv(out_buff,size,MPI_INTEGER,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
-      return
    end subroutine decompose_RT_int
 
    subroutine decompose_RT_int8 (in_buff,out_buff,g_nx,g_ny,nx,ny)
@@ -1557,7 +1499,6 @@ contains
          call mpi_recv(out_buff,size,MPI_INTEGER8,IO_id, &
             tag,HYDRO_COMM_WORLD,mpp_status,ierr)
       end if
-      return
    end subroutine decompose_RT_int8
 
    subroutine getNX_NY(nprocs,nx,ny)
@@ -1585,7 +1526,6 @@ contains
             end if
          end if
       end do
-      return
    end subroutine getNX_NY
 
    subroutine pack_global_22(in,   &
@@ -1596,7 +1536,6 @@ contains
       do i = 1, k
          call write_IO_real(in(:,:,i),out(:,:,i))
       enddo
-      return
    end subroutine pack_global_22
 
 
@@ -1667,13 +1606,11 @@ contains
       enddo
       call calculate_offset_vectors()
 
-      return
    end   subroutine wrf_LAND_set_INIT
 
    subroutine getMy_global_id()
       integer ierr
       call MPI_COMM_RANK( HYDRO_COMM_WORLD, my_id, ierr )
-      return
    end subroutine getMy_global_id
 
    subroutine MPP_CHANNEL_COM_REAL(Link_location,ix,jy,Link_V,size,flag)
@@ -1877,7 +1814,6 @@ contains
          in(local_nx,local_ny)
       call write_IO_real(in,buf2)
       if(my_id.eq.IO_id) write(unit,*) buf2
-      return
    end subroutine print_2
 
    subroutine print_rt_2(unit,in)
@@ -1886,7 +1822,6 @@ contains
          in(local_nx,local_ny)
       call write_IO_real(in,buf2)
       if(my_id.eq.IO_id) write(unit,*) buf2
-      return
    end subroutine print_rt_2
 
    subroutine mpp_land_max_int1(v)
@@ -1911,7 +1846,6 @@ contains
       end if
       call mpp_land_bcast_int1(max)
       v = max
-      return
    end subroutine mpp_land_max_int1
 
    subroutine mpp_land_max_real1(v)
@@ -1936,7 +1870,6 @@ contains
       end if
       call mpp_land_bcast_real1(max)
       v = max
-      return
    end subroutine mpp_land_max_real1
 
    subroutine mpp_same_int1(v)
@@ -2276,7 +2209,6 @@ contains
       if(ierr2 .ne. 0) return
       call mpi_bcast(out,size,MPI_REAL,   &
          IO_id,HYDRO_COMM_WORLD,ierr)
-      return
    end subroutine read_rst_crt_r
 
    subroutine write_rst_crt_r(unit,cd,map_l2g,gnlinks,nlinks)
@@ -2285,7 +2217,6 @@ contains
       real g_cd (gnlinks)
       call write_chanel_real(cd,map_l2g,gnlinks,nlinks, g_cd)
       write(unit) g_cd
-      return
    end subroutine write_rst_crt_r
 
    subroutine sum_int1d(vin,nsize)
@@ -2307,7 +2238,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
-      return
    end subroutine sum_int1d
 
    subroutine combine_int1d(vin,nsize, flag)
@@ -2333,7 +2263,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
-      return
    end subroutine combine_int1d
 
    subroutine combine_int8_1d(vin,nsize, flag)
@@ -2359,7 +2288,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int8_1d(vin)
-      return
    end subroutine combine_int8_1d
 
    subroutine sum_real1d(vin,nsize)
@@ -2393,7 +2321,6 @@ contains
       endif
       call mpp_land_bcast_real(nsize,v)
       vin = v
-      return
    end subroutine sum_real8
 
 !  subroutine get_globalDim(ix,g_ix)
@@ -2410,7 +2337,6 @@ contains
 !     endif
 !      call mpp_land_bcast_int1(g_ix)
 !
-!     return
 !
 !  end subroutine get_globalDim
 
@@ -2457,7 +2383,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       end if
 
-      return
    end  subroutine gather_1d_real_tmp
 
    subroutine sum_real1(inout)
@@ -2823,7 +2748,6 @@ contains
             tag,HYDRO_COMM_WORLD,ierr)
       endif
       call mpp_land_bcast_int1d(vin)
-      return
    end subroutine match1dLake
 
    subroutine mpp_land_abort()
@@ -2837,7 +2761,6 @@ contains
       integer ierr
       call MPI_barrier( HYDRO_COMM_WORLD ,ierr)
       if(ierr .ne. 0) call mpp_land_abort()
-      return
    end subroutine mpp_land_sync ! mpp_land_sync
 
    subroutine mpp_comm_scalar_real(scalar, fromImage, toImage)

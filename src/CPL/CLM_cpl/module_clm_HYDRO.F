@@ -210,7 +210,6 @@ CONTAINS
             write(6,*) "end of drive ndhms"
 #endif
 
-     return
      end subroutine clm_cpl_HYDRO
 
       subroutine Toclm3d (v1d_out,nn,kk1,z1_in,ix,jx,kk2,z2,v2_in)
@@ -235,7 +234,6 @@ CONTAINS
                 call Toclm2d(v1(:,:,k),ix,jx,v1d_out(:,k),nn)
              end do
 
-        return
       end subroutine Toclm3d
 
       subroutine Toclm2d(v1,ix,jx,v1d_out,nn)
@@ -266,7 +264,6 @@ CONTAINS
             write(6,*) "after scatter_1d_r"
 
 #endif
-         return
       end subroutine Toclm2d
 
       subroutine TO1d(vg2d,v1d,nx,ny)
@@ -280,7 +277,6 @@ CONTAINS
                 v1d(n) = vg2d(i,j)
              enddo
              enddo
-         return
       end subroutine TO1d
 
       subroutine clm2ND3d (v1d_in,nn,kk1,z1_in,ix,jx,kk2,z2,vout)
@@ -302,8 +298,6 @@ CONTAINS
           end do
              call Interp3D (z1(1:kk1),v1,kk1,z2(1:kk2),vout,ix,jx,kk2)
 
-
-        return
       end subroutine clm2ND3d
 
       subroutine clm2ND2d (v1d_in,nn,vout,ix,jx)
@@ -346,7 +340,6 @@ CONTAINS
 ! domain decomposition
           call decompose_data_real(v2d_g,vout)
 
-      return
       end subroutine clm2ND2d
 
       subroutine Interp3D (z1,v1,kk1,z,vout,ix,jx,kk)
@@ -366,8 +359,8 @@ CONTAINS
          do j = 1, jx
             do i = 1, ix
               do k = 1, kk
-!                call interpLayer(abs(Z1),v1(i,j,1:kk1),kk1,abs( Z(k) ),vout(i,j,k)) 
-                call interpLayer(Z1(1:kk1),v1(i,j,1:kk1),kk1,Z(k),vout(i,j,k)) 
+!                call interpLayer(abs(Z1),v1(i,j,1:kk1),kk1,abs( Z(k) ),vout(i,j,k))
+                call interpLayer(Z1(1:kk1),v1(i,j,1:kk1),kk1,Z(k),vout(i,j,k))
               end do
             end do
          end do
@@ -408,7 +401,7 @@ CONTAINS
              if(inZ(k1) .eq. inZ(k2)) then
                 write(6,*) "FATAL ERROR: inZ(k1)=inZ(k2) ", inZ(k1),inZ(k2)
                 !stop 99
-                stop("FATAL ERROR: In module_clm_HYDRO.F interpLayer()- inZ(k1)=inZ(k2)") 
+                stop("FATAL ERROR: In module_clm_HYDRO.F interpLayer()- inZ(k1)=inZ(k2)")
              end if
                 w1 = (outZ-inZ(k1))/(inZ(k2)-inZ(k1))
                 w2 = (inZ(k2)-outZ)/(inZ(k2)-inZ(k1))
@@ -692,7 +685,6 @@ CONTAINS
           iret = nf_inq_varid(ncid,var_name,varid)
           iret = nf_put_var_real(ncid,varid,array)
           iret=nf_close(ncid)
-      return
       end subroutine output_nc
 
   subroutine g2c_2d(lbc, ubc, lbl, ubl, lbg, ubg, num2d, carr, garr, &
@@ -995,7 +987,7 @@ CONTAINS
                     !w_yw = scale_c2l(c) * scale_l2g(l) * wtgcell(c)
                     w_yw = scale_c2l(c) * scale_l2g(l)
                     if(w_yw .ne. 0) then
-                    if(abs(garr(g,j)) .gt. minv .and. abs(garr(g,j)) .lt. maxv) then 
+                    if(abs(garr(g,j)) .gt. minv .and. abs(garr(g,j)) .lt. maxv) then
                        ! carr(c,j) =  garr(g,j) / w_yw *sumwt(g)
                              yw_r =  garr(g,j) / w_yw
                              if(yw_r .gt. 0) then

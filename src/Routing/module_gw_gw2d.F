@@ -83,7 +83,6 @@ module module_gw_gw2d
 
           end do
 
-   return
    end subroutine gw2d_ini
 
    subroutine gw2d_allocate(did, ix, jx, nsoil)
@@ -911,7 +910,6 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
 !         /3x,4f9.4,2(9x),e14.4)
         /3x,5(e14.4))
 
-      return
       end subroutine gwstep
 
 
@@ -930,7 +928,6 @@ if(my_id .eq. IO_id)  write(6,*) "Iteration", iter, "of", itermax, "error:", del
          IB = IB + INCB
    10 CONTINUE
 !
-      RETURN
       END SUBROUTINE SCOPY
 
 
@@ -1490,7 +1487,6 @@ end subroutine aggregateQsgw
 
       endif
 
-      return
       end subroutine
 
 
@@ -1805,7 +1801,6 @@ end subroutine aggregateQsgw
 
       endif
 
-      return
       end subroutine
 
 
@@ -2036,7 +2031,6 @@ end subroutine aggregateQsgw
 !       stop
       endif
 
-      return
       end subroutine
 #endif
 
@@ -2130,7 +2124,6 @@ end subroutine aggregateQsgw
 !       stop
       endif
 
-      return
       end  subroutine
 
 

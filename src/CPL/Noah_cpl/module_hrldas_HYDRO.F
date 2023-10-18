@@ -133,8 +133,6 @@ CONTAINS
 !? not sure for the following
 !           grid%xice(its:ite,jts:jte) = rt_domain(did)%sice
 
-
-     return
      end subroutine hrldas_cpl_HYDRO
 
     subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
@@ -234,7 +232,6 @@ CONTAINS
 #endif
         endif
 
-     return
      end subroutine hrldas_cpl_HYDRO_ini
 
      subroutine open_print_mpp(iunit)
