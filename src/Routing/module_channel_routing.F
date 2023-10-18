@@ -1524,7 +1524,6 @@ end subroutine drive_CHANNEL
 #endif
          write(unit,*) cd
           call flush(unit)
-         return
     end subroutine check_lake
 
     subroutine check_channel(unit,cd,did,nlinks)
@@ -1547,7 +1546,6 @@ end subroutine drive_CHANNEL
 #endif
           call flush(unit)
           close(unit)
-         return
     end subroutine check_channel
     subroutine smoth121(var,nlinks,maxv_p,from_node,to_node)
         implicit none
@@ -1581,7 +1579,6 @@ end subroutine drive_CHANNEL
                  endif
               end do
               var = vartmp
-        return
     end subroutine smoth121
 
 !   SUBROUTINE drive_CHANNEL for NHDPLUS

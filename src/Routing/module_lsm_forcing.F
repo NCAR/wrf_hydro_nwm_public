@@ -323,7 +323,6 @@ Contains
       ierr = nf_get_vara_real(ncid, varid, start,count,var)
 
 
-      return
       end subroutine get_2d_netcdf_ruc
 
 
@@ -354,7 +353,6 @@ Contains
       endif
       iret = nf_get_vara_real(ncid, varid, start,count,var)
 
-      return
       end subroutine get_2d_netcdf_cows
 
 
@@ -856,7 +854,6 @@ Contains
     call get2d_hrldas_real("SOIL_W_8",    ncid, SH2OX(:,:,8),  ix, jx)
 
           iret = nf_close(ncid)
-         return
       end subroutine get2d_hrldas
 
       subroutine get2d_hrldas_real(var_name,ncid,out_buff,ix,jx)
@@ -866,7 +863,6 @@ Contains
           character(len=*), intent(in) :: var_name
           iret = nf_inq_varid(ncid,trim(var_name),  varid)
           iret = nf_get_var_real(ncid, varid, out_buff)
-         return
       end subroutine get2d_hrldas_real
 
     subroutine read_stage4(flnm,IX,JX,pcp)
@@ -891,7 +887,6 @@ Contains
         end do
         end do
         pcp = buf
-        return
     END subroutine read_stage4
 
 
@@ -1649,7 +1644,6 @@ Contains
      call decompose_data_real(g_TERRAIN,TERRAIN)
      call decompose_data_real(g_LATITUDE,LATITUDE)
      call decompose_data_real(g_LONGITUDE,LONGITUDE)
-      return
       end subroutine mpp_readland_hrldas
 
 
@@ -1675,7 +1669,6 @@ Contains
        call decompose_data_real(g_WEASD,WEASD)
        call decompose_data_real(g_SNODEP,SNODEP)
 
-        return
         end  subroutine MPP_READSNOW_FORC
 
       subroutine MPP_DEEPGW_HRLDAS(ix,jx,in_SMCMAX,&
@@ -1712,7 +1705,6 @@ Contains
         call decompose_data_real(g_sh2ox(:,:,k),out_sh2ox(:,:,k))
        end do
 
-        return
         end  subroutine MPP_DEEPGW_HRLDAS
 
 
@@ -1782,7 +1774,6 @@ Contains
      call decompose_data_real(g_fpar,fpar)
      call decompose_data_real(g_snodep,snodep)
 
-     return
    end subroutine read_hydro_forcing_mpp
 #endif
 

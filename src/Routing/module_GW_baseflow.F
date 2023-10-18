@@ -234,7 +234,7 @@ contains
 
                if (bucket_loss .eq. 1) then
                     qloss_gwsubbas(bas) = qout_gwsubbas(bas)*loss_fraction(bas)
-                    qout_gwsubbas(bas) = qout_gwsubbas(bas)-qloss_gwsubbas(bas) 
+                    qout_gwsubbas(bas) = qout_gwsubbas(bas)-qloss_gwsubbas(bas)
                endif
 
           elseif (GWBASESWCRT.eq.2) then  !Pass through/steady-state bucket
@@ -251,7 +251,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
           if (bucket_loss .eq. 1) then
-             z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)	
+             z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas)+qloss_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)
           else
              z_gwsubbas(bas) = z_gwsubbas(bas) - (qout_gwsubbas(bas))*DT/( basns_area(bas) )   ! units (meters)
           endif
@@ -270,7 +270,6 @@ contains
 
    z_gwsubbas_tmp(1:numbasns) = z_gwsubbas(1:numbasns)     ! units (meters)
 
-   return
 
 !------------------------------------------------------------------------------
    End subroutine simp_gw_buck_nhd
@@ -459,7 +458,7 @@ contains
 !DJG bug adjust output to be mm and correct area bug...                       / (ct_bas(bas)*basns_area(bas))   !units(m)
 
      z_gwsubbas(bas) = z_gwsubbas(bas) - qout_gwsubbas(bas)*DT/( &
-                       ct_bas(bas)*basns_area(bas))*1000.   ! units (mm)	
+                       ct_bas(bas)*basns_area(bas))*1000.   ! units (mm)
 
 !DJG...Combine calculated bucket discharge and amount spilled from bucket...
 !ADCHANGE: Add in surface runoff as direct pass-through
@@ -508,7 +507,6 @@ contains
 
         z_gwsubbas = z_gwsubbas_tmp
 
-   return
 
 !------------------------------------------------------------------------------
    End subroutine simp_gw_buck
@@ -569,7 +567,6 @@ contains
       end do
 
 
-      return
    end subroutine pix_ct_1
 #endif
 
