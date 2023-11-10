@@ -833,7 +833,8 @@ subroutine LandRT_ini(did)
                      rt_domain(did)%ORIFICEC(lake_index),         &
                      rt_domain(did)%ORIFICEA(lake_index),         &
                      rt_domain(did)%LAKEMAXH(lake_index),         &
-                     rt_domain(did)%LAKEIDM(lake_index)            )
+                     rt_domain(did)%LAKEIDM(lake_index),          &
+                     nlst(did)%lake_option)
 
           type is (persistence_levelpool_hybrid)
               call reservoir%init(                                     &
