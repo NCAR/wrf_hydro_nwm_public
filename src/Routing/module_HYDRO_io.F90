@@ -10302,8 +10302,8 @@ end subroutine output_chrt2
           endif
        else
 !yw for IOC reach based routing, if netcdf lake file is not set from the hydro.namelist,
-!    we will assume that no lake will be assimulated.
-          write(6,*) "No lake nectdf file defined. NLAKES is set to be zero."
+!    we will assume that no lake will be assimilated.
+          write(6,*) "Lakes have been disabled -- NLAKES will be set to zero."
           NLAKES = 0
       endif
 #ifdef MPP_LAND
