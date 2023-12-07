@@ -407,6 +407,7 @@ contains
 
 
         else   ! ELSE for LAKE_OPT....
+         call hydro_stop("Invalid lake option supplied to LEVELPOOL_PHYSICS()")
         endif  ! ENDIF for LAKE_OPT....
 
         return
