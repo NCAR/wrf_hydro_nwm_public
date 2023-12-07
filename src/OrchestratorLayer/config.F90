@@ -537,6 +537,8 @@ contains
     integer, intent(in) :: did
 
     integer ierr
+    character(len=512) :: msg
+
     integer:: RT_OPTION, CHANRTSWCRT, channel_option, &
          SUBRTSWCRT,OVRTSWCRT,AGGFACTRT, &
          GWBASESWCRT,  GW_RESTART,RSTRT_SWC,TERADJ_SOLAR, &
@@ -702,17 +704,17 @@ contains
 #else
     open(12, form="FORMATTED")
 #endif
-    read(12, HYDRO_nlist, iostat=ierr)
-    if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst")
+    read(12, HYDRO_nlist, iostat=ierr, iomsg=msg)
+    if(ierr .ne. 0) call hydro_stop("HYDRO_nlst namelist error in read_rt_nlst: " // trim(msg))
 
     if (lake_option == 3) then
-      read(12, reservoir_nlist, iostat=ierr)
-      if (ierr /= 0) call hydro_stop("reservoir_nlist namelist error in read_rt_nlst")
+      read(12, reservoir_nlist, iostat=ierr, iomsg=msg)
+      if (ierr /= 0) call hydro_stop("reservoir_nlist namelist error in read_rt_nlst: " // trim(msg))
     end if
 
 #ifdef WRF_HYDRO_NUDGING
-    read(12, NUDGING_nlist, iostat=ierr)
-    if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst")
+    read(12, NUDGING_nlist, iostat=ierr, iomsg=msg)
+    if(ierr .ne. 0) call hydro_stop("NUDGING_nlst namelist error in read_rt_nlst: " // trim(msg))
     !! Conditional default values for nuding_nlist
     if(maxAgePairsBiasPersist .eq. -99999) maxAgePairsBiasPersist = -1*nLastObs
 #endif
@@ -756,6 +758,11 @@ contains
     nlst(did)%SOLVEG_INITSWC = SOLVEG_INITSWC
     nlst(did)%reservoir_obs_dir = "testDirectory"
 
+    if ((lake_option == 3) .and. (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts)) then
+      reservoir_type_specified = .TRUE.
+      lake_option = 1
+    end if
+
     nlst(did)%lake_option = lake_option
     nlst(did)%reservoir_persistence_usgs = reservoir_persistence_usgs
     nlst(did)%reservoir_persistence_usace = reservoir_persistence_usace
@@ -767,10 +774,6 @@ contains
     nlst(did)%reservoir_rfc_forecasts = reservoir_rfc_forecasts
     nlst(did)%reservoir_rfc_forecasts_time_series_path = reservoir_rfc_forecasts_time_series_path
     nlst(did)%reservoir_rfc_forecasts_lookback_hours = reservoir_rfc_forecasts_lookback_hours
-
-    if ((lake_option == 3) .and. (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts)) then
-        reservoir_type_specified = .TRUE.
-    end if
 
     nlst(did)%reservoir_type_specified = reservoir_type_specified
 
