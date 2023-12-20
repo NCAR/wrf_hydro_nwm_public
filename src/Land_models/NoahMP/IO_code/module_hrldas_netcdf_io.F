@@ -586,9 +586,8 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
-    ! the following two vars have xstart:xend,ystart:yend bounds
-    real,    dimension(:,:), intent(out), allocatable :: glact
-    real,    dimension(:,:), intent(out), allocatable :: vis_icealb
+    real,    dimension(xstart:xend,ystart:yend), intent(inout), optional :: glact
+    real,    dimension(xstart:xend,ystart:yend), intent(inout), optional :: vis_icealb
 
     character(len=256) :: units
     integer :: ierr
