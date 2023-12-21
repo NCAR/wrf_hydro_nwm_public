@@ -586,8 +586,8 @@ contains
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: seaice
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msftx
     real,    dimension(xstart:xend,ystart:yend), intent(out) :: msfty
-    real,    dimension(xstart:xend,ystart:yend), intent(inout), optional :: glact
-    real,    dimension(xstart:xend,ystart:yend), intent(inout), optional :: vis_icealb
+    real,    dimension(:,:), intent(inout), allocatable :: glact
+    real,    dimension(:,:), intent(inout), allocatable :: vis_icealb
 
     character(len=256) :: units
     integer :: ierr
@@ -679,6 +679,8 @@ contains
           stop "FATAL ERROR: In module_hrldas_netcdf_io.F readland_hrldas()"// &
                " - crocus_opt on but netcdf read of glacinfo returned non-zero"
        end if
+
+       if (allocated(glact) .eqv. .false.) error stop "FATAL ERROR: glact not initialized but crocus is on"
        ! Get Glacier thickness (glact)
        call get_2d_netcdf("glacier_thickness", ncid, glact,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
        if (ierr /= 0) then
@@ -687,6 +689,7 @@ contains
                ". Setting glacier thickness to 0.0"
        end if
 
+       if (allocated(vis_icealb) .eqv. .false.) error stop "FATAL ERROR: vis_icealb not initialized but crocus is on"
        ! Get visible ice albedo map (vis_icealb)
        call get_2d_netcdf("min_vis", ncid, vis_icealb,   units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
        if (ierr /= 0) then
