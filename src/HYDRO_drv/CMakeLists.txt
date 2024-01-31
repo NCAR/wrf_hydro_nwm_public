@@ -1,6 +1,6 @@
 # build the version static library
 add_library(hydro_driver STATIC
-	module_HYDRO_drv.F
+	module_HYDRO_drv.F90
 )
 
 target_link_libraries(hydro_driver PUBLIC hydro_mpp)
