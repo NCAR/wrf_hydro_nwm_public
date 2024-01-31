@@ -14,6 +14,7 @@ add_subdirectory("HYDRO_drv")
 
 if (WRF_HYDRO_NUDGING STREQUAL "1")
     add_subdirectory("nudging")
+    add_dependencies(hydro_routing hydro_nudging)
     add_dependencies(hydro_driver hydro_nudging)
 endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
