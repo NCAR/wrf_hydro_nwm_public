@@ -4,10 +4,10 @@ import socket
 import subprocess
 import sys
 from argparse import ArgumentParser
+import gdown
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
-from utils.gdrive_download import download_file_from_google_drive
 
 def run_tests(
     config: str,
@@ -311,8 +311,9 @@ def main():
 
         if domain_tag == 'dev':
             file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
-            download_file_from_google_drive(file_id, str(output_dir.joinpath(
-                'gdrive_testcase.tar.gz')))
+            url = 'https://drive.google.com/uc?id='+file_id
+            output_f = 'gdrive_testcase.tar.gz'
+            gdown.download(url, output_f, quiet=False)
 
             # untar the test case
             untar_cmd = 'tar -xf *testcase*.tar.gz'
