@@ -312,11 +312,11 @@ def main():
         if domain_tag == 'dev':
             file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
             url = 'https://drive.google.com/uc?id='+file_id
-            output_f = 'gdrive_testcase.tar.gz'
+            output_f = str(output_dir) + '/gdrive_testcase.tar.gz'
             gdown.download(url, output_f, quiet=False)
 
             # untar the test case
-            untar_cmd = 'tar -xf *testcase*.tar.gz'
+            untar_cmd = 'tar -xf ' + output_f
             subprocess.run(untar_cmd,
                            shell=True,
                            cwd=str(output_dir))
