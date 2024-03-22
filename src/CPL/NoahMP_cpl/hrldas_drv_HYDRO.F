@@ -74,6 +74,8 @@
 
        subroutine HYDRO_frocing_drv (indir,forc_typ, snow_assim,olddate,     &
           ixs, ixe,jxs,jxe,                       &
+          forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+          forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
           T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1,lai,SNOWBL,fpar,snodep, kt, FORCING_TIMESTEP,pcp_old)
 
          use module_lsm_forcing, only: read_hydro_forcing
@@ -83,6 +85,16 @@
          integer ix,jx, kt
          character(len=19) :: olddate
          character(len=*) :: indir
+         character(len=256), intent(in)  :: forcing_name_T
+         character(len=256), intent(in)  :: forcing_name_Q
+         character(len=256), intent(in)  :: forcing_name_U
+         character(len=256), intent(in)  :: forcing_name_V
+         character(len=256), intent(in)  :: forcing_name_P
+         character(len=256), intent(in)  :: forcing_name_LW
+         character(len=256), intent(in)  :: forcing_name_SW
+         character(len=256), intent(in)  :: forcing_name_PR
+         character(len=256), intent(in)  :: forcing_name_SN
+         character(len=256), intent(in)  :: forcing_name_LF
          real, dimension(ixs:ixe,jxs:jxe):: T2,Q2X,U,V,PRES,XLONG,SHORT,PRCP1, &
                  lai, snowbl, fpar, snodep, pcp_old
          integer :: forc_typ, snow_assim, FORCING_TIMESTEP
@@ -95,6 +107,8 @@
             indir, olddate, &
             nlst(did)%hgrid,&
             ix,jx,forc_typ,snow_assim,  &
+            forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+            forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
             T2,q2x,u,v,pres,xlong,short,prcp1,&
             lai,snowbl,fpar,snodep,FORCING_TIMESTEP*1.0,kt, pcp_old)
        end subroutine HYDRO_frocing_drv

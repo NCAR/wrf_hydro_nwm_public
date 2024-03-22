@@ -1187,11 +1187,11 @@ module module_NoahMP_hrldas_driver
      !PSNOWAGEXY     = undefined_real
 
 ! These should probably be kept initialized with an undefined value (above)
-! to allow tracking of cells that fall through the cracks in value updates 
+! to allow tracking of cells that fall through the cracks in value updates
 ! (also worth noting that 0 is not a valid value for all of these variables).
-! However, since restarts are not currently water-masking 2d reals, this makes 
+! However, since restarts are not currently water-masking 2d reals, this makes
 ! for odd value ranges in the LSM restarts so leaving as 0s for now.
-! On quick tests, the only one of these that changes answers if NOT initialized 
+! On quick tests, the only one of these that changes answers if NOT initialized
 ! at 0 is PSNOWHISTXY so making sure that one is covered in value initialization
 ! loop below in case we go back to undefined_real for these.
      PSNOWLIQXY     = 0.
@@ -1739,6 +1739,10 @@ end subroutine land_driver_ini
         if(olddate == forcDate) then
            CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim, olddate,                     &
                xstart, xend, ystart, yend,    &
+               noah_lsm%forcing_name_T ,noah_lsm%forcing_name_Q ,noah_lsm%forcing_name_U , &
+               noah_lsm%forcing_name_V ,noah_lsm%forcing_name_P ,noah_lsm%forcing_name_LW, &
+               noah_lsm%forcing_name_SW,noah_lsm%forcing_name_PR,noah_lsm%forcing_name_SN, &
+               noah_lsm%forcing_name_LF, &
                T_PHY(:,1,:), QV_CURR(:,1,:), U_PHY(:,1,:), V_PHY(:,1,:), &
                P8W(:,1,:), GLW, SWDOWN, RAINBL_tmp, &
                LAI, SNOWBL, VEGFRA, state%SNOWH, &

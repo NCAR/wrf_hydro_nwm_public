@@ -2011,19 +2011,19 @@ contains
        call get_2d_netcdf(trim(forcing_name_LW), ncid, nextread%lw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf(trim(forcing_name_SW), ncid, nextread%sw,    units, xstart, xend, ystart, yend, FATAL, ierr)
        call get_2d_netcdf(trim(forcing_name_PR), ncid, nextread%pcp,   units, xstart, xend, ystart, yend, FATAL, ierr)
-       
+
        nextread%snow = 0.0  ! Assume zero in case not present
-       if(forcing_name_SN /= "") then
+       if(trim(forcing_name_SN) /= "") then
          call get_2d_netcdf(trim(forcing_name_SN), ncid, nextread%snow,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
          if(ierr == 0) snow_read = .true.
        end if
-       
-       if(forcing_name_LF /= "" .and. .not. snow_read) then   ! snow was not read in
+
+       if(trim(forcing_name_LF) /= "" .and. .not. snow_read) then   ! snow was not read in
          liqfrac = 1.0            ! Assume all liquid in case not present
          call get_2d_netcdf(trim(forcing_name_LF), ncid, liqfrac,  units, xstart, xend, ystart, yend, NOT_FATAL, ierr)
          if (ierr == 0) nextread%snow = (1.0 - liqfrac ) * nextread%pcp
        end if
-       
+
        if(update_veg) then    ! Barlage v3.7: update only if dveg option is appropriate
 
          call get_2d_netcdf("VEGFRA",  ncid, nextread%vegfra,units, xstart, xend, ystart, yend, NOT_FATAL, ierr)

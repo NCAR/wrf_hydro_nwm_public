@@ -443,13 +443,26 @@ Contains
 
 
 
-  subroutine READFORC_HRLDAS(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp,lai,snowbl,fpar)
+  subroutine READFORC_HRLDAS(flnm,ix,jx,target_date, &
+       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+       t,q,u,v,p,lw,sw,pcp,lai,snowbl,fpar)
     implicit none
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
     integer,                            intent(in)  :: jx
     character(len=*),                   intent(in)  :: target_date
+    character(len=256), intent(in)  :: forcing_name_T
+    character(len=256), intent(in)  :: forcing_name_Q
+    character(len=256), intent(in)  :: forcing_name_U
+    character(len=256), intent(in)  :: forcing_name_V
+    character(len=256), intent(in)  :: forcing_name_P
+    character(len=256), intent(in)  :: forcing_name_LW
+    character(len=256), intent(in)  :: forcing_name_SW
+    character(len=256), intent(in)  :: forcing_name_PR
+    character(len=256), intent(in)  :: forcing_name_SN
+    character(len=256), intent(in)  :: forcing_name_LF
     real,             dimension(ix,jx), intent(out) :: t
     real,             dimension(ix,jx), intent(out) :: q
     real,             dimension(ix,jx), intent(out) :: u
@@ -473,23 +486,24 @@ Contains
        call hydro_stop("In READFORC_HRLDAS() - Problem opening netcdf file")
     endif
 
-    call get_2d_netcdf("T2D",     ncid, t,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("Q2D",     ncid, q,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("U2D",     ncid, u,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("V2D",     ncid, v,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("PSFC",    ncid, p,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("LWDOWN",  ncid, lw,    units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("SWDOWN",  ncid, sw,    units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("RAINRATE",ncid, pcp,   units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_T),     ncid, t,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_Q),     ncid, q,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_U),     ncid, u,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_V),     ncid, v,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_P),    ncid, p,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_lw),  ncid, lw,    units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_sw),  ncid, sw,    units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_pr),ncid, pcp,   units, ix, jx, .TRUE., ierr)
     call get_2d_netcdf("VEGFRA",  ncid, fpar,  units, ix, jx, .FALSE., ierr)
     if (ierr == 0) then
       if(maxval(fpar) .gt. 10 .and. maxval(fpar) .lt. 10000)  fpar = fpar * 1.E-2
     endif
+
     call get_2d_netcdf("LAI",     ncid, lai,   units, ix, jx, .FALSE., ierr)
-    call get_2d_netcdf("SNOW",    ncid, snowbl,units, ix, jx, .FALSE., ierr)
+    call get_2d_netcdf(trim(forcing_name_SN),    ncid, snowbl,units, ix, jx, .FALSE., ierr)
     if (ierr /= 0) then
        allocate(liqfrac(ix,jx))
-       call get_2d_netcdf("LQFRAC", ncid, liqfrac, units, ix, jx, .FALSE., ierr)
+       call get_2d_netcdf(trim(forcing_name_LF), ncid, liqfrac, units, ix, jx, .FALSE., ierr)
        if (ierr == 0) then
           snowbl = (1.0 - liqfrac) * pcp
        else
@@ -912,6 +926,8 @@ Contains
  subroutine read_hydro_forcing_seq( &
        indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  &
+       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
        T2,q2x,u,v,pres,xlong,short,prcp1,&
        lai,snowbl,fpar,snodep,dt,k,prcp_old)
 ! This subrouting is going to read different forcing.
@@ -920,6 +936,16 @@ Contains
    character(len=*) :: olddate,hgrid,indir
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
+   character(len=256), intent(in)  :: forcing_name_T
+   character(len=256), intent(in)  :: forcing_name_Q
+   character(len=256), intent(in)  :: forcing_name_U
+   character(len=256), intent(in)  :: forcing_name_V
+   character(len=256), intent(in)  :: forcing_name_P
+   character(len=256), intent(in)  :: forcing_name_LW
+   character(len=256), intent(in)  :: forcing_name_SW
+   character(len=256), intent(in)  :: forcing_name_PR
+   character(len=256), intent(in)  :: forcing_name_SN
+   character(len=256), intent(in)  :: forcing_name_LF
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
           prcpnew,weasd,snodep,prcp0,prcp2,prcp_old
    real ::  dt, wrf_dt
@@ -948,8 +974,11 @@ Contains
            call hydro_stop("In read_hydro_forcing_seq")
         endif
 
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
+        CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE, &
+             forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+             forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+             T2,Q2X,U,V,   &
+             PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
    end if
 
 
@@ -967,8 +996,11 @@ Contains
            print*, "no forcing data found", inflnm
            call hydro_stop("In read_hydro_forcing_seq() - no forcing data found")
         endif
-      CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
-          PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
+        CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE, &
+             forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+             forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+             T2,Q2X,U,V,   &
+             PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
    end if
 
 
@@ -1153,7 +1185,10 @@ Contains
            print*, "reading forcing data at this time", inflnm
 #endif
 
-           CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+           CALL READFORC_HRLDAS(inflnm,IX,JX,OLDDATE,&
+                forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+                forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+                T2,Q2X,U,V,   &
                 PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
            PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
         endif
@@ -1730,6 +1765,8 @@ Contains
  subroutine read_hydro_forcing_mpp( &
        indir,olddate,hgrid, &
        ix,jx,forc_typ,snow_assim,  &
+       forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+       forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
        T2,q2x,u,v,pres,xlong,short,prcp1,&
        lai,snowbl,fpar,snodep,dt,k,prcp_old)
 ! This subrouting is going to read different forcing.
@@ -1740,6 +1777,16 @@ Contains
    character(len=*) :: olddate,hgrid,indir
    character(len=256) :: filename
    integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
+   character(len=256), intent(in)  :: forcing_name_T
+   character(len=256), intent(in)  :: forcing_name_Q
+   character(len=256), intent(in)  :: forcing_name_U
+   character(len=256), intent(in)  :: forcing_name_V
+   character(len=256), intent(in)  :: forcing_name_P
+   character(len=256), intent(in)  :: forcing_name_LW
+   character(len=256), intent(in)  :: forcing_name_SW
+   character(len=256), intent(in)  :: forcing_name_PR
+   character(len=256), intent(in)  :: forcing_name_SN
+   character(len=256), intent(in)  :: forcing_name_LF
    real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
           prcpnew,lai,snowbl,fpar,snodep,prcp_old
    real ::  dt
@@ -1773,6 +1820,8 @@ Contains
       call read_hydro_forcing_seq( &
         indir,olddate,hgrid,&
         global_nx,global_ny,forc_typ,snow_assim,  &
+        forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+        forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
         g_T2,g_q2x,g_u,g_v,g_pres,g_xlong,g_short,g_prcp1,&
         g_lai,g_snowbl,g_fpar,g_snodep,dt,k,g_prcp_old)
 #ifdef HYDRO_D
@@ -2264,6 +2313,8 @@ Contains
 subroutine read_hydro_forcing_mpp1( &
      indir,olddate,hgrid, &
      ix,jx,forc_typ,snow_assim,  &
+     forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+     forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
      T2,q2x,u,v,pres,xlong,short,prcp1,&
      lai,snowbl,fpar,snodep,dt,k,prcp_old)
 ! This subrouting is going to read different forcing.
@@ -2272,6 +2323,16 @@ implicit none
 character(len=*) :: olddate,hgrid,indir
 character(len=256) :: filename
 integer :: ix,jx,forc_typ,k,snow_assim  ! k is time loop
+character(len=256), intent(in)  :: forcing_name_T
+character(len=256), intent(in)  :: forcing_name_Q
+character(len=256), intent(in)  :: forcing_name_U
+character(len=256), intent(in)  :: forcing_name_V
+character(len=256), intent(in)  :: forcing_name_P
+character(len=256), intent(in)  :: forcing_name_LW
+character(len=256), intent(in)  :: forcing_name_SW
+character(len=256), intent(in)  :: forcing_name_PR
+character(len=256), intent(in)  :: forcing_name_SN
+character(len=256), intent(in)  :: forcing_name_LF
 real,dimension(ix,jx):: T2,q2x,u,v,pres,xlong,short,prcp1,&
      prcpnew,weasd,snodep,prcp0,prcp2,prcp_old
 real ::  dt, wrf_dt
@@ -2311,7 +2372,10 @@ if(FORC_TYP.eq.1) then
 #ifdef HYDRO_D
    print*, "read forcing data at ", OLDDATE,  trim(inflnm)
 #endif
-   call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+   call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE, &
+        forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+        forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+        T2,Q2X,U,V,   &
         PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
 
    where(PRCP1 .lt. 0) PRCP1= 0  ! set minimum to be 0
@@ -2337,7 +2401,10 @@ if(FORC_TYP.eq.2) then
       print*, "no forcing data found", inflnm
       call hydro_stop("In read_hydro_forcing_mpp1() - no forcing data found")
    endif
-   call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+   call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,&
+        forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+        forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+        T2,Q2X,U,V,   &
         PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
 
    where(PRCP1 .lt. 0) PRCP1= 0  ! set minimum to be 0
@@ -2551,7 +2618,10 @@ if(FORC_TYP.eq.6) then
       print*, "reading forcing data at this time", inflnm
 #endif
 
-      call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,T2,Q2X,U,V,   &
+      call READFORC_HRLDAS_mpp(inflnm,IX,JX,OLDDATE,&
+           forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+           forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+           T2,Q2X,U,V,   &
            PRES,XLONG,SHORT,PRCP1,LAI,snowbl,FPAR)
       PRCP_old = PRCP1  ! This assigns new precip to last precip as a fallback for missing data...
    endif
@@ -2741,13 +2811,26 @@ end subroutine read_hydro_forcing_mpp1
 
 
 
-  subroutine READFORC_HRLDAS_mpp(flnm,ix,jx,target_date, t,q,u,v,p,lw,sw,pcp,lai,snowbl,fpar)
+    subroutine READFORC_HRLDAS_mpp(flnm,ix,jx,target_date, &
+         forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+         forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN, forcing_name_LF,&
+         t,q,u,v,p,lw,sw,pcp,lai,snowbl,fpar)
     implicit none
 
     character(len=*),                   intent(in)  :: flnm
     integer,                            intent(in)  :: ix
     integer,                            intent(in)  :: jx
     character(len=*),                   intent(in)  :: target_date
+    character(len=256), intent(in)  :: forcing_name_T
+    character(len=256), intent(in)  :: forcing_name_Q
+    character(len=256), intent(in)  :: forcing_name_U
+    character(len=256), intent(in)  :: forcing_name_V
+    character(len=256), intent(in)  :: forcing_name_P
+    character(len=256), intent(in)  :: forcing_name_LW
+    character(len=256), intent(in)  :: forcing_name_SW
+    character(len=256), intent(in)  :: forcing_name_PR
+    character(len=256), intent(in)  :: forcing_name_SN
+    character(len=256), intent(in)  :: forcing_name_LF
     real,             dimension(ix,jx), intent(out) :: t
     real,             dimension(ix,jx), intent(out) :: q
     real,             dimension(ix,jx), intent(out) :: u
@@ -2784,21 +2867,21 @@ end subroutine read_hydro_forcing_mpp1
     endif
 
 
-    if(my_id .eq. io_id ) call get_2d_netcdf("T2D", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_T), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,t)
-    if(my_id .eq. io_id ) call get_2d_netcdf("Q2D", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_Q), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,q)
-    if(my_id .eq. io_id ) call get_2d_netcdf("U2D", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_U), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,u)
-    if(my_id .eq. io_id ) call get_2d_netcdf("V2D", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_V), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,v)
-    if(my_id .eq. io_id ) call get_2d_netcdf("PSFC", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_P), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,p)
-    if(my_id .eq. io_id ) call get_2d_netcdf("LWDOWN", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_LW), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,lw)
-    if(my_id .eq. io_id ) call get_2d_netcdf("SWDOWN", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_SW), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,sw)
-    if(my_id .eq. io_id ) call get_2d_netcdf("RAINRATE", ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_PR), ncid,buf2, units, global_nx, global_ny, .TRUE., ierr)
     call decompose_data_real (buf2,pcp)
     if(my_id .eq. io_id ) then
           call get_2d_netcdf("VEGFRA", ncid,buf2, units, global_nx, global_ny, .FALSE., ierr)
@@ -2811,12 +2894,12 @@ end subroutine read_hydro_forcing_mpp1
     if(my_id .eq. io_id ) call get_2d_netcdf("LAI",     ncid, buf2,   units, global_nx, global_ny, .FALSE., ierr)
     call mpp_land_bcast_int1(ierr)
     if(ierr == 0) call decompose_data_real (buf2,lai)
-    if(my_id .eq. io_id ) call get_2d_netcdf("SNOW", ncid, buf2, units, global_nx, global_ny, .FALSE., ierr)
+    if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_SN), ncid, buf2, units, global_nx, global_ny, .FALSE., ierr)
     call mpp_land_bcast_int1(ierr)
     if (ierr == 0) then
        call decompose_data_real (buf2,snowbl)
     else
-       if(my_id .eq. io_id ) call get_2d_netcdf("LQFRAC", ncid, buf2, units, global_nx, global_ny, .FALSE., ierr)
+       if(my_id .eq. io_id ) call get_2d_netcdf(trim(forcing_name_LF), ncid, buf2, units, global_nx, global_ny, .FALSE., ierr)
        call mpp_land_bcast_int1(ierr)
        if(ierr == 0) then
           allocate(liqfrac(ix,jx))
@@ -2835,24 +2918,25 @@ end subroutine read_hydro_forcing_mpp1
        write(*,'("READFORC Problem opening netcdf file: ''", A, "''")') trim(flnm)
        call hydro_stop("READFORC_HRLDAS")
     endif
-    call get_2d_netcdf("T2D",     ncid, t,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("Q2D",     ncid, q,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("U2D",     ncid, u,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("V2D",     ncid, v,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("PSFC",    ncid, p,     units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("LWDOWN",  ncid, lw,    units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("SWDOWN",  ncid, sw,    units, ix, jx, .TRUE., ierr)
-    call get_2d_netcdf("RAINRATE",ncid, pcp,   units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_T),     ncid, t,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_Q),     ncid, q,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_U),     ncid, u,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_V),     ncid, v,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_P),    ncid, p,     units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_LW),  ncid, lw,    units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_SW),  ncid, sw,    units, ix, jx, .TRUE., ierr)
+    call get_2d_netcdf(trim(forcing_name_PR),ncid, pcp,   units, ix, jx, .TRUE., ierr)
     call get_2d_netcdf("VEGFRA",  ncid, fpar,  units, ix, jx, .FALSE., ierr)
 
     if (ierr == 0) then
       if(maxval(fpar) .gt. 10 .and. maxval(fpar) .lt. 10000)  fpar = fpar * 1.E-2
     endif
+
     call get_2d_netcdf("LAI",     ncid, lai,   units, ix, jx, .FALSE., ierr)
-    call get_2d_netcdf("SNOW",    ncid, snowbl,units, ix, jx, .FALSE., ierr)
+    call get_2d_netcdf(trim(forcing_name_SN),    ncid, snowbl,units, ix, jx, .FALSE., ierr)
     if (ierr /= 0) then
        allocate(liqfrac(ix,jx))
-       call get_2d_netcdf("LQFRAC", ncid, liqfrac, units, ix, jx, .FALSE., ierr)
+       call get_2d_netcdf(trim(forcing_name_LF), ncid, liqfrac, units, ix, jx, .FALSE., ierr)
        if (ierr == 0) then
           snowbl = (1.0 - liqfrac) * pcp
        else
@@ -2864,7 +2948,6 @@ end subroutine read_hydro_forcing_mpp1
 #endif
 
     ierr = nf_close(ncid)
-
   end subroutine READFORC_HRLDAS_mpp
 
   subroutine READFORC_WRF_mpp(flnm,ix,jx,target_date,t,q,u,v,p,lw,sw,pcp,lai,fpar)
