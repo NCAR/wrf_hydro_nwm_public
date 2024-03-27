@@ -39,6 +39,17 @@ module config_base
      integer            :: glacier_option
      integer            :: surface_resistance_option
 
+     character(len=256) :: forcing_name_T
+     character(len=256) :: forcing_name_Q
+     character(len=256) :: forcing_name_U
+     character(len=256) :: forcing_name_V
+     character(len=256) :: forcing_name_P
+     character(len=256) :: forcing_name_LW
+     character(len=256) :: forcing_name_SW
+     character(len=256) :: forcing_name_PR
+     character(len=256) :: forcing_name_SN
+     character(len=256) :: forcing_name_LF
+
      integer            :: soil_data_option = 1
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
@@ -889,6 +900,16 @@ contains
      character(len=256) :: restart_filename_requested = " "
      integer            :: restart_frequency_hours
      integer            :: output_timestep
+     character(len=256) :: forcing_name_T = "T2D"
+     character(len=256) :: forcing_name_Q = "Q2D"
+     character(len=256) :: forcing_name_U = "U2D"
+     character(len=256) :: forcing_name_V = "V2D"
+     character(len=256) :: forcing_name_P = "PSFC"
+     character(len=256) :: forcing_name_LW = "LWDOWN"
+     character(len=256) :: forcing_name_SW = "SWDOWN"
+     character(len=256) :: forcing_name_PR = "RAINRATE"
+     character(len=256) :: forcing_name_SN = ""
+     character(len=256) :: forcing_name_LF = ""
      integer            :: dynamic_veg_option
      integer            :: canopy_stomatal_resistance_option
      integer            :: btr_option
@@ -932,6 +953,9 @@ contains
          start_year, start_month, start_day, start_hour, start_min, &
          outdir, &
          restart_filename_requested, restart_frequency_hours, output_timestep, &
+
+         forcing_name_T,forcing_name_Q,forcing_name_U,forcing_name_V,forcing_name_P, &
+         forcing_name_LW,forcing_name_SW,forcing_name_PR,forcing_name_SN,forcing_name_LF, &
 
          dynamic_veg_option, canopy_stomatal_resistance_option, &
          btr_option, runoff_option, surface_drag_option, supercooled_water_option, &
@@ -1031,6 +1055,16 @@ contains
     noah_lsm%restart_filename_requested = restart_filename_requested
     noah_lsm%restart_frequency_hours = restart_frequency_hours
     noah_lsm%output_timestep = output_timestep
+    noah_lsm%forcing_name_T = forcing_name_T
+    noah_lsm%forcing_name_Q = forcing_name_Q
+    noah_lsm%forcing_name_U = forcing_name_U
+    noah_lsm%forcing_name_V = forcing_name_V
+    noah_lsm%forcing_name_P = forcing_name_P
+    noah_lsm%forcing_name_LW = forcing_name_LW
+    noah_lsm%forcing_name_SW = forcing_name_SW
+    noah_lsm%forcing_name_PR = forcing_name_PR
+    noah_lsm%forcing_name_SN = forcing_name_SN
+    noah_lsm%forcing_name_LF = forcing_name_LF
     noah_lsm%dynamic_veg_option = dynamic_veg_option
     noah_lsm%canopy_stomatal_resistance_option = canopy_stomatal_resistance_option
     noah_lsm%btr_option = btr_option
