@@ -90,6 +90,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
 
     # Job
     exe_command = exe_cmd.format(str(ncores))
+    print("--- DEBUGGING EXE_COMMAND =" exe_command)
     out_dt = 1 if 'channel' in candidate_sim.model.model_config else 24
     job = wrfhydropy.Job(
         job_id='run_candidate',
@@ -104,6 +105,7 @@ def test_run_candidate(candidate_sim, output_dir, ncores, exe_cmd):
         warnings.simplefilter("ignore")
         candidate_sim_copy.compose()
 
+    print("-----DEBUGGING: WE ARE RIGHT HERE-----")
     print('\nwaiting for job to complete...', end='')
     candidate_sim_copy.run()
     # Wait to collect until job has finished. All test runs are performed on a single job with

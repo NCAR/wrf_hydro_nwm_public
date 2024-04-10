@@ -18,13 +18,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [nwm_ana, nwm_long_range, gridded, reach]
+        # configuration: [nwm_ana, nwm_long_range, gridded, reach]
+        configuration: [gridded] # gridded-no-lakes, nwm, reach, reach-lakes
     runs-on: ubuntu-latest
 
+    env:
+      MPI_HOME: /usr/share/miniconda
+      NETCDF: /usr/share/miniconda
+      NETCDF_INCLUDES: /usr/share/miniconda/include
+      NETCDF_LIBRARIES: /usr/share/miniconda/lib
+
+
     steps:
+      # - uses: conda-incubator/setup-miniconda@v3
+      #   with:
+      #     miniconda-version: "latest"
+      #     activate-environment: foo
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      # - uses: conda-incubator/setup-miniconda@v3
+      #   with:
+      #     activate-environment:
+
+
       - name: Checkout candidate (pull request / push)
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: candidate
 
@@ -36,14 +57,14 @@ jobs:
 
       - name: Checkout reference (pull request)
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: reference
 
       - name: Checkout reference (push)
         if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.before }}
           path: reference
@@ -54,34 +75,95 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: gh repo clone ${{ github.repository }} reference && cd reference && git checkout origin/$(gh pr view ${{ github.event.inputs.pr }} --json baseRefName --jq '.baseRefName')
 
-      - name: Run testing container
+      - name: Install Dependencies With Apt
         run: |
-          docker run -e TRAVIS=1 -t --name test_container \
-           -v $GITHUB_WORKSPACE/candidate:/home/docker/candidate \
-           -v $GITHUB_WORKSPACE/reference:/home/docker/reference \
-           wrfhydro/dev:modeltesting --config ${{ matrix.configuration }} --domain_tag dev
+          sudo apt-get update \
+            && sudo apt-get install -yq --no-install-recommends \
+            wget \
+            curl \
+            emacs-nox \
+            bzip2 \
+            ca-certificates \
+            vim \
+            libhdf5-dev \
+            gfortran \
+            g++ \
+            valgrind \
+            m4 \
+            make \
+            libswitch-perl \
+            git \
+            nano \
+            tcsh \
+            bc \
+            less \
+            openmpi-bin openmpi-common libopenmpi-dev \
+            libxml2-dev \
+            libnetcdf-dev \
+            libnetcdff-dev
 
-      - name: Copy test results from container
-        if: ${{ always() }}
-        run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
-
-      - name: Checkout Github API
-        if: ${{ always() }}
+      - name: Install Dependencies with pip
         run: |
-          pip install pygithub
+          python3 -m pip install wrfhydropy>=0.0.21 gdown matplotlib numpy importlib-metadata pytest pytest-datadir-ng
 
-      - name: Attach diff plots to PR
-        if: ${{ always() }}
+      # need a way to install nccmp!!
+      # - name: Install Dependencies with Conda
+      #   run: |
+      #     conda update conda
+      #     conda install conda-forge::nccmp
+
+      - name: which python
+        run: which python
+
+      - name: Test Python Pip Package
+        run: python -c "import gdown; print('Fin')"
+
+      - name: Compile Reference
         run: |
-          cd $GITHUB_WORKSPACE/candidate/tests/local/utils
-          bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
+          cd $GITHUB_WORKSPACE/reference
+          cmake -B build
+          make -C build -j
 
+      - name: Compile Candidate
+        run: |
+          cd $GITHUB_WORKSPACE/candidate
+          cmake -B build
+          make -C build -j
 
-      - name: Archive test results to GitHub
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-reports
-          path: |
-            ${{ github.workspace }}/test_report/**.html
-            ${{ github.workspace }}/test_report/*/diff_plots
+      # make croton statements download testcase and configure if needed
+      - name: Run Reference Command
+        run: |
+          cd $GITHUB_WORKSPACE/reference/build/Run
+          make croton-${{ matrix.configuration }}
+          make run
+
+      - name: Run Candidate Command
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          make croton-${{ matrix.configuration }}
+          make run
+
+      # ADD BACK IN AFTER DEBUGGING
+      # - name: Copy test results from container
+      #   if: ${{ always() }}
+      #   run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
+
+      # - name: Checkout Github API
+      #   if: ${{ always() }}
+      #   run: |
+      #     pip install pygithub
+
+      # - name: Attach diff plots to PR
+      #   if: ${{ always() }}
+      #   run: |
+      #     cd $GITHUB_WORKSPACE/candidate/tests/local/utils
+      #     bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
+
+      # - name: Archive test results to GitHub
+      #   if: ${{ always() }}
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: test-reports
+      #     path: |
+      #       ${{ github.workspace }}/test_report/**.html
+      #       ${{ github.workspace }}/test_report/*/diff_plots

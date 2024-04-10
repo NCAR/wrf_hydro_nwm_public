@@ -5,6 +5,7 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 import gdown
+import os
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from utils.releaseapi import get_release_asset
@@ -74,6 +75,8 @@ def run_tests(
         else:
             pytest_cmd += " --pdb"
 
+
+    print("DEBUGGING: ??? print_log was =", print_log)
     if print_log:
         pytest_cmd += " -s"
 
@@ -110,8 +113,9 @@ def run_tests(
         pytest_cmd += " --use_existing_test_dir"
 
     subprocess_cmd = module_cmd + pytest_cmd
-    print(subprocess_cmd)
+    print("SUBPROCESS_CMD =", subprocess_cmd)
     tests = subprocess.run(subprocess_cmd, shell=True, cwd=candidate_dir)
+    print("POST SUBPROCESS CMD")
 
     return tests
 
@@ -297,6 +301,10 @@ def main():
     use_existing_test_dir = args.use_existing_test_dir
     xrcmp_n_cores = args.xrcmp_n_cores
 
+    # DEBUGGING
+    print_log = True
+
+
     # Make output dir if does not exist
     if not use_existing_test_dir:
         if output_dir.is_dir():
@@ -308,6 +316,8 @@ def main():
     if domain_tag is not None:
         # Reset domain dir to be the downlaoded domain in the output dir
         domain_dir = output_dir.joinpath('example_case')
+        print("1PWD:", os.getcwd())
+        print("1FILES:", os.listdir('.'))
 
         if domain_tag == 'dev':
             file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
@@ -316,7 +326,8 @@ def main():
             gdown.download(url, output_f, quiet=False)
 
             # untar the test case
-            untar_cmd = 'tar -xf ' + output_f
+            untar_cmd = 'tar zxf ' + output_f
+            print("untar_cmd =", untar_cmd)
             subprocess.run(untar_cmd,
                            shell=True,
                            cwd=str(output_dir))
@@ -326,10 +337,14 @@ def main():
                               tag=domain_tag,
                               asset_name='testcase')
             # untar the test case
-            untar_cmd = 'tar -xf *testcase*.tar.gz'
+            untar_cmd = 'tar zxf *testcase*.tar.gz'
+            print("untar_cmd =", untar_cmd)
             subprocess.run(untar_cmd,
                            shell=True,
                            cwd=str(output_dir))
+
+    print("PWD:", os.getcwd())
+    print("FILES: ./test_out/", os.listdir('./test_out/'))
 
     # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
@@ -350,6 +365,8 @@ def main():
         print('\n\n' + ('#' * total_len))
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
+
+
 
         test_result = run_tests(
             config=config,
