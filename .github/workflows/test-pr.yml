@@ -147,9 +147,11 @@ jobs:
       - name: Compare Outputs
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
+          mkdir output_diff
           capital_config=$(echo "${{ matrix.configuration }}" | tr '[:lower:]' '[:upper:]')
           python -c \
-          "import sys; sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
+          "import sys; \
+          sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
           import compare_output; \
           from pathlib import Path; \
           compare_output.plot_diffs('${GITHUB_WORKSPACE}/candidate/build/Run/output_diff', \
