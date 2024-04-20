@@ -21,6 +21,19 @@ croton-reach:
 	make -C .. croton-reach
 croton-reach-lakes:
 	make -C .. croton-reach-lakes
+# run croton targets
+run-croton:
+	make -C .. run-croton
+run-croton-gridded:
+	make -C .. run-croton-gridded
+run-croton-gridded-no-lakes:
+	make -C .. run-croton-gridded-no-lakes
+run-croton-nwm:
+	make -C .. run-croton-nwm
+run-croton-reach:
+	make -C .. run-croton-reach
+run-croton-reach-lakes:
+	make -C .. run-croton-reach-lakes
 
 clean:
 	rm -f *.LDASOUT_DOMAIN1 *.LAKEOUT_DOMAIN1 *.CHRTOUT_DOMAIN1
