@@ -106,7 +106,7 @@ jobs:
         run: |
           python3 -m pip install wrfhydropy>=0.0.21 gdown matplotlib numpy importlib-metadata pytest pytest-datadir-ng
 
-      # need a way to install nccmp!!
+      # don't think we need nccmp anymore
       # - name: Install Dependencies with Conda
       #   run: |
       #     conda update conda
@@ -115,8 +115,9 @@ jobs:
       - name: which python
         run: which python
 
-      - name: Test Python Pip Package
-        run: python -c "import gdown; print('Fin')"
+      # # don't need this anymore
+      # - name: Test Python Pip Package
+      #   run: python -c "import gdown; print('Fin')"
 
       - name: Compile Reference
         run: |
@@ -134,14 +135,25 @@ jobs:
       - name: Run Reference Command
         run: |
           cd $GITHUB_WORKSPACE/reference/build/Run
-          make croton-${{ matrix.configuration }}
-          make run
+          make run-croton-${{ matrix.configuration }}
 
       - name: Run Candidate Command
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
-          make croton-${{ matrix.configuration }}
-          make run
+          make run-croton-${{ matrix.configuration }}
+
+
+      - name: Compare Outputs
+        run: |
+          cd $GITHUB_WORKSPACE/reference/build/Run
+          python -c \
+          "import sys; sys.path.append('${GITHUB_WORKSPACE}/reference/tests'); \
+          import compare_output; \
+          from pathlib import Path; \
+          compare_output.plot_diffs('${GITHUB_WORKSPACE}/reference/build/Run/output_diff', \
+            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{matrix.configuration@u}}/', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{matrix.configuration@u}}/', \
+            '${{matrix.configuration@u}}')"
 
       # ADD BACK IN AFTER DEBUGGING
       # - name: Copy test results from container

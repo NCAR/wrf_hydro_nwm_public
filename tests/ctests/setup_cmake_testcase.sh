@@ -34,3 +34,10 @@ cp ${testcase_dir}/namelist.hrldas .
 ln -sf ${testcase_dir}/DOMAIN .
 ln -sf ${testcase_dir}/RESTART .
 ln -sf ${testcase}/FORCING .
+
+# turn on all output. Done with sed instead of Python for performance
+sed -i 's/^\( *CHRTOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
+sed -i 's/^\( *CHANOBS_DOMAIN *= *\).*$/\11/' hydro.namelist
+sed -i 's/^\( *CHRTOUT_GRID *= *\).*$/\11/' hydro.namelist
+sed -i 's/^\( *LSMOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
+sed -i 's/^\( *RTOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
