@@ -146,7 +146,7 @@ jobs:
 
       - name: Compare Outputs
         run: |
-          cd $GITHUB_WORKSPACE/reference/build/Run
+          cd $GITHUB_WORKSPACE/candidate/build/Run
           capital_config=$(echo "${{ matrix.configuration }}" | tr '[:lower:]' '[:upper:]')
           python -c \
           "import sys; sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
