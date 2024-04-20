@@ -146,14 +146,15 @@ jobs:
       - name: Compare Outputs
         run: |
           cd $GITHUB_WORKSPACE/reference/build/Run
+          capital_config=$(echo "${{ matrix.configuration }}" | tr '[:lower:]' '[:upper:]')
           python -c \
           "import sys; sys.path.append('${GITHUB_WORKSPACE}/reference/tests'); \
           import compare_output; \
           from pathlib import Path; \
           compare_output.plot_diffs('${GITHUB_WORKSPACE}/reference/build/Run/output_diff', \
-            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{ matrix.configuration^ }}/', \
-            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration^ }}/', \
-            '${{ matrix.configuration^ }}')"
+            '${GITHUB_WORKSPACE}/reference/build/Run/output_${capital_config}/', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${capital_config}/', \
+            '${capital_config}')"
 
       # ADD BACK IN AFTER DEBUGGING
       # - name: Copy test results from container
