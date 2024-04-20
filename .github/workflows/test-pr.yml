@@ -151,9 +151,9 @@ jobs:
           import compare_output; \
           from pathlib import Path; \
           compare_output.plot_diffs('${GITHUB_WORKSPACE}/reference/build/Run/output_diff', \
-            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{matrix.configuration@u}}/', \
-            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{matrix.configuration@u}}/', \
-            '${{matrix.configuration@u}}')"
+            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{ matrix.configuration^ }}/', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration^ }}/', \
+            '${{ matrix.configuration^ }}')"
 
       # ADD BACK IN AFTER DEBUGGING
       # - name: Copy test results from container
