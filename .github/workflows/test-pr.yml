@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         # configuration: [nwm_ana, nwm_long_range, gridded, reach]
-        configuration: [gridded] # gridded-no-lakes, nwm, reach, reach-lakes
+        configuration: [nwm, gridded, reach] # gridded-no-lakes, nwm, reach, reach-lakes
     runs-on: ubuntu-latest
 
     env:
