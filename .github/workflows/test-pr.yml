@@ -18,8 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # configuration: [nwm_ana, nwm_long_range, gridded, reach]
-        configuration: [nwm, gridded, reach] # gridded-no-lakes, nwm, reach, reach-lakes
+        configuration: [nwm_ana, nwm_long_range, gridded, reach]
     runs-on: ubuntu-latest
 
     env:
@@ -30,18 +29,10 @@ jobs:
 
 
     steps:
-      # - uses: conda-incubator/setup-miniconda@v3
-      #   with:
-      #     miniconda-version: "latest"
-      #     activate-environment: foo
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      # - uses: conda-incubator/setup-miniconda@v3
-      #   with:
-      #     activate-environment:
-
 
       - name: Checkout candidate (pull request / push)
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
@@ -75,121 +66,107 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: gh repo clone ${{ github.repository }} reference && cd reference && git checkout origin/$(gh pr view ${{ github.event.inputs.pr }} --json baseRefName --jq '.baseRefName')
 
-      - name: Install Dependencies With Apt
+      - name: Install dependencies with apt-get
         run: |
           sudo apt-get update \
             && sudo apt-get install -yq --no-install-recommends \
             wget \
             curl \
-            emacs-nox \
             bzip2 \
             ca-certificates \
-            vim \
             libhdf5-dev \
             gfortran \
             g++ \
-            valgrind \
             m4 \
             make \
             libswitch-perl \
             git \
-            nano \
-            tcsh \
             bc \
-            less \
             openmpi-bin openmpi-common libopenmpi-dev \
             libxml2-dev \
             libnetcdf-dev \
             libnetcdff-dev
 
-      - name: Install Dependencies with pip
+      - name: Install dependencies with pip
         run: |
-          python3 -m pip install matplotlib numpy xarray netCDF4
-          # python3 -m pip install wrfhydropy>=0.0.21 gdown matplotlib numpy importlib-metadata pytest pytest-datadir-ng
+          python3 -m pip install matplotlib numpy xarray dask netCDF4 pygithub
 
-      # don't think we need nccmp anymore
-      # - name: Install Dependencies with Conda
-      #   run: |
-      #     conda update conda
-      #     conda install conda-forge::nccmp
-
-      - name: which python
-        run: which python
-
-      # # don't need this anymore
-      # - name: Test Python Pip Package
-      #   run: python -c "import gdown; print('Fin')"
-
-      - name: Compile Reference
+      - name: Compile reference
         run: |
           cd $GITHUB_WORKSPACE/reference
           cmake -B build
           make -C build -j
 
-      - name: Compile Candidate
+      - name: Compile candidate
         run: |
           cd $GITHUB_WORKSPACE/candidate
           cmake -B build
           make -C build -j
 
       # make croton statements download testcase and configure if needed
-      # - name: Run Reference Command
+      # - name: Run reference model
       #   run: |
       #     cd $GITHUB_WORKSPACE/reference/build/Run
       #     make run-croton-${{ matrix.configuration }}
 
-      - name: Run Candidate Command
+      - name: Run candidate model
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
           make run-croton-${{ matrix.configuration }}
 
 
-      - name: Compare Outputs
+      - name: Compare HYDRO_RST.* output with xrcmp
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/HYDRO_RST.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+      - name: Compare RESTART.* output with xrcmp
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/RESTART.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+
+      - name: Compare output with compare_output
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
           mkdir output_diff
-          # capitalize all lowercase matrix.configuration testcase name
-          capital_config=$(echo "${{ matrix.configuration }}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
           python -c \
           "import sys; \
-          sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
+          sys.path.append('${GITHUB_WORKSPACE}/candidate/tests/utils'); \
           import compare_output; \
           from pathlib import Path; \
           compare_output.plot_diffs('${GITHUB_WORKSPACE}/candidate/build/Run/output_diff', \
-            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${capital_config}/', \
-            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${capital_config}/', \
-            '${capital_config}')"
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration }}/', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration }}/', \
+            '${{ matrix.configuration }}')"
 
-          # THESE CAN BE ADDED BACK IN ONCE REFERENCE HAS NEW CI
-          # "import sys; sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
-          # compare_output.plot_diffs('${GITHUB_WORKSPACE}/reference/build/Run/output_diff', \
-          #   '${GITHUB_WORKSPACE}/reference/build/Run/output_${capital_config}/', \
-          #   '${GITHUB_WORKSPACE}/candidate/build/Run/output_${capital_config}/', \
-          #   '${capital_config}')"
+      - name: Copy test results from container
+        if: ${{ always() }}
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/test_report
+          cp -r $GITHUB_WORKSPACE/candidate/build/Run/output_${{ matrix.configuration }}/* $GITHUB_WORKSPACE/test_report/
 
+      - name: Attach diff plots to PR
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/tests/local/utils
+          bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
 
-
-      # ADD BACK IN AFTER DEBUGGING
-      # - name: Copy test results from container
-      #   if: ${{ always() }}
-      #   run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
-
-      # - name: Checkout Github API
-      #   if: ${{ always() }}
-      #   run: |
-      #     pip install pygithub
-
-      # - name: Attach diff plots to PR
-      #   if: ${{ always() }}
-      #   run: |
-      #     cd $GITHUB_WORKSPACE/candidate/tests/local/utils
-      #     bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
-
-      # - name: Archive test results to GitHub
-      #   if: ${{ always() }}
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: test-reports
-      #     path: |
-      #       ${{ github.workspace }}/test_report/**.html
-      #       ${{ github.workspace }}/test_report/*/diff_plots
+      - name: Archive test results to GitHub
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: |
+            ${{ github.workspace }}/test_report/**.html
+            ${{ github.workspace }}/test_report/*/diff_plots

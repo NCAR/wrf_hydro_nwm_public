@@ -39,7 +39,6 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
         f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
         f"-n -t {thresholds}"
 
-    print("CMAD DDD + =", cmd)
     ldas_vars = ['ACCET','SFCRNOF','UGDRNOFF','SOIL_M','SNEQV','FSA','FIRA','TRAD','GRDFLX','LH','HFX']
 
     cmd_gridded = cmd + " -f ldas:" + (",".join(ldas_vars)) + " -f rtout"

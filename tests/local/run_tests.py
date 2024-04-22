@@ -75,8 +75,6 @@ def run_tests(
         else:
             pytest_cmd += " --pdb"
 
-
-    print("DEBUGGING: ??? print_log was =", print_log)
     if print_log:
         pytest_cmd += " -s"
 
@@ -301,10 +299,6 @@ def main():
     use_existing_test_dir = args.use_existing_test_dir
     xrcmp_n_cores = args.xrcmp_n_cores
 
-    # DEBUGGING
-    print_log = True
-
-
     # Make output dir if does not exist
     if not use_existing_test_dir:
         if output_dir.is_dir():
@@ -316,8 +310,6 @@ def main():
     if domain_tag is not None:
         # Reset domain dir to be the downlaoded domain in the output dir
         domain_dir = output_dir.joinpath('example_case')
-        print("1PWD:", os.getcwd())
-        print("1FILES:", os.listdir('.'))
 
         if domain_tag == 'dev':
             file_id = '1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe'
@@ -326,8 +318,7 @@ def main():
             gdown.download(url, output_f, quiet=False)
 
             # untar the test case
-            untar_cmd = 'tar zxf ' + output_f
-            print("untar_cmd =", untar_cmd)
+            untar_cmd = 'tar -xf ' + output_f
             subprocess.run(untar_cmd,
                            shell=True,
                            cwd=str(output_dir))
@@ -337,14 +328,10 @@ def main():
                               tag=domain_tag,
                               asset_name='testcase')
             # untar the test case
-            untar_cmd = 'tar zxf *testcase*.tar.gz'
-            print("untar_cmd =", untar_cmd)
+            untar_cmd = 'tar -xf *testcase*.tar.gz'
             subprocess.run(untar_cmd,
                            shell=True,
                            cwd=str(output_dir))
-
-    print("PWD:", os.getcwd())
-    print("FILES: ./test_out/", os.listdir('./test_out/'))
 
     # Make copy paths
     candidate_copy = output_dir.joinpath(candidate_dir.name + '_can_pytest')
@@ -365,8 +352,6 @@ def main():
         print('\n\n' + ('#' * total_len))
         print('### TESTING:  ---  ' + config + '  ---  ###')
         print(('#' * total_len) + '\n', flush=True)
-
-
 
         test_result = run_tests(
             config=config,

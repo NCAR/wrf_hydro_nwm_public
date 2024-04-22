@@ -5,8 +5,34 @@
 # files so ctest can run wrf_hydro.exe
 
 # setup directory variables in script
-# testcase_type values = {Gridded, Gridded_no_lakes, NWM, Reach, ReachLakes}
-testcase_type=${1}
+# match the input case to valid testcase_dir
+case ${1} in
+    gridded)
+        testcase_dir="Gridded"
+        ;;
+    gridded_no_lakes)
+        testcase_dir="Gridded_no_lakes"
+        ;;
+    nwm_ana)
+        testcase_dir="NWM"
+        ;;
+    nwm_ana)
+        testcase_dir="NWM"
+        ;;
+    nwm_long_range)
+        testcase_dir="NWM"
+        ;;
+    reach)
+        testcase_dir="Reach"
+        ;;
+    reach_lakes)
+        testcase_dir="ReachLakes"
+        ;;
+    *)
+        echo "setup_cmake_testcase.sh: first command line argument did not match"
+        exit 1
+        ;;
+esac
 binary_dir=${2}
 test_file_dir=${binary_dir}/tests
 run_dir=${binary_dir}/Run
@@ -28,7 +54,7 @@ fi
 
 # setup testcase
 testcase=example_case/
-testcase_dir=${testcase}/${testcase_type}
+testcase_dir=${testcase}/${testcase_dir}
 cp ${testcase_dir}/hydro.namelist .
 cp ${testcase_dir}/namelist.hrldas .
 ln -sf ${testcase_dir}/DOMAIN .
@@ -41,3 +67,23 @@ sed -i 's/^\( *CHANOBS_DOMAIN *= *\).*$/\11/' hydro.namelist
 sed -i 's/^\( *CHRTOUT_GRID *= *\).*$/\11/' hydro.namelist
 sed -i 's/^\( *LSMOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
 sed -i 's/^\( *RTOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
+
+# if NWM test fix for ana and long_range runs
+case ${1} in
+    nwm_ana)
+        sed -i 's/^\( *RUNOFF_OPTION *= *\).*$/\17/I' namelist.hrldas
+        ;;
+    nwm_longrange)
+        sed -i 's/^\( *RUNOFF_OPTION *= *\).*$/\17/I' namelist.hrldas
+        sed -i 's/^\( *AGGFACTRT *= *\).*$/\11/I' hydro.namelist
+        sed -i 's/^\( *DXRT *= *\).*$/\11000/I' hydro.namelist
+        sed -i 's/^\( *OVRTSWCRT *= *\).*$/\10/I' hydro.namelist
+        sed -i 's/^\( *RST_TYP *= *\).*$/\10/I' hydro.namelist
+        sed -i 's/^\( *RTOUT_DOMAIN *= *\).*$/\10/I' hydro.namelist
+        sed -i 's/^\( *SUBRTSWCRT *= *\).*$/\10/I' hydro.namelist
+        sed -i 's/^\( *maxagepairsbiaspersist *= *\).*$/\124/I' hydro.namelist
+        sed -i 's/^\( *persistBias *= *\).*$/\1.false./I' hydro.namelist
+        ;;
+    *)
+        ;;
+esac
