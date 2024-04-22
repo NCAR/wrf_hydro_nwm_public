@@ -104,7 +104,7 @@ jobs:
 
       - name: Install Dependencies with pip
         run: |
-          python3 -m pip install matplotlib numpy
+          python3 -m pip install matplotlib numpy xarray
           # python3 -m pip install wrfhydropy>=0.0.21 gdown matplotlib numpy importlib-metadata pytest pytest-datadir-ng
 
       # don't think we need nccmp anymore
