@@ -148,7 +148,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
           mkdir output_diff
-          capital_config=$(echo "${{ matrix.configuration }}" | tr '[:lower:]' '[:upper:]')
+          # capitalize all lowercase matrix.configuration testcase name
+          capital_config=$(echo "${{ matrix.configuration }}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
           python -c \
           "import sys; \
           sys.path.append('${GITHUB_WORKSPACE}/candidate/tests'); \
