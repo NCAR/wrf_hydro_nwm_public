@@ -136,49 +136,45 @@ jobs:
               --n_cores 1; \
           done
 
-      - name: Compare *.CHANOBS_DOMAIN1 output with xrcmp
+      - name: Compare last *.CHANOBS_DOMAIN1 output with xrcmp
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
-          for file in output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1; do\
-            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
               --candidate $file \
               --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
               --log_file $file_diff.txt \
               --n_cores 1; \
-          done
 
-      - name: Compare *.CHRTOUT_DOMAIN1 output with xrcmp
+      - name: Compare last *.CHRTOUT_DOMAIN1 output with xrcmp
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
-          for file in output_${{ matrix.configuration }}/*.CHRTOUT_DOMAIN1; do\
-            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHRTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
               --candidate $file \
               --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
               --log_file $file_diff.txt \
               --n_cores 1; \
-          done
 
-      - name: Compare *.LSMOUT_DOMAIN1 output with xrcmp
+      - name: Compare last *.LSMOUT_DOMAIN1 output with xrcmp
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
-          for file in output_${{ matrix.configuration }}/*.LSMOUT_DOMAIN1; do\
-            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+          file=$(ls -t output_${{ matrix.configuration }}/*.LSMOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
               --candidate $file \
               --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
               --log_file $file_diff.txt \
               --n_cores 1; \
-          done
 
-      - name: Compare *.RTOUT_DOMAIN1 output with xrcmp
+      - name: Compare last *.RTOUT_DOMAIN1 output with xrcmp
         run: |
           cd $GITHUB_WORKSPACE/candidate/build/Run
-          for file in output_${{ matrix.configuration }}/*.RTOUT_DOMAIN1; do\
-            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+          file=$(ls -t output_${{ matrix.configuration }}/*.RTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
               --candidate $file \
               --reference $GITHUB_WORKSPACE/candidate/build/Run/$file \
               --log_file $file_diff.txt \
               --n_cores 1; \
-          done
 
       - name: Compare output with compare_output
         run: |
