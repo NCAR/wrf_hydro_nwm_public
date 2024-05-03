@@ -21,10 +21,22 @@ jobs:
         configuration: [nwm_ana, nwm_long_range, gridded, reach]
     runs-on: ubuntu-latest
 
+    env:
+      MPI_HOME: /usr/share/miniconda
+      NETCDF: /usr/share/miniconda
+      NETCDF_INCLUDES: /usr/share/miniconda/include
+      NETCDF_LIBRARIES: /usr/share/miniconda/lib
+
+
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
       - name: Checkout candidate (pull request / push)
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: candidate
 
@@ -36,14 +48,14 @@ jobs:
 
       - name: Checkout reference (pull request)
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: reference
 
       - name: Checkout reference (push)
         if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.before }}
           path: reference
@@ -54,28 +66,147 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: gh repo clone ${{ github.repository }} reference && cd reference && git checkout origin/$(gh pr view ${{ github.event.inputs.pr }} --json baseRefName --jq '.baseRefName')
 
-      - name: Run testing container
+      - name: Install dependencies with apt-get
         run: |
-          docker run -e TRAVIS=1 -t --name test_container \
-           -v $GITHUB_WORKSPACE/candidate:/home/docker/candidate \
-           -v $GITHUB_WORKSPACE/reference:/home/docker/reference \
-           wrfhydro/dev:modeltesting --config ${{ matrix.configuration }} --domain_tag dev
+          sudo apt-get update \
+            && sudo apt-get install -yq --no-install-recommends \
+            wget \
+            curl \
+            bzip2 \
+            ca-certificates \
+            libhdf5-dev \
+            gfortran \
+            g++ \
+            m4 \
+            make \
+            libswitch-perl \
+            git \
+            bc \
+            openmpi-bin openmpi-common libopenmpi-dev \
+            libxml2-dev \
+            libnetcdf-dev \
+            libnetcdff-dev
+
+      - name: Install dependencies with pip
+        run: |
+          python3 -m pip install matplotlib numpy xarray dask netCDF4 pygithub
+
+      - name: Compile reference
+        run: |
+          cd $GITHUB_WORKSPACE/reference
+          cmake -B build
+          make -C build -j
+
+      - name: Compile candidate
+        run: |
+          cd $GITHUB_WORKSPACE/candidate
+          cmake -B build
+          make -C build -j
+
+      - name: Run reference model
+        run: |
+          cd $GITHUB_WORKSPACE/reference/build/Run
+          make run-croton-${{ matrix.configuration }}
+
+      - name: Run candidate model
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          make run-croton-${{ matrix.configuration }}
+
+      - name: Compare HYDRO_RST.* output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/HYDRO_RST.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+
+      - name: Compare RESTART.* output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/RESTART.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+
+      - name: Compare last *.CHANOBS_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+
+      - name: Compare last *.CHRTOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHRTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+
+      - name: Compare last *.LSMOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.LSMOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+
+      - name: Compare last *.RTOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.RTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+
+      - name: Compare output with compare_output
+        if: ${{ always() }}
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          mkdir output_diff
+          python -c \
+          "import sys; \
+          sys.path.append('${GITHUB_WORKSPACE}/candidate/tests/utils'); \
+          import compare_output; \
+          from pathlib import Path; \
+          compare_output.plot_diffs('${GITHUB_WORKSPACE}/candidate/build/Run/output_diff', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration }}/', \
+            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{ matrix.configuration }}/', \
+            '${{ matrix.configuration }}')"
 
       - name: Copy test results from container
         if: ${{ always() }}
-        run: docker cp test_container:/home/docker/test_out $GITHUB_WORKSPACE/test_report
-
-      - name: Checkout Github API
-        if: ${{ always() }}
         run: |
-          pip install pygithub
+          mkdir -p $GITHUB_WORKSPACE/test_report
+          cp -r $GITHUB_WORKSPACE/candidate/build/Run/output_${{ matrix.configuration }}/* $GITHUB_WORKSPACE/test_report/
 
       - name: Attach diff plots to PR
         if: ${{ always() }}
         run: |
           cd $GITHUB_WORKSPACE/candidate/tests/local/utils
           bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
-
 
       - name: Archive test results to GitHub
         if: ${{ always() }}
