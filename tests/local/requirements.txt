@@ -11,7 +11,7 @@ DateTime==4.3
 deepdiff==3.3.0
 f90nml==1.0.2
 gdown==5.1.0
-idna==2.7
+idna==3.7
 importlib-metadata==0.19
 jsonpickle==1.2
 locket==0.2.0
