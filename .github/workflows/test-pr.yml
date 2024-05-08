@@ -200,7 +200,7 @@ jobs:
         if: ${{ always() }}
         run: |
           mkdir -p $GITHUB_WORKSPACE/test_report
-          cp -r $GITHUB_WORKSPACE/candidate/build/Run/output_${{ matrix.configuration }}/* $GITHUB_WORKSPACE/test_report/
+          cp -r $GITHUB_WORKSPACE/candidate/build/Run/output_diff/diff_plots/* $GITHUB_WORKSPACE/test_report/
 
       - name: Attach diff plots to PR
         if: ${{ failure() }}
@@ -214,5 +214,4 @@ jobs:
         with:
           name: test-reports
           path: |
-            ${{ github.workspace }}/test_report/**.html
-            ${{ github.workspace }}/test_report/*/diff_plots
+            ${{ github.workspace }}/test_report/*
