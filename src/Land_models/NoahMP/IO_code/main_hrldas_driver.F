@@ -29,6 +29,8 @@ program noah_hrldas_driver
   use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
 #endif
 
+  use module_HYDRO_drv, only: HYDRO_finish
+
   ! NEW MODULE WITH DT INCLUDING STATE, PARAMETER,FORCING AND GEOMETRY. Different modules
   use state_module, only: state_type
   use parameters
