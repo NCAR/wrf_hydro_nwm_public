@@ -395,6 +395,14 @@
          iocflag = nlst(did)%io_config_outputs
       end subroutine get_iocflag
 
+      subroutine get_rstrt_swc(did, restart_flag)
+         use config_base, only: nlst
+         implicit none
+         integer, intent(in)  :: did
+         integer, intent(out) :: restart_flag
+         restart_flag = nlst(did)%RSTRT_SWC
+      end subroutine
+
       subroutine get_t0OutputFlag(did, t0OutputFlag)
         use config_base, only: nlst
          implicit none

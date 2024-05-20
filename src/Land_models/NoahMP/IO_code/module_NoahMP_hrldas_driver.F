@@ -41,8 +41,9 @@ module module_NoahMP_hrldas_driver
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCECAN  ! accumulated canopy evap [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCETRAN ! accumulated transpiration [mm]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ACCEDIR ! accumulated direct soil evap [mm]
-   integer :: io_config_outputs=0
-   integer :: t0OutputFlag=0
+   integer :: io_config_outputs = 0
+   integer :: reset_flag = 0
+   integer :: t0OutputFlag = 0
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT_TOP ! top 2 layer soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILSAT ! column integrated soil saturation [fraction]
    REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SOILICE ! fraction of soil moisture that is ice [fraction]
@@ -1533,9 +1534,10 @@ module module_NoahMP_hrldas_driver
          olddate,zsoil(1:NSOIL))
 
 call get_iocflag(1, io_config_outputs)
+call get_rstrt_swc(1, reset_flag)
 
 #ifdef WRF_HYDRO
-if (io_config_outputs .gt. 0) then
+if (reset_flag == 1) then
      ACCPRCP = 0.0
      ACCECAN = 0.0
      ACCEDIR = 0.0
