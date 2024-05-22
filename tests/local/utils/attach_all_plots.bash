@@ -26,5 +26,5 @@ set -e -x
 if [[ `ls -1 $d` ]]
 then
     echo "attach_all_plots.py:28"
-    python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" $d/*
+    python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" ./*
 fi
