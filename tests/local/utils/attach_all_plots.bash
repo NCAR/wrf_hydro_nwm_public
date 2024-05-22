@@ -23,11 +23,8 @@ cd $diffs
 
 set -e -x
 
-for d in `ls -1`
-do
-        echo "attach_all_plots.py:26"
-        if [[ -d $d && `ls -1 $d` ]]; then
-            echo "attach_all_plots.py:28"
-            python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" $d/*
-        fi
-done
+if [[ `ls -1 $d` ]]
+then
+    echo "attach_all_plots.py:28"
+    python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" $d/*
+fi
