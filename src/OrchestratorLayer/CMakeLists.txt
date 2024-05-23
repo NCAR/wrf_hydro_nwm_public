@@ -10,7 +10,7 @@ add_dependencies(hydro_orchestrator
         hydro_utils
 )
 
-target_link_libraries(hydro_orchestrator PUBLIC
+target_link_libraries(hydro_orchestrator PRIVATE
         hydro_netcdf_layer
         hydro_utils
 )
