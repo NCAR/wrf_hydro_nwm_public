@@ -6,7 +6,7 @@ endif()
 
 
 # set project name and version numbers
-project (WRF_Hydro LANGUAGES Fortran)
+project (WRF_Hydro LANGUAGES Fortran C)
 set (WRF_Hydro_VERSION_MAJOR 5)
 set (WRF_Hydro_VERSION_MINOR 3)
 set (WRF_Hydro_VERSION_PATCH 0)

@@ -17,6 +17,8 @@ add_library(hydro_routing STATIC
 	Noah_distr_routing_subsurface.F
 )
 
+add_dependencies(hydro_routing hydro_routing_diversions)
+
 target_link_libraries(hydro_routing PUBLIC hydro_mpp)
 target_link_libraries(hydro_routing PUBLIC hydro_utils)
 target_link_libraries(hydro_routing PUBLIC hydro_orchestrator)
@@ -31,4 +33,5 @@ target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_levelpool)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_hybrid)
 target_link_libraries(hydro_routing PUBLIC hydro_data_rec)
 target_link_libraries(hydro_routing PUBLIC hydro_routing_reservoirs_rfc)
+target_link_libraries(hydro_routing PUBLIC hydro_routing_diversions)
 
