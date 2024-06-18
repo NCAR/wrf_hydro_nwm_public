@@ -2011,7 +2011,7 @@ do nt = 1, nsteps
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
 #endif
 
-         call calculate_diversion(LINKID(k), -1, Quc, tmpQLINK(k,2))
+         call calculate_diversion(LINKID(k), -1_int64, Quc, tmpQLINK(k,2))
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &

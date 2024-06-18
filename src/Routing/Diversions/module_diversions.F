@@ -107,8 +107,8 @@ contains
     end subroutine
 
     subroutine calculate_diversion(src_link, dst_link, qlink_src, qlink_dst)
-        integer, intent(in) :: src_link
-        integer, intent(in) :: dst_link
+        integer(kind=int64), intent(in) :: src_link
+        integer(kind=int64), intent(in) :: dst_link
         real, intent(inout) :: qlink_src
         real, intent(inout) :: qlink_dst
 
@@ -134,7 +134,7 @@ contains
     end subroutine
 
     subroutine gage_assisted_diversion(src_link, diversion, qlink_src)
-        integer, intent(in) :: src_link
+        integer(kind=int64), intent(in) :: src_link
         type(diversion_t), intent(in) :: diversion
         real, intent(inout) :: qlink_src
 
