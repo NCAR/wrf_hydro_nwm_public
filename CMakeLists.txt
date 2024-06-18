@@ -6,13 +6,13 @@ endif()
 
 
 # set project name and version numbers
-project(WRF_Hydro LANGUAGES Fortran)
-set(WRF_Hydro_VERSION_MAJOR 5)
-set(WRF_Hydro_VERSION_MINOR 3)
-set(WRF_Hydro_VERSION_PATCH 0)
-set(National_Water_Model_VERSION_MAJOR 3)
-set(National_Water_Model_VERSION_MINOR 0)
-set(National_Water_Model_VERSION_PATCH beta)
+project (WRF_Hydro LANGUAGES Fortran C)
+set (WRF_Hydro_VERSION_MAJOR 5)
+set (WRF_Hydro_VERSION_MINOR 4)
+set (WRF_Hydro_VERSION_PATCH 0)
+set (National_Water_Model_VERSION_MAJOR 3)
+set (National_Water_Model_VERSION_MINOR 1)
+set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
 find_package(MPI REQUIRED)
