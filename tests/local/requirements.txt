@@ -31,7 +31,7 @@ setuptools==69.0.2
 six==1.12.0
 soupsieve==1.9.3
 toolz==0.10.0
-urllib3==1.26.18
+urllib3==1.26.19
 wrfhydropy==0.0.19
 xarray==0.19
 zipp==0.6.0
