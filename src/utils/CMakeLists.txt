@@ -17,3 +17,5 @@ add_library(hydro_utils STATIC
 	module_version.F
 	module_hydro_stop.F
 )
+
+add_subdirectory(fortglob)
