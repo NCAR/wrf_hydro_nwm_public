@@ -3,20 +3,20 @@ module module_channel_diversions
     use iso_fortran_env, only: int8, int16, int64
     use ieee_arithmetic, only: ieee_is_nan
 
-    use module_diversions_timeslice
+    use module_diversions_timeslice, only: get_flow_for_gage, init_timeslices
     use module_hydro_stop, only: hydro_stop
 
     implicit none
 
     type diversion_t
         character(len=128) :: name
-        character(len=16)  :: da_src, da_dest
 
+        character(len=16)  :: da_src, da_dest
         integer(kind=int8)  :: type_div, type_src, type_dest
         integer(kind=int64) :: id_src, id_dest, src_index, dest_index
         real :: capacity, fraction
-
         integer(kind=int16) :: lookback
+
         real :: persisted_flow_src, persisted_flow_dest
     end type
 
