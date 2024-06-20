@@ -97,7 +97,7 @@ contains
                         ierr = ierr + nf90_get_var(ncid, fraction_vid, div%fraction, start=(/i/))
                         ierr = ierr + nf90_get_var(ncid, lookback_vid, div%lookback, start=(/i/))
 
-                        if (ierr > 0) call hydro_stop("Error occurred reading diversion variables from diversion file")
+                        if (ierr /= 0) call hydro_stop("Error occurred reading diversion variables from diversion file")
                     end associate
                 end do
 
