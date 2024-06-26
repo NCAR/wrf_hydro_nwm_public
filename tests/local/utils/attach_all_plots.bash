@@ -3,10 +3,10 @@
 PR=$1
 CONFIG=$2
 cwd=`pwd`
-diffs=$GITHUB_WORKSPACE/test_report/$CONFIG/diff_plots
+diffs=$GITHUB_WORKSPACE/test_report/$CONFIG
 
 if [[ ! -d $diffs ]]; then
-    echo "No diff plots to attach!"
+    echo "No diff plots to attach at ${diffs}"
     exit 0
 fi
 
@@ -21,9 +21,8 @@ REPO=NCAR/wrf_hydro_nwm_public
 
 cd $diffs
 
-for d in `ls -1`
-do
-        if [[ -d $d && `ls -1 $d` ]]; then
-            python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" $d/* 
-        fi
-done
+# if $diffs directory is not empty, attach files in it
+if [[ `ls -1 ./` ]]
+then
+    python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" ./*
+fi
