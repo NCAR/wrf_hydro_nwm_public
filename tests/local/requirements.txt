@@ -34,5 +34,5 @@ toolz==0.10.0
 urllib3==1.26.19
 wrfhydropy==0.0.19
 xarray==0.19
-zipp==0.6.0
+zipp==3.19.1
 zope.interface==5.5.2
