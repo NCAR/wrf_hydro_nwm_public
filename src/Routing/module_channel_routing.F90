@@ -2007,11 +2007,12 @@ do nt = 1, nsteps
          !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
          !                  MannN(k), ChSSlp(k), Bw(k), Tw(k) )
 
+         call calculate_diversion(LINKID(k), -1_int64, Qup, Quc, tmpQLINK(k,2))
+
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
 #endif
 
-         call calculate_diversion(LINKID(k), -1_int64, Quc, tmpQLINK(k,2))
          call SUBMUSKINGCUNGE(&
               tmpQLINK(k,2), velocity(k), qloss(k), LINKID(k),     Qup,        Quc, QLINK(k,1), &
               QLateral(k),   DTRT_CH,     So(k), CHANLEN(k),                  &

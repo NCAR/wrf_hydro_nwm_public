@@ -106,10 +106,10 @@ contains
 
     end subroutine
 
-    subroutine calculate_diversion(src_link, dst_link, qlink_src, qlink_dst)
+    subroutine calculate_diversion(src_link, dst_link, qlink_src_previous, qlink_src_current, qlink_dst)
         integer(kind=int64), intent(in) :: src_link
         integer(kind=int64), intent(in) :: dst_link
-        real, intent(inout) :: qlink_src
+        real, intent(inout) :: qlink_src_previous, qlink_src_current
         real, intent(inout) :: qlink_dst
 
         integer :: i
@@ -126,17 +126,17 @@ contains
                 if (diversions(i)%type_div /= 3) then
                     print free, "!!! UNSUPPORTED DIVERSION TYPE (", diversions(i)%type_div, "), skipping"
                 else
-                    call gage_assisted_diversion(src_link, diversions(i), qlink_src)
+                    call gage_assisted_diversion(src_link, diversions(i), qlink_src_previous, qlink_src_current)
                 end if
             end if
         end do
 
     end subroutine
 
-    subroutine gage_assisted_diversion(src_link, diversion, qlink_src)
+    subroutine gage_assisted_diversion(src_link, diversion, qlink_src_prev, qlink_src_curr)
         integer(kind=int64), intent(in) :: src_link
         type(diversion_t), intent(in) :: diversion
-        real, intent(inout) :: qlink_src
+        real, intent(inout) :: qlink_src_prev, qlink_src_curr
 
         real :: div_gage_flow, fraction
 
@@ -155,15 +155,32 @@ contains
             else
                 print free, "INFO: No gage discharge available for diversion '" // trim(adjustl(diversion%da_dest)) // "', using fixed fractional diversion of", fraction
             end if
-            div_gage_flow = qlink_src * fraction
+            div_gage_flow = qlink_src_curr * fraction
         end if
+
+        ! div_gage_flow = min(div_gage_flow, diversion%capacity)    ! don't divert more than diversion can handle
 
 #ifdef HYDRO_D
         if (div_gage_flow /= 0) &
-            print free, "DEBUG: diverting", div_gage_flow, "of", qlink_src, "from link id =", src_link
+            print free, "DEBUG: diverting", div_gage_flow, "of", qlink_src_curr, "from link id =", src_link
 #endif
-        qlink_src = qlink_src - div_gage_flow
+        if (div_gage_flow <= qlink_src_prev) then
+            qlink_src_prev = qlink_src_prev - div_gage_flow
+        else
+            qlink_src_prev = 0
+#ifdef HYDRO_D
+            print free, "DEBUG WARNING: diverted flow (", div_gage_flow, ") exceeds total flow, zeroing."
+#endif
+        end if
 
+        if (div_gage_flow <= qlink_src_curr) then
+            qlink_src_curr = qlink_src_curr - div_gage_flow
+        else
+            qlink_src_curr = 0
+#ifdef HYDRO_D
+            print free, "DEBUG WARNING: diverted flow (", div_gage_flow, ") exceeds total flow, zeroing."
+#endif
+        end if
     end subroutine
 
 end module

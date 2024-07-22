@@ -9,6 +9,8 @@ module module_diversions_timeslice
     integer, parameter :: PATH_MAX = 4096
     type(glob_t) :: timeslice_files
 
+    character(*), parameter :: free = '(*(g0,1x))'
+
     contains
 
     integer function init_timeslices(timeslice_path) result(ierr)
@@ -51,6 +53,9 @@ module module_diversions_timeslice
 
             found = findloc(gage_ids, gage)
             if (found(1) /= 0) then
+#ifdef HYDRO_D
+                print free, "DEBUG: Reading diversion discharge for gage " // trim(adjustl(gage)) // " from " // trim(timeslice_files%filenames(i))
+#endif
                 ierr = ierr + nf90_inq_varid(ncid, 'discharge', varid)
                 ierr = ierr + nf90_get_var(ncid, varid, discharge, start=found, count=(/1/))
                 if (ierr /= 0) call hydro_stop("Error occurred reading gage data from " // trim(timeslice_files%filenames(i)))
@@ -64,7 +69,7 @@ module module_diversions_timeslice
             ierr = nf90_close(ncid)
         end do
 
-        print *, "WARNING: Gage discharge not found in any timeslice file, falling back to fractional diversion"
+        print free, "WARNING: Gage discharge not found in any timeslice file, falling back to fractional diversion"
     end function
 
 end module

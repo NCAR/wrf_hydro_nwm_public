@@ -171,7 +171,7 @@ module config_base
      integer            :: maxAgePairsBiasPersist
      logical            :: invDistTimeWeightBias
      logical            :: noConstInterfBias
-     character(len=256) :: timeSlicePath
+     character(len=256) :: timeSlicePath = "./nudgingTimeSliceObs/"
      integer            :: nLastObs
      integer            :: bucket_loss
      integer            :: imperv_adj
