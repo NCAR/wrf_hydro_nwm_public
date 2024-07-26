@@ -11,6 +11,7 @@
 
 import math
 from multiprocessing import Pool
+import os
 import pathlib
 import sys
 # import time
@@ -139,6 +140,7 @@ def xrcmp(
     n_cores: int = 1,
     chunks={},
     exclude_vars: list = [],
+    interactive: bool = False
 ) -> int:
 
     if exclude_vars is None:
@@ -147,7 +149,7 @@ def xrcmp(
     # Delete log file first
     # Should write a log file that says nothing yet determined?
     log_file = pathlib.Path(log_file)
-    if log_file.exists():
+    if log_file.exists() and not interactive:
         log_file.unlink()
 
     # Dont chunk, this is just a meta-data read.
@@ -183,8 +185,8 @@ def xrcmp(
 
     diff_var_names = sorted(all_stats.keys())
     if not diff_var_names:
-        with open(log_file, 'w') as opened_file:
-            opened_file.write("Files are identical\n")
+        with open(log_file, 'a') as opened_file:
+            opened_file.write(f"Files are identical: {os.path.basename(ref_file)}\n")
         return 0
 
     # Formatting:
@@ -259,6 +261,11 @@ def xrcmp(
     header_dict = {name: name for name in stat_names}
     the_header = header_string.format(**header_dict)
 
+    if len(all_stats) > 0:
+        print(the_header, end='')
+    for key in all_stats.keys():
+        print(var_string.format(**all_stats[key]), end='')
+
     with open(log_file, 'w') as opened_file:
         opened_file.write(the_header)
         for key in all_stats.keys():
@@ -294,29 +301,35 @@ def parse_arguments():
         default=1,
         help="Chunks as integer."
     )
+    parser.add_argument(
+        "-i", "--interactive", action='store_true', default=False,
+        help="Run in interactive mode for local analysis."
+    )
+
     args = parser.parse_args()
     can_file = args.candidate
     ref_file = args.reference
     log_file = args.log_file
     chunks = args.chunks
     n_cores = args.n_cores
+    interactive = args.interactive
 
     if chunks == 1:
         chunks = {}    # No chunking
     elif chunks == 0:
         chunks = None  # This will use the conus_chunks_dict
 
-    return can_file, ref_file, log_file, chunks, n_cores
-
+    return can_file, ref_file, log_file, chunks, n_cores, interactive
 
 if __name__ == "__main__":
 
-    can_file, ref_file, log_file, chunks, n_cores = parse_arguments()
+    can_file, ref_file, log_file, chunks, n_cores, inter = parse_arguments()
     ret = xrcmp(
         can_file=can_file,
         ref_file=ref_file,
         log_file=log_file,
         n_cores=n_cores,
-        chunks=chunks
+        chunks=chunks,
+        interactive=inter
     )
     sys.exit(ret)
