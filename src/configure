@@ -4,6 +4,14 @@ theArgument=$1
 
 ###################################
 ## Setup the HOSTNAME if not set
+echo "WARNING: configure is being deprecated and removed in the future."
+echo "         See docs/BUILD.md for more detail on building."
+echo "         Please switch to using CMake from the top directory."
+echo "         $ mkdir build"
+echo "         $ cd build"
+echo "         $ cmake .."
+echo "         $ make -j 4"
+echo "---------------------------------------------------"
 
 if [ -z ${HOSTNAME+x} ]; then
   HOSTNAME=`hostname`
@@ -48,12 +56,12 @@ if [[ -z $NETCDF_LIB ]]; then
 fi
 
 if [[ ! -e ${NETCDF_LIB}/libnetcdff.a ]]; then
-    echo "NETCDFLIB       =       -L${NETCDF_LIB} -lnetcdf" >> macros.tmp 
+    echo "NETCDFLIB       =       -L${NETCDF_LIB} -lnetcdf" >> macros.tmp
 fi
- 
+
 # add any additional F90 flags that came out of nf-config (most likely separate module/library path)
 if command -v nf-config &> /dev/null; then             # ignore if nf-config isn't available
-    echo "F90FLAGS        +=      $(nf-config --fflags)" >> macros.tmp 
+    echo "F90FLAGS        +=      $(nf-config --fflags)" >> macros.tmp
     echo "NETCDFLIB       +=      $(nf-config --flibs)" >> macros.tmp
 fi
 
@@ -69,7 +77,7 @@ if [[ ! -e mod ]]; then mkdir mod; fi
 if [[ -z $theArgument ]]; then
     echo "Please select from following supported linux compilers"
     echo "using either the number or key (not case sensitive):"
-    echo 
+    echo
     echo "Number           Key  Description"
     echo "---------------------------------------------------"
     echo "     1           pgi  PGI parallel"
@@ -80,7 +88,7 @@ if [[ -z $theArgument ]]; then
     echo "     6 intel.cray_xc  intel parallel (cray_xc)"
     echo "     7  cray_fortran  Cray Fortran PE (ftn)"
     echo "     0          exit  exit"
-    echo 
+    echo
     read -p "Enter selection: " theArgument
     echo
 fi
@@ -93,13 +101,13 @@ theArgument=`echo $theArgument | tr '[:upper:]' '[:lower:]'`
 ## What to do with the choice
 
 if [[ "$theArgument" == "1" ]] || [[ "$theArgument" == "pgi" ]]; then
-    cp arc/macros.mpp.linux macros 
-    cp arc/Makefile.mpp Makefile.comm 
+    cp arc/macros.mpp.linux macros
+    cp arc/Makefile.mpp Makefile.comm
     echo "Configured: PGI"
 fi
 
 if [[ "$theArgument" == "2" ]] || [[ "$theArgument" == "gfort" ]]; then
-    cp arc/macros.mpp.gfort macros 
+    cp arc/macros.mpp.gfort macros
     cp arc/Makefile.mpp Makefile.comm
     echo "Configured: gfort"
 fi
@@ -107,7 +115,7 @@ fi
 if [[ "$theArgument" == "3" ]] || [[ "$theArgument" == "ifort" ]]; then
 
     ## theia login machines self identify as "tfe" and have
-    ## their own intel macros. We handle luna more explicitly... 
+    ## their own intel macros. We handle luna more explicitly...
     if [[ $HOSTNAME = *tfe* ]]; then
         cp arc/macros.mpp.ifort.theia macros
         echo "Configured: ifort on Theia"
@@ -121,23 +129,23 @@ if [[ "$theArgument" == "3" ]] || [[ "$theArgument" == "ifort" ]]; then
         echo "Configured: ifort on Summit haswell"
 
     else
-	cp arc/macros.mpp.ifort macros 
+	cp arc/macros.mpp.ifort macros
 	echo "Configured: ifort"
     fi
     cp arc/Makefile.mpp Makefile.comm
 fi
 
 if [[ "$theArgument" == "4" ]] || [[ "$theArgument" == "luna" ]]; then
-    cp arc/macros.mpp.ifort.luna macros 
+    cp arc/macros.mpp.ifort.luna macros
     cp arc/Makefile.mpp Makefile.comm
     echo "Configured: ifort on Luna"
 fi
 
 if [[ "$theArgument" == "5" ]] || [[ "$theArgument" == "ifort_omp" ]]; then
     ## theia login machines self identify as "tfe" and have
-    ## their own intel macros. We handle luna more explicitly... 
+    ## their own intel macros. We handle luna more explicitly...
     if [[ $HOSTNAME != *tfe* ]]; then
-	cp arc/macros.mpp.ifort.omp macros 
+	cp arc/macros.mpp.ifort.omp macros
 	echo "Configured: ifort with OpenMP"
     else
 	cp arc/macros.mpp.ifort.theia macros
@@ -172,11 +180,11 @@ fi
 # PGI sequential
 # cp arc/macros.seq.linux macros
 # cp arc/Makefile.seq Makefile.comm
-# gfortran sequential                         
-#zystem "cp arc/macros.seq.gfort macros 
-#cp arc/Makefile.seq Makefile.comm 
-# ifort sequential                            
-#cp arc/macros.seq.ifort macros 
+# gfortran sequential
+#zystem "cp arc/macros.seq.gfort macros
+#cp arc/Makefile.seq Makefile.comm
+# ifort sequential
+#cp arc/macros.seq.ifort macros
 #cp arc/Makefile.seq Makefile.comm
 
 if [[ -e macros.tmp ]]; then
