@@ -8,6 +8,7 @@ add_subdirectory("Routing/Overland")
 add_subdirectory("Routing/Subsurface")
 #add_subdirectory("Routing/Groundwater")
 add_subdirectory("Routing/Reservoirs")
+add_subdirectory("Routing/Diversions")
 add_subdirectory("Data_Rec")
 add_subdirectory("Routing")
 add_subdirectory("HYDRO_drv")
@@ -103,7 +104,9 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
     if (WRF_HYDRO_NUDGING STREQUAL "1")
         target_link_libraries(wrfhydro.exe hydro_nudging)
+        target_link_libraries(wrfhydro.exe hydro_routing_diversions)
         add_dependencies(wrfhydro.exe hydro_nudging)
+        add_dependencies(wrfhydro.exe hydro_routing_diversions)
     endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
     # bash commands to copy namelists to the Run directory

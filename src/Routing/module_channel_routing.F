@@ -508,11 +508,13 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
       !TML:Added print statement to test qlos function;
       !comment out to prevent excessive file sizes when running model
       !print*, "qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D", qloss,dx,WP,WPk,depth,ChannK,qdc,ql,dt,D
-      if((qloss*dt)/D > ((ql*dt)/D - C4)) then
-           qloss = ql - C4*(D/dt)
-           if (qloss < 0) then
-              print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
-           endif
+      if (ChannK /= 0) then
+         if((qloss*dt)/D > ((ql*dt)/D - C4)) then
+            qloss = ql - C4*(D/dt)
+            if (qloss < 0) then
+               print*, 'WARNING CHANNEL LOSS IS NEGATIVE',qloss
+            endif
+         endif
       endif
 
 ! ----------------------------------------------------------------
@@ -1599,7 +1601,7 @@ end subroutine drive_CHANNEL
                                          nudgeWAdvance,                      &
                                          nudge_apply_upstream_muskingumCunge
 #endif
-
+      use module_channel_diversions, only: calculate_diversion
 
        implicit none
 
@@ -1709,6 +1711,11 @@ end subroutine drive_CHANNEL
        integer, allocatable, dimension(:) :: tmpFinalResType
        real, allocatable,dimension(:) :: tmpAssimilatedValue
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
+
+       ! diversions
+       integer(kind=int64) :: div_dest
+       real :: div_qty
+       character(*), parameter :: free = '(*(g0,1x))'
 
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
@@ -1958,6 +1965,37 @@ do nt = 1, nsteps
          !              tmpQLINK(k,2) = MUSKINGCUNGE(k,Qup, Quc, QLINK(k,1), &
          !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
          !                  MannN(k), ChSSlp(k), Bw(k), Tw(k) )
+
+         ! HANDLE DIVERSIONS
+
+         call calculate_diversion(LINKID(k), div_dest, Quc, div_qty)
+         if (div_qty /= 0) then
+            ! remove from upstream
+#ifdef HYDRO_D
+            print free, "DEBUG: diverting", div_qty, "of", Quc, "from link id =", LINKID(k)
+            if (div_qty > Quc) &
+               print free, "DEBUG WARNING: diverted flow (", div_qty, ") exceeds total flow, zeroing."
+#endif
+
+            ! add to downstream if needed
+            if (div_dest /= -99) then
+               ! find destination (it's not necessarily tmpQLINK(k,2)))
+               do kk = 1,NLINKSL
+                  if (LINKID(kk) == div_dest) then
+#ifdef HYDRO_D
+                     print free, "Found diversion destination ID", LINKID(kk),"in local processor at index", kk, ", replacing", tmpQLINK(kk,2), "with", div_qty
+#endif
+                     tmpQLINK(kk,2) = div_qty
+                     exit !do loop
+                  end if
+               end do
+
+               Quc = max(0.0, Quc - div_qty)
+               Qup = max(0.0, Qup - div_qty)
+
+            end if
+         end if
+
 
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
