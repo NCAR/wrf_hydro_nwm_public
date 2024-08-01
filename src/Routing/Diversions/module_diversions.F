@@ -106,13 +106,16 @@ contains
 
     end subroutine
 
-    subroutine calculate_diversion(src_link, dst_link, qlink_src_previous, qlink_src_current, qlink_dst)
-        integer(kind=int64), intent(in) :: src_link
-        integer(kind=int64), intent(in) :: dst_link
-        real, intent(inout) :: qlink_src_previous, qlink_src_current
-        real, intent(inout) :: qlink_dst
+    subroutine calculate_diversion(src_link_in, dst_link_out, qlink_src_in, diversion_quantity_out)
+        integer(kind=int64), intent(in) :: src_link_in
+        integer(kind=int64), intent(out) :: dst_link_out
+        real, intent(in) :: qlink_src_in
+        real, intent(out) :: diversion_quantity_out
 
         integer :: i
+
+        dst_link_out = -99
+        diversion_quantity_out = 0
 
         ! bail if we're inactive
         if (.not. diversions_active) return
@@ -122,23 +125,25 @@ contains
         ! call into sub-procedure to handle type=1, type=2, type=3, etc
 
         do i = 1, ndivs
-            if (src_link == diversions(i)%id_src) then
+            if (src_link_in == diversions(i)%id_src) then
                 if (diversions(i)%type_div /= 3) then
                     print free, "!!! UNSUPPORTED DIVERSION TYPE (", diversions(i)%type_div, "), skipping"
                 else
-                    call gage_assisted_diversion(src_link, diversions(i), qlink_src_previous, qlink_src_current)
+                    call gage_assisted_diversion(src_link_in, diversions(i), qlink_src_in, diversion_quantity_out)
+                    dst_link_out = diversions(i)%id_dest
                 end if
             end if
         end do
 
     end subroutine
 
-    subroutine gage_assisted_diversion(src_link, diversion, qlink_src_prev, qlink_src_curr)
+    subroutine gage_assisted_diversion(src_link, diversion, qlink_src, div_gage_flow)
         integer(kind=int64), intent(in) :: src_link
         type(diversion_t), intent(in) :: diversion
-        real, intent(inout) :: qlink_src_prev, qlink_src_curr
+        real, intent(in) :: qlink_src
+        real, intent(out) :: div_gage_flow
 
-        real :: div_gage_flow, fraction
+        real :: fraction
 
         ! This is the so-called "Type 3" diversion. We take the observed flow from div_gage,
         ! and subtract it from the upstream qlink_src, if it's a valid flow (not-NaN).
@@ -155,32 +160,23 @@ contains
             else
                 print free, "INFO: No gage discharge available for diversion '" // trim(adjustl(diversion%da_dest)) // "', using fixed fractional diversion of", fraction
             end if
-            div_gage_flow = qlink_src_curr * fraction
+            div_gage_flow = qlink_src * fraction
         end if
 
         ! div_gage_flow = min(div_gage_flow, diversion%capacity)    ! don't divert more than diversion can handle
 
-#ifdef HYDRO_D
-        if (div_gage_flow /= 0) &
-            print free, "DEBUG: diverting", div_gage_flow, "of", qlink_src_curr, "from link id =", src_link
-#endif
-        if (div_gage_flow <= qlink_src_prev) then
-            qlink_src_prev = qlink_src_prev - div_gage_flow
-        else
-            qlink_src_prev = 0
-#ifdef HYDRO_D
-            print free, "DEBUG WARNING: diverted flow (", div_gage_flow, ") exceeds total flow, zeroing."
-#endif
-        end if
-
-        if (div_gage_flow <= qlink_src_curr) then
-            qlink_src_curr = qlink_src_curr - div_gage_flow
-        else
-            qlink_src_curr = 0
-#ifdef HYDRO_D
-            print free, "DEBUG WARNING: diverted flow (", div_gage_flow, ") exceeds total flow, zeroing."
-#endif
-        end if
+! #ifdef HYDRO_D
+!         if (div_gage_flow /= 0) &
+!             print free, "DEBUG: diverting", div_gage_flow, "of", qlink_src_curr, "from link id =", src_link
+! #endif
+!         if (div_gage_flow <= qlink_src_curr) then
+!             qlink_src_curr = qlink_src_curr - div_gage_flow
+!         else
+!             qlink_src_curr = 0
+! #ifdef HYDRO_D
+!             print free, "DEBUG WARNING: diverted flow (", div_gage_flow, ") exceeds total flow, zeroing."
+! #endif
+!         end if
     end subroutine
 
 end module
