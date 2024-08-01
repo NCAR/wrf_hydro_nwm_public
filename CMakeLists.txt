@@ -205,7 +205,7 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
     if (CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 9)
       set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fallow-argument-mismatch")
     endif()
-    set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=native")
+    set (CMAKE_Fortran_FLAGS_RELEASE "-O2")
     set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbacktrace")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
     # set compile flags for ifort
