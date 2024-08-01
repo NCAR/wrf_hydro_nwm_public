@@ -1758,6 +1758,11 @@ end subroutine drive_CHANNEL
        real, allocatable,dimension(:) :: tmpAssimilatedValue
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
 
+       ! diversions
+       integer(kind=int64) :: div_dest
+       real :: div_qty
+       character(*), parameter :: free = '(*(g0,1x))'
+
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
 #endif
@@ -2007,7 +2012,36 @@ do nt = 1, nsteps
          !                  QLateral(k), DTRT_CH, So(k),  CHANLEN(k), &
          !                  MannN(k), ChSSlp(k), Bw(k), Tw(k) )
 
-         call calculate_diversion(LINKID(k), -1_int64, Qup, Quc, tmpQLINK(k,2))
+         ! HANDLE DIVERSIONS
+
+         call calculate_diversion(LINKID(k), div_dest, Quc, div_qty)
+         if (div_qty /= 0) then
+            ! remove from upstream
+#ifdef HYDRO_D
+            print free, "DEBUG: diverting", div_qty, "of", Quc, "from link id =", LINKID(k)
+            if (div_qty > Quc) &
+               print free, "DEBUG WARNING: diverted flow (", div_qty, ") exceeds total flow, zeroing."
+#endif
+
+            ! add to downstream if needed
+            if (div_dest /= -99) then
+               ! find destination (it's not necessarily tmpQLINK(k,2)))
+               do kk = 1,NLINKSL
+                  if (LINKID(kk) == div_dest) then
+#ifdef HYDRO_D
+                     print free, "Found diversion destination ID", LINKID(kk),"in local processor at index", kk, ", replacing", tmpQLINK(kk,2), "with", div_qty
+#endif
+                     tmpQLINK(kk,2) = div_qty
+                     exit !do loop
+                  end if
+               end do
+
+               Quc = max(0.0, Quc - div_qty)
+               Qup = max(0.0, Qup - div_qty)
+
+            end if
+         end if
+
 
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
