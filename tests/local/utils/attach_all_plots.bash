@@ -25,3 +25,4 @@ cd $diffs
 if [[ `ls -1 ./` ]]
 then
     python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" ./*
+fi
