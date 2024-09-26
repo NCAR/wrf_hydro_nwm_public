@@ -176,9 +176,9 @@ def add_images(images, outdir, pull):
             if runcmd(f"cp {img} {imagedir}/.") is None:
                 raise Exception("Not all image files could be copied")
 
-        logger.debug("Pulling from github")
-        if runcmd(f"git pull origin HEAD:refs/{IMAGEREF}", outdir) is None:
-            raise Exception("Problem pulling form github")
+        # logger.debug("Pulling from github")
+        # if runcmd(f"git pull origin HEAD:refs/{IMAGEREF}", outdir) is None:
+        #     raise Exception("Problem pulling form github")
 
         logger.debug("Adding images to commit")
         if runcmd(f"git add images_{pull}", outdir) is None:
