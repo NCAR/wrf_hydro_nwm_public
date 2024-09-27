@@ -83,7 +83,7 @@ Examples are provided in `tests/local/examples`.
 
 At this time:
 ```
-james@vpn35[609]:~/WRF_Hydro/wrf_hydro_nwm_public/tests/local> python run_tests.py --help
+$ python run_tests.py --help
 usage: run_tests.py [-h] --config CONFIG [CONFIG ...] --compiler COMPILER
                     --output_dir OUTPUT_DIR --candidate_dir CANDIDATE_DIR
                     --reference_dir REFERENCE_DIR [--domain_dir DOMAIN_DIR]
@@ -120,13 +120,13 @@ optional arguments:
                         convention is that the exe is always named
                         wrf_hydro.exe.
   --ncores NCORES       Number of cores to use for testing
-  --scheduler           Scheduler to use for testing, options are PBSCheyenne
+  --scheduler           Scheduler to use for testing, options are PBSDerecho
                         or do not specify for no scheduler
   --nnodes NNODES       Number of nodes to use for testing if running on
                         scheduler
   --account ACCOUNT     Account number to use if using a scheduler.
   --walltime WALLTIME   Account number to use if using a scheduler.
-  --queue QUEUE         Queue to use if running on NCAR Cheyenne, options are
+  --queue QUEUE         Queue to use if running on NCAR Derecho, options are
                         regular, premium, or shared
   --print               Print log to stdout instead of html
   --pdb                 pdb (debug) in pytest
@@ -141,8 +141,8 @@ optional arguments:
 ## Croton example
 Many docker-related details aside, this is essentially how the Croton Continuous-Inegration domain is run inside a docker container:
 ```
-cd ~/wrf_hydro_nwm_public/tests/local
-python run_tests.py \
+$ cd ~/wrf_hydro_nwm_public/tests/local
+$ python run_tests.py \
     --config nwm_ana nwm_long_range reach gridded
     --compiler gfort \
     --output_dir /home/docker/test_out \
@@ -168,16 +168,15 @@ The following two envionments come "ready to go":
 The two containers [`wrfhydro/dev:conda`](https://github.com/NCAR/wrf_hydro_docker/blob/main/dev/conda/Dockerfile) and  [`wrfhydro/dev:modeltesting`](https://github.com/NCAR/wrf_hydro_docker/blob/main/dev/modeltesting/Dockerfile) contain the full software stack required to run testing.
 
 
-## Cheyenne
-To activate a common python virtual envionment for model testing on cheyenne:
+## Derecho
+To activate a common python virtual envionment for model testing on Derecho:
 ```
-(368) jamesmcc@cheyenne3[999]:~> deactivate
-jamesmcc@cheyenne3[1000]:~> source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate
-(wrf_hydro_nwm_test) jamesmcc@cheyenne3[1001]:~>
+$ deactivate
+$ source /glade/p/cisl/nwc/model_testing_env/wrf_hydro_nwm_test/bin/activate
 ```
-Because Whole new levels of testing complexity open up on cheyenne, there is a
+Because Whole new levels of testing complexity open up on Derecho, there is a
 special script to handle this with minimal pain:
-`test/local/cheyenne/model_test.sh`. This script provides flexibility to
+`test/local/derecho/model_test.sh`. This script provides flexibility to
 switch compilers, MPI distributions, and domains. With MPI distributions,
 different model execution commands may be required. Furthermore, output
 comparison on large domains is better handled by `xrcmp` in `wrfhydropy`.
@@ -186,11 +185,9 @@ comparison on large domains is better handled by `xrcmp` in `wrfhydropy`.
 # The Croton domain
 A lovely watershed with some very lovely lakes, I am sure as I hope to visit
 it some day. As a test domain, it has served us marvelously. To pull the domain
-from the cloud:
+from the WRF-Hydro release:
 ```
-cd /your/path/to/wrf_hydro_nwm_public/tests/local/utils
-python gdrive_download.py --file_id 1xFYB--zm9f8bFHESzgP5X5i7sZryQzJe --dest_file ~/croton_NY.tar.gz
-cd ~
-tar xzf croton_NY.tar.gz
-mv example_case croton_NY  ## we thought the generic name would be useful.
+$ wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.4.0/croton_NY_training_example_v5.4.tar.gz
+$ tar zxf croton_NY_training_example_v5.4.tar.gz
+$ mv example_case croton_NY  ## we thought the generic name would be useful.
 ```

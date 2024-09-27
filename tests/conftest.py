@@ -74,7 +74,7 @@ def pytest_addoption(parser):
     parser.addoption(
         '--scheduler',
         action='store_true',
-        help='Use PBS scheduler on cheyenne'
+        help='Use PBS scheduler on Derecho'
     )
 
     parser.addoption(
@@ -105,7 +105,7 @@ def pytest_addoption(parser):
         default='regular',
         required=False,
         action='store',
-        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+        help='Queue to use if running on NCAR Derecho, options are regular, '
         'premium, or shared'
     )
 
@@ -170,7 +170,7 @@ def _make_sim(
 
     if scheduler:
         sim.add(
-            wrfhydropy.schedulers.PBSCheyenne(
+            wrfhydropy.schedulers.PBSDerecho(
                 account=account,
                 nproc=int(ncores),
                 nnodes=int(nnodes),
