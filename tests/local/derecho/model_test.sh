@@ -1,7 +1,5 @@
 #!/bin/bash
-# A first productiony test script for cheyenne.
-# James McCreight
-# April 5, 2019
+# A first productiony test script for Derecho.
 # Why bash?
 #    1) might need to establish the python env from scratch,
 #    2) set the modules is much easier
@@ -45,9 +43,8 @@ Options:
     --walltime:
         default=01:00:00
     --domain_dir:
-        default=/glade/work/jamesmcc/domains/private/CONUS
         The domain must be properly constructed with domain-side json namelist patch files and a
-        .version file. Most domains in /glade/work/jamesmcc/domains fit that criteria.
+        .version file. 
     --use_existing_test_dir
         default is not included. Lets testing proceede with existing output in place.
     --xrcmp_n_cores
@@ -71,7 +68,7 @@ Usage Examples:
     --compiler=ifort --mpi=impi \\
     --config='nwm_ana nwm_long_range gridded reach' \\
     --ncores=6 --queue=share \\
-    --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
+    --domain_dir path/to/croton_NY
 
 # Non-standard mpi/exe_cmd example. A croton test of nwm_ana configuration.
 # An strenuous exercise in bash escaping.
@@ -82,7 +79,7 @@ Usage Examples:
     --exe_cmd=\"mpiexec_mpt $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro.exe\" \\
     --config='nwm_ana' \\
     --ncores=6 --queue=share \\
-    --domain_dir /glade/work/jamesmcc/domains/public/croton_NY
+    --domain_dir path/to/croton_NY
 "
 
 ## Default options
@@ -96,7 +93,7 @@ queue=regular
 account=NRAL0017
 walltime=01:00:00
 reference_update=true
-domain_dir=/glade/work/jamesmcc/domains/private/CONUS
+domain_dir=path/to/CONUS
 use_existing_test_dir=''
 xrcmp_n_cores=0
 
@@ -196,8 +193,8 @@ if [[ $reference_update == 'true' ]]; then
     echo; echo
     printf "\e[7;49;94mUpdate the reference repository with NCAR/$branch_name\e[0m\n"
     cd $reference_dir || exit 9
-    if [[ `hostname` != *cheyenne* ]]; then
-        ssh cheyenne1 "cd $reference_dir && git fetch upstream" || exit 9
+    if [[ `hostname` != *derecho* ]]; then
+        ssh derecho1 "cd $reference_dir && git fetch upstream" || exit 9
     else
         cd $reference_dir || exit 9
         git fetch upstream || exit 9

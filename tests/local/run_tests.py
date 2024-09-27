@@ -40,11 +40,11 @@ def run_tests(
             candidate_dir: The wrf-hydro code candidate directory to use, e.g. wrf_hydro_nwm_public
             reference_dir: The wrf-hydro code directory to use, e.g. wrf_hydro_nwm_public
             output_dir: The directory to hold test outputs
-            scheduler: Use PBSCheyenne scheduler?
+            scheduler: Use PBSDerecho scheduler?
             exe_cmd: Optional. The MPI dependent run command which zeroth variable for ncores.
-            ncores: Optional. The number of cores to use if running on cheyenne
-            nnodes: Optional. The number of nodes to use if running on cheyenne
-            account: Options. The account number to use if running on cheyenne
+            ncores: Optional. The number of cores to use if running on Derecho
+            nnodes: Optional. The number of nodes to use if running on Derecho
+            account: Options. The account number to use if running on Derecho
             walltime: Optional. Walltime for scheduler
             queue: Optional, queue to use for scheduler
             print_log: Optional, print text logs instead of HTML logs
@@ -57,10 +57,10 @@ def run_tests(
     candidate_source_dir = candidate_dir + '/src'
     reference_source_dir = reference_dir + '/src'
 
-    # Load modules and override nnodes/ncores if running on cheyenne
+    # Load modules and override nnodes/ncores if running on Derecho
     hostname = socket.gethostname()
     module_cmd = ''
-    if 'cheyenne' in hostname:
+    if 'Derecho' in hostname:
         module_cmd = 'echo; echo "Using the following modules for testing:" ; module list; echo;'
 
     # HTML report
@@ -199,7 +199,7 @@ def main():
         '--scheduler',
         required=False,
         action='store_true',
-        help='Scheduler to use for testing, options are PBSCheyenne or do not '
+        help='Scheduler to use for testing, options are PBSDerecho or do not '
         'specify for no scheduler'
     )
 
@@ -231,7 +231,7 @@ def main():
         default='regular',
         required=False,
         action='store',
-        help='Queue to use if running on NCAR Cheyenne, options are regular, '
+        help='Queue to use if running on NCAR Derecho, options are regular, '
         'premium, or shared'
     )
 
