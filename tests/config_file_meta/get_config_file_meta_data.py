@@ -7,7 +7,7 @@ from wrfhydropy import JSONNamelist
 # Example: python get_config_file_meta_data
 #
 # 1) Run script file in-place, in this directory, as above.
-# 2) Typically, this will be run on cheyenne since that's where CONUS domain
+# 2) Typically, this will be run on Derecho since that's where CONUS domain
 #    files will live.
 # 3) Configure the list of domains paths and configs below.
 # 4) The dirs in this directory must be removed to be refreshed.

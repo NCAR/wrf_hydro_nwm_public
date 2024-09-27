@@ -131,11 +131,11 @@ def make_sim(domain_dir,
         pass
 
     if scheduler:
-        sim.add(schedulers.PBSCheyenne(account=account,
-                                       nproc=int(ncores),
-                                       nnodes=int(nnodes),
-                                       walltime=walltime,
-                                       queue=queue))
+        sim.add(schedulers.PBSDerecho(account=account,
+                                      nproc=int(ncores),
+                                      nnodes=int(nnodes),
+                                      walltime=walltime,
+                                      queue=queue))
 
     # Channel and bucket mode is forc_typ = 10.
     if channel_only:
