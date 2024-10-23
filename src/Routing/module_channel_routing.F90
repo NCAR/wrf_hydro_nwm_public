@@ -858,11 +858,11 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !            endif !!! order(1) .ne. 1
          end do       !--k links
 
-   #ifdef MPP_LAND
+#ifdef MPP_LAND
          call updateLake_seq(RESHT,nlakes,tmpRESHT)
          call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
          call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
-   #endif
+#endif
 
 !yw check
 !        gQLINK = 0.0
