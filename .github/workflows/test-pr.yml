@@ -114,4 +114,29 @@ jobs:
           make run-croton-${{ matrix.configuration }}
 
       - name: Compare output of serial runs
-        uses: ./github/actions/compare-output
+        uses: ./.github/actions/compare-output
+
+      - name: Clean candidate model output
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          make clean
+
+      - name: Run parallel candidate model
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          make run-croton-${{ matrix.configuration }}-parallel
+
+      - name: Compare output of n-cores candidate model
+        uses: ./.github/actions/compare-output
+
+      # Testing perfect restart, not cleaning candidate model output
+      - name: Setup and run candidate model perfect restart startup
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          sed -i 's|RESTART_FILENAME_REQUESTED = "RESTART/RESTART.2011082600_DOMAIN1"|RESTART_FILENAME_REQUESTED = "./RESTART.2011090100_DOMAIN1"|' namelist.hrldas
+          sed -i 's/KDAY = 7/KDAY = 1/' namelist.hrldas
+          rm RESTART.2011090200_DOMAIN1
+          make run-croton-${{ matrix.configuration }}-parallel
+
+      - name: Compare output of perfect restart candidate model
+        uses: ./.github/actions/compare-output
