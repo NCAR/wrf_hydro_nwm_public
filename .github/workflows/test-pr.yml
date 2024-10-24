@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ main, v5.2.x ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, v5.2.x ]
+    branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [nwm_ana, nwm_long_range, gridded, reach]
+        configuration: [nwm_ana, nwm_long_range, gridded, reach, reach_lakes]
     runs-on: ubuntu-latest
 
     env:
