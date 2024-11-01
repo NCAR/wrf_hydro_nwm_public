@@ -1,5 +1,4 @@
 .. vim: syntax=rst
-.. include:: media.rest
 .. include:: meta.rest
 
 2. Model Code and Configuration Description
