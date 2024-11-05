@@ -14,6 +14,7 @@ try:
         'navigation_depth': -1
     }
 except:
+    print("Warning: sphinx_rtd_theme not installed, using default theme")
     pass
 html_static_path = ['_static']
 html_css_files = ['ug_theme.css']
