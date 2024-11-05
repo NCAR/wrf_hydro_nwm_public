@@ -5,6 +5,7 @@
 *.lst
 *~
 Makefile.comm
+docs/_build/
 src/lib/*
 src/macros
 src/HRLDAS/user_build_options

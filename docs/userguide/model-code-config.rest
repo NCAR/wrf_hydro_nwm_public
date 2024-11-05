@@ -462,3 +462,7 @@ model, the WRF model input file namelist.input becomes the second
 namelist file. Full annotated example namelist.hrldas files for Noah and
 Noah-MP are provided in :ref:`section-a3` and :ref:`section-a4`.
 
+2.8 Build Instructions
+------------------------------------
+.. include:: ../BUILD.rst
+   :start-line: 2

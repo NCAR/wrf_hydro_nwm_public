@@ -11,7 +11,7 @@ WRF-Hydro is a community modeling system and framework for hydrologic modeling a
 
 ## Documentation
 Documentation and in-depth build instructions can be found on our [project website](https://ral.ucar.edu/projects/wrf_hydro/technical-description-user-guide).
-Quick [build instructions](docs/BUILD.md) for CMake are also available.
+Quick [build instructions](docs/BUILD.rst) for CMake are also available.
 
 ## Resources and Support
 For news and updates regarding the WRF-Hydro project please subscribe to our [email list](https://ral.ucar.edu/projects/wrf_hydro/subscribe).
