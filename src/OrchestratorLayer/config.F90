@@ -476,6 +476,7 @@ contains
    end if
 
    if ((self%lake_option .lt. 0) .or. (self%lake_option .gt. 3)) then
+      print *, self%lake_option
       call hydro_stop("Lake Option must be 0 [lakes off], 1 [level pool], or 2 [passthrough], or 3 [reservoir DA]")
    end if
 
@@ -669,7 +670,7 @@ contains
     compound_channel = .FALSE.
     channel_loss_option = 0
     bucket_loss = 0
-    lake_option = 1
+    lake_option = -99
     reservoir_persistence_usgs = .FALSE.
     reservoir_persistence_usace = .FALSE.
     reservoir_observation_lookback_hours = 18
@@ -761,6 +762,15 @@ contains
     if ((lake_option == 3) .and. (reservoir_persistence_usgs .or. reservoir_persistence_usace .or. reservoir_rfc_forecasts)) then
       reservoir_type_specified = .TRUE.
       lake_option = 1
+    end if
+
+    if (lake_option == -99) then
+      if (route_lake_f /= "") then
+         print *, "WARNING: lake_option not specified, but route_lake_f specified. Setting lake_option to 1."
+         lake_option = 1
+      else
+         lake_option = 0
+      end if
     end if
 
     nlst(did)%lake_option = lake_option
