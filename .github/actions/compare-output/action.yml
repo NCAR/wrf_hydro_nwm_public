@@ -1,0 +1,135 @@
+name: "Compare Output"
+description: "Performs a series of comparison steps"
+runs:
+  using: "composite"
+  steps:
+      - name: Compare HYDRO_RST.* output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/HYDRO_RST.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+
+      - name: Compare RESTART.* output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          for file in output_${{ matrix.configuration }}/RESTART.*; do\
+            python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1; \
+          done
+
+      - name: List file
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          ls -t output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1 | head -n 1)
+
+      - name: Head of list of files
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1 | head -n 1)
+          echo "file = ${file}"
+
+      - name: Compare last *.CHANOBS_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHANOBS_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1
+
+      - name: Compare last *.CHRTOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.CHRTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1;
+
+      - name: Compare last *.LSMOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.LSMOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1;
+
+      - name: Compare last *.RTOUT_DOMAIN1 output with xrcmp
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          file=$(ls -t output_${{ matrix.configuration }}/*.RTOUT_DOMAIN1 | head -n 1)
+          python ${GITHUB_WORKSPACE}/candidate/tests/utils/xrcmp.py \
+              --candidate $file \
+              --reference $GITHUB_WORKSPACE/reference/build/Run/$file \
+              --log_file $file_diff.txt \
+              --n_cores 1;
+
+      - name: Compare output with compare_output
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/build/Run
+          rm -f output_diff
+          mkdir output_diff
+          python -c \
+          "import sys; \
+          sys.path.append('${GITHUB_WORKSPACE}/candidate/tests/utils'); \
+          import compare_output; \
+          from pathlib import Path; \
+          compare_output.plot_diffs('${GITHUB_WORKSPACE}/candidate/build/Run/output_diff', \
+            '${GITHUB_WORKSPACE}/candidate/build/Run/output_${{ matrix.configuration }}/', \
+            '${GITHUB_WORKSPACE}/reference/build/Run/output_${{ matrix.configuration }}/', \
+            '${{ matrix.configuration }}')"
+
+      - name: Copy test results from container
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/test_report
+          cp -r $GITHUB_WORKSPACE/candidate/build/Run/output_diff/diff_plots/* $GITHUB_WORKSPACE/test_report/
+
+      - name: Attach diff plots to PR
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/candidate/tests/local/utils
+          bash attach_all_plots.bash $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH") ${{ matrix.configuration }}
+
+      - name: Archive test results to GitHub
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            ${{ github.workspace }}/test_report/*
+
+      - name: Exit if any tests fail
+        if: ${{ failure() }}
+        shell: bash
+        run: exit 1
