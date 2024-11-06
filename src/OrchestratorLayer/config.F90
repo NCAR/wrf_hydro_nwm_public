@@ -475,7 +475,7 @@ contains
       call hydro_stop("Compound channel option not available for diffusive wave routing. ")
    end if
 
-   if ((self%lake_option .lt. 0) .and. (self%lake_option .gt. 3)) then
+   if ((self%lake_option .lt. 0) .or. (self%lake_option .gt. 3)) then
       call hydro_stop("Lake Option must be 0 [lakes off], 1 [level pool], or 2 [passthrough], or 3 [reservoir DA]")
    end if
 
