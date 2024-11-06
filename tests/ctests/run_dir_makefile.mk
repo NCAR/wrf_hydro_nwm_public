@@ -23,7 +23,7 @@ croton-nwm_long_range:
 	make -C .. $@
 croton-reach:
 	make -C .. $@
-croton-reach_lakes:
+croton-reach-lakes:
 	make -C .. $@
 # run croton targets
 run-croton:
@@ -40,7 +40,7 @@ run-croton-nwm_long_range:
 	make -C .. $@
 run-croton-reach:
 	make -C .. $@
-run-croton-reach_lakes:
+run-croton-reach-lakes:
 	make -C .. $@
 # run in parallel
 run-croton-gridded-parallel:
@@ -55,7 +55,7 @@ run-croton-nwm_long_range-parallel:
 	make -C .. $@
 run-croton-reach-parallel:
 	make -C .. $@
-run-croton-reach_lakes-parallel:
+run-croton-reach-lakes-parallel:
 	make -C .. $@
 
 clean:
