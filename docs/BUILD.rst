@@ -27,15 +27,18 @@ Requirements
 | CMake              | 3.12+   |
 +--------------------+---------+
 
+
 Install dependencies for Debain/Ubuntu
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: bash
+
     $ apt install -y git cmake libnetcdff-dev mpi-default-dev
 
 
 Install/activate dependencies for Red Hat/Fedora
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: bash
+
     $ dnf install -y git cmake netcdf-fortran-mpich-devel
     <log out and back in to activate environment modules>
     $ module load mpi
