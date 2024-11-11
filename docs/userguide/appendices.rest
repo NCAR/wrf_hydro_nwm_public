@@ -7,38 +7,15 @@ APPENDICES
 
 This section contains supplementary information.
 
-.. _section-a1:
-
-A1. Example of Dependency Installation for Ubuntu 24.04 LTS
------------------------------------------------------------
-
-The example below uses the GNU compilers and Open MPI. Commands are
-issued as root user in the bash shell.::
-
-   ##########################################################
-   ###     Get libraries available through apt-get        ###
-   ##########################################################
-
-   apt-get update
-
-   apt-get install wget bzip2 ca-certificates gfortran \
-                   libnetcdff-dev mpi-default-dev \
-                   cmake git netcdf-bin
-
-   ##########################################################
-   ###          Check netCDF installs (optional)          ###
-   ##########################################################
-
-   nf-config --all
-   nc-config --all
-
 .. _section-a2:
 
 A2. Exceptions for Running WRF-Hydro with the Noah LSM
 ------------------------------------------------------
 
 Support for the Noah Land Surface Model (LSM) within WRF-Hydro is
-currently frozen at Noah version 3.6. Since the Noah LSM is not under
+currently frozen at Noah version 3.6, development to use the
+`refactored NoahMP <https://github.com/NCAR/noahmp>`_ as a submodule
+is under way. Since the Noah LSM is not under
 active development by the community, WRF-Hydro is continuing to support
 Noah in deprecated mode only. Some new model features, such as the
 improved output routines, have not been setup to be backward compatible
@@ -2312,4 +2289,3 @@ layers contain the initialized ice.
    Currently there are no namelist options to change parameter values.
    Several important parameters that can be modified can be found in:
    :file:`src/Land_models/NoahMP/phys/surfex/modd_snow_par.F90`
-
