@@ -1759,8 +1759,7 @@ end subroutine drive_CHANNEL
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
 
        ! diversions
-       integer(kind=int64) :: div_dest
-       real :: div_qty
+       real :: div_src, div_dst
        character(*), parameter :: free = '(*(g0,1x))'
 
 #ifdef MPP_LAND
@@ -2014,34 +2013,26 @@ do nt = 1, nsteps
 
          ! HANDLE DIVERSIONS
 
-         call calculate_diversion(LINKID(k), div_dest, Quc, div_qty)
-         if (div_qty /= 0) then
+         call calculate_diversion(LINKID(k), Quc, div_src, div_dst)
+
+         if (div_src /= 0) then
             ! remove from upstream
 #ifdef HYDRO_D
-            print free, "DEBUG: diverting", div_qty, "of", Quc, "from link id =", LINKID(k)
-            if (div_qty > Quc) &
-               print free, "DEBUG WARNING: diverted flow (", div_qty, ") exceeds total flow, zeroing."
+            print free, "DEBUG: diverting", div_src, "of", Quc, "from link id =", LINKID(k), "on processor", my_id
+            if (div_src > Quc) &
+               print free, "DEBUG WARNING: diverted flow (", div_src, ") exceeds total flow, zeroing."
 #endif
-
-            ! add to downstream if needed
-            if (div_dest /= -99) then
-               ! find destination (it's not necessarily tmpQLINK(k,2)))
-               do kk = 1,NLINKSL
-                  if (LINKID(kk) == div_dest) then
-#ifdef HYDRO_D
-                     print free, "Found diversion destination ID", LINKID(kk),"in local processor at index", kk, ", replacing", tmpQLINK(kk,2), "with", div_qty
-#endif
-                     tmpQLINK(kk,2) = div_qty
-                     exit !do loop
-                  end if
-               end do
-
-               Quc = max(0.0, Quc - div_qty)
-               Qup = max(0.0, Qup - div_qty)
-
-            end if
+            Quc = max(0.0, Quc - div_src)
+            Qup = max(0.0, Qup - div_src)
          end if
 
+         if (div_dst /= 0) then
+            ! apply observed value to downstream
+#ifdef HYDRO_D
+            print free, "DEBUG: diverting", div_dst, "to link id =", LINKID(k), "on processor", my_id
+#endif
+            tmpQLINK(k,2) = div_dst
+         end if
 
 #ifdef WRF_HYDRO_NUDGING
          call nudge_apply_upstream_muskingumCunge( Qup,  Quc,  nudge(k),  k )
