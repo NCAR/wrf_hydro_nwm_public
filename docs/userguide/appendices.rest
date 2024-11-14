@@ -1401,7 +1401,7 @@ Variables within the `LAKEPARM.nc` file are described in the tables below.
    | crs                | CRS definition                                  |
    +--------------------+-------------------------------------------------+
 
-.. _section-22:
+.. _section-a13:
 
 A13. Restart Files Overview
 ----------------------------
@@ -1662,10 +1662,13 @@ A13.2 HYDRO_RST File Variable Table
    | z_gwsubbas   | depth in ground water bucket  | 1              | link           | :math:`m`       |
    +--------------+-------------------------------+----------------+----------------+-----------------+
 
+
+.. _section-a14:
+
 A14. Streamflow Nudging
 -----------------------
 
-**Figure A14.1** Below is an example netCDF header nudging time slice
+Below is an example netCDF header nudging time slice
 observation file containing 2 gages. The command :program:`ncdump -h` was used to
 produce this header information.
 
@@ -1696,7 +1699,7 @@ produce this header information.
          :sliceTimeResolutionMinutes = "15" ;
    }
 
-**Figure A14.2:** Below is an example `nudgingParams.nc` file containing
+Below is an example `nudgingParams.nc` file containing
 parameters for 3 gages. The command :program:`ncdump -h` was used to create this
 header information.
 
