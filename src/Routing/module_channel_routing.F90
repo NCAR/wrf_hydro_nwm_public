@@ -2018,7 +2018,7 @@ do nt = 1, nsteps
          if (div_src /= 0) then
             ! remove from upstream
 #ifdef HYDRO_D
-            print free, "DEBUG: diverting", div_src, "of", Quc, "from link id =", LINKID(k), "on processor", my_id
+            print free, "DEBUG: diverting", div_src, "of", Quc, "from link id =", LINKID(k) !, "on processor", my_id
             if (div_src > Quc) &
                print free, "DEBUG WARNING: diverted flow (", div_src, ") exceeds total flow, zeroing."
 #endif
@@ -2029,8 +2029,11 @@ do nt = 1, nsteps
          if (div_dst /= 0) then
             ! apply observed value to downstream
 #ifdef HYDRO_D
-            print free, "DEBUG: diverting", div_dst, "to link id =", LINKID(k), "on processor", my_id
+            print free, "DEBUG: diverting", div_dst, "to link id =", LINKID(k) !, "on processor", my_id
 #endif
+            Qup = div_dst
+            Quc = div_dst
+            tmpQLINK(k,1) = div_dst
             tmpQLINK(k,2) = div_dst
          end if
 
