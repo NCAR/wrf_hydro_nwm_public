@@ -1,7 +1,7 @@
 .. vim: syntax=rst
 .. include:: meta.rest
 
-4. Streamflow Nudging Data Assimilation 
+4. Streamflow Nudging Data Assimilation
 =======================================
 
 This chapter describes streamflow nudging and data assimilation in
@@ -193,7 +193,8 @@ diagram.
 4.3.1 Input Files
 ~~~~~~~~~~~~~~~~~
 
-.. rubric:: Discharge observations and :file:`nudgingTimeSliceObs/` : 
+.. rubric:: Discharge observations and :file:`nudgingTimeSliceObs/` :
+
 Discharge observations from the real world enter the WRF-Hydro system through the
 :file:`nugingTimeSliceObs/` directory.
 

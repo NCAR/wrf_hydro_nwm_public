@@ -1060,6 +1060,7 @@ functions of stream order is likely to be a valid assumption over
 relatively small catchments and not over large regions.
 
 .. _section-3.6.2:
+
 3.6.2. Linked Routing using Muskingum and Muskingum-Cunge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
