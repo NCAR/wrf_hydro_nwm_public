@@ -8,7 +8,7 @@ This chapter describes streamflow nudging and data assimilation in
 Version 5.0 and beyond of WRF-Hydro. Streamflow nudging was introduced
 in v1.1 of the National Water Model (NWM). The community WRF-Hydro model
 source code and the NWM source code have merged as of Version 5.0 of
-WRF-Hydro. See Appendix :ref:`A15 <section-a15>` for more
+WRF-Hydro. See Appendix :ref:`A14 <section-a14>` for more
 information on the NWM.
 
 4.1 Streamflow Nudging Data Assimilation Overview
@@ -55,7 +55,7 @@ element `j`,
 .. _equation-4.1:
 .. rst-class:: center
 .. math::
-   e_{j} = \frac{q_{n}*w_{n}^{2}(j,t)*(Q_{n} - {\widehat{Q}}_{n})}{w_{n}^{2}(j,t)}
+   e_{j} = \frac{\sum_{n=1}^{N_j} q_{n}*w_{n}^{2}(j,t)*(Q_{n} - {\widehat{Q}}_{n})}{\sum_{n=1}^{N_j} w_{n}^{2}(j,t)}
     \qquad (4.1)
 
 The numerator is the sum, over the `N_j` observations affecting element
@@ -81,7 +81,7 @@ application:
 .. _equation-4.3:
 .. rst-class:: center
 .. math::
-    w_{n_t}(t,j) = w_{n_s} \begin{cases}
+    w_{n_t}(t,j) = \begin{cases}
     10^{10} * (1/10)^{\frac{\left| t-\widehat{t} \right|}{tau_j / 10}} &:\text{if} \ \left| t-\widehat{t} \right| \leq tau_j \\
     e^{-a_j*(t-\widehat{t})} &:\text{if} \ \left| t-\widehat{t} \right| \gt tau_j
     \end{cases} \qquad (4.3)
@@ -116,7 +116,7 @@ heavily weighting the observation and `a = 120` means that nudging to
 the observation relaxes with e-folding time of two hours moving away
 from the observation.
 
-The Muskingum-Cunge equation in Section 3.6.2 has the form:
+The Muskingum-Cunge equation in :ref:`Section 3.6.2 <section-3.6.2>` has the form:
 
 .. _equation-4.5:
 .. rst-class:: center
@@ -124,7 +124,7 @@ The Muskingum-Cunge equation in Section 3.6.2 has the form:
    Q_{d}^{c} = C1{\,Q}_{u}^{p} + C2\,Q_{u}^{c} + {C3\,Q}_{d}^{p} + \left( \frac{q_{l}\,dt}{D} \right)
    \qquad (4.5)
 
-In V1.0 of the NWM, nudging was applied into this equation in the
+In v1.0 of the NWM, nudging was applied into this equation in the
 following manner
 
 .. _equation-4.6:
@@ -170,7 +170,7 @@ nudge values gets written to the nudgingLastObs files (described in
 the nudging routine.
 
 There are a variety of experimental nudging options and features in the
-nudging section of the hydro.namelist which are incomplete or unused at
+nudging section of the :file:`hydro.namelist` which are incomplete or unused at
 this time. There are also nudging features used in a limited capacity by
 the NWM which are not described here. As development of these options
 evolves, they will be documented in future versions of WRF-Hydro.
@@ -207,14 +207,13 @@ center of the “slice of time” in which observations are found (from year
 down to second). ``RR`` indicates the resolution, or total width of the time
 slice. Currently this resolution is a **hard-coded** parameter in the model.
 It is set to 15 minutes as this is the most common reporting frequency
-for USGS gages in the USA. The “usgsTimeSlice” part of the filename is
+for USGS gages in the USA. The ``usgsTimeSlice`` part of the filename is
 fixed and is legacy of the fact that these files were originally
 designed for USGS observations. However, any discharge observations can
 be placed into this format.
 
 The format of a an example timeslice observation file is given by an
-:program:`ncdump -h` in :ref:`Figure A15.1 <figure-a15.1>` in
-:ref:`Appendix A15 <section-a15>`. Of the three-dimensional variables,
+:program:`ncdump -h` in :ref:`Appendix A14 <section-a14>`. Of the three-dimensional variables,
 two are character lengths and only the ``stationIdInd`` dimension is
 variable (unlimited). The ``stationIdInd`` variable has dimensions of the
 number of individual stream gages contained in the file by the fixed
@@ -251,7 +250,7 @@ options are detailed in :ref:`Section 4.5 <section-4.5>` below and in
 .. rubric:: :file:`Route_Link.nc`:
 
 Collocation of streamflow gages and reach elements is achieved
-by the gages field in the Route_Link.nc file (see Sections
+by the gages field in the :file:`Route_Link.nc` file (see Sections
 :ref:`3.6 <section-3.6>` and :ref:`5.4 <section-5.4>`). Each reach
 element may have a single gage identified with it as specific by a
 fixed-width 15 character string in the gages field. A blank entry
@@ -266,7 +265,7 @@ nudging parameters file, described next.
 
 .. rubric:: :file:`nudgingParams.nc`:
 
-:ref:`Figure A15.2 <figure-a15.2>` in Appendix :ref:`A15 <section-a15>` shows
+Appendix :ref:`A14 <section-a14>` shows
 the structure of the :file:`nudgingParams.nc` file for a small domain. Some
 of the parameters in the file are explained in detail in Section
 :ref:`4.2 <section-4.2>` and some are placeholders for capabilities
