@@ -22,6 +22,7 @@
             "igrid": 1,
             "io_config_outputs": 0,
             "io_form_outputs": 4,
+            "lake_option": 1,
             "land_spatial_meta_flnm": "NULL_specified_in_domain.json",
             "lsmout_domain": 1,
             "nsoil": 4,
@@ -31,7 +32,6 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
-            "reservoir_persistence_usgs": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
@@ -49,6 +49,9 @@
             "udmap_file": "NULL_specified_in_domain.json",
             "udmp_opt": 1,
             "zsoil8": [-0.1, -0.4, -1.0, -2.0]
+        },
+        "reservoir_nlist": {
+            "reservoir_persistence_usgs": false
         },
         "nudging_nlist": {
             "biaswindowbeforet0": false,
@@ -109,7 +112,9 @@
         "hydro_nlist": {
             "lsmout_domain": 0,
             "output_gw": 0,
-            "output_channelbucket_influx": 2,
+            "output_channelbucket_influx": 2
+        },
+        "reservoir_nlist": {
             "reservoir_persistence_usgs": false
         },
         "nudging_nlist": {}
@@ -186,7 +191,8 @@
             "channel_option": 3,
             "dtrt_ch": 10,
             "rstrt_swc": 1,
-            "udmp_opt": 0
+            "udmp_opt": 0,
+            "lake_option": 0
         },
         "nudging_nlist": {
             "biaswindowbeforet0": "",
@@ -211,6 +217,7 @@
             "gwbasmskfil": "NULL_specified_in_domain.json",
             "dtrt_ch": 10,
             "outlake": 0,
+            "lake_option": 0,
             "rstrt_swc": 0,
             "t0outputflag": 0,
             "udmp_opt": 0
