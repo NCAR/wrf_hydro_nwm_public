@@ -7,6 +7,380 @@ APPENDICES
 
 This section contains supplementary information.
 
+.. _section-a1:
+
+A1. Coupled WRF | WRF-Hydro Test Case User Guide
+-----------------------------------------------------------
+
+Purpose
+^^^^^^^
+
+This test case for the coupled WRF | WRF-Hydro modeling system is meant to
+orient you to running the modeling system using prepared geographical inputs
+for WRF-Hydro and sample initial and boundary conditions for WRF. Note that
+some of the initial and boundary conditions for this test case have been
+modified in order to produce a hydrologic response over a very limited spatial
+domain. Results generated from this test case should not be interpreted as a
+real simulation and users should consult the WRF and WPS documentation for
+best practices with respect to domain and model configuration. The purpose of
+this test case is to provide baseline instructions and a computationally
+tractable test case for users to familiarize themselves with the modeling
+system and help ensure the modeling system is running properly on their
+systems. Please see the README.txt file provided with the test case for a more
+detailed description of the contents.
+
+For a detailed technical description of WRF-Hydro and instructions on how to run WRF |
+WRF-Hydro in coupled mode see the `WRF-Hydro Technical Description
+documentation <https://wrf-hydro.readthedocs.io/>`_ and How
+to Run WRF-Hydro V5 in Coupled Mode user guide available from
+https://ral.ucar.edu/projects/wrf_hydro.
+
+For further information regarding the WRF model and the WRF Preprocessing System (WPS)
+see the WRF Users’ Guide located here:
+http://www2.mmm.ucar.edu/wrf/users/docs/user_guide_v4/contents.html
+
+Requirements
+^^^^^^^^^^^^
+
+- WRF-Hydro source code: https://github.com/NCAR/wrf_hydro_nwm_public.git
+  - Git clone into directory where you will be running this case
+- Download WRF and WPS source code:
+  - WRF: https://github.com/wrf-model/WRF
+  - WPS: https://github.com/wrf-model/WPS
+- WPS geographic data
+  http://www2.mmm.ucar.edu/wrf/src/wps_files/geog_high_res_mandatory.tar.gz
+- An official WRF-Hydro coupled test case:
+  https://ral.ucar.edu/projects/wrf_hydro/testcases
+- All system libraries needed by the WRF-Hydro modelling system can be found
+  in the How To Build & Run WRF-Hydro V5 in Standalone Mode user guide and the
+  FAQ web page located at https://ral.ucar.edu/projects/wrf_hydro
+- All system libraries needed by the WRF modeling system and WPS can be found
+  in the WRF User’s Guide located here:
+  http://www2.mmm.ucar.edu/wrf/users/docs/user_guide_v4/contents.html
+
+
+Step-by-step walkthrough
+^^^^^^^^^^^^^^^^^^^^^^^^
+**Directory structure setup**:
+We will organize all files and folders under a common top-level directory to
+simplify commands in this walkthrough. All paths mentioned in this walkthrough
+will be relative to this top-level directory. For example,
+/home/user/project_directory/example_case_coupled/ will be referred to as
+example_case_coupled/. The following steps walk you through how to setup your
+project directory.
+
+1. Open a terminal window
+2. Create a top-level directory that will hold all subdirectories and files
+   used for this walkthrough. Hereafter referred to as the ‘project
+   directory’.
+3. Git clone WRF-Hydro, WRF, and WPS into project directory created in step 2
+4. Copy the uncompressed WPS geographic data into the WPS directory.
+5. Copy the uncompressed coupled example case into the project directory.
+6. Your project directory structure should now look like the following:
+
+.. code-block:: console
+
+   project_directory/
+   ├──wrf_hydro_nwm_public*/
+   │   └──src/
+   ├──WRF*/
+   ├──WPS*/
+   │   ├──geogrid/
+   │   ├──metgrid/
+   │   ├──ungrib/
+   │   └──geog/
+   └──example_case_coupled/
+       ├──WRF_FORCING/
+       └──DOMAIN/
+
+
+Compiling the Code
+^^^^^^^^^^^^^^^^^^
+
+This section will walk you through compiling the coupled WRF | WRF-Hydro
+modeling system and the WRF Preprocessing System (WPS) utilities
+
+**Compiling the coupled WRF | WRF-Hydro modeling system**
+
+0. Compile WRF-Hydro first
+
+1. Navigate to the WRF source code directory at WRF*
+
+.. code-block:: console
+
+  cd WRF*
+
+2. Remove the old WRF-Hydro source code contained within this directory and replace it
+with the updated version you just downloaded
+
+.. code-block:: console
+
+  rm -r hydro
+  cp -r ../wrf_hydro*/src hydro
+
+3. Set environment variables for required dependencies (e.g. netCDF libraries - see the
+WRF documentation for specific requirements) and compile time options for the
+WRF-Hydro modeling system.
+Edit the provided template (WRF/hydro/template/setEnvar.sh) as desired, but be sure to
+set the variable WRF_HYDRO to 1 so that WRF compiles with hydro
+
+.. code-block:: console
+
+  source WRF/hydro/template/setEnvar.sh
+
+4.  Load appropriate modules on Derecho:
+
+.. code-block:: console
+
+  module load ncarenv gcc ncarcompilers cray-mpich craype
+
+
+5.  Follow the steps here:
+    https://www2.mmm.ucar.edu/wrf/OnLineTutorial/compilation_tutorial.php#STEP5
+    under "Building Libraries" to build the appropriate WRF libraries
+
+6. Export paths necessary for WRF to find the right libraries
+
+.. code-block:: console
+
+  export DIR=path/to/WRF/Build_WRF/LIBRARIES
+  export NETCDF_INC=$DIR/netcdf/include
+  export NETCDF_LIB=$DIR/netcdf/lib
+  export CC="gcc"
+  export CXX="g++"
+  export FC="gfortran"
+  export FCFLAGS="-m64"
+  export F77="gfortran"
+  export FFLAGS="-m64"
+  export JASPERLIB=$DIR/grib2/lib
+  export JASPERINC=$DIR/grib2/include
+  export LDFLAGS=-L$DIR/grib2/lib
+  setenv CPPFLAGS -I$DIR/grib2/include
+
+7. Configure WRF
+On Derecho, selection option 50 (Intel dmpar Cray XC) and 1 (basic nesting)
+.. code-block:: console
+
+  cd …/WRF/
+  ./configure
+
+
+**Compiling the WRF Preprocessing System (WPS)**
+
+Make sure that paths are set as in Step #6 from above
+
+1. Navigate to the WPS source code directory at WPS*
+
+2. Configure the WPS
+
+.. code-block:: console
+
+  ./configure
+
+For Derecho select option 43: Cray XC CLE/Linux x86_64, Intel Classic compilers   (dmpar).
+
+3. Compile the code and pipe the output to a log file.
+
+.. code-block:: console
+
+  ./compile >& compile.log
+
+check the compile log for errors.
+
+
+Running the WRF Preprocessing System (WPS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this section we will use the compiled WRF Preprocessing System (WPS)
+utilities along with a namelist file ( namelist.wps ) and meteorological
+forcing data from the coupled test case to generate geogrid and metgrid files
+for the two model domains (note that the inner nest, or domain 2, is where
+WRF-Hydro will run).
+
+**Running the geogrid utility**
+
+1. Create a run directory for WPS within your project directory
+
+.. code-block:: console
+
+  mkdir -p run/WPS
+  cd run/WPS
+
+
+2. Now copy the required files for the WPS geogrid utility into your run
+   directory
+
+.. code-block:: console
+
+  cp ../../WPS*/geogrid.exe .
+  cp ../../WPS*/GEOGRID.TBL .
+  cp ../../example_case_coupled/namelist.wps .
+
+Edit the paths within this namelist as appropriate for your system
+
+3. Edit the path to geographic data in your ``namelist.wps`` file so that
+
+.. code-block:: console
+
+  geog_data_path = '/glade/work/wrfhelp/WPS_GEOG/',
+
+
+4. Run the geogrid utility
+
+.. code-block:: console
+
+  ./geogrid.exe >& geogrid.log
+
+
+**Running the ungrib utility**
+
+The ungrib utility takes meteorological forcing data to be used for simulation
+initial and boundary conditions and converts the files to an intermediate file
+format used by the metgrid utility. Make sure modules are loaded from previous
+steps.
+
+
+1. Now copy the additional required files for the WPS ungrib utility into your
+   run directory
+
+.. code-block:: console
+
+  cp ../../WPS*/ungrib.exe .
+  cp ../../WPS*/link_grib.csh .
+
+
+2. Next copy over the necessary variable table for your forcing data
+
+.. code-block:: console
+
+  cp ../../WPS*/ungrib/Variable_Tables/Vtable.NAM Vtable
+
+3. Make sure grib2 library is available
+
+.. code-block:: console
+
+  export LD_LIBRARY_PATH=$DIR/grib2/lib/:$LD_LIBRARY_PATH
+
+
+4. Then link your forcing data from the test case to the run directory (this
+   script will also rename the files to those expected for the ungrib utility)
+
+.. code-block:: console
+
+  ./link_grib.csh ../../example_case_coupled/WRF_FORCING/*
+
+5. Next run the ungrib utility
+
+.. code-block:: console
+
+  ./ungrib.exe >& ungrib.log
+
+
+**Running the metgrid utility**
+
+The metgrid utility does some interpolation of meteorological forcing data to
+the model domain creating metgrid files to be used as input to the WRF real
+utility.
+
+1. Now copy additional the required files for the WPS metgrid utility into
+   your run directory
+
+.. code-block:: console
+
+  cp ../../WPS/metgrid.exe .
+  cp ../../WPS/metgrid/METGRID.TBL .
+
+2. Next run the metgrid utility
+
+.. code-block:: console
+
+  ./metgrid.exe >& metgrid.log
+
+
+Running a coupled WRF | WRF-Hydro simulation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this section we will use our compiled coupled WRF | WRF-Hydro model to run
+a simulation. This walkthrough uses the Front Range coupled example test
+case. Details on the domain and time period of the simulation are provided in
+the example_case_coupled/README.txt file.
+
+**Setting up your run directory**
+
+First we will create a run directory and copy over or link the required files.
+
+1. Create a run directory for WRF by copying over the run directory from where
+   it was compiled
+
+.. code-block:: console
+
+  cp -RL WRF*/run WRF
+
+
+2. Copy over parameter tables for WRF-Hydro from the template directory
+
+.. code-block:: console
+
+  cp ../../WRF/hydro/src/template/HYDRO/*TBL .
+
+3. Copy over the namelists for real / wrf (namelist.input) and the hydro components
+(hydro.namelist) from the example case
+
+.. code-block:: console
+
+  cp ../../example_case_coupled/namelist.input .
+  cp ../../example_case_coupled/hydro.namelist .
+  cp -r path/to/example_case_coupled/DOMAIN/ .
+
+
+
+4. Link the geogrid and metgrid files we just generated from the WPS utilities
+
+.. code-block:: console
+
+  ln -sf ../WPS/met_em* .
+  ln -sf ../WPS/geo_em* .
+
+
+**Running the real utility**
+
+The WRF real utility creates the wrfinput* and wrfbdy* initial and boundary
+condition files to be used as input for the coupled simulation.
+
+1. Execute real.exe using the proper syntax for your system (example below)
+   and pipe the output to a log file.
+
+.. code-block:: console
+
+  mpirun -np 2 ./real.exe >& real.log
+
+2. Next review the rsl.out.* and rsl.error.* files for possible errors and
+   check to make sure the wrfinput* and wrfbdy* files have been created.
+
+**Running the coupled model**
+
+Now we will run the coupled model (all included in the wrf.exe binary) using
+the wrfinput* and wrfbdy* files as initial and boundary conditions and the
+model physics and other options selected in the namelist.input and
+hydro.namelist files.
+
+1. Execute wrf.exe using the proper syntax for your system (example below) and
+   pipe the output to a log file.
+
+.. code-block:: console
+
+  mpirun -np 2 ./wrf.exe >& wrf.log
+
+2. If your simulation ran successfully, there should now be a large number of
+   output files. Descriptions of the output files can be found in the
+   WRF-Hydro V5 Technical Description at (
+   https://ral.ucar.edu/projects/wrf_hydro ) and the WRF User’s Guide found
+   here ( http://www2.mmm.ucar.edu/wrf/users/docs/user_guide_v4/contents.html
+   ). You will also want to review the rsl.out.* and rsl.error.* files for
+   possible error messages.
+
+
+
 .. _section-a2:
 
 A2. Exceptions for Running WRF-Hydro with the Noah LSM
