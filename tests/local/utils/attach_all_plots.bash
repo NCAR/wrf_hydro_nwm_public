@@ -2,6 +2,7 @@
 
 PR=$1
 CONFIG=$2
+TEST_TYPE=$3
 cwd=`pwd`
 diffs=$GITHUB_WORKSPACE/test_report/$CONFIG
 
@@ -10,7 +11,7 @@ if [[ ! -d $diffs ]]; then
     exit 0
 fi
 
-title="Difference plots for configuration '$CONFIG'"
+title="Difference plots for configuration '$CONFIG' and $TEST_TYPE test type"
 
 # set for repo authentication
 git config --global user.email "model.tester@ucar.edu"
