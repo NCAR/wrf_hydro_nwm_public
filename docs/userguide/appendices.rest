@@ -118,30 +118,35 @@ with the updated version you just downloaded
   rm -r hydro
   cp -r ../wrf_hydro*/src hydro
 
-3. Set environment variables for required dependencies (e.g. netCDF libraries - see the
-WRF documentation for specific requirements) and compile time options for the
-WRF-Hydro modeling system.
-Edit the provided template (WRF/hydro/template/setEnvar.sh) as desired, but be sure to
-set the variable WRF_HYDRO to 1 so that WRF compiles with hydro
-
-.. code-block:: console
-
-  source WRF/hydro/template/setEnvar.sh
-
-4.  Load appropriate modules on Derecho:
+3.  Load appropriate modules on Derecho:
 
 .. code-block:: console
 
   module load ncarenv gcc ncarcompilers cray-mpich craype
 
 
-5.  Follow the steps here:
-    https://www2.mmm.ucar.edu/wrf/OnLineTutorial/compilation_tutorial.php#STEP5
-    under "Building Libraries" to build the appropriate WRF libraries
 
-6. Export paths necessary for WRF to find the right libraries
+4a. Configure WRF: CMake (preferred method)
 
 .. code-block:: console
+
+      cd …/WRF/
+      # CMake option to turn on WRF-Hydro nudging `-DWRF_HYDRO_NUDGING=1`
+      ./configure_new -x -p gfortran/gcc -- -DWRF_CORE=ARW -DWRF_NESTING=BASIC -DENABLE_HYDRO=ON -DWRF_CASE=EM_REAL
+      ./compile_new
+
+
+4b. Configure WRF: Old Method
+
+
+.. code-block:: console
+
+  # Load environement variables
+  source WRF/hydro/template/setEnvar.sh
+
+  # Export paths necessary for WRF to find the right libraries, follow the link
+  # https://www2.mmm.ucar.edu/wrf/OnLineTutorial/compilation_tutorial.php#STEP2
+  # under "Building Libraries" to build the appropriate WRF libraries
 
   export DIR=path/to/WRF/Build_WRF/LIBRARIES
   export NETCDF_INC=$DIR/netcdf/include
@@ -157,17 +162,19 @@ set the variable WRF_HYDRO to 1 so that WRF compiles with hydro
   export LDFLAGS=-L$DIR/grib2/lib
   setenv CPPFLAGS -I$DIR/grib2/include
 
-7. Configure WRF
-On Derecho, selection option 50 (Intel dmpar Cray XC) and 1 (basic nesting)
-.. code-block:: console
-
+  # Configure WRF
+  # On Derecho, selection option 50 (Intel dmpar Cray XC) and 1 (basic nesting)
   cd …/WRF/
   ./configure
+  ./compile >& compile.log
+
+
+
 
 
 **Compiling the WRF Preprocessing System (WPS)**
 
-Make sure that paths are set as in Step #6 from above
+Make sure that paths are set as in Step #5b from above
 
 1. Navigate to the WPS source code directory at WPS*
 
