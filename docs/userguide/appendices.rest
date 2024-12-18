@@ -1473,6 +1473,27 @@ land cover type.
    | vcmx25     | Maximum rate of carboxylation at 25°C                    |
    |            | [:math:`umol\ CO_{2}/m^2/s`]                             |
    +------------+----------------------------------------------------------+
+   | AXAJ       | Tension water distribution inflection parameter          |
+   +------------+----------------------------------------------------------+
+   | BXAJ       | Tension water distribution shape parameter               |
+   +------------+----------------------------------------------------------+
+   | XXAJ       | Free water distribution shape parameter                  |
+   +------------+----------------------------------------------------------+
+   | rsurfsnow  | Surface resistance for snow [s/m]                        |
+   +------------+----------------------------------------------------------+
+   | scamax     | Maximum fractional snow covered area [0-1]               |
+   +------------+----------------------------------------------------------+
+   | snowretfac | Snowpack water release timescale factor [1/s]            |
+   +------------+----------------------------------------------------------+
+   | ssi        | Liquid water holding capacity for snowpack               |
+   |            | [:math:`m^3/m^3`]                                        |
+   +------------+----------------------------------------------------------+
+   | tau0       | Snow albedo decay timescale parameter [s]                |
+   +------------+----------------------------------------------------------+
+   | imperv     | Impervious factor                                        |
+   +------------+----------------------------------------------------------+
+
+
 
 .. _section-a8:
 
@@ -1535,6 +1556,10 @@ within these files are described in the tables below.
    | LKSAT                 | Lateral saturated soil hydraulic             |
    |                       | conductivity [:math:`m/s`]                   |
    +-----------------------+----------------------------------------------+
+   | NEXP                  | Exponent in the decay function for lateral   |
+   |                       | Ksat over depth                              |
+   +-----------------------+----------------------------------------------+
+
 
 .. _section-a9:
 
@@ -1611,11 +1636,17 @@ the tables below.
    +----------------------+-----------------------------------------------+
    | n                    | Manning's roughness                           |
    +----------------------+-----------------------------------------------+
+   | nCC                  | Compound Channel Manning's roughness          |
+   +----------------------+-----------------------------------------------+
    | order                | Strahler stream order                         |
    +----------------------+-----------------------------------------------+
    | to                   | To Link ID                                    |
    +----------------------+-----------------------------------------------+
    | time                 | Time of measurement                           |
+   +----------------------+-----------------------------------------------+
+   | TopWdth              | Top Width [m]                                 |
+   +----------------------+-----------------------------------------------+
+   | TopWdthCC            | Compound Channel Top Width [m]                |
    +----------------------+-----------------------------------------------+
 
 .. _section-a10:
@@ -1666,6 +1697,8 @@ in the tables below.
    | Area_sqkm             | Basin area [:math:`km^2`]                    |
    +-----------------------+----------------------------------------------+
    | ComID                 | NHDCatchment FEATUREID (NHDFlowline ComID)   |
+   +-----------------------+----------------------------------------------+
+   | Loss                  | Fraction of bucket output lost               |
    +-----------------------+----------------------------------------------+
 
 .. _section-20:
@@ -1757,6 +1790,38 @@ Variables within the `LAKEPARM.nc` file are described in the tables below.
 A13. Restart Files Overview
 ----------------------------
 
+**Cold start versus warm start model simulations:**
+
+When one start the model as a `cold start` (meaning that it is starting with the default values at the very
+beginning), it takes time for the model to warm up and reach an equilibrium state. For example, consider
+simulating streamflow values for a stream which has a base flow of at least 10 cms during the year, and you
+have a `cold start`. The default values of the streamflow might be zeros at the start of the modeling. It then
+takes time for the simulated streamflow within the model to reach the 10 cms. In contrast, a `warm start` is
+when the model simulation begins with the simulated values of a given time step (starting time step) from a
+previous run. This eliminates the processing time the model would take to reach an equilibrium state.
+Depending on which variable of the model you are looking at, the time required to reach to the warm state may
+differ. For example, groundwater requires a longer time period to reach to equilibrium.
+
+**How to do a warm start simulations with WRF-Hydro?**
+
+WRF-Hydro model outputs two set of model restart files (:file:`RESTART.YYYYmmddHH_DOMAIN` and
+:file:`HYDRO_RST.YYYY-mm-dd_HH:MM_DOMAIN1`) which store the model states at a specified time and
+could be used to start the model from that point in time. :file:`RESTART.YYYYmmddHH_DOMAIN` stores the
+state variables reqiured for restarting LSM and :file:`HYDRO_RST.YYYY-mm-dd_HH:MM_DOMAIN`
+stores the state variables required to resume the hydro components of the WRF-Hydro model.
+
+To warm start the LSM part of the model, specify path to the restart file in the :file:`namelist.hrldas`
+using `RESTART\_FILENAME\_REQUESTED` option.
+To warm start the HYDRO part of the model, specify the path to the `HYDRO\_RST` file in
+the :file:`hydro.namelist` using the option `RESTART\_FILE`, and also set the `gw\_restart` option to 1.
+If the path to the files are left empty or commented out, it means the model simulation is cold started.
+
+
+One could control the frequency of outputting restart files using the options `RESTART\_FREQUENCY\_HOURS`
+and `rst\_dt` in the :file:`namelist.hrldas` and :file:`hydro.namelist`, respectively. If these options are set
+to -9999, model outputs restart files once a month. Restart files are large in size, and therefore user
+needs to be cautious of how frequently it outputs the restart files.
+
 .. figure:: media/restarts.png
    :align: center
 
@@ -1780,6 +1845,14 @@ A13.1 RESTART_MP File Variable Table
    | **Variable  | **Description**                           | **Units**        |
    | name**      |                                           |                  |
    +=============+===========================================+==================+
+   | ACCPRCP     | Accumulated precipitation                 | :math:`mm`       |
+   +-------------+-------------------------------------------+------------------+
+   | ACCECAN     | Accumulated canopy evaporation            | :math:`mm`       |
+   +-------------+-------------------------------------------+------------------+
+   | ACCEDIR     | Accumulated direct soil evaporation       | :math:`mm`       |
+   +-------------+-------------------------------------------+------------------+
+   | ACCETRAN    | Accumulated transpiration                 | :math:`mm`       |
+   +-------------+-------------------------------------------+------------------+
    | ACMELT      | accumulated melting water out of snow     | :math:`mm`       |
    |             | bottom                                    |                  |
    +-------------+-------------------------------------------+------------------+
@@ -1902,16 +1975,8 @@ A13.1 RESTART_MP File Variable Table
    +-------------+-------------------------------------------+------------------+
    | VEGFRA      | Vegetation fraction                       |                  |
    +-------------+-------------------------------------------+------------------+
-   | ACCPRCP     | Accumulated precipitation                 | :math:`mm`       |
-   +-------------+-------------------------------------------+------------------+
-   | ACCECAN     | Accumulated canopy evaporation            | :math:`mm`       |
-   +-------------+-------------------------------------------+------------------+
-   | ACCEDIR     | Accumulated direct soil evaporation       | :math:`mm`       |
-   +-------------+-------------------------------------------+------------------+
-   | ACCETRAN    | Accumulated transpiration                 | :math:`mm`       |
-   +-------------+-------------------------------------------+------------------+
-   | SMOISEQ     | volumetric soil moisture                  | :math:`m^3/m^3`  |
-   +-------------+-------------------------------------------+------------------+
+
+
 
 .. _section-23:
 
@@ -1919,7 +1984,7 @@ A13.2 HYDRO_RST File Variable Table
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
-   The variables are written to the `HYDRO_RST` file in the subroutine of
+   The variables are written to the `HYDRO\_RST` file in the subroutine of
    ``RESTART_OUT_nc`` in the :file:`Routing/module_HYDRO_io.F90`. The tables below
    contain all the information on the dimensions and variables in the Hydro
    RESTART file (`HYDRO\_RST`).
@@ -2672,3 +2737,60 @@ layers contain the initialized ice.
    surface runoff, thus ``FLOW_SNOW`` and ``FLOW_ICE`` cannot be used directly
    as indication if melt is from the ice part of the glacier or snow part of
    the glacier.
+
+
+.. _section-a17:
+
+A17. Model Output Variables
+---------------------------------------------
+
+.. rubric:: 1. Land surface model output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.LDASOUT_DOMAIN{X}`
+
+.. rubric:: 2. Land surface diagnostic output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.LSMOUT_DOMAIN{X}`
+
+
+.. rubric:: 3. Streamflow output variables at all channel reaches/cells
+
+\
+   :file:`{YYYYMMDDHHMM}.CHRTOUT_DOMAIN{X}`
+
+
+
+.. rubric:: 4. Streamflow output variables at forecast points or gage reaches/cells
+
+\
+   :file:`{YYYYMMDDHHMM}.CHANOBS_DOMAIN{X}`
+
+
+
+.. rubric:: 5. Streamflow output variables on the 2D high resolution routing grid
+
+\
+   :file:`{YYYYMMDDHHMM}.CHRTOUT_GRID{X}`
+
+
+
+.. rubric:: 6. Terrain routing variables on the 2D high resolution routing grid
+
+\
+   :file:`{YYYYMMDDHHMM}.RTOUT_DOMAIN{X}`
+
+
+
+.. rubric:: 7. Lake output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.LAKEOUT_DOMAIN{X}`
+
+
+
+.. rubric:: 8. Ground water output variables
+
+\
+   :file:`{YYYYMMDDHHMM}.GWOUT_DOMAIN{X}`

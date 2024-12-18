@@ -76,10 +76,8 @@ of compression files contain.
    be zero for running a gridded channel routing configuration of the model.
 
 An overview of available model output files is shown in :ref:`Figure 6.1 <figure-6.1>`.
-For a detailed table of each variable contained within each output file, see
-the *WRF-Hydro Output Variable Matrix V5* located on our website
-(`https://ral.ucar.edu/projects/wrf_hydro <https://ral.ucar.edu/projects/wrf_hydro/pre-processing-tools>`__)
-for details. There is no optimal combination of namelist options to use
+For a detailed table of each variable contained within each output file, see :ref:`A17 <section-a17>`.
+There is no optimal combination of namelist options to use
 for outputs. Flexibility was given to the user as end applications will
 vary from one user to another. While a combination of many output
 variables with compression may work for a one-time model simulation,
@@ -148,7 +146,7 @@ predefined link ID value specified via the :file:`Route_Link.nc` file. All files
 contain ``model_initialization_time`` and ``model_output_valid_time`` character
 attributes to offer additional time information about the output file.
 For files that were produced with ``io_form_outputs`` options of ``1`` or ``2``,
-standard netCDF variable attributes ``scale_factor`` and add_``offset are
+standard netCDF variable attributes ``scale_factor`` and ``add_offset`` are
 present to help users and netCDF APIs unpack integer data back to
 floating point for visualization and analysis. For a more in-depth
 description of netCDF CF compliant output, please visit
@@ -269,7 +267,7 @@ the domain number of the geogrid input file)
    description of the Route_Link.nc file in Appendix :ref:`A9 <section-a9>`),
    and size 15. If a channel reach does not contain a gage, the string
    stays empty. For example, ``"               "`` would represent a channel
-   reach with no gage, and ``" 07124000"`` would contain a gage labeled
+   reach with no gage, and ``"       07124000"`` would contain a gage labeled
    “07124000”. It is up to the user to create this variable and populate it with
    character strings if there is a desire to connect gage locations to channel
    reaches. If no locations are found, the output code will simply bypass
@@ -281,7 +279,7 @@ the domain number of the geogrid input file)
 \
    :file:`{YYYYMMDDHHMM}.CHRTOUT_GRID{X}`
 
-   The ``CHRTOUT_GRID`` option in the :file"`hydro.namelist` is used to activate this
+   The ``CHRTOUT_GRID`` option in the :file:`hydro.namelist` is used to activate this
    output. This output file is a 2D file created from streamflow with 2D gridded
    channel routing. Currently, this file is not available for reach-based
    routing as channel routing does not occur on the channel grid. Output
@@ -321,7 +319,7 @@ the domain number of the geogrid input file)
 .. rubric:: 8. Ground water output variables
 
 \
-   :file:`{YYYYMMDDHHMM}.GWOUT_DOMAIN{X}``
+   :file:`{YYYYMMDDHHMM}.GWOUT_DOMAIN{X}`
 
    The ``output_gw`` option in the :file:`hydro.namelist` will activate this output.
    When groundwater buckets are activated in the model simulations, it is
