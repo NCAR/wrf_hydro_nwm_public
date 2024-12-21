@@ -2631,7 +2631,7 @@ layers contain the initialized ice.
    +--------------+-----------+----------------------------------------------+--------------------+
    | PSNOWALB     | 2D        | Albedo                                       | `-`                |
    +--------------+-----------+----------------------------------------------+--------------------+
-   | PSNOWTHRUFAL | 2D        | Surface runoff rate                          | `kg/m^2/s`         |
+   | PSNOWTHRUFAL | 2D        | Accumulated surface runoff                   | `kg/m^2`           |
    +--------------+-----------+----------------------------------------------+--------------------+
    | PSNOWHEIGHT  | 2D        | Total glacier thickness                      | `m`                |
    +--------------+-----------+----------------------------------------------+--------------------+
@@ -2663,3 +2663,12 @@ layers contain the initialized ice.
    Currently there are no namelist options to change parameter values.
    Several important parameters that can be modified can be found in:
    :file:`src/Land_models/NoahMP/phys/surfex/modd_snow_par.F90`
+
+   Surface runoff is assigned to ``FLOW_ICE`` when the top active layer at the
+   specific grid point has a density of 850 kg/m3, while surface runoff is
+   assigned to ``FLOW_SNOW`` when the top active layer has a density equal to
+   or less than 850 kg/m3. The sum of ``FLOW_ICE`` and ``FLOW_SNOW`` is equal
+   to ``PSNOWTHRUFAL``. Note that runoff from precipitation is included in
+   surface runoff, thus ``FLOW_SNOW`` and ``FLOW_ICE`` cannot be used directly
+   as indication if melt is from the ice part of the glacier or snow part of
+   the glacier.
