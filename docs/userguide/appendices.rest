@@ -76,11 +76,14 @@ project directory.
 3. Git clone WRF-Hydro, WRF, and WPS into project directory created in step 2
 4. Copy the uncompressed WPS geographic data into the WPS directory.
 5. Copy the uncompressed coupled example case into the project directory.
-6. Your project directory structure should now look like the following:
+6. Your project directory structure will look like the following:
 
 .. code-block:: console
 
    project_directory/
+   ├──run/
+   │   ├──WPS/
+   │   └──WRF/
    ├──wrf_hydro_nwm_public*/
    │   └──src/
    ├──WRF*/
@@ -219,8 +222,8 @@ WRF-Hydro will run).
 
 .. code-block:: console
 
-  cp ../../WPS*/geogrid.exe .
-  cp ../../WPS*/GEOGRID.TBL .
+  cp ../../WPS*/install/bin/geogrid.exe .
+  cp ../../WPS*/geogrid/GEOGRID.TBL .
   cp ../../example_case_coupled/namelist.wps .
 
 Edit the paths within this namelist as appropriate for your system
@@ -252,7 +255,7 @@ steps.
 
 .. code-block:: console
 
-  cp ../../WPS*/ungrib.exe .
+  cp ../../WPS*/install/bin/ungrib.exe .
   cp ../../WPS*/link_grib.csh .
 
 
@@ -262,7 +265,7 @@ steps.
 
   cp ../../WPS*/ungrib/Variable_Tables/Vtable.NAM Vtable
 
-3. Make sure grib2 library is available
+3. If the grib-util module is not loaded, make sure grib2 library is available
 
 .. code-block:: console
 
@@ -294,7 +297,7 @@ utility.
 
 .. code-block:: console
 
-  cp ../../WPS/metgrid.exe .
+  cp ../../WPS/install/bin/metgrid.exe .
   cp ../../WPS/metgrid/METGRID.TBL .
 
 2. Next run the metgrid utility
@@ -321,14 +324,18 @@ First we will create a run directory and copy over or link the required files.
 
 .. code-block:: console
 
-  cp -RL WRF*/run WRF
+  cd project_directory
+  mkdir run
+  cp -RL WRF*/run run/WRF
+  cd run/WRF
 
 
-2. Copy over parameter tables for WRF-Hydro from the template directory
+2. Copy over parameter tables for WRF-Hydro
 
 .. code-block:: console
 
   cp ../../WRF/hydro/src/template/HYDRO/*TBL .
+  cp ../../WRF/hydro/Land_models/NoahMP/run/*.TBL .
 
 3. Copy over the namelists for real / wrf (namelist.input) and the hydro components
 (hydro.namelist) from the example case
@@ -337,8 +344,8 @@ First we will create a run directory and copy over or link the required files.
 
   cp ../../example_case_coupled/namelist.input .
   cp ../../example_case_coupled/hydro.namelist .
-  cp -r path/to/example_case_coupled/DOMAIN/ .
-
+  cp ../../WRF/hydro/template/NoahMP/namelist.hrldas .
+  cp -r ../../example_case_coupled/DOMAIN/ .
 
 
 4. Link the geogrid and metgrid files we just generated from the WPS utilities
@@ -349,24 +356,32 @@ First we will create a run directory and copy over or link the required files.
   ln -sf ../WPS/geo_em* .
 
 
+4. Copy executable files
+
+.. code-block:: console
+
+  cp ../../WRF/install/bin/real .
+  cp ../../WRF/install/bin/wrf .
+
+
 **Running the real utility**
 
 The WRF real utility creates the wrfinput* and wrfbdy* initial and boundary
 condition files to be used as input for the coupled simulation.
 
-1. Execute real.exe using the proper syntax for your system (example below)
+1. Execute real using the proper syntax for your system (example below)
    and pipe the output to a log file.
 
 .. code-block:: console
 
-  mpirun -np 2 ./real.exe >& real.log
+  mpirun -np 2 ./real >& real.log
 
 2. Next review the rsl.out.* and rsl.error.* files for possible errors and
    check to make sure the wrfinput* and wrfbdy* files have been created.
 
 **Running the coupled model**
 
-Now we will run the coupled model (all included in the wrf.exe binary) using
+Now we will run the coupled model (all included in the wrf binary) using
 the wrfinput* and wrfbdy* files as initial and boundary conditions and the
 model physics and other options selected in the namelist.input and
 hydro.namelist files.
@@ -376,7 +391,7 @@ hydro.namelist files.
 
 .. code-block:: console
 
-  mpirun -np 2 ./wrf.exe >& wrf.log
+  mpirun -np 2 ./wrf >& wrf.log
 
 2. If your simulation ran successfully, there should now be a large number of
    output files. Descriptions of the output files can be found in the
