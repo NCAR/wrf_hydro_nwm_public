@@ -1401,7 +1401,7 @@ processes. Because these processes contribute to streamflow (typically
 as “baseflow”) a parameterization is often used in order to simulate
 total streamflow values that are comparable with observed streamflow
 from gauging stations. Therefore, a switch-activated baseflow module
-:file:`module_GW_baseflow.F90` has been created which conceptually
+:file:`Routing/module_GW_baseflow.F90` has been created which conceptually
 (i.e. *not* physically-explicit) represents baseflow contributions to
 streamflow. This model option is particularly useful when WRF-Hydro is
 used for long-term streamflow simulation/prediction and baseflow or
@@ -1424,9 +1424,9 @@ recharge. The functional type and parameters are determined empirically
 from offline tests using an estimation of baseflow from stream gauge
 observations and model-derived estimates of bucket recharge provided by
 WRF-Hydro. Presently, WRF-Hydro uses either a direct output-equals-input
-"pass-through" relationship or an exponential storage-discharge function
+("pass-through") relationship or an exponential storage-discharge function
 for estimating the bucket discharge as a function of a conceptual depth
-of water in the bucket "exponential bucket". Note that, because this is
+of water in the bucket ("exponential bucket"). Note that, because this is
 a highly conceptualized formulation, the depth of water in the bucket in
 no way infers the actual depth of water in a real aquifer system.
 However, the volume of water that exists in the bucket needs to be
@@ -1493,6 +1493,18 @@ themselves have no real physical basis. As mentioned above, initial
 values of the groundwater bucket model parameters are typically derived
 analytically or \'offline\' from WRF-Hydro and then are fine-tuned through
 model calibration.
+
+There are 4 options available for the conceptual baseflow model, as specified 
+in ``GWBASESWCRT`` in :file:`hydro.namelist`. The conceptual baseflow model 
+can be turned off (``GWBASESWCRT = 0``), which means water draining from the soil column in the land
+surface model will become a sink term (this water will not be returned to the channel 
+and will be a loss from the system). The exponential bucket model can be activated 
+(``GWBASESWCRT = 1``), as described above. Water draining from the land model soil
+column can be placed directly into the channel with no additional storage/attenuation 
+(``GWBASESWCRT = 2``). For configurations using user-defined mapping to specify
+catchment boundaries (``UDMP_OPT = 1``), there is a modified version of the 
+exponential bucket model (``GWBASESWCRT = 4``) that adjusts the `C` parameter above
+based on the area of the catchment.
 
 .. rubric:: Relevant code modules:
 
