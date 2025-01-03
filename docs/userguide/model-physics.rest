@@ -568,9 +568,9 @@ and soil thickness (`D_{i,j}`) given by:
    (3.2)
 
 where, `z_{i,j}` is the depth to the water table. `n_{i,j}` in :ref:`Eq. (3.2) <eqn3.2>`
-is defined as the local power law exponent and is a tunable parameter
-(currently hard-coded to 1 but will be exposed in future versions) that
-dictates the rate of decay of `Ksat_{i,j}` with depth. When :ref:`Eq. (3.2) <eqn3.2>` is
+is defined as the local power law exponent and is a tunable parameter that
+dictates the rate of decay of `Ksat_{i,j}` with depth (`n_{i,j}` has a default value of 1.0 
+or can be specified as "NEXP" in hydro2dtbl.nc). When :ref:`Eq. (3.2) <eqn3.2>` is
 substituted into :ref:`Eq. (3.1) <eqn3.1>` the flow rate from cell `(i,j)`
 to its neighbor in the `x`-direction can be expressed as:
 
@@ -650,13 +650,18 @@ include 1) the specified depth of soil and number and thickness of the
 soil vertical layers and 2) the prescription of the model bottom
 boundary condition. Typically, for simulations with deep soil profiles
 (e.g. > 10 `m`) the bottom boundary condition is set to a ‘no-flow’
-boundary (``SLOPE_DATA = 0.0``) in the :file:`GENPARM.TBL` parameter file (see
-Appendices :ref:`section-a6` and :ref:`section-a7` for a
-description of :file:`GENPARM.TBL`).
+boundary (``SLOPE_DATA = 0.0`` in the :file:`GENPARM.TBL` parameter file 
+or ``slope = 0.0`` in the :file:`soil_properties.nc` spatially distributed 
+parameter file). See Appendices :ref:`section-a6` and :ref:`section-a7` for a
+description of :file:`GENPARM.TBL` and :file:`soil_properties.nc`.
+
+.. note::
+   Currently subsurface routing is only supported in the steepest slope (D8) formulation.
+   The 2-dimensional solution will be reactivated in a future release.
 
 .. rubric:: Relevant code modules:
 
-:file:`Routing/Noah_distr_routing.F90`
+:file:`Routing/Noah_distr_routing_subsurface.F90`
 
 .. rubric:: Relevant namelist options:
 
@@ -669,8 +674,9 @@ description of :file:`GENPARM.TBL`).
 -  ``AGGFACTR`` - Subgrid aggregation factor, defined as the ratio of the
    subgrid resolution to the native land model resolution
 
--  ``DTRT_TER`` - Terrain routing grid time step (used for overland and
-   subsurface routing)
+:file:`namelist.hrldas`:
+
+-  ``NOAH_TIMESTEP`` - Subsurface routing operates on the LSM timestep
 
 .. rubric:: Relevant domain and parameter files/variables:
 
@@ -684,6 +690,9 @@ description of :file:`GENPARM.TBL`).
 -  ``SATDK``, ``SMCMAX``, ``SMCREF`` in :file:`HYDRO.TBL` or :file:`hydro2dtbl.nc` - Soil properties
    (saturated hydraulic conductivity, porosity, field capacity) used in
    lateral flow routing.
+
+-  ``NEXP`` in :file:`hydro2dtbl.nc` - Local power law exponent that
+   dictates the rate of decay of saturated hydraulic conductivity with depth.
 
 .. _section-3.5:
 
@@ -820,7 +829,7 @@ size as shown in Table 3.2.
 
 .. rubric:: Relevant code modules:
 
-:file:`Routing/Noah_distr_routing.F90`
+:file:`Routing/Noah_distr_routing_overland.F90`
 
 .. rubric:: Relevant namelist options:
 
@@ -833,8 +842,9 @@ size as shown in Table 3.2.
 -  ``AGGFACTR`` - Subgrid aggregation factor, defined as the ratio of the
    subgrid resolution to the native land model resolution
 
--  ``DTRT_TER`` - Terrain routing grid time step (used for overland and
-   subsurface routing)
+-  ``DTRT_TER`` - Overland routing grid time step
+
+-  ``rt_option`` - Overland flow routing option (steepest descent or 2-dimensional)
 
 .. rubric:: Relevant domain and parameter files/variables:
 
