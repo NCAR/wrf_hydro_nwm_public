@@ -646,7 +646,7 @@ description in the namelist which precedes the option.
    !!!! --------------- SYSTEM COUPLING -------------- !!!!
    ! Specify what is being coupled: 1=HRLDAS (offline Noah-LSM),
    ! 2=WRF, 3=NASA/LIS, 4=CLM
-   sys_cpl = 1 !<-- For offline runs, including Noah and NoahMP, this will be option 1.
+   sys_cpl = 1 !<-- For offline runs, including Noah and Noah-MP, this will be option 1.
 
    !!!! ----------- MODEL INPUT DATA FILES ----------- !!!!
    ! Specify land surface model gridded input data file (e.g.: "geo_em.d01.nc")
@@ -663,9 +663,9 @@ description in the namelist which precedes the option.
    ! Specify the spatial hydro parameters file (e.g.: "hydro2dtbl.nc")
    ! If you specify a filename and the file does not exist, it will
    ! be created for you.
-   HYDROTBL_F = "./DOMAIN/hydro2dtbl.nc" !<-- Path to the new 2d hydro parameters file. If this file
+   HYDROTBL_F = "./DOMAIN/hydro2dtbl.nc" !<-- Path to the 2d hydro parameters file. If this file
                                          ! does not exist, it will be created for you based on
-                                         ! HYDRO.TBL and the soil and land class grids foundin the
+                                         ! HYDRO.TBL and the soil and land class grids found in the
                                          ! GEOGRID netCDF file
 
    ! Specify spatial metadata file for land surface grid. (e.g.: "GEOGRID_LDASOUT_Spatial_Metadata.nc")
@@ -728,9 +728,13 @@ description in the namelist which precedes the option.
                ! on disk space and runtime when specifying.
 
    ! Specify the number of output times to be contained within each output history file...(integer)
-   ! SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
-   ! SET = 1 WHEN RUNNING COUPLED TO WRF!!!
+   ! Currently only 1 and 0 are valid options. 1 will output a single file per timestep.
+   ! 0 will output the CHANOBS file only as a single file over the run duration; other
+   ! files will be one file per timestep.
    SPLIT_OUTPUT_COUNT = 1 !<-- Number of timesteps to put in a single output file.
+                        ! 1 = one file per timestep
+                        ! 0 = same as option 1 but there will be one file for the 
+                        !     full run duration for CHANOBS only
 
    ! Specify the minimum stream order to output to netCDF point file (integer)
    ! Note: lower value of stream order produces more output.
@@ -838,6 +842,14 @@ description in the namelist which precedes the option.
                  ! steepest path (option 1) or multi-directional (option 2).
                  ! Option 2 is currently unsupported.
 
+   ! Specify whether to adjust overland flow parameters based on imperviousness
+   imperv_adj = 0 !<-- When overland routing is active and an imperviousness grid is 
+                  !    provided in Fulldom_hires.nc, you can use this option to reduce
+                  !    the overland roughness and maximum retention depth based on the
+                  !    impervious fraction.
+                  ! 0 = no adjustment, 1 = activate parameter adjustments
+                 
+
    ! Switch to activate channel routing...(0=no, 1=yes)
    CHANRTSWCRT = 1 !<-- Turn on/off channel routing module.
 
@@ -854,6 +866,13 @@ description in the namelist which precedes the option.
    ! If using channel_option=2, activate the compound channel formulation? (Default=.FALSE.)
    ! This option is currently only supported if using reach-basedrouting with UDMP=1.
    compound_channel = .FALSE.
+
+   ! Switch to activate channel-loss option (0=no, 1=yes) [Requires Kchan in RouteLink]
+   ! channel_loss_option = 0
+
+   ! Lake / Reservoir options (0=lakes off, 1=level pool (typical default),
+   !                           2=passthrough, 3=reservoir DA [see &reservoir_nlist below])
+   lake_option = 1
 
    ! Specify the lake parameter file (e.g.: "LAKEPARM.nc"). Note: REQUIRED if lakes are on.
    route_lake_f = "./DOMAIN/LAKEPARM.nc" !<-- If lakes are active,specify the path to the lake
