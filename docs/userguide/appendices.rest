@@ -426,8 +426,7 @@ A3. Noah `namelist.hrldas` File with Description of Options
 -----------------------------------------------------------
 
 Below is an annotated namelist.hrldas file for running with the Noah
-land surface model. Notes and descriptions are indicated with <-- and
-blue text.
+land surface model. Notes and descriptions are indicated with <--
 
 .. code-block:: fortran
 
@@ -500,7 +499,7 @@ Below is an annotated namelist.hrldas file for running with the Noah-MP
 land surface model. Do note that the file says ``&NOAHLSM_OFFLINE``
 however it is for use with the Noah-MP LSM. This namelist statement
 happens to be hardcoded and thus not easily changed. Notes and
-descriptions are indicated with <-- and blue text when after sections
+descriptions are indicated with <-- after sections
 being described. See the official HRLDAS namelist description here:
 https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
 
@@ -551,6 +550,7 @@ https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
    TEMP_TIME_SCHEME_OPTION = 3
    GLACIER_OPTION = 2
    SURFACE_RESISTANCE_OPTION = 4
+   IMPERV_OPTION = 9  !(0->none; 1->total; 2->Alley&Veenhuis; 9->orig)
 
    ! Timesteps in units of seconds
    FORCING_TIMESTEP = 3600 !<-- Timestep for forcing input data (in seconds)
@@ -588,6 +588,23 @@ https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
                   ! restart files (1 per core)
    rst_bi_out = 0 !<-- 0: use netcdf output restart file 1: use parallel io for outputting multiple
                   ! restart files (1 per core)
+
+   ! -------- Optional forcing variable names -------- !
+   ! These can be left out of the namelist and will default to the values below,
+   ! so only need to be specified if using alternative names.
+
+   ! Forcing input variable names
+   forcing_name_T = "T2D"        !<-- variable name for air temperature
+   forcing_name_Q = "Q2D"        !<-- variable name for humidity
+   forcing_name_U = "U2D"        !<-- variable name for u-component of wind speed
+   forcing_name_V = "V2D"        !<-- variable name for v-component of wind speed
+   forcing_name_P = "PSFC"       !<-- variable name for surface pressure
+   forcing_name_LW = "LWDOWN"    !<-- variable name for downward longwave radiation
+   forcing_name_SW = "SWDOWN"    !<-- variable name for downward shortwave radiation
+   forcing_name_PR = "RAINRATE"  !<-- variable name for precipitation rate
+   forcing_name_SN = ""          !<-- variable name for ???
+   forcing_name_LF = "LQFRAC"    !<-- variable name for liquid fraction of precipitation
+
    /
 
    &WRF_HYDRO_OFFLINE
@@ -596,6 +613,19 @@ https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
    ! 3=WRF, 4=Idealized, 5=Ideal w/ Spec.Precip.,
    ! 6=HRLDAS-hrly fomat w/ Spec. Precip, 7=WRF w/ Spec.Precip
    FORC_TYP = 1
+
+   /
+
+   ! -------- Optional settings for the Crocus snow model -------- !
+   ! These options can be excluded if not using the Crocus snow/glacier model.
+
+   &CROCUS_nlist
+   crocus_opt = 0   !<--  0 means the Crocus model is off (default)
+                    !     1 means the Crocus model is on
+   act_lev = 40     !<--  Specify the number of layers the Crocus snow model will resolve.
+                    !     More layers will require more memory and may slow performance.
+                    !     20-40 normal range, 1-50 acceptable
+
    /
 
 .. _section-a5:
