@@ -95,7 +95,10 @@ identified as 'channel' grid cells pass a portion of the surface water
 in excess of the local ponded water retention depth to the channel
 model. This current formulation implies that stream and lake inflow from
 the land surface is always positive to the stream or lake element. There
-currently are no channel or lake loss functions where water can move
+is an optional channel loss formulation *(Lahmers et al. 2019)* where water
+can seep from the channel; note that this water becomes a sink term and is
+not returned to the soil or baseflow. Currently there are no channel or 
+lake loss functions where water can move
 from channels or lakes back to the landscape. Channel flow in WRF-Hydro
 is represented by one of a few different user-selected methodologies
 described below. Water passing into and through lakes and reservoirs is
@@ -118,11 +121,14 @@ options in the model namelist file.
 
 .. note::
    As of this writing, only the Noah and Noah-MP land surface
-   models are supported within WRF-Hydro. Additional land surface models
-   such as CLM or land model driver frameworks, such as the NASA Land
-   Information System (LIS) have been coupled with WRF-Hydro but those
-   efforts are in various phases of development and are not yet formally
-   supported as part of the main code repository.
+   models are supported within WRF-Hydro. CLM coupling is currently
+   out-of-date and is not formally supported but is in the process of
+   being updated. The NASA Land Information System (LIS) has been coupled 
+   with WRF-Hydro through the NUOPC framework and is supported under
+   the `NASA Land Coupler <https://github.com/NASA-LIS/NASA-Land-Coupler>`_.
+
+3.2.1 Noah Land Surface Model (deprecated support only)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Noah land surface model is a community, 1-dimensional land surface
 model that simulates soil moisture (both liquid and frozen), soil
@@ -137,8 +143,8 @@ Project *(Smith, 2002)*. *Mahrt and Pan (1984)* and *Pan and Mahrt (1987)*
 developed the earliest predecessor to Noah at Oregon State University
 (OSU) during the mid-1980's. The original OSU model calculated sensible
 and latent heat flux using a two-layer soil model and a simplified plant
-canopy model. Recent development and implementation of the current
-version of Noah has been sustained through the community participation
+canopy model. Development and implementation of the Noah land model
+has been sustained through the community participation
 of various agency modeling groups and the university community (e.g.
 *Chen et al., 2005*). *Ek et al. (2003)* detail the numerous changes that
 have evolved since its inception including, a four layer soil
@@ -157,7 +163,7 @@ The Noah land surface model has been tested extensively in both offline
 1998*; *Bowling et al., 2003*) and coupled (e.g. *Chen et el., 1997*, *Chen
 and Dudhia, 2001*, *Yucel et al., 1998*; *Angevine and Mitchell, 2001*; and
 *Marshall et al., 2002*) modes. The most recent version of Noah is
-currently one of the operational LSP's participating in the interagency
+currently one of the operational LSM's participating in the interagency
 NASA-NCEP real-time Land Data Assimilation System (LDAS, 2003, *Mitchell
 et al., 2004* for details). Gridded versions of the Noah model are
 currently coupled to real-time weather forecasting models such as the
@@ -166,13 +172,17 @@ National Center for Environmental Prediction (NCEP) North American Model
 (2003)* and earlier works for more detailed descriptions of the
 1-dimensional land surface model physics of the Noah LSM.
 
-Support for the Noah Land Surface Model within WRF-Hydro is currently
-frozen at Noah version 3.6. Since the Noah LSM is not under active
-development by the community, WRF-Hydro is continuing to support Noah in
-deprecated mode only. Some new model features, such as the improved
-output routines, have not been setup to be backward compatible with Noah.
-Noah users should follow the guidelines in Appendix :ref:`A2 <section-a2>`
-for adapting the WRF-Hydro workflow to work with Noah.
+.. note::
+   Support for the Noah Land Surface Model within WRF-Hydro is currently
+   frozen at Noah version 3.6. Since the Noah LSM is not under active
+   development by the community, WRF-Hydro is continuing to support Noah in
+   deprecated mode only. Some new model features, such as the improved
+   output routines, have not been setup to be backward compatible with Noah.
+   Noah users should follow the guidelines in Appendix :ref:`A2 <section-a2>`
+   for adapting the WRF-Hydro workflow to work with Noah.
+
+3.2.2 Noah-MP Land Surface Model (recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Noah-MP is a land surface model (LSM) using multiple options for key
 land-atmosphere interaction processes (*Niu et al., 2011*). Noah-MP was
@@ -209,6 +219,15 @@ optionally running the Crocus snowpack model within NoahMP for glacial
 representation. For details on using this option, please see
 :ref:`Appendix 16 <section-a16>`.
 
+.. note::
+   The Noah-MP code within WRF-Hydro has some additional features that were added 
+   specifically for WRF-Hydro hydrologic applications, such as spatially distributed 
+   parameters and impervious surface runoff treatment, so it does not exactly track
+   the Noah-MP standalone code releases. Standalone Noah-MP model code was recently 
+   modernized for modularity and accessibility (*He et al. 2023*). Support for this 
+   refactored version of the Noah-MP model is currently in development and will be 
+   included in a future WRF-Hydro release.
+
 3.3 Spatial Transformations
 ---------------------------
 
@@ -223,7 +242,7 @@ differing spatial frameworks. Section 3.3.1 describes the spatial
 transformation process which relies on regular, rectilinear grid-to-grid
 mapping using a simplified integer linear multiple
 aggregation/disaggregation scheme. This basic scheme has been utilized
-in WRF-Hydro since its creation as it was described in Gochis and Chen,
+in WRF-Hydro since its creation as it was described in *Gochis and Chen, 2003*.
 
 Section 3.3.2 describes new spatial transformation methods that have been
 developed and are currently supported in v5.0 and beyond and, more
@@ -332,7 +351,7 @@ content on the sub-grid from one model time step to the next, simple,
 linear sub-grid weighting factors are assigned. These values indicate
 the fraction of the total land surface model grid value that is
 partitioned to each sub-grid pixel. After disaggregation, the routing
-schemes are executed using the fine grid values.
+schemes are executed using the fine-grid values.
 
 Following execution of the routing schemes the fine-grid values are
 aggregated back to the native land surface model grid. The aggregation
@@ -407,9 +426,9 @@ regridding from one grid to another. The Earth System Modeling Framework
 coupling weather, climate, and related models. ESMF provides the
 :program:`ESMF_RegridWeightGen` utility for parallel generation of interpolation
 weights between two grid files in netCDF format. These utilities will
-work for structured (rectilinear) and unstructured grids. The NCAR
-Command Language (NCL) has supported the :program:`ESMF_RegridWeightGen` tool since
-version 6.1.0. Another commonly used tool in the atmospheric sciences
+work for structured (rectilinear) and unstructured grids. The :program:`ESMF_RegridWeightGen` 
+tool since can be accessed through python (through ESMPy) and the NCAR
+Command Language (NCL, deprecated). Another commonly used tool in the atmospheric sciences
 are the Climate Data Operators (CDO), which offer 1\ :sup:`st` and 2\ :sup:`nd`\-
 order conservative regridding (:program:`remapcon`, :program:`remapcon2`) and regrid weight
 generation (:program:`gencon`, :program:`gencon2`) based on the work of *Jones (1999)*. All of
@@ -420,7 +439,8 @@ here store just the spatial weights. Thus, WRF-Hydro spatial
 correspondence files are more generic, with compact file sizes, and may
 be used for non-gridded data.
 
-This script quantifies the polygon to polygon correspondence between
+The WRF-Hydro geospatial pre-processing toolkit includes a script that 
+quantifies the polygon to polygon correspondence between
 geometries in two separate features (grid cells represented by polygons
 and basins represented by polygons). This correspondence is stored in a
 netCDF format file that contains the spatial weights and identification
