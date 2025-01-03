@@ -864,10 +864,10 @@ size as shown in Table 3.2.
 
 .. _section-3.6:
 
-3.6 Channel and Lake Routing
+3.6 Channel Routing
 ----------------------------
 
-There are multiple channel routing algorithms available in version 5.0
+There are multiple channel routing algorithms available in version |version_short|
 of WRF-Hydro. These algorithms operate either on the resolution of the
 fine grid (gridded routing) or on a vectorized network of channel
 reaches (linked routing, also referred to as reach-based routing), which
@@ -885,14 +885,12 @@ amount of water flowing onto the grid cell from overland flow, and
 exfiltration from groundwater flow. The quantity of surface head in
 excess of the retention depth is accumulated as stream channel inflow
 and is effectively “discharged” to the channel routing routine
-(described below). For calibration purposes gridded values of a scaling
-factor for `RETDEPRT` can be specified in the main hydro2dtbl.nc netCDF
-input file. Increases in the `RETDEPRT` scaling factor on channel pixels
-can encourage more local infiltration near the river channel leading to
-wetter soils that better emulate riparian conditions. Values of “channel
-inflow” are accumulated on the channel grid and can be output for
-visualization and analysis (see :ref:`Section 6 <section-6.0>` for a
-description of model outputs).
+(described below). In the current code, `RETDEPRT` is hard-coded to 
+5mm for channel pixels to encourage more local infiltration near the 
+river channel leading to wetter soils that better emulate riparian 
+conditions. Values of “channel inflow” are accumulated on the channel 
+grid and can be output for visualization and analysis 
+(see :ref:`Section 6 <section-6.0>` for a description of model outputs).
 
 .. _figure3.6:
 .. figure:: media/channel-routing-grid-link.png
@@ -1065,8 +1063,8 @@ decrease model time-steps in order to satisfy Courant conditions.
 Therefore WRF-Hydro utilizes variable time-stepping in the diffusive
 wave channel routing module in order to satisfy Courant constraints and
 avoid numerical dispersion and instabilities in the solutions. The
-initial value of the channel routing time-step is set equal to that of
-the overland flow routing timestep which is a function of grid spacing.
+initial value of the channel routing time-step is set equal to ``DTRT_CH``
+(which should be estimated based on the grid cell size, as for overland routing).
 If, during model integration the N-R convergence criteria for
 upstream-downstream streamflow discharge values is not met, the channel
 routing time-step is decreased by a factor of one-half and the N-R
@@ -1091,7 +1089,7 @@ relatively small catchments and not over large regions.
 
 .. _section-3.6.2:
 
-3.6.2. Linked Routing using Muskingum and Muskingum-Cunge
+3.6.2. Reach Routing using Muskingum and Muskingum-Cunge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The gridded catchment and drainage network of the land surface model
@@ -1099,17 +1097,17 @@ The gridded catchment and drainage network of the land surface model
 network, with a unique set of channel properties defined as constant for
 each reach. The flow out of each channel reach is determined based on
 flow hydraulics, channel storage and the lateral inflow contribution
-from each grid cell that is mapped to the individual link element. Since
+from each grid cell that is mapped to the individual reach element. Since
 reach lengths are not constant, the number of contributing grid cells to
-the link depend on the link length (:ref:`Figure 3.6 <figure3.6>`).
+the reach depend on the reach length (:ref:`Figure 3.6 <figure3.6>`).
 Flow is assumed always upstream-to-downstream, and channel junctions
-accommodate the merging of flows through the linked network. The simultaneous
+accommodate the merging of flows through the reach network. The simultaneous
 transformation of the often complex drainage network, source areas, and
 channel flow hydrographs in these large, complex networks necessitates
 a practical and efficient solution to the routing problem (*Brunner and
 Gorbrecht, 1991*).
 
-On the linked network, WRF-Hydro makes use of a fairly standard
+On the reach network, WRF-Hydro makes use of a fairly standard
 implementation of the Muskingum-Cunge (MC) method of hydrograph routing
 which makes use of time varying parameter estimates. The scheme is a
 practical approach to characterize watershed runoff characteristics over
@@ -1209,28 +1207,30 @@ width, *S\ o* is the channel slope and *dx* is the channel length.
 
 .. note:: Reach-based routing is highly sensitive to time step.
 
-3.6.3 Compound Channel (currently only functional in NWM)
+3.6.3 Compound Channel (limited configuration)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to represent a simplification of the behavior of a flood wave
 when it exceeds the channel bank, a compound channel formulation was
-added to the NWM (i.e. only active when ``channel_option=2`` and ``udmp=1``).
+added to WRF-Hydro. This option is currently only available when 
+``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+the Muskingum-Cunge reach-based channel routing scheme).
 A visual representation is shown in Figure 3.9. When the depth of the
 flow exceeds bankfull (`d > d_b`), then the wave celerity is given
 as the weighted celerity of the trapezoidal flow and the overbank
-portion of flow. This weighting is based on the cross sectional area of
+portion of flow. This weighting is based on the cross-sectional area of
 each, and allows water to enter the conceptual compound channel, where
 the Manning's coefficient of the compound channel portion, `n_{cc}`,
 is assumed rougher than the channel `n` by an unknown factor,
 `n_{cc}`. Based on a set of sensitivity experiments described in
-*Read et al., (forthcoming)*, the default value for in NWMv2.0 and v2.1 is
+*Read et al., (2023)*, the default value is
 `n_{cc}=2n`, such that the floodplain roughness is twice that of
 the channel. The introduction of compound channel requires values for
 three more parameters: bankfull depth (`d_b`), top widths of the
 trapezoid and the compound channel, `T_w` and `T_{w\_cc},`
 respectively. These parameters, in addition to `n_{cc}`, are defined
-in the Route_Link.nc file for the NWM. The default values in NWMv2.0 and
-v2.1 are defined as: (1) was determined using a published equation from
+in the Route_Link.nc file. The default values were 
+determined using a published equation from
 *Blackburn-Lynch et al., 2017*, who gathered regional USGS estimations of
 channel parameters and developed coefficients to describe the
 relationship of drainage area (`DA`) to `T_w` and to channel area
@@ -1238,7 +1238,7 @@ relationship of drainage area (`DA`) to `T_w` and to channel area
 and `A = 0.75(DA)^{0.53}`. Given these, `d_b` is determined
 using the standard equation for a trapezoid. As a default value,
 `T_{w\_cc}` is a multiplier on `T_w`. Sensitivity experiments
-presented in *Read et al. (forthcoming)* found that `T_{w\_cc}=3*T_w`
+presented in *Read et al. (2023)* found that `T_{w\_cc}=3*T_w`
 yielded the best streamflow performance, all else being equal.
 
 .. _figure3.9:
@@ -1249,6 +1249,10 @@ yielded the best streamflow performance, all else being equal.
    **Figure 3.9** Cross-sectional schematic of trapezoidal channel and compound
    channel in National Water Model, where the dashed lines represent roughness
    of the channel n, and of the compound channel, `n_{cc}`
+
+.. note:: The compound channel option is currently only available when 
+   ``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+   the Muskingum-Cunge reach-based channel routing scheme).
 
 .. _section-3.7:
 
@@ -1267,7 +1271,8 @@ must adjust these parameters accordingly - the model makes no other
 distinction between a reservoir and a lake.
 
 Fluxes into a lake/reservoir object occur through the channel network
-and when surface overland flow intersects a lake object. Fluxes from
+and when surface overland flow intersects a lake object (in the gridded 
+channel routing configuration only). Fluxes from
 lake/reservoir objects are made only through the channel network and no
 fluxes from lake/reservoir objects to the atmosphere or the land surface
 are currently represented (i.e. there is currently no lake evaporation
@@ -1302,24 +1307,44 @@ vertical side walls, such that the surface area is always constant.
 
    **Figure 3.10** Schematic of Level Pool Routing
 
-The following lake/reservoir parameters are required for level-pool
+The lake/reservoir parameters listed below are required for level-pool
 routing and are defined in the :file:`LAKEPARM.nc` parameter file. The GIS
-pre-processing tool can make either of these files and the model will
-read the one specified in the :file:`hydro.namelist` file:
+pre-processing tool can make this file and the model will
+read it as specified in the :file:`hydro.namelist` file.
 
-   -  Weir and Orifice Coefficients (`Co`, `Cw`)
-   -  Weir Length, `L` (`m`)
-   -  Orifice Area, `O_a` (`m^2`)
-   -  Reservoir Area, `A_s` (`km^2`)
-   -  Maximum reservoir height at full storage, `h_{max}` (`m`)
+   -  Weir and Orifice Coefficients, `Cw`, `Co` in equations above or ``WeirC``, ``OrificeC`` in :file:`LAKEPARM.nc`
+   -  Weir Length (`m`), `L` in equations above or ``WeirL`` in :file:`LAKEPARM.nc`
+   -  Weir Elevation (`m`), ``WeirE`` in :file:`LAKEPARM.nc`
+   -  Orifice Area (`m^2`), `O_a` in equations above or ``OrificeA`` in :file:`LAKEPARM.nc`
+   -  Orifice Elevation (`m`), ``OrificeE`` in :file:`LAKEPARM.nc`
+   -  Reservoir Area (`km^2`), `A_s` in equations above or ``LkArea`` in :file:`LAKEPARM.nc`
+   -  Maximum reservoir height at full storage (`m`), `h_{max}` in equations above or ``LkMxE`` in :file:`LAKEPARM.nc`
+   -  Dam length specified as a multiplier on weir length (`dimensionless`), `Dam_Length` in :file:`LAKEPARM.nc`
 
-The lake/reservoir flow routing option is activated when lake objects
-are defined and properly indexed as a data field in the high resolution
-terrain routing grid file. If lake/reservoir objects are present in the
-lake grid (and also within the channel network) then routing through
-those objects will occur if the channel is active AND if ``channel_option
-= 3`` (gridded routing). There are several special requirements for the
-lake grid and channel routing grids when lakes/reservoirs are to be
+For the gridded channel routing option, the lake/reservoir routing options
+require lake objects to be defined and properly indexed as a data 
+field in the high resolution terrain routing :file:`Fulldom_hires.nc` 
+file. If lake/reservoir objects are present in the
+lake grid (and also within the channel network) then level-pool routing through
+those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
+= 3`` (gridded routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+
+For reach-based channel routing options, the lake/reservoir routing options 
+require lake objects to be defined  and properly indexed as waterbody  objects 
+in the :file:`Route_Link.nc` file.
+If lake/reservoir objects are present in the
+:file:`Route_Link.nc` file then level-pool routing through
+those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
+= 1 or 2`` (reach routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+
+The ``lake_option`` in :file:`hydro.namelist` can also be used to turn off lake/reservoir 
+routing completely (``lake_option = 0``), set the waterbodies to simply pass water through 
+from inflow to outflow with no storage or delay (``lake_option = 2``), or activate data 
+assimilation (specific to the NOAA National Water Model and not currently 
+supported outside of that configuration).
+
+There are several special requirements for the
+lake and channel files when lakes/reservoirs are to be
 represented and these are discussed in Sections :ref:`5.4 <section-5.4>`
 and :ref:`5.6 <section-5.6>`.
 
@@ -1327,11 +1352,15 @@ and :ref:`5.6 <section-5.6>`.
 
 :file:`Routing/module_channel_routing.F90`
 
+:file:`Routing/Reservoirs/Level_Pool/module_levelpool.F90`
+
 .. rubric:: Relevant namelist options:
 
 :file:`hydro.namelist`:
 
--  ``route_lake_f`` (optional) - Path to lake parameter file to support
+-  ``lake_option`` - Option to specify lake/reservoir routing behavior
+   (0=lakes off, 1=level pool, 2=passthrough, 3=reservoir DA).
+-  ``route_lake_f`` - Path to lake parameter file to support
    level-pool reservoir routing methods.
 
 .. note:: As mentioned in the paragraph above, if in the
