@@ -1,6 +1,6 @@
 add_library(hydro_routing_diversions STATIC
-    module_diversions.F
-    module_diversions_timeslice.F
+    module_diversions.F90
+    module_diversions_timeslice.F90
 )
 
 add_dependencies(hydro_routing_diversions hydro_orchestrator)
