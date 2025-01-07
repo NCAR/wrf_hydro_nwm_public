@@ -7,6 +7,7 @@ add_subdirectory("Debug_Utilities")
 add_subdirectory("Routing/Overland")
 add_subdirectory("Routing/Subsurface")
 add_subdirectory("Routing/Reservoirs")
+add_subdirectory("Routing/Diversions")
 add_subdirectory("Data_Rec")
 add_subdirectory("Routing")
 add_subdirectory("HYDRO_drv")
@@ -112,13 +113,15 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
                 target_link_libraries(wrfhydro.exe hydro_nudging)
+                target_link_libraries(wrfhydro.exe hydro_routing_diversions)
                 add_dependencies(wrfhydro.exe hydro_nudging)
+                add_dependencies(wrfhydro.exe hydro_routing_diversions)
         endif()
 
         # bash commands to copy namelists to the Run directory
         set(BASH_CP_HRLDAS_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/namelist.hrldas ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/namelist.hrldas ${CMAKE_BINARY_DIR}/Run \; fi\;")
         set(BASH_CP_HYDRO_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/hydro.namelist ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run \; fi\;")
-   
+
         add_custom_command(TARGET wrfhydro.exe POST_BUILD
                 COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/tests/ctests/run_dir_makefile.mk ${CMAKE_BINARY_DIR}/Run/Makefile

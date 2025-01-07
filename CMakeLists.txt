@@ -6,13 +6,13 @@ endif()
 
 
 # set project name and version numbers
-project(WRF_Hydro LANGUAGES Fortran)
-set(WRF_Hydro_VERSION_MAJOR 5)
-set(WRF_Hydro_VERSION_MINOR 3)
-set(WRF_Hydro_VERSION_PATCH 0)
-set(National_Water_Model_VERSION_MAJOR 3)
-set(National_Water_Model_VERSION_MINOR 0)
-set(National_Water_Model_VERSION_PATCH beta)
+project (WRF_Hydro LANGUAGES Fortran C)
+set (WRF_Hydro_VERSION_MAJOR 5)
+set (WRF_Hydro_VERSION_MINOR 4)
+set (WRF_Hydro_VERSION_PATCH 0)
+set (National_Water_Model_VERSION_MAJOR 3)
+set (National_Water_Model_VERSION_MINOR 1)
+set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
 find_package(MPI REQUIRED)
@@ -211,7 +211,7 @@ elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
         # set compile flags for ifort
         message( "-- Using ifort")
         set(CMAKE_Fortran_FLAGS "-fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
-        set(CMAKE_Fortran_FLAGS_RELEASE "-O2")
+        set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=core-avx2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
 elseif ((CMAKE_Fortran_COMPILER_ID MATCHES "PGI.*") OR (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC.*"))
         message("-- Using NVHPC / PGI")

@@ -29,4 +29,5 @@ target_link_libraries(hydro_routing
        hydro_routing_reservoirs_hybrid
        hydro_data_rec
        hydro_routing_reservoirs_rfc
+       hydro_routing_diversions
 )
