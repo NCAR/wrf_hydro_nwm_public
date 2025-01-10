@@ -101,7 +101,7 @@ Future commands will reconfigure the ``Run`` directory.
 +=================================+
 | make croton                     |
 +---------------------------------+
-| makep croton-gridded            |
+| make croton-gridded             |
 +---------------------------------+
 | make croton-gridded-no-lakes    |
 +---------------------------------+
