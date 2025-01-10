@@ -602,7 +602,10 @@ https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
    forcing_name_LW = "LWDOWN"    !<-- variable name for downward longwave radiation
    forcing_name_SW = "SWDOWN"    !<-- variable name for downward shortwave radiation
    forcing_name_PR = "RAINRATE"  !<-- variable name for precipitation rate
-   forcing_name_SN = ""          !<-- variable name for ???
+   ! Optional way to supply liquid or snow fraction of precipitation, e.g., if provided 
+   ! by an atmospheric model. Otherwise the land model will estimate this.
+   ! NOTE: You can provide either frozen fraction or liquid fraction (no need to provide both).
+   forcing_name_SN = ""          !<-- variable name for frozen fraction of precipitation
    forcing_name_LF = "LQFRAC"    !<-- variable name for liquid fraction of precipitation
 
    /
@@ -865,31 +868,44 @@ description in the namelist which precedes the option.
 
    ! If using channel_option=2, activate the compound channel formulation? (Default=.FALSE.)
    ! This option is currently only supported if using reach-basedrouting with UDMP=1.
-   compound_channel = .FALSE.
+   compound_channel = .FALSE. !<-- Turn on or off the compound channel formulation.
+                              !    This option only works with Muskingum-Cunge reach-based
+                              !    routing with UDMP=1. This option also requires additional
+                              !    parameters in the routelink file.
 
    ! Switch to activate channel-loss option (0=no, 1=yes) [Requires Kchan in RouteLink]
-   ! channel_loss_option = 0
+   ! channel_loss_option = 0 !<-- Turn on or off channel loss. Note that the channel loss
+                             !    scheme currently only works for Muskingum-Cunge reach-based  
+                             !    channel routing. Also note that activating channel loss will
+                             !    create a sink in the model, so the water budget will not close.
+                             !    By default this option is off.
 
    ! Lake / Reservoir options (0=lakes off, 1=level pool (typical default),
    !                           2=passthrough, 3=reservoir DA [see &reservoir_nlist below])
-   lake_option = 1
+   lake_option = 1 !<-- Set the lake/reservoir option. Note that different options may
+                   !    require different domain/parameter/input files. Option 0 (lakes off) 
+                   !    will not generate reasonable results for gridded channel routing 
+                   !    domains where lake cells mask out channel cells.
 
    ! Specify the lake parameter file (e.g.: "LAKEPARM.nc"). Note: REQUIRED if lakes are on.
-   route_lake_f = "./DOMAIN/LAKEPARM.nc" !<-- If lakes are active,specify the path to the lake
-                                         !  parameter file, which provides thelake parameters.
+   route_lake_f = "./DOMAIN/LAKEPARM.nc" !<-- If lakes are active, specify the path to the lake
+                                         !    parameter file, which provides the lake parameters.
 
-   ! Switch to activate baseflow bucket model…
-   ! (0=none, 1=exp. bucket, 2=pass-through)
+   ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through,
+   ! 4=exp. bucket with area normalized parameters)
+   ! Option 4 is currently only supported if using reach-based routing with UDMP=1.
    GWBASESWCRT = 1 !<-- Turn on/off the ground water bucket module. Option 1 activates the
                    ! exponential bucket model, Option 2 bypasses the bucket model and dumps all
                    ! flow from the bottom of the soil column directly into the channel, and
+                   ! Option 4 is a variation of the exponential bucket model (option 1) where
+                   ! the coefficient is scaled by catchment area and only works for UDMP=1.
                    ! Option 0 creates a sink at the bottom of the soil column (water draining from
                    ! the bottom of the soil column leaves the system, so note that this option will
-                   ! not have water balance closure).
+                   ! not have water balance closure). 
 
    ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc").
    ! NOTE: Only required if baseflow model is active (1 or 2) and UDMP_OPT=0.
-   gwbasmskfil = "./DOMAIN/GWBASINS.nc" !<-- For configurations wherethe bucket or pass-through
+   gwbasmskfil = "./DOMAIN/GWBASINS.nc" !<-- For configurations where the bucket or pass-through
                                         ! groundwater modules are active, provide the path to the
                                         ! 2d netCDF file (LSM grid resolution) that maps the
                                         ! groundwater basin IDs. Bucket parameters will be specified
@@ -905,7 +921,8 @@ description in the namelist which precedes the option.
    ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
    UDMP_OPT = 0 !<-- If 1, this tells the model to use a "user-defined mapping" scheme to translate
                 ! between terrain and groundwater flow and reaches, e.g., NHDPlus.
-   ! If UDM is on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
+   
+   ! If user-define mapping is on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
    !udmap_file = "./DOMAIN/spatialweights.nc" !<-- If UDMP_OPT=1 (user defined mapping is active),
                                               ! provide the path to the required spatial weights
                                               ! file, which maps between grid cells and catchments.
@@ -1230,6 +1247,12 @@ on soil classification.
    +--------------+-------------------------------------------------------+
    | QTZ          | Soil quartz content                                   |
    +--------------+-------------------------------------------------------+
+   | AXAJ         | Tension water distribution inflection parameter       |
+   +--------------+-------------------------------------------------------+
+   | BXAJ         | Tension water distribution shape parameter            |
+   +--------------+-------------------------------------------------------+
+   | XXAJ         | Free water distribution shape parameter               |
+   +--------------+-------------------------------------------------------+
 
 `MPTABLE.TBL` - This file contains parameters that are a function of
 land cover type.
@@ -1472,6 +1495,13 @@ land cover type.
    | RSURF_EXP               | Exponent in the shape parameter for        |
    |                         | soil resistance option 1                   |
    +-------------------------+--------------------------------------------+
+   | IMPERV_URBAN            | impervious fraction to use for urban       |
+   |                         | type cells [0-1]                           |
+   +-------------------------+--------------------------------------------+
+   | SCAMAX                  | maximum fractional snow covered area [0-1] |
+   +-------------------------+--------------------------------------------+
+   | SWE_LIMIT               | maximum SWE limit [mm]                     |
+   +-------------------------+--------------------------------------------+
 
 `soil\_properties.nc` [optional]
 
@@ -1539,7 +1569,7 @@ land cover type.
    +------------+----------------------------------------------------------+
    | tau0       | Snow albedo decay timescale parameter [s]                |
    +------------+----------------------------------------------------------+
-   | imperv     | Impervious factor                                        |
+   | imperv     | Impervious fraction (optional) [0-1]                     |
    +------------+----------------------------------------------------------+
 
 
@@ -1813,19 +1843,21 @@ Variables within the `LAKEPARM.nc` file are described in the tables below.
    +--------------------+-------------------------------------------------+
    | WeirL              | Weir length [:math:`m`]                         |
    +--------------------+-------------------------------------------------+
+   | WeirE              | Weir elevation [:math:`m`, AMSL]                |
+   +--------------------+-------------------------------------------------+
    | OrificeC           | Orifice coefficient (ranges from zero to one)   |
    +--------------------+-------------------------------------------------+
    | OrificeA           | Orifice area [:math:`m^2`]                      |
    +--------------------+-------------------------------------------------+
    | OrificeE           | Orifice elevation [:math:`m`, AMSL]             |
    +--------------------+-------------------------------------------------+
+   | Dam_Length         | Dam length as a multiplier on WeirL [multiplier]|
+   +--------------------+-------------------------------------------------+
    | lat                | Latitude *[decimal degrees north]*              |
    +--------------------+-------------------------------------------------+
    | lon                | Longitude *[decimal degrees east]*              |
    +--------------------+-------------------------------------------------+
    | time               | time                                            |
-   +--------------------+-------------------------------------------------+
-   | WeirE              | Weir elevation [:math:`m`, AMSL]                |
    +--------------------+-------------------------------------------------+
    | ascendingIndex     | Index to use for sorting IDs (ascending)        |
    +--------------------+-------------------------------------------------+
