@@ -2235,11 +2235,10 @@ header information.
 A15. National Water Model (NWM) Configuration
 ---------------------------------------------
 
-It is important to note here that the community WRF-Hydro modeling
-system is currently the actual underlying modeling architecture that is
-used in the NOAA National Water Model. This means that the community
+The community WRF-Hydro modeling system is currently the underlying modeling 
+architecture for the NOAA National Water Model. This means that the community
 WRF-Hydro model code is configurable into the National Water Model
-configurations that runs in operations at the National Center for
+configurations that run in operations at the National Center for
 Environmental Prediction (NCEP).
 
 .. pull-quote::
@@ -2260,9 +2259,7 @@ Environmental Prediction (NCEP).
    inclusion of ~5500 reservoirs. The core of the NWM system is the
    National Center for Atmospheric Research (NCAR)-supported community
    Weather Research and Forecasting (WRF)-Hydro hydrologic model. WRF-Hydro
-   is configured to use the Noah Multi-*
-
-   *Parameterization (Noah-MP) Land Surface Model (LSM) to simulate land
+   is configured to use the Noah Multi-Parameterization (Noah-MP) Land Surface Model (LSM) to simulate land
    surface processes. Separate water routing modules perform diffusive wave
    surface routing and saturated subsurface flow routing on a 250m grid,
    and Muskingum-Cunge channel routing down NHDPlusV2 stream reaches. River
@@ -2275,380 +2272,63 @@ Environmental Prediction (NCEP).
 
 .. centered:: *Excerpt from NOUS41 KWBC 061735 PNSWSH NWS Office of Science and Technology Integration*
 
+Newer versions of the National Water Model were extended to Hawaii, Puerto Rico and the U.S. Virgin Islands, and South-Central Alaska.
+
+A15.1 Operational NWM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 For more information regarding the operational configuration, input, and
 output data of the National Water Model see the Office of Water
 Prediction website: http://water.noaa.gov/about/nwm and the Open Commons
 Consortium Environmental Data Commons website:
 http://edc.occ-data.org/nwm/.
 
-The NWM/WRF-Hydro modeling system suite of tools for data
-preparation, evaluation, and calibration. is continually under
-development and will be rolled out to the community as each tool becomes
-finalized with supporting documentation for public usage. To be
-notified when tools become available please subscribe to the WRF-Hydro
-email list https://ral.ucar.edu/projects/wrf_hydro/subscribe.
-
-The figures below illustrate the physics permutations available in the
-WRF-Hydro framework and the Noah-MP land surface model as well as the
-current National Water Model configuration as of March 2018, the
-NWM ecosystem and suite of tools and sample NWM configuration
-namelists.
-
-.. _figure-A15.1:
-.. figure:: media/hydro-physics-permutations.png
-   :align: center
-   :scale: 90%
-
-   **Figure A15.1** Illustration of WRF-Hydro physics permutations and those used in the
-   current configuration of the National Water Model (NWM).
-
-.. _figure-A15.2:
-.. figure:: media/noahmp-physics-permutations.png
-   :align: center
-   :scale: 75%
-
-   **Figure A15.2.** Illustration of Noah-MP physics permutations and those
-   used in the configuration of the National Water Model (NWM)
-
-.. _figure-A15.3:
-.. figure:: media/nwm-wrf-hydro.png
-   :align: center
-   :scale: 135%
-
-   **Figure A15.3** National Water Model/WRF-Hydro Modeling System
-   Ecosystem and Suite of Tools.
-
 There are different NWM configurations that run operationally. The full
 list of the configurations and their specifics can be found at
-https://water.noaa.gov/about/nwm. Below we provide the namelists for the
-Standard Analysis configuration (self-cycling with 3-hour look-back,
-used to initialize CONUS short- and medium-range forecasts) as the
-sample namelists. Note that the name of the files are different from the
-conventions used throughout this documentation and they match with the
-name of the files in operation (A subset of the model parameter files
-used by the operational implementation of the NWM is available on `NWM
-website <http://www.nohrsc.noaa.gov/pub/staff/keicher/NWM_live/NWM_parameters/>`__).
-The namelists for all the configurations are also being distributed with
-the model code.
-
-.. rubric::
-   Below are sample NWM configuration namelists for both the LSM (NoahMP) and WRF-Hydro:
-
-`namelist.hrldas` (sample NWM configuration)
-
-.. code-block:: fortran
-
-   &NOAHLSM_OFFLINE
-   HRLDAS_SETUP_FILE = "./DOMAIN/wrfinput_d01_1km.nc"
-   INDIR = "./forcing"
-   SPATIAL_FILENAME = "./DOMAIN/soil_veg_properties_ASM.nc"
-   OUTDIR = "./"
-   START_YEAR = 2018
-   START_MONTH = 06
-   START_DAY = 01
-   START_HOUR = 00
-   START_MIN = 00
-   RESTART_FILENAME_REQUESTED = "RESTART.2018060100_DOMAIN1"
-
-   ! Specification of simulation length in days OR hours
-   !KDAY = 1
-   KHOUR = 3
-
-   ! Physics options (see the documentation for details)
-   DYNAMIC_VEG_OPTION = 4
-   CANOPY_STOMATAL_RESISTANCE_OPTION = 1
-   BTR_OPTION = 1
-   RUNOFF_OPTION = 3
-   SURFACE_DRAG_OPTION = 1
-   FROZEN_SOIL_OPTION = 1
-   SUPERCOOLED_WATER_OPTION = 1
-   RADIATIVE_TRANSFER_OPTION = 3
-   SNOW_ALBEDO_OPTION = 1
-   PCP_PARTITION_OPTION = 1
-   TBOT_OPTION = 2
-   TEMP_TIME_SCHEME_OPTION = 3
-   GLACIER_OPTION = 2
-   SURFACE_RESISTANCE_OPTION = 4
-
-   ! Timesteps in units of seconds
-   FORCING_TIMESTEP = 3600
-   NOAH_TIMESTEP = 3600
-   OUTPUT_TIMESTEP = 3600
-
-   ! Land surface model restart file write frequency
-   RESTART_FREQUENCY_HOURS = 1
-
-   ! Split output after split_output_count output times.
-   SPLIT_OUTPUT_COUNT = 1
-
-   ! Soil layer specification
-   NSOIL=4
-   soil_thick_input(1) = 0.10
-   soil_thick_input(2) = 0.30
-   soil_thick_input(3) = 0.60
-   soil_thick_input(4) = 1.00
-
-   ! Forcing data measurement height for winds, temp, humidity
-   ZLVL = 10.0
-
-   ! Restart file format options
-   rst_bi_in = 0 !0: use netcdf input restart file
-         !1: use parallel io for reading multiple restart files (1 per core)
-   rst_bi_out = 0 !0: use netcdf output restart file
-         !1: use parallel io for outputting multiple restart files (1 per core)
-   /
-
-   &WRF_HYDRO_OFFLINE
-   ! Specification of forcing data: 1=HRLDAS-hr format, 2=HRLDAS-min
-   ! format, 3=WRF, 4=Idealized, 5=Ideal w/ spec. precip,
-   ! 6=HRLDAS-hr format w/ spec. precip, 7=WRF w/ spec. precip
-   FORC_TYP = 2
-
-   /
-
-`hydro.namelist` (sample NWM configuration)
-
-.. code-block:: fortran
-
-   &HYDRO_nlist
-
-   !!!! ---------------------- SYSTEM COUPLING -----------------------
-   !!!!
-
-   ! Specify what is being coupled: 1=HRLDAS (offline Noah-LSM), 2=WRF, 3=NASA/LIS, 4=CLM
-   sys_cpl = 1
-
-   !!!! ------------------- MODEL INPUT DATA FILES -------------------
-   !!!!
-
-   ! Specify land surface model gridded input data file (e.g.: "geo_em.d01.nc")
-   GEO_STATIC_FLNM = "./DOMAIN/geo_em.d01_1km.nc"
 
-   ! Specify the high-resolution routing terrain input data file (e.g.: "Fulldom_hires.nc")
-   GEO_FINEGRID_FLNM = "./DOMAIN/Fulldom_hires_netcdf_250m.nc"
+-  https://water.noaa.gov/about/nwm
 
-   ! Specify the spatial hydro parameters file (e.g.: "hydro2dtbl.nc")
-   ! If you specify a filename and the file does not exist, it will becreated for you.
-   HYDROTBL_F = "./DOMAIN/HYDRO_TBL_2D.nc"
+The latest NWM configuration and files can be found on the NOAA NCEP site:
 
-   ! Specify spatial metadata file for land surface grid. (e.g.: "GEOGRID_LDASOUT_Spatial_Metadata.nc")
-   LAND_SPATIAL_META_FLNM = "./DOMAIN/WRF_Hydro_NWM_geospatial_data_template_land_GIS.nc"
+-  https://www.nco.ncep.noaa.gov/pmb/codes/nwprod/
+   (scroll to the nwm.vX folder)
 
-   ! Specify the name of the restart file if starting from restart...comment out with '!' if not...
-   RESTART_FILE = 'HYDRO_RST.2018-06-01_00:00_DOMAIN1'
+Namelists for different operational configurations can be found on the NOAA NCEP site, for example:
 
-   !!!! --------------------- MODEL SETUP OPTIONS --------------------
-   !!!!
+-  NWMv3.0 CONUS Analysis & Assimilation cycle:
+   https://www.nco.ncep.noaa.gov/pmb/codes/nwprod/nwm.v3.0.12/parm/analysis_assim/
 
-   ! Specify the domain or nest number identifier...(integer)
-   IGRID = 1
+-  NWMv3.0 South-Central Alaska Medium-Range Forecast cycle:
+   https://www.nco.ncep.noaa.gov/pmb/codes/nwprod/nwm.v3.0.12/parm/ak_medium_range/
 
-   ! Specify the restart file write frequency...(minutes)
-   ! A value of -99999 will output restarts on the first day of the month only.
-   rst_dt = 60
+-  NWMv3.0 Hawaii Short-Range Forecast cycle:
+   https://www.nco.ncep.noaa.gov/pmb/codes/nwprod/nwm.v3.0.12/parm/hi_short_range/
 
-   ! Reset the LSM soil states from the high-res routing restart file (1=overwrite, 0=no overwrite)
-   ! NOTE: Only turn this option on if overland or subsurface rotuing is active!
-   rst_typ = 1
+-  NWMv3.0 Puerto Rico & U.S. Virgin Islands Short-Range Forecast cycle:
+   https://www.nco.ncep.noaa.gov/pmb/codes/nwprod/nwm.v3.0.12/parm/pr_short_range/
 
-   ! Restart file format control
 
-   rst_bi_in = 0 !0: use netcdf input restart file (default)
-   !1: use parallel io for reading multiple restart files, 1 per core
+An archive of National Water Model operational outputs can be found on Google Cloud:
 
-   rst_bi_out = 0 !0: use netcdf output restart file (default)
-   !1: use parallel io for outputting multiple restart files, 1 per core
+-  https://console.cloud.google.com/storage/browser/national-water-model/
 
-   ! Restart switch to set restart accumulation variables to 0 (0=no reset, 1=yes reset to 0.0)
-   RSTRT_SWC = 1
 
-   ! Specify baseflow/bucket model initialization...(0=cold start from table, 1=restart file)
-   GW_RESTART = 1
+A15.2 NWM Retrospectives
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   !!!! -------------------- MODEL OUTPUT CONTROL --------------------
-   !!!!
+In addition to the operational model outputs, we also produce long-term (20-40 year)
+retrospectives for most versions of the National Water Model.
 
-   ! Specify the output file write frequency...(minutes)
-   out_dt = 60
 
-   ! Specify the number of output times to be contained within each output history file...(integer)
-   ! SET = 1 WHEN RUNNING CHANNEL ROUTING ONLY/CALIBRATION SIMS!!!
-   ! SET = 1 WHEN RUNNING COUPLED TO WRF!!!
-   SPLIT_OUTPUT_COUNT = 1
+The National Water Model Retrospectives can be found on AWS and Google Cloud:
 
-   ! Specify the minimum stream order to output to netcdf point file...(integer)
-   ! Note: lower value of stream order produces more output.
-   order_to_write = 1
+-  https://registry.opendata.aws/nwm-archive/
 
-   ! Flag to turn on/off new I/O routines: 0 = deprecated output routines (use when running with Noah LSM),
-   ! 1 = with scale/offset/compression, ! 2 = with scale/offset/NO compression,
-   ! 3 = compression only, 4 = no scale/offset/compression (default)
-   io_form_outputs = 2
+-  https://console.cloud.google.com/storage/browser/national-water-model-v3-0
 
-   ! Realtime run configuration option:
-   ! 0=all (default), 1=analysis, 2=short-range, 3=medium-range, 4=long-range, 5=retrospective,
-   ! 6=diagnostic (includes all of 1-4 outputs combined)
-   io_config_outputs = 1
 
-   ! Option to write output files at time 0 (restart cold start time): 0=no, 1=yes (default)
-   t0OutputFlag = 1
 
-   ! Options to output channel & bucket influxes. Only active for UDMP_OPT=1.
-   ! Nonzero choice requires that out_dt above matches NOAH_TIMESTEP in namelist.hrldas.
-   ! 0=None (default), 1=channel influxes (qSfcLatRunoff, qBucket)
-   ! 2=channel+bucket fluxes (qSfcLatRunoff, qBucket, qBtmVertRunoff_toBucket)
-   ! 3=channel accumulations (accSfcLatRunoff, accBucket) \*\*NOT TESTED\*\*
 
-   output_channelBucket_influx = 2
-
-   ! Output netcdf file control
-   CHRTOUT_DOMAIN = 1 ! Netcdf point timeseries output at all channel points (1d)
-                      ! 0 = no output, 1 = output
-
-   CHANOBS_DOMAIN = 0 ! Netcdf point timeseries at forecast points or gage points (defined in Routelink)
-   ! 0 = no output, 1 = output at forecast points or gage points.
-
-   CHRTOUT_GRID = 0 ! Netcdf grid of channel streamflow values (2d)
-                    ! 0 = no output, 1 = output
-                    ! NOTE: Not available with reach-based routing
-
-   LSMOUT_DOMAIN = 0 ! Netcdf grid of variables passed between LSM and routing components (2d)
-                     ! 0 = no output, 1 = output
-                     ! NOTE: No scale_factor/add_offset available
-
-   RTOUT_DOMAIN = 1 ! Netcdf grid of terrain routing variables on routing grid (2d)
-                    ! 0 = no output, 1 = output
-
-   output_gw = 0 ! Netcdf GW output, 0 = no output, 1 = output
-   outlake = 1 ! Netcdf grid of lake values (1d), 0 = no output, 1 = output
-
-   frxst_pts_out = 0 ! ASCII text file of forecast points or gage points (defined in Routelink)
-                     ! 0 = no output, 1 = output
-
-   !!!! ------------ PHYSICS OPTIONS AND RELATED SETTINGS ------------
-   !!!!
-
-   ! Specify the number of soil layers (integer) and the depth of the bottom of each layer... (meters)
-   ! Notes: In Version 1 of WRF-Hydro these must be the same as in the namelist.input file.
-   ! Future versions will permit this to be different.
-   NSOIL=4
-   ZSOIL8(1) = -0.10
-   ZSOIL8(2) = -0.40
-   ZSOIL8(3) = -1.00
-   ZSOIL8(4) = -2.00
-
-   ! Specify the grid spacing of the terrain routing grid...(meters)
-   DXRT = 250.0
-
-   ! Specify the integer multiple between the land model grid and the terrain routing grid...(integer)
-   AGGFACTRT = 4
-
-   ! Specify the channel routing model timestep...(seconds)
-   DTRT_CH = 300
-
-   ! Specify the terrain routing model timestep...(seconds)
-   DTRT_TER = 10
-
-   ! Switch to activate subsurface routing...(0=no, 1=yes)
-   SUBRTSWCRT = 1
-
-   ! Switch to activate surface overland flow routing...(0=no, 1=yes)
-   OVRTSWCRT = 1
-
-   ! Specify overland flow routing option: 1=Steepest Descent (D8) 2=CASC2D (not active)
-   ! NOTE: Currently subsurface flow is only steepest descent
-   rt_option = 1
-
-   ! Switch to activate channel routing...(0=no, 1=yes)
-   CHANRTSWCRT = 1
-
-   ! Specify channel routing option: 1=Muskingam-reach, 2=Musk.-Cunge-reach, 3=Diff.Wave-gridded
-   channel_option = 2
-
-   ! Specify the reach file for reach-based routing options (e.g.: "Route_Link.nc")
-   route_link_f = "./DOMAIN/RouteLink_NHDPLUS.nc"
-
-   ! If using channel_option=2, activate the compound channel formulation? (Default=.FALSE.)
-   compound_channel = .TRUE.
-
-   ! Specify the lake parameter file (e.g.: "LAKEPARM.nc").
-   ! Note REQUIRED if lakes are on.
-   route_lake_f = "./DOMAIN/LAKEPARM_NHDPLUS.nc"
-
-   ! Switch to activate baseflow bucket model...(0=none, 1=exp. bucket, 2=pass-through)
-   GWBASESWCRT = 1
-
-   ! Groundwater/baseflow 2d mask specified on land surface model grid (e.g.: "GWBASINS.nc")
-   ! Note: Only required if baseflow model is active (1 or 2) and UDMP_OPT=0.
-   gwbasmskfil = "./DOMAIN/GWBASINS.nc"
-
-   ! Groundwater bucket parameter file (e.g.: "GWBUCKPARM.nc")
-   GWBUCKPARM_file = "./DOMAIN/GWBUCKPARM_CONUS.nc"
-
-   ! User defined mapping, such NHDPlus: 0=no (default), 1=yes
-   UDMP_OPT = 1
-
-   ! If on, specify the user-defined mapping file (e.g.: "spatialweights.nc")
-   udmap_file = "./DOMAIN/spatialweights_250m_all_basins.nc"
-
-   /
-
-   &NUDGING_nlist
-
-   ! Path to the "timeslice" observation files.
-   timeSlicePath = "./nudgingTimeSliceObs/"
-   nudgingParamFile = "./DOMAIN/nudgingParams.nc"
-
-   ! Nudging restart file = "nudgingLastObsFile"
-   ! nudgingLastObsFile defaults to '', which will look for nudgingLastObs.YYYY-mm-dd_HH:MM:SS.nc
-   ! \*\*AT THE INITALIZATION TIME OF THE RUN\*\*. Set to a missing file to use no restart.
-
-   !nudgingLastObsFile = '/a/nonexistent/file/gives/nudging/cold/start'
-
-   !! Parallel input of nudging timeslice observation files?
-   readTimesliceParallel = .TRUE.
-
-   ! temporalPersistence defaults to true, only runs if necessary params present.
-   temporalPersistence = .TRUE.
-
-   ! The total number of last (obs, modeled) pairs to save in nudgingLastObs for
-   ! removal of bias. This is the maximum array length. (This option is active when persistBias=FALSE)
-   ! (Default=960=10days @15min obs resolution, if all the obs are present and longer if not.)
-   nLastObs = 480
-
-   ! If using temporalPersistence the last observation persists by default.
-   ! This option instead persists the bias after the last observation.
-   persistBias = .TRUE.
-
-   ! AnA (FALSE) vs Forecast (TRUE) bias persistence.
-   ! If persistBias: Does the window for calculating the bias end at
-   ! model init time (=t0)?
-   ! FALSE = window ends at model time (moving),
-   ! TRUE = window ends at init=t0(fcst) time.
-   ! (If commented out, Default=FALSE)
-   ! Note: Perfect restart tests require this option to be .FALSE.
-   biasWindowBeforeT0 = .FALSE.
-
-   ! If persistBias: Only use this many last (obs, modeled) pairs. (If Commented out, Default=-1*nLastObs)
-   ! > 0: apply an age-based filter, units=hours.
-   ! = 0: apply no additional filter, use all available/usable obs.
-   ! < 0: apply an count-based filter, units=count
-   maxAgePairsBiasPersist = 3
-
-   ! If persistBias: The minimum number of last (obs, modeled) pairs, with age less than
-   ! maxAgePairsBiasPersist, required to apply a bias correction. (default=8)
-   minNumPairsBiasPersist = 1
-
-   ! If persistBias: give more weight to observations closer in time? (default=FALSE)
-   invDistTimeWeightBias = .TRUE.
-
-   ! If persistBias: "No constructive interference in bias correction?", Reduce the bias adjustment
-   ! when the model and the bias adjustment have the same sign relative to the modeled flow at t0?
-   ! (default=FALSE)
-   ! Note: Perfect restart tests require this option to be .FALSE.
-   noConstInterfBias = .TRUE.
-
-   /
 
 
 .. _section-a16:
