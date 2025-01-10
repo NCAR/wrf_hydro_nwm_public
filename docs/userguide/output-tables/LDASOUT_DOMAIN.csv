@@ -1,0 +1,102 @@
+Variable Name,Long Name,Description,Units,IO_ConfigOutputs_0,IO_ConfigOutputs_1,IO_ConfigOutputs_2,IO_ConfigOutputs_3,IO_ConfigOutputs_4,IO_ConfigOutputs_5,IO_ConfigOutputs_6,Min,Max,Scale,Offset,Fill
+time,valid output time,Valid output time,minutes since 1970-01-01 00:00:00 UTC,Yes,Yes,Yes,Yes,Yes,Yes,Yes,N/A,N/A,N/A,N/A,N/A
+reference_time,model initialization time,Model initialization time,minutes since 1970-01-01 00:00:00 UTC,Yes,Yes,Yes,Yes,Yes,Yes,Yes,N/A,N/A,N/A,N/A,N/A
+x,x coordinate of projection,x coordinate (in native projection),native projection units,Yes,Yes,Yes,Yes,Yes,Yes,Yes,N/A,N/A,N/A,N/A,N/A
+y,y coordinate of projection,x coordinate (in native projection),native projection units,Yes,Yes,Yes,Yes,Yes,Yes,Yes,N/A,N/A,N/A,N/A,N/A
+IVGTYP,Dominant vegetation category,Dominant vegetation category,category,Yes,No,No,No,No,No,No,0,100,1,0,-9999
+ISLTYP,Dominant soil category,Dominant soil category,category,Yes,No,No,No,No,No,No,0,100,1,0,-9999
+FVEG,Green Vegetation Fraction,Fraction of surface covered by vegetation,fraction,Yes,No,No,No,No,No,No,0,1,0.01,0,-9999
+LAI,Leaf area index,Leaf area index,m2 m-2,Yes,No,No,No,No,No,No,0,20,0.1,0,-9999
+SAI,Stem area index,Stem area index,m2 m-2,Yes,No,No,No,No,No,No,0,20,0.1,0,-9999
+SWFORC,Shortwave forcing,Shortwave radiation forcing,W m-2,Yes,No,No,No,No,No,No,-1000,3000,0.1,0,-9999
+COSZ,Cosine of zenith angle,Cosine of zenith angle,-,Yes,No,No,No,No,No,No,-1,1,0.01,0,-9999
+LWFORC,Longwave forcing,Longwave radiation forcing,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+RAINRATE,Precipitation rate,Precipitation in model timestep,mm s-1,Yes,No,No,No,No,No,No,0,100,0.000001,0,-9999
+EMISS,Grid emissivity,Emissivity: grid-average,-,Yes,No,No,No,No,No,No,0,1,0.01,0,-9999
+FSA,Total absorbed SW radiation,Total absorbed SW radiation,W m-2,Yes,No,No,Yes,No,Yes,Yes,-1500,1500,0.1,0,-9999
+FIRA,Total net LW radiation to atmosphere,Total net LW radiation (+ to atmosphere),W m-2,Yes,No,No,Yes,No,Yes,Yes,-1500,1500,0.1,0,-9999
+GRDFLX,Heat flux into the soil,Ground heat flux: grid-average (+ to soil),W m-2,Yes,No,No,Yes,No,No,Yes,-1500,1500,0.1,0,-9999
+HFX,Total sensible heat to the atmosphere,Sensible heat flux: grid-average (+ to atmosphere),W m-2,Yes,No,No,Yes,No,Yes,Yes,-1500,1500,0.1,0,-9999
+LH,Total latent heat to the atmosphere,Latent heat flux: grid-average (+ to atmosphere),W m-2,Yes,No,No,Yes,No,Yes,Yes,-1500,1500,0.1,0,-9999
+ECAN,Canopy water evaporation rate,Canopy water evaporation rate,kg m-2 s-1,Yes,No,No,No,No,No,No,-100,100,0.000001,0,-9999
+EDIR,Direct from soil evaporation rate,Direct soil evaporation rate,kg m-2 s-1,Yes,No,No,No,No,No,No,-100,100,0.000001,0,-9999
+ALBEDO,Surface albedo,Total-grid surface albedo,-,Yes,No,No,No,No,No,No,0,1,0.01,0,-9999
+ETRAN,Transpiration rate,Transpiration rate,kg m-2 s-1,Yes,No,No,No,No,No,No,-100,100,0.000001,0,-9999
+UGDRNOFF,Accumulated underground runoff,Underground runoff: accumulated,mm,Yes,No,No,Yes,Yes,Yes,Yes,-100,100000,0.01,0,-9999
+SFCRNOFF,Accumulated surface runoff,Surface runoff: accumulated,mm,Yes,No,No,No,Yes,Yes,Yes,0,100000,0.001,0,-9999
+CANLIQ,Canopy liquid water content,Canopy liquid water content,mm,Yes,No,No,No,No,No,No,-5,30000,0.01,0,-9999
+CANICE,Canopy ice water content,Canopy ice water content,mm,Yes,No,No,No,No,No,No,-5,30000,0.01,0,-9999
+ZWT,Depth to the water table,Depth to water table,m,Yes,No,No,No,No,No,No,0,10,0.00001,0,-9999
+WA,Water in aquifer,Water in aquifer relative to reference level,kg m-2,Yes,No,No,No,No,No,No,0,10000,0.01,0,-9999
+WT,Water in aquifer and saturated soil,Water in aquifer and saturated soil,kg m-2,Yes,No,No,No,No,No,No,0,10000,0.01,0,-9999
+ACCPRCP,Accumulated precip,Accumulated precipitation,mm,Yes,No,No,No,No,No,No,0,1000000,0.01,0,-9999
+ACCECAN,Accumulated canopy water,Accumulated canopy evaporation,mm,Yes,No,No,Yes,No,No,Yes,-100,1000000,0.01,0,-9999
+ACCEDIR,Accumulated direct soil evap,Accumulated direct soil evaporation,mm,Yes,No,No,Yes,No,No,Yes,-100,1000000,0.01,0,-9999
+ACCETRAN,Accumulated transpiration,Accumulated transpiration,mm,Yes,No,No,Yes,No,No,Yes,-100,1000000,0.01,0,-9999
+SAV,Solar radiative heat flux aborbed by vegetation,Solar radiation absorbed: vegetation canopy,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+TR,Transpiration heat,Transpiration heat flux,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+EVC,Canopy evap heat,Latent heat flux: leaf to canopy air,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+IRC,Canopy net LW rad,Net emitted LW radiation: canopy,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+SHC,Canopy sensible heat,Sensible heat flux: leaf to canopy air,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+IRG,Ground net LW rad,Net emitted LW radiation: below-canopy ground,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+SHG,Ground sensible heat,Sensible heat flux: below-canopy ground to canopy air,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+EVG,Ground evap heat,Latent heat flux: below-canopy ground to canopy air,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+GHV,Ground heat flux + to soil vegetated,Ground heat flux: vegetated fraction (+ to soil),W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+SAG,Solar radiative heat flux absorved by ground,Solar radiation absorbed: ground surface,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+IRB,Net LW rad to atm bare,Net emitted LW radiation: bare ground,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+SHB,Sensible heat atm bare,Sensible heat flux: bare ground to atmosphere,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+EVB,Evaporation heat to atm bare,Latent heat flux: bare ground to atmosphere,W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+GHB,Ground heat flux + to soil bare,Ground heat flux: bare ground fraction (+ to soil),W m-2,Yes,No,No,No,No,No,No,-1500,1500,0.1,0,-9999
+TRAD,Surface radiative temperature,Surface radiative temperature: grid,K,Yes,No,No,Yes,No,Yes,Yes,0,400,0.1,0,-9999
+TG,Ground temperature,Ground temperature: grid-average,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+TV,Vegetation temperature,Vegetation leaf temperature,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+TAH,Canopy air temperature,Canopy air temperature,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+TGV,Ground surface Temp vegetated,Ground temperature: vegetated ground,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+TGB,Ground surface Temp bare,Ground temperature: bare ground,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+T2MV,2m Air Temp vegetated,Air temperature @ 2m: vegetated ground,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+T2MB,2m Air Temp bare,Air temperature @ 2m: bare ground,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+Q2MV,2m mixing ratio vegetated,Mixing ratio @ 2m: vegetated ground,kg/kg,Yes,No,No,No,No,No,No,0,1,0.0001,0,-9999
+Q2MB,2m mixing ratio bare,Mixing ratio @ 2m: bare ground,kg/kg,Yes,No,No,No,No,No,No,0,1,0.0001,0,-9999
+EAH,Canopy air vapor pressure,Canopy air vapor pressure,Pa,Yes,No,No,No,No,No,No,-1000,100000,0.1,0,-9999
+FWET,Wetted or snowed fraction of canopy,Fraction of canopy covered by liquid or frozen water,fraction,Yes,No,No,No,No,No,No,0,1,0.01,0,-9999
+ZSNSO_SN,Snow layer depths from snow surface,Snow and soil interface depths (from snow surface),m,Yes,No,No,No,No,No,No,-100,100,0.00001,0,-9999
+SNICE,Snow layer ice,Snow layer ice,mm,Yes,No,No,No,No,No,No,0,100000,0.01,0,-9999
+SNLIQ,Snow layer liquid water,Snow layer liquid water,mm,Yes,No,No,Yes,No,No,Yes,0,100000,0.01,0,-9999
+SOIL_T,soil temperature,Soil temperature,K,Yes,No,No,Yes,No,No,Yes,0,400,0.1,0,-9999
+SOIL_W,liquid volumetric soil moisture,Volumetric soil moisture: liquid,m3 m-3,Yes,No,No,No,No,Yes,Yes,0,1,0.01,0,-9999
+SNOW_T,snow temperature,Snow temperature,K,Yes,No,No,No,No,No,No,0,400,0.1,0,-9999
+SOIL_M,volumetric soil moisture,Volumetric soil moisture,m3 m-3,Yes,No,No,Yes,No,Yes,Yes,0,1,0.01,0,-9999
+SNOWH,Snow depth,Snow depth,m,Yes,Yes,Yes,Yes,No,Yes,Yes,0,100,0.0001,0,-9999
+SNEQV,Snow water equivalent,Snow water equivalent,kg m-2,Yes,Yes,Yes,Yes,Yes,Yes,Yes,0,100000,0.1,0,-9999
+QSNOW,Snowfall rate,Snowfall rate at ground surface,mm s-1,Yes,No,No,No,No,No,No,0,100,0.000001,0,-9999
+ISNOW,Number of snow layers,Number of active snow layers,count,Yes,No,No,Yes,No,No,Yes,0,10,1,0,-9999
+FSNO,Snow-cover fraction on the ground,Fraction of surface covered by snow,fraction,Yes,Yes,Yes,Yes,No,Yes,Yes,0,1,0.001,0,-9999
+ACSNOW,accumulated snow fall,Accumulated snow fall,mm,Yes,No,No,No,No,No,No,0,100000,0.01,0,-9999
+ACSNOM,accumulated melting water out of snow bottom,Accumulated melting water out of snow bottom,mm,Yes,No,No,Yes,Yes,No,Yes,0,100000,0.01,0,-9999
+CM,Momentum drag coefficient,Exchange coefficient: grid-average,-,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CH,Sensible heat exchange coefficient,Exchange coefficient: grid-average,-,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHV,Exchange coefficient vegetated,Exchange coefficient: vegetation-atmosphere,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHB,Exchange coefficient bare,Exchange coefficient: bare ground,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHLEAF,Exchange coefficient leaf,Exchange coefficient: leaf surface,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHUC,Exchange coefficient bare,Exchange coefficient: below-canopy,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHV2,Exchange coefficient 2-meter vegetated,Exchange coefficient: vegetation-atmosphere @ 2-meters,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+CHB2,Exchange coefficient 2-meter bare,Exchange coefficient: bare ground @ 2-meters,m s-1,Yes,No,No,No,No,No,No,-5,5,0.00001,0,-9999
+LFMASS,Leaf mass,Leaf carbon mass,g C m-2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+RTMASS,Mass of fine roots,Root carbon mass,g C m-2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+STMASS,Stem mass,Stem carbon mass,g C m-2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+WOOD,Mass of wood and woody roots,Wood and woody roots carbon mass,g C m-2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+STBLCP,Stable carbon in deep soil,Stable carbon in deep soil,g C m-2,Yes,No,No,No,No,No,No,0,5000,0.01,0,-9999
+FASTCP,Short-lived carbon in shallow soil,Short-lived carbon in shallow soil,g C m-2,Yes,No,No,No,No,No,No,0,5000,0.01,0,-9999
+NEE,Net ecosystem exchange,Net ecosystem exchange,g m-2 s-1 CO2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+GPP,Net instantaneous assimilation,Net instantaneous carbon assimilation,g m-2 s-1 C,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+NPP,Net primary productivity,Net primary productivity,g m-2 s-1 C,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+PSN,Total photosynthesis,Total photosynthesis,umol CO2 m-2 s-1,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+APAR,Photosynthesis active energy by canopy,Absorbed photosynthetically active radiation,W m-2,Yes,No,No,No,No,No,No,0,1000,0.01,0,-9999
+ACCET,Accumulated total ET,Accumulated total evapotranspiration,mm,Yes,Yes,Yes,Yes,Yes,Yes,Yes,-1000,1000000,0.01,0,-9999
+CANWAT,Total canopy water (liquid + ice),Total canopy water (liquid + ice),mm,Yes,No,No,Yes,Yes,No,Yes,-5,30000,0.01,0,-9999
+SOILICE,fraction of soil moisture that is ice,Fraction of soil moisture that is ice,fraction,Yes,No,No,Yes,No,No,Yes,0,1,0.01,0,-9999
+SOILSAT_TOP,fraction of soil saturation (top 2 layers),Fraction of soil saturation (top 2 layers),fraction,Yes,Yes,Yes,Yes,Yes,No,Yes,0,1,0.001,0,-9999
+SOILSAT,fraction of soil saturation (column integrated),Fraction of soil saturation (column integrated),fraction,Yes,No,No,No,Yes,No,Yes,0,1,0.001,0,-9999
+SNOWT_AVG,average snow temperature (by layer mass),Average snow temperature (by layer mass),K,Yes,Yes,Yes,Yes,No,No,Yes,0,400,0.1,0,-9999
+ALBSND,snowpack albedo (direct),Snowpack albedo (direct),-,Yes,No,No ,No,No,Yes,Yes,0,1,0.01,0,-9999
+ALBSNI,snowpack albedo (diffuse),Snowpack albedo (diffuse),-,Yes,No,No,No,No ,Yes,Yes,0,1,0.01,0,-9999
