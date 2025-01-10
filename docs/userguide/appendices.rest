@@ -2593,53 +2593,74 @@ layers contain the initialized ice.
 A17. Model Output Variables
 ---------------------------------------------
 
-.. rubric:: 1. Land surface model output variables
+A17.1. Land surface model output variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-\
    :file:`{YYYYMMDDHHMM}.LDASOUT_DOMAIN{X}`
 
-.. rubric:: 2. Land surface diagnostic output variables
+   .. csv-table:: LDASOUT
+      :file: output-tables/LDASOUT_DOMAIN.csv
+      :header-rows: 1
 
-\
+A17.2. Land surface diagnostic output variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
    :file:`{YYYYMMDDHHMM}.LSMOUT_DOMAIN{X}`
 
+   .. csv-table:: LSMOUT
+      :file: output-tables/LSMOUT.csv
+      :header-rows: 1
 
-.. rubric:: 3. Streamflow output variables at all channel reaches/cells
+A17.3. Streamflow output variables at all channel reaches/cells
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-\
    :file:`{YYYYMMDDHHMM}.CHRTOUT_DOMAIN{X}`
 
+   .. csv-table:: CHRTOUT
+      :file: output-tables/CHRTOUT_DOMAIN.csv
+      :header-rows: 1
 
+A17.4. Streamflow output variables at forecast points or gage reaches/cells
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rubric:: 4. Streamflow output variables at forecast points or gage reaches/cells
-
-\
    :file:`{YYYYMMDDHHMM}.CHANOBS_DOMAIN{X}`
 
+   .. csv-table:: CHANOBS_DOMAIN
+      :file: output-tables/CHANOBS_DOMAIN.csv
+      :header-rows: 1
 
+A17.5. Streamflow output variables on the 2D high resolution routing grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rubric:: 5. Streamflow output variables on the 2D high resolution routing grid
-
-\
    :file:`{YYYYMMDDHHMM}.CHRTOUT_GRID{X}`
 
+   .. csv-table:: CHRTOUT_GRID
+      :file: output-tables/CHRTOUT_GRID.csv
+      :header-rows: 1
 
+A17.6. Terrain routing variables on the 2D high resolution routing grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rubric:: 6. Terrain routing variables on the 2D high resolution routing grid
-
-\
    :file:`{YYYYMMDDHHMM}.RTOUT_DOMAIN{X}`
 
+   .. csv-table:: RTOUT
+      :file: output-tables/RTOUT_DOMAIN.csv
+      :header-rows: 1
 
+A17.7. Lake output variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rubric:: 7. Lake output variables
-
-\
    :file:`{YYYYMMDDHHMM}.LAKEOUT_DOMAIN{X}`
 
+   .. csv-table:: LAKEOUT
+      :file: output-tables/LAKEOUT_DOMAIN.csv
+      :header-rows: 1
 
+A17.8. Ground water output variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. rubric:: 8. Ground water output variables
-
-\
    :file:`{YYYYMMDDHHMM}.GWOUT_DOMAIN{X}`
+
+   .. csv-table:: GWOUT
+      :file: output-tables/GWOUT_DOMAIN.csv
+      :header-rows: 1
