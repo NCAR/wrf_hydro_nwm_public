@@ -219,6 +219,38 @@ optionally running the Crocus snowpack model within NoahMP for glacial
 representation. For details on using this option, please see
 :ref:`Appendix 16 <section-a16>`.
 
+The Noah-MP version in WRF-Hydro also includes an option for adjusting
+infiltration vs. surface runoff partitioning as a function of impervious
+surface cover. The default Noah-MP behavior is to set a very narrow range 
+of soil water holding capacity for cells classified as urban. This has the 
+effect of generating more runoff, but also results in very wet cells 
+that may or may not be appropriate for your application. The new physics setting
+(``IMPERV_OPTION`` in :file:`namelist.hrldas`) includes 4 options:
+
+-  Option 0 (no adjustment): Urban cells will be treated the same as all other 
+   cells and will use the provided soil and surface parameters to calculate partitoning 
+   between infiltration and surface runoff.
+
+-  Option 1 (total): If spatially distributed parameters are active (``SPATIAL_SOIL=1`` on 
+   code compile), the model will expect an impervious fraction grid (``imperv``) to be 
+   included in the soil_properties.nc file. The model will use this fractional value 
+   to automatically partition that fraction (``imperv``) of effective precipitation 
+   reaching the surface to direct surface runoff. The rest (1-``imperv``) will be available 
+   for infiltration. If spatially distributed parameters are not active (``SPATIAL_SOIL=0`` 
+   on code compile), the model will use the ``IMPERV_URBAN`` value from :file:`MPTABLE.TBL` for 
+   impervious fraction for all urban cells.
+
+-  Option 2 (Alley&Veenhuis): Similar to Option 1, with the modification that the 
+   provided impervious fraction will be adjusted to account for local capture of some
+   runoff to adjacent green spaces. This adjustment uses an empirical formulation
+   derived in Alley & Veenhuis (1983, https://doi.org/10.1061/(ASCE)0733-9429(1983)109:2(313) ).
+   In the future we plan to test options that derive an adjustment factor based on 
+   impervious connectivity or other local (sub-grid) conditions. 
+
+-  Option 9 (original formulation): This reverts back to the original Noah-MP configuration
+   where soil water holding capacity is adjusted for urban cells and impervious fraction is not used.
+
+
 .. note::
    The Noah-MP code within WRF-Hydro has some additional features that were added 
    specifically for WRF-Hydro hydrologic applications, such as spatially distributed 
@@ -827,6 +859,19 @@ size as shown in Table 3.2.
    | 500     | 30      |
    +---------+---------+
 
+
+WRF-Hydro also includes an impervious surface adjustment option for overland routing. If this 
+scheme is activated (``imperv_adj = 0`` in :file:`hydro.namelist`) then the overland roughness 
+Manning's coefficient and maximum retention depth are adjusted based on the impervious fraction 
+provided as ``IMPERVFRAC`` in :file:`Fulldom_hires.nc`. Specifically, maximum retention depth 
+is multiplied by (1 - ``IMPERVFRAC``) (so smaller values for higher imperviousness). Manning's 
+roughness for overland routing is scaled based on a linear weighting of smoothness 
+(1/roughness, see Liong et al. 1989) and assuming a roughness of 0.02 for impervious and native 
+cell roughness for pervious:
+
+OVROUGHRT = 1 / ((1/0.02)*impervfrac + (1/OVROUGHRT)*(1-impervfrac))
+
+
 .. rubric:: Relevant code modules:
 
 :file:`Routing/Noah_distr_routing_overland.F90`
@@ -861,6 +906,7 @@ size as shown in Table 3.2.
 -  ``OV_ROUGH`` in :file:`HYDRO.TBL` or ``OV_ROUGH2D`` in
    :file:`hydro2dtbl.nc` - Manning's roughness for overland flow (by
    default a function of land use type).
+
 
 .. _section-3.6:
 
