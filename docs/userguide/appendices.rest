@@ -536,21 +536,87 @@ https://github.com/NCAR/hrldas-release/blob/release/HRLDAS/run/README.namelist
 
    ! Physics options (see the documentation for details)
 
-   DYNAMIC_VEG_OPTION = 4
-   CANOPY_STOMATAL_RESISTANCE_OPTION = 1
-   BTR_OPTION = 1
-   RUNOFF_OPTION = 3
-   SURFACE_DRAG_OPTION = 1
-   FROZEN_SOIL_OPTION = 1
-   SUPERCOOLED_WATER_OPTION = 1
-   RADIATIVE_TRANSFER_OPTION = 3
-   SNOW_ALBEDO_OPTION = 2
-   PCP_PARTITION_OPTION = 1
-   TBOT_OPTION = 2
-   TEMP_TIME_SCHEME_OPTION = 3
-   GLACIER_OPTION = 2
-   SURFACE_RESISTANCE_OPTION = 4
-   IMPERV_OPTION = 9  !(0->none; 1->total; 2->Alley&Veenhuis; 9->orig)
+   DYNAMIC_VEG_OPTION = 4 !<-- options for dynamic vegetation: 
+                      !   1 -> off (use table LAI; use FVEG = SHDFAC from input)
+                      !   2 -> on  (together with OPT_CRS = 1) 
+                      !   3 -> off (use table LAI; calculate FVEG)
+                      ! **4 -> off (use table LAI; use maximum vegetation fraction)
+                      ! **5 -> on  (use maximum vegetation fraction)
+                      !   6 -> on  (use FVEG = SHDFAC from input)
+                      !   7 -> off (use input LAI; use FVEG = SHDFAC from input)
+                      !   8 -> off (use input LAI; calculate FVEG)
+                      !   9 -> off (use input LAI; use maximum vegetation fraction)
+
+   CANOPY_STOMATAL_RESISTANCE_OPTION = 1 !<-- options for canopy stomatal resistance
+                      ! **1 -> Ball-Berry
+                      !   2 -> Jarvis
+
+   BTR_OPTION = 1 !<-- options for soil moisture factor for stomatal resistance
+                      ! **1 -> Noah (soil moisture) 
+                      !   2 -> CLM  (matric potential)
+                      !   3 -> SSiB (matric potential)
+
+   RUNOFF_OPTION = 3 !<-- options for runoff and groundwater
+                      !   1 -> TOPMODEL with groundwater (Niu et al. 2007 JGR) 
+                      !   2 -> TOPMODEL with an equilibrium water table (Niu et al. 2005 JGR)
+                      ! **3 -> original surface and subsurface runoff (free drainage)
+                      !   4 -> BATS surface and subsurface runoff (free drainage)
+                      !   5 -> Miguez-Macho&Fan groundwater scheme (Miguez-Macho et al. 2007 JGR; 
+                      !                   Fan et al. 2007 JGR) [NOT YET SUPPORTED WITH WRF-HYDRO]
+                      !   7 -> Xinanjiang runoff scheme
+
+
+   SURFACE_DRAG_OPTION = 1 !<-- options for surface layer drag coeff (CH & CM)
+                      ! **1 -> M-O
+                      !   2 -> original Noah (Chen97)
+
+   FROZEN_SOIL_OPTION = 1 !<-- options for frozen soil permeability
+                      ! **1 -> linear effects, more permeable (Niu and Yang, 2006, JHM) 
+                      !   2 -> nonlinear effects, less permeable (old)
+
+   SUPERCOOLED_WATER_OPTION = 1 !<-- options for supercooled liquid water (or ice fraction)
+                      ! **1 -> no iteration (Niu and Yang, 2006 JHM) 
+                      !   2 -> Koren's iteration 
+
+   RADIATIVE_TRANSFER_OPTION = 3 !<-- options for radiation transfer
+                      !   1 -> modified two-stream (gap = F(solar angle, 3D structure ...)<1-FVEG)
+                      !   2 -> two-stream applied to grid-cell (gap = 0) 
+                      ! **3 -> two-stream applied to vegetated fraction (gap=1-FVEG)
+
+   SNOW_ALBEDO_OPTION = 1 !<-- options for ground snow surface albedo
+                      ! **1 -> BATS 
+                      !   2 -> CLASS
+
+   PCP_PARTITION_OPTION = 1 !<-- options for partitioning  precipitation into rainfall & snowfall
+                      ! **1 -> Jordan (1991)
+                      !   2 -> BATS: when SFCTMP<TFRZ+2.2 
+                      !   3 -> SFCTMP < TFRZ 
+                      !   4 -> Use WRF microphysics output
+
+   TBOT_OPTION = 2 !<-- options for lower boundary condition of soil temperature
+                      !   1 -> zero heat flux from bottom (ZBOT and TBOT not used)
+                      ! **2 -> TBOT at ZBOT (8m) read from a file (original Noah)
+
+   TEMP_TIME_SCHEME_OPTION = 3 !<-- options for snow/soil temperature time scheme (only layer 1)
+                      !   1 -> semi-implicit; flux top boundary condition
+                      !   2 -> full implicit (original Noah); temperature top boundary condition
+                      ! **3 -> same as 1, but FSNO for TS calculation (generally improves snow; v3.7)
+
+   GLACIER_OPTION = 2 !<-- options for glacier treatment
+                       !   1 -> include phase change of ice
+                       ! **2 -> ice treatment more like original Noah (slab)
+
+   SURFACE_RESISTANCE_OPTION = 4 !<-- options for surface resistent to evaporation/sublimation
+                      !   1 -> Sakaguchi and Zeng, 2009 
+                      !   2 -> Sellers (1992)
+                      !   3 -> adjusted Sellers to decrease RSURF for wet soil 
+                      ! **4 -> option 1 for non-snow; rsurf = rsurf_snow for snow (set in MPTABLE); AD v3.8 
+
+   IMPERV_OPTION = 9 !<-- options for impervious adjustment for surface runoff partitioning
+                      !   0 -> none
+                      !   1 -> adjust based on impervious fraction
+                      !   2 -> adjust based on effective impervious fraction from Alley & Veenhuis
+                      ! **9 -> original formulation (varies based on runoff option)
 
    ! Timesteps in units of seconds
    FORCING_TIMESTEP = 3600 !<-- Timestep for forcing input data (in seconds)
