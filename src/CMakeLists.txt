@@ -1,3 +1,15 @@
+if(${PROJECT_NAME} STREQUAL "WRF")
+        # additions that WRF-Hydro's top CMakeLists.txt handles
+        add_compile_options( "${PROJECT_COMPILE_OPTIONS}" )
+        add_compile_definitions( "${PROJECT_COMPILE_DEFINITIONS}" )
+        set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/hydro/mods)
+        add_definitions(-DMPP_LAND)
+        if (WRF_HYDRO_NUDGING STREQUAL "1")
+                add_definitions(-DWRF_HYDRO_NUDGING=1)
+        endif()
+endif()
+
+
 # build the various sup-projects
 add_subdirectory("MPP")
 add_subdirectory("utils")
@@ -7,9 +19,13 @@ add_subdirectory("Debug_Utilities")
 add_subdirectory("Routing/Overland")
 add_subdirectory("Routing/Subsurface")
 add_subdirectory("Routing/Reservoirs")
+add_subdirectory("Routing/Diversions")
 add_subdirectory("Data_Rec")
 add_subdirectory("Routing")
 add_subdirectory("HYDRO_drv")
+if(${PROJECT_NAME} STREQUAL "WRF")
+        add_subdirectory("CPL/WRF_cpl")
+endif()
 
 if (WRF_HYDRO_NUDGING STREQUAL "1")
         add_subdirectory("nudging")
@@ -112,13 +128,15 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
                 target_link_libraries(wrfhydro.exe hydro_nudging)
+                target_link_libraries(wrfhydro.exe hydro_routing_diversions)
                 add_dependencies(wrfhydro.exe hydro_nudging)
+                add_dependencies(wrfhydro.exe hydro_routing_diversions)
         endif()
 
         # bash commands to copy namelists to the Run directory
         set(BASH_CP_HRLDAS_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/namelist.hrldas ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/namelist.hrldas ${CMAKE_BINARY_DIR}/Run \; fi\;")
         set(BASH_CP_HYDRO_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/hydro.namelist ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run \; fi\;")
-   
+
         add_custom_command(TARGET wrfhydro.exe POST_BUILD
                 COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/tests/ctests/run_dir_makefile.mk ${CMAKE_BINARY_DIR}/Run/Makefile
@@ -195,6 +213,25 @@ elseif (HYDRO_LSM MATCHES "Noah")
                 COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro.exe
         )
 
+elseif(${PROJECT_NAME} STREQUAL "WRF")
+        add_library(wrfhydro INTERFACE)
+        target_link_libraries(wrfhydro INTERFACE
+                hydro_utils
+                hydro_mpp
+                hydro_debug_utils
+                hydro_routing_overland
+                hydro_routing_subsurface
+                hydro_data_rec
+                hydro_routing
+                hydro_routing_reservoirs_levelpool
+                hydro_routing_reservoirs_hybrid
+                hydro_routing_reservoirs_rfc
+                hydro_routing_reservoirs
+                hydro_wrf_cpl
+                hydro_orchestrator
+                hydro_netcdf_layer
+                hydro_driver
+        )
 else()
         message("Unknown land surface model:" ${HYDRO_LSM} )
 endif()
