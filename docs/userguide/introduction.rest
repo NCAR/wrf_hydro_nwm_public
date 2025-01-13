@@ -17,7 +17,7 @@ system, the WRF-Hydro modeling system is not a singular 'model' per se
 but instead it is a modeling architecture that facilitates coupling of
 multiple alternative hydrological process representations. There are
 numerous (over 100) different configuration permutations possible in
-WRF-Hydro Version 5.2. Users need to become familiar with the concepts
+WRF-Hydro Version |version_short|. Users need to become familiar with the concepts
 behind the processes within the various model options in order to
 optimally tailor the system for their particular research and
 application activities.
@@ -68,13 +68,16 @@ computing applications. During late 2011 and 2012, the WRF-Hydro code
 underwent a major reconfiguration of its coding structures to facilitate
 greater and easier extensibility and upgradability with respect to the
 WRF model, other hydrological modeling components, and other Earth
-system modeling frameworks. The new code and directory structure
-implemented is reflected in this document. Additional changes to the
+system modeling frameworks. Additional changes to the
 directory structure occurred during 2014-2015 to accommodate the
 coupling with the new Noah-MP land modeling system. Between 2015-2018,
 new capabilities were added to permit more generalized, user-defined
 mapping onto irregular objects, such as catchments or hydrologic
-response units. As additional changes and enhancements to the WRF-Hydro
+response units. During 2018-2022, some of the modules underwent
+a code refactoring and automated testing capabilities were added.
+In 2024, the directory structure was again updated for consistency with modern
+software design practices and this user guide was ported to an interactive
+online format. As additional changes and enhancements to WRF-Hydro 
 occur they will be documented in future versions of this document.
 
 1.2 Model Description
@@ -122,7 +125,7 @@ and fully-coupled (to an atmospheric model) mode. Both time-evolving
 “forcing” and static input datasets are required for model operation.
 The exact specification of both forcing and static data depends greatly
 on the selection of model physics and component options to be used. The
-principle model physics options in WRF-Hydro include:
+principal model physics options in WRF-Hydro include:
 
 -  1-dimensional (vertical) land surface parameterization
 
@@ -186,8 +189,8 @@ used to delineate a stream channel network, open water (i.e., lake,
 reservoir, and ocean) grid cells and groundwater/baseflow basins. Water
 features are mapped onto the high-resolution terrain-routing grid and
 post-hoc consistency checks are performed to ensure consistency between
-the coarse resolution Noah/Noah-MP land model grid and the fine
-resolution terrain and channel routing grid.
+the coarse-resolution Noah/Noah-MP land model grid and the fine-resolution 
+terrain and channel routing grid.
 
 The WRF-Hydro model components calculate fluxes of energy and moisture
 either back to the atmosphere or also, in the case of moisture fluxes,
@@ -219,7 +222,7 @@ are discussed in detail in :ref:`section-6.0`
    +-----------------------------------------------------------+------------+
    | Soil temperature                                          | `K`        |
    +-----------------------------------------------------------+------------+
-   | Deep soil drainage                                        |            |
+   | Deep soil drainage                                        | `mm`       |
    +-----------------------------------------------------------+------------+
    | Surface runoff                                            | `mm`       |
    +-----------------------------------------------------------+------------+
@@ -235,8 +238,8 @@ are discussed in detail in :ref:`section-6.0`
    +-----------------------------------------------------------+------------+
    | Channel flow depth (optional with channel routing)        | `mm`       |
    +-----------------------------------------------------------+------------+
-   | Reservoir height and discharge (optional with channel and |            |
-   | reservoir routing)                                        |            |
+   | Reservoir height and discharge (optional with channel and | `m` and    |
+   | reservoir routing)                                        | `m^3/s`    |
    +-----------------------------------------------------------+------------+
 
 WRF-Hydro has been developed for Linux-based operating systems including
@@ -244,7 +247,7 @@ small local clusters and high-performance computing systems.
 Additionally, the model code has also been ported to a selection of
 virtual machine environments (e.g. "containers") to enable the use of
 small domain cases on many common desktop computing platforms (e.g.
-Windows and MacOS). The parallel computing schema is provided in
+Windows and MacOS) and in the cloud. The parallel computing schema is provided in
 :ref:`section-2.3`. WRF-Hydro utilizes a combination of netCDF and flat
 ASCII file formats.
 
