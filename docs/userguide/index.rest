@@ -15,7 +15,7 @@ The NCAR WRF-Hydro® Modeling System Technical Description
     | April 14, 2013
     |
     | Updated:
-    | January XX, 2025
+    | January 17, 2025
 
 Until further notice, please cite the WRF-Hydro® modeling system as
 follows:
