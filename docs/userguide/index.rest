@@ -15,32 +15,32 @@ The NCAR WRF-Hydro® Modeling System Technical Description
     | April 14, 2013
     |
     | Updated:
-    | October 17, 2024
+    | January 17, 2025
 
 Until further notice, please cite the WRF-Hydro® modeling system as
 follows:
 
-Gochis, D.J., M. Barlage, R. Cabell, M. Casali, A. Dugger, T. Eidhammer,
-K. FitzGerald, M. McAllister, J. McCreight, A. McCluskey, A. RafieeiNasab,
-S. Rasmussen, L. Read, K. Sampson, D. Yates, Y. Zhang (2024).
+Gochis, D.J., M. Barlage, R. Cabell, M. Casali, E. Dougherty, A. Dugger, T. Eidhammer, T. Enzminger, 
+K. FitzGerald, F. Felfelani, A. Gaydos, A. Mazrooei, M. McAllister, J. McCreight, A. McCluskey,
+N. Omani, A. RafieeiNasab, S. Rasmussen, L. Read, K. Sampson, I. Srivastava, D. Yates, Y. Zhang (2025).
 *The WRF-Hydro® Modeling System Technical Description,* (Version 5.4).
-NCAR Technical Note. 107 pages. Available online at:
+NCAR Technical Note. Available online at:
 https://wrf-hydro.readthedocs.io/en/latest/
 
 .. rubric:: FORWARD
 
 This Technical Description describes the WRF-Hydro® model coupling
-architecture and physics options, released in Version 5.4 in Oct. 2024.
+architecture and physics options, released in Version 5.4 in January 2025.
 As the WRF-Hydro® modeling system is developed further, this document
 will be continuously enhanced and updated. Please send feedback to
 wrfhydro@ucar.edu.
 
 .. rubric:: Prepared by:
 
-David Gochis, Michael Barlage, Ryan Cabell, Matt Casali, Aubrey Dugger, Trude
-Eidhammer, Katelyn FitzGerald, Molly McAllister, James McCreight, Alyssa
-McCluskey, Arezoo RafieeiNasab, Soren Rasmussen, Laura Read, Kevin Sampson,
-David Yates, and Yongxin Zhang
+David Gochis, Michael Barlage, Ryan Cabell, Matt Casali, Erin Dougherty, Aubrey Dugger, Trude
+Eidhammer, Tom Enzminger, Katelyn FitzGerald, Farshid Felfelani, Andy Gaydos, Amir Mazrooei, Molly McAllister, 
+James McCreight, Alyssa McCluskey, Nina Omani, Arezoo RafieeiNasab, Soren Rasmussen, Laura Read, Kevin Sampson,
+Ishita Srivastava, David Yates, and Yongxin Zhang
 
 .. rubric:: Special Acknowledgments:
 
@@ -48,55 +48,58 @@ Development of the NCAR WRF-Hydro system has been significantly enhanced
 through numerous collaborations. The following persons are graciously
 thanked for their contributions to this effort:
 
-John McHenry and Carlie Coats, Baron Advanced Meteorological Services
+- John McHenry and Carlie Coats, Baron Advanced Meteorological Services
 
-Martyn Clark and Fei Chen, National Center for Atmospheric Research
+- Martyn Clark, Fei Chen, Cenlin He, Prasanth Valayamkunnath, Dan Rosen, Rocky Dunlap, 
+  Alessandro Fanfarillo, National Center for Atmospheric Research
 
-Zong-Liang Yang, Cedric David, Peirong Lin and David Maidment of the
-University of Texas at Austin
+- Zong-Liang Yang, Cedric David, Peirong Lin and David Maidment of the
+  University of Texas at Austin
 
-Harald Kunstmann, Benjamin Fersch and Thomas Rummler of Karlsruhe
-Institute of Technology, Garmisch-Partenkirchen, Germany
+- Harald Kunstmann, Benjamin Fersch and Thomas Rummler of Karlsruhe
+  Institute of Technology, Garmisch-Partenkirchen, Germany
 
-Alfonso Senatore, University of Calabria, Cosenza, Italy
+- Alfonso Senatore, University of Calabria, Cosenza, Italy
 
-Brian Cosgrove, Ed Clark, Fernando Salas, Trey Flowers, Xia Feng,
-Yuqiong Liu, Nels Frazier,
+- Brian Cosgrove, Ed Clark, Fernando Salas, Trey Flowers, Zhengtao Cui, Xia Feng, Nels Frazier, 
+  James Halgren, Don Johnson, Yuqiong Liu, Dave Mattern, Fred Ogden, Cham Phan, Mehdi Rezaeianzadeh, 
+  and Tom Graziano of the National Oceanic and Atmospheric Administration Office of Water Prediction
 
-Fred Ogden, Dave Mattern, Don Johnson, and Tom Graziano of the National
-Oceanic and Atmospheric Administration Office of Water Prediction
+- Ismail Yucel, Middle East Technical University, Ankara, Turkey
 
-Ismail Yucel, Middle East Technical University, Ankara, Turkey
+- Erick Fredj, The Jerusalem College of Technology, Jerusalem, Israel
 
-Erick Fredj, The Jerusalem College of Technology, Jerusalem, Israel
+- Amir Givati, Surface water and Hydrometeorology Department, Israeli
+  Hydrological Service, Jerusalem.
 
-Amir Givati, Surface water and Hydrometeorology Department, Israeli
-Hydrological Service, Jerusalem.
+- Antonio Parodi, Fondazione CIMA - Centro Internazionale in Monitoraggio
+  Ambientale, Savona, Italy
 
-Antonio Parodi, Fondazione CIMA - Centro Internazionale in Monitoraggio
-Ambientale, Savona, Italy
+- Blair Greimann, Sedimentation and Hydraulics section, U.S. Bureau of
+  Reclamation
 
-Blair Greimann, Sedimentation and Hydraulics section, U.S. Bureau of
-Reclamation
+- Z George Xue and Dongxiao Yin, Louisiana State University
 
-Z George Xue and Dongxiao Yin, Louisiana State University
+- Tim Lahmers and Sujay Kumar, NASA Goddard Space Flight Center
 
 Funding support for the development and application of the WRF-Hydro®
 modeling system has been provided by:
 
-The National Science Foundation and the National Center for Atmospheric
-Research
+- The National Science Foundation National Center for Atmospheric
+  Research
 
-The U.S. National Weather Service
+- The U.S. National Weather Service
 
-The Colorado Water Conservation Board
+- The Colorado Water Conservation Board
 
-Baron Advanced Meteorological Services
+- Baron Advanced Meteorological Services
 
-National Aeronautics and Space Administration (NASA)
+- National Aeronautics and Space Administration (NASA)
 
-National Oceanic and Atmospheric Administration (NOAA) Office of Water
-Prediction (OWP)
+- National Oceanic and Atmospheric Administration (NOAA) Office of Water
+  Prediction (OWP)
+
+- U.S. Geological Survey (USGS) Water Mission Area
 
 
 .. toctree::

@@ -95,7 +95,10 @@ identified as 'channel' grid cells pass a portion of the surface water
 in excess of the local ponded water retention depth to the channel
 model. This current formulation implies that stream and lake inflow from
 the land surface is always positive to the stream or lake element. There
-currently are no channel or lake loss functions where water can move
+is an optional channel loss formulation *(Lahmers et al. 2019)* where water
+can seep from the channel; note that this water becomes a sink term and is
+not returned to the soil or baseflow. Currently there are no channel or 
+lake loss functions where water can move
 from channels or lakes back to the landscape. Channel flow in WRF-Hydro
 is represented by one of a few different user-selected methodologies
 described below. Water passing into and through lakes and reservoirs is
@@ -118,11 +121,14 @@ options in the model namelist file.
 
 .. note::
    As of this writing, only the Noah and Noah-MP land surface
-   models are supported within WRF-Hydro. Additional land surface models
-   such as CLM or land model driver frameworks, such as the NASA Land
-   Information System (LIS) have been coupled with WRF-Hydro but those
-   efforts are in various phases of development and are not yet formally
-   supported as part of the main code repository.
+   models are supported within WRF-Hydro. CLM coupling is currently
+   out-of-date and is not formally supported but is in the process of
+   being updated. The NASA Land Information System (LIS) has been coupled 
+   with WRF-Hydro through the NUOPC framework and is supported under
+   the `NASA Land Coupler <https://github.com/NASA-LIS/NASA-Land-Coupler>`_.
+
+3.2.1 Noah Land Surface Model (deprecated support only)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Noah land surface model is a community, 1-dimensional land surface
 model that simulates soil moisture (both liquid and frozen), soil
@@ -137,8 +143,8 @@ Project *(Smith, 2002)*. *Mahrt and Pan (1984)* and *Pan and Mahrt (1987)*
 developed the earliest predecessor to Noah at Oregon State University
 (OSU) during the mid-1980's. The original OSU model calculated sensible
 and latent heat flux using a two-layer soil model and a simplified plant
-canopy model. Recent development and implementation of the current
-version of Noah has been sustained through the community participation
+canopy model. Development and implementation of the Noah land model
+has been sustained through the community participation
 of various agency modeling groups and the university community (e.g.
 *Chen et al., 2005*). *Ek et al. (2003)* detail the numerous changes that
 have evolved since its inception including, a four layer soil
@@ -157,7 +163,7 @@ The Noah land surface model has been tested extensively in both offline
 1998*; *Bowling et al., 2003*) and coupled (e.g. *Chen et el., 1997*, *Chen
 and Dudhia, 2001*, *Yucel et al., 1998*; *Angevine and Mitchell, 2001*; and
 *Marshall et al., 2002*) modes. The most recent version of Noah is
-currently one of the operational LSP's participating in the interagency
+currently one of the operational LSM's participating in the interagency
 NASA-NCEP real-time Land Data Assimilation System (LDAS, 2003, *Mitchell
 et al., 2004* for details). Gridded versions of the Noah model are
 currently coupled to real-time weather forecasting models such as the
@@ -166,13 +172,17 @@ National Center for Environmental Prediction (NCEP) North American Model
 (2003)* and earlier works for more detailed descriptions of the
 1-dimensional land surface model physics of the Noah LSM.
 
-Support for the Noah Land Surface Model within WRF-Hydro is currently
-frozen at Noah version 3.6. Since the Noah LSM is not under active
-development by the community, WRF-Hydro is continuing to support Noah in
-deprecated mode only. Some new model features, such as the improved
-output routines, have not been setup to be backward compatible with Noah.
-Noah users should follow the guidelines in Appendix :ref:`A2 <section-a2>`
-for adapting the WRF-Hydro workflow to work with Noah.
+.. note::
+   Support for the Noah Land Surface Model within WRF-Hydro is currently
+   frozen at Noah version 3.6. Since the Noah LSM is not under active
+   development by the community, WRF-Hydro is continuing to support Noah in
+   deprecated mode only. Some new model features, such as the improved
+   output routines, have not been setup to be backward compatible with Noah.
+   Noah users should follow the guidelines in Appendix :ref:`A2 <section-a2>`
+   for adapting the WRF-Hydro workflow to work with Noah.
+
+3.2.2 Noah-MP Land Surface Model (recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Noah-MP is a land surface model (LSM) using multiple options for key
 land-atmosphere interaction processes (*Niu et al., 2011*). Noah-MP was
@@ -209,6 +219,47 @@ optionally running the Crocus snowpack model within NoahMP for glacial
 representation. For details on using this option, please see
 :ref:`Appendix 16 <section-a16>`.
 
+The Noah-MP version in WRF-Hydro also includes an option for adjusting
+infiltration vs. surface runoff partitioning as a function of impervious
+surface cover. The default Noah-MP behavior is to set a very narrow range 
+of soil water holding capacity for cells classified as urban. This has the 
+effect of generating more runoff, but also results in very wet cells 
+that may or may not be appropriate for your application. The new physics setting
+(``IMPERV_OPTION`` in :file:`namelist.hrldas`) includes 4 options:
+
+-  Option 0 (no adjustment): Urban cells will be treated the same as all other 
+   cells and will use the provided soil and surface parameters to calculate partitoning 
+   between infiltration and surface runoff.
+
+-  Option 1 (total): If spatially distributed parameters are active (``SPATIAL_SOIL=1`` on 
+   code compile), the model will expect an impervious fraction grid (``imperv``) to be 
+   included in the soil_properties.nc file. The model will use this fractional value 
+   to automatically partition that fraction (``imperv``) of effective precipitation 
+   reaching the surface to direct surface runoff. The rest (1-``imperv``) will be available 
+   for infiltration. If spatially distributed parameters are not active (``SPATIAL_SOIL=0`` 
+   on code compile), the model will use the ``IMPERV_URBAN`` value from :file:`MPTABLE.TBL` for 
+   impervious fraction for all urban cells.
+
+-  Option 2 (Alley&Veenhuis): Similar to Option 1, with the modification that the 
+   provided impervious fraction will be adjusted to account for local capture of some
+   runoff to adjacent green spaces. This adjustment uses an empirical formulation
+   derived in Alley & Veenhuis (1983, https://doi.org/10.1061/(ASCE)0733-9429(1983)109:2(313) ).
+   In the future we plan to test options that derive an adjustment factor based on 
+   impervious connectivity or other local (sub-grid) conditions. 
+
+-  Option 9 (original formulation): This reverts back to the original Noah-MP configuration
+   where soil water holding capacity is adjusted for urban cells and impervious fraction is not used.
+
+
+.. note::
+   The Noah-MP code within WRF-Hydro has some additional features that were added 
+   specifically for WRF-Hydro hydrologic applications, such as spatially distributed 
+   parameters and impervious surface runoff treatment, so it does not exactly track
+   the Noah-MP standalone code releases. Standalone Noah-MP model code was recently 
+   modernized for modularity and accessibility (*He et al. 2023*). Support for this 
+   refactored version of the Noah-MP model is currently in development and will be 
+   included in a future WRF-Hydro release.
+
 3.3 Spatial Transformations
 ---------------------------
 
@@ -223,7 +274,7 @@ differing spatial frameworks. Section 3.3.1 describes the spatial
 transformation process which relies on regular, rectilinear grid-to-grid
 mapping using a simplified integer linear multiple
 aggregation/disaggregation scheme. This basic scheme has been utilized
-in WRF-Hydro since its creation as it was described in Gochis and Chen,
+in WRF-Hydro since its creation as it was described in *Gochis and Chen, 2003*.
 
 Section 3.3.2 describes new spatial transformation methods that have been
 developed and are currently supported in v5.0 and beyond and, more
@@ -332,7 +383,7 @@ content on the sub-grid from one model time step to the next, simple,
 linear sub-grid weighting factors are assigned. These values indicate
 the fraction of the total land surface model grid value that is
 partitioned to each sub-grid pixel. After disaggregation, the routing
-schemes are executed using the fine grid values.
+schemes are executed using the fine-grid values.
 
 Following execution of the routing schemes the fine-grid values are
 aggregated back to the native land surface model grid. The aggregation
@@ -407,9 +458,9 @@ regridding from one grid to another. The Earth System Modeling Framework
 coupling weather, climate, and related models. ESMF provides the
 :program:`ESMF_RegridWeightGen` utility for parallel generation of interpolation
 weights between two grid files in netCDF format. These utilities will
-work for structured (rectilinear) and unstructured grids. The NCAR
-Command Language (NCL) has supported the :program:`ESMF_RegridWeightGen` tool since
-version 6.1.0. Another commonly used tool in the atmospheric sciences
+work for structured (rectilinear) and unstructured grids. The :program:`ESMF_RegridWeightGen` 
+tool since can be accessed through python (through ESMPy) and the NCAR
+Command Language (NCL, deprecated). Another commonly used tool in the atmospheric sciences
 are the Climate Data Operators (CDO), which offer 1\ :sup:`st` and 2\ :sup:`nd`\-
 order conservative regridding (:program:`remapcon`, :program:`remapcon2`) and regrid weight
 generation (:program:`gencon`, :program:`gencon2`) based on the work of *Jones (1999)*. All of
@@ -420,7 +471,8 @@ here store just the spatial weights. Thus, WRF-Hydro spatial
 correspondence files are more generic, with compact file sizes, and may
 be used for non-gridded data.
 
-This script quantifies the polygon to polygon correspondence between
+The WRF-Hydro geospatial pre-processing toolkit includes a script that 
+quantifies the polygon to polygon correspondence between
 geometries in two separate features (grid cells represented by polygons
 and basins represented by polygons). This correspondence is stored in a
 netCDF format file that contains the spatial weights and identification
@@ -548,9 +600,9 @@ and soil thickness (`D_{i,j}`) given by:
    (3.2)
 
 where, `z_{i,j}` is the depth to the water table. `n_{i,j}` in :ref:`Eq. (3.2) <eqn3.2>`
-is defined as the local power law exponent and is a tunable parameter
-(currently hard-coded to 1 but will be exposed in future versions) that
-dictates the rate of decay of `Ksat_{i,j}` with depth. When :ref:`Eq. (3.2) <eqn3.2>` is
+is defined as the local power law exponent and is a tunable parameter that
+dictates the rate of decay of `Ksat_{i,j}` with depth (`n_{i,j}` has a default value of 1.0 
+or can be specified as "NEXP" in hydro2dtbl.nc). When :ref:`Eq. (3.2) <eqn3.2>` is
 substituted into :ref:`Eq. (3.1) <eqn3.1>` the flow rate from cell `(i,j)`
 to its neighbor in the `x`-direction can be expressed as:
 
@@ -630,13 +682,18 @@ include 1) the specified depth of soil and number and thickness of the
 soil vertical layers and 2) the prescription of the model bottom
 boundary condition. Typically, for simulations with deep soil profiles
 (e.g. > 10 `m`) the bottom boundary condition is set to a ‘no-flow’
-boundary (``SLOPE_DATA = 0.0``) in the :file:`GENPARM.TBL` parameter file (see
-Appendices :ref:`section-a6` and :ref:`section-a7` for a
-description of :file:`GENPARM.TBL`).
+boundary (``SLOPE_DATA = 0.0`` in the :file:`GENPARM.TBL` parameter file 
+or ``slope = 0.0`` in the :file:`soil_properties.nc` spatially distributed 
+parameter file). See Appendices :ref:`section-a6` and :ref:`section-a7` for a
+description of :file:`GENPARM.TBL` and :file:`soil_properties.nc`.
+
+.. note::
+   Currently subsurface routing is only supported in the steepest slope (D8) formulation.
+   The 2-dimensional solution will be reactivated in a future release.
 
 .. rubric:: Relevant code modules:
 
-:file:`Routing/Noah_distr_routing.F90`
+:file:`Routing/Noah_distr_routing_subsurface.F90`
 
 .. rubric:: Relevant namelist options:
 
@@ -649,8 +706,9 @@ description of :file:`GENPARM.TBL`).
 -  ``AGGFACTR`` - Subgrid aggregation factor, defined as the ratio of the
    subgrid resolution to the native land model resolution
 
--  ``DTRT_TER`` - Terrain routing grid time step (used for overland and
-   subsurface routing)
+:file:`namelist.hrldas`:
+
+-  ``NOAH_TIMESTEP`` - Subsurface routing operates on the LSM timestep
 
 .. rubric:: Relevant domain and parameter files/variables:
 
@@ -664,6 +722,9 @@ description of :file:`GENPARM.TBL`).
 -  ``SATDK``, ``SMCMAX``, ``SMCREF`` in :file:`HYDRO.TBL` or :file:`hydro2dtbl.nc` - Soil properties
    (saturated hydraulic conductivity, porosity, field capacity) used in
    lateral flow routing.
+
+-  ``NEXP`` in :file:`hydro2dtbl.nc` - Local power law exponent that
+   dictates the rate of decay of saturated hydraulic conductivity with depth.
 
 .. _section-3.5:
 
@@ -798,9 +859,22 @@ size as shown in Table 3.2.
    | 500     | 30      |
    +---------+---------+
 
+
+WRF-Hydro also includes an impervious surface adjustment option for overland routing. If this 
+scheme is activated (``imperv_adj = 0`` in :file:`hydro.namelist`) then the overland roughness 
+Manning's coefficient and maximum retention depth are adjusted based on the impervious fraction 
+provided as ``IMPERVFRAC`` in :file:`Fulldom_hires.nc`. Specifically, maximum retention depth 
+is multiplied by (1 - ``IMPERVFRAC``) (so smaller values for higher imperviousness). Manning's 
+roughness for overland routing is scaled based on a linear weighting of smoothness 
+(1/roughness, see Liong et al. 1989) and assuming a roughness of 0.02 for impervious and native 
+cell roughness for pervious:
+
+OVROUGHRT = 1 / ((1/0.02)*impervfrac + (1/OVROUGHRT)*(1-impervfrac))
+
+
 .. rubric:: Relevant code modules:
 
-:file:`Routing/Noah_distr_routing.F90`
+:file:`Routing/Noah_distr_routing_overland.F90`
 
 .. rubric:: Relevant namelist options:
 
@@ -813,8 +887,9 @@ size as shown in Table 3.2.
 -  ``AGGFACTR`` - Subgrid aggregation factor, defined as the ratio of the
    subgrid resolution to the native land model resolution
 
--  ``DTRT_TER`` - Terrain routing grid time step (used for overland and
-   subsurface routing)
+-  ``DTRT_TER`` - Overland routing grid time step
+
+-  ``rt_option`` - Overland flow routing option (steepest descent or 2-dimensional)
 
 .. rubric:: Relevant domain and parameter files/variables:
 
@@ -832,12 +907,13 @@ size as shown in Table 3.2.
    :file:`hydro2dtbl.nc` - Manning's roughness for overland flow (by
    default a function of land use type).
 
+
 .. _section-3.6:
 
-3.6 Channel and Lake Routing
+3.6 Channel Routing
 ----------------------------
 
-There are multiple channel routing algorithms available in version 5.0
+There are multiple channel routing algorithms available in version |version_short|
 of WRF-Hydro. These algorithms operate either on the resolution of the
 fine grid (gridded routing) or on a vectorized network of channel
 reaches (linked routing, also referred to as reach-based routing), which
@@ -855,14 +931,12 @@ amount of water flowing onto the grid cell from overland flow, and
 exfiltration from groundwater flow. The quantity of surface head in
 excess of the retention depth is accumulated as stream channel inflow
 and is effectively “discharged” to the channel routing routine
-(described below). For calibration purposes gridded values of a scaling
-factor for `RETDEPRT` can be specified in the main hydro2dtbl.nc netCDF
-input file. Increases in the `RETDEPRT` scaling factor on channel pixels
-can encourage more local infiltration near the river channel leading to
-wetter soils that better emulate riparian conditions. Values of “channel
-inflow” are accumulated on the channel grid and can be output for
-visualization and analysis (see :ref:`Section 6 <section-6.0>` for a
-description of model outputs).
+(described below). In the current code, `RETDEPRT` is hard-coded to 
+5mm for channel pixels to encourage more local infiltration near the 
+river channel leading to wetter soils that better emulate riparian 
+conditions. Values of “channel inflow” are accumulated on the channel 
+grid and can be output for visualization and analysis 
+(see :ref:`Section 6 <section-6.0>` for a description of model outputs).
 
 .. _figure3.6:
 .. figure:: media/channel-routing-grid-link.png
@@ -1035,8 +1109,8 @@ decrease model time-steps in order to satisfy Courant conditions.
 Therefore WRF-Hydro utilizes variable time-stepping in the diffusive
 wave channel routing module in order to satisfy Courant constraints and
 avoid numerical dispersion and instabilities in the solutions. The
-initial value of the channel routing time-step is set equal to that of
-the overland flow routing timestep which is a function of grid spacing.
+initial value of the channel routing time-step is set equal to ``DTRT_CH``
+(which should be estimated based on the grid cell size, as for overland routing).
 If, during model integration the N-R convergence criteria for
 upstream-downstream streamflow discharge values is not met, the channel
 routing time-step is decreased by a factor of one-half and the N-R
@@ -1061,7 +1135,7 @@ relatively small catchments and not over large regions.
 
 .. _section-3.6.2:
 
-3.6.2. Linked Routing using Muskingum and Muskingum-Cunge
+3.6.2. Reach Routing using Muskingum and Muskingum-Cunge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The gridded catchment and drainage network of the land surface model
@@ -1069,17 +1143,17 @@ The gridded catchment and drainage network of the land surface model
 network, with a unique set of channel properties defined as constant for
 each reach. The flow out of each channel reach is determined based on
 flow hydraulics, channel storage and the lateral inflow contribution
-from each grid cell that is mapped to the individual link element. Since
+from each grid cell that is mapped to the individual reach element. Since
 reach lengths are not constant, the number of contributing grid cells to
-the link depend on the link length (:ref:`Figure 3.6 <figure3.6>`).
+the reach depend on the reach length (:ref:`Figure 3.6 <figure3.6>`).
 Flow is assumed always upstream-to-downstream, and channel junctions
-accommodate the merging of flows through the linked network. The simultaneous
+accommodate the merging of flows through the reach network. The simultaneous
 transformation of the often complex drainage network, source areas, and
 channel flow hydrographs in these large, complex networks necessitates
 a practical and efficient solution to the routing problem (*Brunner and
 Gorbrecht, 1991*).
 
-On the linked network, WRF-Hydro makes use of a fairly standard
+On the reach network, WRF-Hydro makes use of a fairly standard
 implementation of the Muskingum-Cunge (MC) method of hydrograph routing
 which makes use of time varying parameter estimates. The scheme is a
 practical approach to characterize watershed runoff characteristics over
@@ -1179,28 +1253,30 @@ width, *S\ o* is the channel slope and *dx* is the channel length.
 
 .. note:: Reach-based routing is highly sensitive to time step.
 
-3.6.3 Compound Channel (currently only functional in NWM)
+3.6.3 Compound Channel (limited configuration)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to represent a simplification of the behavior of a flood wave
 when it exceeds the channel bank, a compound channel formulation was
-added to the NWM (i.e. only active when ``channel_option=2`` and ``udmp=1``).
+added to WRF-Hydro. This option is currently only available when 
+``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+the Muskingum-Cunge reach-based channel routing scheme).
 A visual representation is shown in Figure 3.9. When the depth of the
 flow exceeds bankfull (`d > d_b`), then the wave celerity is given
 as the weighted celerity of the trapezoidal flow and the overbank
-portion of flow. This weighting is based on the cross sectional area of
+portion of flow. This weighting is based on the cross-sectional area of
 each, and allows water to enter the conceptual compound channel, where
 the Manning's coefficient of the compound channel portion, `n_{cc}`,
 is assumed rougher than the channel `n` by an unknown factor,
 `n_{cc}`. Based on a set of sensitivity experiments described in
-*Read et al., (forthcoming)*, the default value for in NWMv2.0 and v2.1 is
+*Read et al., (2023)*, the default value is
 `n_{cc}=2n`, such that the floodplain roughness is twice that of
 the channel. The introduction of compound channel requires values for
 three more parameters: bankfull depth (`d_b`), top widths of the
 trapezoid and the compound channel, `T_w` and `T_{w\_cc},`
 respectively. These parameters, in addition to `n_{cc}`, are defined
-in the Route_Link.nc file for the NWM. The default values in NWMv2.0 and
-v2.1 are defined as: (1) was determined using a published equation from
+in the Route_Link.nc file. The default values were 
+determined using a published equation from
 *Blackburn-Lynch et al., 2017*, who gathered regional USGS estimations of
 channel parameters and developed coefficients to describe the
 relationship of drainage area (`DA`) to `T_w` and to channel area
@@ -1208,7 +1284,7 @@ relationship of drainage area (`DA`) to `T_w` and to channel area
 and `A = 0.75(DA)^{0.53}`. Given these, `d_b` is determined
 using the standard equation for a trapezoid. As a default value,
 `T_{w\_cc}` is a multiplier on `T_w`. Sensitivity experiments
-presented in *Read et al. (forthcoming)* found that `T_{w\_cc}=3*T_w`
+presented in *Read et al. (2023)* found that `T_{w\_cc}=3*T_w`
 yielded the best streamflow performance, all else being equal.
 
 .. _figure3.9:
@@ -1219,6 +1295,10 @@ yielded the best streamflow performance, all else being equal.
    **Figure 3.9** Cross-sectional schematic of trapezoidal channel and compound
    channel in National Water Model, where the dashed lines represent roughness
    of the channel n, and of the compound channel, `n_{cc}`
+
+.. note:: The compound channel option is currently only available when 
+   ``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+   the Muskingum-Cunge reach-based channel routing scheme).
 
 .. _section-3.7:
 
@@ -1237,7 +1317,8 @@ must adjust these parameters accordingly - the model makes no other
 distinction between a reservoir and a lake.
 
 Fluxes into a lake/reservoir object occur through the channel network
-and when surface overland flow intersects a lake object. Fluxes from
+and when surface overland flow intersects a lake object (in the gridded 
+channel routing configuration only). Fluxes from
 lake/reservoir objects are made only through the channel network and no
 fluxes from lake/reservoir objects to the atmosphere or the land surface
 are currently represented (i.e. there is currently no lake evaporation
@@ -1272,24 +1353,44 @@ vertical side walls, such that the surface area is always constant.
 
    **Figure 3.10** Schematic of Level Pool Routing
 
-The following lake/reservoir parameters are required for level-pool
+The lake/reservoir parameters listed below are required for level-pool
 routing and are defined in the :file:`LAKEPARM.nc` parameter file. The GIS
-pre-processing tool can make either of these files and the model will
-read the one specified in the :file:`hydro.namelist` file:
+pre-processing tool can make this file and the model will
+read it as specified in the :file:`hydro.namelist` file.
 
-   -  Weir and Orifice Coefficients (`Co`, `Cw`)
-   -  Weir Length, `L` (`m`)
-   -  Orifice Area, `O_a` (`m^2`)
-   -  Reservoir Area, `A_s` (`km^2`)
-   -  Maximum reservoir height at full storage, `h_{max}` (`m`)
+   -  Weir and Orifice Coefficients, `Cw`, `Co` in equations above or ``WeirC``, ``OrificeC`` in :file:`LAKEPARM.nc`
+   -  Weir Length (`m`), `L` in equations above or ``WeirL`` in :file:`LAKEPARM.nc`
+   -  Weir Elevation (`m`), ``WeirE`` in :file:`LAKEPARM.nc`
+   -  Orifice Area (`m^2`), `O_a` in equations above or ``OrificeA`` in :file:`LAKEPARM.nc`
+   -  Orifice Elevation (`m`), ``OrificeE`` in :file:`LAKEPARM.nc`
+   -  Reservoir Area (`km^2`), `A_s` in equations above or ``LkArea`` in :file:`LAKEPARM.nc`
+   -  Maximum reservoir height at full storage (`m`), `h_{max}` in equations above or ``LkMxE`` in :file:`LAKEPARM.nc`
+   -  Dam length specified as a multiplier on weir length (`dimensionless`), `Dam_Length` in :file:`LAKEPARM.nc`
 
-The lake/reservoir flow routing option is activated when lake objects
-are defined and properly indexed as a data field in the high resolution
-terrain routing grid file. If lake/reservoir objects are present in the
-lake grid (and also within the channel network) then routing through
-those objects will occur if the channel is active AND if ``channel_option
-= 3`` (gridded routing). There are several special requirements for the
-lake grid and channel routing grids when lakes/reservoirs are to be
+For the gridded channel routing option, the lake/reservoir routing options
+require lake objects to be defined and properly indexed as a data 
+field in the high resolution terrain routing :file:`Fulldom_hires.nc` 
+file. If lake/reservoir objects are present in the
+lake grid (and also within the channel network) then level-pool routing through
+those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
+= 3`` (gridded routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+
+For reach-based channel routing options, the lake/reservoir routing options 
+require lake objects to be defined  and properly indexed as waterbody  objects 
+in the :file:`Route_Link.nc` file.
+If lake/reservoir objects are present in the
+:file:`Route_Link.nc` file then level-pool routing through
+those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
+= 1 or 2`` (reach routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+
+The ``lake_option`` in :file:`hydro.namelist` can also be used to turn off lake/reservoir 
+routing completely (``lake_option = 0``), set the waterbodies to simply pass water through 
+from inflow to outflow with no storage or delay (``lake_option = 2``), or activate data 
+assimilation (specific to the NOAA National Water Model and not currently 
+supported outside of that configuration).
+
+There are several special requirements for the
+lake and channel files when lakes/reservoirs are to be
 represented and these are discussed in Sections :ref:`5.4 <section-5.4>`
 and :ref:`5.6 <section-5.6>`.
 
@@ -1297,11 +1398,15 @@ and :ref:`5.6 <section-5.6>`.
 
 :file:`Routing/module_channel_routing.F90`
 
+:file:`Routing/Reservoirs/Level_Pool/module_levelpool.F90`
+
 .. rubric:: Relevant namelist options:
 
 :file:`hydro.namelist`:
 
--  ``route_lake_f`` (optional) - Path to lake parameter file to support
+-  ``lake_option`` - Option to specify lake/reservoir routing behavior
+   (0=lakes off, 1=level pool, 2=passthrough, 3=reservoir DA).
+-  ``route_lake_f`` - Path to lake parameter file to support
    level-pool reservoir routing methods.
 
 .. note:: As mentioned in the paragraph above, if in the
@@ -1342,7 +1447,7 @@ processes. Because these processes contribute to streamflow (typically
 as “baseflow”) a parameterization is often used in order to simulate
 total streamflow values that are comparable with observed streamflow
 from gauging stations. Therefore, a switch-activated baseflow module
-:file:`module_GW_baseflow.F90` has been created which conceptually
+:file:`Routing/module_GW_baseflow.F90` has been created which conceptually
 (i.e. *not* physically-explicit) represents baseflow contributions to
 streamflow. This model option is particularly useful when WRF-Hydro is
 used for long-term streamflow simulation/prediction and baseflow or
@@ -1365,9 +1470,9 @@ recharge. The functional type and parameters are determined empirically
 from offline tests using an estimation of baseflow from stream gauge
 observations and model-derived estimates of bucket recharge provided by
 WRF-Hydro. Presently, WRF-Hydro uses either a direct output-equals-input
-"pass-through" relationship or an exponential storage-discharge function
+("pass-through") relationship or an exponential storage-discharge function
 for estimating the bucket discharge as a function of a conceptual depth
-of water in the bucket "exponential bucket". Note that, because this is
+of water in the bucket ("exponential bucket"). Note that, because this is
 a highly conceptualized formulation, the depth of water in the bucket in
 no way infers the actual depth of water in a real aquifer system.
 However, the volume of water that exists in the bucket needs to be
@@ -1434,6 +1539,18 @@ themselves have no real physical basis. As mentioned above, initial
 values of the groundwater bucket model parameters are typically derived
 analytically or \'offline\' from WRF-Hydro and then are fine-tuned through
 model calibration.
+
+There are 4 options available for the conceptual baseflow model, as specified 
+in ``GWBASESWCRT`` in :file:`hydro.namelist`. The conceptual baseflow model 
+can be turned off (``GWBASESWCRT = 0``), which means water draining from the soil column in the land
+surface model will become a sink term (this water will not be returned to the channel 
+and will be a loss from the system). The exponential bucket model can be activated 
+(``GWBASESWCRT = 1``), as described above. Water draining from the land model soil
+column can be placed directly into the channel with no additional storage/attenuation 
+(``GWBASESWCRT = 2``). For configurations using user-defined mapping to specify
+catchment boundaries (``UDMP_OPT = 1``), there is a modified version of the 
+exponential bucket model (``GWBASESWCRT = 4``) that adjusts the `C` parameter above
+based on the area of the catchment.
 
 .. rubric:: Relevant code modules:
 
