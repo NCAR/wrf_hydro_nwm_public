@@ -436,7 +436,7 @@ file and in it are the various settings for operating all of the routing
 components of the WRF-Hydro system. The hydro.namelist file is
 internally commented so that it should be clear as to what is needed for
 each setting. A full annotated example of the hydro.namelist file is
-provided in :ref:`section-a5`.
+provided in :ref:`section-a6`.
 
 The second namelist is the namelist which specifies the land surface
 model options to be used. This namelist can change depending on which
@@ -460,7 +460,9 @@ as noted above, will contain different settings for the two different
 land surface models. For a run where WRF-Hydro is coupled to the WRF
 model, the WRF model input file namelist.input becomes the second
 namelist file. Full annotated example namelist.hrldas files for Noah and
-Noah-MP are provided in :ref:`section-a3` and :ref:`section-a4`.
+Noah-MP are provided in :ref:`section-a4` and :ref:`section-a5`.
+
+.. _section-2.8:
 
 2.8 Build Instructions
 ------------------------------------
