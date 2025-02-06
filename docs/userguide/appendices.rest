@@ -2849,8 +2849,8 @@ A19.3. Streamflow output variables at all channel reaches/cells
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    :file:`{YYYYMMDDHHMM}.CHRTOUT_DOMAIN{X}`
-_
-   .. csv-tAble:: CHRTOUT
+
+   .. csv-table:: CHRTOUT
       :file: output-tables/CHRTOUT_DOMAIN.csv
       :header-rows: 1
 
