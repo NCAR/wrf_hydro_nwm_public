@@ -280,7 +280,16 @@ project directory.
 2. Create a top-level directory that will hold all subdirectories and files
    used for this walkthrough. Hereafter referred to as the ‘project
    directory’.
-3. Git clone WRF-Hydro, WRF, and WPS into project directory created in step 2
+3. Git clone WRF-Hydro, WRF, and WPS into project directory created in step 2.
+   Here are examples of possible commands to use, modify as needed:
+
+.. code-block:: console
+
+  git clone https://github.com/NCAR/wrf_hydro_nwm_public.git
+  git clone --recurse-submodule --branch v4.6.1 https://github.com/wrf-model/WRF.git
+  git clone --branch v4.6.0 https://github.com/wrf-model/WPS.git
+  wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.3.0/croton_NY_training_example_v5.3.tar.gz
+
 4. Copy the uncompressed WPS geographic data into the WPS directory.
 5. Copy the uncompressed coupled example case into the project directory.
 6. Your project directory structure will look like the following:
@@ -311,8 +320,6 @@ This section will walk you through compiling the coupled WRF | WRF-Hydro
 modeling system and the WRF Preprocessing System (WPS) utilities
 
 **Compiling the coupled WRF | WRF-Hydro modeling system**
-
-0. Compile WRF-Hydro first
 
 1. Navigate to the WRF source code directory at WRF*
 
@@ -392,7 +399,7 @@ Make sure that paths are set as in Step #5b from above
 
 .. code-block:: console
 
-  ./configure
+  ./configure_new
 
 For Derecho select option 43: Cray XC CLE/Linux x86_64, Intel Classic compilers   (dmpar).
 
@@ -400,7 +407,7 @@ For Derecho select option 43: Cray XC CLE/Linux x86_64, Intel Classic compilers 
 
 .. code-block:: console
 
-  ./compile >& compile.log
+  ./compile_new >& compile.log
 
 check the compile log for errors.
 
