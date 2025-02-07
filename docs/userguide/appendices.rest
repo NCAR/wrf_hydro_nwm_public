@@ -111,12 +111,13 @@ Running a WRF-Hydro Simulation
 
 In this section we will use our compiled WRF-Hydro model and an
 example test case to run a WRF-Hydro simulation. This walkthrough is
-using the Croton, NY example test case. Details on the domain and
-time period of the simulation are provided in the
+using the Croton, NY example test case. After extracting the Croton tarball
+details on the domain and time period of the simulation are provided in the
 :file:`example_case/Readme.txt` file.
 
 1. First we need to copy the TBL and executable files in the
-   :file:`wrf_hydro_nwm_public*/trunk/NDHMS/Run` directory to the directory
+   :file:`wrf_hydro_nwm_public*/src/build/Run`
+   directory to the directory
    containing the domain and forcing files. For the WRF-Hydro Gridded
    configuration, these files are located in the directory
    :file:`example_case/Gridded`.
@@ -124,14 +125,15 @@ time period of the simulation are provided in the
    Copy the :file:`*.TBL` files to the example configuration directory:
 
       | *(from your project directory)*
-      | :code:`cp wrf_hydro_nwm_public*/trunk/NDHMS/Run/\*.TBL example_case/Gridded`
+      | :code:`cp wrf_hydro_nwm_public*/build/Run/\*.TBL example_case/Gridded`
 
    Copy the :file:`wrf_hydro.exe` file:
 
-      :code:`cp wrf_hydro_nwm_public*/trunk/NDHMS/Run/wrf_hydro.exe example_case/Gridded`
+      :code:`cp wrf_hydro_nwm_public*/build/Run/wrf_hydro.exe example_case/Gridded`
 
    .. note:: There are other configuration subfolders with the names such as :file:`Gridded`, :file:`nwm`, and
-      :file:`Reach`. These folders contain prepared files for other configurations of WRF-Hydro. Information
+      :file:`Reach`. These folders contain prepared files for other configurations of WRF-Hydro. They are found
+      under the :file:`src/template/` directory. Information
       regarding physics options and routing configurations can be found in the main body of the *WRF-Hydro*
       v\ |version_short| *Technical Description*. Also, note that there is only one :file:`FORCING/` directory.
       The same forcing data can be used for all configurations.
@@ -288,7 +290,7 @@ project directory.
   git clone https://github.com/NCAR/wrf_hydro_nwm_public.git
   git clone --recurse-submodule --branch v4.6.1 https://github.com/wrf-model/WRF.git
   git clone --branch v4.6.0 https://github.com/wrf-model/WPS.git
-  wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.3.0/croton_NY_training_example_v5.3.tar.gz
+  wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.4.0/croton_NY_training_example_v5.4.tar.gz
 
 4. Copy the uncompressed WPS geographic data into the WPS directory.
 5. Copy the uncompressed coupled example case into the project directory.

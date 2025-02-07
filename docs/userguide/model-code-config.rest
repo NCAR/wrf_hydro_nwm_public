@@ -130,9 +130,10 @@ required even if running over a single core.
 ------------------------
 
 The top-level directory structure of the code is provided below as
-nested under :file:`trunk/NDHMS` and subdirectory structures are described
-thereafter. The tables below provide brief descriptions of the file
-contents of each directory where the model code resides.
+nested under the :file:`wrf_hydro_nwm_public` root directory and the
+subdirectory structures are described thereafter. The tables below provide
+brief descriptions of the file contents of each directory where the model code
+resides.
 
 .. default-role:: file
 
@@ -157,9 +158,9 @@ contents of each directory where the model code resides.
    | `docs/`                 | Pointer to location of full documentation (i.e.  |
    |                         | this document).                                  |
    +-------------------------+--------------------------------------------------+
-   | `tests`                 | Scripts and data used to test the model          |
+   | `tests/`                | Scripts and data used to test the model          |
    +-------------------------+--------------------------------------------------+
-   | `src`                   | WRF-Hydro Model source code                      |
+   | `src/`                  | WRF-Hydro Model source code                      |
    +-------------------------+--------------------------------------------------+
    | :underline:`Source code directories under \`src/\`:`                       |
    +-------------------------+--------------------------------------------------+
