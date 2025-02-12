@@ -48,11 +48,11 @@ cd ../..
 ln -sf Land_models/NoahMP LandModel
 cat macros LandModel/hydro/user_build_options.bak  > LandModel/user_build_options
 ln -sf CPL/NoahMP_cpl LandModel_cpl
-make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
+# make clean; rm -f Run/wrf_hydro_NoahMP.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
 #for debugging and testing
 #make debug; make install; make test
-make && make install
+make -j4 && make install
 
 if [[ $? -eq 0 ]]; then
     echo
