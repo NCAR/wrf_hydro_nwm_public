@@ -676,6 +676,56 @@ end subroutine get_albedo12m_netcdf
 
       end subroutine get_2d_netcdf_cows
 
+      subroutine get_2d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error)
+         integer,              intent(in)  :: ncid !! the file identifier
+         character(len=*),     intent(in)  :: varName
+         real, dimension(:,:), intent(out) :: var
+         character(len=*),     intent(in)  :: callingRoutine
+         logical,              intent(in)  :: fatal_if_error
+
+         integer :: varid, iret, ndims
+         integer, dimension(2) :: dimids
+         real, dimension(size(var,2),size(var,1)) :: tempTranspose
+         real, dimension(size(var,2)) :: tempFlat
+
+         iRet = nf90_inq_varid(ncid, varName, varid)
+         if (iret /= nf90_noErr) then
+            if (fatal_IF_ERROR) then
+               print*, trim(callingRoutine) // ": get_2d_netcdf_real: variable: " // trim(varName) // " error: " // nf90_strerror(iRet)
+               call hydro_stop("get_2d_netcdf")
+            end if
+         end if
+
+         iRet = nf90_inquire_variable(ncid, varid, ndims=ndims, dimids=dimids)
+
+         if (ndims == 2) then
+            !print *, "DEBUG var dims", size(var,1), size(var,2)
+            ! TODO: verify that time dimension = 365
+
+            iRet = nf90_get_var(ncid, varid, tempTranspose)
+            if (iRet /= nf90_NoErr) then
+               print*, trim(callingRoutine) // ": get_2d_netcdf_real: values: " // trim(varName) // " error: " // nf90_strerror(iRet)
+               if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
+            end if
+            var = transpose(tempTranspose)
+         else if (ndims == 1) then
+            ! Expand traditional 1D variable to 2D
+
+            iRet = nf90_get_var(ncid, varid, tempFlat)
+            if (iRet /= nf90_NoErr) then
+               print*, trim(callingRoutine) // ": get_2d_netcdf_real: expand-1D values: " // trim(varName) // " error: " // nf90_strerror(iRet)
+               if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
+            end if
+
+            var = spread(tempFlat, 1, size(var,1))
+
+         else
+            print*, trim(callingRoutine) // ": get_2d_netcdf_real: variable: " // trim(varName) // " has more than 2 dimensions"
+            if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
+         end if
+
+      end subroutine get_2d_netcdf_real
+
 !---------------------------------------------------------
 !DJG Subroutinesfor inputting routing fields...
 !DNY   first reads the files to get the size of the
@@ -7436,10 +7486,10 @@ logical, intent(IN)			            :: reservoir_type_specified
 real, intent(INOUT),  dimension(:)      :: HRZAREA
 
 real, intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH
-real, intent(INOUT),  dimension(:)      :: WEIRC
+real, intent(INOUT),  dimension(:,:)    :: WEIRC
 real, intent(INOUT),  dimension(:)      :: WEIRL
 real, intent(INOUT),  dimension(:)      :: DAML
-real, intent(INOUT),  dimension(:)      :: ORIFICEC
+real, intent(INOUT),  dimension(:,:)    :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 integer, intent(INOUT), dimension(:)    :: reservoir_type
@@ -7574,7 +7624,7 @@ if (channel_option .eq. 3) then
           read(79,*)  header  !-- read the lake file
           do i=1, NLAKES
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
-            WEIRC(i), WEIRL(i), ORIFICEC(i), ORIFICEA(i), ORIFICEE(i),&
+            WEIRC(:,i), WEIRL(i), ORIFICEC(:,i), ORIFICEA(i), ORIFICEE(i),&
             LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), reservoir_type(i)
           enddo
 5101      continue
@@ -7595,10 +7645,10 @@ if (channel_option .eq. 3) then
       call mpp_land_bcast_real(NLAKES,HRZAREA)
       call mpp_land_bcast_real(NLAKES,LAKEMAXH)
       call mpp_land_bcast_real(NLAKES,WEIRH  )
-      call mpp_land_bcast_real(NLAKES,WEIRC  )
+      call mpp_land_bcast_real2(WEIRC)
       call mpp_land_bcast_real(NLAKES,WEIRL  )
       call mpp_land_bcast_real(NLAKES,DAML)
-      call mpp_land_bcast_real(NLAKES,ORIFICEC)
+      call mpp_land_bcast_real2(ORIFICEC)
       call mpp_land_bcast_real(NLAKES,ORIFICEA)
       call mpp_land_bcast_real(NLAKES,ORIFICEE)
       call mpp_land_bcast_real(NLAKES,LATLAKE )
@@ -8303,8 +8353,9 @@ real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw !added Top Width LK
 real,    intent(INOUT),  dimension(:)      :: Tw_CC, n_CC !compound chnannel params
 real,    intent(INOUT),  dimension(:)      :: ChannK !added ChanLoss
 real,    intent(INOUT),  dimension(:)      :: HRZAREA
-real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRC, WEIRL, DAML
-real,    intent(INOUT),  dimension(:)      :: ORIFICEC, ORIFICEA, ORIFICEE
+real,    intent(INOUT),  dimension(:)      :: LAKEMAXH, WEIRH, WEIRL, DAML
+real,    intent(INOUT),  dimension(:,:)    :: ORIFICEC, WEIRC
+real,    intent(INOUT),  dimension(:)      :: ORIFICEA, ORIFICEE
 logical, intent(IN)                        :: reservoir_type_specified
 integer, intent(INOUT),  dimension(:)      :: reservoir_type
 character(len=*), intent(in)               :: reservoir_parameter_file
@@ -8352,10 +8403,10 @@ if (NLAKES > 0) then
    call mpp_land_bcast_int8(NLAKES,LAKEIDM)
    call mpp_land_bcast_real(NLAKES,LAKEMAXH)
    call mpp_land_bcast_real(NLAKES,WEIRH  )
-   call mpp_land_bcast_real(NLAKES,WEIRC  )
+   call mpp_land_bcast_real2(WEIRC)
    call mpp_land_bcast_real(NLAKES,WEIRL  )
    call mpp_land_bcast_real(NLAKES,DAML)
-   call mpp_land_bcast_real(NLAKES,ORIFICEC)
+   call mpp_land_bcast_real2(ORIFICEC)
    call mpp_land_bcast_real(NLAKES,ORIFICEA)
    call mpp_land_bcast_real(NLAKES,ORIFICEE)
    call mpp_land_bcast_real(NLAKES,LATLAKE )
@@ -8398,8 +8449,9 @@ end subroutine read_routelink
         integer, intent(out), dimension(:)  ::  reservoir_type
         logical, intent(in)		            ::  reservoir_type_specified
         character(len=*), intent(in)        ::  reservoir_parameter_file
-        REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRC, WEIRL, DAML, ORIFICEC, WEIRH, &
+        REAL, intent(out), dimension(:) :: HRZAREA,LAKEMAXH, WEIRL, DAML, WEIRH, &
                    ORIFICEA, ORIFICEE, ELEVLAKE
+        REAL, intent(out), dimension(:,:) :: WEIRC, ORIFICEC      ! daily parameters
 !end NLAKES
 
         INTEGER(kind=int64), dimension(GNLINKSL) ::  tmpLAKEIDA, tmpLINKID,  tmpTO_NODE
@@ -8538,10 +8590,10 @@ end subroutine read_routelink
            call mpp_land_bcast_real(NLAKES, HRZAREA)
            call mpp_land_bcast_real(NLAKES, LAKEMAXH)
            call mpp_land_bcast_real(NLAKES, WEIRH)
-           call mpp_land_bcast_real(NLAKES, WEIRC)
+           call mpp_land_bcast_real2(WEIRC)
            call mpp_land_bcast_real(NLAKES, WEIRL)
            call mpp_land_bcast_real(NLAKES, DAML)
-           call mpp_land_bcast_real(NLAKES, ORIFICEC)
+           call mpp_land_bcast_real2(ORIFICEC)
            call mpp_land_bcast_real(NLAKES, ORIFICEA)
            call mpp_land_bcast_real(NLAKES, ORIFICEE)
            call mpp_land_bcast_int8(NLAKES, LAKEIDM)
@@ -8684,10 +8736,10 @@ integer, intent(INOUT), dimension(NLINKS)   :: CHANXI, CHANYJ
 logical, intent(IN)                          :: reservoir_type_specified
 real, intent(INOUT),  dimension(NLAKES)      :: HRZAREA
 real, intent(INOUT),  dimension(NLAKES)      :: LAKEMAXH, WEIRH
-real, intent(INOUT),  dimension(NLAKES)      :: WEIRC
+real, intent(INOUT),  dimension(:,:)         :: WEIRC
 real, intent(INOUT),  dimension(NLAKES)      :: WEIRL
 real, intent(INOUT),  dimension(NLAKES)      :: DAML
-real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEC
+real, intent(INOUT),  dimension(:,:)         :: ORIFICEC
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEA
 real, intent(INOUT),  dimension(NLAKES)      :: ORIFICEE
 integer, intent(INOUT), dimension(NLAKES)    :: reservoir_type
@@ -8794,11 +8846,10 @@ call flush(6)
 if (NLAKES > 0) then
    call mpp_land_bcast_real(NLAKES,HRZAREA)
    call mpp_land_bcast_real(NLAKES,LAKEMAXH)
-   call mpp_land_bcast_real(NLAKES,WEIRC)
-   call mpp_land_bcast_real(NLAKES,WEIRC)
+   call mpp_land_bcast_real2(WEIRC)
    call mpp_land_bcast_real(NLAKES,WEIRL)
    call mpp_land_bcast_real(NLAKES,DAML)
-   call mpp_land_bcast_real(NLAKES,ORIFICEC)
+   call mpp_land_bcast_real2(ORIFICEC)
    call mpp_land_bcast_real(NLAKES,ORIFICEA)
    call mpp_land_bcast_real(NLAKES,ORIFICEE)
    call mpp_land_bcast_real(NLAKES,LATLAKE)
@@ -9037,8 +9088,9 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     logical,                       intent(in)  :: reservoir_type_specified
     character(len=*),              intent(in)  :: reservoir_parameter_file
     integer(kind=int64), dimension(:), intent(out) :: LAKEIDM
-    real,    dimension(:),         intent(out) :: HRZAREA,  LAKEMAXH, WEIRC,    WEIRL, WEIRH, DAML
-    real,    dimension(:),         intent(out) :: ORIFICEC, ORIFICEA, ORIFICEE, lakelat, lakelon
+    real,    dimension(:),         intent(out) :: HRZAREA,  LAKEMAXH, WEIRL, WEIRH, DAML
+    real,    dimension(:),         intent(out) :: ORIFICEA, ORIFICEE, lakelat, lakelon
+    real,    dimension(:,:),       intent(out) :: ORIFICEC, WEIRC    ! daily values
     real,    dimension(:),         intent(out) :: ELEVLAKE
     integer, dimension(:),         intent(out) :: reservoir_type
 
@@ -9062,16 +9114,18 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     call get_1d_netcdf_real(ncid, 'LkMxE',    LAKEMAXH,  'read_route_lake_netcdf', .TRUE.)
     !rename WeirH to WeirE
     call get_1d_netcdf_real(ncid, 'WeirE',    WEIRH,     'read_route_lake_netcdf', .TRUE.)
-    call get_1d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'WeirL',    WEIRL,     'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'Dam_Length', DAML,    'read_route_lake_netcdf', .TRUE.)
-    call get_1d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeA', ORIFICEA,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'OrificeE', ORIFICEE,  'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lat', lakelat,        'read_route_lake_netcdf', .TRUE.)
     call get_1d_netcdf_real(ncid, 'lon', lakelon,        'read_route_lake_netcdf', .TRUE.)
     !remove the alt var. and add initial fractional depth var. LKR/DY
     call get_1d_netcdf_real(ncid, 'ifd', ELEVLAKE,       'read_route_lake_netcdf', .FALSE.)
+
+    ! this are 2D (but may be read from 1D array)
+    call get_2d_netcdf_real(ncid, 'OrificeC', ORIFICEC,  'read_route_lake_netcdf', .TRUE.)
+    call get_2d_netcdf_real(ncid, 'WeirC',    WEIRC,     'read_route_lake_netcdf', .TRUE.)
 
     iRet = nf90_close(ncId)
     if (iRet /= nf90_noErr) then
@@ -9089,8 +9143,8 @@ subroutine read_route_lake_netcdf(route_lake_file,                         &
     ii = size(LAKEIDM)
     print*,'last index=',ii
     print*,'HRZAREA', HRZAREA(ii)
-    print*,'LAKEMAXH', LAKEMAXH(ii), 'WEIRC', WEIRC(ii), 'WEIRL', WEIRL(ii), 'DAML', DAML(ii)
-    print*,'ORIFICEC', ORIFICEC(ii), 'ORIFICEA', ORIFICEA(ii), 'ORIFICEE', ORIFICEE(ii)
+    print*,'LAKEMAXH', LAKEMAXH(ii), 'WEIRC', WEIRC(:,ii), 'WEIRL', WEIRL(ii), 'DAML', DAML(ii)
+    print*,'ORIFICEC', ORIFICEC(:,ii), 'ORIFICEA', ORIFICEA(ii), 'ORIFICEE', ORIFICEE(ii)
     print*,"finish read_route_lake_netcdf"
 #endif
 
@@ -9159,25 +9213,25 @@ end subroutine get_1d_netcdf_int
     end subroutine get_1d_netcdf_int64
 
 subroutine get_1d_netcdf_real(ncid, varName, var, callingRoutine, fatal_if_error)
-integer,            intent(in)  :: ncid !! the file identifier
-character(len=*),   intent(in)  :: varName
-real, dimension(:), intent(out) :: var
-character(len=*),   intent(in)  :: callingRoutine
-logical,            intent(in)  :: fatal_if_error
+   integer,            intent(in)  :: ncid !! the file identifier
+   character(len=*),   intent(in)  :: varName
+   real, dimension(:), intent(out) :: var
+   character(len=*),   intent(in)  :: callingRoutine
+   logical,            intent(in)  :: fatal_if_error
 
-integer :: varid, iret
-iRet = nf90_inq_varid(ncid, varName, varid)
-if (iret /= nf90_noErr) then
-   if (fatal_IF_ERROR) then
-      print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
-      call hydro_stop("get_1d_netcdf")
+   integer :: varid, iret
+   iRet = nf90_inq_varid(ncid, varName, varid)
+   if (iret /= nf90_noErr) then
+      if (fatal_IF_ERROR) then
+         print*, trim(callingRoutine) // ": get_1d_netcdf_real: variable: " // trim(varName)
+         call hydro_stop("get_1d_netcdf")
+      end if
    end if
-end if
-iRet = nf90_get_var(ncid, varid, var)
-if (iRet /= nf90_NoErr) then
-   print*, trim(callingRoutine) // ": get_1d_netcdf_real: values: " // trim(varName)
-   if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
-end if
+   iRet = nf90_get_var(ncid, varid, var)
+   if (iRet /= nf90_NoErr) then
+      print*, trim(callingRoutine) // ": get_1d_netcdf_real: values: " // trim(varName)
+      if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_real")
+   end if
 end subroutine get_1d_netcdf_real
 
 subroutine get_1d_netcdf_text(ncid, varName, var, callingRoutine, fatal_if_error)
@@ -9198,6 +9252,32 @@ if (iret /= nf90_NoErr) then
    if (fatal_IF_ERROR) call hydro_stop("get_1d_netcdf_text")
 end if
 end subroutine get_1d_netcdf_text
+
+! subroutine get_1d_or_2d_netcdf_real(ncid, varName, var, fillCount1D, callingRoutine, fatal_if_error)
+!    integer,              intent(in)  :: ncid !! the file identifier
+!    character(len=*),     intent(in)  :: varName
+!    real, dimension(:,:), intent(out) :: var
+!    integer,              intent(in)  :: fillCount1D
+!    character(len=*),     intent(in)  :: callingRoutine
+!    logical,              intent(in)  :: fatal_if_error
+
+!    integer :: iret, varid, ndims
+
+!    continue
+
+!    iret = nf90_inq_varid(ncid, varName, varid)
+!    iret = nf90_inquire_variable(ncid, varid, ndims=ndims)
+
+!    if (ndims == 1) then
+
+!    else if (ndims == 2) then
+!    else
+!       ! ERR-ROR
+!    end if
+
+
+! end subroutine
+
 
 !===================================================================================================
 ! Program Names:
