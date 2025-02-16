@@ -176,7 +176,7 @@ module module_rt_inc
   REAL, allocatable, DIMENSION(:)    :: HRZAREA    !horizontal extent of lake, km^2
   REAL, allocatable, DIMENSION(:)    :: WEIRL      !overtop weir length (m)
   REAL, allocatable, DIMENSION(:)    :: DAML      !overtop weir length (m)
-  REAL, allocatable, DIMENSION(:)    :: ORIFICEC   !coefficient of orifice
+  REAL, allocatable, DIMENSION(:,:)  :: ORIFICEC   !coefficient of orifice (can be daily)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEA   !orifice opening area (m^2)
   REAL, allocatable, DIMENSION(:)    :: ORIFICEE   !orifice elevation (m)
   REAL, allocatable, DIMENSION(:)    :: LATLAKE, LONLAKE,ELEVLAKE ! lake info
@@ -239,7 +239,7 @@ module module_rt_inc
 
 !-- lake params
   REAL, allocatable, DIMENSION(:)    :: LAKEMAXH   !maximum depth (m)
-  REAL, allocatable, DIMENSION(:)    :: WEIRC      !coeff of overtop weir
+  REAL, allocatable, DIMENSION(:,:)  :: WEIRC      !coeff of overtop weir (can be daily)
   REAL, allocatable, DIMENSION(:)    :: WEIRH      !depth of Lake coef
 
 
