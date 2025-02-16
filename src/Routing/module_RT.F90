@@ -368,10 +368,10 @@ CONTAINS
         allocate( rt_domain(did)%LAKEMAXH(NLAKES) )
         allocate( rt_domain(did)%ELEVLAKE(NLAKES) )
         allocate( rt_domain(did)%WEIRH(NLAKES) )
-        allocate( rt_domain(did)%WEIRC(NLAKES) )
+        allocate( rt_domain(did)%WEIRC(365, NLAKES) )
         allocate( rt_domain(did)%WEIRL(NLAKES) )
         allocate( rt_domain(did)%DAML(NLAKES) )
-        allocate( rt_domain(did)%ORIFICEC(NLAKES) )
+        allocate( rt_domain(did)%ORIFICEC(365, NLAKES) )
         allocate( rt_domain(did)%ORIFICEA(NLAKES) )
         allocate( rt_domain(did)%ORIFICEE(NLAKES) )
 
@@ -832,11 +832,11 @@ subroutine LandRT_ini(did)
                      rt_domain(did)%RESHT(lake_index),            &
                      rt_domain(did)%HRZAREA(lake_index),          &
                      rt_domain(did)%WEIRH(lake_index),            &
-                     rt_domain(did)%WEIRC(lake_index),            &
+                     rt_domain(did)%WEIRC(:, lake_index),         &
                      rt_domain(did)%WEIRL(lake_index),            &
                      rt_domain(did)%DAML(lake_index),             &
                      rt_domain(did)%ORIFICEE(lake_index),         &
-                     rt_domain(did)%ORIFICEC(lake_index),         &
+                     rt_domain(did)%ORIFICEC(:, lake_index),      &
                      rt_domain(did)%ORIFICEA(lake_index),         &
                      rt_domain(did)%LAKEMAXH(lake_index),         &
                      rt_domain(did)%LAKEIDM(lake_index),          &
@@ -847,11 +847,11 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%RESHT(lake_index),                  &
                     rt_domain(did)%HRZAREA(lake_index),                &
                     rt_domain(did)%WEIRH(lake_index),                  &
-                    rt_domain(did)%WEIRC(lake_index),                  &
+                    rt_domain(did)%WEIRC(:, lake_index),               &
                     rt_domain(did)%WEIRL(lake_index),                  &
                     rt_domain(did)%DAML(lake_index),                   &
                     rt_domain(did)%ORIFICEE(lake_index),               &
-                    rt_domain(did)%ORIFICEC(lake_index),               &
+                    rt_domain(did)%ORIFICEC(:, lake_index),            &
                     rt_domain(did)%ORIFICEA(lake_index),               &
                     rt_domain(did)%LAKEMAXH(lake_index),               &
                     rt_domain(did)%ELEVLAKE(lake_index),               &
@@ -869,11 +869,11 @@ subroutine LandRT_ini(did)
                     rt_domain(did)%RESHT(lake_index),                   &
                     rt_domain(did)%HRZAREA(lake_index),                 &
                     rt_domain(did)%WEIRH(lake_index),                   &
-                    rt_domain(did)%WEIRC(lake_index),                   &
+                    rt_domain(did)%WEIRC(:, lake_index),                &
                     rt_domain(did)%WEIRL(lake_index),                   &
                     rt_domain(did)%DAML(lake_index),                    &
                     rt_domain(did)%ORIFICEE(lake_index),                &
-                    rt_domain(did)%ORIFICEC(lake_index),                &
+                    rt_domain(did)%ORIFICEC(:, lake_index),             &
                     rt_domain(did)%ORIFICEA(lake_index),                &
                     rt_domain(did)%LAKEMAXH(lake_index),                &
                     rt_domain(did)%ELEVLAKE(lake_index),                &
