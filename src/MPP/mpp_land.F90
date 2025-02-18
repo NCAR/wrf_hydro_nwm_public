@@ -2681,40 +2681,35 @@ contains
    end subroutine updateLake_seq_char
 
 
-   subroutine updateLake_grid(in,nsize,lake_index)
+   subroutine updateLake_grid(in, nsize, lake_index)
       implicit none
-      integer :: nsize
-      real, dimension(nsize) :: in
-      integer, dimension(nsize) :: lake_index
-      real, dimension(nsize) :: tmp
-      integer tag, i, status, ierr, k
-      if(nsize .le. 0) return
+      integer, intent(in) :: nsize
+      real, dimension(nsize), intent(inout) :: in
+      integer, dimension(nsize), intent(in) :: lake_index
 
-      if(my_id .ne. IO_id) then
-         tag = 29
-         call MPI_Send(in,nsize,MPI_REAL, IO_id,     &
-            tag,HYDRO_COMM_WORLD,ierr)
-         tag = 30
-         call MPI_Send(lake_index,nsize,MPI_INTEGER, IO_id,     &
-            tag,HYDRO_COMM_WORLD,ierr)
-      else
-         do i = 0, numprocs - 1
-            if(i .ne. IO_id) then
-               tag = 29
-               call MPI_Recv(tmp,nsize,&
-                  MPI_REAL,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-               tag = 30
-               call MPI_Recv(lake_index,nsize,&
-                  MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
-               do k = 1, nsize
-                  if(lake_index(k) .gt. 0) in(k) = tmp(k)
-               end do
-            end if
-         end do
-      end if
-      call mpp_land_bcast_real_1d(in)
+      real, dimension(:), allocatable :: tmp
+      integer, dimension(:), allocatable :: all_lake_index
+      integer :: ierr, k
 
-   end subroutine updateLake_grid
+      if (nsize .le. 0) return
+
+      ! Allocate temporary arrays to hold gathered data
+      allocate(tmp(nsize * numprocs))
+      allocate(all_lake_index(nsize * numprocs))
+
+      ! Gather all data from all processes
+      call MPI_Allgather(in, nsize, MPI_REAL, tmp, nsize, MPI_REAL, HYDRO_COMM_WORLD, ierr)
+      call MPI_Allgather(lake_index, nsize, MPI_INTEGER, all_lake_index, nsize, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+
+      ! Update the 'in' array based on the gathered lake_index data
+      do k = 1, nsize * numprocs
+          if (all_lake_index(k) .gt. 0) in(mod(k-1, nsize) + 1) = tmp(k)
+      end do
+
+      ! Deallocate temporary arrays
+      deallocate(tmp)
+      deallocate(all_lake_index)
+  end subroutine updateLake_grid
 
 
 !subroutine match1dLake:
