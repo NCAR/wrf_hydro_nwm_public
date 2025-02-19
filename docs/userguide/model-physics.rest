@@ -97,7 +97,7 @@ model. This current formulation implies that stream and lake inflow from
 the land surface is always positive to the stream or lake element. There
 is an optional channel loss formulation *(Lahmers et al. 2019)* where water
 can seep from the channel; note that this water becomes a sink term and is
-not returned to the soil or baseflow. Currently there are no channel or 
+not returned to the soil or baseflow. Currently there are no channel or
 lake loss functions where water can move
 from channels or lakes back to the landscape. Channel flow in WRF-Hydro
 is represented by one of a few different user-selected methodologies
@@ -123,7 +123,7 @@ options in the model namelist file.
    As of this writing, only the Noah and Noah-MP land surface
    models are supported within WRF-Hydro. CLM coupling is currently
    out-of-date and is not formally supported but is in the process of
-   being updated. The NASA Land Information System (LIS) has been coupled 
+   being updated. The NASA Land Information System (LIS) has been coupled
    with WRF-Hydro through the NUOPC framework and is supported under
    the `NASA Land Coupler <https://github.com/NASA-LIS/NASA-Land-Coupler>`_.
 
@@ -221,43 +221,43 @@ representation. For details on using this option, please see
 
 The Noah-MP version in WRF-Hydro also includes an option for adjusting
 infiltration vs. surface runoff partitioning as a function of impervious
-surface cover. The default Noah-MP behavior is to set a very narrow range 
-of soil water holding capacity for cells classified as urban. This has the 
-effect of generating more runoff, but also results in very wet cells 
+surface cover. The default Noah-MP behavior is to set a very narrow range
+of soil water holding capacity for cells classified as urban. This has the
+effect of generating more runoff, but also results in very wet cells
 that may or may not be appropriate for your application. The new physics setting
 (``IMPERV_OPTION`` in :file:`namelist.hrldas`) includes 4 options:
 
--  Option 0 (no adjustment): Urban cells will be treated the same as all other 
-   cells and will use the provided soil and surface parameters to calculate partitoning 
+-  Option 0 (no adjustment): Urban cells will be treated the same as all other
+   cells and will use the provided soil and surface parameters to calculate partitoning
    between infiltration and surface runoff.
 
--  Option 1 (total): If spatially distributed parameters are active (``SPATIAL_SOIL=1`` on 
-   code compile), the model will expect an impervious fraction grid (``imperv``) to be 
-   included in the soil_properties.nc file. The model will use this fractional value 
-   to automatically partition that fraction (``imperv``) of effective precipitation 
-   reaching the surface to direct surface runoff. The rest (1-``imperv``) will be available 
-   for infiltration. If spatially distributed parameters are not active (``SPATIAL_SOIL=0`` 
-   on code compile), the model will use the ``IMPERV_URBAN`` value from :file:`MPTABLE.TBL` for 
+-  Option 1 (total): If spatially distributed parameters are active (``SPATIAL_SOIL=1`` on
+   code compile), the model will expect an impervious fraction grid (``imperv``) to be
+   included in the soil_properties.nc file. The model will use this fractional value
+   to automatically partition that fraction (``imperv``) of effective precipitation
+   reaching the surface to direct surface runoff. The rest (1-``imperv``) will be available
+   for infiltration. If spatially distributed parameters are not active (``SPATIAL_SOIL=0``
+   on code compile), the model will use the ``IMPERV_URBAN`` value from :file:`MPTABLE.TBL` for
    impervious fraction for all urban cells.
 
--  Option 2 (Alley&Veenhuis): Similar to Option 1, with the modification that the 
+-  Option 2 (Alley&Veenhuis): Similar to Option 1, with the modification that the
    provided impervious fraction will be adjusted to account for local capture of some
    runoff to adjacent green spaces. This adjustment uses an empirical formulation
    derived in Alley & Veenhuis (1983, https://doi.org/10.1061/(ASCE)0733-9429(1983)109:2(313) ).
-   In the future we plan to test options that derive an adjustment factor based on 
-   impervious connectivity or other local (sub-grid) conditions. 
+   In the future we plan to test options that derive an adjustment factor based on
+   impervious connectivity or other local (sub-grid) conditions.
 
 -  Option 9 (original formulation): This reverts back to the original Noah-MP configuration
    where soil water holding capacity is adjusted for urban cells and impervious fraction is not used.
 
 
 .. note::
-   The Noah-MP code within WRF-Hydro has some additional features that were added 
-   specifically for WRF-Hydro hydrologic applications, such as spatially distributed 
+   The Noah-MP code within WRF-Hydro has some additional features that were added
+   specifically for WRF-Hydro hydrologic applications, such as spatially distributed
    parameters and impervious surface runoff treatment, so it does not exactly track
-   the Noah-MP standalone code releases. Standalone Noah-MP model code was recently 
-   modernized for modularity and accessibility (*He et al. 2023*). Support for this 
-   refactored version of the Noah-MP model is currently in development and will be 
+   the Noah-MP standalone code releases. Standalone Noah-MP model code was recently
+   modernized for modularity and accessibility (*He et al. 2023*). Support for this
+   refactored version of the Noah-MP model is currently in development and will be
    included in a future WRF-Hydro release.
 
 3.3 Spatial Transformations
@@ -458,7 +458,7 @@ regridding from one grid to another. The Earth System Modeling Framework
 coupling weather, climate, and related models. ESMF provides the
 :program:`ESMF_RegridWeightGen` utility for parallel generation of interpolation
 weights between two grid files in netCDF format. These utilities will
-work for structured (rectilinear) and unstructured grids. The :program:`ESMF_RegridWeightGen` 
+work for structured (rectilinear) and unstructured grids. The :program:`ESMF_RegridWeightGen`
 tool since can be accessed through python (through ESMPy) and the NCAR
 Command Language (NCL, deprecated). Another commonly used tool in the atmospheric sciences
 are the Climate Data Operators (CDO), which offer 1\ :sup:`st` and 2\ :sup:`nd`\-
@@ -471,7 +471,7 @@ here store just the spatial weights. Thus, WRF-Hydro spatial
 correspondence files are more generic, with compact file sizes, and may
 be used for non-gridded data.
 
-The WRF-Hydro geospatial pre-processing toolkit includes a script that 
+The WRF-Hydro geospatial pre-processing toolkit includes a script that
 quantifies the polygon to polygon correspondence between
 geometries in two separate features (grid cells represented by polygons
 and basins represented by polygons). This correspondence is stored in a
@@ -495,7 +495,7 @@ storage of the correspondence information for future use in a small-file
 size. Users wanting to create custom spatial weight interpolation files
 for WRF-Hydro need to refer to the *WRF-Hydro GIS Pre-processing
 Toolkit* and documentation. For reference, variable descriptions of the
-contents of the spatial weights file is located in :ref:`section-20`.
+contents of the spatial weights file is located in :ref:`section-a13`.
 
 .. _figure3.3:
 .. figure:: media/user-defined-mapping.png
@@ -601,7 +601,7 @@ and soil thickness (`D_{i,j}`) given by:
 
 where, `z_{i,j}` is the depth to the water table. `n_{i,j}` in :ref:`Eq. (3.2) <eqn3.2>`
 is defined as the local power law exponent and is a tunable parameter that
-dictates the rate of decay of `Ksat_{i,j}` with depth (`n_{i,j}` has a default value of 1.0 
+dictates the rate of decay of `Ksat_{i,j}` with depth (`n_{i,j}` has a default value of 1.0
 or can be specified as "NEXP" in hydro2dtbl.nc). When :ref:`Eq. (3.2) <eqn3.2>` is
 substituted into :ref:`Eq. (3.1) <eqn3.1>` the flow rate from cell `(i,j)`
 to its neighbor in the `x`-direction can be expressed as:
@@ -682,8 +682,8 @@ include 1) the specified depth of soil and number and thickness of the
 soil vertical layers and 2) the prescription of the model bottom
 boundary condition. Typically, for simulations with deep soil profiles
 (e.g. > 10 `m`) the bottom boundary condition is set to a ‘no-flow’
-boundary (``SLOPE_DATA = 0.0`` in the :file:`GENPARM.TBL` parameter file 
-or ``slope = 0.0`` in the :file:`soil_properties.nc` spatially distributed 
+boundary (``SLOPE_DATA = 0.0`` in the :file:`GENPARM.TBL` parameter file
+or ``slope = 0.0`` in the :file:`soil_properties.nc` spatially distributed
 parameter file). See Appendices :ref:`section-a6` and :ref:`section-a7` for a
 description of :file:`GENPARM.TBL` and :file:`soil_properties.nc`.
 
@@ -860,13 +860,13 @@ size as shown in Table 3.2.
    +---------+---------+
 
 
-WRF-Hydro also includes an impervious surface adjustment option for overland routing. If this 
-scheme is activated (``imperv_adj = 0`` in :file:`hydro.namelist`) then the overland roughness 
-Manning's coefficient and maximum retention depth are adjusted based on the impervious fraction 
-provided as ``IMPERVFRAC`` in :file:`Fulldom_hires.nc`. Specifically, maximum retention depth 
-is multiplied by (1 - ``IMPERVFRAC``) (so smaller values for higher imperviousness). Manning's 
-roughness for overland routing is scaled based on a linear weighting of smoothness 
-(1/roughness, see Liong et al. 1989) and assuming a roughness of 0.02 for impervious and native 
+WRF-Hydro also includes an impervious surface adjustment option for overland routing. If this
+scheme is activated (``imperv_adj = 0`` in :file:`hydro.namelist`) then the overland roughness
+Manning's coefficient and maximum retention depth are adjusted based on the impervious fraction
+provided as ``IMPERVFRAC`` in :file:`Fulldom_hires.nc`. Specifically, maximum retention depth
+is multiplied by (1 - ``IMPERVFRAC``) (so smaller values for higher imperviousness). Manning's
+roughness for overland routing is scaled based on a linear weighting of smoothness
+(1/roughness, see Liong et al. 1989) and assuming a roughness of 0.02 for impervious and native
 cell roughness for pervious:
 
 OVROUGHRT = 1 / ((1/0.02)*impervfrac + (1/OVROUGHRT)*(1-impervfrac))
@@ -931,11 +931,11 @@ amount of water flowing onto the grid cell from overland flow, and
 exfiltration from groundwater flow. The quantity of surface head in
 excess of the retention depth is accumulated as stream channel inflow
 and is effectively “discharged” to the channel routing routine
-(described below). In the current code, `RETDEPRT` is hard-coded to 
-5mm for channel pixels to encourage more local infiltration near the 
-river channel leading to wetter soils that better emulate riparian 
-conditions. Values of “channel inflow” are accumulated on the channel 
-grid and can be output for visualization and analysis 
+(described below). In the current code, `RETDEPRT` is hard-coded to
+5mm for channel pixels to encourage more local infiltration near the
+river channel leading to wetter soils that better emulate riparian
+conditions. Values of “channel inflow” are accumulated on the channel
+grid and can be output for visualization and analysis
 (see :ref:`Section 6 <section-6.0>` for a description of model outputs).
 
 .. _figure3.6:
@@ -1258,8 +1258,8 @@ width, *S\ o* is the channel slope and *dx* is the channel length.
 
 In order to represent a simplification of the behavior of a flood wave
 when it exceeds the channel bank, a compound channel formulation was
-added to WRF-Hydro. This option is currently only available when 
-``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+added to WRF-Hydro. This option is currently only available when
+``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with
 the Muskingum-Cunge reach-based channel routing scheme).
 A visual representation is shown in Figure 3.9. When the depth of the
 flow exceeds bankfull (`d > d_b`), then the wave celerity is given
@@ -1275,7 +1275,7 @@ the channel. The introduction of compound channel requires values for
 three more parameters: bankfull depth (`d_b`), top widths of the
 trapezoid and the compound channel, `T_w` and `T_{w\_cc},`
 respectively. These parameters, in addition to `n_{cc}`, are defined
-in the Route_Link.nc file. The default values were 
+in the Route_Link.nc file. The default values were
 determined using a published equation from
 *Blackburn-Lynch et al., 2017*, who gathered regional USGS estimations of
 channel parameters and developed coefficients to describe the
@@ -1296,8 +1296,8 @@ yielded the best streamflow performance, all else being equal.
    channel in National Water Model, where the dashed lines represent roughness
    of the channel n, and of the compound channel, `n_{cc}`
 
-.. note:: The compound channel option is currently only available when 
-   ``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with 
+.. note:: The compound channel option is currently only available when
+   ``channel_option=2`` and ``udmp=1`` (so using user-defined mapping with
    the Muskingum-Cunge reach-based channel routing scheme).
 
 .. _section-3.7:
@@ -1317,7 +1317,7 @@ must adjust these parameters accordingly - the model makes no other
 distinction between a reservoir and a lake.
 
 Fluxes into a lake/reservoir object occur through the channel network
-and when surface overland flow intersects a lake object (in the gridded 
+and when surface overland flow intersects a lake object (in the gridded
 channel routing configuration only). Fluxes from
 lake/reservoir objects are made only through the channel network and no
 fluxes from lake/reservoir objects to the atmosphere or the land surface
@@ -1368,25 +1368,25 @@ read it as specified in the :file:`hydro.namelist` file.
    -  Dam length specified as a multiplier on weir length (`dimensionless`), `Dam_Length` in :file:`LAKEPARM.nc`
 
 For the gridded channel routing option, the lake/reservoir routing options
-require lake objects to be defined and properly indexed as a data 
-field in the high resolution terrain routing :file:`Fulldom_hires.nc` 
+require lake objects to be defined and properly indexed as a data
+field in the high resolution terrain routing :file:`Fulldom_hires.nc`
 file. If lake/reservoir objects are present in the
 lake grid (and also within the channel network) then level-pool routing through
 those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
-= 3`` (gridded routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+= 3`` (gridded routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`.
 
-For reach-based channel routing options, the lake/reservoir routing options 
-require lake objects to be defined  and properly indexed as waterbody  objects 
+For reach-based channel routing options, the lake/reservoir routing options
+require lake objects to be defined  and properly indexed as waterbody  objects
 in the :file:`Route_Link.nc` file.
 If lake/reservoir objects are present in the
 :file:`Route_Link.nc` file then level-pool routing through
 those objects will occur if ``CHANRTSWCRT = 1`` (channel is active), ``channel_option
-= 1 or 2`` (reach routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`. 
+= 1 or 2`` (reach routing), and ``lake_option = 1`` (level pool) in :file:`hydro.namelist`.
 
-The ``lake_option`` in :file:`hydro.namelist` can also be used to turn off lake/reservoir 
-routing completely (``lake_option = 0``), set the waterbodies to simply pass water through 
-from inflow to outflow with no storage or delay (``lake_option = 2``), or activate data 
-assimilation (specific to the NOAA National Water Model and not currently 
+The ``lake_option`` in :file:`hydro.namelist` can also be used to turn off lake/reservoir
+routing completely (``lake_option = 0``), set the waterbodies to simply pass water through
+from inflow to outflow with no storage or delay (``lake_option = 2``), or activate data
+assimilation (specific to the NOAA National Water Model and not currently
 supported outside of that configuration).
 
 There are several special requirements for the
@@ -1540,15 +1540,15 @@ values of the groundwater bucket model parameters are typically derived
 analytically or \'offline\' from WRF-Hydro and then are fine-tuned through
 model calibration.
 
-There are 4 options available for the conceptual baseflow model, as specified 
-in ``GWBASESWCRT`` in :file:`hydro.namelist`. The conceptual baseflow model 
+There are 4 options available for the conceptual baseflow model, as specified
+in ``GWBASESWCRT`` in :file:`hydro.namelist`. The conceptual baseflow model
 can be turned off (``GWBASESWCRT = 0``), which means water draining from the soil column in the land
-surface model will become a sink term (this water will not be returned to the channel 
-and will be a loss from the system). The exponential bucket model can be activated 
+surface model will become a sink term (this water will not be returned to the channel
+and will be a loss from the system). The exponential bucket model can be activated
 (``GWBASESWCRT = 1``), as described above. Water draining from the land model soil
-column can be placed directly into the channel with no additional storage/attenuation 
+column can be placed directly into the channel with no additional storage/attenuation
 (``GWBASESWCRT = 2``). For configurations using user-defined mapping to specify
-catchment boundaries (``UDMP_OPT = 1``), there is a modified version of the 
+catchment boundaries (``UDMP_OPT = 1``), there is a modified version of the
 exponential bucket model (``GWBASESWCRT = 4``) that adjusts the `C` parameter above
 based on the area of the catchment.
 

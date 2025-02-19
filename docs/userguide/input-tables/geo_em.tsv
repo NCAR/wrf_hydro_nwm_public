@@ -1,0 +1,4 @@
+VariableName	Dimensions	Description	Units	Notes
+LU_INDEX	LSM grid	Land cover type	Categorical	Hydro routing code uses this variable to define land cover type. The classification scheme is determined by the global attribute MMINLU and ISURBAN, ISWATER, and ISOILWATER are used to define special types. See MPTABLE.TBL for NoahMP-supported land cover classification schemes.
+SCT_DOM	LSM grid	Dominant top layer soil texture class	Categorical	Hydro routing code uses this variable to define soil type (texture class). Currently there is only one texture class defined per cell (not variable with depth). See SOILPARM.TBL for the supported texture classes.
+HGT_M	LSM grid	Elevation	m	Not used by the model but useful for reference.

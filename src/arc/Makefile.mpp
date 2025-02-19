@@ -6,8 +6,10 @@ all:
 BASIC:
 	make -C MPP
 	make -C IO
+	make -C utils/fortglob
 	make -C utils
 	make -C OrchestratorLayer
+	make -C Routing/Diversions
 	make -C Routing/Overland
 	make -C Routing/Subsurface
 	make -C Routing/Reservoirs

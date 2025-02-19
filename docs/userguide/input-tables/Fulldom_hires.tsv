@@ -1,0 +1,13 @@
+VariableName	Dimensions	Description	Units	Notes
+TOPOGRAPHY	Routing grid	Terrain grid or Digital Elevation Model (DEM).	m
+FLOWDIRECTION	Routing grid	Flow direction grid, which explicitly defines flow directions along the channel network in gridded routing. This variable dictates where water flows into channels from the land surface as well as in the channel.	categorical
+FLOWACC	Routing grid	Number of upstream cells that drain into each cell.	count
+CHANNELGRID	Routing grid	Channel network grid identifying the location of stream channel grid cells (-9999=no channel, -1=deactivated channel, 0=active channel)	categorical
+STREAMORDER	Routing grid	Strahler stream order grid identifying the stream order for all channel pixels within the channel network.	categorical
+LKSATFAC	Routing grid	Multiplier on saturated hydraulic conductivity in lateral flow direction.	dimensionless
+RETDEPRTFAC	Routing grid	Multiplier on maximum retention depth before flow is routed as overland flow.	dimensionless
+OVROUGHRTFAC	Routing grid	Multiplier on Manning's roughness for overland flow.	dimensionless
+frxst_pts	Routing grid	Prescribed forecast points	index
+basn_msk	Routing grid	Prescribed basin masks	index
+LAKEGRID	Routing grid	Prescribed lakes	index
+landuse	Routing grid	Land use from geogrid regridded to the high-res routing grid	categorical

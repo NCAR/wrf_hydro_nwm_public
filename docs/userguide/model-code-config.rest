@@ -130,9 +130,10 @@ required even if running over a single core.
 ------------------------
 
 The top-level directory structure of the code is provided below as
-nested under :file:`trunk/NDHMS` and subdirectory structures are described
-thereafter. The tables below provide brief descriptions of the file
-contents of each directory where the model code resides.
+nested under the :file:`wrf_hydro_nwm_public` root directory and the
+subdirectory structures are described thereafter. The tables below provide
+brief descriptions of the file contents of each directory where the model code
+resides.
 
 .. default-role:: file
 
@@ -157,9 +158,9 @@ contents of each directory where the model code resides.
    | `docs/`                 | Pointer to location of full documentation (i.e.  |
    |                         | this document).                                  |
    +-------------------------+--------------------------------------------------+
-   | `tests`                 | Scripts and data used to test the model          |
+   | `tests/`                | Scripts and data used to test the model          |
    +-------------------------+--------------------------------------------------+
-   | `src`                   | WRF-Hydro Model source code                      |
+   | `src/`                  | WRF-Hydro Model source code                      |
    +-------------------------+--------------------------------------------------+
    | :underline:`Source code directories under \`src/\`:`                       |
    +-------------------------+--------------------------------------------------+
@@ -436,7 +437,7 @@ file and in it are the various settings for operating all of the routing
 components of the WRF-Hydro system. The hydro.namelist file is
 internally commented so that it should be clear as to what is needed for
 each setting. A full annotated example of the hydro.namelist file is
-provided in :ref:`section-a5`.
+provided in :ref:`section-a6`.
 
 The second namelist is the namelist which specifies the land surface
 model options to be used. This namelist can change depending on which
@@ -460,7 +461,9 @@ as noted above, will contain different settings for the two different
 land surface models. For a run where WRF-Hydro is coupled to the WRF
 model, the WRF model input file namelist.input becomes the second
 namelist file. Full annotated example namelist.hrldas files for Noah and
-Noah-MP are provided in :ref:`section-a3` and :ref:`section-a4`.
+Noah-MP are provided in :ref:`section-a4` and :ref:`section-a5`.
+
+.. _section-2.8:
 
 2.8 Build Instructions
 ------------------------------------

@@ -1,0 +1,15 @@
+VariableName	Dimensions	Description	Units	Notes
+SMOIS	LSM grid, soil layers	Initial volumetric soil moisture content	m3/m3
+TSLB	LSM grid, soil layers	Initial soil temperature	K
+SNOW	LSM grid	Initial snow water equivalent	mm (kg/m2)
+CANWAT	LSM grid	Initial canopy water storage	mm (kg/m2)
+TSK	LSM grid	Initial surface temperature	K	Used to initialize model temperatures other than soil, e.g., canopy leaf and air temperature
+LAI	LSM grid	Initial leaf area index	m2/m2	Only used by certain NoahMP settings
+IVGTYP	LSM grid	Land cover type	Categorical	LSM uses this variable to define land cover type. The classification scheme is determined by the global attribute MMINLU and ISURBAN, ISWATER, and ISICE are used to define special types. See MPTABLE.TBL for NoahMP-supported land cover classification schemes.
+ISLTYP	LSM grid	Soil texture class	Categorical	LSM uses this variable to define soil type (texture class). Currently there is only one texture class defined per cell (not variable with depth). See SOILPARM.TBL for the supported texture classes.
+TMN	LSM grid	Constant deep ­soil temperature	K	Used as fixed lower boundary temperature for TBOT_OPTION=2
+SHDMAX	LSM grid	Maximum annual vegetation fraction	% (0-100)	Only used by certain NoahMP settings
+SHDMIN	LSM grid	Minimum annual vegetation fraction	% (0-100)	Only used by certain NoahMP settings
+SEAICE	LSM grid	Presence of sea ice	fraction	Set to 0; if >0, model will skip execution
+XLAND	LSM grid	Land/water mask (1=land, 2=water)	categorical	Set to 1 for land points; if =2, model will skip execution
+HGT	LSM grid	Elevation	m	Not used by the model but useful for reference.
