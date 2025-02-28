@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/NCAR/wrf_hydro_nwm_public/actions/workflows/test-pr.yml/badge.svg?branch=main)](https://github.com/NCAR/wrf_hydro_nwm_public/actions/workflows/test-pr.yml)
 [![Doc Build Status](https://readthedocs.org/projects/wrf-hydro/badge/?version=latest&style=flat)](https://wrf-hydro.readthedocs.io)
 [![Release](https://img.shields.io/github/release/NCAR/wrf_hydro_nwm_public.svg)](https://github.com/NCAR/wrf_hydro_nwm_public/releases/latest)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3625237.svg)](https://doi.org/10.5281/zenodo.3625237)
+[![DOI](https://zenodo.org/badge/121802384.svg)](https://zenodo.org/badge/latestdoi/121802384)
 
 ## Description
 This is the code repository for [WRF-Hydro®](https://ral.ucar.edu/projects/wrf_hydro).
