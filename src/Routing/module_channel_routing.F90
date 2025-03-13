@@ -876,7 +876,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !        endif
 
           do k = 1, NLINKSL
-            if(TYPEL(k) .ne. 2) then
+            if(TYPEL(k) .ne. 1) then
                QLINK(k,2) = tmpQLINK(k,2)
             endif
             QLINK(k,1) = QLINK(k,2)    !assing link flow of current to be previous for next time step
