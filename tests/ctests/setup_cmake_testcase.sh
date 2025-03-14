@@ -38,7 +38,7 @@ test_file_dir=${binary_dir}/tests
 run_dir=${binary_dir}/Run
 
 # download testcase if not present
-version=5.3
+version=5.4
 croton_tarball=croton_NY_training_example_v${version}.tar.gz
 if [ ! -f ${test_file_dir}/${croton_tarball} ]
 then
