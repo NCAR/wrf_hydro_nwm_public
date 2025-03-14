@@ -18,6 +18,7 @@ add_library(hydro_routing STATIC
 )
 
 target_link_libraries(hydro_routing
+       PRIVATE
        MPI::MPI_Fortran
        hydro_mpp
        hydro_utils
