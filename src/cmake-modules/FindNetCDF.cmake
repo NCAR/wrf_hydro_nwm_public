@@ -88,4 +88,26 @@ set (NETCDF_LIBRARIES ${NetCDF_libs} CACHE INTERNAL "All NetCDF libraries requir
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (NetCDF DEFAULT_MSG NETCDF_LIBRARIES NETCDF_INCLUDES NetCDF_has_interfaces)
 
+if (NETCDF_FOUND AND NOT TARGET netCDF::netcdf)
+  add_library(netCDF::netcdf UNKNOWN IMPORTED)
+  set_target_properties(
+    netCDF::netcdf
+    PROPERTIES
+    IMPORTED_LOCATION "${NETCDF_LIBRARIES_C}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES C
+    INTERFACE_INCLUDE_DIRECTORIES "${NETCDF_INCLUDES}"
+    )
+endif()
+if (NETCDF_FOUND AND NOT TARGET netCDF::netcdff)
+  add_library(netCDF::netcdff UNKNOWN IMPORTED)
+  set_target_properties(
+    netCDF::netcdff
+    PROPERTIES
+    IMPORTED_LOCATION "${NETCDF_LIBRARIES_F90}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES Fortran
+    INTERFACE_INCLUDE_DIRECTORIES "${NETCDF_MODULES}"
+    )
+  target_link_libraries(netCDF::netcdff INTERFACE netCDF::netcdf)
+endif()
+
 mark_as_advanced (NETCDF_LIBRARIES NETCDF_INCLUDES)
