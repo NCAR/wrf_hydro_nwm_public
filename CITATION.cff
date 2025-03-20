@@ -23,13 +23,88 @@ authors:
     given-names: Aubrey
     orcid: 0000-0001-8250-4218
     # origin: technical doc
-  - family-names: Dunlap
-    given-names: Rocky
-    # orcid:
-    # origin: github
   - family-names: Eidhammer
     given-names: Trude
     orcid: 0000-0003-2281-9351
+    # origin: github
+  - family-names: Enzminger
+    given-names: Tom
+    orcid: 0000-0001-5072-3854
+    # origin: technical doc
+  - family-names: FitzGerald
+    given-names: Katelyn
+    orcid: 0000-0003-4184-1917
+    # origin: technical doc
+  - family-names: Felfelani
+    given-names: Farshid
+    orcid: 0000-0003-1360-5095
+    # origin: technical doc
+  - family-names: Gaydos
+    given-names: Andy
+    # origin: technical doc
+  - family-names: Mazrooei
+    given-names: Amir
+    orcid: 0000-0001-9171-9595
+    # origin: technical doc
+  - family-names: McAllister
+    given-names: Molly
+    # orcid:
+    # origin: technical doc
+  - family-names: McCreight
+    given-names: James
+    orcid: 0000-0001-6018-425X
+    # origin: technical doc
+  - family-names: McCluskey
+    given-names: Alyssa
+    # orcid:
+    # origin: technical doc
+  - family-names: Omani
+    given-names: Nina
+    # orcid:
+    # origin: technical doc
+  - family-names: RafieeiNasab
+    given-names: Arezoo
+    # github-names: arezoorn
+    orcid: 0000-0001-8557-107X
+    # origin: technical doc
+  - family-names: Rasmussen
+    given-names: Soren
+    #github-names: scrasmussen
+    orcid: 0000-0003-3899-1463
+    # origin: github
+  - family-names: Read
+    given-names: Laura
+    orcid: 0000-0003-3476-1249
+    # origin: technical doc
+  - family-names: Sampson
+    given-names: Kevin
+    orcid: 0000-0002-5537-7775
+    # origin: technical doc
+  - family-names: Srivastava
+    given-names: Ishita
+    orcid: 0009-0002-4060-6659
+    # origin: technical doc
+  - family-names: Yates
+    given-names: David
+    orcid: 0000-0002-0688-3460
+    # origin: technical doc
+  - family-names: Zhang
+    given-names: Yongxin
+    orcid: 0000-0001-6321-1276
+    # origin: technical doc
+  - family-names: Yu
+    given-names: Wei
+    # github-names:
+    # orcid:
+    # origin:
+  - family-names: Karsten
+    given-names: Logan
+    # github-names: logankarsten
+    # orcid:
+    # origin: github
+  - family-names: Dunlap
+    given-names: Rocky
+    # orcid:
     # origin: github
   - family-names: Fanfarillo
     given-names: Alessandro
@@ -39,10 +114,6 @@ authors:
     given-names: Benjamin
     # orcid:
     # origin: github
-  - family-names: FitzGerald
-    given-names: Katelyn
-    orcid: 0000-0003-4184-1917
-    # origin: technical doc
   - family-names: Heldmyer
     given-names: Aaron
     # github: aheldmyer
@@ -53,11 +124,6 @@ authors:
     # github-names: donaldwj
     # orcid:
     # origin: github
-  - family-names: Karsten
-    given-names: Logan
-    # github-names: logankarsten
-    # orcid:
-    # origin: github
   - family-names: Lahmers
     given-names: Tim
     # orcid:
@@ -66,57 +132,24 @@ authors:
     given-names: David
     # orcid:
     # origin: github
-  - family-names: McAllister
-    given-names: Molly
-    # orcid:
-    # origin: technical doc
-  - family-names: McCreight
-    given-names: James
-    orcid: 0000-0001-6018-425X
-    # origin: technical doc
   # - family-names:
     # given-names: Nels
     # orcid:
     # origin: github
-  - family-names: RafieeiNasab
-    given-names: Arezoo
-    # github-names: arezoorn
-    orcid: 0000-0002-8607-294X
-    # origin: technical doc
-  - family-names: Rasmussen
-    given-names: Soren
-    orcid: 0000-0003-3899-1463
-    # origin: github
-  - family-names: Read
-    given-names: Laura
-    orcid: 0000-0003-3476-1249
-    # origin: technical doc
   - family-names: Rosen
     given-names: Dan
     # orcid:
     # origin: github
-  - family-names: Sampson
-    given-names: Kevin
-    orcid: 0000-0002-5537-7775
-    # origin: technical doc
   - family-names: Valayamkunnath
     given-names: Prasanth
     orcid: 0000-0003-2270-0780
     # origin: github
-  - family-names: Yates
-    given-names: David
-    orcid: 0000-0002-0688-3460
-    # origin: technical doc
-  - family-names: Zhang
-    given-names: Yongxin
-    orcid: 0000-0001-6321-1276
-    # origin: technical doc
 
 cff-version: 1.2.0
-date-released: "2021-01-29"
+date-released: "2025-03-14"
 title: "WRF-Hydro"
 repository-code: "https://github.com/NCAR/wrf_hydro_nwm_public"
-version: 5.3.0
+version: 5.4.0
 url: "https://ral.ucar.edu/projects/wrf_hydro"
 keywords:
   - "hydrologic model"
@@ -127,6 +160,12 @@ identifiers:
   - description: "This is the archived snapshot of all versions of WRF-Hydro"
     type: doi
     value: 10.5281/zenodo.3625237
+  - description: "This is the archived snapshot of version v5.4.0 of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.15040873
+  - description: "This is the archived snapshot of version v5.3.0 of WRF-Hydro"
+    type: doi
+    value: 10.5281/zenodo.5773161
   - description: "This is the archived snapshot of version v5.2.0 of WRF-Hydro"
     type: doi
     value: 10.5281/zenodo.4479912
