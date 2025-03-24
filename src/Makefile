@@ -43,7 +43,7 @@ clean:
 	@if [ -d "LandModel" ]; then \
 	(cd LandModel; make clean) \
 	fi
-	if [ $(WRF_HYDRO_RAPID) -eq 1 ]; then \
-		(cd Rapid_routing; make -f makefile.cpl clean); \
+	@if [ "$(WRF_HYDRO_RAPID)" = "1" ]; then \
+	(cd Rapid_routing; make -f makefile.cpl clean); \
 	fi
 	(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
