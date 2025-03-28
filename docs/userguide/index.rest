@@ -20,12 +20,20 @@ The NCAR WRF-Hydro® Modeling System Technical Description
 Until further notice, please cite the WRF-Hydro® modeling system as
 follows:
 
-Gochis, D.J., M. Barlage, R. Cabell, M. Casali, E. Dougherty, A. Dugger, T. Eidhammer, T. Enzminger, 
+Gochis, D.J., M. Barlage, R. Cabell, M. Casali, E. Dougherty, A. Dugger, T. Eidhammer, T. Enzminger,
 K. FitzGerald, F. Felfelani, A. Gaydos, A. Mazrooei, M. McAllister, J. McCreight, A. McCluskey,
-N. Omani, A. RafieeiNasab, S. Rasmussen, L. Read, K. Sampson, I. Srivastava, D. Yates, Y. Zhang (2025).
+N. Omani, A. RafieeiNasab, S. Rasmussen, L. Read, K. Sampson, I. Srivastava, D. Yates, Y. Zhang,
+W. Yu, and L. Karsten (2025).
 *The WRF-Hydro® Modeling System Technical Description,* (Version 5.4).
+doi:`10.5281/zenodo.15040873`
 NCAR Technical Note. Available online at:
 https://wrf-hydro.readthedocs.io/en/latest/
+
+
+.. rubric:: Links:
+
+- `Project Website <https://ral.ucar.edu/projects/wrf_hydro>`_
+- `GitHub Repository <https://github.com/NCAR/wrf_hydro_nwm_public>`_
 
 .. rubric:: FORWARD
 
@@ -38,7 +46,7 @@ wrfhydro@ucar.edu.
 .. rubric:: Prepared by:
 
 David Gochis, Michael Barlage, Ryan Cabell, Matt Casali, Erin Dougherty, Aubrey Dugger, Trude
-Eidhammer, Tom Enzminger, Katelyn FitzGerald, Farshid Felfelani, Andy Gaydos, Amir Mazrooei, Molly McAllister, 
+Eidhammer, Tom Enzminger, Katelyn FitzGerald, Farshid Felfelani, Andy Gaydos, Amir Mazrooei, Molly McAllister,
 James McCreight, Alyssa McCluskey, Nina Omani, Arezoo RafieeiNasab, Soren Rasmussen, Laura Read, Kevin Sampson,
 Ishita Srivastava, David Yates, and Yongxin Zhang
 
@@ -50,7 +58,7 @@ thanked for their contributions to this effort:
 
 - John McHenry and Carlie Coats, Baron Advanced Meteorological Services
 
-- Martyn Clark, Fei Chen, Cenlin He, Prasanth Valayamkunnath, Dan Rosen, Rocky Dunlap, 
+- Martyn Clark, Fei Chen, Cenlin He, Prasanth Valayamkunnath, Dan Rosen, Rocky Dunlap,
   Alessandro Fanfarillo, National Center for Atmospheric Research
 
 - Zong-Liang Yang, Cedric David, Peirong Lin and David Maidment of the
@@ -61,8 +69,8 @@ thanked for their contributions to this effort:
 
 - Alfonso Senatore, University of Calabria, Cosenza, Italy
 
-- Brian Cosgrove, Ed Clark, Fernando Salas, Trey Flowers, Zhengtao Cui, Xia Feng, Nels Frazier, 
-  James Halgren, Don Johnson, Yuqiong Liu, Dave Mattern, Fred Ogden, Cham Phan, Mehdi Rezaeianzadeh, 
+- Brian Cosgrove, Ed Clark, Fernando Salas, Trey Flowers, Zhengtao Cui, Xia Feng, Nels Frazier,
+  James Halgren, Don Johnson, Yuqiong Liu, Dave Mattern, Fred Ogden, Cham Phan, Mehdi Rezaeianzadeh,
   and Tom Graziano of the National Oceanic and Atmospheric Administration Office of Water Prediction
 
 - Ismail Yucel, Middle East Technical University, Ankara, Turkey
