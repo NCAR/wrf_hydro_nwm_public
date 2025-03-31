@@ -2,7 +2,7 @@
 
 # Bash script is meant to be used by CMake. It downloads and extracts the
 # Croton, NY testcase to the CMake build Run directory. It then setups up the
-# files so ctest can run wrf_hydro.exe
+# files so ctest can run wrf_hydro
 
 # setup directory variables in script
 # match the input case to valid testcase_dir

@@ -46,7 +46,7 @@ for coupling other modeling systems into WRF-Hydro.
 
     *Example:* For coupled WRF/WRF-Hydro runs the WRF-Hydro components are
     compiled as a single library function call with the WRF system. As such,
-    a single executable is created upon compilation (:program:`wrf.exe`). As
+    a single executable is created upon compilation (:program:`wrf`). As
     illustrated in :ref:`Figure 2.1 <figure2.1>`, WRF-hydro is called directly
     from WRF in the WRF surface driver module (:file:`phys/module_surface_driver.F90`).
     The code that manages the communication is the :file:`WRF_drv_Hydro.F90`

@@ -47,7 +47,7 @@ $ make -j 4
 
 This should result in the creation of a 'Run' directory populated with the
 appropriate template parameter tables and namelists for the land surface model
-selected as well as a model executable that is then symlinked to wrf_hydro.exe.
+selected as well as a model executable that is then symlinked to `wrf_hydro`.
 
 Note that, as mentioned above, passing the environment variable file as an
 argument to the compile script is optional. However, if this is not passed the

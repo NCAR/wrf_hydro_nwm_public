@@ -37,7 +37,7 @@ def test_run_reference_nwm_output_sim(
     reference_nwm_output_sim_copy.model = copy.deepcopy(reference_sim.model)
 
     # Job
-    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
+    exe_command = 'mpirun -np {0} ./wrf_hydro'.format(str(ncores))
     job = wrfhydropy.Job(
         job_id='run_reference',
         exe_cmd=exe_command,
@@ -96,7 +96,7 @@ def test_run_candidate_nwm_output_sim(
     candidate_nwm_output_sim_copy.model = copy.deepcopy(candidate_sim.model)
 
     # Job
-    exe_command = 'mpirun -np {0} ./wrf_hydro.exe'.format(str(ncores))
+    exe_command = 'mpirun -np {0} ./wrf_hydro'.format(str(ncores))
     job = wrfhydropy.Job(
         job_id='run_candidate',
         exe_cmd=exe_command,
@@ -162,4 +162,3 @@ def test_regression_metadata_nwm_output(output_dir):
         print_diffs(meta_data_diffs)
     assert has_metadata_diffs is False, \
         'NWM output metadata and attributes of candidate run do not match those of the reference run.'
-

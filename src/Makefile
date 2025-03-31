@@ -1,6 +1,6 @@
 # Makefile
 #
-CMD = Run/wrf_hydro.exe
+CMD = Run/wrf_hydro
 .PHONY: $(CMD)
 
 all: $(CMD)
@@ -9,7 +9,7 @@ $(CMD):
 	@if [ ! -d "Run" ]; then \
 		(mkdir Run);\
 	fi
-	(rm -f Run/wrf_hydro.exe   )
+	(rm -f Run/wrf_hydro   )
 	(make -f Makefile.comm BASIC)
 	@if [ -d "LandModel_cpl" ]; then \
 	(cd LandModel_cpl; make) \
@@ -31,8 +31,8 @@ debug::
 debug:: $(CMD)
 
 install:
-	-rm -f ./Run/wrf_hydro.exe
-	mv LandModel/run/hrldas.exe  ./Run/wrf_hydro.exe
+	-rm -f ./Run/wrf_hydro
+	mv LandModel/run/hrldas.exe  ./Run/wrf_hydro
 test:
 	@echo "No libraries or utilities are built, skip testing."
 clean:
@@ -46,4 +46,4 @@ clean:
 	@if [ "$(WRF_HYDRO_RAPID)" = "1" ]; then \
 	(cd Rapid_routing; make -f makefile.cpl clean); \
 	fi
-	(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro.exe)
+	(rm -f */*.mod */*.o lib/*.a Run/wrf_hydro)

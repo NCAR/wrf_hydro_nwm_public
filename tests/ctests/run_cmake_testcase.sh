@@ -11,9 +11,9 @@ run_dir=${binary_dir}/Run
 output_dir=output_${testcase_type}
 
 if [ "$np" -eq "1" ]; then
-    run_cmd="./wrf_hydro.exe"
+    run_cmd="./wrf_hydro"
 else
-    run_cmd="mpiexec -np ${np} ./wrf_hydro.exe"
+    run_cmd="mpiexec -np ${np} ./wrf_hydro"
 fi
 
 # run testcase

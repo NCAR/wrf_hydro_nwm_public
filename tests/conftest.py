@@ -111,12 +111,12 @@ def pytest_addoption(parser):
 
     parser.addoption(
         '--exe_cmd',
-        default='mpirun -np {0} ./wrf_hydro.exe',
+        default='mpirun -np {0} ./wrf_hydro',
         required=False,
         action='store',
         help='The MPI-dependent model execution command. Default is best guess. '
         'The first/zeroth variable is set to the total number of cores. The '
-        'wrf_hydro_py convention is that the exe is always named wrf_hydro.exe.'
+        'wrf_hydro_py convention is that the exe is always named wrf_hydro.'
     )
 
     parser.addoption(
