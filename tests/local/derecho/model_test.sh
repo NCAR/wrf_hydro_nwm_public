@@ -10,29 +10,29 @@ the_help="\
 Model Testing
 
 Required
-    -c: 
-        Candidate directory path. The code to test. 
+    -c:
+        Candidate directory path. The code to test.
     -r:
         Reference directory path. The code to test against.
 
 Options:
-    --reference_update: 
+    --reference_update:
        default=true
-       In the reference repo, fetch upstream (NCAR) and checkout branch matching 
+       In the reference repo, fetch upstream (NCAR) and checkout branch matching
        that of the candidate?
-    --compiler: 
-        [default=ifort, gfort, <You can try whatever is available in modules>] 
+    --compiler:
+        [default=ifort, gfort, <You can try whatever is available in modules>]
         Currently:  ifort -> intel/17.0.1   and  gnu -> gnu/7.1.0
         We should try to keep this update along with what is here:
         https://github.com/NCAR/wrf_hydro_nwm_public/wiki/Compiler-requirements-by-version
-    --mpi: 
+    --mpi:
         [default=impi, <You can try whatever is available in modules.>]
     --exe_cmd:
-        [default=\"mpirun -np \\\$ncores ./wrf_hydro.exe\", <Whatever you need for your mpi.>]
+        [default=\"mpirun -np \\\$ncores ./wrf_hydro\", <Whatever you need for your mpi.>]
         See examples for MPT in the shared queue (other MPI distros apparently dont need this).
-    --config: 
+    --config:
         [default=nwm_ana, nwm_long_range, <Whatever is available in the .json files for the domain.>]
-    ---ncores: 
+    ---ncores:
         default=360
     --nnodes:
         default=ceiling ncores 36
@@ -44,7 +44,7 @@ Options:
         default=01:00:00
     --domain_dir:
         The domain must be properly constructed with domain-side json namelist patch files and a
-        .version file. 
+        .version file.
     --use_existing_test_dir
         default is not included. Lets testing proceede with existing output in place.
     --xrcmp_n_cores
@@ -53,7 +53,7 @@ Options:
 
 
 
-Usage Examples: 
+Usage Examples:
 # A CONUS test of nwm_ana
 ./model_test.sh -c /path/to/candidate_dir -r /path/to/reference_dir
 
@@ -76,7 +76,7 @@ Usage Examples:
     -c ~/WRF_Hydro/wrf_hydro_nwm_public \\
     -r ~/WRF_Hydro/.wrf_hydro_nwm_public_REFERENCE \\
     --compiler=ifort --mpi=mpt \\
-    --exe_cmd=\"mpiexec_mpt $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro.exe\" \\
+    --exe_cmd=\"mpiexec_mpt $'\\\$(hostname)' -np \\\$ncores ./wrf_hydro\" \\
     --config='nwm_ana' \\
     --ncores=6 --queue=share \\
     --domain_dir path/to/croton_NY
@@ -85,7 +85,7 @@ Usage Examples:
 ## Default options
 compiler=ifort
 mpi=impi
-exe_cmd="mpirun -np \$ncores ./wrf_hydro.exe"
+exe_cmd="mpirun -np \$ncores ./wrf_hydro"
 config=nwm_ana
 ncores=360
 nnodes=to_calculate
@@ -198,7 +198,7 @@ if [[ $reference_update == 'true' ]]; then
     else
         cd $reference_dir || exit 9
         git fetch upstream || exit 9
-    fi             
+    fi
     git checkout origin/$branch_name  || exit 9
     cd - 2> /dev/null cd 1> /dev/null
 fi

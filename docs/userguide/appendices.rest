@@ -127,9 +127,9 @@ details on the domain and time period of the simulation are provided in the
       | *(from your project directory)*
       | :code:`cp wrf_hydro_nwm_public*/build/Run/\*.TBL example_case/Gridded`
 
-   Copy the :file:`wrf_hydro.exe` file:
+   Copy the :file:`wrf_hydro` file:
 
-      :code:`cp wrf_hydro_nwm_public*/build/Run/wrf_hydro.exe example_case/Gridded`
+      :code:`cp wrf_hydro_nwm_public*/build/Run/wrf_hydro example_case/Gridded`
 
    .. note:: There are other configuration subfolders with the names such as :file:`Gridded`, :file:`nwm`, and
       :file:`Reach`. These folders contain prepared files for other configurations of WRF-Hydro. They are found
@@ -167,7 +167,7 @@ details on the domain and time period of the simulation are provided in the
                   ├──SOILPARM.TBL
                   ├──hydro.namelist
                   ├──namelist.hydrodas
-                  ├──wrf_hydro.exe
+                  ├──wrf_hydro
 
 3. Now we will run the simulation. Note that there are many options
    and filepaths that need to be set in the two namelist files
@@ -183,7 +183,7 @@ details on the domain and time period of the simulation are provided in the
 
    .. code-block:: bash
 
-      mpirun -np 2 ./wrf_hydro.exe
+      mpirun -np 2 ./wrf_hydro
 
 4. If your simulation ran successfully, there should now be a large
    number of output files. Descriptions of the output files and their contents
@@ -602,7 +602,7 @@ the wrfinput* and wrfbdy* files as initial and boundary conditions and the
 model physics and other options selected in the namelist.input and
 hydro.namelist files.
 
-1. Execute wrf.exe using the proper syntax for your system (example below) and
+1. Execute wrf using the proper syntax for your system (example below) and
    pipe the output to a log file.
 
 .. code-block:: console
@@ -637,7 +637,7 @@ the WRF-Hydro workflow to work with Noah:
 -  **LSM initialization:** The simple wrfinput.nc initialization file
    created by the create_Wrfinput.R script does not currently include
    all of the fields required by the Noah LSM. Therefore, Noah users
-   should use the WRF real.exe utility to create a wrfinput_d0x file.
+   should use the WRF real utility to create a wrfinput_d0x file.
    Refer to the WRF documentation and user guides for information on how
    to do this.
 

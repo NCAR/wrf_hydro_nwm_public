@@ -5,7 +5,7 @@ build:
 	make -C ..
 
 run:
-	./wrf_hydro.exe
+	./wrf_hydro
 
 # download and extract Croton, NY test case to Run directory
 # testcase options: {Gridded, Gridded_no_lakes, NWM, Reach, ReachLakes}

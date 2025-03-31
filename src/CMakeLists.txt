@@ -94,15 +94,15 @@ if (HYDRO_LSM MATCHES "NoahMP")
         add_dependencies(hydro_noahmp_cpl hydro_mpp )
         add_dependencies(hydro_noahmp_cpl hydro_driver )
 
-        add_executable(wrfhydro.exe
+        add_executable(wrfhydro
                 Land_models/NoahMP/IO_code/main_hrldas_driver.F
                 Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.F
                 Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.F
         )
 
-        target_include_directories(wrfhydro.exe BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
+        target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
 
-        target_link_libraries(wrfhydro.exe
+        target_link_libraries(wrfhydro
                 hydro_utils
                 hydro_mpp
                 hydro_debug_utils
@@ -127,17 +127,17 @@ if (HYDRO_LSM MATCHES "NoahMP")
         )
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
-                target_link_libraries(wrfhydro.exe hydro_nudging)
-                target_link_libraries(wrfhydro.exe hydro_routing_diversions)
-                add_dependencies(wrfhydro.exe hydro_nudging)
-                add_dependencies(wrfhydro.exe hydro_routing_diversions)
+                target_link_libraries(wrfhydro hydro_nudging)
+                target_link_libraries(wrfhydro hydro_routing_diversions)
+                add_dependencies(wrfhydro hydro_nudging)
+                add_dependencies(wrfhydro hydro_routing_diversions)
         endif()
 
         # bash commands to copy namelists to the Run directory
         set(BASH_CP_HRLDAS_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/namelist.hrldas ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/namelist.hrldas ${CMAKE_BINARY_DIR}/Run \; fi\;")
         set(BASH_CP_HYDRO_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/hydro.namelist ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run \; fi\;")
 
-        add_custom_command(TARGET wrfhydro.exe POST_BUILD
+        add_custom_command(TARGET wrfhydro POST_BUILD
                 COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/tests/ctests/run_dir_makefile.mk ${CMAKE_BINARY_DIR}/Run/Makefile
                 # copy tables
@@ -148,12 +148,17 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 COMMAND bash -c "${BASH_CP_HRLDAS_NML}"
                 COMMAND bash -c "${BASH_CP_HYDRO_NML}"
                 # copy and setup executables
-                COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-                COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
-                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP.exe
-                COMMAND ln -s wrf_hydro_NoahMP.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro.exe
+                COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro
+                COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP
+                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro
+                COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP
+                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
         )
+        if(WRF_HYDRO_CREATE_EXE_SYMLINK)
+                add_custom_command(TARGET wrfhydro POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/Run/wrf_hydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+                )
+        endif()
 
 elseif (HYDRO_LSM MATCHES "Noah")
         message("-- Building Noah LSM")
@@ -164,14 +169,14 @@ elseif (HYDRO_LSM MATCHES "Noah")
         add_dependencies(hydro_noah_cpl hydro_mpp )
         add_dependencies(hydro_noah_cpl hydro_driver )
 
-        add_executable(wrfhydro.exe
+        add_executable(wrfhydro
                 Land_models/Noah/IO_code/module_hrldas_netcdf_io.F
                 Land_models/Noah/IO_code/Noah_hrldas_driver.F
         )
 
-        target_include_directories(wrfhydro.exe BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
+        target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
 
-        target_link_libraries(wrfhydro.exe
+        target_link_libraries(wrfhydro
                 hydro_utils
                 hydro_mpp
                 hydro_debug_utils
@@ -196,21 +201,22 @@ elseif (HYDRO_LSM MATCHES "Noah")
         )
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
-                target_link_libraries(wrfhydro.exe hydro_nudging)
-                add_dependencies(wrfhydro.exe hydro_nudging)
+                target_link_libraries(wrfhydro hydro_nudging)
+                add_dependencies(wrfhydro hydro_nudging)
         endif()
 
-        add_custom_command(TARGET wrfhydro.exe POST_BUILD
+        add_custom_command(TARGET wrfhydro POST_BUILD
                 COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
                 COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah.exe
+                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah
                 COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/Noah/* ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
                 COMMAND cp ${PROJECT_SOURCE_DIR}/src/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
-                COMMAND ln -s wrf_hydro_Noah.exe ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro.exe
+                COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro
+                COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
+                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
         )
 
 elseif(${PROJECT_NAME} STREQUAL "WRF")

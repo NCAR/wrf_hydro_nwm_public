@@ -118,7 +118,7 @@ optional arguments:
                         best guess. The first/zeroth variable is set to the
                         total number of cores (ncores). The wrf_hydro_py
                         convention is that the exe is always named
-                        wrf_hydro.exe.
+                        wrf_hydro.
   --ncores NCORES       Number of cores to use for testing
   --scheduler           Scheduler to use for testing, options are PBSDerecho
                         or do not specify for no scheduler

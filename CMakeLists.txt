@@ -194,6 +194,8 @@ if (WRF_HYDRO_NUOPC STREQUAL "1" )
 endif()
 
 option(BUILD_CROCUS "Build Crocus" ON)
+option(WRF_HYDRO_CREATE_EXE_SYMLINK "Create symlink wrfhydro.exe -> wrfhydro" ON)
+message("WRF_HYDRO_CREATE_EXE_SYMLINK = " ${WRF_HYDRO_CREATE_EXE_SYMLINK} )
 
 message("=============================================================")
 

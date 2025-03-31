@@ -39,7 +39,7 @@ cp arc/Makefile.Noah Makefile
 ln -sf CPL/Noah_cpl LandModel_cpl
 ln -sf Land_models/Noah LandModel
 cat macros LandModel/user_build_options.bak  > LandModel/user_build_options
-make clean ; rm -f Run/wrf_hydro_Noah.exe ; rm -f Run/*TBL ; rm -f Run/*namelist*
+make clean ; rm -f Run/wrf_hydro_Noah ; rm -f Run/*TBL ; rm -f Run/*namelist*
 
 cat macros LandModel/user_build_options.bak > LandModel/user_build_options
 
@@ -58,7 +58,7 @@ else
 fi
 
 cd Run
-mv wrf_hydro.exe wrf_hydro_Noah.exe ; ln -sf wrf_hydro_Noah.exe wrf_hydro.exe
+mv wrf_hydro wrf_hydro_Noah ; ln -sf wrf_hydro_Noah wrf_hydro ; ln -sf wrf_hydro_Noah wrf_hydro
 cp ../Land_models/Noah/Run/GENPARM.TBL .
 cp ../Land_models/Noah/Run/SOILPARM.TBL .
 cp ../Land_models/Noah/Run/VEGPARM.TBL .
