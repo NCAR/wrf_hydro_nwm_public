@@ -1,6 +1,6 @@
 # Makefile
 
-.PHONY: cp *.f90 *.c
+.PHONY: cp *.F90 *.c
 
 include ../../macros
 
@@ -13,8 +13,8 @@ all:	$(OBJS) cp
 cp:
 	cp *.mod ../../mod
 
-%.o: %.f90
-	@echo "Utils fortglob Makefile: %.f90"
+%.o: %.F90
+	@echo "Utils fortglob Makefile: %.F90"
 	$(COMPILER90) $(CPPINVOKE) $(CPPFLAGS) -o $(@) $(F90FLAGS) $(LDFLAGS) -I../../ -I$(NETCDFINC) $(*).F90
 	@echo ""
 	ar -r ../../lib/libHYDRO.a $(@)

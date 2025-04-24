@@ -1,4 +1,4 @@
 add_library(fortglob STATIC
     libfortglob.c
-    fortglob.f90
+    fortglob.F90
 )
