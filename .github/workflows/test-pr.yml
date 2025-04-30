@@ -15,6 +15,7 @@ on:
 
 jobs:
   Model_Testing:
+    if: github.repository == 'NCAR/wrf_hydro_nwm_public'
     strategy:
       fail-fast: false
       max-parallel: 4
