@@ -43,10 +43,16 @@ enable_testing()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/src/cmake-modules)
 
 # try to find the installed NETCDF library
-set(NETCDF_F90 "YES")
-set(NETCDF_F77 "YES")
-find_package(NetCDF REQUIRED)
-message("-- NetCDF Include Dir(s): ${NETCDF_INCLUDES_F77} ${NETCDF_INCLUDES_F90}")
+if (NOT TARGET netCDF::netcdff AND TARGET NetCDF::NetCDF_Fortran)
+   add_library(netCDF::netcdff ALIAS NetCDF::NetCDF_Fortran)
+endif()
+
+if (NOT TARGET netCDF::netcdff)
+   set(NETCDF_F90 "YES")
+   set(NETCDF_F77 "YES")
+   find_package(NetCDF REQUIRED)
+   message("-- NetCDF Include Dir(s): ${NETCDF_INCLUDES_F77} ${NETCDF_INCLUDES_F90}")
+endif()
 
 # set user controled enviorment variables
 set(HYDRO_LSM $ENV{HYDRO_LSM} CACHE STRING "Name of the Land Surface Model to Use")
