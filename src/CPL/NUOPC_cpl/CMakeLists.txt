@@ -28,6 +28,8 @@ list(APPEND wrfhydro_nuopc_linklibs
   hydro_routing_subsurface
   hydro_data_rec
   hydro_routing
+  hydro_routing_diversions
+  fortglob
   hydro_routing_reservoirs_levelpool
   hydro_routing_reservoirs_hybrid
   hydro_routing_reservoirs_rfc
