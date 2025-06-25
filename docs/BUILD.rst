@@ -8,13 +8,13 @@ Requirements
 +------------+---------+
 |Compiler    | Version |
 +============+=========+
-| GNU        | 9.1+    |
+| GNU        | 11+     |
 +------------+---------+
-| Intel      | 2018+   |
+| Intel      | 2023+   |
 +------------+---------+
-| NVidia/PGI | 20.4+   |
+| NVidia     | 23+     |
 +------------+---------+
-| Cray       | 8+      |
+| Cray       | 15+     |
 +------------+---------+
 
 +--------------------+---------+
@@ -27,6 +27,7 @@ Requirements
 | CMake              | 3.12+   |
 +--------------------+---------+
 
+Note: Supported compiler versions are chosen based on long-term support (LTS) status, ensuring they continue to receive security and bug fixes.
 
 Install dependencies for Debain/Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
