@@ -1,19 +1,28 @@
 # Prerequisites
+Turn on Python coupling during CMake initialization.
+Make sure Conda environment is loaded before modules.
+
+## Load Python Environment
 ```
 $ conda create --prefix /path/to/wrf-h-ml
 $ conda activate wrf-h-ml
 $ conda install -c conda-forge scikit-learn xgboost pandas joblib
 ```
 
-# Build
-Turn on Python coupling during CMake initialization.
-Make sure Conda environment is loaded before modules.
-
+## Load Modules
 ```
 $ conda activate wrf-h-ml
 $ module purge
 $ module load ncarenv gcc cray-mpich netcdf cmake
 $ module load conda
+```
+
+# Build
+```
+$ mkdir build
+$ cd build
+$ cmake ../ -DPYTHON_CPL=1
+$ make -j 4
 ```
 
 # Run
