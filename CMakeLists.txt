@@ -75,6 +75,7 @@ set(WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0
 set(OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set(PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
 set(WRF_HYDRO_NUOPC $ENV{WRF_HYDRO_NUOPC} CACHE STRING "NUOPC library 0=off 1=on")
+set(PYTHON_CPL $ENV{PYTHON_CPL} CACHE STRING "Call Python Functions 0=off 1=on")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")

@@ -10,6 +10,13 @@ if(${PROJECT_NAME} STREQUAL "WRF")
 endif()
 
 
+if (PYTHON_CPL)
+        add_subdirectory("CPL/python_cpl")
+        message("=== RETURNING EARLY, REMOVE AFTER TESTING ===")
+        return()
+endif()
+
+
 # build the various sup-projects
 add_subdirectory("MPP")
 add_subdirectory("utils")
