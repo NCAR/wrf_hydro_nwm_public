@@ -20,3 +20,14 @@ From `build` or `bin` directory
 ```
 $ ./bin/call_python
 ```
+
+# Flowchart
+```mermaid
+flowchart TD
+  driver([call_python_test_driver.f90]) -- "call Fortran routine" --> bind_c([call_python_bind_c.f90])
+  bind_c -- "call C routine" --> c([call_python.c])
+  c -- "call Python routine" --> python([get_weights.py <br />put weights in array])
+  python -- "return array" --> c
+  c -- "return array" --> bind_c
+  bind_c -- "return array"--> driver
+```

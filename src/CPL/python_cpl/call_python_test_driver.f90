@@ -6,8 +6,8 @@ program call_python_test_driver
 
   weights = 0
 
-  call foo(weights, n)
-  call foo(weights, n)
+  call get_py_weights(weights, n)
+  call get_py_weights(weights, n)
 
   print *, "weights at end:", weights
   print *, "FIN"

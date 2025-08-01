@@ -12,9 +12,9 @@ module call_python_bind_c
   end interface
 
 contains
-  subroutine foo(weights, n)
+  subroutine get_py_weights(weights, n)
     real(c_double), intent(inout) :: weights(:)
     integer(c_int), intent(in) :: n
     call call_python(weights, n)
-  end subroutine foo
+  end subroutine get_py_weights
 end module call_python_bind_c
