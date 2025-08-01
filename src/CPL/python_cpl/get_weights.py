@@ -3,19 +3,24 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
-from xgboost import XGBRegressor
+from xgboost import XGBRegressor, Booster
 import joblib
 
 initialized = False
+model = None
 
 def init_ml_object():
-    dir = '/glade/work/soren/src/wrf-hydro/lanl-ml/'
-    f = dir+"model.pkl"
-    modelpath = f
+    base_dir = '/glade/work/soren/src/wrf-hydro/lanl-ml/'
+    model_name = 'model.pkl'
+    # model_name = 'hello_world.pkl'
+    model_path = base_dir + model_name
+    print("Loading model:", model_name)
+
+    model = None
 
     try:
-        # Attempt with joblib (most common for sklearn)
-        model = joblib.load(f)
+        # Attempt joblib load (most common for sklearn-based XGBRegressor)
+        model = joblib.load(model_path)
         print("Loaded using joblib:", type(model))
     except Exception as e:
         print("joblib failed, trying pickle...", e)
@@ -23,18 +28,50 @@ def init_ml_object():
             model = pickle.load(f)
             print("Loaded using pickle:", type(model))
 
-    # Inspect model attributes
-    if hasattr(model, "get_params"):
-        print("Model parameters:", model.get_params())
+    # Check if model is an sklearn wrapper
+    if isinstance(model, XGBRegressor):
+        print("Model is an XGBRegressor with parameters:")
+        # print(model.get_params())
+        booster = model.get_booster()
+    elif isinstance(model, Booster):
+        print("Model is a raw XGBoost Booster")
+        booster = model
+    elif isinstance(model, dict) and 'model' in model:
+        inner = model['model']
+        if isinstance(inner, XGBRegressor):
+            print("Dictionary contains XGBRegressor")
+            # print(inner.get_params())
+            # booster = inner.get_booster()
+            if hasattr(inner, "get_booster"):
+                booster = inner.get_booster()
+                booster.save_model("model.json")  # safe portable format
+            else:
+                booster = None
+
+        elif isinstance(inner, Booster):
+            print("Dictionary contains raw Booster")
+            booster = inner
+        else:
+            print("Dictionary contains unknown model type:", type(inner))
+            booster = None
     else:
-        print("Model does not have get_params (might not be sklearn).")
+        print("Unknown model type:", type(model))
+        booster = None
+
+    if booster:
+        # print("Booster best score:", booster.attr("best_score"))
+        print("Weight:", booster.get_score(importance_type='weight'))
+    else:
+        print("No booster available")
+
+    return model
 
 
 def init_weights():
-    global initialized
+    global initialized, model
     print("Initializing Python")
     initialized = True
-    init_ml_object()
+    model = init_ml_object()
 
 def get_weights(weights):
     global initialized
