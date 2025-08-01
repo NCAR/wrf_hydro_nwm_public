@@ -13,6 +13,7 @@ Make sure Conda environment is loaded before modules.
 $ conda activate wrf-h-ml
 $ module purge
 $ module load ncarenv gcc cray-mpich netcdf cmake
+$ module load conda
 ```
 
 # Run
