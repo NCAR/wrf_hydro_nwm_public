@@ -21,7 +21,6 @@ src/LandModel
 src/LandModel_cpl
 src/Land_models/NoahMP/MPP
 build/
-README.md
 /.idea
 *__pycache__*
 *pytest_cache*
