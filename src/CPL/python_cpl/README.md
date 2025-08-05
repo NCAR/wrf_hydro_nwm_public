@@ -2,7 +2,7 @@
 Turn on Python coupling during CMake initialization.
 Make sure Conda environment is loaded before modules.
 
-## Load Python Environment
+## Setup Python Environment
 ```
 $ conda create --prefix /path/to/wrf-h-ml
 $ conda activate wrf-h-ml
