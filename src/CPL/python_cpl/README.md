@@ -25,9 +25,10 @@ $ cmake ../ -DPYTHON_FSCA=1
 $ make -j 4
 ```
 
-# Run
-From `build` or `bin` directory
+# Run Test Driver
+From `build` directory
 ```
+$ make install
 $ ./bin/call_python
 ```
 
