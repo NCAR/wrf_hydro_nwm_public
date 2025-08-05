@@ -110,13 +110,6 @@ def ml_fSCA(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
 
     # Reshape back to grid (nx, ny)
     fSCA = np.ascontiguousarray(predictions.reshape((nx, ny)), dtype=np.float64)
-    # fSCA = predictions.reshape((nx, ny))
-
-    print("!!! Remove this code after testing !!!")
-    fSCA[0,:] = [1,2,3,4]
-    fSCA[1,:] = [5,6,7,8]
-    fSCA[2,:] = [9,10,11,12]
-    fSCA[3,:] = [13,14,15,16]
 
     print("Python's fSCA:\n", fSCA)
     return fSCA
