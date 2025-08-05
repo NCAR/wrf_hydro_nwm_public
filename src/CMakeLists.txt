@@ -10,13 +10,6 @@ if(${PROJECT_NAME} STREQUAL "WRF")
 endif()
 
 
-if (PYTHON_CPL)
-        add_subdirectory("CPL/python_cpl")
-        message("=== RETURNING EARLY, REMOVE AFTER TESTING ===")
-        return()
-endif()
-
-
 # build the various sup-projects
 add_subdirectory("MPP")
 add_subdirectory("utils")
@@ -33,6 +26,8 @@ add_subdirectory("HYDRO_drv")
 if(${PROJECT_NAME} STREQUAL "WRF")
         add_subdirectory("CPL/WRF_cpl")
 endif()
+add_subdirectory("CPL/python_cpl")
+
 
 if (WRF_HYDRO_NUDGING_IO STREQUAL "1" OR
     WRF_HYDRO_NUDGING STREQUAL "1")

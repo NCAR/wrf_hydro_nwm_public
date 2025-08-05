@@ -7,4 +7,4 @@ add_library(noahmp_phys STATIC
         module_sf_noahmplsm.F
 )
 
-target_link_libraries(noahmp_phys snowcro crocus_surfex)
+target_link_libraries(noahmp_phys snowcro crocus_surfex py_fSCA_lib)

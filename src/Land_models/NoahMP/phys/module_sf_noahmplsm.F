@@ -1,5 +1,5 @@
 MODULE MODULE_SF_NOAHMPLSM
-
+  use call_py_fSCA, only: ml_fSCA
   IMPLICIT NONE
 
   public  :: noahmp_options
@@ -1816,6 +1816,9 @@ ENDIF   ! CROPTYPE == 0
      IF(SNOWH.GT.0.)  THEN
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
+         ! if (namelist option tbd) then
+         !   call ml_fSCA(FSNO, ...)
+         ! else
          FSNO     = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
      ENDIF
 

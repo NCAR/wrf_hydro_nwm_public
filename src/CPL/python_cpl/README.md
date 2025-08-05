@@ -21,7 +21,7 @@ $ module load conda
 ```
 $ mkdir build
 $ cd build
-$ cmake ../ -DPYTHON_CPL=1
+$ cmake ../ -DPYTHON_FSCA=1
 $ make -j 4
 ```
 
@@ -34,9 +34,9 @@ $ ./bin/call_python
 # Flowchart
 ```mermaid
 flowchart TD
-  driver([call_python_test_driver.f90]) -- "call Fortran routine" --> bind_c([call_python_bind_c.f90])
-  bind_c -- "call C routine" --> c([call_python.c])
-  c -- "call Python routine" --> python([get_weights.py <br />put weights in array])
+  driver([python_test_driver.f90]) -- "call Fortran routine" --> bind_c([py_fSCA_bind_c.f90])
+  bind_c -- "call C routine" --> c([call_py_fSCA.c])
+  c -- "call Python routine" --> python([ml_fSCA.py <br />put weights in array])
   python -- "return array" --> c
   c -- "return array" --> bind_c
   bind_c -- "return array"--> driver

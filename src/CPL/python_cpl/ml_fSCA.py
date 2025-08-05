@@ -67,16 +67,56 @@ def init_ml_object():
     return model
 
 
-def init_weights():
+def init_model():
     global initialized, model
-    print("Initializing Python")
-    initialized = True
-    model = init_ml_object()
-
-def get_weights(weights):
-    global initialized
+    print("Initializing XGBoost Model")
     if (not initialized):
-        init_weights()
+        model = init_ml_object()
+        initialized = True
+    return model
 
-    print("Python side received:", weights)
-    return [w + 1 for w in weights]
+
+def ml_fSCA(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
+                HGT, slope, aspect, lat, lon, nx, ny):
+    model = init_model()
+
+    # --- Define inputs ---
+    # Was (time, lat, lon), but we are passing one time period at a time
+    # Must be (lat, lon)
+    dynamic_vars = ['T2D', 'LWDOWN', 'SWDOWN', 'U2D', 'V2D', 'day_of_year']
+    # Must be (lat, lon)
+    static_vars = ['HGT', 'slope', "aspect", "lat", "lon"]
+    target_var = 'fSCA'
+
+
+    # Flatten each variable (column-major to row-major conversion)
+    npoints = nx * ny
+    features = np.stack([
+        T2D.reshape(-1),
+        LWDOWN.reshape(-1),
+        SWDOWN.reshape(-1),
+        U2D.reshape(-1),
+        V2D.reshape(-1),
+        day_of_year.reshape(-1),
+        HGT.reshape(-1),
+        slope.reshape(-1),
+        aspect.reshape(-1),
+        lat.reshape(-1),
+        lon.reshape(-1)
+    ], axis=1)
+
+    # Predict using the model
+    predictions = model["model"].predict(features)
+
+    # Reshape back to grid (nx, ny)
+    fSCA = np.ascontiguousarray(predictions.reshape((nx, ny)), dtype=np.float64)
+    # fSCA = predictions.reshape((nx, ny))
+
+    print("!!! Remove this code after testing !!!")
+    fSCA[0,:] = [1,2,3,4]
+    fSCA[1,:] = [5,6,7,8]
+    fSCA[2,:] = [9,10,11,12]
+    fSCA[3,:] = [13,14,15,16]
+
+    print("Python's fSCA:\n", fSCA)
+    return fSCA
