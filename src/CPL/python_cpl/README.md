@@ -49,16 +49,16 @@ The static variable information comes from files like `geo_em.d01.nc`.
 WRF-Hydro forcing variables are kept in `module_NoahMP_hrldas_driver.F` and the
 static variables are kept in `module_RT_data.F90` and `?`.
 
-| Variable      | WRF-Hydro Name      | Description                                       | Type    |
-|---------------|---------------------|---------------------------------------------------|---------|
-| `T2D`         | `T_PHY`, `T2`       | 2-m Air Temperature                               | Forcing |
-| `LWDOWN`      | `GLW`, `XLONG`      | Surface downward long-wave radiation flux         | Forcing |
-| `SWDOWN`      | `SWDOWN`, `SHORT`   | Surface downward short-wave radiation flux        | Forcing |
-| `U2D`         | `U_PHY`, `U`        | 10-m U-component of wind                          | Forcing |
-| `V2D`         | `V_PHY`, `V`        | 10-m V-component of wind                          | Forcing |
-| `day_of_year` | `%olddate(1:19)`?   | Day of the Water Year                             |         |
-| `HGT`         | `TERRAIN`           | Topography height                                 | Static  |
-| `slope`       | read in from NetCDF | Slope                                             | Static  |
-| `aspect`      | read in from NetCDF | Direction a slope faces, calculated from COSALPHA | Static  |
-| `lat`         | `latval`            | Latitude                                          | Static  |
-| `lon`         | `lonval`            | Longitude                                         | Static  |
+| Variable      | WRF-Hydro Name      | Description                                | Type    |
+|---------------|---------------------|--------------------------------------------|---------|
+| `T2D`         | `T_PHY`, `T2`       | 2-m Air Temperature                        | Forcing |
+| `LWDOWN`      | `GLW`, `XLONG`      | Surface downward long-wave radiation flux  | Forcing |
+| `SWDOWN`      | `SWDOWN`, `SHORT`   | Surface downward short-wave radiation flux | Forcing |
+| `U2D`         | `U_PHY`, `U`        | 10-m U-component of wind                   | Forcing |
+| `V2D`         | `V_PHY`, `V`        | 10-m V-component of wind                   | Forcing |
+| `day_of_year` | `%olddate(1:19)`?   | Day of the Water Year                      |         |
+| `HGT`         | `TERRAIN`           | Topography height                          | Static  |
+| `slope`       | read in from NetCDF | Slope                                      | Static  |
+| `aspect`      | read in from NetCDF | Direction the slope faces                  | Static  |
+| `lat`         | `latval`            | Latitude                                   | Static  |
+| `lon`         | `lonval`            | Longitude                                  | Static  |
