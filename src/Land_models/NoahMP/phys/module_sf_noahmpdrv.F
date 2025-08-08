@@ -67,6 +67,7 @@ CONTAINS
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
+               , XLONIN &
 #endif
                )
 !----------------------------------------------------------------
@@ -295,6 +296,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILSAT     ! soil saturation column integrated [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
+    REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(IN   ) ::  XLONIN    ! longitude [rad]
 #endif
 
 ! 1D equivalent of 2D/3D fields
@@ -576,6 +578,7 @@ CONTAINS
     CHARACTER(3) :: HSNOWMETAMO, HSNOWRAD
 
     REAL,   DIMENSION( 1:NSOIL)    :: liq_frac
+    real :: longitude
 
     ! crocus, assign mock local values, and initialize. These values should be in namelist.
     if (crocus_opt /= 0) then
@@ -681,6 +684,7 @@ CONTAINS
 
        COSZ   = COSZIN  (I,J)                         ! cos zenith angle []
        LAT    = XLATIN  (I,J)                         ! latitude [rad]
+       LONGITUDE = XLONIN  (I,J)                      ! longitude [rad]
        Z_ML   = 0.5*DZ8W(I,1,J)                       ! DZ8W: thickness of full levels; ZLVL forcing height [m]
        VEGTYP = IVGTYP(I,J)                           ! vegetation type
        SOILTYP= ISLTYP(I,J)                           ! soil type
@@ -1000,7 +1004,7 @@ CONTAINS
                                   ! move NOAHMP_GLACIER to after CROCUS
                                   ! for temperatre glacier, set top soil temp to 272
           ZP_TG(1) = 272.0
-          ! Why is this if block here? Not sure top condition would ever trigger  
+          ! Why is this if block here? Not sure top condition would ever trigger
           ! given we are already in an if block requiring ZP_SNOWDZ(1,1) .gt. 0.0. (AD)
           IF (ZP_SNOWDZ(1,1) .eq. 0.0 .and. ZP_SRSNOW(1) .eq. 0.0) THEN
           ELSE
@@ -1301,6 +1305,7 @@ CONTAINS
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
+            , longitude &
             )            ! OUT :
 
             QFX(I,J) = ECAN + ESOIL + ETRAN

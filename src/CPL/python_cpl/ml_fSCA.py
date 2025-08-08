@@ -76,7 +76,44 @@ def init_model():
     return model
 
 
-def ml_fSCA(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
+def ml_fSCA_scalar(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
+                HGT, slope, aspect, lat, lon):
+    model = init_model()
+
+    # --- Define inputs ---
+    # Was (time, lat, lon), but we are passing one time period at a time
+    # Must be (lat, lon)
+    dynamic_vars = ['T2D', 'LWDOWN', 'SWDOWN', 'U2D', 'V2D', 'day_of_year']
+    # Must be (lat, lon)
+    static_vars = ['HGT', 'slope', "aspect", "lat", "lon"]
+    target_var = 'fSCA'
+
+
+    # Flatten each variable (column-major to row-major conversion)
+    features = np.array([[
+        T2D,
+        LWDOWN,
+        SWDOWN,
+        U2D,
+        V2D,
+        day_of_year,
+        HGT,
+        slope,
+        aspect,
+        lat,
+        lon,
+    ]], dtype=np.float64)  # shape (1, 11)
+
+    # Predict using the model
+    predictions = model["model"].predict(features)
+
+    fSCA = float(predictions[0])
+
+    print("Python's fSCA:\n", fSCA)
+    return fSCA
+
+
+def ml_fSCA_array(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
                 HGT, slope, aspect, lat, lon, nx, ny):
     model = init_model()
 

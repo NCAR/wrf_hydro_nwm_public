@@ -373,6 +373,18 @@ contains
 !
 !== begin noahmp_sflx ==============================================================================
 
+  pure function doy_to_dowy(doy) result(dowy)
+    real, intent(in) :: doy
+    real :: dowy, start_doy
+    ! Oct 1 is day 274 in a non-leap year (275 in a leap year)
+    start_doy = 274  ! todo: adjust for leap years separately if needed
+    if (doy >= start_doy) then
+        dowy = doy - start_doy + 1
+    else
+       dowy = doy + (365 - start_doy + 1)
+    end if
+  end function doy_to_dowy
+
   SUBROUTINE NOAHMP_SFLX (parameters, &
                    ILOC    , JLOC    , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
                    DT      , DX      , DZ8W    , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration
@@ -407,6 +419,7 @@ contains
 #ifdef WRF_HYDRO
                    ,SFCHEADRT                                                  & ! IN/OUT :
 #endif
+                   , longitude &
                    )
 
 ! --------------------------------------------------------------------------------------------------
@@ -417,6 +430,7 @@ contains
 ! --------------------------------------------------------------------------------------------------
 ! input
   type (noahmp_parameters), INTENT(IN) :: parameters
+  real, intent(in) :: longitude
 
   INTEGER                        , INTENT(IN)    :: ICE    !ice (ice = 1)
   INTEGER                        , INTENT(IN)    :: IST    !surface type 1->soil; 2->lake
@@ -767,7 +781,10 @@ contains
                  FSRG   ,RSSUN   ,RSSHA ,ALBSND  ,ALBSNI, BGAP   ,WGAP,TGV,TGB,&
                  Q1     ,Q2V    ,Q2B    ,Q2E    ,CHV   ,CHB     , & !out
                  EMISSI ,PAH    ,                                 &
-		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2 )                                            !out
+                 SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF, &
+                 CHUC,CHV2,CHB2, & !out
+                 SWDOWN, JULIAN, longitude & ! ml_fSCA variables
+    )                                            !out
 !jref:end
 
     SICE(:) = MAX(0.0, SMC(:) - SH2O(:))
@@ -1521,7 +1538,10 @@ ENDIF   ! CROPTYPE == 0
                      T2MV   ,T2MB   ,FSRV   , &
                      FSRG   ,RSSUN  ,RSSHA  ,ALBSND  ,ALBSNI,BGAP   ,WGAP,TGV,TGB,&
                      Q1     ,Q2V    ,Q2B    ,Q2E    ,CHV  ,CHB, EMISSI,PAH  ,&
-		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2 )   !out
+		     SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,&
+                     CHUC,CHV2,CHB2, &!)   !out
+                     SWDOWN, JULIAN, longitude &
+                     ) ! ml_fSCA additions
 !jref:end
 
 ! --------------------------------------------------------------------------------------------------
@@ -1688,6 +1708,11 @@ ENDIF   ! CROPTYPE == 0
   REAL,                               INTENT(OUT)   :: EMISSI
   REAL,                               INTENT(OUT)   :: PAH    !precipitation advected heat - total (W/m2)
 
+  real, intent(in) :: SWDOWN !downward solar [w/m2]
+  real, intent(in) :: JULIAN !Julian day of year (floating point)
+  real, intent(in) :: longitude
+
+
 ! local
   INTEGER                                           :: IZ     !do-loop index
   LOGICAL                                           :: VEG    !true if vegetated surface
@@ -1777,6 +1802,9 @@ ENDIF   ! CROPTYPE == 0
   REAL, PARAMETER                   :: PSIWLT = -150.  !metric potential for wilting point (m)
   REAL, PARAMETER                   :: Z0     = 0.002  ! Bare-soil roughness length (m) (i.e., under the canopy)
 
+  real :: day_of_water_year, day
+  real, parameter  :: slope_dummy = -1, aspect_dummy = -1
+
 ! ---------------------------------------------------------------------------------------------------
 ! initialize fluxes from veg. fraction
 
@@ -1817,9 +1845,18 @@ ENDIF   ! CROPTYPE == 0
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
          ! if (namelist option tbd) then
-         !   call ml_fSCA(FSNO, ...)
+           day = floor(julian)
+           if (day == 366) day = 365
+           day_of_water_year = doy_to_dowy(day)
+           print *, "day =", day, "dowy =", day_of_water_year
+
+           call ml_fSCA(FSNO, &
+                SFCTMP, LWDN, SWDOWN, UU, VV, &
+                day_of_water_year, &
+                ZREF, slope_dummy, aspect_dummy, lat, longitude)
          ! else
-         FSNO     = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
+         !   FSNO     = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
+         ! end else
      ENDIF
 
 ! ground roughness length

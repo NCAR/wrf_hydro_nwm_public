@@ -3,8 +3,8 @@ program call_python_test_driver
   use call_py_fSCA, only: ml_fSCA
   implicit none
   integer :: i, j
-  integer(c_int), parameter :: nx = 4, ny = 4
-  real(c_double), dimension(nx, ny) :: fSCA, T2D, LWDOWN, &
+  integer, parameter :: nx = 4, ny = 4
+  real, dimension(nx, ny) :: fSCA, T2D, LWDOWN, &
        SWDOWN, U2D, V2D, day_of_year, HGT, slope, aspect, lat, lon
 
   fSCA = -1

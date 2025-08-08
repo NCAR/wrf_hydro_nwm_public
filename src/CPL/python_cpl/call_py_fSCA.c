@@ -6,7 +6,86 @@ static int python_initialized = 0;  // Global flag
 static PyObject *pModule = NULL;
 static PyObject *pFunc = NULL;
 
-void py_ml_fSCA(double *fSCA,
+void py_ml_fSCA_scalar(double *fSCA,
+                       const double *T2D, const double *LWDOWN, const double *SWDOWN,
+                       const double *U2D, const double *V2D, const double *day_of_year,
+                       const double *HGT, const double *slope, const double *aspect,
+                       const double *lat, const double *lon)
+{
+    if (!python_initialized) {
+        Py_Initialize();
+        import_array1();
+
+        // sys.path += ["./", "./bin"]
+        PyObject *sys_path = PySys_GetObject("path");  // borrowed ref
+        if (sys_path) {
+            PyList_Append(sys_path, PyUnicode_FromString("./"));
+            PyList_Append(sys_path, PyUnicode_FromString("./bin"));
+        }
+
+        // import ml_fSCA and get ml_fSCA_scalar
+        PyObject *pName = PyUnicode_DecodeFSDefault("ml_fSCA");
+        pModule = PyImport_Import(pName);
+        Py_DECREF(pName);
+        if (!pModule) {
+            PyErr_Print();
+            fprintf(stderr, "Failed to load Python module 'ml_fSCA'\n");
+            return;
+        }
+
+        pFunc = PyObject_GetAttrString(pModule, "ml_fSCA_scalar");
+        if (!pFunc || !PyCallable_Check(pFunc)) {
+            PyErr_Print();
+            fprintf(stderr, "Cannot find callable 'ml_fSCA_scalar' in ml_fSCA\n");
+            return;
+        }
+
+        python_initialized = 1;
+    }
+
+    // Build args as Python floats
+    PyObject *pArgs = Py_BuildValue(
+        "(ddddddddddd)",
+        *T2D, *LWDOWN, *SWDOWN, *U2D, *V2D, *day_of_year,
+        *HGT, *slope, *aspect, *lat, *lon
+    );
+    if (!pArgs) {
+        PyErr_Print();
+        fprintf(stderr, "Failed to build argument tuple\n");
+        return;
+    }
+
+    // Call ml_fSCA_scalar(T2D, ..., lon) -> float or 0-D array
+    PyObject *pReturn = PyObject_CallObject(pFunc, pArgs);
+    Py_DECREF(pArgs);
+
+    if (!pReturn) {
+        PyErr_Print();
+        fprintf(stderr, "Python call failed\n");
+        return;
+    }
+
+    // Accept float or 1-element numpy array
+    if (PyFloat_Check(pReturn)) {
+        *fSCA = PyFloat_AsDouble(pReturn);
+    } else if (PyArray_Check(pReturn)) {
+        PyArrayObject *arr = (PyArrayObject *)pReturn;
+        if (PyArray_TYPE(arr) == NPY_DOUBLE && PyArray_SIZE(arr) == 1) {
+            *fSCA = *(double *)PyArray_DATA(arr);
+        } else {
+            PyErr_SetString(PyExc_TypeError, "Return array must be 1 element of dtype float64");
+            PyErr_Print();
+        }
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Return value must be float or 1-element numpy array");
+        PyErr_Print();
+    }
+
+    Py_DECREF(pReturn);
+    // Keep interpreter alive for subsequent calls
+}
+
+void py_ml_fSCA_array(double *fSCA,
                 const double *T2D, const double *LWDOWN, const double *SWDOWN,
                 const double *U2D, const double *V2D, const double *day_of_year,
                 const double *HGT, const double *slope, const double *aspect,
