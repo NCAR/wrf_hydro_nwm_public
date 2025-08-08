@@ -137,7 +137,6 @@ def ml_fSCA_scalar(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
     slope = get_slope(lat, lon)
     aspect = get_aspect(lat, lon)
 
-    # Flatten each variable (column-major to row-major conversion)
     features = np.array([[
         T2D,
         LWDOWN,
@@ -179,7 +178,6 @@ def ml_fSCA_array(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
     error_s ="get_slope and get_aspect need to be implemented for arrays"
     raise ValueError(error_s)
 
-    # Flatten each variable (column-major to row-major conversion)
     npoints = nx * ny
     features = np.stack([
         T2D.reshape(-1),
