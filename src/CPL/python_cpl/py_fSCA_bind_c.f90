@@ -42,7 +42,7 @@ contains
     real(c_double), dimension(nx, ny)  :: slope_c, day_of_year_c
     integer(c_int)  :: nx_c, ny_c
 
-    fSCA_c = real(fSCA, c_double)
+    fSCA_c = -1
     T2D_c = real(T2D, c_double)
     LWDOWN_c = real(LWDOWN, c_double)
     SWDOWN_c = real(SWDOWN, c_double)
@@ -60,7 +60,8 @@ contains
     call py_ml_fSCA_array(fSCA_c, T2D_c, LWDOWN_c, SWDOWN_c, U2D_c, V2D_c, &
               day_of_year_c, HGT_c, slope_c, aspect_c, lat_c, lon_c, nx_c, ny_c)
 
-    fSCA = real(fSCA)
+    fSCA = real(fSCA_c)
+    if (any(fSCA == -1.0)) error stop "py_ml_fSCA returned bad value"
 
   end subroutine ml_fSCA_array
 
@@ -75,7 +76,7 @@ contains
     real(c_double)  :: slope_c
     real(c_double)  :: day_of_year_c
 
-    fSCA_c = real(fSCA, c_double)
+    fSCA_c = -1.0
     T2D_c = real(T2D, c_double)
     LWDOWN_c = real(LWDOWN, c_double)
     SWDOWN_c = real(SWDOWN, c_double)
@@ -91,7 +92,8 @@ contains
     call py_ml_fSCA_scalar(fSCA_c, T2D_c, LWDOWN_c, SWDOWN_c, U2D_c, V2D_c, &
               day_of_year_c, HGT_c, slope_c, aspect_c, lat_c, lon_c)
 
-    fSCA = real(fSCA)
+    fSCA = real(fSCA_c)
+    if (fSCA == -1.0) error stop "py_ml_fSCA returned bad value"
 
   end subroutine ml_fSCA_scalar
 end module call_py_fSCA

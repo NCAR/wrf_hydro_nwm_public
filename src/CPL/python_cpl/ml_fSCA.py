@@ -1,11 +1,10 @@
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
-from xgboost import XGBRegressor, Booster
 import xarray as xr
+from xgboost import XGBRegressor, Booster
 
 initialized = False
 model = None
@@ -76,13 +75,19 @@ def init_ml_object():
 
 def init_aspect():
     aspect_f = '/glade/campaign/ral/hap/enzminger/snowmodel/topo_vege/domain_UCRB/aspect.nc'
-    ds = xr.open_dataset(aspect_f)
-    return ds["aspect"].values, ds["lat"].values, ds["lon"].values
+    with xr.open_dataset(aspect_f) as ds:
+        aspect = ds.variables["aspect"][:]
+        lat = ds.variables["lat"][:]
+        lon = ds.variables["lon"][:]
+    return aspect, lat, lon
 
 def init_slope():
     slope_f = '/glade/campaign/ral/hap/enzminger/snowmodel/topo_vege/domain_UCRB/slope.nc'
-    ds = xr.open_dataset(slope_f)
-    return ds["slope"].values, ds["lat"].values, ds["lon"].values
+    with xr.open_dataset(slope_f) as ds:
+        slope = ds.variables["slope"][:]
+        lat = ds.variables["lat"][:]
+        lon = ds.variables["lon"][:]
+    return slope, lat, lon
 
 def init_model():
     global initialized, model, aspect, slope, lat_a, lat_s, lon_a, lon_s
@@ -156,7 +161,12 @@ def ml_fSCA_scalar(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
 
     fSCA = float(predictions[0])
 
-    print("Python's fSCA:\n", fSCA)
+    # fSCA check
+    if fSCA < 0.0:
+        fSCA = 0.0
+    if fSCA > 1.0:
+        fSCA = 1.0
+
     return fSCA
 
 
@@ -199,5 +209,7 @@ def ml_fSCA_array(T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year,
     # Reshape back to grid (nx, ny)
     fSCA = np.ascontiguousarray(predictions.reshape((nx, ny)), dtype=np.float64)
 
-    print("Python's fSCA:\n", fSCA)
+    fSCA[fSCA < 0.0] = 0.0
+    fSCA[fSCA > 1.0] = 1.0
+
     return fSCA

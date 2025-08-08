@@ -1,10 +1,7 @@
 program call_python_test_driver
-  use, intrinsic :: iso_c_binding, only: c_int, c_double
   use call_py_fSCA, only: ml_fSCA
   implicit none
-  integer :: i, j
-  integer, parameter :: nx = 4, ny = 4
-  real, dimension(nx, ny) :: fSCA, T2D, LWDOWN, &
+  real :: fSCA, T2D, LWDOWN, &
        SWDOWN, U2D, V2D, day_of_year, HGT, slope, aspect, lat, lon
 
   fSCA = -1
@@ -18,19 +15,12 @@ program call_python_test_driver
   slope = 0
   aspect = 0
 
-  do i=1,nx
-     lat(i,:) = [37, 38, 39, 40]
-  end do
-  do j=1,ny
-     lon(:,j) = [107, 106, 105, 104]
-  end do
+  lat = 35.0612092158282
+  lon = -111.783129501614
 
   call ml_fSCA(fSCA, T2D, LWDOWN, SWDOWN, U2D, V2D, day_of_year, &
-       HGT, slope, aspect, lat, lon, nx, ny)
+       HGT, slope, aspect, lat, lon)
 
-  print *, "Fortran's fSCA:"
-  do i=1,nx
-  print *, fSCA(i,:)
-  end do
+  print *, "Fortran's fSCA:", fSCA
   print *, "FIN"
 end program call_python_test_driver

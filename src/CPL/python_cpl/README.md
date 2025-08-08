@@ -6,7 +6,7 @@ Make sure Conda environment is loaded before modules.
 ```
 $ conda create --prefix /path/to/wrf-h-ml
 $ conda activate wrf-h-ml
-$ conda install -c conda-forge scikit-learn xgboost pandas joblib
+$ conda install -c conda-forge scikit-learn xgboost xarray netcdf4 joblib
 ```
 
 ## Load Modules
