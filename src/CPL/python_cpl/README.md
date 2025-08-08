@@ -48,7 +48,7 @@ flowchart TD
 The static variable information comes from files like `geo_em.d01.nc`.
 WRF-Hydro forcing variables are kept in `module_NoahMP_hrldas_driver.F` and the
 static variables are kept in `module_RT_data.F90` and `?`.
-|---------------|-------------------|---------------------------------------------------|---------|
+
 | Variable      | WRF-Hydro Name    | Description                                       | Type    |
 |---------------|-------------------|---------------------------------------------------|---------|
 | `T2D`         | `T_PHY`, `T2`     | 2-m Air Temperature                               | Forcing |
@@ -62,4 +62,3 @@ static variables are kept in `module_RT_data.F90` and `?`.
 | `aspect`      | `?`               | Direction a slope faces, calculated from COSALPHA | Static  |
 | `lat`         | `latval`          | Latitude                                          | Static  |
 | `lon`         | `lonval`          | Longitude                                         | Static  |
-|---------------|-------------------|---------------------------------------------------|---------|
