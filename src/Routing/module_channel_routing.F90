@@ -1646,6 +1646,7 @@ end subroutine drive_CHANNEL
                                          nudge_apply_upstream_muskingumCunge
 #endif
       use module_channel_diversions, only: calculate_diversion
+      use ieee_arithmetic, only: ieee_is_nan
 
        implicit none
 
@@ -2031,8 +2032,17 @@ do nt = 1, nsteps
 #endif
             Qup = div_dst
             Quc = div_dst
-            tmpQLINK(k,1) = div_dst
             tmpQLINK(k,2) = div_dst
+
+            ! reset any NaNs that got through
+            if (ieee_is_nan(div_dst)) then
+               ! fallback to zero if div_dst is NaN
+               if (ieee_is_nan(QLINK(k,1))) QLINK(k,1) = 0.0
+               if (ieee_is_nan(QLINK(k,2))) QLINK(k,2) = 0.0
+            else
+               if (ieee_is_nan(QLINK(k,1))) QLINK(k,1) = tmpQLINK(k,2)
+               if (ieee_is_nan(QLINK(k,2))) QLINK(k,2) = tmpQLINK(k,2)
+            end if
          end if
 
 #ifdef WRF_HYDRO_NUDGING

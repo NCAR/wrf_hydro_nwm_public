@@ -3,7 +3,7 @@ module module_diversions_timeslice
     use module_hydro_stop, only: hydro_stop
 
     use netcdf
-    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan
+    use ieee_arithmetic, only: ieee_value, ieee_quiet_nan, ieee_is_nan
     implicit none
 
     integer, parameter :: PATH_MAX = 4096
@@ -60,16 +60,22 @@ module module_diversions_timeslice
                 ierr = ierr + nf90_get_var(ncid, varid, discharge, start=found, count=(/1/))
                 if (ierr /= 0) call hydro_stop("Error occurred reading gage data from " // trim(timeslice_files%filenames(i)))
 
-                flow = discharge(1)
-                deallocate(gage_ids)
-                return
+                if (discharge(1) >= 0) then
+                    flow = discharge(1)
+                    deallocate(gage_ids)
+                    return
+#ifdef HYDRO_D
+                else
+                    print free, "DEBUG: Diversion discharge value invalid, continuing search if able"
+#endif
+                end if
             end if
 
             deallocate(gage_ids)
             ierr = nf90_close(ncid)
         end do
 
-        print free, "WARNING: Gage discharge not found in any timeslice file, falling back to fractional diversion"
+        print free, "WARNING: Valid gage discharge not found in any timeslice file, falling back to fractional diversion"
     end function
 
 end module

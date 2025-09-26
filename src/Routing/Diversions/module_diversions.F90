@@ -138,7 +138,8 @@ contains
                 if (diversions(i)%type_div /= 3) then
                     print free, "!!! UNSUPPORTED DIVERSION TYPE (", diversions(i)%type_div, "), skipping"
                 else
-                    diversion_quantity_in = diversions(i)%persisted_flow_dest
+                    if (.not. ieee_is_nan(diversions(i)%persisted_flow_dest)) &
+                        diversion_quantity_in = diversions(i)%persisted_flow_dest
                 end if
             end if
         end do
