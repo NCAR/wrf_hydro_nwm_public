@@ -66,14 +66,20 @@ contains
             ierr = ierr + nf90_inq_varid(ncid, "DivFrac", fraction_vid)
             ierr = ierr + nf90_inq_varid(ncid, "Lookback", lookback_vid)
 
-            if (ierr /= 0) call hydro_stop("Error occurred accessing diversion file variables")
+            if (ierr /= 0) then
+                print free, "WARNING: error occurred accessing diversion file variables, will disable diversions"
+                return
+            end if
 
             if (ndivs > 0) then
-                diversions_active = .true.
-
                 ! Read the timeslice data
                 ierr = init_timeslices(timeslice_path)
-                if (ierr /= 0) call hydro_stop("No timeslice files available when initializing diversions")
+                if (ierr /= 0) then
+                    print free, "WARNING: No timeslice files available when initializing diversions, will disable diversions"
+                    return
+                end if
+
+                diversions_active = .true.
 
                 allocate(diversions(ndivs))
                 do i = 1, ndivs
@@ -97,7 +103,11 @@ contains
                         ierr = ierr + nf90_get_var(ncid, fraction_vid, div%fraction, start=(/i/))
                         ierr = ierr + nf90_get_var(ncid, lookback_vid, div%lookback, start=(/i/))
 
-                        if (ierr /= 0) call hydro_stop("Error occurred reading diversion variables from diversion file")
+                        if (ierr /= 0) then
+                            print free, "WARNING: error occurred reading diversion variables from diversion file, will disable diversions"
+                            diversions_active = .false.
+                            return
+                        end if
                     end associate
                 end do
 
