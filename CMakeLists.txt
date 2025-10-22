@@ -185,6 +185,8 @@ endif()
 message("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
 if (OUTPUT_CHAN_CONN STREQUAL "1" )
         add_definitions(-DOUTPUT_CHAN_CONN)
+        # requires nudging io module
+        set(WRF_HYDRO_NUDGING_IO "1")
 endif()
 
 #set -DPRECIP_DOUBLE from env
