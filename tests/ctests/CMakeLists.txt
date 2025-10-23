@@ -1,7 +1,7 @@
 # add Makefile targets to setup test runs
 # Croton Test Options: {Gridded, Gridded_no_lakes, NWM, Reach, ReachLakes}
 set(croton_testcases "gridded" "gridded_no_lakes" "nwm" "nwm_ana"
-  "nwm_long_range" "reach" "reach_lakes")
+  "nwm_long_range" "nwm_nudging" "reach" "reach_lakes")
 
 # set default croton setup and run target
 set(croton_default_testcase "gridded")
