@@ -146,8 +146,8 @@ if (HYDRO_D STREQUAL "1" )
 endif()
 
 # set -DWRF_HYDRO_RAPID from env
-message("WRF_HYDRO_RAPID = " ${WRF_HYDRO_RAPID} )
 if (WRF_HYDRO_RAPID STREQUAL "1" )
+        message("WRF_HYDRO_RAPID = " ${WRF_HYDRO_RAPID} )
         add_definitions(-DWRF_HYDRO_RAPID)
 endif()
 
@@ -182,8 +182,8 @@ if (WRF_HYDRO_NUDGING STREQUAL "1" )
 endif()
 
 #set -DOUTPUT_CHAN_CONN from env
-message("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
 if (OUTPUT_CHAN_CONN STREQUAL "1" )
+        message("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
         add_definitions(-DOUTPUT_CHAN_CONN)
         # requires nudging io module
         set(WRF_HYDRO_NUDGING_IO "1")

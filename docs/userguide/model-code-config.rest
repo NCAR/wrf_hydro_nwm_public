@@ -400,8 +400,6 @@ below along with a description of what each option does:
 
    HYDRO_D = 0                *Set to 1 for enhanced diagnostic output*
 
-   WRF_HYDRO_RAPID = 0         *Currently unsupported, always set to 0*
-
    SPATIAL_SOIL = 1               *Set to 1 to allow NoahMP LSM to use*
                                     *spatially distrubuted parameteter*
                                   *vs. a table based on soil class and*

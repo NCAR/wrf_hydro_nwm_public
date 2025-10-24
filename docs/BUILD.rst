@@ -83,8 +83,6 @@ available options are described in the following table.
 +====================================+===============================================================================+
 | ``-DWRF_HYDRO_NUOPC=1``            | Coupling with NUOPC, this option is not currently supported                   |
 +------------------------------------+-------------------------------------------------------------------------------+
-| ``-DWRF_HYDRO_RAPID=1``            | Coupling with the RAPID routing model, this option is not currently supported |
-+------------------------------------+-------------------------------------------------------------------------------+
 
 
 CMake Testcase
