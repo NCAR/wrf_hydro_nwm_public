@@ -400,10 +400,8 @@ below along with a description of what each option does:
 
    HYDRO_D = 0                *Set to 1 for enhanced diagnostic output*
 
-   WRF_HYDRO_RAPID = 0         *Currently unsupported, always set to 0*
-
    SPATIAL_SOIL = 1               *Set to 1 to allow NoahMP LSM to use*
-                                    *spatially distrubuted parameteter*
+                                    *spatially distributed parameter*
                                   *vs. a table based on soil class and*
                                                   *land use categories*
 
@@ -415,9 +413,6 @@ below along with a description of what each option does:
    NWM_META = 0        *Set to 1 if using NWM-style metadata in output*
 
    WRF_HYDRO_NUDGING = 0         *Set to 1 if using streamflow nudging*
-
-   OUTPUT_CHAN_CONN = 0            *Set to 1 to output channel network*
-                                               *diagnostic information*
 
    PRECIP_DOUBLE = 0                  *Set to 1 to double all incoming*
                               *precipitation (for debug purposes only)*
