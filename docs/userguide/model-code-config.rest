@@ -401,7 +401,7 @@ below along with a description of what each option does:
    HYDRO_D = 0                *Set to 1 for enhanced diagnostic output*
 
    SPATIAL_SOIL = 1               *Set to 1 to allow NoahMP LSM to use*
-                                    *spatially distrubuted parameteter*
+                                    *spatially distributed parameter*
                                   *vs. a table based on soil class and*
                                                   *land use categories*
 
