@@ -73,8 +73,6 @@ available options are described in the following table.
 +------------------------------------+-------------------------------------------------------------------------------+
 | ``-DNWM_META=1``                   | Output NWM Metadata                                                           |
 +------------------------------------+-------------------------------------------------------------------------------+
-| ``-DOUTPUT_CHAN_CONN=1``           | For gridded channel routing, write the channel connectivity to a netcdf file  |
-+------------------------------------+-------------------------------------------------------------------------------+
 | ``-DPRECIP_DOUBLE=1``              | Double precipitation from hydro forcing                                       |
 +------------------------------------+-------------------------------------------------------------------------------+
 | ``-DNCEP_WCOSS=1``                 | Do not use unless working on the WCOSS machines                               |
