@@ -1650,7 +1650,7 @@ end subroutine land_driver_ini
     implicit  none
     type(state_type) :: state
     integer :: itime          ! timestep loop
-    integer :: iday           ! MaxC -- Move these outside calc_declin
+    integer :: iday           ! Moved these outside calc_declin loop for speedup
     integer :: ihr
     integer :: imin
     integer :: isec
@@ -1786,7 +1786,7 @@ end subroutine land_driver_ini
 !------------------------------------------------------------------------
 
    ! create a few fields that are IN in WRF - coszen, julian_in,yr
-   ! MaxC -- Previously calculating julian_in occured within calc_declin, which is called for all grid cells
+   ! Previously calculating julian_in occured within calc_declin, which is called for all grid cells
    ! but is only dependant on the current date which does not change over cells
 
    CALL GETH_IDTS(OLDDATE(1:10), OLDDATE(1:4)//"-01-01", iday)
@@ -2825,14 +2825,13 @@ SUBROUTINE CALC_DECLIN (LATITUDE, LONGITUDE, JULIAN, IHOUR, IMINUTE, ISECOND, CO
    REAL, PARAMETER :: DEGRAD = 3.14159265/180.
    REAL, PARAMETER :: DPD    = 360./365.
 ! !ARGUMENTS:
-   !CHARACTER(LEN=19), INTENT(IN)  :: NOWDATE    ! YYYY-MM-DD_HH:MM:SS
    REAL,              INTENT(IN)  :: LATITUDE
    REAL,              INTENT(IN)  :: LONGITUDE
-   REAL,              INTENT(IN)  :: JULIAN      ! MaxC -- now obtained outside loop, and an input
-   INTEGER,           INTENT(IN)  :: IHOUR       ! MaxC -- used in local time calc
-   INTEGER,           INTENT(IN)  :: IMINUTE     ! MaxC -- used in local time calc
-   INTEGER,           INTENT(IN)  :: ISECOND     ! MaxC -- used in local time calc
-   REAL,              INTENT(OUT) :: COSZ        ! MaxC -- unchanged, but moved to end of subroutine call
+   REAL,              INTENT(IN)  :: JULIAN      ! Calculated outside of the loop
+   INTEGER,           INTENT(IN)  :: IHOUR       ! used in local time calc
+   INTEGER,           INTENT(IN)  :: IMINUTE     ! used in local time calc
+   INTEGER,           INTENT(IN)  :: ISECOND     ! used in local time calc
+   REAL,              INTENT(OUT) :: COSZ        ! unchanged, but moved to end of subroutine call
 
    REAL                           :: HRANG
    REAL                           :: DECLIN
