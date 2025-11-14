@@ -288,12 +288,35 @@ project directory.
 .. code-block:: console
 
   git clone https://github.com/NCAR/wrf_hydro_nwm_public.git
-  git clone --recurse-submodule --branch v4.6.1 https://github.com/wrf-model/WRF.git
+  git clone --recurse-submodule --branch v4.7.1 https://github.com/wrf-model/WRF.git
   git clone --branch v4.6.0 https://github.com/wrf-model/WPS.git
-  wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.4.0/croton_NY_training_example_v5.4.tar.gz
 
-4. Copy the uncompressed WPS geographic data into the WPS directory.
-5. Copy the uncompressed coupled example case into the project directory.
+
+4. Download and extract testcase and geographic data.
+
+.. code-block:: console
+
+  # download and extract files
+  wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.4.0/front_range_CO_example_testcase_coupled.tar.gz
+  tar zxf front_range_CO_example_testcase_coupled.tar.gz
+
+  # Note this geog data is currently broken, Derecho users should skip this
+  # step and in namelists.wps set
+  # geog_data_path = '/glade/work/wrfhelp/WPS_GEOG/',
+  wget http://www2.mmm.ucar.edu/wrf/src/wps_files/geog_high_res_mandatory.tar.gz
+  tar zxf geog_high_res_mandatory.tar.gz
+
+
+
+5. Move the newly extracted geographic data into the WPS directory.
+
+.. code-block:: console
+
+  # create directory and move geopgraphic data
+  mkdir -p run/WPS
+  mv WPS_GEOG/ run/WPS/geog
+
+
 6. Your project directory structure will look like the following:
 
 .. code-block:: console
@@ -304,8 +327,8 @@ project directory.
    │   └──WRF/
    ├──wrf_hydro_nwm_public*/
    │   └──src/
-   ├──WRF*/
-   ├──WPS*/
+   ├──WRF/
+   ├──WPS/
    │   ├──geogrid/
    │   ├──metgrid/
    │   ├──ungrib/
@@ -323,11 +346,11 @@ modeling system and the WRF Preprocessing System (WPS) utilities
 
 **Compiling the coupled WRF | WRF-Hydro modeling system**
 
-1. Navigate to the WRF source code directory at WRF*
+1. Navigate to the WRF source code directory at WRF
 
 .. code-block:: console
 
-  cd WRF*
+  cd WRF
 
 2. Remove the old WRF-Hydro source code contained within this directory and replace it
 with the updated version you just downloaded
@@ -337,85 +360,85 @@ with the updated version you just downloaded
   rm -r hydro
   cp -r ../wrf_hydro*/src hydro
 
-3.  Load appropriate modules on Derecho:
+3.  Load appropriate modules on Derecho, the following is an example for GNU compilers.
 
 .. code-block:: console
 
-  module load ncarenv gcc ncarcompilers cray-mpich craype
+  module purge
+  module load ncarenv gcc ncarcompilers cray-mpich craype netcdf cmake
 
+4. Configure and compile WRF
 
-
-4a. Configure WRF: CMake (preferred method)
+4a. Configure and compile WRF: CMake (new preferred method)
 
 .. code-block:: console
 
-      cd …/WRF/
       # CMake option to turn on WRF-Hydro nudging `-DWRF_HYDRO_NUDGING=1`
       ./configure_new -x -p gfortran/gcc -- -DWRF_CORE=ARW -DWRF_NESTING=BASIC -DENABLE_HYDRO=ON -DWRF_CASE=EM_REAL
-      ./compile_new
+      ./compile_new -j4
 
 
-4b. Configure WRF: Old Method
+4b. Configure and compile WRF: Old Method
 
 
 .. code-block:: console
 
-  # Load environement variables
-  source WRF/hydro/template/setEnvar.sh
+  # Load environement variables from WRF directory
+  source hydro/template/setEnvar.sh
 
-  # Export paths necessary for WRF to find the right libraries, follow the link
-  # https://www2.mmm.ucar.edu/wrf/OnLineTutorial/compilation_tutorial.php#STEP2
-  # under "Building Libraries" to build the appropriate WRF libraries
-
-  export DIR=path/to/WRF/Build_WRF/LIBRARIES
-  export NETCDF_INC=$DIR/netcdf/include
-  export NETCDF_LIB=$DIR/netcdf/lib
-  export CC="gcc"
-  export CXX="g++"
-  export FC="gfortran"
-  export FCFLAGS="-m64"
-  export F77="gfortran"
-  export FFLAGS="-m64"
-  export JASPERLIB=$DIR/grib2/lib
-  export JASPERINC=$DIR/grib2/include
-  export LDFLAGS=-L$DIR/grib2/lib
-  setenv CPPFLAGS -I$DIR/grib2/include
+  # Export paths necessary for WRF to find the right libraries on Derecho
+  export Jasper_ROOT=/glade/u/home/wrfhelp/UNGRIB_LIBRARIES/
 
   # Configure WRF
-  # On Derecho, selection option 50 (Intel dmpar Cray XC) and 1 (basic nesting)
-  cd …/WRF/
+  # On Derecho, select option 34 for GNU (gfortran/gcc) (dmpar) and 1 for basic nesting
+  # The user can also enter printf '34\n1\n' | ./configure to pass the arguments
   ./configure
-  ./compile >& compile.log
-
-
-
+  ./compile -j 4 em_real &> compile.log
+  # the binaries will be in the run directory
 
 
 **Compiling the WRF Preprocessing System (WPS)**
 
-Make sure that paths are set as in Step #5b from above
+1. Navigate to the WPS source code directory at WPS
 
-1. Navigate to the WPS source code directory at WPS*
 
-2. Configure the WPS
+2. Configure and compile the WPS. Note that grib2 data is used in the example
+   and the Jasper environmental variables need to be set.
 
-.. code-block:: console
+2a. Configure and compile WPS: CMake (new preferred method)
 
-  ./configure_new
-
-For Derecho select option 43: Cray XC CLE/Linux x86_64, Intel Classic compilers   (dmpar).
-
-3. Compile the code and pipe the output to a log file.
 
 .. code-block:: console
 
-  ./compile_new >& compile.log
+  ./configure_new -x -p gfortran -- -DBUILD_EXTERNALS=ON
+  ./compile_new -j 4 &> compile.log
+
+
+2b. Configure and compile WPS: old Method
+
+
+.. code-block:: console
+
+  # Select option 2 and --build-grib2-libs. Option 2 is Linux x86_64, gfortran
+  #   (dmpar) or select th dmpar option for compiler of choice
+  # The user can also enter printf '2\n' | ./configure --build-grib2-libs to pass the arguments
+  export Jasper_ROOT=/glade/u/home/wrfhelp/UNGRIB_LIBRARIES/
+  ./configure --build-grib2-libs
+  ./compile geogrid -j 4
+  ./compile ungrib -j 4
+  ./compile metgrid -j 4
 
 check the compile log for errors.
 
 
 Running the WRF Preprocessing System (WPS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: media/wps_program_flow.png
+   :align: center
+
+   Image from `WPS Userguide <https://www2.mmm.ucar.edu/wrf/users/wrf_users_guide/build/html/wps.html>`_.
+
 
 In this section we will use the compiled WRF Preprocessing System (WPS)
 utilities along with a namelist file ( namelist.wps ) and meteorological
@@ -433,29 +456,38 @@ WRF-Hydro will run).
   cd run/WPS
 
 
-2. Now copy the required files for the WPS geogrid utility into your run
+2. Now copy the required files for the WPS geogrid utility into your ``run/WPS``
    directory
 
 .. code-block:: console
 
-  cp ../../WPS*/install/bin/geogrid.exe .
-  cp ../../WPS*/geogrid/GEOGRID.TBL .
+  cp ../../WPS/geogrid/GEOGRID.TBL .
   cp ../../example_case_coupled/namelist.wps .
+
+  # for new CMake install method
+  cp ../../WPS/install/bin/geogrid.exe .
+  # or if the older method was used to build
+  cp ../../WPS/geogrid.exe .
+
+
 
 Edit the paths within this namelist as appropriate for your system
 
 3. Edit the path to geographic data in your ``namelist.wps`` file so that
+   ``geog_data_path`` points to the correct path.
 
 .. code-block:: console
 
   geog_data_path = '/glade/work/wrfhelp/WPS_GEOG/',
+  # or geog, note though this is currently not working
+  geog_data_path = 'geog',
 
 
 4. Run the geogrid utility
 
 .. code-block:: console
 
-  ./geogrid.exe >& geogrid.log
+  mpiexec -np 2 ./geogrid.exe &> geogrid.log
 
 
 **Running the ungrib utility**
@@ -467,39 +499,40 @@ steps.
 
 
 1. Now copy the additional required files for the WPS ungrib utility into your
-   run directory
+   ``run/WPS`` directory
 
 .. code-block:: console
 
-  cp ../../WPS*/install/bin/ungrib.exe .
-  cp ../../WPS*/link_grib.csh .
+  cd run/WPS
+  cp ../../WPS/link_grib.csh .
+
+  # for new cmake build method
+  cp ../../WPS/install/bin/ungrib.exe .
+
+  # or if the older method was used to build
+  cp ../../WPS/ungrib.exe .
 
 
 2. Next copy over the necessary variable table for your forcing data
 
 .. code-block:: console
 
-  cp ../../WPS*/ungrib/Variable_Tables/Vtable.NAM Vtable
-
-3. If the grib-util module is not loaded, make sure grib2 library is available
-
-.. code-block:: console
-
-  export LD_LIBRARY_PATH=$DIR/grib2/lib/:$LD_LIBRARY_PATH
+  cp ../../WPS/ungrib/Variable_Tables/Vtable.NAM Vtable
 
 
-4. Then link your forcing data from the test case to the run directory (this
+3. Then link your forcing data from the test case to the run directory (this
    script will also rename the files to those expected for the ungrib utility)
 
 .. code-block:: console
 
   ./link_grib.csh ../../example_case_coupled/WRF_FORCING/*
 
-5. Next run the ungrib utility
+
+4. Next run the ungrib utility
 
 .. code-block:: console
 
-  ./ungrib.exe >& ungrib.log
+  mpiexec -np 2 ./ungrib.exe &> ungrib.log
 
 
 **Running the metgrid utility**
@@ -509,18 +542,23 @@ the model domain creating metgrid files to be used as input to the WRF real
 utility.
 
 1. Now copy additional the required files for the WPS metgrid utility into
-   your run directory
+   your ``run/WPS`` directory
 
 .. code-block:: console
 
-  cp ../../WPS/install/bin/metgrid.exe .
   cp ../../WPS/metgrid/METGRID.TBL .
+
+  # for newer CMake build method
+  cp ../../WPS/install/bin/metgrid.exe .
+  # or if the older method was used to build
+  cp ../../WPS/metgrid.exe .
+
 
 2. Next run the metgrid utility
 
 .. code-block:: console
 
-  ./metgrid.exe >& metgrid.log
+  mpiexec -np 2 ./metgrid.exe &> metgrid.log
 
 
 Running a coupled WRF | WRF-Hydro simulation
@@ -541,8 +579,8 @@ First we will create a run directory and copy over or link the required files.
 .. code-block:: console
 
   cd project_directory
-  mkdir run
-  cp -RL WRF*/run run/WRF
+  # run directory should exist at this point
+  cp -RL WRF/run run/WRF
   cd run/WRF
 
 
@@ -550,8 +588,9 @@ First we will create a run directory and copy over or link the required files.
 
 .. code-block:: console
 
-  cp ../../WRF/hydro/src/template/HYDRO/*TBL .
-  cp ../../WRF/hydro/Land_models/NoahMP/run/*.TBL .
+  cp ../../WRF/hydro/template/HYDRO/*TBL .
+  # cp ../../WRF/hydro/template/NoahMP/run/*.TBL .
+  # cp ../../WRF/install/test/em_real/*.TBL .
 
 3. Copy over the namelists for real / wrf (namelist.input) and the hydro components
 (hydro.namelist) from the example case
@@ -562,6 +601,8 @@ First we will create a run directory and copy over or link the required files.
   cp ../../example_case_coupled/hydro.namelist .
   cp ../../WRF/hydro/template/NoahMP/namelist.hrldas .
   cp -r ../../example_case_coupled/DOMAIN/ .
+  cp ../../WRF/run/CAMtr_volume_mixing_ratio .
+  cp ../../WRF/phys/noahmp/parameters/MPTABLE.TBL .
 
 
 4. Link the geogrid and metgrid files we just generated from the WPS utilities
@@ -570,14 +611,16 @@ First we will create a run directory and copy over or link the required files.
 
   ln -sf ../WPS/met_em* .
   ln -sf ../WPS/geo_em* .
+  ln -sf ../../WRF/run/RRTM_DATA .
 
 
 4. Copy executable files
 
 .. code-block:: console
 
-  cp ../../WRF/install/bin/real .
-  cp ../../WRF/install/bin/wrf .
+  # location for the CMake build, older method will have these files in the WRF/run directory
+  cp ../../WRF/install/bin/real real.exe
+  cp ../../WRF/install/bin/wrf wrf.exe
 
 
 **Running the real utility**
@@ -590,10 +633,14 @@ condition files to be used as input for the coupled simulation.
 
 .. code-block:: console
 
-  mpirun -np 2 ./real >& real.log
+  mpirun -np 2 ./real.exe &> real.log
 
 2. Next review the rsl.out.* and rsl.error.* files for possible errors and
    check to make sure the wrfinput* and wrfbdy* files have been created.
+
+.. code-block:: console
+
+  tail rsl.error.* -n 1
 
 **Running the coupled model**
 
@@ -607,7 +654,7 @@ hydro.namelist files.
 
 .. code-block:: console
 
-  mpirun -np 2 ./wrf >& wrf.log
+  mpirun -np 2 ./wrf.exe &> wrf.log
 
 2. If your simulation ran successfully, there should now be a large number of
    output files. Descriptions of the output files can be found in the
