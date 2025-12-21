@@ -407,6 +407,18 @@ with the updated version you just downloaded
 
 2a. Configure and compile WPS: CMake (new preferred method)
 
+Note: CMakeLists.txt line 164 in the top directory of WPS will need to be changed to
+
+.. code-block:: console
+
+  add_compile_definitions(
+                          ${WPS_DEFINITIONS_LIST}
+                          ${WPS_UNDEFINITIONS_LIST}
+                          USE_JPEG2000
+                          USE_PNG
+                          )
+
+Now configure with
 
 .. code-block:: console
 
