@@ -1646,9 +1646,14 @@ end subroutine land_driver_ini
   subroutine land_driver_exe(itime, state)
     use module_hydro_io, only: read_channel_only
     use state_module, only: state_type
+    use module_date_utilities ! Calculating iday outside of loop now
     implicit  none
     type(state_type) :: state
     integer :: itime          ! timestep loop
+    integer :: iday           ! Moved these outside calc_declin loop for speedup
+    integer :: ihr
+    integer :: imin
+    integer :: isec
 
 !---------------------------------------------------------------------------------
 ! Read the forcing data.
@@ -1781,10 +1786,18 @@ end subroutine land_driver_ini
 !------------------------------------------------------------------------
 
    ! create a few fields that are IN in WRF - coszen, julian_in,yr
+   ! Previously calculating julian_in occured within calc_declin, which is called for all grid cells
+   ! but is only dependant on the current date which does not change over cells
+
+   CALL GETH_IDTS(OLDDATE(1:10), OLDDATE(1:4)//"-01-01", iday)
+   READ(OLDDATE(12:13), *) ihr
+   READ(OLDDATE(15:16), *) imin
+   READ(OLDDATE(18:19), *) isec
+   JULIAN_IN = real(iday) + real(ihr)/24.
 
     DO J = YSTART,YEND
     DO I = XSTART,XEND
-      CALL CALC_DECLIN(OLDDATE(1:19),XLAT_URB2D(I,J), XLONIN(I,J),COSZEN(I,J),JULIAN_IN)
+      CALL CALC_DECLIN(XLAT_URB2D(I,J), XLONIN(I,J), JULIAN_IN, ihr, imin, isec, COSZEN(I,J))
     END DO
     END DO
 
@@ -2803,9 +2816,8 @@ end function wrf_dm_on_monitor
 !------------------------------------------------------------------------------------
 !------------------------------------------------------------------------------------
 
-SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN )
+SUBROUTINE CALC_DECLIN (LATITUDE, LONGITUDE, JULIAN, IHOUR, IMINUTE, ISECOND, COSZ)
 
-  USE MODULE_DATE_UTILITIES
 !---------------------------------------------------------------------
    IMPLICIT NONE
 !---------------------------------------------------------------------
@@ -2813,11 +2825,14 @@ SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN )
    REAL, PARAMETER :: DEGRAD = 3.14159265/180.
    REAL, PARAMETER :: DPD    = 360./365.
 ! !ARGUMENTS:
-   CHARACTER(LEN=19), INTENT(IN)  :: NOWDATE    ! YYYY-MM-DD_HH:MM:SS
    REAL,              INTENT(IN)  :: LATITUDE
    REAL,              INTENT(IN)  :: LONGITUDE
-   REAL,              INTENT(OUT) :: COSZ
-   REAL,              INTENT(OUT) :: JULIAN
+   REAL,              INTENT(IN)  :: JULIAN      ! Calculated outside of the loop
+   INTEGER,           INTENT(IN)  :: IHOUR       ! used in local time calc
+   INTEGER,           INTENT(IN)  :: IMINUTE     ! used in local time calc
+   INTEGER,           INTENT(IN)  :: ISECOND     ! used in local time calc
+   REAL,              INTENT(OUT) :: COSZ        ! unchanged, but moved to end of subroutine call
+
    REAL                           :: HRANG
    REAL                           :: DECLIN
    REAL                           :: OBECL
@@ -2825,16 +2840,6 @@ SUBROUTINE CALC_DECLIN ( NOWDATE, LATITUDE, LONGITUDE, COSZ, JULIAN )
    REAL                           :: SXLONG
    REAL                           :: ARG
    REAL                           :: TLOCTIM
-   INTEGER                        :: IDAY
-   INTEGER                        :: IHOUR
-   INTEGER                        :: IMINUTE
-   INTEGER                        :: ISECOND
-
-   CALL GETH_IDTS(NOWDATE(1:10), NOWDATE(1:4)//"-01-01", IDAY)
-   READ(NOWDATE(12:13), *) IHOUR
-   READ(NOWDATE(15:16), *) IMINUTE
-   READ(NOWDATE(18:19), *) ISECOND
-   JULIAN = REAL(IDAY) + REAL(IHOUR)/24.
 
 !
 ! FOR SHORT WAVE RADIATION
