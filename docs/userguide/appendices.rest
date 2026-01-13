@@ -369,7 +369,12 @@ with the updated version you just downloaded
 
 4. Configure and compile WRF
 
-4a. Configure and compile WRF: CMake (new preferred method)
+.. warning::
+   **On Derecho, use the legacy configure method. CMake has known issues with the coupled case.**
+   **Use the legacy configure method for building both WRF and WPS**
+
+
+4a. Configure and compile WRF: CMake
 
 .. code-block:: console
 
@@ -405,7 +410,7 @@ with the updated version you just downloaded
 2. Configure and compile the WPS. Note that grib2 data is used in the example
    and the Jasper environmental variables need to be set.
 
-2a. Configure and compile WPS: CMake (new preferred method)
+2a. Configure and compile WPS: CMake
 
 Note: CMakeLists.txt line 164 in the top directory of WPS will need to be changed to
 
@@ -478,6 +483,7 @@ WRF-Hydro will run).
 
   # for new CMake install method
   cp ../../WPS/install/bin/geogrid.exe .
+
   # or if the older method was used to build
   cp ../../WPS/geogrid.exe .
 
@@ -562,6 +568,7 @@ utility.
 
   # for newer CMake build method
   cp ../../WPS/install/bin/metgrid.exe .
+
   # or if the older method was used to build
   cp ../../WPS/metgrid.exe .
 
