@@ -1334,12 +1334,12 @@ end subroutine drive_CHANNEL
 !=======find flow depth in channel with quadratic formula
     REAL FUNCTION HEAD(idx,AREA,Bw,z)
     ! Find the height of water in a channel (head) based on wetted area.
-    ! Channel shape is trapzeoidal. The zero of Af(h)-AREA=0 is
+    ! Channel shape is trapezoidal. The zero of Af(h)-AREA=0 is
     ! analytically solvable as Af(h) = z*h^2 + Bw*h, resulting in a quadratic
     ! equation of h, with A=z, B=Bw, and C=-AREA. Area is always positive, so C
     ! is always negative, and A=z is always positive, giving a real answer for both roots.
     ! Further, h is non-negative so only the addition root is needed,
-    ! d^2 = sqrt(Bw^2 + 4*z*AREA)>0 -> (-Bw - d^2)/z < 0.
+    ! d^1/2 = sqrt(Bw^2 + 4*z*AREA)>0 -> (-Bw - d^1/2)/z < 0.
      REAL :: Bw,z,AREA
      INTEGER :: idx
 
