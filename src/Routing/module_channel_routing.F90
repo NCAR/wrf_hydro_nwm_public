@@ -1320,12 +1320,6 @@ gwOption:   if(gwBaseSwCRT == 3) then
 end subroutine drive_CHANNEL
 ! ----------------------------------------------------------------
 
-!-=======================================
-     REAL FUNCTION AREAf(AREA,Bw,h,z)
-     REAL :: AREA, Bw, z, h
-       AREAf = (Bw+z*h)*h-AREA       !-- Flow area
-     END FUNCTION AREAf
-
 !-====critical depth function  ==========
      REAL FUNCTION CDf(Q,Bw,h,z)
      REAL :: Q, Bw, z, h
@@ -1337,59 +1331,19 @@ end subroutine drive_CHANNEL
        endif
      END FUNCTION CDf
 
-!=======find flow depth in channel with bisection Chapra pg. 131
-    REAL FUNCTION HEAD(idx,AREA,Bw,z)  !-- find the water elevation given wetted area,
-                                         !--bottom widith and side channel.. index was for debuggin
-     REAL :: Bw,z,AREA,test
-     REAL :: hl, hu, hr, hrold
-     REAL :: fl, fr,error                !-- function evaluation
-     INTEGER :: maxiter, idx
+!=======find flow depth in channel with quadratic formula
+    REAL FUNCTION HEAD(idx,AREA,Bw,z)
+    ! Find the height of water in a channel (head) based on wetted area.
+    ! Channel shape is trapzeoidal. The zero of Af(h)-AREA=0 is
+    ! analytically solvable as Af(h) = z*h^2 + Bw*h, resulting in a quadratic
+    ! equation of h, with A=z, B=Bw, and C=-AREA. Area is always positive, so C
+    ! is always negative, and A=z is always positive, giving a real answer for both roots.
+    ! Further, h is non-negative so only the addition root is needed,
+    ! d^2 = sqrt(Bw^2 + 4*z*AREA)>0 -> (-Bw - d^2)/z < 0.
+     REAL :: Bw,z,AREA
+     INTEGER :: idx
 
-     error = 1.0
-     maxiter = 0
-     hl = 0.00001   !-- minimum depth is small
-     hu = 30.  !-- assume maximum depth is 30 meters
-
-    if (AREA .lt. 0.00001) then
-     hr = 0.
-    else
-       ! JLM: .gt. "0" is somewhat alarming. We really should have a constant like zero_r4
-      do while ((AREAf(AREA,BW,hl,z)*AREAf(AREA,BW,hu,z)) .gt. 0.0 .and. maxiter .lt. 100)
-       !-- allows for larger , smaller heads
-       if(AREA .lt. 1.) then
-        hl=hl/2
-       else
-        hu = hu * 2
-       endif
-       maxiter = maxiter + 1
-
-      end do
-
-      maxiter =0
-      hr = 0
-      fl = AREAf(AREA,Bw,hl,z)
-      do while (error .gt. 0.0001 .and. maxiter < 1000)
-        hrold = hr
-        hr = (hl+hu)/2
-        fr =  AREAf(AREA,Bw,hr,z)
-        maxiter = maxiter + 1
-         if (hr .ne. 0) then
-          error = abs((hr - hrold)/hr)
-         endif
-        test = fl * fr
-         if (test.lt.0) then
-           hu = hr
-         elseif (test.gt.0) then
-           hl=hr
-           fl = fr
-         else
-           error = 0.0
-         endif
-      end do
-     endif
-     HEAD = hr
-
-22   format("i,hl,hu,Area",i5,2x,f12.8,2x,f6.3,2x,f6.3,2x,f6.3,2x,f9.1,2x,i5)
+     HEAD = (-Bw + sqrt(Bw**2 + 4*z*AREA)) / (2*z)
 
     END FUNCTION HEAD
 !=================================
