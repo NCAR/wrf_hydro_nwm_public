@@ -395,8 +395,13 @@ with the updated version you just downloaded
   export Jasper_ROOT=/glade/u/home/wrfhelp/UNGRIB_LIBRARIES/
 
   # Configure WRF
-  # On Derecho, select option 34 for GNU (gfortran/gcc) (dmpar) and 1 for basic nesting
-  # The user can also enter printf '34\n1\n' | ./configure to pass the arguments
+  # On Derecho,
+  #   For GNU (dmpar) and basic nesting
+  #     1. enter `printf '34\n1\n' | ./configure` or option 34 and 1
+  #   For IFX (dmpar) and basic nesting
+  #     1. enter `printf '78\n1\n' | ./configure` or option 78 and 1
+  #     2. Login node does not have enough memory to compile succesfully with ifx.
+  #        User can use interactive node with extra memory, mem=50GB works
   ./configure
   ./compile -j 4 em_real &> compile.log
   # the binaries will be in the run directory
