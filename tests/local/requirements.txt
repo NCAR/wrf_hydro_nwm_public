@@ -10,7 +10,7 @@ cloudpickle==1.2.1
 DateTime==4.3
 deepdiff==8.6.2
 f90nml==1.2
-gdown==5.1.0
+gdown==5.2.2
 idna==3.7
 importlib-metadata==4.13.0
 locket==0.2.0
