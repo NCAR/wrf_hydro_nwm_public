@@ -19,6 +19,8 @@ croton-nwm:
 	make -C .. $@
 croton-nwm_ana:
 	make -C .. $@
+croton-nwm_nudging:
+	make -C .. $@
 croton-nwm_long_range:
 	make -C .. $@
 croton-reach:
@@ -36,6 +38,8 @@ run-croton-nwm:
 	make -C .. $@
 run-croton-nwm_ana:
 	make -C .. $@
+run-croton-nwm_nudging:
+	make -C .. $@
 run-croton-nwm_long_range:
 	make -C .. $@
 run-croton-reach:
@@ -43,6 +47,8 @@ run-croton-reach:
 run-croton-reach_lakes:
 	make -C .. $@
 # run in parallel
+run-croton-parallel:
+	make -C .. $@
 run-croton-gridded-parallel:
 	make -C .. $@
 run-croton-gridded-no-lakes-parallel:
@@ -50,6 +56,8 @@ run-croton-gridded-no-lakes-parallel:
 run-croton-nwm-parallel:
 	make -C .. $@
 run-croton-nwm_ana-parallel:
+	make -C .. $@
+run-croton-nwm_nudging-parallel:
 	make -C .. $@
 run-croton-nwm_long_range-parallel:
 	make -C .. $@
@@ -64,3 +72,4 @@ clean:
 	rm -f *.RTOUT_DOMAIN1 RESTART.*_DOMAIN1 HYDRO_RST.*_DOMAIN1
 	rm -f *.CHRTOUT_GRID1
 	rm -f diag_hydro.*
+	rm -rf output_nwm_nudging/ nudgingLastObs.*
