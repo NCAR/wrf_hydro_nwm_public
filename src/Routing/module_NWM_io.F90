@@ -3365,7 +3365,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       do iTmp2=1,fileMeta%nCrsCharAtts
          if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
             iret = nf90_put_att(ftn,indexVarId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into index variable')
          endif
       end do
       ! Define compression for meta-variables only if io_form_outputs is set to 1.
