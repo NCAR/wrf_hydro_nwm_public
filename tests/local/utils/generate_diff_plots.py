@@ -255,7 +255,7 @@ def get_datasets(base_path, comp_path, filepattern, useDask=True):
 
             # merge files along the time axis
             try:
-                ds = xr.merge(a)
+                ds = xr.concat(a, dim=TIME, coords="minimal", compat="no_conflicts")
             except:
                 ds = None
 
@@ -601,4 +601,3 @@ if __name__ == "__main__":
     if run():
         exit(0)
     exit(-1)
-
