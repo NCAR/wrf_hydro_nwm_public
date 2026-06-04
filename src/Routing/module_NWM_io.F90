@@ -314,13 +314,17 @@ subroutine output_chrt_NWM(domainId)
       ! to missing as this causes the model to crash.
       allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
       allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
-      strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
-      velocityLocal = RT_DOMAIN(domainId)%velocity
+      if (RT_DOMAIN(domainId)%NLINKS > 0) then
+         strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+         velocityLocal = RT_DOMAIN(domainId)%velocity
+      endif
       ! TML: Add qloss allocation and compute variable, only for channel
       ! option #2, where qloss is active (muskingum-cunge).
       if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
          allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
-         qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
+         if (RT_DOMAIN(domainId)%NLINKS > 0) then
+            qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
+         endif
       endif
 
       ! Loop through all the local links on this processor. For lake_type
