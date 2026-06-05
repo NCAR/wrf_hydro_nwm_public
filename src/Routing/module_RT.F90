@@ -213,7 +213,8 @@ CONTAINS
      !!rt_domain(did)%overland%streams_and_lakes%surface_water_to_lake= 0.0                                               ! moved to overland%streams_and_lakes
      allocate( rt_domain(did)%LAKE_INFLORT_TS(IXRT,JXRT) )
      allocate( rt_domain(did)%LAKE_INFLORT_DUM(IXRT,JXRT) )
-     rt_domain(did)%LAKE_INFLORT_DUM= 0.0
+     rt_domain(did)%LAKE_INFLORT_TS = 0.0
+     rt_domain(did)%LAKE_INFLORT_DUM = 0.0
      allocate( rt_domain(did)%LATVAL (ixrt,jxrt) )
      allocate( rt_domain(did)%LONVAL (ixrt,jxrt) )
      rt_domain(did)%LONVAL = 0.0
