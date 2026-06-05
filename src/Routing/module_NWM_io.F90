@@ -5155,6 +5155,7 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_z_gwsubbas(1))
          allocate(g_basnsInd(1))
       endif
+      g_qloss_gwsubbas = 0.0
 
       if(nlst(domainId)%UDMP_OPT .eq. 1) then
          ! This is ONLY for NWM configuration with NHD channel routing. NCAR
@@ -5196,6 +5197,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
       g_qin_gwsubbas = rt_domain(domainId)%qin_gwsubbas/nlst(domainId)%DT
       g_qout_gwsubbas = rt_domain(domainId)%qout_gwsubbas
+      g_qloss_gwsubbas = 0.0
       g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
