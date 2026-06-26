@@ -3,7 +3,7 @@
 ## Our Pledge
 We, as contributors, creators, stewards, and maintainers of WRF-Hydro® pledge to make participation in our software, system or hardware project and community a safe, productive, welcoming and inclusive experience for everyone. All participants are required to abide by this Code of Conduct. This includes respectful treatment of everyone regardless of age, body size, disability, ethnicity, gender identity or expression, level of experience, nationality, political affiliation, veteran status, pregnancy, genetic information, physical appearance, race, religion, or sexual orientation, as well as any other characteristic protected under applicable US federal or state law.
 
-## Our Standards 
+## Our Standards
 Examples of behavior that contribute to creating a positive environment include:
 * All participants are treated with respect and consideration, valuing a diversity of views and opinions
 * Be considerate, respectful, and collaborative
@@ -39,7 +39,7 @@ Project administrators are also expected to keep this *Code of Conduct* updated 
 ## Reporting
 Instances of unacceptable behavior can be brought to the attention of the [project administrator(s)](https://ral.ucar.edu/projects/wrf_hydro/team) who may take any action as outlined in the *Consequences* section below. However, making a report to a project administrator is not considered an 'official report' to UCAR.
 
-Instances of unacceptable behavior may also be reported directly to UCAR via [UCAR's Harassment Reporting and Complaint Procedure](https://operations.ucar.edu/procedures/hr/harassment-reporting-and-complaint-procedure) or anonymously through [UCAR's EthicsPoint Hotline](https://www.ucar.edu/who-we-are/ethics). 
+Instances of unacceptable behavior may also be reported directly to UCAR via [UCAR's Harassment Reporting and Complaint Procedure](https://operations.ucar.edu/procedures/hr/harassment-reporting-and-complaint-procedure) or anonymously through [UCAR's EthicsPoint Hotline](https://www.ucar.edu/who-we-are/ethics).
 
 Complaints received by UCAR will be handled pursuant to the procedures outlined in UCAR's Harassment Reporting and Complaint Procedure. Complaints to UCAR will be held as confidential as practicable under the circumstances, and retaliation against a person who initiates a complaint or an inquiry about inappropriate behavior will not be tolerated.
 
