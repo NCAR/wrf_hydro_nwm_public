@@ -22,22 +22,20 @@ add_library(py_fSCA_lib
 target_link_libraries(py_fSCA_lib ${Python3_LIBRARIES})
 target_include_directories(py_fSCA_lib PRIVATE ${Python3_INCLUDE_DIRS})
 
-add_executable(python_test_driver
+add_executable(test_ml_fSCA_driver
   python_test_driver.f90
 )
-target_link_libraries(python_test_driver py_fSCA_lib ${Python3_LIBRARIES})
-target_include_directories(python_test_driver PRIVATE ${Python3_INCLUDE_DIRS})
+target_link_libraries(test_ml_fSCA_driver py_fSCA_lib ${Python3_LIBRARIES})
+target_include_directories(test_ml_fSCA_driver PRIVATE ${Python3_INCLUDE_DIRS})
 
-install(TARGETS python_test_driver
-    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
+set_target_properties(test_ml_fSCA_driver PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Path to Python script
+# Create symlink after build so the test driver will run
 set(PY_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ml_fSCA.py)
 set(PY_SCRIPT_LINK ${CMAKE_BINARY_DIR}/bin/ml_fSCA.py)
-
-# Create symlink after build
-add_custom_command(TARGET python_test_driver POST_BUILD
+add_custom_command(TARGET test_ml_fSCA_driver POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
     COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${PY_SCRIPT} ${PY_SCRIPT_LINK}

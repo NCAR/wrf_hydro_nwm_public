@@ -1,8 +1,10 @@
 import joblib
 import numpy as np
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+import sys
 import xarray as xr
 from xgboost import XGBRegressor, Booster
 
@@ -17,10 +19,13 @@ lon_a = None
 
 
 def init_ml_object():
-    base_dir = '/glade/work/soren/src/wrf-hydro/lanl-ml/'
+    base_dir = ''
     model_name = 'model.pkl'
     # model_name = 'hello_world.pkl'
-    model_path = base_dir + model_name
+    model_path = Path(base_dir + model_name)
+
+    if not model_path.exists():
+        sys.exit(f"Error: model file does not exist: {model_path}")
     print("Loading model:", model_name)
 
     model = None
@@ -74,7 +79,9 @@ def init_ml_object():
     return model
 
 def init_aspect():
-    aspect_f = '/glade/campaign/ral/hap/enzminger/snowmodel/topo_vege/domain_UCRB/aspect.nc'
+    aspect_f = Path('aspect.nc')
+    if not aspect_f.is_file():
+        sys.exit(f"Error: aspect file does not exist: {aspect_f}")
     with xr.open_dataset(aspect_f) as ds:
         aspect = ds.variables["aspect"][:]
         lat = ds.variables["lat"][:]
@@ -82,7 +89,10 @@ def init_aspect():
     return aspect, lat, lon
 
 def init_slope():
-    slope_f = '/glade/campaign/ral/hap/enzminger/snowmodel/topo_vege/domain_UCRB/slope.nc'
+    slope_f = Path('slope.nc')
+    if not slope_f.is_file():
+        sys.exit(f"Error: aspect file does not exist: {slope_f}")
+
     with xr.open_dataset(slope_f) as ds:
         slope = ds.variables["slope"][:]
         lat = ds.variables["lat"][:]
