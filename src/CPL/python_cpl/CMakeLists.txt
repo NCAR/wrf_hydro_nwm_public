@@ -1,4 +1,4 @@
-if (NOT PYTHON_FSCA)
+if (NOT PYTHON_ML_FSCA)
   add_library(py_fSCA_lib
     stub_fSCA.f90
     )

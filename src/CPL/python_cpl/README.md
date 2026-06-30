@@ -21,7 +21,7 @@ $ module load conda
 ```
 $ mkdir build
 $ cd build
-$ cmake ../ -DPYTHON_FSCA=1
+$ cmake ../ -DPYTHON_ML_FSCA=1
 $ make -j 4
 ```
 

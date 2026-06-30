@@ -75,7 +75,7 @@ set(WRF_HYDRO_NUDGING $ENV{WRF_HYDRO_NUDGING} CACHE STRING "Streamflow nudging 0
 set(OUTPUT_CHAN_CONN $ENV{OUTPUT_CHAN_CONN} CACHE STRING "Output channel connections")
 set(PRECIP_DOUBLE $ENV{PRECIP_DOUBLE} CACHE STRING "Precipitation as double")
 set(WRF_HYDRO_NUOPC $ENV{WRF_HYDRO_NUOPC} CACHE STRING "NUOPC library 0=off 1=on")
-set(PYTHON_CPL $ENV{PYTHON_CPL} CACHE STRING "Call Python Functions 0=off 1=on")
+set(PYTHON_ML_FSCA $ENV{PYTHON_ML_FSCA} CACHE STRING "Call Python ML Functions 0=off 1=on")
 
 #set default values for env variables
 if (WRF_HYDRO STREQUAL "")
@@ -201,6 +201,8 @@ message("WRF_HYDRO_NUOPC = " ${WRF_HYDRO_NUOPC} )
 if (WRF_HYDRO_NUOPC STREQUAL "1" )
         add_definitions(-DWRF_HYDRO_NUOPC)
 endif()
+
+message("PYTHON_ML_FSCA = " ${PYTHON_ML_FSCA} )
 
 option(BUILD_CROCUS "Build Crocus" ON)
 option(WRF_HYDRO_CREATE_EXE_SYMLINK "Create symlink wrfhydro.exe -> wrfhydro" ON)

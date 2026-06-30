@@ -8,6 +8,6 @@ contains
          SWDOWN, U2D, V2D, day_of_year, HGT, slope, aspect, lat, lon
     integer(c_int), intent(in) :: nx, ny
     error stop &
-         "Error: calling ml_fSCA without building CMake with -DPYTHON_FSCA"
+         "Error: calling ml_fSCA without building CMake with -DPYTHON_ML_FSCA"
   end subroutine ml_fSCA
 end module call_py_fSCA
