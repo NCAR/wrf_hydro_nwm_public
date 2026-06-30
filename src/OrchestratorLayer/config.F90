@@ -54,6 +54,7 @@ module config_base
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
      integer            :: imperv_option = 9
+     integer            :: ml_fsca_option = 0
 
      integer            :: split_output_count = 1
      integer            :: khour
@@ -637,7 +638,8 @@ contains
          CHRTOUT_DOMAIN,CHANOBS_DOMAIN,CHRTOUT_GRID,LSMOUT_DOMAIN,&
          RTOUT_DOMAIN, output_gw, outlake, &
          frxst_pts_out, udmap_file, UDMP_OPT, GWBUCKPARM_file, bucket_loss, &
-         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, output_channelBucket_influx, imperv_adj
+         io_config_outputs, io_form_outputs, hydrotbl_f, t0OutputFlag, &
+         output_channelBucket_influx, imperv_adj
 
    namelist /reservoir_nlist/ &
       reservoir_persistence_usgs, reservoir_persistence_usace, reservoir_parameter_file, reservoir_usgs_timeslice_path, &
@@ -1017,6 +1019,7 @@ contains
      integer            :: pedotransfer_option = 0
      integer            :: crop_option = 0
      integer            :: imperv_option = 9
+     integer            :: ml_fsca_option = 0
      integer            :: split_output_count = 1
      integer            :: khour = -999
      integer            :: kday = -999
@@ -1059,7 +1062,8 @@ contains
          khour, kday, zlvl, hrldas_setup_file, mmf_runoff_file, &
          spatial_filename, &
          external_veg_filename_template, external_lai_filename_template, &
-         xstart, xend, ystart, yend, rst_bi_out, rst_bi_in
+         xstart, xend, ystart, yend, rst_bi_out, rst_bi_in, ml_fsca_option
+
 
     namelist /WRF_HYDRO_OFFLINE/ &
          finemesh,finemesh_factor,forc_typ, snow_assim
@@ -1173,6 +1177,7 @@ contains
     noah_lsm%pedotransfer_option = pedotransfer_option
     noah_lsm%crop_option = crop_option
     noah_lsm%imperv_option = imperv_option
+    noah_lsm%ml_fsca_option = ml_fsca_option
 
     noah_lsm%split_output_count = split_output_count
 

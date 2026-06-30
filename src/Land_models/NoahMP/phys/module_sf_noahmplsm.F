@@ -155,6 +155,7 @@ MODULE MODULE_SF_NOAHMPLSM
                       !   2 -> use effective imperviousness from Alley & Veenhuis
                       ! **9 -> older model behavior (urban soil parameter adjustment
                       !        and mixed runoff adjustment depending on runoff scheme)
+  INTEGER :: OPT_ML_FSCA ! ml fsca optin (0->none; 1->on)
 
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
@@ -1844,19 +1845,19 @@ ENDIF   ! CROPTYPE == 0
      IF(SNOWH.GT.0.)  THEN
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
-         ! if (namelist option tbd) then
-           day = floor(julian)
-           if (day == 366) day = 365
-           day_of_water_year = doy_to_dowy(day)
-           print *, "day =", day, "dowy =", day_of_water_year
+         if (opt_ml_fsca == 1) then
+            day = floor(julian)
+            if (day == 366) day = 365
+            day_of_water_year = doy_to_dowy(day)
+            print *, "day =", day, "dowy =", day_of_water_year
 
-           call ml_fSCA(FSNO, &
-                SFCTMP, LWDN, SWDOWN, UU, VV, &
-                day_of_water_year, &
-                ZREF, slope_dummy, aspect_dummy, lat, longitude)
-         ! else
-         !   FSNO     = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
-         ! end else
+            call ml_fSCA(FSNO, &
+                 SFCTMP, LWDN, SWDOWN, UU, VV, &
+                 day_of_water_year, &
+                 ZREF, slope_dummy, aspect_dummy, lat, longitude)
+         else
+            FSNO = parameters%SCAMAX * TANH( SNOWH /(2.5* Z0 * FMELT))
+         end if
      ENDIF
 
 ! ground roughness length
@@ -9173,7 +9174,8 @@ END SUBROUTINE PSN_CROP
 
   subroutine noahmp_options(idveg     ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz , &
                              iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc, &
-			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop, iopt_imperv )
+			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop, iopt_imperv, &
+			     iopt_ml_fsca)
 
   implicit none
 
@@ -9197,6 +9199,7 @@ END SUBROUTINE PSN_CROP
   INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.)
   INTEGER,  INTENT(IN) :: iopt_imperv !imperviousness infiltration adjustment (0->none; 1->total imperviousness;
                                            !2->Alley&Veenhuis)
+  INTEGER,  INTENT(IN) :: iopt_ml_fsca ! ml fsca optin (0->none; 1->on)
 
 ! -------------------------------------------------------------------------------------------------
 
@@ -9218,6 +9221,7 @@ END SUBROUTINE PSN_CROP
   opt_pedo = iopt_pedo
   opt_crop = iopt_crop
   opt_imperv = iopt_imperv
+  opt_ml_fsca = iopt_ml_fsca
 
   end subroutine noahmp_options
 

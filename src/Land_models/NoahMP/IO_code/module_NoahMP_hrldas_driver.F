@@ -109,6 +109,7 @@ module module_NoahMP_hrldas_driver
   INTEGER                                 ::  IOPT_CROP ! crop model option (0->none; 1->Liu et al.)
   INTEGER                                 ::  IOPT_IMPERV !imperviousness infiltration adjustment (0->none; 1->total;
                                                                                         !2->Alley&Veenhuis; 9->old)
+  INTEGER                                 ::  IOPT_ML_FSCA ! fSCA ML option (0->none; 1->on)
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  T_PHY     ! 3D atmospheric temperature valid at mid-levels [K]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  QV_CURR   ! 3D water vapor mixing ratio [kg/kg_dry]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  U_PHY     ! 3D U wind component [m/s]
@@ -465,6 +466,7 @@ module module_NoahMP_hrldas_driver
   IOPT_PEDO  = noah_lsm%pedotransfer_option
   IOPT_CROP  = noah_lsm%crop_option
   IOPT_IMPERV = noah_lsm%imperv_option
+  IOPT_ML_FSCA = noah_lsm%ml_fsca_option
 
   khour = noah_lsm%khour
 
@@ -1892,7 +1894,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
                 , ACCPRCP=ACCPRCP,  ACCECAN=ACCECAN, ACCETRAN=ACCETRAN,  ACCEDIR=ACCEDIR  &
                 , SOILSAT_TOP=SOILSAT_TOP, SOILSAT=SOILSAT, SOILICE=SOILICE, SNOWT_AVG=SNOWT_AVG      &
-                , XLONIN=XLONIN &
+                , XLONIN=XLONIN, IOPT_ML_FSCA=IOPT_ML_FSCA &
 #endif
                 )
 

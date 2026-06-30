@@ -67,7 +67,7 @@ CONTAINS
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
-               , XLONIN &
+               , XLONIN, IOPT_ML_FSCA &
 #endif
                )
 !----------------------------------------------------------------
@@ -297,6 +297,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SOILICE     ! fraction of soil moisture that is ice [fraction]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(INOUT) ::  SNOWT_AVG   ! average snowpack temperature (by layer mass) [K]
     REAL,    DIMENSION( ims:ime,          jms:jme ), OPTIONAL, INTENT(IN   ) ::  XLONIN    ! longitude [rad]
+    INTEGER,                                         OPTIONAL, INTENT(IN   ) ::  IOPT_ML_FSCA ! fSCA ML option (0->none; 1->on)
 #endif
 
 ! 1D equivalent of 2D/3D fields
@@ -616,7 +617,8 @@ CONTAINS
 
     CALL NOAHMP_OPTIONS(IDVEG  ,IOPT_CRS  ,IOPT_BTR  ,IOPT_RUN  ,IOPT_SFC  ,IOPT_FRZ , &
                      IOPT_INF  ,IOPT_RAD  ,IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC , &
-		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP, IOPT_IMPERV )
+		     IOPT_RSF  ,IOPT_SOIL ,IOPT_PEDO ,IOPT_CROP, IOPT_IMPERV, &
+		     IOPT_ML_FSCA )
 
     IPRINT    =  .false.                     ! debug printout
 
