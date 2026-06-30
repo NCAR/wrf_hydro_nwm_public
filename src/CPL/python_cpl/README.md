@@ -45,9 +45,11 @@ flowchart TD
 
 
 # Input Variables
-The static variable information comes from files like `geo_em.d01.nc`.
-WRF-Hydro forcing variables are kept in `module_NoahMP_hrldas_driver.F` and the
-static variables are kept in `module_RT_data.F90` and `?`.
+The static variable information comes from files `geo_em.d01.nc`, `aspect.nc`,
+and `slope.nc`.
+WRF-Hydro forcing variables are read in by `module_NoahMP_hrldas_driver.F` and
+most static variables are kept in `module_RT_data.F90`. Aspect and slope is
+read directly by the python module.
 
 | Variable      | WRF-Hydro Name      | Description                                | Type    |
 |---------------|---------------------|--------------------------------------------|---------|
@@ -56,7 +58,7 @@ static variables are kept in `module_RT_data.F90` and `?`.
 | `SWDOWN`      | `SWDOWN`, `SHORT`   | Surface downward short-wave radiation flux | Forcing |
 | `U2D`         | `U_PHY`, `U`        | 10-m U-component of wind                   | Forcing |
 | `V2D`         | `V_PHY`, `V`        | 10-m V-component of wind                   | Forcing |
-| `day_of_year` | `%olddate(1:19)`?   | Day of the Water Year                      |         |
+| `day_of_year` | `day_of_water_year` | Day of the Water Year                      |         |
 | `HGT`         | `TERRAIN`           | Topography height                          | Static  |
 | `slope`       | read in from NetCDF | Slope                                      | Static  |
 | `aspect`      | read in from NetCDF | Direction the slope faces                  | Static  |
