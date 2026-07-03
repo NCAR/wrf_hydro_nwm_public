@@ -13,8 +13,8 @@ $ conda install -c conda-forge scikit-learn xgboost xarray netcdf4 joblib
 ```
 $ conda activate wrf-h-ml
 $ module purge
-$ module load ncarenv gcc cray-mpich netcdf cmake
-$ module load conda
+$ module load ncarenv/25.10 gcc/14.3.0 craype/2.7.34 libfabric/1.22.0 cray-mpich/8.1.32 hdf5/1.14.6 netcdf/4.9.3 cmake/3.31.8
+$ module load conda/latest
 ```
 
 # Build
