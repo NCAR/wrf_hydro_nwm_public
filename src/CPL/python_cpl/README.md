@@ -28,8 +28,14 @@ $ make -j 4
 # Run Test Driver
 From `build` directory
 ```
-$ make install
-$ ./bin/call_python
+$ cd bin
+download tarball with trained ML Python object and test files:
+  - aspect.nc
+  - model.pkl
+  - slope.nc
+$ wget https://github.com/NCAR/wrf_hydro_nwm_public/releases/download/v5.4.0/ml_fSCA.tar.gz
+$ tar zxf ml_fSCA.tar.gz
+$ ./test_ml_fSCA_driver
 ```
 
 # Flowchart

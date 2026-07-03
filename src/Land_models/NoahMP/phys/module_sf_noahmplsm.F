@@ -155,7 +155,7 @@ MODULE MODULE_SF_NOAHMPLSM
                       !   2 -> use effective imperviousness from Alley & Veenhuis
                       ! **9 -> older model behavior (urban soil parameter adjustment
                       !        and mixed runoff adjustment depending on runoff scheme)
-  INTEGER :: OPT_ML_FSCA ! ml fsca optin (0->none; 1->on)
+  INTEGER :: OPT_ML_FSCA ! ml fsca option (0->none; 1->on)
 
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
@@ -9199,7 +9199,7 @@ END SUBROUTINE PSN_CROP
   INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.)
   INTEGER,  INTENT(IN) :: iopt_imperv !imperviousness infiltration adjustment (0->none; 1->total imperviousness;
                                            !2->Alley&Veenhuis)
-  INTEGER,  INTENT(IN) :: iopt_ml_fsca ! ml fsca optin (0->none; 1->on)
+  INTEGER,  INTENT(IN) :: iopt_ml_fsca ! ml fsca option (0->none; 1->on)
 
 ! -------------------------------------------------------------------------------------------------
 
