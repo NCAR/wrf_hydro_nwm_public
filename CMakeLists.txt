@@ -16,7 +16,7 @@ set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
 find_package(MPI REQUIRED)
-add_compile_options(${MPI_Fortran_COMPILE_FLAGS})
+add_compile_options(${MPI_Fortran_COMPILE_OPTIONS})
 include_directories(${MPI_Fortran_INCLUDE_PATH})
 link_directories(${MPI_Fortran_LIBRARIES})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
