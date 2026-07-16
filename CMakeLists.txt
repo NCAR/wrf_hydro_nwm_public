@@ -14,16 +14,24 @@ if (NOT DEFINED CMAKE_Fortran_COMPILER)
         set(_env_fc "$ENV{FC}")
         if ("${_env_fc}" STREQUAL "" OR "${_env_fc}" MATCHES "(^|/)ifort$")
                 get_filename_component(_env_fc_dir "${_env_fc}" DIRECTORY)
+
+                # Ensure environment changes are reflected across re-configures
+                unset(WRF_HYDRO_IFORT_PATH CACHE)
+                unset(WRF_HYDRO_IFX_PATH CACHE)
+
                 find_program(WRF_HYDRO_IFORT_PATH ifort HINTS "${_env_fc_dir}")
                 if (WRF_HYDRO_IFORT_PATH)
                         get_filename_component(_intel_bin_dir "${WRF_HYDRO_IFORT_PATH}" DIRECTORY)
-                        find_program(WRF_HYDRO_IFX_PATH ifx HINTS "${_intel_bin_dir}")
+                        find_program(WRF_HYDRO_IFX_PATH ifx PATHS "${_intel_bin_dir}" NO_DEFAULT_PATH)
                         if (WRF_HYDRO_IFX_PATH)
                                 message(STATUS "ifort is deprecated and ifx was found; using ${WRF_HYDRO_IFX_PATH}"
-                                        " (set FC or CMAKE_Fortran_COMPILER to override)")
+                                        " (set -DCMAKE_Fortran_COMPILER=ifort to keep ifort, or set FC/CMAKE_Fortran_COMPILER to override)")
                                 set(CMAKE_Fortran_COMPILER "${WRF_HYDRO_IFX_PATH}")
                         endif()
                 endif()
+
+                unset(WRF_HYDRO_IFORT_PATH CACHE)
+                unset(WRF_HYDRO_IFX_PATH CACHE)
                 unset(_env_fc_dir)
                 unset(_intel_bin_dir)
         endif()
