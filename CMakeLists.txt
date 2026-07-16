@@ -24,7 +24,7 @@ if (NOT DEFINED CMAKE_Fortran_COMPILER)
                         get_filename_component(_intel_bin_dir "${WRF_HYDRO_IFORT_PATH}" DIRECTORY)
                         find_program(WRF_HYDRO_IFX_PATH ifx PATHS "${_intel_bin_dir}" NO_DEFAULT_PATH)
                         if (WRF_HYDRO_IFX_PATH)
-                                message(STATUS "ifort is deprecated and ifx was found; using ${WRF_HYDRO_IFX_PATH}"
+                                message(STATUS "ifort is deprecated; using ifx instead"
                                         " (set -DCMAKE_Fortran_COMPILER=ifort to keep ifort, or set FC/CMAKE_Fortran_COMPILER to override)")
                                 set(CMAKE_Fortran_COMPILER "${WRF_HYDRO_IFX_PATH}")
                         endif()
