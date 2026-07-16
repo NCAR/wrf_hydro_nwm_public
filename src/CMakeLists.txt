@@ -108,23 +108,26 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
         target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
 
+        # WRF-Hydro's internal static libraries reach each other through
+        # several independent PUBLIC/PRIVATE target_link_libraries paths
+        # (e.g. hydro_driver, hydro_noahmp_cpl, and noahmp_util/noahmp_data
+        # all separately depend on hydro_mpp/hydro_routing/hydro_orchestrator).
+        # CMake's link-line generator resolves this kind of diamond dependency
+        # by repeating a static archive later in the command line wherever a
+        # later target still needs it. That repetition is harmless for
+        # classic linking, but GCC's LTO linker plugin claims each occurrence
+        # of a repeated archive as its own "prevailing" definition and fatally
+        # errors with "multiple prevailing defs" once the same archive
+        # appears twice.
+        #
+        # $<LINK_GROUP:RESCAN,...> (CMake >= 3.24) wraps the whole internal
+        # closure in a linker group (-Wl,--start-group/--end-group for
+        # GNU-like linkers) and tells CMake's link-line generator to treat it
+        # as a single already-resolved unit instead of duplicating members:
+        # ld itself re-scans the group as many times as needed to resolve
+        # cross-references, so every archive needs to be listed only once.
         target_link_libraries(wrfhydro
-                hydro_utils
-                hydro_mpp
-                hydro_debug_utils
-                hydro_routing_overland
-                hydro_routing_subsurface
-                hydro_data_rec
-                hydro_routing
-                hydro_routing_reservoirs_levelpool
-                hydro_routing_reservoirs_hybrid
-                hydro_routing_reservoirs_rfc
-                hydro_routing_reservoirs
-                hydro_driver
-                noahmp_util
-                noahmp_phys
-                noahmp_data
-                hydro_noahmp_cpl
+                "$<LINK_GROUP:RESCAN,hydro_utils,hydro_mpp,hydro_debug_utils,hydro_driver,hydro_noahmp_cpl,hydro_routing,hydro_routing_overland,hydro_routing_subsurface,hydro_routing_reservoirs,hydro_routing_reservoirs_levelpool,hydro_routing_reservoirs_hybrid,hydro_routing_reservoirs_rfc,hydro_routing_diversions,hydro_orchestrator,hydro_netcdf_layer,hydro_data_rec,noahmp_util,noahmp_phys,noahmp_data,snowcro,crocus_surfex>"
                 ${NETCDF_LIBRARIES}
                 # hydro_routing_groundwater
                 # hydro_routing_groundwater_bucket
