@@ -253,7 +253,7 @@ elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
                 # silence the ifort deprecation remark; ignored by older ifort
                 set(CMAKE_Fortran_FLAGS "-diag-disable=10448 ")
         endif()
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}-fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
         set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=core-avx2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
 elseif ((CMAKE_Fortran_COMPILER_ID MATCHES "PGI.*") OR (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC.*"))
