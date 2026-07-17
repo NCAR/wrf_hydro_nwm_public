@@ -16,7 +16,7 @@ case ${1} in
     nwm_ana)
         testcase_dir="NWM"
         ;;
-    nwm_ana)
+    nwm_nudging)
         testcase_dir="NWM"
         ;;
     nwm_long_range)
@@ -72,6 +72,9 @@ sed -i 's/^\( *RTOUT_DOMAIN *= *\).*$/\11/' hydro.namelist
 # if NWM test fix for ana and long_range runs
 case ${1} in
     nwm_ana)
+        sed -i 's/^\( *RUNOFF_OPTION *= *\).*$/\17/I' namelist.hrldas
+        ;;
+    nwm_nudging)
         sed -i 's/^\( *RUNOFF_OPTION *= *\).*$/\17/I' namelist.hrldas
         ;;
     nwm_longrange)

@@ -18,7 +18,9 @@ fi
 
 # run testcase
 cd $run_dir
+set -e -x
 ${run_cmd}
+set +e +x
 
 # collect output, and fail silently if files not outputted at this point
 mkdir -p ${output_dir}
