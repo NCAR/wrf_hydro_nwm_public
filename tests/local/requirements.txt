@@ -27,7 +27,7 @@ pytest-metadata==1.8.0
 python-dateutil==2.8.0
 pytz==2019.2
 requests==2.33.0
-setuptools==78.1.1
+setuptools==83.0.0
 six==1.12.0
 soupsieve==2.8.4
 toolz==0.10.0
