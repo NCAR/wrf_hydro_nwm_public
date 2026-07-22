@@ -4,6 +4,39 @@ if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# Intel oneAPI environments (and some HPC module systems) still set FC=ifort,
+# but ifort is deprecated and emits a remark on every invocation. If ifort
+# would be selected and ifx is available alongside it, prefer ifx. This must
+# happen before project(). Systems with only gfortran or only classic ifort
+# are unaffected, and an explicit -DCMAKE_Fortran_COMPILER=... or FC set to
+# anything other than ifort is honored as-is.
+if (NOT DEFINED CMAKE_Fortran_COMPILER)
+        set(_env_fc "$ENV{FC}")
+        if ("${_env_fc}" STREQUAL "" OR "${_env_fc}" MATCHES "(^|/)ifort$")
+                get_filename_component(_env_fc_dir "${_env_fc}" DIRECTORY)
+
+                # Ensure environment changes are reflected across re-configures
+                unset(WRF_HYDRO_IFORT_PATH CACHE)
+                unset(WRF_HYDRO_IFX_PATH CACHE)
+
+                find_program(WRF_HYDRO_IFORT_PATH ifort HINTS "${_env_fc_dir}")
+                if (WRF_HYDRO_IFORT_PATH)
+                        get_filename_component(_intel_bin_dir "${WRF_HYDRO_IFORT_PATH}" DIRECTORY)
+                        find_program(WRF_HYDRO_IFX_PATH ifx PATHS "${_intel_bin_dir}" NO_DEFAULT_PATH)
+                        if (WRF_HYDRO_IFX_PATH)
+                                message(STATUS "ifort is deprecated; using ifx instead"
+                                        " (set -DCMAKE_Fortran_COMPILER=ifort to keep ifort, or set FC/CMAKE_Fortran_COMPILER to override)")
+                                set(CMAKE_Fortran_COMPILER "${WRF_HYDRO_IFX_PATH}")
+                        endif()
+                endif()
+
+                unset(WRF_HYDRO_IFORT_PATH CACHE)
+                unset(WRF_HYDRO_IFX_PATH CACHE)
+                unset(_env_fc_dir)
+                unset(_intel_bin_dir)
+        endif()
+        unset(_env_fc)
+endif()
 
 # set project name and version numbers
 project (WRF_Hydro LANGUAGES Fortran C)
@@ -218,9 +251,17 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
         set(CMAKE_Fortran_FLAGS_RELEASE "-O2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbacktrace")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
-        # set compile flags for ifort
-        message( "-- Using ifort")
-        set(CMAKE_Fortran_FLAGS "-fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+        # set compile flags for ifx (IntelLLVM) and ifort (Intel Classic);
+        # both accept the same flag set below
+        if (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+                message( "-- Using ifx (Intel LLVM)")
+                set(CMAKE_Fortran_FLAGS "")
+        else()
+                message( "-- Using ifort (Intel Classic)")
+                # silence the ifort deprecation remark; ignored by older ifort
+                set(CMAKE_Fortran_FLAGS "-diag-disable=10448 ")
+        endif()
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
         set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=core-avx2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
 elseif ((CMAKE_Fortran_COMPILER_ID MATCHES "PGI.*") OR (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC.*"))
