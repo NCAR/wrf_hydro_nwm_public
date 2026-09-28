@@ -35,7 +35,7 @@ contains
              end_y(index+1) = ny
           end if
 
-          print*, "index", index, "i", i, "j", j, "end_x", end_x(index)
+          print*, "index", index, "i", i, "j", j, "end_x", end_x(index+1)
           ! if (i < x_np) then
           ! end if
           ! end_x(i) = start_x(i+1)

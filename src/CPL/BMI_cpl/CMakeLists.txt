@@ -42,12 +42,6 @@ file(CREATE_LINK
   "${CMAKE_BINARY_DIR}/Run/wrf_hydro_bmi.py"
   SYMBOLIC)
 
-# setup WRF-Hydro BMI Python driver
-file(CREATE_LINK
-  "${CMAKE_CURRENT_SOURCE_DIR}/wrf_hydro_nwm_modflow6_bmi_driver.py"
-  "${CMAKE_BINARY_DIR}/Run/wrf_hydro_modflow_bmi.py"
-  SYMBOLIC)
-
 #
 # link_directories(bmi_wrf_hydro_nwm_bind_c ${CMAKE_BINARY_DIR}/lib )
 # setup WRF-Hydro BMI C driver

@@ -11,9 +11,7 @@ program wrf_hydro_nwm_bmi_init
   stat = BMI_SUCCESS
 
   wrf_hydro = wrf_hydro_nwm()
-  call stat_check(wrf_hydro%parallel_initialize(MPI_COMM_WORLD))
-  call stat_check(wrf_hydro%initialize("no config file"))
-
-
+  call stat_check(wrf_hydro%parallel_initialize(MPI_COMM_WORLD), stat)
+  call stat_check(wrf_hydro%initialize("no config file"), stat)
 
 end program wrf_hydro_nwm_bmi_init

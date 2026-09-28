@@ -54,67 +54,67 @@ program wrf_hydro_nwm_bmi_driver
   integer :: x_grid_shape_const(1)
   integer :: nx, ny, ii, jj, kk, mm
   double precision, allocatable :: x(:,:), x_flat(:)
-  double precision, allocatable :: SIMVALS_flat(:), SIMVALS_flat_flipped(:)  
+  double precision, allocatable :: SIMVALS_flat(:), SIMVALS_flat_flipped(:)
   double precision, allocatable :: rch_flat(:), rch_soldrain_red(:)
   double precision, allocatable :: grid_x(:), grid_y(:)
 
   print *, "----------------------------------------"
-  print *, "   Starting WRF-Hydro/MODFLOW BMI ...   "  
+  print *, "   Starting WRF-Hydro/MODFLOW BMI ...   "
   print *, "----------------------------------------"
 
 
   wrf_hydro = wrf_hydro_nwm()
   modflow = modflow6()
-  call stat_check(wrf_hydro%get_component_name(model_name))
-  call stat_check(modflow%get_component_name(mf_model_name))
+  call stat_check(wrf_hydro%get_component_name(model_name), bmi_status)
+  call stat_check(modflow%get_component_name(mf_model_name), bmi_status)
 
   ! print * , "--- Starting ", trim(model_name), " and ", trim(mf_model_name), " ---"
 
   ! initialize model
-  call stat_check(wrf_hydro%initialize("no config file"))
-  call stat_check(modflow%initialize(""))
+  call stat_check(wrf_hydro%initialize("no config file"), bmi_status)
+  call stat_check(modflow%initialize(""), bmi_status)
 
   ! get timing components
-  call stat_check(wrf_hydro%get_start_time(current_time))
-  call stat_check(wrf_hydro%get_end_time(end_time))
-  call stat_check(wrf_hydro%get_time_step(time_step))
-  call stat_check(modflow%get_time_step(mf_time_step))
-  call stat_check(wrf_hydro%get_time_units(time_unit))
-  ! call stat_check(wrf_hydro%get_start_time(mf_current_time))
-  call stat_check(modflow%get_start_time(mf_current_time))
-  ! call stat_check(modflow%get_time_units(mf_time_unit)) ! hardcoded, need to update
-  ! call stat_check(modflow%get_output_item_count(modflow_output_item_count))
+  call stat_check(wrf_hydro%get_start_time(current_time), bmi_status)
+  call stat_check(wrf_hydro%get_end_time(end_time), bmi_status)
+  call stat_check(wrf_hydro%get_time_step(time_step), bmi_status)
+  call stat_check(modflow%get_time_step(mf_time_step), bmi_status)
+  call stat_check(wrf_hydro%get_time_units(time_unit), bmi_status)
+  ! call stat_check(wrf_hydro%get_start_time(mf_current_time), bmi_status)
+  call stat_check(modflow%get_start_time(mf_current_time), bmi_status)
+  ! call stat_check(modflow%get_time_units(mf_time_unit), bmi_status) ! hardcoded, need to update
+  ! call stat_check(modflow%get_output_item_count(modflow_output_item_count), bmi_status)
   print *, "time steps:", time_step, mf_time_step
 
   ! print *, "modflow_output_item_count", modflow_output_item_count
 
   ! --- setup soldrain variables
-  call stat_check(wrf_hydro%get_var_grid("soldrain", soldrain_grid))
-  call stat_check(wrf_hydro%get_grid_rank(soldrain_grid, soldrain_rank))
-  call stat_check(wrf_hydro%get_grid_shape(soldrain_grid, soldrain_grid_shape))
+  call stat_check(wrf_hydro%get_var_grid("soldrain", soldrain_grid), bmi_status)
+  call stat_check(wrf_hydro%get_grid_rank(soldrain_grid, soldrain_rank), bmi_status)
+  call stat_check(wrf_hydro%get_grid_shape(soldrain_grid, soldrain_grid_shape), bmi_status)
   soldrain_grid_shape_const = soldrain_grid_shape
-  call stat_check(wrf_hydro%get_grid_size(soldrain_grid, soldrain_size))
+  call stat_check(wrf_hydro%get_grid_size(soldrain_grid, soldrain_size), bmi_status)
   ! --- done setting up soldrain variables
 
   ! --- setup moddrain variables
-  call stat_check(wrf_hydro%get_var_grid("moddrain", moddrain_grid))
-  call stat_check(wrf_hydro%get_grid_rank(moddrain_grid, moddrain_rank))
-  call stat_check(wrf_hydro%get_grid_shape(moddrain_grid, moddrain_grid_shape))
+  call stat_check(wrf_hydro%get_var_grid("moddrain", moddrain_grid), bmi_status)
+  call stat_check(wrf_hydro%get_grid_rank(moddrain_grid, moddrain_rank), bmi_status)
+  call stat_check(wrf_hydro%get_grid_shape(moddrain_grid, moddrain_grid_shape), bmi_status)
   moddrain_grid_shape_const = moddrain_grid_shape
-  call stat_check(wrf_hydro%get_grid_size(moddrain_grid, moddrain_size))
+  call stat_check(wrf_hydro%get_grid_size(moddrain_grid, moddrain_size), bmi_status)
 
   ! --- setup modflow x variable
-  call stat_check(modflow%get_var_grid("X", x_grid))
-  call stat_check(modflow%get_grid_rank(x_grid, x_rank))
-  call stat_check(modflow%get_grid_shape(x_grid, x_grid_shape))
+  call stat_check(modflow%get_var_grid("X", x_grid), bmi_status)
+  call stat_check(modflow%get_grid_rank(x_grid, x_rank), bmi_status)
+  call stat_check(modflow%get_grid_shape(x_grid, x_grid_shape), bmi_status)
   x_grid_shape_const = x_grid_shape
-  call stat_check(modflow%get_grid_size(x_grid, x_size))
+  call stat_check(modflow%get_grid_size(x_grid, x_size), bmi_status)
 
-  call stat_check(modflow%get_var_grid("RECHARGE", rch_grid))
-  call stat_check(modflow%get_grid_rank(rch_grid, rch_rank))
-  call stat_check(modflow%get_grid_size(rch_grid, rch_size))
-  call stat_check(modflow%get_grid_x(rch_grid, grid_x))
-  call stat_check(modflow%get_grid_y(rch_grid, grid_y))  
+  call stat_check(modflow%get_var_grid("RECHARGE", rch_grid), bmi_status)
+  call stat_check(modflow%get_grid_rank(rch_grid, rch_rank), bmi_status)
+  call stat_check(modflow%get_grid_size(rch_grid, rch_size), bmi_status)
+  call stat_check(modflow%get_grid_x(rch_grid, grid_x), bmi_status)
+  call stat_check(modflow%get_grid_y(rch_grid, grid_y), bmi_status)
 
   nx = size(grid_x) - 1
   ny = size(grid_y) - 1
@@ -144,7 +144,7 @@ program wrf_hydro_nwm_bmi_driver
   print *, " "
   print *, "modflow:   Setting mf_current_time to ", mf_current_time
   print *, "modflow:   Setting mf_time_step to    ", mf_time_step
-  
+
   print *, "x_grid       , x_rank      ", x_grid, x_rank
   print *, "x_size, rch_size, soldrain_size", x_size, rch_size, soldrain_size
   print *, "x_grid_shape , x_size      ", x_grid_shape, x_size
@@ -162,10 +162,10 @@ program wrf_hydro_nwm_bmi_driver
   ngwfpack = gwfmodel%bndlist%Count()
 
   do ip = 1, ngwfpack
-  
+
      packobj => GetBndFromList(gwfmodel%bndlist, ip)
 
-     print *, "gwfmodel%bndlist%Count(), ngwfpack ******", ngwfpack	 
+     print *, "gwfmodel%bndlist%Count(), ngwfpack ******", ngwfpack
 	 print *, "trim(packobj%packName) ******", trim(packobj%packName)
 
      if (trim(packobj%packName) == "RCH") then
@@ -176,27 +176,27 @@ program wrf_hydro_nwm_bmi_driver
 
   do while (current_time < end_time)
     ! update models
-    call stat_check(wrf_hydro%update())
-    call stat_check(modflow%update())
+    call stat_check(wrf_hydro%update(), bmi_status)
+    call stat_check(modflow%update(), bmi_status)
     ! update current_time
-    call stat_check(wrf_hydro%get_current_time(current_time))
-    call stat_check(modflow%get_current_time(mf_current_time))
-    call stat_check(modflow%get_time_step(mf_time_step))
+    call stat_check(wrf_hydro%get_current_time(current_time), bmi_status)
+    call stat_check(modflow%get_current_time(mf_current_time), bmi_status)
+    call stat_check(modflow%get_time_step(mf_time_step), bmi_status)
     time_step_conv = time_step / mf_time_step
 
     soldrainavesum = 0.
 	soldrain_flat_daysum(:) = 0.
 
     ! get current values
-    call stat_check(modflow%get_value("X", x_flat))
-    call stat_check(modflow%get_value("RECHARGE", rch_flat))
+    call stat_check(modflow%get_value("X", x_flat), bmi_status)
+    call stat_check(modflow%get_value("RECHARGE", rch_flat), bmi_status)
 
-    call stat_check(modflow%get_grid_flipped("SIMVALS", SIMVALS_flat_flipped))
+    call stat_check(modflow%get_grid_flipped("SIMVALS", SIMVALS_flat_flipped), bmi_status)
     ! 1-D to 2-D before setting WRF-Hydro grid
 	! DRN is negative in MODFLOW
 	SIMVALS_flipped = reshape(-SIMVALS_flat_flipped, moddrain_grid_shape_const)
-	 
-    call stat_check(wrf_hydro%get_value("soldrain", soldrain_flat))
+
+    call stat_check(wrf_hydro%get_value("soldrain", soldrain_flat), bmi_status)
 
     soldrainavesum = soldrainavesum + SUM(soldrain_flat)/size(soldrain_flat)
 	soldrain_flat_daysum = soldrain_flat_daysum + soldrain_flat
@@ -217,7 +217,7 @@ program wrf_hydro_nwm_bmi_driver
 	print *, "RCHA min, max: ", minval(rch_flat)*dxdy*dxdy, maxval(rch_flat)*dxdy*dxdy
 
 	print *, "SIMVALS_flipped ave     : ", SUM(SIMVALS_flat_flipped)/size(soldrain_flat)
-	print *, "SIMVALS_flipped min, max: ", minval(SIMVALS_flat_flipped), maxval(SIMVALS_flat_flipped)	
+	print *, "SIMVALS_flipped min, max: ", minval(SIMVALS_flat_flipped), maxval(SIMVALS_flat_flipped)
 
 	print *, "soldrain ave:             ", SUM(soldrain_flat)/size(soldrain_flat)
 	print *, "soldrain sum of ave:      ", soldrainavesum
@@ -230,14 +230,14 @@ program wrf_hydro_nwm_bmi_driver
 
     do while (current_time < mf_current_time .and. &
           current_time < end_time)
-        call stat_check(wrf_hydro%get_current_time(current_time))
-        call stat_check(modflow%get_current_time(mf_current_time))
+        call stat_check(wrf_hydro%get_current_time(current_time), bmi_status)
+        call stat_check(modflow%get_current_time(mf_current_time), bmi_status)
         time_step_conv = time_step / mf_time_step
         print *, "[", int(current_time), "/", int(mf_current_time), "]", &
                  " time_steps =", real(time_step), real(mf_time_step), &
                  "conv", real(time_step_conv)
 
-        call stat_check(wrf_hydro%get_value("soldrain", soldrain_flat))
+        call stat_check(wrf_hydro%get_value("soldrain", soldrain_flat), bmi_status)
         ! soldrain = reshape(soldrain_flat, soldrain_grid_shape_const)
         soldrainavesum = soldrainavesum + SUM(soldrain_flat)/size(soldrain_flat)
 		soldrain_flat_daysum = soldrain_flat_daysum + soldrain_flat
@@ -248,15 +248,15 @@ program wrf_hydro_nwm_bmi_driver
 
 		!unit change: m3/hour to m -----> I think it is m3/hour to m/hour
         moddrain = (SIMVALS_flipped*24./dxdy/dxdy) * time_step_conv
-        call stat_check(wrf_hydro%set_value("moddrain", pack(moddrain, .true.)))
+        call stat_check(wrf_hydro%set_value("moddrain", pack(moddrain, .true.)), bmi_status)
 
         ! --- update soldrain value
         ! soldrain = x_flat * time_step_conv
         ! soldrain = soldrain + 0.01 ! test update_value
-        ! call stat_check(wrf_hydro%set_value("soldrain", pack(soldrain, .true.)))
+        ! call stat_check(wrf_hydro%set_value("soldrain", pack(soldrain, .true.)), bmi_status)
 
         ! update current_time
-        call stat_check(wrf_hydro%update())
+        call stat_check(wrf_hydro%update(), bmi_status)
 		print *, " "
     end do
 
@@ -282,7 +282,7 @@ program wrf_hydro_nwm_bmi_driver
     do jj = 1, nx
        soldrain_flat_daysum_flip(kk)=soldrain_flat_daysum((ii-1)*nx+jj)
        kk = kk + 1
-	end do	
+	end do
 	end do
 
     if (rch_size < nxny) then
@@ -290,20 +290,20 @@ program wrf_hydro_nwm_bmi_driver
     do mm = 1, rch_size
 	   idx1 = packobjrch%nodelist(mm)
 	   idx2 = packobjrch%dis%get_nodeuser(idx1)
-	   
+
 	   rch_soldrain_red(mm) = soldrain_flat_daysum_flip(idx2)
 
     end do
-       call stat_check(modflow%set_value("RECHARGE", rch_soldrain_red/24./1.E3))	
+       call stat_check(modflow%set_value("RECHARGE", rch_soldrain_red/24./1.E3), bmi_status)
 	else
-       call stat_check(modflow%set_value("RECHARGE", soldrain_flat_daysum_flip/24./1.E3))
+       call stat_check(modflow%set_value("RECHARGE", soldrain_flat_daysum_flip/24./1.E3), bmi_status)
     end if
 
   end do
 
 
-  call stat_check(modflow%finalize())
-  call stat_check(wrf_hydro%finalize())
+  call stat_check(modflow%finalize(), bmi_status)
+  call stat_check(wrf_hydro%finalize(), bmi_status)
   print *, "--- FIN ---"
 
 end program wrf_hydro_nwm_bmi_driver

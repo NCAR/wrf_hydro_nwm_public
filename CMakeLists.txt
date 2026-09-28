@@ -207,10 +207,17 @@ option(BUILD_CROCUS "Build Crocus" ON)
 option(WRF_HYDRO_CREATE_EXE_SYMLINK "Create symlink wrfhydro.exe -> wrfhydro" ON)
 message("WRF_HYDRO_CREATE_EXE_SYMLINK = " ${WRF_HYDRO_CREATE_EXE_SYMLINK} )
 
-if (MODFLOW STREQUAL "1" )
-  message("MODFLOW = " ${MODFLOW} )
-endif()
+message("=============================================================")
 
+option(BMI "BMI Coupling" OFF)
+option(MODFLOW "MODFLOW Coupling, turns on BMI coupling" OFF)
+# MODFLOW requires BMI
+if (MODFLOW)
+  set(BMI ON)
+endif()
+message(STATUS "Coupling Options")
+message("BMI = " ${BMI} )
+message("MODFLOW = " ${MODFLOW} )
 message("=============================================================")
 
 #set compile flags based on compiler id
