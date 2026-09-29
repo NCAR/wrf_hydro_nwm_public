@@ -40,6 +40,12 @@ if (MODFLOW)
   add_subdirectory("CPL/MODFLOW_cpl")
 endif()
 
+if (WRF_HYDRO_NUDGING_IO STREQUAL "1" OR
+    WRF_HYDRO_NUDGING STREQUAL "1")
+        add_subdirectory("nudging/io")
+        add_dependencies(hydro_routing hydro_nudging_io)
+endif()
+
 if (WRF_HYDRO_NUDGING STREQUAL "1")
         add_subdirectory("nudging")
         add_dependencies(hydro_routing hydro_nudging)
@@ -118,23 +124,6 @@ if (HYDRO_LSM MATCHES "NoahMP")
 
         target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
 
-        target_link_libraries(wrfhydro_lib INTERFACE
-                hydro_utils
-                hydro_mpp
-                hydro_debug_utils
-                hydro_routing_overland
-                hydro_routing_subsurface
-                hydro_data_rec
-                hydro_routing
-                hydro_routing_reservoirs_levelpool
-                hydro_routing_reservoirs_hybrid
-                hydro_routing_reservoirs_rfc
-                hydro_routing_reservoirs
-                hydro_driver
-                noahmp_util
-                noahmp_phys
-                noahmp_data
-                hydro_noahmp_cpl
         # WRF-Hydro's internal static libraries reach each other through
         # several independent PUBLIC/PRIVATE target_link_libraries paths
         # (e.g. hydro_driver, hydro_noahmp_cpl, and noahmp_util/noahmp_data
@@ -153,7 +142,11 @@ if (HYDRO_LSM MATCHES "NoahMP")
         # as a single already-resolved unit instead of duplicating members:
         # ld itself re-scans the group as many times as needed to resolve
         # cross-references, so every archive needs to be listed only once.
-        target_link_libraries(wrfhydro
+        #
+        # The group is attached to wrfhydro_lib (not wrfhydro directly) so that
+        # module_NoahMP_hrldas and the BMI libraries also get it, along with the
+        # build-order dependencies on these libraries.
+        target_link_libraries(wrfhydro_lib INTERFACE
                 "$<LINK_GROUP:RESCAN,hydro_utils,hydro_mpp,hydro_debug_utils,hydro_driver,hydro_noahmp_cpl,hydro_routing,hydro_routing_overland,hydro_routing_subsurface,hydro_routing_reservoirs,hydro_routing_reservoirs_levelpool,hydro_routing_reservoirs_hybrid,hydro_routing_reservoirs_rfc,hydro_routing_diversions,hydro_orchestrator,hydro_netcdf_layer,hydro_data_rec,noahmp_util,noahmp_phys,noahmp_data,snowcro,crocus_surfex>"
                 ${NETCDF_LIBRARIES}
                 # hydro_routing_groundwater
@@ -161,6 +154,11 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 # hydro_routing_groundwater_nhd
                 # hydro_routing_groundwater_simple
         )
+
+        if (WRF_HYDRO_NUDGING_IO STREQUAL "1")
+          target_link_libraries(wrfhydro hydro_nudging_io)
+          add_dependencies(wrfhydro hydro_nudging_io)
+        endif()
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
                 target_link_libraries(wrfhydro hydro_nudging)
