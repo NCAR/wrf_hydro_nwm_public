@@ -93,7 +93,9 @@ def main():
         if verbose:
             print("process", p, "bounds:",
                   p_start_x,":",p_end_x,",", p_start_y,":",p_end_y)
-        array[p_start_y:p_end_y, p_start_x:p_end_x] = p+1
+        # WRF-Hydro y index starts at the south edge, MODFLOW row 0 is the
+        # north edge, so mirror the y range
+        array[m - p_end_y:m - p_start_y, p_start_x:p_end_x] = p+1
 
     if np.any(array == -999):
         print("Decomposition has failed")

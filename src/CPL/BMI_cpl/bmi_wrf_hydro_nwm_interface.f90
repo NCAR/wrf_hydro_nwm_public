@@ -641,8 +641,9 @@ module bmi_wrf_hydro_nwm_mod
     end subroutine print_model_info
 
     ! Check the status and update bmi_status if necessary
-    module subroutine stat_check(bmi_status, advance)
-      integer, intent(in) :: bmi_status
+    module subroutine stat_check(bmi_status_in, bmi_status_out, advance)
+      integer, intent(in) :: bmi_status_in
+      integer, intent(out) :: bmi_status_out
       logical, intent(in), optional :: advance
     end subroutine stat_check
   end interface

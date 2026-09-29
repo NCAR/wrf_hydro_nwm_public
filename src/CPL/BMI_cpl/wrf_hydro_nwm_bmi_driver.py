@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import bmi_wrf_hydro_nwm as wrf_hydro
 from bmi_wrf_hydro_nwm import bmi
 import ctypes as ct

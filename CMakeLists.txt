@@ -215,6 +215,17 @@ endif()
 
 message("=============================================================")
 
+option(BMI "BMI Coupling" OFF)
+option(MODFLOW "MODFLOW Coupling, turns on BMI coupling" OFF)
+# MODFLOW requires BMI
+if (MODFLOW)
+  set(BMI ON)
+endif()
+message(STATUS "Coupling Options")
+message("BMI = " ${BMI} )
+message("MODFLOW = " ${MODFLOW} )
+message("=============================================================")
+
 #set compile flags based on compiler id
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
         # set compile flags for gfortran

@@ -10,10 +10,10 @@ program wrf_hydro_nwm_bmi_init
   stat = BMI_SUCCESS
 
   wrf_hydro = wrf_hydro_nwm()
-  call stat_check(wrf_hydro%get_component_name(model_name))
-  call stat_check(wrf_hydro%initialize("no config file"))
-  call stat_check(wrf_hydro%get_start_time(current_time))
-  call stat_check(wrf_hydro%get_end_time(end_time))
+  call stat_check(wrf_hydro%get_component_name(model_name), stat)
+  call stat_check(wrf_hydro%initialize("no config file"), stat)
+  call stat_check(wrf_hydro%get_start_time(current_time), stat)
+  call stat_check(wrf_hydro%get_end_time(end_time), stat)
 
   ! only checking the first 13, full string would be ~= WRF-Hydro v5.Y.Z
   if (trim(model_name(1:13)) /= "WRF-Hydro v5.") then

@@ -432,7 +432,7 @@ contains
     call land_driver_ini(end_time, this%model)
 
     ! initialize time step values
-    call stat_check(this%get_start_time(start_time), PROCEED)
+    call stat_check(this%get_start_time(start_time), bmi_status, PROCEED)
     this%model%itimestep = int(start_time)
     this%model%ntime = end_time
     this%model%timestep = 1
@@ -447,8 +447,8 @@ contains
     use module_noahmp_hrldas_driver, only: land_driver_exe
     double precision :: current_time, time_step
     bmi_status = BMI_SUCCESS
-    call stat_check(this%get_current_time(current_time), PROCEED)
-    call stat_check(this%get_time_step(time_step), PROCEED)
+    call stat_check(this%get_current_time(current_time), bmi_status, PROCEED)
+    call stat_check(this%get_time_step(time_step), bmi_status, PROCEED)
     call land_driver_exe(int(current_time), this%model)
     this%model%itimestep = this%model%itimestep + int(time_step)
   end procedure ! wrf_hydro_update
@@ -464,10 +464,10 @@ contains
   module procedure wrf_hydro_update_until
     double precision :: current_time
     bmi_status = BMI_SUCCESS
-    call stat_check(this%get_current_time(current_time), PROCEED)
+    call stat_check(this%get_current_time(current_time), bmi_status, PROCEED)
     do while (current_time < time)
-       call stat_check(this%update(), PROCEED)
-       call stat_check(this%get_current_time(current_time), PROCEED)
+       call stat_check(this%update(), bmi_status, PROCEED)
+       call stat_check(this%get_current_time(current_time), bmi_status, PROCEED)
     end do
   end procedure ! wrf_hydro_update_until
 
@@ -855,7 +855,7 @@ contains
 
   ! Check the status and update bmi_status if necessary
   module procedure stat_check
-    if (bmi_status == BMI_FAILURE) then
+    if (bmi_status_in == BMI_FAILURE) then
        print *, "- WARNING BMI_FAILURE: calling backtrace"
        if (present(advance)) then
           if (advance .eqv. .false.) then
@@ -863,6 +863,7 @@ contains
           end if
        end if
     end if
+    bmi_status_out = bmi_status_in
   end procedure
 
   ! Get memory use per array element, in bytes.
