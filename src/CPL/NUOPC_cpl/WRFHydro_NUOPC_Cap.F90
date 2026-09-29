@@ -364,23 +364,8 @@ module WRFHydro_NUOPC
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -775,23 +760,8 @@ module WRFHydro_NUOPC
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -867,23 +837,8 @@ module WRFHydro_NUOPC
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -977,23 +932,8 @@ module WRFHydro_NUOPC
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -1178,23 +1118,8 @@ module WRFHydro_NUOPC
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -1297,23 +1222,8 @@ subroutine CheckImport(gcomp, rc)
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State
@@ -1365,23 +1275,8 @@ subroutine CheckImport(gcomp, rc)
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query component for its internal State
@@ -1570,23 +1465,8 @@ subroutine CheckImport(gcomp, rc)
     rc = ESMF_SUCCESS
 
     ! Query component for name, verbosity, and diagnostic values
-!    call NUOPC_CompGet(gcomp, name=name, verbosity=verbosity, &
-!      diagnostic=diagnostic, rc=rc)
-    call ESMF_GridCompGet(gcomp, name=cname, rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Diagnostic", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    diagnostic = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    call ESMF_AttributeGet(gcomp, name="Verbosity", value=value, &
-      defaultValue="0", convention="NUOPC", purpose="Instance", rc=rc)
-    if (ESMF_STDERRORCHECK(rc)) return  ! bail out
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min","max","bit16","maxplus"/), &
-      specialValueList=(/0,65535,65536,131071/), rc=rc)
+    call NUOPC_CompGet(gcomp, name=cname, verbosity=verbosity, &
+      diagnostic=diagnostic, rc=rc)
     if (ESMF_STDERRORCHECK(rc)) return  ! bail out
 
     ! query Component for its internal State

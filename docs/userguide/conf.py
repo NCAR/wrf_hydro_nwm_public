@@ -1,6 +1,6 @@
 project = 'WRF-Hydro Modeling System'
 author = 'WRF-Hydro Team'
-copyright = '2024, '+author
+copyright = '2026, '+author
 version = 'v5.4.0'
 release = '5.4.0'
 try:
@@ -11,7 +11,7 @@ try:
     # html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
     html_theme = 'sphinx_rtd_theme'
     html_theme_options = {
-        'navigation_depth': -1
+        'navigation_depth': -1,
     }
 except:
     print("Warning: sphinx_rtd_theme not installed, using default theme")
@@ -24,7 +24,7 @@ numfig_secnum_depth = 2
 numfig = 0
 smartquotes = 0
 source_suffix = '.rest'
-templates_path = []
+templates_path = ["_templates"]
 language = 'en'
 highlight_language = "none"
 default_role = 'math'

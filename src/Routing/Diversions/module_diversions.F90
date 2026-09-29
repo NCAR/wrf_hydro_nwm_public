@@ -39,6 +39,7 @@ contains
         integer :: ncid, dimid
         integer :: name_vid, type_div_vid, type_src_vid, type_dest_vid, da_src_vid, da_dest_vid
         integer :: id_src_vid, id_dest_vid, capacity_vid, fraction_vid, lookback_vid
+        type(diversion_t) :: div
 
         if (len_trim(diversions_file) > 0) then
             print *, "Loading diversions data from " // trim(diversions_file)

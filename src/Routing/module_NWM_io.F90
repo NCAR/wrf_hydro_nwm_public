@@ -314,13 +314,17 @@ subroutine output_chrt_NWM(domainId)
       ! to missing as this causes the model to crash.
       allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
       allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
-      strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
-      velocityLocal = RT_DOMAIN(domainId)%velocity
+      if (RT_DOMAIN(domainId)%NLINKS > 0) then
+         strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
+         velocityLocal = RT_DOMAIN(domainId)%velocity
+      endif
       ! TML: Add qloss allocation and compute variable, only for channel
       ! option #2, where qloss is active (muskingum-cunge).
       if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
          allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
-         qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
+         if (RT_DOMAIN(domainId)%NLINKS > 0) then
+            qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
+         endif
       endif
 
       ! Loop through all the local links on this processor. For lake_type
@@ -3365,7 +3369,7 @@ subroutine output_chrtout_grd_NWM(domainId,iGrid)
       do iTmp2=1,fileMeta%nCrsCharAtts
          if(trim(fileMeta%crsCharAttNames(iTmp2)) .eq. 'esri_pe_string') then
             iret = nf90_put_att(ftn,indexVarId,trim(fileMeta%crsCharAttNames(iTmp2)),trim(fileMeta%crsCharAttVals(iTmp2)))
-            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into '//trim(fileMeta%varNames(iTmp)))
+            call nwmCheck(diagFlag,iret,'ERROR: Unable to place esri_pe_string attribute into index variable')
          endif
       end do
       ! Define compression for meta-variables only if io_form_outputs is set to 1.
@@ -5155,6 +5159,7 @@ subroutine output_gw_NWM(domainId,iGrid)
          allocate(g_z_gwsubbas(1))
          allocate(g_basnsInd(1))
       endif
+      g_qloss_gwsubbas = 0.0
 
       if(nlst(domainId)%UDMP_OPT .eq. 1) then
          ! This is ONLY for NWM configuration with NHD channel routing. NCAR
@@ -5196,6 +5201,7 @@ subroutine output_gw_NWM(domainId,iGrid)
       !ADCHANGE: Note units conversion from m3 to m3/s for UPDMP=1 only
       g_qin_gwsubbas = rt_domain(domainId)%qin_gwsubbas/nlst(domainId)%DT
       g_qout_gwsubbas = rt_domain(domainId)%qout_gwsubbas
+      g_qloss_gwsubbas = 0.0
       g_z_gwsubbas = rt_domain(domainId)%z_gwsubbas
       !ADCHANGE: Note units conversion from m to mm for UPDMP=1 only
       if(nlst(domainId)%UDMP_OPT .eq. 1) g_z_gwsubbas = g_z_gwsubbas * 1000.
