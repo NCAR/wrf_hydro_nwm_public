@@ -26,10 +26,6 @@ set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# enable ctests
-enable_testing()
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 #message("-- MPI Include directories: " ${MPI_INCLUDE_PATH} )
 #message("-- MPI C COMPILER : " ${MPI_C_COMPILER} )
 #message("-- MPI CXX COMPILER : " ${MPI_CXX_COMPILER} )

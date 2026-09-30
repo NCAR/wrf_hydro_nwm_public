@@ -15,17 +15,17 @@ target_link_libraries(bmi_modflow
   modflow)
 
 # setup WRF-Hydro BMI Fortran drivers
-add_executable(modflow-hydro-serial
+add_executable(wrfhydro_modflow
   wrf_hydro_nwm_modflow6_serial.f90)
-target_link_libraries(modflow-hydro-serial
+target_link_libraries(wrfhydro_modflow
   bmi_wrf_hydro_nwm
   bmi_modflow
   modflow
   ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(modflow-hydro-parallel
+add_executable(wrfhydro_modflow_parallel
   wrf_hydro_nwm_modflow6_parallel.f90)
-target_link_libraries(modflow-hydro-parallel
+target_link_libraries(wrfhydro_modflow_parallel
   bmi_wrf_hydro_nwm
   bmi_modflow
   modflow

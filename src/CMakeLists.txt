@@ -171,8 +171,9 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 add_dependencies(wrfhydro wrf_hydro_bmi)
         endif()
         if (MODFLOW)
-                add_dependencies(wrfhydro modflow-hydro-serial)
-                add_dependencies(wrfhydro modflow-hydro-parallel)
+                add_dependencies(wrfhydro wrfhydro_modflow)
+                # parallel needs more testing
+                # add_dependencies(wrfhydro wrfhydro_modflow_parallel)
         endif()
         # add_dependencies(wrfhydro wrf_hydro_bmi_cpp)
 
@@ -212,8 +213,9 @@ if (HYDRO_LSM MATCHES "NoahMP")
         endif()
         if (MODFLOW)
                 add_custom_command(TARGET wrfhydro POST_BUILD
-                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/modflow-hydro-serial ${CMAKE_BINARY_DIR}/Run/
-                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/modflow-hydro-parallel ${CMAKE_BINARY_DIR}/Run/
+                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow ${CMAKE_BINARY_DIR}/Run/
+                        # parallel needs more testing
+                        # COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow_parallel ${CMAKE_BINARY_DIR}/Run/
                 )
         endif()
         if(WRF_HYDRO_CREATE_EXE_SYMLINK)
