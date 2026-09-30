@@ -1365,6 +1365,12 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
       fileMeta%numVars = numLdasVars_crocus_off ! 98
    end if
 
+   ! MODFLOW drain variables are only outputted when built with MODFLOW coupling
+   if (.not. noah_lsm%modflow_opt) then
+      fileMeta%outFlag(99) = 0
+      fileMeta%outFlag(100) = 0
+   end if
+
    ! call the GetModelConfigType function
    modelConfigType = GetModelConfigType(nlst(1)%io_config_outputs)
 

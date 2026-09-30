@@ -189,7 +189,7 @@ CONTAINS
 
      end subroutine hrldas_cpl_HYDRO
 
-    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,moddrain,ii,jj,kk,kt,dt, olddate,zsoil)
+    subroutine hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt, olddate,zsoil)
 
 
        implicit none
@@ -198,7 +198,7 @@ CONTAINS
        integer k, kt
        real :: dt
        real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
-       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, moddrain
+       real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
        real, dimension(kk) :: zsoil
        character(len = *) :: olddate
 

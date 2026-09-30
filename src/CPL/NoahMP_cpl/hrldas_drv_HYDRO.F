@@ -26,7 +26,7 @@
 
        end subroutine hrldas_drv_HYDRO
 
-       subroutine hrldas_drv_HYDRO_ini(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,moddrain,ii,jj,kk,kt,dt,olddate,zsoil)
+       subroutine hrldas_drv_HYDRO_ini(STC_io,SMC_io,SH2OX_io,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
           use module_hrldas_HYDRO, only: hrldas_cpl_HYDRO_ini, open_print_mpp
           implicit none
           integer:: ii,jj,kk, kt, k
@@ -34,14 +34,14 @@
           real :: dt
           real,dimension(ii,jj,kk) :: STC,SMC,SH2OX
           real,dimension(ii,kk,jj) :: STC_io,SMC_io,SH2OX_io
-          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain, moddrain
+          real,dimension(ii,jj) ::infxsrt,sfcheadrt, soldrain
           real, dimension(kk) :: zsoil
           do k = 1, kk
               STC(:,:,k) = STC_io(:,k,:)
               SMC(:,:,k) = SMC_io(:,k,:)
               SH2OX(:,:,k) = SH2OX_io(:,k,:)
           end do
-             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,moddrain,ii,jj,kk,kt,dt,olddate,zsoil)
+             call hrldas_cpl_HYDRO_ini(STC,SMC,SH2OX,infxsrt,sfcheadrt,soldrain,ii,jj,kk,kt,dt,olddate,zsoil)
 
            do k = 1, kk
                STC_io(:,k,:) = STC(:,:,k)

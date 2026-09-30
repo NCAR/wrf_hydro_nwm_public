@@ -1324,8 +1324,10 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSFC"    , QSFC     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SFCRUNOFF",SFCRUNOFF   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "UDRUNOFF" ,UDRUNOFF    )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACMODDRAIN" ,ACMODDRAIN    )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "MODDRAINout" ,MODDRAINout    )
+     if (noah_lsm%modflow_opt) then
+        call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ACMODDRAIN" ,ACMODDRAIN    )
+        call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "MODDRAINout" ,MODDRAINout    )
+     end if
      if (crocus_opt /= 0) then
         call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWAGE",     PSNOWAGEXY    )
         call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "PSNOWDZ",      PSNOWDZXY     )
@@ -1542,7 +1544,7 @@ module module_NoahMP_hrldas_driver
 #endif
 
    call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
-         infxsrt,sfcheadrt,soldrain,moddrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep), &
+         infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep), &
          olddate,zsoil(1:NSOIL))
 
 call get_iocflag(1, io_config_outputs)
@@ -2357,8 +2359,10 @@ subroutine lsm_restart(state)
   call add_to_restart(ncid,QSFC      , "QSFC"  )
   call add_to_restart(ncid,SFCRUNOFF , "SFCRUNOFF")
   call add_to_restart(ncid,UDRUNOFF  , "UDRUNOFF" )
-  call add_to_restart(ncid,ACMODDRAIN  , "ACMODDRAIN" )
-  call add_to_restart(ncid,MODDRAINout  , "MODDRAINout" )
+  if (noah_lsm%modflow_opt) then
+     call add_to_restart(ncid,ACMODDRAIN  , "ACMODDRAIN" )
+     call add_to_restart(ncid,MODDRAINout  , "MODDRAINout" )
+  end if
   if (crocus_opt /= 0) then
      call add_to_restart(ncid, PSNOWAGEXY    , "PSNOWAGE"  , LAYERS="MAXS")
      call add_to_restart(ncid, PSNOWDZXY     , "PSNOWDZ"   , LAYERS="MAXS")
@@ -2495,8 +2499,10 @@ subroutine lsm_rst_bi_out(state)
   write(iunit,ERR=101) QSFC
   write(iunit,ERR=101) SFCRUNOFF
   write(iunit,ERR=101) UDRUNOFF
-  write(iunit,ERR=101) ACMODDRAIN
-  write(iunit,ERR=101) MODDRAINout
+  if (noah_lsm%modflow_opt) then
+     write(iunit,ERR=101) ACMODDRAIN
+     write(iunit,ERR=101) MODDRAINout
+  end if
   if (crocus_opt /= 0) then
      write(iunit,ERR=101) PSNOWAGEXY
      write(iunit,ERR=101) PSNOWDZXY
@@ -2645,8 +2651,10 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) QSFC
   read(iunit,ERR=101) SFCRUNOFF
   read(iunit,ERR=101) UDRUNOFF
-  read(iunit,ERR=101) ACMODDRAIN
-  read(iunit,ERR=101) MODDRAINout
+  if (noah_lsm%modflow_opt) then
+     read(iunit,ERR=101) ACMODDRAIN
+     read(iunit,ERR=101) MODDRAINout
+  end if
   if (crocus_opt /= 0) then
      read(iunit,ERR=101) PSNOWAGEXY
      read(iunit,ERR=101) PSNOWDZXY
@@ -2772,8 +2780,10 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,QSFC      , "QSFC"  )
   call define_rst_var(ncid,SFCRUNOFF , "SFCRUNOFF")
   call define_rst_var(ncid,UDRUNOFF  , "UDRUNOFF" )
-  call define_rst_var(ncid,ACMODDRAIN  , "ACMODDRAIN" )
-  call define_rst_var(ncid,MODDRAINout  , "MODDRAINout" )
+  if (noah_lsm%modflow_opt) then
+     call define_rst_var(ncid,ACMODDRAIN  , "ACMODDRAIN" )
+     call define_rst_var(ncid,MODDRAINout  , "MODDRAINout" )
+  end if
   if (crocus_opt /= 0) then
      call define_rst_var(ncid,PSNOWAGEXY    , "PSNOWAGE"  , layers="MAXS")
      call define_rst_var(ncid,PSNOWDZXY     , "PSNOWDZ"   , layers="MAXS")

@@ -13,6 +13,7 @@ module config_base
      integer            :: nsoil ! number of soil layers
      integer            :: crocus_opt = 0
      integer            :: act_lev    = 0
+     logical            :: modflow_opt = .false. ! MODFLOW coupling, set at compile time
      integer            :: forcing_timestep
      integer            :: noah_timestep
      integer            :: start_year
@@ -1133,6 +1134,9 @@ contains
     noah_lsm%nsoil = nsoil ! number of soil layers
     noah_lsm%crocus_opt = crocus_opts%crocus_opt
     noah_lsm%act_lev = crocus_opts%act_lev
+#ifdef WRF_HYDRO_MODFLOW
+    noah_lsm%modflow_opt = .true.
+#endif
     noah_lsm%forcing_timestep = forcing_timestep
     noah_lsm%noah_timestep = noah_timestep
     noah_lsm%start_year = start_year

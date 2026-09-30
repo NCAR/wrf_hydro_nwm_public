@@ -216,6 +216,7 @@ option(MODFLOW "MODFLOW Coupling, turns on BMI coupling" OFF)
 # MODFLOW requires BMI
 if (MODFLOW)
   set(BMI ON)
+  add_definitions(-DWRF_HYDRO_MODFLOW)
 endif()
 message(STATUS "Coupling Options")
 message("BMI = " ${BMI} )
