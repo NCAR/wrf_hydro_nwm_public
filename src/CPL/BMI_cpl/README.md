@@ -2,27 +2,9 @@
 The [Basic Model Interface](https://bmi.readthedocs.io/en/stable/) ([BMI](https://github.com/csdms/bmi)) is a standardized set of control and query functions.
 This allows for different models to use the BMI functions to couple and interact together.
 
+See [readthedocs BMI documentation](https://wrf-hydro.readthedocs.io/en/latest/appendices.html#a20-introduction-to-the-basic-model-interface-bmi)
+  for instructions on building and running WRF-Hydro BMI.
 
-## Languages
-WRF-Hydro's BMI functionality has been implemented in the following languages:
-  - Fortran
-  - Python
-  - C
-
-Note: since the `bind c` arrays are passed as assumed size to the `get_value_at_indices` procedures, the size of the arrays must be passed somehow. This is done by putting the size as the first value in the indices array. This is done by a wrapper in Python but needs to be done in C.
-
-
-## Adding new variables
-The following is the list of currently supported variables.
-To add new ones please follow the steps listed in this section.
-
-### List variables exposed to the BMI
-| Variable |
-|----------|
-| IVGTYP   |
-| ISLTYP   |
-| GLACT    |
-| soldrain |
 
 ### Exposing Additional Variables
 Here are the steps for exposing additional WRF-Hydro variables to BMI.
