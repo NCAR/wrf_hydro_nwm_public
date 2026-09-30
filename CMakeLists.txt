@@ -15,6 +15,8 @@ set (National_Water_Model_VERSION_MINOR 1)
 set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
+enable_language (Fortran)
+enable_testing()
 find_package(MPI REQUIRED)
 add_compile_options(${MPI_Fortran_COMPILE_OPTIONS})
 include_directories(${MPI_Fortran_INCLUDE_PATH})
@@ -22,9 +24,7 @@ link_directories(${MPI_Fortran_LIBRARIES})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-
-# enable ctests
-enable_testing()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #message("-- MPI Include directories: " ${MPI_INCLUDE_PATH} )
 #message("-- MPI C COMPILER : " ${MPI_C_COMPILER} )
@@ -205,6 +205,22 @@ option(BUILD_CROCUS "Build Crocus" ON)
 option(WRF_HYDRO_CREATE_EXE_SYMLINK "Create symlink wrfhydro.exe -> wrfhydro" ON)
 message("WRF_HYDRO_CREATE_EXE_SYMLINK = " ${WRF_HYDRO_CREATE_EXE_SYMLINK} )
 
+if (MODFLOW STREQUAL "1" )
+  message("MODFLOW = " ${MODFLOW} )
+endif()
+
+message("=============================================================")
+
+option(BMI "BMI Coupling" OFF)
+option(MODFLOW "MODFLOW Coupling, turns on BMI coupling" OFF)
+# MODFLOW requires BMI
+if (MODFLOW)
+  set(BMI ON)
+  add_definitions(-DWRF_HYDRO_MODFLOW)
+endif()
+message(STATUS "Coupling Options")
+message("BMI = " ${BMI} )
+message("MODFLOW = " ${MODFLOW} )
 message("=============================================================")
 
 #set compile flags based on compiler id
@@ -248,6 +264,7 @@ set(CMAKE_BINARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/mods)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/Run)
 
 #add common include directores need in the build
 include_directories(AFTER ${PROJECT_BINARY_DIR}/mods)
@@ -256,6 +273,9 @@ include_directories(AFTER ${MPI_INCLUDE_PATH})
 include_directories(AFTER ${NETCDF_INCLUDES_F77})
 include_directories(AFTER ${NETCDF_INCLUDES_F90})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
+
+# make an if statement
+enable_language(CXX)
 
 add_subdirectory("src")
 add_subdirectory("tests/ctests")

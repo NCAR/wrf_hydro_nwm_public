@@ -9,6 +9,9 @@ module state_module
      REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
      REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW      ! snow water equivalent [mm] ** (sometime) PROGNOSTIC VARIABLE
      REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH     ! physical snow depth [m] ** (sometime) PROGNOSTIC VARIABLE
+     integer :: ntime ! this will be in the refactor
+     integer :: itimestep ! this will be in the refactor
+     integer :: timestep ! will this be in the refactor?
    contains
      procedure :: init => init_undefined
   end type state_type

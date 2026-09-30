@@ -1225,7 +1225,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,1,1,1,1,1,1,1,1,1,& !61-70
                              1,1,1,1,1,1,1,1,1,1,& !71-80
                              1,1,1,1,1,1,1,1,1,1,& !81-90
-                             1,1,1,1,1,1,1,1,&     !91-98
+                             1,1,1,1,1,1,1,1,1,1,&     !91-98
                              1,1,1,&               !99-101
                              1,1,1,&               !102-104
                              1,1,1,&               !105-107
@@ -1244,7 +1244,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,1,1,1,1,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,1,1,0,1,0,0,1,&     !91-98
+                             0,1,1,0,1,0,0,1,0,0,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1263,7 +1263,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,1,1,0,0,1,0,0,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,1,0,1,0,0,0,&     !91-98
+                             0,0,1,0,1,0,0,0,0,0,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1282,7 +1282,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,1,1,1,0,1,1,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,0,1,0,0,0,&     !91-98
+                             1,1,1,0,1,0,0,0,1,1,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1301,7 +1301,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              0,0,0,0,1,0,0,0,0,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,0,1,1,0,0,0,0,&     !91-98
+                             1,0,1,1,0,0,0,0,1,1,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1320,7 +1320,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,0,1,1,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             0,0,0,0,0,1,1,1,&     !91-98
+                             0,0,0,0,0,1,1,1,1,1,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1339,7 +1339,7 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
                              1,0,1,1,1,1,1,1,1,1,& !61-70
                              0,0,0,0,0,0,0,0,0,0,& !71-80
                              0,0,0,0,0,0,0,0,0,1,& !81-90
-                             1,1,1,1,1,1,1,1,&     !91-98
+                             1,1,1,1,1,1,1,1,1,1,&     !91-98
                              0,0,0,&               !99-101
                              0,0,0,&               !102-104
                              0,0,0,&               !105-107
@@ -1352,17 +1352,23 @@ subroutine output_NoahMP_NWM(outDir,iGrid,output_timestep,itime,startdate,date,i
 
    ! ! If crocus is off, these should not be outputted
    if (noah_lsm%crocus_opt == 0) then
-      fileMeta%outFlag(101) = 0
-      fileMeta%outFlag(102) = 0
       fileMeta%outFlag(103) = 0
       fileMeta%outFlag(104) = 0
-      fileMeta%outFlag(108) = 0
-      fileMeta%outFlag(109) = 0
+      fileMeta%outFlag(105) = 0
+      fileMeta%outFlag(106) = 0
+      fileMeta%outFlag(110) = 0
       fileMeta%outFlag(111) = 0
-      fileMeta%outFlag(114) = 0
-      fileMeta%outFlag(115) = 0
+      fileMeta%outFlag(113) = 0
       fileMeta%outFlag(116) = 0
+      fileMeta%outFlag(117) = 0
+      fileMeta%outFlag(118) = 0
       fileMeta%numVars = numLdasVars_crocus_off ! 98
+   end if
+
+   ! MODFLOW drain variables are only outputted when built with MODFLOW coupling
+   if (.not. noah_lsm%modflow_opt) then
+      fileMeta%outFlag(99) = 0
+      fileMeta%outFlag(100) = 0
    end if
 
    ! call the GetModelConfigType function

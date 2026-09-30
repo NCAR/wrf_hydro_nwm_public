@@ -1,0 +1,12 @@
+name: modflow
+channels:
+  - conda-forge
+  - defaults
+  - odlgroup
+  - csdms-stack
+  - r
+dependencies:
+  - numpy
+  - matplotlib
+  - flopy
+  - meson
