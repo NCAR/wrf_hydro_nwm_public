@@ -794,6 +794,15 @@ subroutine LandRT_ini(did)
            rt_domain(did)%gageMiss                                   )
    end if
 
+   !! BUGFIX: channel_loss_option in hydro.namelist was documented as the
+   !! switch for channel seepage, but SUBMUSKINGCUNGE only gates the loss
+   !! term on ChannK (from Route_Link.nc's Kchan) being > 0, independent of
+   !! this namelist flag. Zero ChannK here when the option is off so the
+   !! namelist actually controls the physics, not just the qloss diagnostic.
+   if (nlst(did)%channel_loss_option .le. 0) then
+      rt_domain(did)%ChannK = 0.0
+   end if
+
    NLAKES_total = rt_domain(did)%NLAKES
 
    do lake_index = 1, NLAKES_total
