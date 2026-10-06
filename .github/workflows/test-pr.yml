@@ -115,6 +115,26 @@ jobs:
           cd $GITHUB_WORKSPACE/candidate/build/Run
           make run-croton-${{ matrix.configuration }}
 
+      - name: DEBUG - Print data checksums of reach outputs
+        if: ${{ always() && startsWith(matrix.configuration, 'reach') }}
+        run: |
+          python3 - <<'EOF'
+          import glob, hashlib, os
+          import numpy as np
+          import xarray as xr
+          root_dir = os.environ['GITHUB_WORKSPACE']
+          patterns = ['*CHRTOUT_DOMAIN1', '*CHANOBS_DOMAIN1', 'HYDRO_RST.*', 'RESTART.*']
+          for side in ['candidate', 'reference']:
+              base = os.path.join(root_dir, side, 'build', 'Run', 'output_${{ matrix.configuration }}')
+              files = sorted(f for p in patterns for f in glob.glob(os.path.join(base, p)))
+              for path in files:
+                  digest = hashlib.sha256()
+                  with xr.open_dataset(path, mask_and_scale=False) as ds:
+                      for name in sorted(ds.data_vars):
+                          digest.update(name.encode())
+                          digest.update(np.ascontiguousarray(ds[name].values).tobytes())
+                  print(side, os.path.basename(path), digest.hexdigest())
+          EOF
       - name: generic - Compare HYDRO_RST.* output with xrcmp
         if: ${{ always() }}
         run: |
