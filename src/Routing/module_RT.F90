@@ -794,6 +794,11 @@ subroutine LandRT_ini(did)
            rt_domain(did)%gageMiss                                   )
    end if
 
+   ! Zero ChannK here when the option is off so the namelist actually controls the physics.
+   if (nlst(did)%channel_loss_option .le. 0) then
+      rt_domain(did)%ChannK = 0.0
+   end if
+
    NLAKES_total = rt_domain(did)%NLAKES
 
    do lake_index = 1, NLAKES_total
