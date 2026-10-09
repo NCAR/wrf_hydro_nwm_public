@@ -11,6 +11,8 @@ run:
 # testcase options: {Gridded, Gridded_no_lakes, NWM, Reach, ReachLakes}
 croton:
 	make -C .. $@
+croton-bmi:
+	make -C .. $@
 croton-gridded:
 	make -C .. $@
 croton-gridded-no-lakes:
@@ -28,6 +30,8 @@ croton-reach_lakes:
 # run croton targets
 run-croton:
 	make -C .. $@
+run-croton-bmi:
+	make -C .. $@
 run-croton-gridded:
 	make -C .. $@
 run-croton-gridded-no-lakes:
@@ -43,6 +47,8 @@ run-croton-reach:
 run-croton-reach_lakes:
 	make -C .. $@
 # run in parallel
+run-croton-bmi-parallel:
+	make -C .. $@
 run-croton-gridded-parallel:
 	make -C .. $@
 run-croton-gridded-no-lakes-parallel:

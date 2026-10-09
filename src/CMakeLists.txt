@@ -23,8 +23,21 @@ add_subdirectory("Routing/Diversions")
 add_subdirectory("Data_Rec")
 add_subdirectory("Routing")
 add_subdirectory("HYDRO_drv")
+add_subdirectory("tools")
 if(${PROJECT_NAME} STREQUAL "WRF")
         add_subdirectory("CPL/WRF_cpl")
+endif()
+
+# add Basic Module Interface (BMI)
+if (BMI)
+  add_subdirectory("CPL/BMI_cpl")
+endif()
+# add MODFLOW Coupling
+if (MODFLOW)
+  if (NOT DEFINED ENV{MODFLOW_BMI})
+    message(FATAL_ERROR "MODFLOW Coupling requested but MODFLOW_BMI environmental variable not set.")
+  endif()
+  add_subdirectory("CPL/MODFLOW_cpl")
 endif()
 
 if (WRF_HYDRO_NUDGING_IO STREQUAL "1" OR
@@ -90,6 +103,7 @@ add_dependencies(hydro_data_rec
         hydro_routing_subsurface
         hydro_routing_reservoirs
 )
+add_library(wrfhydro_lib INTERFACE)
 
 if (HYDRO_LSM MATCHES "NoahMP")
         message("-- Building NoahMP LSM")
@@ -100,10 +114,12 @@ if (HYDRO_LSM MATCHES "NoahMP")
         add_dependencies(hydro_noahmp_cpl hydro_mpp )
         add_dependencies(hydro_noahmp_cpl hydro_driver )
 
+        add_library(module_NoahMP_hrldas
+                Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.F
+                Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.F)
+
         add_executable(wrfhydro
                 Land_models/NoahMP/IO_code/main_hrldas_driver.F
-                Land_models/NoahMP/IO_code/module_hrldas_netcdf_io.F
-                Land_models/NoahMP/IO_code/module_NoahMP_hrldas_driver.F
         )
 
         target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
@@ -126,7 +142,11 @@ if (HYDRO_LSM MATCHES "NoahMP")
         # as a single already-resolved unit instead of duplicating members:
         # ld itself re-scans the group as many times as needed to resolve
         # cross-references, so every archive needs to be listed only once.
-        target_link_libraries(wrfhydro
+        #
+        # The group is attached to wrfhydro_lib (not wrfhydro directly) so that
+        # module_NoahMP_hrldas and the BMI libraries also get it, along with the
+        # build-order dependencies on these libraries.
+        target_link_libraries(wrfhydro_lib INTERFACE
                 "$<LINK_GROUP:RESCAN,hydro_utils,hydro_mpp,hydro_debug_utils,hydro_driver,hydro_noahmp_cpl,hydro_routing,hydro_routing_overland,hydro_routing_subsurface,hydro_routing_reservoirs,hydro_routing_reservoirs_levelpool,hydro_routing_reservoirs_hybrid,hydro_routing_reservoirs_rfc,hydro_routing_diversions,hydro_orchestrator,hydro_netcdf_layer,hydro_data_rec,noahmp_util,noahmp_phys,noahmp_data,snowcro,crocus_surfex>"
                 ${NETCDF_LIBRARIES}
                 # hydro_routing_groundwater
@@ -146,6 +166,23 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 add_dependencies(wrfhydro hydro_nudging)
                 add_dependencies(wrfhydro hydro_routing_diversions)
         endif()
+        if (BMI)
+                add_dependencies(wrf_hydro_bmi hydro_driver)
+                add_dependencies(wrfhydro wrf_hydro_bmi)
+        endif()
+        if (MODFLOW)
+                add_dependencies(wrfhydro wrfhydro_modflow)
+                # parallel needs more testing
+                # add_dependencies(wrfhydro wrfhydro_modflow_parallel)
+        endif()
+        # add_dependencies(wrfhydro wrf_hydro_bmi_cpp)
+
+        target_link_libraries(module_NoahMP_hrldas
+                wrfhydro_lib)
+
+        target_link_libraries(wrfhydro
+                wrfhydro_lib
+                module_NoahMP_hrldas)
 
         # bash commands to copy namelists to the Run directory
         set(BASH_CP_HRLDAS_NML "if [[ ! -f ${CMAKE_BINARY_DIR}/Run/namelist.hrldas ]]\; then cp ${PROJECT_SOURCE_DIR}/src/template/NoahMP/namelist.hrldas ${CMAKE_BINARY_DIR}/Run \; fi\;")
@@ -168,11 +205,25 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP
                 COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
         )
+        if (BMI)
+                add_custom_command(TARGET wrfhydro POST_BUILD
+                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/BMI_cpl/wrf_hydro_bmi ${CMAKE_BINARY_DIR}/Run/
+                        # COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/BMI_cpl/wrf_hydro_bmi_cpp ${CMAKE_BINARY_DIR}/Run/
+                )
+        endif()
+        if (MODFLOW)
+                add_custom_command(TARGET wrfhydro POST_BUILD
+                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow ${CMAKE_BINARY_DIR}/Run/
+                        # parallel needs more testing
+                        # COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow_parallel ${CMAKE_BINARY_DIR}/Run/
+                )
+        endif()
         if(WRF_HYDRO_CREATE_EXE_SYMLINK)
                 add_custom_command(TARGET wrfhydro POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/Run/wrf_hydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
                 )
         endif()
+
 
 elseif (HYDRO_LSM MATCHES "Noah")
         message("-- Building Noah LSM")
@@ -183,19 +234,26 @@ elseif (HYDRO_LSM MATCHES "Noah")
         add_dependencies(hydro_noah_cpl hydro_mpp )
         add_dependencies(hydro_noah_cpl hydro_driver )
 
-        add_executable(wrfhydro
+        add_library(module_Noah_hrldas
                 Land_models/Noah/IO_code/module_hrldas_netcdf_io.F
+        )
+
+	add_executable(wrfhydro
                 Land_models/Noah/IO_code/Noah_hrldas_driver.F
         )
 
         target_include_directories(wrfhydro BEFORE PUBLIC ${PROJECT_BINARY_DIR}/mods)
 
-        target_link_libraries(wrfhydro
+	target_link_libraries(wrfhydro_lib INTERFACE
                 hydro_utils
                 hydro_mpp
                 hydro_debug_utils
                 hydro_routing_overland
                 hydro_routing_subsurface
+                # hydro_routing_groundwater
+                # hydro_routing_groundwater_bucket
+                # hydro_routing_groundwater_nhd
+                # hydro_routing_groundwater_simple
                 hydro_data_rec
                 hydro_routing
                 hydro_driver
@@ -208,30 +266,37 @@ elseif (HYDRO_LSM MATCHES "Noah")
                 hydro_noah_cpl
                 ${NETCDF_LIBRARIES}
                 ${MPI_Fortran_LIBRARIES}
-                # hydro_routing_groundwater
-                # hydro_routing_groundwater_bucket
-                # hydro_routing_groundwater_nhd
-                # hydro_routing_groundwater_simple
-        )
+                )
+
+	if (BMI)
+		add_dependencies(wrfhydro wrf_hydro_bmi)
+	endif()
+
+	target_link_libraries(module_Noah_hrldas
+	    wrfhydro_lib)
+
+	target_link_libraries(wrfhydro
+  	    wrfhydro_lib
+	    module_Noah_hrldas)
 
         if (WRF_HYDRO_NUDGING STREQUAL "1")
-                target_link_libraries(wrfhydro hydro_nudging)
-                add_dependencies(wrfhydro hydro_nudging)
-        endif()
+            target_link_libraries(wrfhydro hydro_nudging)
+            add_dependencies(wrfhydro hydro_nudging)
+        endif (WRF_HYDRO_NUDGING STREQUAL "1")
 
         add_custom_command(TARGET wrfhydro POST_BUILD
-                COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
-                COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah
-                COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/Noah/* ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
-                COMMAND cp ${PROJECT_SOURCE_DIR}/src/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
-                COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro
-                COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro.exe
-                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
+            COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
+            COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
+            COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah
+            COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/Noah/* ${CMAKE_BINARY_DIR}/Run
+            COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
+            COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
+            COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
+            COMMAND cp ${PROJECT_SOURCE_DIR}/src/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
+            COMMAND ln -s wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro
+            COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
         )
+
 
 elseif(${PROJECT_NAME} STREQUAL "WRF")
         add_library(wrfhydro INTERFACE)

@@ -28,6 +28,9 @@ case ${1} in
     reach_lakes)
         testcase_dir="ReachLakes"
         ;;
+    bmi)
+        testcase_dir="Gridded"
+        ;;
     *)
         echo "setup_cmake_testcase.sh: first command line argument did not match"
         exit 1

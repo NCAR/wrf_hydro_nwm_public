@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        configuration: [nwm_ana, nwm_long_range, gridded, reach, reach_lakes]
+        configuration: [nwm_ana, nwm_long_range, gridded, reach, reach_lakes, bmi]
     runs-on: ubuntu-latest
 
     env:
@@ -101,8 +101,13 @@ jobs:
 
       - name: Compile candidate
         run: |
+          CMAKE_ARGS=""
+          if [ "${{ matrix.configuration }}" = "bmi" ]; then
+             CMAKE_ARGS="-DBMI=1"
+          fi
+
           cd $GITHUB_WORKSPACE/candidate
-          cmake -B build
+          cmake -B build ${CMAKE_ARGS}
           make -C build -j
 
       - name: Run reference model

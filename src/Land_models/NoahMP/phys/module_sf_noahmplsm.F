@@ -390,7 +390,7 @@ contains
                    STMASS  , WOOD    , STBLCP  , FASTCP  , LAI     , SAI     , & ! IN/OUT :
                    CM      , CH      , TAUSS   ,                               & ! IN/OUT :
                    GRAIN   , GDD     , PGS     ,                               & ! IN/OUT
-                   SMCWTD  ,DEEPRECH , RECH    ,                               & ! IN/OUT :
+                   SMCWTD  ,DEEPRECH , RECH    , MODEXCESS,                    & ! IN/OUT :
 		   Z0WRF   , &
                    FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT :
                    FGEV    , FCTR    , ECAN    , ETRAN   , EDIR    , TRAD    , & ! OUT :
@@ -498,6 +498,7 @@ contains
   REAL,                            INTENT(INOUT) :: SMCWTD !soil water content between bottom of the soil and water table [m3/m3]
   REAL,                            INTENT(INOUT) :: DEEPRECH !recharge to or from the water table when deep [m]
   REAL,                            INTENT(INOUT) :: RECH !recharge to or from the water table when shallow [m] (diagnostic)
+  REAL,                            INTENT(INOUT) :: MODEXCESS ! MODFLOW Excess saturation [mm?] input is in m/hour
 
 ! output
   REAL                           , INTENT(OUT)   :: Z0WRF  !combined z0 sent to coupled model
@@ -788,7 +789,7 @@ contains
                  ISNOW  ,CANLIQ ,CANICE ,TV     ,SNOWH  ,SNEQV  , & !inout
                  SNICE  ,SNLIQ  ,STC    ,ZSNSO  ,SH2O   ,SMC    , & !inout
                  SICE   ,ZWT    ,WA     ,WT     ,DZSNSO ,WSLAKE , & !inout
-                 SMCWTD ,DEEPRECH,RECH                          , & !inout
+                 SMCWTD ,DEEPRECH,RECH, MODEXCESS               , & !inout
                  CMC    ,ECAN   ,ETRAN  ,FWET   ,RUNSRF ,RUNSUB , & !out
                  QIN    ,QDIS   ,PONDING1       ,PONDING2,&
                  QSNBOT                             &
@@ -833,7 +834,7 @@ contains
      CALL ERROR (parameters,SWDOWN ,FSA    ,FSR    ,FIRA   ,FSH    ,FCEV   , & !in
                  FGEV   ,FCTR   ,SSOIL  ,BEG_WB ,CANLIQ ,CANICE , & !in
                  SNEQV  ,WA     ,SMC    ,DZSNSO ,PRCP   ,ECAN   , & !in
-                 ETRAN  ,EDIR   ,RUNSRF ,RUNSUB ,DT     ,NSOIL  , & !in
+                 ETRAN  ,EDIR   ,RUNSRF ,RUNSUB ,MODEXCESS, DT  ,NSOIL  , & !in
                  NSNOW  ,IST    ,ERRWAT ,ILOC   , JLOC  ,FVEG   , &
                  SAV    ,SAG    ,FSRV   ,FSRG   ,ZWT    ,PAH    , &
                  PAHV   ,PAHG   ,PAHB   )   !in ( Except ERRWAT, which is out )
@@ -1351,7 +1352,7 @@ ENDIF   ! CROPTYPE == 0
   SUBROUTINE ERROR (parameters,SWDOWN ,FSA    ,FSR    ,FIRA   ,FSH    ,FCEV   , &
                     FGEV   ,FCTR   ,SSOIL  ,BEG_WB ,CANLIQ ,CANICE , &
                     SNEQV  ,WA     ,SMC    ,DZSNSO ,PRCP   ,ECAN   , &
-                    ETRAN  ,EDIR   ,RUNSRF ,RUNSUB ,DT     ,NSOIL  , &
+                    ETRAN  ,EDIR   ,RUNSRF ,RUNSUB ,MODEXCESS, DT     ,NSOIL  , &
                     NSNOW  ,IST    ,ERRWAT, ILOC   ,JLOC   ,FVEG   , &
                     SAV    ,SAG    ,FSRV   ,FSRG   ,ZWT    ,PAH    , &
                     PAHV   ,PAHG   ,PAHB   )
@@ -1389,6 +1390,7 @@ ENDIF   ! CROPTYPE == 0
   REAL                           , INTENT(IN) :: EDIR   !soil surface evaporation rate[mm/s]
   REAL                           , INTENT(IN) :: RUNSRF !surface runoff [mm/s]
   REAL                           , INTENT(IN) :: RUNSUB !baseflow (saturation excess) [mm/s]
+  REAL                           , INTENT(IN) :: MODEXCESS !MODEXCESS [m/hr]
   REAL                           , INTENT(IN) :: CANLIQ !intercepted liquid water (mm)
   REAL                           , INTENT(IN) :: CANICE !intercepted ice mass (mm)
   REAL                           , INTENT(IN) :: SNEQV  !snow water eqv. [mm]
@@ -1470,7 +1472,8 @@ ENDIF   ! CROPTYPE == 0
         DO IZ = 1,NSOIL
           END_WB = END_WB + SMC(IZ) * DZSNSO(IZ) * 1000.
         END DO
-        ERRWAT = END_WB-BEG_WB-(PRCP-ECAN-ETRAN-EDIR-RUNSRF-RUNSUB)*DT
+        ERRWAT = END_WB-BEG_WB-(PRCP+MODEXCESS*1000./3600.0-ECAN-ETRAN-EDIR-RUNSRF-RUNSUB)*DT
+        ! ERRWAT = END_WB-BEG_WB-(PRCP+MODEXCESS*1000./DT-ECAN-ETRAN-EDIR-RUNSRF-RUNSUB)*DT
 
 #ifndef WRF_HYDRO
         IF(ABS(ERRWAT) > 0.1) THEN
@@ -5634,7 +5637,7 @@ ENDIF   ! CROPTYPE == 0
                     ISNOW  ,CANLIQ ,CANICE ,TV     ,SNOWH  ,SNEQV  , & !inout
                     SNICE  ,SNLIQ  ,STC    ,ZSNSO  ,SH2O   ,SMC    , & !inout
                     SICE   ,ZWT    ,WA     ,WT     ,DZSNSO ,WSLAKE , & !inout
-                    SMCWTD ,DEEPRECH,RECH                          , & !inout
+                    SMCWTD ,DEEPRECH,RECH, MODEXCESS               , & !inout
                     CMC    ,ECAN   ,ETRAN  ,FWET   ,RUNSRF ,RUNSUB , & !out
                     QIN    ,QDIS   ,PONDING1       ,PONDING2,        &
                     QSNBOT                                           &
@@ -5708,6 +5711,7 @@ ENDIF   ! CROPTYPE == 0
   REAL,                            INTENT(INOUT) :: SMCWTD !soil water content between bottom of the soil and water table [m3/m3]
   REAL,                            INTENT(INOUT) :: DEEPRECH !recharge to or from the water table when deep [m]
   REAL,                            INTENT(INOUT) :: RECH !recharge to or from the water table when shallow [m] (diagnostic)
+  REAL,                            INTENT(INOUT) :: MODEXCESS
 
 ! output
   REAL,                            INTENT(OUT)   :: CMC     !intercepted water per ground area (mm)
@@ -5827,7 +5831,7 @@ ENDIF   ! CROPTYPE == 0
        CALL      SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                             QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC , & !in
                             SH2O   ,SMC    ,ZWT    ,VEGTYP , & !inout
-                           SMCWTD, DEEPRECH                       , & !inout
+                           SMCWTD, DEEPRECH, MODEXCESS                    , & !inout
                             RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX )   !out
 
        IF(OPT_RUN == 1) THEN
@@ -6827,7 +6831,7 @@ ENDIF   ! CROPTYPE == 0
   SUBROUTINE SOILWATER (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                         QINSUR ,QSEVA  ,ETRANI ,SICE   ,ILOC   , JLOC, & !in
                         SH2O   ,SMC    ,ZWT    ,VEGTYP ,& !inout
-                        SMCWTD, DEEPRECH                       ,& !inout
+                        SMCWTD, DEEPRECH, MODEXCESS                  ,& !inout
                         RUNSRF ,QDRAIN ,RUNSUB ,WCND   ,FCRMAX )   !out
 
 ! ----------------------------------------------------------------------
@@ -6857,7 +6861,7 @@ ENDIF   ! CROPTYPE == 0
   REAL, DIMENSION(1:NSOIL), INTENT(INOUT) :: SMC    !total soil water content [m3/m3]
   REAL, INTENT(INOUT)                     :: ZWT    !water table depth [m]
   REAL,                     INTENT(INOUT) :: SMCWTD !soil moisture between bottom of the soil and the water table [m3/m3]
-  REAL                    , INTENT(INOUT) :: DEEPRECH
+  REAL                    , INTENT(INOUT) :: DEEPRECH, MODEXCESS
 
 ! output
   REAL, INTENT(OUT)                       :: QDRAIN !soil-bottom free drainage [mm/s]
@@ -7025,6 +7029,8 @@ ENDIF   ! CROPTYPE == 0
           NITER = NITER*2
        END IF
 !    END IF
+    ! Farshid increased NITER
+    ! NITER = NITER*2
 
     DTFINE  = DT / NITER
 
@@ -7046,14 +7052,14 @@ ENDIF   ! CROPTYPE == 0
 
        CALL SRT   (parameters,NSOIL  ,ZSOIL  ,DTFINE ,PDDUM  ,ETRANI , & !in
                    QSEVA  ,SH2O   ,SMC    ,ZWT    ,FCR    , & !in
-                   SICEMAX,FCRMAX ,ILOC   ,JLOC   ,SMCWTD ,         & !in
+                   SICEMAX,FCRMAX ,ILOC   ,JLOC   ,SMCWTD , MODEXCESS,        & !in
                    RHSTT  ,AI     ,BI     ,CI     ,QDRAIN , & !out
-                   WCND   )                                   !out
+                   WCND)!, MODEXCESS)                                   !out
 
        CALL SSTEP (parameters,NSOIL  ,NSNOW  ,DTFINE ,ZSOIL  ,DZSNSO , & !in
                    SICE   ,ILOC   ,JLOC   ,ZWT            ,                 & !in
                    SH2O   ,SMC    ,AI     ,BI     ,CI     , & !inout
-                   RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,                                 & !inout
+                   RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,MODEXCESS,              & !inout
                    WPLUS, WMINUS)                                     !out
        RSAT =  RSAT + WPLUS
        SUBDEF = SUBDEF + WMINUS
@@ -7294,9 +7300,9 @@ ENDIF   ! CROPTYPE == 0
 
   SUBROUTINE SRT (parameters,NSOIL  ,ZSOIL  ,DT     ,PDDUM  ,ETRANI , & !in
                   QSEVA  ,SH2O   ,SMC    ,ZWT    ,FCR    , & !in
-                  SICEMAX,FCRMAX ,ILOC   ,JLOC   ,SMCWTD ,         & !in
+                  SICEMAX,FCRMAX ,ILOC   ,JLOC   ,SMCWTD , MODEXCESS,        & !in
                   RHSTT  ,AI     ,BI     ,CI     ,QDRAIN , & !out
-                  WCND   )                                   !out
+                  WCND)!, MODEXCESS)                                   !out
 ! ----------------------------------------------------------------------
 ! calculate the right hand side of the time tendency term of the soil
 ! water diffusion equation.  also to compute ( prepare ) the matrix
@@ -7322,7 +7328,7 @@ ENDIF   ! CROPTYPE == 0
     REAL, INTENT(IN)                      :: FCRMAX !maximum of FCR (-)
     REAL,                     INTENT(IN)  :: SICEMAX!maximum soil ice content (m3/m3)
     REAL,                     INTENT(IN)  :: SMCWTD !soil moisture between bottom of the soil and the water table
-
+    REAL                    , INTENT(INOUT) :: MODEXCESS !unit is [m/hr]
 ! output
 
     REAL, DIMENSION(1:NSOIL), INTENT(OUT) :: RHSTT
@@ -7383,7 +7389,13 @@ ENDIF   ! CROPTYPE == 0
              QDRAIN   = 0.
           END IF
           IF(OPT_RUN == 3 .OR. OPT_RUN == 7) THEN
+		     ! MODEXCESS unit change [m/hr --> m/sec]
+			 ! QDRAIN can be negative here,
+             ! QDRAIN   = parameters%SLOPE*WCND(K) - MODEXCESS/3600.0
+
              QDRAIN   = parameters%SLOPE*WCND(K)
+			 IF(MODEXCESS > 0.0) QDRAIN = 0.0
+
           END IF
           IF(OPT_RUN == 4) THEN
              QDRAIN   = (1.0-FCRMAX)*WCND(K)
@@ -7399,7 +7411,12 @@ ENDIF   ! CROPTYPE == 0
              DSMDZ(K) = 2.0 * (SMX(K) - SMXBOT) / TEMP1
              QDRAIN   = WDF(K  ) * DSMDZ(K  ) + WCND(K  )
           END IF
-          WFLUX(K) = -(WDF(K-1)*DSMDZ(K-1))-WCND(K-1)+ETRANI(K) + QDRAIN
+          ! WFLUX(K) = -(WDF(K-1)*DSMDZ(K-1))-WCND(K-1)+ETRANI(K) + QDRAIN
+
+          WFLUX(K) = -(WDF(K-1)*DSMDZ(K-1))-WCND(K-1)+ETRANI(K) + QDRAIN !- MODEXCESS/3600.0
+          ! WFLUX(K) = -(WDF(K-1)*DSMDZ(K-1))-WCND(K-1)+ETRANI(K) + QDRAIN - MODEXCESS/DT ! this DT is subset of land DT=3600
+		                                                                                  ! the rate should be MODEXCESS/3600.0
+
        END IF
     END DO
 
@@ -7428,7 +7445,7 @@ ENDIF   ! CROPTYPE == 0
   SUBROUTINE SSTEP (parameters,NSOIL  ,NSNOW  ,DT     ,ZSOIL  ,DZSNSO , & !in
                     SICE   ,ILOC   ,JLOC   ,ZWT            ,                 & !in
                     SH2O   ,SMC    ,AI     ,BI     ,CI     , & !inout
-                    RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,                                 & !inout
+                    RHSTT  ,SMCWTD ,QDRAIN ,DEEPRECH,MODEXCESS,              & !inout
                     WPLUS, WMINUS  )                                   !out
 
 ! ----------------------------------------------------------------------
@@ -7458,10 +7475,11 @@ ENDIF   ! CROPTYPE == 0
     REAL, DIMENSION(1:NSOIL), INTENT(INOUT) :: RHSTT
     REAL                    , INTENT(INOUT) :: SMCWTD
     REAL                    , INTENT(INOUT) :: QDRAIN
-    REAL                    , INTENT(INOUT) :: DEEPRECH
+    REAL                    , INTENT(INOUT) :: DEEPRECH, MODEXCESS
 
 !output
     REAL, INTENT(OUT)                       :: WPLUS     !saturation excess water (m)
+    REAL                                    :: WPLUStmp  !temporary saturation excess water (m)
     REAL, INTENT(OUT)                       :: WMINUS    !deficit from negative smc correction (m)
 
 !local
@@ -7475,6 +7493,7 @@ ENDIF   ! CROPTYPE == 0
 ! ----------------------------------------------------------------------
     WPLUS = 0.0
     WMINUS = 0.0
+	WPLUStmp = 0.0
 
     DO K = 1,NSOIL
        RHSTT (K) =   RHSTT(K) * DT
@@ -7497,6 +7516,11 @@ ENDIF   ! CROPTYPE == 0
     DO K = 1,NSOIL
         SH2O(K) = SH2O(K) + CI(K)
     ENDDO
+
+    ! addeding excess water from MODFLOW to last layer  [m/m]
+    ! better to be added to SRT difussion solver above,
+    ! that does take care of soil miosture changes internally
+    SH2O(NSOIL) = SH2O(NSOIL) + DT * (MODEXCESS/3600.0)/DZSNSO(NSOIL)
 
 !  excessive water above saturation in a layer is moved to
 !  its unsaturated layer like in a bucket
@@ -7548,6 +7572,9 @@ ENDIF   ! CROPTYPE == 0
     WPLUS        = MAX((SH2O(NSOIL)-EPORE), 0.0) * DZSNSO(NSOIL)
     SH2O(NSOIL)  = MIN(EPORE,SH2O(NSOIL))
    END IF
+
+   ! I added (NO NEED: WPLUS WOULD BE ADDED TO SURF RUNOFF AFTER SSTEP)
+   ! IF(WPLUS > 0.0) QDRAIN = QDRAIN + WPLUS/DT
 
    ! Negative soil moisture check
    IF ( ANY(SH2O < 0.0) ) THEN

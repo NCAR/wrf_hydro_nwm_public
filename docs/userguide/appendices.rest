@@ -2978,3 +2978,531 @@ A19.8. Ground water output variables
    .. csv-table:: GWOUT
       :file: output-tables/GWOUT_DOMAIN.csv
       :header-rows: 1
+
+.. _section-a20:
+
+A20. Introduction to the Basic Model Interface (BMI)
+-----------------------------------------------------
+
+The `Basic Model Interface <https://bmi.csdms.io/en/stable/>`_ (BMI) is a
+standardized set of control and query functions defined by the
+`Community Surface Dynamics Modeling System <https://csdms.colorado.edu/>`_
+(CSDMS). A model that implements BMI can be started, advanced, inspected and
+shut down by an outside program using the same function names that every other
+BMI-enabled model uses. That shared vocabulary is what allows two models to be
+coupled without either one containing code specific to the other: a coupling
+driver talks BMI to both sides and is responsible only for regridding, unit
+conversion and time-step reconciliation between them.
+
+WRF-Hydro provides an implementation of the BMI 2.0 Fortran specification. The
+specification itself is vendored in :file:`src/CPL/BMI_cpl/bmi.f90` (module
+``bmif_2_0``, MIT licensed by CSDMS), and WRF-Hydro's implementation of it lives
+alongside it in :file:`src/CPL/BMI_cpl`. Bindings are provided for three
+languages:
+
+- **Fortran** — the native implementation, an extended derived type
+  ``bmi_wrf_hydro_nwm`` in module ``bmi_wrf_hydro_nwm_mod``
+- **C / C++** — a ``bind(c)`` layer built as a shared library
+- **Python** — a ``ctypes`` package that wraps the ``bind(c)`` shared library
+
+:file:`src/CPL/BMI_cpl/README.md` is the reference for developers, and in
+particular documents the steps required to expose an additional WRF-Hydro
+variable through the interface. A worked two-model coupling built on top of this
+interface, WRF-Hydro coupled to MODFLOW 6, is described in
+:ref:`section-a20.7`.
+
+.. note:: The BMI implementation is under active development. Not every function
+   in the specification is implemented yet, and only a small set of model
+   variables is currently exposed. See :ref:`section-a20.8` for the current
+   gaps.
+
+A20.1. The BMI control flow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BMI organizes a model around an *initialize, run, finalize* (IRF) pattern. A
+calling program never touches the model's internals; it only makes BMI calls:
+
+- **Lifecycle**: ``initialize``, ``update``, ``update_until``, ``finalize``
+- **Model and variable metadata**: ``get_component_name``,
+  ``get_input_item_count``, ``get_output_item_count``, ``get_input_var_names``,
+  ``get_output_var_names``, ``get_var_type``, ``get_var_units``,
+  ``get_var_itemsize``, ``get_var_nbytes``
+- **Time**: ``get_start_time``, ``get_end_time``, ``get_current_time``,
+  ``get_time_step``, ``get_time_units``
+- **Grids**: ``get_var_grid``, then ``get_grid_type``, ``get_grid_rank``,
+  ``get_grid_shape``, ``get_grid_size`` for that grid identifier
+- **Data**: ``get_value``, ``set_value``, and the ``*_at_indices`` variants for
+  sparse access
+
+Every BMI function returns a status code, ``BMI_SUCCESS`` (0) or ``BMI_FAILURE``
+(1), rather than the requested value; results come back through ``intent(out)``
+arguments. The WRF-Hydro module provides a convenience subroutine
+``stat_check`` that tests a returned status and stops the program on failure,
+which keeps driver code readable.
+
+Two details of WRF-Hydro's time reporting are worth noting up front. First, the
+model reports time as a land surface model **time-step counter**, not a
+calendar date: ``get_start_time`` returns ``1``, ``get_end_time`` returns the
+total number of time steps for the run, and ``get_current_time`` returns the
+current time-step index. Second, the ``config_file`` argument to ``initialize``
+is currently ignored — WRF-Hydro is still configured by the
+:file:`namelist.hrldas` and :file:`hydro.namelist` files in the run directory,
+exactly as for a standalone run (see :ref:`section-a5` and
+:ref:`section-a6`). Drivers conventionally pass a placeholder string.
+
+A20.2.1 MODFLOW Dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In addition to the WRF-Hydro dependencies the following is needed to build and couple MODFLOW.
+
+.. note:: These instructions may not be the most up-to-date and might have to be tweaked for newer versions
+
++--------------------+---------+
+| Libraries/Software | Version |
++====================+=========+
+| Conda              |         |
++--------------------+---------+
+| CMake              | 3.12+   |
++--------------------+---------+
+| ESMF               |         |
++--------------------+---------+
+| FFTW               |         |
++--------------------+---------+
+
+The following will install Meson
+
+.. code-block:: bash
+
+   $ cd src/CPL/MODFLOW_cpl
+   $ conda create --prefix ./environment.yml
+   $ conda activate modflow
+
+
+The following is a table of supported compilers
+
++--------------------+---------+
+| Compiler           | Version |
++====================+=========+
+| Intel oneAPI       | 2026.Y+ |
++--------------------+---------+
+| GNU                | 12.4+   |
++--------------------+---------+
+
+.. code-block:: bash
+
+   Derecho Modules
+   $ ml ncarenv/25.10
+   $ ml conda
+   $ ml gcc
+   $ ml openmpi
+   $ ml netcdf
+   $ ml cmake
+   $ ml esmf
+   $ ml fftw
+   $ # the following modules can be found with
+   $ # $ ml use /glade/campaign/ral/hap/common/modflow/lmods
+   $ ml petsc
+   $ ml modflow
+
+The following is a table of the software that needs to be installed.
+
++--------------------+---------+
+| Libraries/Software | Version |
++====================+=========+
+| MODFLOW            | 6.6+    |
++--------------------+---------+
+| PETSc              | 3.22.5+ |
++--------------------+---------+
+
+
+Obtain MODFLOW release or develop branch if desired. Note: release binaries will not work with coupling because Fortran modules are needed, not just the shared libraries.
+
+Note: PETSc 3.23.4 was having issues building with MODFLOW using the GNU compilers.
+
+.. code-block:: bash
+
+   Build PETSc
+   $ wget https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-3.22.tar.gz
+   $ tar zxf petsc-3.22.tar.gz
+   $ cd petsc-3.22.5
+   or
+   $ git clone -b release https://gitlab.com/petsc/petsc.git petsc
+   $ cd petsc
+   then to configure, build and install
+   $ ./configure \
+     --with-debugging=1 \
+     --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif90 \
+     --download-fblaslapack=1 \
+     --prefix=/path/to/install
+   $ make -j 4
+   $ make install
+
+
+The meson install step does not currently build the modules files that are needed
+so an in-source installation is used.
+
+.. code-block:: bash
+
+   Build MODFLOW
+   $ cd [MODFLOW base directory]
+   $ meson setup builddir -Dparallel=true -Dextended=true -Ddebug=true
+   $ meson compile -C builddir
+   $ export MODFLOW_BMI=[MODFLOW base directory]/builddir/srcbmi/
+   Build WRF-Hydro with MODFLOW Coupling
+   $ cd [WRF-Hydro base directory]
+   $ mkdir build
+   $ cd build
+   $ cmake .. -DMODFLOW=1
+   $ make -j 4
+
+
+
+A20.2.2 Building WRF-Hydro with BMI enabled
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BMI support is a compile-time option, enabled by passing ``-DBMI=1`` to CMake in
+addition to the usual build steps described in the
+:ref:`build instructions <section-2.8>`:
+
+.. code-block:: bash
+
+   $ cd wrf_hydro_nwm_public
+   $ mkdir build
+   $ cd build
+   $ cmake -DBMI=1 ..
+   $ make -j 4
+
+This adds the following to a normal build:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Artifact
+     - Description
+   * - :file:`build/Run/wrf_hydro_bmi`
+     - Example Fortran driver that runs WRF-Hydro through BMI calls
+   * - :file:`build/Run/wrf_hydro_bmi.py`
+     - Symlink to the example Python driver
+   * - ``libbmi_wrf_hydro_nwm``
+     - The Fortran BMI implementation, to link against from Fortran
+   * - ``libbmi_wrf_hydro_nwm_bind_c.so``
+     - Shared library exposing the interface to C, C++ and Python
+
+The standard :file:`wrf_hydro` executable, parameter tables and namelist
+templates are still produced as usual, so a BMI-enabled build is a superset of a
+standard build.
+
+.. note:: The BMI implementation reaches into the Noah-MP HRLDAS driver for its
+   model state, so it is only available for Noah-MP builds
+   (``HYDRO_LSM=NoahMP``, the default).
+
+A20.3. Running the example drivers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The BMI driver needs exactly the same run directory as a standalone simulation:
+domain files, forcing data, parameter tables and the two namelists. Follow the
+walkthrough in :ref:`Appendix A1 <section-a1>` to assemble a run directory, then
+substitute the executable:
+
+.. code-block:: bash
+
+   $ ./wrf_hydro_bmi
+
+The Python driver imports the ``bmi_wrf_hydro_nwm`` package from
+:file:`src/CPL/BMI_cpl` and loads the shared library by a path relative to the
+run directory, so run it from the CMake :file:`Run` directory with the package
+on your ``PYTHONPATH``:
+
+.. code-block:: bash
+
+   $ cd build/Run
+   $ export PYTHONPATH=/path/to/wrf_hydro_nwm_public/src/CPL/BMI_cpl:$PYTHONPATH
+   $ ./wrf_hydro_bmi.py
+
+The BMI driver is also wired into the test framework as the ``bmi``
+configuration, which runs the Gridded Croton test case through
+:file:`wrf_hydro_bmi` instead of :file:`wrf_hydro`. The ``croton-bmi`` target
+downloads and stages the test case, and ``run-croton-bmi`` depends on it, so a
+single command does both:
+
+.. code-block:: bash
+
+   $ make -C build run-croton-bmi
+
+The same configuration is exercised by the continuous integration workflow, so
+the BMI build is tested on every pull request.
+
+A20.4. Driving the model from your own program
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The minimal BMI control loop in Fortran is shown below. This is the core of
+:file:`src/CPL/BMI_cpl/wrf_hydro_nwm_bmi_driver.f90`, with the metadata queries
+removed for clarity.
+
+.. code-block:: fortran
+
+   program my_driver
+     use bmi_wrf_hydro_nwm_mod, only: bmi_wrf_hydro_nwm, wrf_hydro_nwm, stat_check
+     implicit none
+     type(bmi_wrf_hydro_nwm) :: wrf_hydro
+     double precision :: current_time, end_time
+     integer, allocatable :: ivgtyp(:)
+     integer :: grid, grid_size
+
+     wrf_hydro = wrf_hydro_nwm()                          ! construct
+     call stat_check(wrf_hydro%initialize("no config file"))
+     call stat_check(wrf_hydro%get_start_time(current_time))
+     call stat_check(wrf_hydro%get_end_time(end_time))
+
+     ! query a variable's grid, then use the grid to size a buffer
+     call stat_check(wrf_hydro%get_var_grid("IVGTYP", grid))
+     call stat_check(wrf_hydro%get_grid_size(grid, grid_size))
+     allocate(ivgtyp(grid_size))
+     call stat_check(wrf_hydro%get_value("IVGTYP", ivgtyp))
+
+     do while (current_time < end_time)
+        call stat_check(wrf_hydro%update())
+        call stat_check(wrf_hydro%get_current_time(current_time))
+     end do
+
+     call stat_check(wrf_hydro%finalize())
+   end program my_driver
+
+``get_value`` always returns data **flattened** to a rank-1 array, whatever the
+rank of the underlying model variable. Use ``get_grid_shape`` and Fortran's
+``reshape`` (or NumPy's ``reshape``) to recover the two-dimensional layout.
+Note that ``get_grid_shape`` returns the shape in ``ij`` (row-major) order,
+which is the reverse of WRF-Hydro's internal ``xy`` ordering.
+
+The same loop in Python, from
+:file:`src/CPL/BMI_cpl/wrf_hydro_nwm_bmi_driver.py`:
+
+.. code-block:: python
+
+   import bmi_wrf_hydro_nwm as wrf_hydro
+
+   wrf_hydro.initialize()
+
+   current_time = wrf_hydro.get_start_time()
+   end_time = wrf_hydro.get_end_time()
+
+   while current_time < end_time:
+       wrf_hydro.update()
+       current_time = wrf_hydro.get_current_time()
+
+   wrf_hydro.finalize()
+
+.. note:: Because the ``bind(c)`` layer receives index arrays as assumed-size
+   arrays, the ``*_at_indices`` functions cannot determine their own length. The
+   convention in the C-callable library is that the **first element of the
+   indices array is the number of indices**, followed by the indices themselves.
+   The Python package inserts this length automatically; C and C++ callers must
+   do it themselves.
+
+.. _section-a20.5:
+
+A20.5. Variables currently exposed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each exposed variable is assigned a BMI grid identifier, which is then used for
+all grid queries. The variables currently registered are:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 8 12 26 40
+
+   * - Variable
+     - Grid
+     - Grid type
+     - Type / units
+     - Description
+   * - ``IVGTYP``
+     - 1
+     - ``uniform_rectilinear``
+     - integer, ``category``
+     - Vegetation type on the land surface grid
+   * - ``ISLTYP``
+     - 2
+     - ``uniform_rectilinear``
+     - integer, ``category``
+     - Soil type on the land surface grid
+   * - ``soldrain``
+     - 3
+     - ``uniform_rectilinear``
+     - real
+     - Drainage out of the bottom soil layer
+   * - ``GLACT``
+     - 4
+     - ``uniform_rectilinear``
+     - real
+     - Glacier thickness
+   * - ``moddrain``
+     - 5
+     - ``uniform_rectilinear``
+     - real
+     - Drainage supplied to the LSM by a coupled groundwater model
+   * - ``qlink1``
+     - 201
+     - ``vector``
+     - real, ``m3/s``
+     - Channel flow at the current time step (metadata only)
+   * - ``qlink2``
+     - 202
+     - ``vector``
+     - real, ``m3/s``
+     - Channel flow at the previous time step (metadata only)
+
+The land surface variables (grids 1–5) are two-dimensional and support
+``get_value``, ``set_value`` and the ``*_at_indices`` variants. The channel
+variables ``qlink1`` and ``qlink2`` are registered for metadata queries
+(``get_var_grid``, ``get_var_type``, ``get_var_units``, ``get_grid_type``,
+``get_grid_size``) but value access and ``get_grid_rank``/``get_grid_shape`` are
+not yet implemented for them.
+
+``get_output_var_names`` returns the full LDASOUT output variable dictionary,
+which is considerably longer than the table above. Only the variables listed
+here can actually be read or written; the remainder are advertised names for
+which value access is not yet wired up.
+
+To expose an additional variable, follow the step-by-step list in
+:file:`src/CPL/BMI_cpl/README.md`: assign the next free grid number in
+``wrf_hydro_var_grid``, then add a matching case in each of the grid, type,
+units and get/set procedures.
+
+A20.6. Extensions beyond the standard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BMI 2.0 does not specify how a parallel model receives its MPI communicator, so
+WRF-Hydro's implementation adds a non-standard ``parallel_initialize`` method
+that must be called before ``initialize`` when running under MPI:
+
+.. code-block:: fortran
+
+   call MPI_Init(ierr)
+   call stat_check(wrf_hydro%parallel_initialize(MPI_COMM_WORLD))
+   call stat_check(wrf_hydro%initialize("no config file"))
+
+.. _section-a20.7:
+
+A20.7. Example coupling: WRF-Hydro | MODFLOW 6
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The coupling of WRF-Hydro to the `MODFLOW 6
+<https://modflow6.readthedocs.io/>`_ groundwater model in
+:file:`src/CPL/MODFLOW_cpl` is the reference example of what the BMI interface
+is for. MODFLOW 6 ships its own BMI, so neither model contains any code that
+knows about the other. A thin local wrapper, ``bmi_modflow``, adapts MODFLOW's
+BMI to the same abstract Fortran ``bmi`` type that WRF-Hydro implements, which
+lets a single driver program hold both models as objects of a common shape and
+step them in the same loop:
+
+.. code-block:: fortran
+
+   type(bmi_wrf_hydro_nwm) :: wrf_hydro
+   type(bmi_modflow)       :: modflow
+
+   wrf_hydro = wrf_hydro_nwm()
+   modflow   = modflow6()
+
+   call MPI_Init(ierr)
+   call stat_check(wrf_hydro%parallel_initialize(MPI_COMM_WORLD))
+   call stat_check(modflow%parallel_initialize(MPI_COMM_WORLD))
+   call stat_check(wrf_hydro%initialize("no config file"))
+   call stat_check(modflow%initialize(""))
+
+The exchange is two-way. Drainage out of the bottom of the WRF-Hydro soil
+column is accumulated and passed to MODFLOW as recharge, and the drain flux
+computed by MODFLOW is passed back to WRF-Hydro:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 12 30 28
+
+   * - Source variable
+     - Direction
+     - Destination variable
+     - Notes
+   * - WRF-Hydro ``soldrain``
+     - to
+     - MODFLOW ``RECHARGE``
+     - Accumulated over the coupling interval, converted to m/h
+   * - MODFLOW ``SIMVALS``
+     - to
+     - WRF-Hydro ``moddrain``
+     - Sign flipped (drains are negative in MODFLOW) and divided by cell area
+
+The driver is also where the two models' differing conventions are reconciled:
+row order is reversed between the two grids, MODFLOW reports volumetric fluxes
+while WRF-Hydro expects depths, and the two models advance on different time
+steps, so WRF-Hydro is sub-cycled until it catches up with MODFLOW's current
+time. This is the normal division of labor in a BMI coupling — the models
+expose data, the driver does the translation.
+
+Building this coupling requires more than a WRF-Hydro build: MODFLOW 6 (6.6 or
+newer) compiled from source with meson, PETSc, and a Conda environment for the
+build tooling. Because Fortran module files are needed and not just the shared
+library, MODFLOW release binaries cannot be used. Point the ``MODFLOW_BMI``
+environment variable at the MODFLOW build's :file:`srcbmi` directory and
+configure WRF-Hydro with ``-DMODFLOW=1``:
+
+.. code-block:: bash
+
+   $ export MODFLOW_BMI=[MODFLOW base directory]/builddir/srcbmi/
+   $ cd wrf_hydro_nwm_public
+   $ mkdir build && cd build
+   $ cmake .. -DMODFLOW=1
+   $ make -j 4
+
+This produces two executables in :file:`build/Run`: ``modflow_hello_world``, a
+minimal connectivity check, and ``wrf_hydro-modflow-driver``, the coupled
+driver. For a parallel run, the serial MODFLOW domain must first be decomposed
+with the supplied helper script, which writes the decomposed domain to
+:file:`split_domain_${np}np`:
+
+.. code-block:: bash
+
+   $ ./create_modflow_domain_decomposition.py -np 4
+   $ mpiexec -np 4 ./wrf_hydro-modflow-driver
+
+:file:`src/CPL/MODFLOW_cpl/README.md` is the authoritative reference for this
+build, including tested compiler and library versions, module lists for NCAR's
+Derecho system, PETSc configure options and MODFLOW's netCDF output settings.
+
+.. _section-a20.8:
+
+A20.8. Jupyter Notebooks
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Jupyter notebooks <https://github.com/NCAR/wrf_hydro_training/tree/main/notebooks/coupled/modflow>`_ are available to view in the `Coupled Modflow section of the WRF-Hydro Training repository <https://github.com/NCAR/wrf_hydro_training/tree/main/notebooks/coupled/modflow>`_.
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 1 — WRF-Hydro Preparation <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb01v01_wrfhydro_cutout_wps_wrfgeogrid.ipynb>`_: This Python notebook defines and creates the case-specific model domain and initial conditions for WRF-Hydro components using the WRF Preprocessing System (WPS).
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 2 — MODFLOW Subsetting and Reprojecting to WRF-Hydro Grid <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb02v01_modflow_cutout_reproj2wrfhydro.ipynb>`_: This Python notebook defines and creates the case-specific model domain and initial conditions for MODFLOW.
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 3 — MODFLOW flopy Process and Package Modification <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb03v01_modflow_cutout_addmodflowPacks.ipynb>`_: This Python notebook defines and creates flopy packates to generate a MODFLOW6 simulation for a subset grid.
+
+
+
+A20.9. Current limitations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Users should be aware of the following gaps in the current implementation:
+
+- Only the variables listed in :ref:`section-a20.5` are exposed;
+  ``get_output_var_names`` advertises many more.
+- ``get_var_type`` and ``get_var_units`` do not yet have entries for
+  ``soldrain`` and ``moddrain``, and return ``BMI_FAILURE`` for them even though
+  ``get_value`` and ``set_value`` work. ``GLACT`` has no units defined.
+- ``get_value_ptr`` is not implemented. WRF-Hydro's internal state variables are
+  not declared as Fortran ``target``\ s, so a pointer to model memory cannot be
+  handed out; use ``get_value``, which returns a copy.
+- The grid geometry functions (``get_grid_spacing``, ``get_grid_origin``,
+  ``get_grid_x``/``y``/``z``, the node/edge/face counts and connectivity
+  functions) and ``get_var_location`` are stubs that return ``BMI_FAILURE``.
+- The ``config_file`` argument to ``initialize`` is ignored; configuration comes
+  from the namelists in the run directory.
+- Model time is reported as a time-step index rather than a calendar time.
+- In the Python bindings, ``get_input_var_names`` and ``get_output_var_names``
+  are incomplete, and value access has been exercised primarily for integer
+  variables.

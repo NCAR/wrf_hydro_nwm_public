@@ -19,10 +19,10 @@ implicit none
 
 ! Declare parameter values for module.
 integer, parameter :: numChVars = 11
-integer, parameter :: numLdasVars = 116
+integer, parameter :: numLdasVars = 118
 ! Note: if more ldas variables are added the logic will need to be changed in
 !       module_NWM_io.F:output_NoahMP_NWM for when to close the restart file
-integer, parameter :: numLdasVars_crocus_off = 98
+integer, parameter :: numLdasVars_crocus_off = 100
 
 integer, parameter :: numRtDomainVars = 5
 integer, parameter :: numLakeVars = 2
@@ -1075,7 +1075,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                "STMASS","WOOD","STBLCP","FASTCP","NEE", &                !81-85
                                "GPP","NPP","PSN","APAR","ACCET", &                       !86-90
                                "CANWAT","SOILICE","SOILSAT_TOP","SOILSAT","SNOWT_AVG", & !91-95
-                               "ALBSND","ALBSNI","QRAIN",&                               !96-98
+                               "ALBSND","ALBSNI","QRAIN","MODDRAIN","MODDRAINout",&               !96-98
                                "glacier", "glacier_thickness" ,"PSNOWALB",&              !99-101
                                "PSNOWTHRUFAL" ,"PSNOWHEIGHT","PSNOWTOTSWE" ,&            !102-104
                                "PSNOWGRAN1","PSNOWGRAN2","PSNOWAGE",&                    !105-107
@@ -1181,7 +1181,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               "average snow temperature (by layer mass)",& !95
                               "snowpack albedo, direct",&               !96
                               "snowpack albedo, diffuse",&              !97
-                              "Rainfall rate on the ground",&           !98
+                              "Rainfall rate on the ground","MODDRAIN","MODDRAINout",&           !98
                               "Glacier grid point",&                    !99
                               "Glacier height",&                        !100
                               "Snow albedo",&                           !101
@@ -1221,7 +1221,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             "g m-2","g m-2","g m-2","g m-2","g m-2s-1 CO2", &  !81-85
                             "g m-2s-1 C","g m-2s-1 C","umol CO2 m-2 s-1","W m-2","mm", & !86-90
                             "mm","1","1","1","K", &                            !91-95
-                            "-","-","mm s-1",&                                 !96-98
+                            "-","-","mm s-1","m","m d-1",&                                 !96-98
                             "-","m","-", &                                     !99-101
                             "kg/(m2 s)","m","kg m-2",&                         !102-104
                             "m","-","days since snowfall",&                    !105-107
@@ -1248,7 +1248,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.01, 0.01, 0.01, 0.01, 0.01, &               !81-85
                                  0.01, 0.01, 0.01, 0.01, 0.01, &               !86-90
                                  0.01, 0.01, 0.001, 0.001, 0.1, &              !91-95
-                                 0.01, 0.01, 0.00001, &                        !96-98
+                                 0.01, 0.01, 0.00001,0.01,0.01, &                        !96-98
                                  1.0, 0.1, 0.01, &                             !99-101
                                  0.0001, 0.0001, 0.1, &                        !102-104
                                  0.01, 0.01, 0.01, &                           !105-107
@@ -1265,7 +1265,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !61-70
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !71-80
                                0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, & !81-90
-                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &         !91-98
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, &         !91-98
                                0.0,0.0,0.0, &                             !99-101
                                0.0,0.0,0.0, &                             !102-104
                                0.0,0.0,0.0, &                             !105-107
@@ -1284,7 +1284,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                              0,0,0,0,0,0,0,0,0,0, & !61-70
                              0,0,0,0,0,0,0,0,0,0, & !71-80
                              0,0,0,0,0,0,0,0,0,0, & !81-90
-                             0,0,0,0,0,0,0,0, &     !91-98
+                             0,0,0,0,0,0,0,0,0,0, &     !91-98
                              0,0,0, &               !99-101
                              0,0,0, &               !102-104
                              0,0,0, &               !105-107
@@ -1301,7 +1301,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                   1,1,1,1,1,1,1,1,1,1, & !61-70
                                   1,1,1,1,1,1,1,1,1,1, & !71-80
                                   1,1,1,1,1,1,1,1,1,1, & !81-90
-                                  1,1,1,1,1,1,1,1, &     !91-98
+                                  1,1,1,1,1,1,1,1,1,1, &     !91-98
                                   1,1,1, &               !99-101
                                   1,1,1, &               !102-104
                                   1,1,1, &               !105-107
@@ -1318,14 +1318,14 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                             4,3,4,1,1,1,1,1,1,1, &  !61-70
                             1,1,1,1,1,1,1,1,1,1, &  !71-80
                             1,1,1,1,1,1,1,1,1,1, &  !81-90
-                            1,1,1,1,1,2,2,1, &      !91-98
+                            1,1,1,1,1,2,2,1,1,1, &      !91-98
                             1,1,1, &                !99-101
                             1,1,1, &                !102-104
                             40,40,40, &             !105-107
                             40,40,40, &             !108-110
                             40,40,40, &             !111-113
                             40,1,1]                 !114-116
-   ldasOutDict%numLev(105:114) = ldasOutDict%act_lev ! Set crocus levels to number from namelist
+   ldasOutDict%numLev(107:116) = ldasOutDict%act_lev ! Set crocus levels to number from namelist
 
    ldasOutDict%missingReal(:) = [-9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !1-5
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !6-10
@@ -1346,7 +1346,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                                  -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                                 -9999.0,-9999.0,-999.0,                  & !96-98
+                                 -9999.0,-9999.0,-999.0,-9999.0,-9999.0,            & !96-98
                                  -9999.0,-9999.0,-9999.0,                 & !99-101
                                  -9999.0,-9999.0,-9999.0,                 & !102-104
                                  -9999.0,-9999.0,-9999.0,                 & !105-107
@@ -1373,7 +1373,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !81-85
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !86-90
                               -9999.0,-9999.0,-9999.0,-9999.0,-9999.0, & !91-95
-                              -9999.0,-9999.0,-999.0,                  & !96-98
+                              -9999.0,-9999.0,-999.0,-9999.0,-9999.0,                  & !96-98
                               -9999.0,-9999.0,-9999.0,                 & !99-101
                               -9999.0,-9999.0,-9999.0,                 & !102-104
                               -9999.0,-9999.0,-9999.0,                 & !105-107
@@ -1400,7 +1400,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                     !81-85
                                  0.0d0, 0.0d0, 0.0d0, 0.0d0, -1000.0d0, &                 !86-90
                                  -5.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0, &                    !91-95
-                                 0.0d0, 0.0d0, 0.0d0,&                                    !96-98
+                                 0.0d0, 0.0d0, 0.0d0,-100.0d0,-100.0d0,&                                    !96-98
    !! NBNB Check these values
                                  0.0d0, 0.0d0, 0.0d0, &                                   !99-101
                                  0.0d0, 0.0d0, 0.0d0, &                                   !102-104
@@ -1428,7 +1428,7 @@ subroutine initLdasDict(ldasOutDict,procId,diagFlag)
                                  1000.0d0, 1000.0d0, 5000.0d0, 5000.0d0, 1000.0d0, &    !81-85
                                  1000.0d0, 1000.0d0, 1000.0d0, 1000.0d0, 1.0D+6, &      !86-90
                                  30000.0d0, 1.0d0, 1.0d0, 1.0d0, 400.0d0, &             !91-95
-                                 1.0d0, 1.0d0, 100.0d0,&                                !96-98
+                                 1.0d0, 1.0d0, 100.0d0,100000.0d0,100000.0d0,&                                !96-98
    ! NBNB Check these values
                                  1.0d0, 1.0d4, 1.0d0, &                                 !99-101
                                  1.0d5, 1.0d4, 1.0d8, &                                 !102-104

@@ -1,7 +1,12 @@
+# add Makefile target to setup test runs
+if (BMI)
+  add_subdirectory("bmi")
+endif()
+
 # add Makefile targets to setup test runs
 # Croton Test Options: {Gridded, Gridded_no_lakes, NWM, Reach, ReachLakes}
 set(croton_testcases "gridded" "gridded_no_lakes" "nwm" "nwm_ana"
-  "nwm_long_range" "reach" "reach_lakes")
+  "nwm_long_range" "reach" "reach_lakes" "bmi")
 
 # set default croton setup and run target
 set(croton_default_testcase "gridded")
@@ -31,7 +36,7 @@ foreach(croton_testcase ${croton_testcases})
     ${CMAKE_CURRENT_SOURCE_DIR}/run_cmake_testcase.sh ${croton_testcase} ${CMAKE_BINARY_DIR} 2)
 endforeach()
 
-# generic ctests
+# --- generic ctests ---
 add_executable(fortran_ctest_should_fail
   should_fail.f90)
 add_test(NAME fortran_ctest_should_fail
@@ -43,3 +48,17 @@ add_executable(fortran_ctest_should_not_fail
   should_not_fail.f90)
 add_test(NAME fortran_ctest_should_not_fail
   COMMAND fortran_ctest_should_not_fail)
+
+# --- add ctests ---
+add_test(NAME setup_wrf_hydro_testcase
+  COMMAND bash
+  ${CMAKE_CURRENT_SOURCE_DIR}/setup_cmake_testcase.sh ${CMAKE_BINARY_DIR})
+
+if (BMI)
+  add_test(NAME wrf_hydro_bmi_test
+    COMMAND wrf_hydro_bmi
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Run)
+
+  set_tests_properties(wrf_hydro_bmi_test
+    PROPERTIES DEPENDS setup_wrf_hydro_testcase)
+endif()

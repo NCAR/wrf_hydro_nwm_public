@@ -10,14 +10,20 @@ np=${3}
 run_dir=${binary_dir}/Run
 output_dir=output_${testcase_type}
 
+exe=wrf_hydro
+if [ "$testcase_type" = "bmi" ]; then
+    exe=wrf_hydro_bmi
+fi
+
 if [ "$np" -eq "1" ]; then
-    run_cmd="./wrf_hydro"
+    run_cmd="./${exe}"
 else
-    run_cmd="mpiexec -np ${np} ./wrf_hydro"
+    run_cmd="mpiexec -np ${np} ./${exe}"
 fi
 
 # run testcase
 cd $run_dir
+echo "$ ${run_cmd}"
 ${run_cmd}
 
 # collect output, and fail silently if files not outputted at this point
