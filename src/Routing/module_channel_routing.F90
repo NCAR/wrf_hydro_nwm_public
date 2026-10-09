@@ -9,6 +9,7 @@ use MODULE_mpp_ReachLS, only : updatelinkv,                   &
 use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
+use module_date_utilities_rt, only: day_of_year
 
 use iso_fortran_env, only: int64
 
@@ -559,8 +560,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
        ,gwBaseSwCRT, gwHead, qgw_chanrt, gwChanCondSw, gwChanCondConstIn, &
        gwChanCondConstOut, velocity, qloss)
 
-
-       IMPLICIT NONE
+       use config_base, only: nlst
+       implicit none
 
         ! -------- DECLARATIONS ------------------------
         INTEGER, INTENT(IN) :: did, IXRT,JXRT,channel_option
@@ -675,6 +676,12 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer flag
 
         integer :: n, kk2, nt, nsteps  ! tmp
+
+        integer doy ! day of year
+
+        doy = day_of_year(nlst(did)%olddate(1:19))
+        call mpp_land_bcast_int1(doy)
+        if (doy == 366) doy = 365
 
 #ifdef MPP_LAND
        if(my_id == io_id) then
@@ -836,7 +843,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
                     if (l_idx >= 0) then     !-- -999 if not a reservoir in the lookup table (belt-and-suspenders check)
                         call rt_domain(did)%reservoirs(l_idx)%ptr%run(Qup, Quc, 0.0, &
                               RESHT(l_idx), QLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(l_idx), &
-                              rt_domain(did)%reservoir_assimilated_value(l_idx), rt_domain(did)%reservoir_assimilated_source_file(l_idx))
+                              rt_domain(did)%reservoir_assimilated_value(l_idx), rt_domain(did)%reservoir_assimilated_source_file(l_idx), doy)
 
                         QLAKEO(l_idx)  = QLINK(k,2)     !save outflow to lake
                         QLAKEI(l_idx)  = Quc            !save inflow to lake
@@ -1243,7 +1250,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
               ! are passed in. Updated outflow and water elevation are returned.
               call rt_domain(did)%reservoirs(i)%ptr%run(QLAKEIP(i), QLAKEI(i), &
                    QLLAKE(i), RESHT(i), QLAKEO(i), DTCT, rt_domain(did)%final_reservoir_type(i), &
-                   rt_domain(did)%reservoir_assimilated_value(i), rt_domain(did)%reservoir_assimilated_source_file(i))
+                   rt_domain(did)%reservoir_assimilated_value(i), rt_domain(did)%reservoir_assimilated_source_file(i), doy)
 
               ! TODO: Encapsulate the lake state variable for water elevation (RESHT(i))
               !       inside the reservoir module, but it requires a redesign of the lake
@@ -1761,6 +1768,12 @@ end subroutine drive_CHANNEL
        real :: div_src, div_dst
        character(*), parameter :: free = '(*(g0,1x))'
 
+       integer doy
+
+       doy = day_of_year(nlst(did)%olddate(1:19))
+       call mpp_land_bcast_int1(doy)
+       if (doy == 366) doy = 365
+
 #ifdef MPP_LAND
        if(my_id .eq. io_id) then
 #endif
@@ -1988,7 +2001,7 @@ do nt = 1, nsteps
             ! are passed in. Updated outflow and water elevation are returned.
             call rt_domain(did)%reservoirs(lakeid)%ptr%run(Qup, Quc, 0.0, &
                  RESHT(lakeid), tmpQLINK(k,2), DTRT_CH, rt_domain(did)%final_reservoir_type(lakeid), &
-                 rt_domain(did)%reservoir_assimilated_value(lakeid), rt_domain(did)%reservoir_assimilated_source_file(lakeid))
+                 rt_domain(did)%reservoir_assimilated_value(lakeid), rt_domain(did)%reservoir_assimilated_source_file(lakeid), doy)
 
             ! TODO: Encapsulate the lake state variable for water elevation (RESHT(lakeid))
             !       inside the reservoir module, but it requires a redesign of the lake

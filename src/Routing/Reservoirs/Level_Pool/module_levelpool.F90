@@ -63,13 +63,13 @@ contains
         real, intent(inout) :: water_elevation           ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
-        real, intent(in)    :: weir_coeffecient          ! weir coefficient
         real, intent(in)    :: weir_length               ! weir length (meters)
         real, intent(in)    :: dam_length                ! dam length (meters)
         real, intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
-        real, intent(in)    :: orifice_coefficient       ! orifice coefficient
         real, intent(in)    :: orifice_area              ! orifice area (meters^2)
         real, intent(in)    :: max_depth                 ! max depth of reservoir before overtop (meters)
+        real, intent(in), dimension(:) :: weir_coeffecient          ! weir coefficient (time-varying)
+        real, intent(in), dimension(:) :: orifice_coefficient       ! orifice coefficient (time-varying)
         integer(kind=int64), intent(in) :: lake_number   ! lake number
         integer, intent(in) :: lake_opt                  ! bypass lake physics (2 to use pass-through)
 
@@ -150,7 +150,7 @@ contains
     ! inputs and returning the output.
     subroutine run_levelpool_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
-        assimilated_value, assimilated_source_file)
+        assimilated_value, assimilated_source_file, param_index)
         implicit none
         class(levelpool), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -162,7 +162,7 @@ contains
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
         character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
-
+        integer, intent(in) :: param_index              ! time index for time-varying reservoirs
 
         ! Update input variables
         this%input%inflow = inflow
@@ -171,23 +171,23 @@ contains
         ! Update state variables
         this%state%water_elevation = water_elevation
 
-        call LEVELPOOL_PHYSICS(this%properties%lake_number,                  &
-                               this%properties%lake_opt,                   &
-                               previous_timestep_inflow,                     &
-                               this%input%inflow,                            &
-                               this%output%outflow,                          &
-                               this%input%lateral_inflow,                    &
-                               routing_period,                               &
-                               this%state%water_elevation,                   &
-                               this%properties%lake_area,                    &
-                               this%properties%weir_elevation,               &
-                               this%properties%max_depth,                    &
-                               this%properties%weir_coeffecient,             &
-                               this%properties%weir_length,                  &
-                               this%properties%dam_length,                   &
-                               this%properties%orifice_elevation,            &
-                               this%properties%orifice_coefficient,          &
-                               this%properties%orifice_area                  &
+        call LEVELPOOL_PHYSICS(this%properties%lake_number,                      &
+                               this%properties%lake_opt,                         &
+                               previous_timestep_inflow,                         &
+                               this%input%inflow,                                &
+                               this%output%outflow,                              &
+                               this%input%lateral_inflow,                        &
+                               routing_period,                                   &
+                               this%state%water_elevation,                       &
+                               this%properties%lake_area,                        &
+                               this%properties%weir_elevation,                   &
+                               this%properties%max_depth,                        &
+                               this%properties%weir_coeffecient(param_index),    &
+                               this%properties%weir_length,                      &
+                               this%properties%dam_length,                       &
+                               this%properties%orifice_elevation,                &
+                               this%properties%orifice_coefficient(param_index), &
+                               this%properties%orifice_area                      &
         )
 
         ! Update output variable returned from this subroutine

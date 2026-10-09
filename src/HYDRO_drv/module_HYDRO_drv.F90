@@ -23,6 +23,7 @@ module module_HYDRO_drv
     use config_base, only: nlst, noah_lsm
     use module_routing, only: getChanDim, landrt_ini
     use module_HYDRO_utils
+    use module_date_utilities_rt, only: day_of_year
     use module_lsm_forcing, only: geth_newdate
 #ifdef WRF_HYDRO_NUDGING
     use module_stream_nudging,  only: init_stream_nudging
@@ -548,7 +549,7 @@ contains
             nlst(did)%olddate = newdate
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-            write(6,*) "current time is ",newdate
+            write(6,*) "current time/DOY is ",newdate, day_of_year(newdate)
 #else
             write(78,*) "current time is ",newdate
 #endif
