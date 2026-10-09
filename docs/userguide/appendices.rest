@@ -3471,7 +3471,20 @@ Derecho system, PETSc configure options and MODFLOW's netCDF output settings.
 
 .. _section-a20.8:
 
-A20.8. Current limitations
+A20.8. Jupyter Notebooks
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Jupyter notebooks <https://github.com/NCAR/wrf_hydro_training/tree/main/notebooks/coupled/modflow>`_ are available to view in the `Coupled Modflow section of the WRF-Hydro Training repository <https://github.com/NCAR/wrf_hydro_training/tree/main/notebooks/coupled/modflow>`_.
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 1 — WRF-Hydro Preparation <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb01v01_wrfhydro_cutout_wps_wrfgeogrid.ipynb>`_: This Python notebook defines and creates the case-specific model domain and initial conditions for WRF-Hydro components using the WRF Preprocessing System (WPS).
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 2 — MODFLOW Subsetting and Reprojecting to WRF-Hydro Grid <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb02v01_modflow_cutout_reproj2wrfhydro.ipynb>`_: This Python notebook defines and creates the case-specific model domain and initial conditions for MODFLOW.
+
+- `WRF-Hydro/MODFLOW Domain Setup: Step 3 — MODFLOW flopy Process and Package Modification <https://github.com/NCAR/wrf_hydro_training/blob/main/notebooks/coupled/modflow/nb03v01_modflow_cutout_addmodflowPacks.ipynb>`_: This Python notebook defines and creates flopy packates to generate a MODFLOW6 simulation for a subset grid.
+
+
+
+A20.9. Current limitations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Users should be aware of the following gaps in the current implementation:
