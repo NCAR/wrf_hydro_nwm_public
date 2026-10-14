@@ -115,7 +115,7 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for levelpool"
-        call levelpool_reservoir_data%init(water_elevation, 4., 6., 8., 10., 11., 12., 14., 16., 18., lake_number)
+        call levelpool_reservoir_data%init(water_elevation, 4., 6., [8.], 10., 11., 12., [14.], 16., 18., lake_number)
 
         print *, "testing data in levelpool"
         call_status = levelpool_data_info(levelpool_reservoir_data)
@@ -173,7 +173,7 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, &
+        [weir_coefficient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, &
         initial_fractional_depth, lake_number, reservoir_type, "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2010-10-01_07:00:00", cwd_full, cwd_full, 12, 1000000000)
 
@@ -189,7 +189,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -267,7 +267,7 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        [weir_coefficient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, &
         max_depth, initial_fractional_depth, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-10_02:00:00", cwd_full, cwd_full, 12, 1000000000)
@@ -281,7 +281,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -359,7 +359,7 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        [weir_coeffecient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, &
         max_depth, initial_fractional_depth, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-10_02:00:00", cwd_full, cwd_full, 12, 1000000000)
@@ -374,7 +374,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -452,7 +452,7 @@ program reservoir_unit_tests
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
         call persistence_levelpool_hybrid_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coeffecient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, &
+        [weir_coeffecient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, &
         max_depth, initial_fractional_depth, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", &
         "2016-10-12_02:00:00", cwd_full, cwd_full, 12, 1000000000)
@@ -466,7 +466,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call persistence_levelpool_hybrid_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -549,7 +549,7 @@ program reservoir_unit_tests
         209.53554, 205.97734, 202.51857, 199.1559, 195.88605, 192.70595, 189.61255 /)
 
         call levelpool_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        weir_coefficient, weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, lake_number)
+        [weir_coefficient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, lake_number)
 
         water_elevation = 9.73733330
 
@@ -558,7 +558,7 @@ program reservoir_unit_tests
         do timestep_count = 1, 108
             inflow = inflow_array_overflow(timestep_count)
             call levelpool_reservoir_data%run(inflow, inflow, 0.0, water_elevation, outflow, 300.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -607,7 +607,7 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for rfc_forecasts"
-        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., 8., 10., 11., 12., 14., 16., 18., 0.9, lake_number, 4, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, 4., 6., [8.], 10., 11., 12., [14.], 16., 18., 0.9, lake_number, 4, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-08-18_07:00:00", cwd_full, 24)
 
         print *, "testing data in rfc_forecasts"
@@ -710,8 +710,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-05-01_22:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -721,7 +721,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -792,8 +792,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-08-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -803,7 +803,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -869,15 +869,15 @@ program reservoir_unit_tests
         lake_number = 17609317
         reservoir_type = 4
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-09-18_09:00:00", cwd_full, 24)
         water_elevation = 1331.18005
         do timestep_count = 1, 120
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
             prev_time_inflow = inflow
             print *, outflow
         end do
@@ -938,8 +938,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-10-18_09:00:00", cwd_full, 24)
 
         water_elevation = 1331.18005
@@ -949,7 +949,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -1015,15 +1015,15 @@ program reservoir_unit_tests
         lake_number = 17609317
         reservoir_type = 4
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-11-18_09:00:00", cwd_full, 24)
         water_elevation = 1331.18005
         do timestep_count = 1, 120
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
             prev_time_inflow = inflow
             print *, outflow
         end do
@@ -1082,8 +1082,8 @@ program reservoir_unit_tests
         lake_number = 17609317
         reservoir_type = 4
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_AnA_represents_Extended_MR.nc", &
         "2019-12-18_03:00:00", cwd_full, 24)
         water_elevation = 1331.18005
@@ -1091,7 +1091,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
             prev_time_inflow = inflow
             print *, outflow
         end do
@@ -1151,15 +1151,15 @@ program reservoir_unit_tests
         lake_number = 1
         reservoir_type = 5
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.0, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.0, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_Standard_AnA_APRFC_GDLs.nc", "2019-05-01_22:00:00", cwd_full, 24)
         water_elevation = 0.0
         do timestep_count = 1, 120
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 900.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
             prev_time_inflow = inflow
             print *, outflow
         end do
@@ -1221,15 +1221,15 @@ program reservoir_unit_tests
         lake_number = 1
         reservoir_type = 5
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.0, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.0, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_Standard_AnA_APRFC_GDLs.nc", "2019-08-18_09:00:00", cwd_full, 24)
         water_elevation = 0.0
         do timestep_count = 1, 80
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
             prev_time_inflow = inflow
             print *, outflow
         end do
@@ -1291,8 +1291,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_short_range.nc", "2019-08-18_09:00:00", cwd_full, 24)
 
         !water_elevation = 1331.18005
@@ -1304,7 +1304,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 
@@ -1376,8 +1376,8 @@ program reservoir_unit_tests
 
         cwd_full = "../../../../tests/local/reservoir_testing_files/"
 
-        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, weir_coefficient, &
-        weir_length, dam_length, orifice_elevation, orifice_coefficient, orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
+        call rfc_forecasts_reservoir_data%init(water_elevation, lake_area, weir_elevation, [weir_coefficient], &
+        weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, 0.9, lake_number, reservoir_type, &
         "../../../../tests/local/reservoir_testing_files/reservoir_index_Long_Range_AnA.nc", &
         "2019-12-18_19:00:00", cwd_full, 24)
 
@@ -1388,7 +1388,7 @@ program reservoir_unit_tests
             inflow = inflow_array(timestep_count)
             call rfc_forecasts_reservoir_data%run(inflow, &
             inflow, 0.0, water_elevation, outflow, 3600.0, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, 1)
 
             prev_time_inflow = inflow
 

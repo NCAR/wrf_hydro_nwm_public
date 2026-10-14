@@ -2689,24 +2689,37 @@ contains
 
       real, dimension(:), allocatable :: tmp
       integer, dimension(:), allocatable :: all_lake_index
-      integer :: ierr, k
+      integer :: ierr, i, k
 
       if (nsize .le. 0) return
 
-      ! Allocate temporary arrays to hold gathered data
-      allocate(tmp(nsize * numprocs))
-      allocate(all_lake_index(nsize * numprocs))
+      ! Only the I/O rank needs the full gathered arrays; other ranks receive the
+      ! merged result from the broadcast below and keep just nsize-sized buffers.
+      if (my_id .eq. IO_id) then
+         allocate(tmp(nsize * numprocs))
+         allocate(all_lake_index(nsize * numprocs))
+      else
+         allocate(tmp(1))
+         allocate(all_lake_index(1))
+      end if
 
-      ! Gather all data from all processes
-      call MPI_Allgather(in, nsize, MPI_REAL, tmp, nsize, MPI_REAL, HYDRO_COMM_WORLD, ierr)
-      call MPI_Allgather(lake_index, nsize, MPI_INTEGER, all_lake_index, nsize, MPI_INTEGER, HYDRO_COMM_WORLD, ierr)
+      call MPI_Gather(in, nsize, MPI_REAL, tmp, nsize, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
+      call MPI_Gather(lake_index, nsize, MPI_INTEGER, all_lake_index, nsize, MPI_INTEGER, IO_id, HYDRO_COMM_WORLD, ierr)
 
-      ! Update the 'in' array based on the gathered lake_index data
-      do k = 1, nsize * numprocs
-          if (all_lake_index(k) .gt. 0) in(mod(k-1, nsize) + 1) = tmp(k)
-      end do
+      ! Merge on the I/O rank, skipping its own block, in rank order (same as the
+      ! original point-to-point version so the last lake owner wins).
+      if (my_id .eq. IO_id) then
+         do i = 0, numprocs - 1
+            if (i .ne. IO_id) then
+               do k = 1, nsize
+                  if (all_lake_index(i*nsize + k) .gt. 0) in(k) = tmp(i*nsize + k)
+               end do
+            end if
+         end do
+      end if
 
-      ! Deallocate temporary arrays
+      call mpp_land_bcast_real_1d(in)
+
       deallocate(tmp)
       deallocate(all_lake_index)
   end subroutine updateLake_grid
