@@ -2687,41 +2687,62 @@ contains
       real, dimension(nsize), intent(inout) :: in
       integer, dimension(nsize), intent(in) :: lake_index
 
-      real, dimension(:), allocatable :: tmp
-      integer, dimension(:), allocatable :: all_lake_index
-      integer :: ierr, i, k
+      real, dimension(:), allocatable :: owned_values, gathered_values
+      integer, dimension(:), allocatable :: owned_idx, gathered_idx
+      integer, dimension(:), allocatable :: counts, displs
+      integer :: ierr, k, r, nowned, total
 
       if (nsize .le. 0) return
 
-      ! Only the I/O rank needs the full gathered arrays; other ranks receive the
-      ! merged result from the broadcast below and keep just nsize-sized buffers.
-      if (my_id .eq. IO_id) then
-         allocate(tmp(nsize * numprocs))
-         allocate(all_lake_index(nsize * numprocs))
-      else
-         allocate(tmp(1))
-         allocate(all_lake_index(1))
+      ! Each rank sends only the lakes it actually owns (lake_index > 0), not its
+      ! whole nsize-length vector. That keeps the I/O rank's gathered buffers on
+      ! the order of NLAKES regardless of rank count, instead of NLAKES * numprocs,
+      ! which matters since this is called several times per routing step.
+      allocate(owned_idx(nsize))
+      allocate(owned_values(nsize))
+      nowned = 0
+      if (my_id .ne. IO_id) then
+         do k = 1, nsize
+            if (lake_index(k) .gt. 0) then
+               nowned = nowned + 1
+               owned_idx(nowned) = k
+               owned_values(nowned) = in(k)
+            end if
+         end do
       end if
 
-      call MPI_Gather(in, nsize, MPI_REAL, tmp, nsize, MPI_REAL, IO_id, HYDRO_COMM_WORLD, ierr)
-      call MPI_Gather(lake_index, nsize, MPI_INTEGER, all_lake_index, nsize, MPI_INTEGER, IO_id, HYDRO_COMM_WORLD, ierr)
+      allocate(counts(numprocs))
+      allocate(displs(numprocs))
+      call MPI_Gather(nowned, 1, MPI_INTEGER, counts, 1, MPI_INTEGER, IO_id, HYDRO_COMM_WORLD, ierr)
 
-      ! Merge on the I/O rank, skipping its own block, in rank order (same as the
-      ! original point-to-point version so the last lake owner wins).
+      total = 0
       if (my_id .eq. IO_id) then
-         do i = 0, numprocs - 1
-            if (i .ne. IO_id) then
-               do k = 1, nsize
-                  if (all_lake_index(i*nsize + k) .gt. 0) in(k) = tmp(i*nsize + k)
-               end do
-            end if
+         displs(1) = 0
+         do r = 2, numprocs
+            displs(r) = displs(r-1) + counts(r-1)
+         end do
+         total = displs(numprocs) + counts(numprocs)
+      end if
+      allocate(gathered_idx(max(total, 1)))
+      allocate(gathered_values(max(total, 1)))
+
+      call MPI_Gatherv(owned_idx, nowned, MPI_INTEGER, gathered_idx, counts, displs, MPI_INTEGER, &
+                        IO_id, HYDRO_COMM_WORLD, ierr)
+      call MPI_Gatherv(owned_values, nowned, MPI_REAL, gathered_values, counts, displs, MPI_REAL, &
+                        IO_id, HYDRO_COMM_WORLD, ierr)
+
+      ! Apply in rank order (Gatherv concatenates by rank) so a lake claimed by
+      ! more than one rank still resolves to the last owner, as in the original
+      ! point-to-point version.
+      if (my_id .eq. IO_id) then
+         do k = 1, total
+            in(gathered_idx(k)) = gathered_values(k)
          end do
       end if
 
       call mpp_land_bcast_real_1d(in)
 
-      deallocate(tmp)
-      deallocate(all_lake_index)
+      deallocate(owned_idx, owned_values, counts, displs, gathered_idx, gathered_values)
   end subroutine updateLake_grid
 
 
