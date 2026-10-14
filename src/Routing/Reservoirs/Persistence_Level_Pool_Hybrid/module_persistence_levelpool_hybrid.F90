@@ -25,7 +25,7 @@ module module_persistence_levelpool_hybrid
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_timeslice_data, only: usgs_timeslice_data, usace_timeslice_data, timeslice_data_type
     use module_hydro_stop, only: HYDRO_stop
-    use iso_fortran_env, only: int64
+    use iso_fortran_env, only: int64, real64
     implicit none
 
     ! Extend/derive hybrid type from the abstract base
@@ -66,7 +66,7 @@ contains
         observation_update_time_interval_seconds)
         implicit none
         class(persistence_levelpool_hybrid), intent(inout) :: this ! object being initialized
-        real,    intent(inout) :: water_elevation           ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -223,14 +223,14 @@ contains
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
+        real(kind=real64), intent(inout) :: water_elevation  ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real, intent(out)   :: assimilated_value        ! value assimilated from observation
         character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
         real                :: delta_storage            ! timestep change in storage (cubic meters)
-        real                :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
+        real(kind=real64)   :: local_water_elevation    ! water elevation passed to levelpool (meters AMSL)
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         logical             :: max_storage_reached      ! flag for when max storage is reached
         integer             :: gage_lookback_seconds    ! seconds between current model
@@ -443,7 +443,7 @@ contains
         this%state%timeslice_update_time, this%state%weight_update_time, gage_lookback_seconds, &
         this%properties%gage_id, this%state%persistence_weight_index, &
         this%state%persistence_current_weight, this%input%inflow, this%state%current_storage, &
-        this%state%water_elevation, this%state%gage_discharge, this%state%persisted_outflow, &
+        real(this%state%water_elevation), this%state%gage_discharge, this%state%persisted_outflow, &
         levelpool_outflow, this%output%outflow)
 #endif
 
