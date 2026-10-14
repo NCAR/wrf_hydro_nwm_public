@@ -60,7 +60,7 @@ contains
 
         implicit none
         class(levelpool), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation           ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation  ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -156,7 +156,7 @@ contains
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
+        real(kind=real64), intent(inout) :: water_elevation  ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
@@ -168,14 +168,8 @@ contains
         this%input%inflow = inflow
         this%input%lateral_inflow = lateral_inflow
 
-        ! Update state variables. The state holds water elevation in double
-        ! precision, but the elevation passed in (e.g. RESHT) is single precision.
-        ! Only take the incoming value if it was changed outside this object
-        ! (e.g. restart or assimilation); otherwise level changes smaller than
-        ! single-precision spacing would be rounded away every timestep.
-        if (water_elevation /= real(this%state%water_elevation)) then
-            this%state%water_elevation = water_elevation
-        end if
+        ! Update state variables
+        this%state%water_elevation = water_elevation
 
         call LEVELPOOL_PHYSICS(this%properties%lake_number,                  &
                                this%properties%lake_opt,                   &
@@ -203,7 +197,7 @@ contains
         this%input%previous_timestep_inflow = inflow
 
         ! Update water_elevation variable returned from this subroutine
-        water_elevation = real(this%state%water_elevation)
+        water_elevation = this%state%water_elevation
 
         ! The dynamic reservoir type is always set to 1 for level pool in this module because
         ! it cannot change reservoir types
@@ -218,7 +212,7 @@ contains
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
-        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, water_elevation, outflow)
+        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, real(water_elevation), outflow)
 #endif
 
     end subroutine run_levelpool_reservoir

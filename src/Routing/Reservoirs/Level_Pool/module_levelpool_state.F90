@@ -31,7 +31,7 @@ contains
     subroutine levelpool_state_init(this, water_elevation)
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(inout) :: water_elevation     ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation  ! meters AMSL
 
         ! Assign the water elevation value passed in to a particular level pool reservoir
         ! state object's variable for water elevation
