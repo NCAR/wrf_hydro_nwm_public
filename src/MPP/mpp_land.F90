@@ -3,7 +3,7 @@ MODULE MODULE_MPP_LAND
 
    use MODULE_CPL_LAND
    use mpi
-   use iso_fortran_env, only: int64
+   use iso_fortran_env, only: int64, real64
 
    IMPLICIT NONE
    !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
@@ -2157,7 +2157,7 @@ contains
 
    subroutine write_lake_real8(v,nodelist_in,nlakes)
       implicit none
-      real*8 recv(nlakes), v(nlakes)
+      real(kind=real64) recv(nlakes), v(nlakes)
       integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
       integer i, ierr, tag, k
       integer length, node
@@ -2691,11 +2691,11 @@ contains
       implicit none
 
       integer :: nsize
-      real*8, dimension(:), intent(inout), asynchronous :: in
-      real*8, dimension(:), intent(in) :: in0
+      real(kind=real64), dimension(:), intent(inout), asynchronous :: in
+      real(kind=real64), dimension(:), intent(in) :: in0
 
-      real*8, dimension(:), allocatable, asynchronous :: prev
-      real*8, dimension(:), allocatable :: adjustment
+      real(kind=real64), dimension(:), allocatable, asynchronous :: prev
+      real(kind=real64), dimension(:), allocatable :: adjustment
       integer ierr
 
       if (nsize .le. 0) return
@@ -2790,9 +2790,9 @@ contains
    subroutine updateLake_grid8(in,nsize,lake_index)
       implicit none
       integer :: nsize
-      real*8, dimension(nsize) :: in
+      real(kind=real64), dimension(nsize) :: in
       integer, dimension(nsize) :: lake_index
-      real*8, dimension(nsize) :: tmp
+      real(kind=real64), dimension(nsize) :: tmp
       integer tag, i, status, ierr, k
       if(nsize .le. 0) return
 

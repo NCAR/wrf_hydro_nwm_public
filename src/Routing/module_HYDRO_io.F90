@@ -14,7 +14,7 @@ module module_HYDRO_io
    use netcdf
    use module_hydro_stop, only:HYDRO_stop
    use hashtable
-   use iso_fortran_env, only: int64, compiler_version
+   use iso_fortran_env, only: int64, real64, compiler_version
 
    implicit none
 
@@ -4726,7 +4726,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake
-     real*8, dimension(NLAKES),                intent(in) :: resht
+     real(kind=real64), dimension(NLAKES),     intent(in) :: resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
 
@@ -4760,7 +4760,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(inout) :: latlake,lonlake,elevlake
-     real*8, dimension(NLAKES),                intent(inout) :: resht
+     real(kind=real64), dimension(NLAKES),     intent(inout) :: resht
      real, dimension(NLAKES),                  intent(inout) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
      integer(kind=int64), dimension(NLAKES),   intent(in) :: LAKEIDM     ! lake id
@@ -4796,7 +4796,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake
-     real*8, dimension(NLAKES),                intent(in) :: resht
+     real(kind=real64), dimension(NLAKES),     intent(in) :: resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
      real,                                     intent(in) :: dtrt_ch
 
@@ -5055,7 +5055,7 @@ end subroutine mpp_output_chrt
      integer,                                  intent(in) :: split_output_count
      integer,                                  intent(in) :: NLAKES
      real, dimension(NLAKES),                  intent(in) :: latlake,lonlake,elevlake
-     real*8, dimension(NLAKES),                intent(in) :: resht
+     real(kind=real64), dimension(NLAKES),     intent(in) :: resht
      real, dimension(NLAKES),                  intent(in) :: qlakei,qlakeo  !-- inflow and outflow of lake
      integer(kind=int64), dimension(NLAKES),       intent(in) :: LAKEIDM        !-- LAKE ID
      real,                                     intent(in) :: dtrt_ch
@@ -6516,7 +6516,7 @@ end if  ! end if(nlst_rt(did)%SUBRTSWCRT  .eq. 1 .or. &
            implicit none
            integer:: ncid,n,varid , iret
            character(len=*) varName
-           real*8 inVar(n)
+           real(kind=real64) inVar(n)
 #ifdef MPP_LAND
            integer:: nodelist(n)
            if(n .eq. 0) return
@@ -7155,7 +7155,7 @@ end subroutine RESTART_IN_nc
       subroutine read_rst_crt_nc8(ncid,var,n,varStr)
          implicit none
          integer ::  ncid, varid, n, iret
-         real*8,dimension(n) ::  var
+         real(kind=real64),dimension(n) ::  var
          character(len=*) :: varStr
 
          if( n .le. 0)  return

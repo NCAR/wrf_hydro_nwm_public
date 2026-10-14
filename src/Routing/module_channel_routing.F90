@@ -10,7 +10,7 @@ use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
 
-use iso_fortran_env, only: int64
+use iso_fortran_env, only: int64, real64
 
 #endif
 implicit none
@@ -628,7 +628,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
-        REAL*8, INTENT(INOUT), DIMENSION(NLAKES)  :: RESHT    !-- reservoir height (m)
+        real(kind=real64), INTENT(INOUT), DIMENSION(NLAKES) :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
@@ -669,7 +669,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer  :: nToNodeInd
         real, dimension(nToNodeInd,2) :: gQLINK
         real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
-        real*8, allocatable,dimension(:) :: tmpRESHT
+        real(kind=real64), allocatable,dimension(:) :: tmpRESHT
 #else
         real(kind=8), dimension(NLINKS)                   :: LQLateral !--lateral flow
 #endif
@@ -1705,7 +1705,7 @@ end subroutine drive_CHANNEL
        !-- lake params
        integer(kind=int64), intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
-       real*8, intent(INOUT), dimension(:)  :: RESHT    !-- reservoir height (m)
+       real(kind=real64), intent(INOUT), dimension(:) :: RESHT    !-- reservoir height (m)
        real, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
        real,                dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
        real, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
@@ -1754,7 +1754,7 @@ end subroutine drive_CHANNEL
        integer :: n, kk2, nt, nsteps  ! tmp
        real, intent(in), dimension(:) :: qout_gwsubbas
        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
-       real*8, allocatable,dimension(:) :: tmpRESHT
+       real(kind=real64), allocatable,dimension(:) :: tmpRESHT
        integer, allocatable, dimension(:) :: tmpFinalResType
        real, allocatable,dimension(:) :: tmpAssimilatedValue
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
