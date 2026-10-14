@@ -683,7 +683,7 @@ end subroutine get_albedo12m_netcdf
          character(len=*),     intent(in)  :: callingRoutine
          logical,              intent(in)  :: fatal_if_error
 
-         integer :: varid, iret, ndims
+         integer :: varid, iret, ndims, dimLen1, dimLen2
          integer, dimension(2) :: dimids
          real, dimension(size(var,2),size(var,1)) :: tempTranspose
          real, dimension(size(var,2)) :: tempFlat
@@ -699,8 +699,17 @@ end subroutine get_albedo12m_netcdf
          iRet = nf90_inquire_variable(ncid, varid, ndims=ndims, dimids=dimids)
 
          if (ndims == 2) then
-            !print *, "DEBUG var dims", size(var,1), size(var,2)
-            ! TODO: verify that time dimension = 365
+            ! File layout is (time, reservoir) in C order, so the Fortran dimension
+            ! lengths are (reservoir, time). Verify both before reading so a longer
+            ! or transposed time dimension is not silently truncated by nf90_get_var.
+            iRet = nf90_inquire_dimension(ncid, dimids(1), len=dimLen1)
+            iRet = nf90_inquire_dimension(ncid, dimids(2), len=dimLen2)
+            if (dimLen1 /= size(var,2) .or. dimLen2 /= size(var,1) .or. size(var,1) /= 365) then
+               print*, trim(callingRoutine) // ": get_2d_netcdf_real: variable: " // trim(varName) // &
+                  " has shape (", dimLen1, ",", dimLen2, "), expected (reservoirs,365)"
+               if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
+               return
+            end if
 
             iRet = nf90_get_var(ncid, varid, tempTranspose)
             if (iRet /= nf90_NoErr) then
@@ -7493,6 +7502,7 @@ real, intent(INOUT),  dimension(:,:)    :: ORIFICEC
 real, intent(INOUT),  dimension(:)      :: ORIFICEA
 real, intent(INOUT),  dimension(:)      :: ORIFICEE
 integer, intent(INOUT), dimension(:)    :: reservoir_type
+real :: weirc_value, orificec_value   !-- static text-file coefficients
 character(len=*), intent(in)            :: reservoir_parameter_file
 real, intent(INOUT),  dimension(:)      :: LATLAKE,LONLAKE,ELEVLAKE
 real, intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw
@@ -7623,9 +7633,12 @@ if (channel_option .eq. 3) then
           call flush(6)
           read(79,*)  header  !-- read the lake file
           do i=1, NLAKES
+            ! text format has one (static) coefficient per lake; apply it to every day
             read (79,*,err=5101) tmp, HRZAREA(i),LAKEMAXH(i), &
-            WEIRC(:,i), WEIRL(i), ORIFICEC(:,i), ORIFICEA(i), ORIFICEE(i),&
+            weirc_value, WEIRL(i), orificec_value, ORIFICEA(i), ORIFICEE(i),&
             LATLAKE(i), LONLAKE(i),ELEVLAKE(i), WEIRH(i), reservoir_type(i)
+            WEIRC(:,i) = weirc_value
+            ORIFICEC(:,i) = orificec_value
           enddo
 5101      continue
           close(79)
