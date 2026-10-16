@@ -288,10 +288,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
           if ( (h_0 .gt. bfd) .and. (TwCC .gt. 0.0) .and. (nCC .gt. 0.0) .and. (Ck .gt. 0.0) ) then
           !water outside of defined channel
-             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2.0*TwCC*So*Ck*dx)))))
+             X = min(0.5,max(0.0,0.5*(1-(Qj_0/(TwCC*So*Ck*dx)))))
           else
             if(Ck .gt. 0.0) then
-              X = min(0.5,max(0.0,0.5*(1-(Qj_0/(2.0*Twl*So*Ck*dx)))))
+              X = min(0.5,max(0.0,0.5*(1-(Qj_0/(Twl*So*Ck*dx)))))
             else
               X = 0.5
             endif
@@ -371,10 +371,10 @@ use module_RT_data, only: rt_domain  !! JLM: this is only used in a c3 paramter 
 
           if ( (h .gt. bfd) .and. (TwCC .gt. 0.0) .and. (nCC .gt. 0.0) .and. (Ck .gt. 0.0) ) then
           !water outside of defined channel
-            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2.0*TwCC*So*Ck*dx)))))
+            X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(TwCC*So*Ck*dx)))))
           else
             if(Ck .gt. 0.0) then
-             X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(2.0*Twl*So*Ck*dx)))))
+             X = min(0.5,max(0.25,0.5*(1-(((C1*qup)+(C2*quc)+(C3*qdp) + C4)/(Twl*So*Ck*dx)))))
             else
              X = 0.5
             endif
