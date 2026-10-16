@@ -684,7 +684,7 @@ end subroutine get_albedo12m_netcdf
          logical,              intent(in)  :: fatal_if_error
 
          integer :: varid, iret, ndims, dimLen1, dimLen2
-         integer, dimension(2) :: dimids
+         integer, dimension(nf90_max_var_dims) :: dimids
          real, dimension(size(var,2),size(var,1)) :: tempTranspose
          real, dimension(size(var,2)) :: tempFlat
 
@@ -696,9 +696,13 @@ end subroutine get_albedo12m_netcdf
             end if
          end if
 
-         iRet = nf90_inquire_variable(ncid, varid, ndims=ndims, dimids=dimids)
+         ! Query ndims before dimids so a variable with more dimensions than
+         ! expected is caught by the ndims check below instead of overrunning
+         ! a too-small dimids buffer.
+         iRet = nf90_inquire_variable(ncid, varid, ndims=ndims)
 
          if (ndims == 2) then
+            iRet = nf90_inquire_variable(ncid, varid, dimids=dimids(1:ndims))
             ! File layout is (time, reservoir) in C order, so the Fortran dimension
             ! lengths are (reservoir, time). Verify both before reading so a longer
             ! or transposed time dimension is not silently truncated by nf90_get_var.
