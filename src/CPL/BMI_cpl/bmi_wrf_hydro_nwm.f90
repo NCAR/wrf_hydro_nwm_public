@@ -449,7 +449,9 @@ contains
     bmi_status = BMI_SUCCESS
     call stat_check(this%get_current_time(current_time), bmi_status, PROCEED)
     call stat_check(this%get_time_step(time_step), bmi_status, PROCEED)
-    call land_driver_exe(int(current_time), this%model)
+    ! current_time counts completed steps, land_driver_exe takes the 1-based
+    ! index of the step being run (ITIME = 1..NTIME in main_hrldas_driver)
+    call land_driver_exe(int(current_time + time_step), this%model)
     this%model%itimestep = this%model%itimestep + int(time_step)
   end procedure ! wrf_hydro_update
 
@@ -488,7 +490,7 @@ contains
   !---------------------------------------------------------------------
   ! Start time of the model.
   module procedure wrf_hydro_start_time
-    time = 1.0
+    time = 0.0
     bmi_status = BMI_SUCCESS
   end procedure ! wrf_hydro_start_time
 

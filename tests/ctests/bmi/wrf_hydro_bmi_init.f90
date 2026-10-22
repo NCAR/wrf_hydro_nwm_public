@@ -20,9 +20,9 @@ program wrf_hydro_nwm_bmi_init
      print * , "model_name(1:14) = ", trim(model_name(1:13))
      error stop "ERROR: bmi_init :: model_name /= WRF-Hydro v5."
   end if
-  if (current_time /= 1.0) then
+  if (current_time /= 0.0) then
      print *, "current time =", current_time
-     error stop "ERROR: bmi_init :: current_time /= 1.0"
+     error stop "ERROR: bmi_init :: current_time /= 0.0"
   end if
   if (end_time /= 24.0) then
      print *, "end time =", end_time
