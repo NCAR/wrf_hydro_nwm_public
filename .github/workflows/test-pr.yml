@@ -95,15 +95,20 @@ jobs:
 
       - name: Compile reference
         run: |
+          CMAKE_ARGS=""
+          if [ "${{ matrix.configuration }}" = "bmi" ]; then
+             CMAKE_ARGS="-DBMI=ON"
+          fi
+
           cd $GITHUB_WORKSPACE/reference
-          cmake -B build
+          cmake -B build ${CMAKE_ARGS}
           make -C build -j
 
       - name: Compile candidate
         run: |
           CMAKE_ARGS=""
           if [ "${{ matrix.configuration }}" = "bmi" ]; then
-             CMAKE_ARGS="-DBMI=1"
+             CMAKE_ARGS="-DBMI=ON"
           fi
 
           cd $GITHUB_WORKSPACE/candidate
