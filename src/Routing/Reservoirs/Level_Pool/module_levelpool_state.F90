@@ -7,12 +7,16 @@
 module module_levelpool_state
 
     use module_reservoir, only: reservoir_state
+    use iso_fortran_env, only: real64
     implicit none
 
     ! Extend/derive level pool state from the abstract base
     ! type for reservoir state.
     type, extends(reservoir_state) :: levelpool_state_interface
-        real :: water_elevation                 ! meters AMSL
+        ! Kept in double precision: at typical lake elevations (~1000s of m) a
+        ! single-precision real cannot resolve the small per-timestep level
+        ! changes produced by short routing timesteps, which freezes the lake level.
+        real(kind=real64) :: water_elevation    ! meters AMSL
 
     contains
 
@@ -27,7 +31,7 @@ contains
     subroutine levelpool_state_init(this, water_elevation)
         implicit none
         class(levelpool_state_interface), intent(inout) :: this ! the type object being initialized
-        real, intent(inout) :: water_elevation     ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation  ! meters AMSL
 
         ! Assign the water elevation value passed in to a particular level pool reservoir
         ! state object's variable for water elevation

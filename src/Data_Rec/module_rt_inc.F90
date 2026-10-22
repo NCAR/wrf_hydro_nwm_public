@@ -5,7 +5,7 @@ module module_rt_inc
    use module_subsurface_input
    use module_subsurface_output
    use module_reservoir, only: reservoir_container
-   use iso_fortran_env, only: int64
+   use iso_fortran_env, only: int64, real64
    implicit none
 
    TYPE RT_FIELD
@@ -169,7 +169,7 @@ module module_rt_inc
   REAL,  DIMENSION(50)     :: TOPWIDCC, NCC  !topwidth and mannings n of compund
 
   ! VARIABLES FOR  RESERVOIRS
-  REAL, allocatable, DIMENSION(:)      :: RESHT  !reservoir height
+  real(kind=real64), allocatable, DIMENSION(:) :: RESHT  !reservoir height (double: float32 cannot resolve small per-step level changes at lake elevations)
 !-- lake params
   integer(kind=int64), allocatable, dimension(:) :: LAKEIDA     !id of lakes in routlink file
   integer(kind=int64), allocatable, dimension(:) :: LAKEIDM     !id of LAKES Modeled in LAKEPARM.nc or tbl
