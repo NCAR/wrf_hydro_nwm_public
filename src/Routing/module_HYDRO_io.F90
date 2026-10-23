@@ -5103,7 +5103,7 @@ end subroutine mpp_output_chrt
 !#endif
 
       !- station location definition,  LAKEIDM
-      iret = nf90_def_var(ncid, "lake_id", NF90_INT, (/stationdim/), varid)
+      iret = nf90_def_var(ncid, "lake_id", NF90_INT64, (/stationdim/), varid)
       iret = nf90_put_att(ncid, varid, 'long_name', 'Lake COMMON ID')
 
 !#ifndef HYDRO_REALTIME
@@ -9805,7 +9805,7 @@ if (io_config_outputs .le. 0) then
 !        iret = nf90_put_att(ncid, varid, '_FillValue', -1)
 endif
 
-        iret = nf90_def_var(ncid, "time", NF90_INT, (/timedim/), varid)
+        iret = nf90_def_var(ncid, "time", NF90_INT64, (/timedim/), varid)
         iret = nf90_put_att(ncid, varid, 'units', sec_valid_date)
         iret = nf90_put_att(ncid, varid, 'long_name', 'valid output time')
 
@@ -9860,7 +9860,7 @@ endif
 
      !-- station  id
      ! define character-position dimension for strings of max length 11
-        iret = nf90_def_var(ncid, "station_id", NF90_INT, (/stationdim/), varid)
+        iret = nf90_def_var(ncid, "station_id", NF90_INT64, (/stationdim/), varid)
         iret = nf90_put_att(ncid, varid, 'long_name', 'Station id')
 
        !! JLM: Write/define a global attribute of the file as the LSM timestep. Enforce
