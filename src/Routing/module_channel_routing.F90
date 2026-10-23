@@ -1340,9 +1340,9 @@ end subroutine drive_CHANNEL
 !=======find flow depth in channel with bisection Chapra pg. 131
     REAL FUNCTION HEAD(idx,AREA,Bw,z)  !-- find the water elevation given wetted area,
                                          !--bottom widith and side channel.. index was for debuggin
-     REAL :: Bw,z,AREA,test
+     REAL :: Bw,z,AREA
      REAL :: hl, hu, hr, hrold
-     REAL :: fl, fr,error                !-- function evaluation
+     REAL :: fr,error                !-- function evaluation
      INTEGER :: maxiter, idx
 
      error = 1.0
@@ -1367,21 +1367,16 @@ end subroutine drive_CHANNEL
 
       maxiter =0
       hr = 0
-      fl = AREAf(AREA,Bw,hl,z)
       do while (error .gt. 0.0001 .and. maxiter < 1000)
         hrold = hr
         hr = (hl+hu)/2
         fr =  AREAf(AREA,Bw,hr,z)
         maxiter = maxiter + 1
-         if (hr .ne. 0) then
-          error = abs((hr - hrold)/hr)
-         endif
-        test = fl * fr
-         if (test.lt.0) then
+         error = abs((hr - hrold)/hr)
+         if (fr.gt.0) then
            hu = hr
-         elseif (test.gt.0) then
+         elseif (fr.lt.0) then
            hl=hr
-           fl = fr
          else
            error = 0.0
          endif
