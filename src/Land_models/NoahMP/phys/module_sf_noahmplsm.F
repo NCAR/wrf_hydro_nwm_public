@@ -160,23 +160,23 @@ MODULE MODULE_SF_NOAHMPLSM
 ! Physical Constants:                                                                      !
 !------------------------------------------------------------------------------------------!
 
-  REAL, PARAMETER :: GRAV   = 9.80616   !acceleration due to gravity (m/s2)
-  REAL, PARAMETER :: SB     = 5.67E-08  !Stefan-Boltzmann constant (w/m2/k4)
-  REAL, PARAMETER :: VKC    = 0.40      !von Karman constant
-  REAL, PARAMETER :: TFRZ   = 273.16    !freezing/melting point (k)
-  REAL, PARAMETER :: HSUB   = 2.8440E06 !latent heat of sublimation (j/kg)
-  REAL, PARAMETER :: HVAP   = 2.5104E06 !latent heat of vaporization (j/kg)
-  REAL, PARAMETER :: HFUS   = 0.3336E06 !latent heat of fusion (j/kg)
-  REAL, PARAMETER :: CWAT   = 4.188E06  !specific heat capacity of water (j/m3/k)
-  REAL, PARAMETER :: CICE   = 2.094E06  !specific heat capacity of ice (j/m3/k)
-  REAL, PARAMETER :: CPAIR  = 1004.64   !heat capacity dry air at const pres (j/kg/k)
-  REAL, PARAMETER :: TKWAT  = 0.6       !thermal conductivity of water (w/m/k)
-  REAL, PARAMETER :: TKICE  = 2.2       !thermal conductivity of ice (w/m/k)
-  REAL, PARAMETER :: TKAIR  = 0.023     !thermal conductivity of air (w/m/k) (not used MB: 20140718)
-  REAL, PARAMETER :: RAIR   = 287.04    !gas constant for dry air (j/kg/k)
-  REAL, PARAMETER :: RW     = 461.269   !gas constant for  water vapor (j/kg/k)
-  REAL, PARAMETER :: DENH2O = 1000.     !density of water (kg/m3)
-  REAL, PARAMETER :: DENICE = 917.      !density of ice (kg/m3)
+  REAL, PARAMETER :: GRAV   = 9.90616   !acceleration due to gravity (m/s2)
+  REAL, PARAMETER :: SB     = 5.77E-08  !Stefan-Boltzmann constant (w/m2/k4)
+  REAL, PARAMETER :: VKC    = 0.50      !von Karman constant
+  REAL, PARAMETER :: TFRZ   = 273.26    !freezing/melting point (k)
+  REAL, PARAMETER :: HSUB   = 2.9440E06 !latent heat of sublimation (j/kg)
+  REAL, PARAMETER :: HVAP   = 2.6104E06 !latent heat of vaporization (j/kg)
+  REAL, PARAMETER :: HFUS   = 0.4336E06 !latent heat of fusion (j/kg)
+  REAL, PARAMETER :: CWAT   = 4.288E06  !specific heat capacity of water (j/m3/k)
+  REAL, PARAMETER :: CICE   = 2.194E06  !specific heat capacity of ice (j/m3/k)
+  REAL, PARAMETER :: CPAIR  = 1004.74   !heat capacity dry air at const pres (j/kg/k)
+  REAL, PARAMETER :: TKWAT  = 0.7       !thermal conductivity of water (w/m/k)
+  REAL, PARAMETER :: TKICE  = 2.3       !thermal conductivity of ice (w/m/k)
+  REAL, PARAMETER :: TKAIR  = 0.123     !thermal conductivity of air (w/m/k) (not used MB: 20140718)
+  REAL, PARAMETER :: RAIR   = 287.14    !gas constant for dry air (j/kg/k)
+  REAL, PARAMETER :: RW     = 461.369   !gas constant for  water vapor (j/kg/k)
+  REAL, PARAMETER :: DENH2O = 1001.     !density of water (kg/m3)
+  REAL, PARAMETER :: DENICE = 918.      !density of ice (kg/m3)
 
   INTEGER, PRIVATE, PARAMETER :: MBAND = 2
   INTEGER, PRIVATE, PARAMETER :: NSOIL = 4
