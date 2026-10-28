@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 3.24)
-cmake_policy(SET CMP0074 NEW) # use xxxx_ROOT env vars
 if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -15,12 +14,10 @@ set (National_Water_Model_VERSION_MINOR 1)
 set (National_Water_Model_VERSION_PATCH beta)
 
 # set cmake to work with MPI Fortran
-enable_language (Fortran)
 enable_testing()
 find_package(MPI REQUIRED)
 add_compile_options(${MPI_Fortran_COMPILE_OPTIONS})
 include_directories(${MPI_Fortran_INCLUDE_PATH})
-link_directories(${MPI_Fortran_LIBRARIES})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -131,60 +128,60 @@ message("=============================================================")
 message("-- Start of WRF-Hydro Env VARIABLES" )
 
 #always use -DMPP_LAND
-add_definitions(-DMPP_LAND)
+add_compile_definitions(MPP_LAND)
 
 # set -DWRF_HYDRO from env
 message("WRF_HYDRO = " ${WRF_HYDRO} )
 if (WRF_HYDRO STREQUAL "1" )
-        add_definitions(-DWRF_HYDRO)
+        add_compile_definitions(WRF_HYDRO)
 endif()
 
 #set -DHYDRO_D from env
 message("HYDRO_D = " ${HYDRO_D} )
 if (HYDRO_D STREQUAL "1" )
-        add_definitions(-DHYDRO_D)
+        add_compile_definitions(HYDRO_D)
 endif()
 
 # set -DWRF_HYDRO_RAPID from env
 if (WRF_HYDRO_RAPID STREQUAL "1" )
         message("WRF_HYDRO_RAPID = " ${WRF_HYDRO_RAPID} )
-        add_definitions(-DWRF_HYDRO_RAPID)
+        add_compile_definitions(WRF_HYDRO_RAPID)
 endif()
 
 #set -DSPATIAL_SOIL from env
 message("SPATIAL_SOIL = " ${SPATIAL_SOIL} )
 if (SPATIAL_SOIL STREQUAL "1" )
-        add_definitions(-DSPATIAL_SOIL)
+        add_compile_definitions(SPATIAL_SOIL)
 endif()
 
 #set -DWRFIO_NCD_LARGE_FILE_SUPPORT from env
 message("WRFIO_NCD_LARGE_FILE_SUPPORT = " ${WRFIO_NCD_LARGE_FILE_SUPPORT} )
 if(WRFIO_NCD_LARGE_FILE_SUPPORT STREQUAL "1" )
-        add_definitions(-DWRFIO_NCD_LARGE_FILE_SUPPORT)
+        add_compile_definitions(WRFIO_NCD_LARGE_FILE_SUPPORT)
 endif()
 
 #set -DNCEP_WCOSS from env
 message("NCEP_WCOSS = " ${NCEP_WCOSS} )
 if (NCEP_WCOSS STREQUAL "1" )
-        add_definitions(-DNCEP_WCOSS)
+        add_compile_definitions(NCEP_WCOSS)
 endif()
 
 #set -DNWM_META from env
 message("NWM_META = " ${NWM_META} )
 if (NWM_META STREQUAL "1" )
-        add_definitions(-DNWM_META)
+        add_compile_definitions(NWM_META)
 endif()
 
 #set -DWRF_HYDRO_NUDGING from env
 message("WRF_HYDRO_NUDGING = " ${WRF_HYDRO_NUDGING} )
 if (WRF_HYDRO_NUDGING STREQUAL "1" )
-        add_definitions(-DWRF_HYDRO_NUDGING)
+        add_compile_definitions(WRF_HYDRO_NUDGING)
 endif()
 
 #set -DOUTPUT_CHAN_CONN from env
 if (OUTPUT_CHAN_CONN STREQUAL "1" )
         message("OUTPUT_CHAN_CONN = " ${OUTPUT_CHAN_CONN} )
-        add_definitions(-DOUTPUT_CHAN_CONN)
+        add_compile_definitions(OUTPUT_CHAN_CONN)
         # requires nudging io module
         set(WRF_HYDRO_NUDGING_IO "1")
 endif()
@@ -192,13 +189,13 @@ endif()
 #set -DPRECIP_DOUBLE from env
 message("PRECIP_DOUBLE = " ${PRECIP_DOUBLE} )
 if (PRECIP_DOUBLE STREQUAL "1" )
-        add_definitions(-DPRECIP_DOUBLE)
+        add_compile_definitions(PRECIP_DOUBLE)
 endif()
 
 #set -DWRF_HYDRO_NUOPC from env
 message("WRF_HYDRO_NUOPC = " ${WRF_HYDRO_NUOPC} )
 if (WRF_HYDRO_NUOPC STREQUAL "1" )
-        add_definitions(-DWRF_HYDRO_NUOPC)
+        add_compile_definitions(WRF_HYDRO_NUOPC)
 endif()
 
 option(BUILD_CROCUS "Build Crocus" ON)
@@ -216,7 +213,7 @@ option(MODFLOW "MODFLOW Coupling, turns on BMI coupling" OFF)
 # MODFLOW requires BMI
 if (MODFLOW)
   set(BMI ON)
-  add_definitions(-DWRF_HYDRO_MODFLOW)
+  add_compile_definitions(WRF_HYDRO_MODFLOW)
 endif()
 message(STATUS "Coupling Options")
 message("BMI = " ${BMI} )
@@ -233,10 +230,16 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU.*")
         endif()
         set(CMAKE_Fortran_FLAGS_RELEASE "-O2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbacktrace")
-elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel.*")
-        # set compile flags for ifort
-        message( "-- Using ifort")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+        # set compile flags for ifx
+        message( "-- Using ifx")
         set(CMAKE_Fortran_FLAGS "-fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian")
+        set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=core-avx2")
+        set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+        # set compile flags for ifort classic
+        message( "-- Using ifort")
+        set(CMAKE_Fortran_FLAGS "-fpp -w -ftz -align all -fno-alias -fp-model precise -FR -convert big_endian -diag-disable=10448")
         set(CMAKE_Fortran_FLAGS_RELEASE "-O2 -march=core-avx2")
         set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
 elseif ((CMAKE_Fortran_COMPILER_ID MATCHES "PGI.*") OR (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC.*"))
@@ -260,7 +263,7 @@ endif()
 message("-- CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
 
 #set output directories for libraries binaries and fortran .mod files
-set(CMAKE_BINARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/mods)
@@ -273,9 +276,6 @@ include_directories(AFTER ${MPI_INCLUDE_PATH})
 include_directories(AFTER ${NETCDF_INCLUDES_F77})
 include_directories(AFTER ${NETCDF_INCLUDES_F90})
 include_directories(AFTER ${PROJECT_SOURCE_DIR}/src/Data_Rec)
-
-# make an if statement
-enable_language(CXX)
 
 add_subdirectory("src")
 add_subdirectory("tests/ctests")
