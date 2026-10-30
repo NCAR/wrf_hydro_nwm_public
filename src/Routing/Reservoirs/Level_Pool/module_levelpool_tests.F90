@@ -197,7 +197,7 @@ contains
 
         print *, "Checking read on weir_coeffecient"
         print *, o%weir_coeffecient
-        if ( o%weir_coeffecient .lt. 8.0 - epsilon(8.0) .or. o%weir_coeffecient .gt. 8.0 + epsilon(8.0) ) then
+        if ( o%weir_coeffecient(1) .lt. 8.0 - epsilon(8.0) .or. o%weir_coeffecient(1) .gt. 8.0 + epsilon(8.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -221,7 +221,7 @@ contains
 
         print *, "Checking read on orifice_coefficient"
         print *, o%orifice_coefficient
-        if ( o%orifice_coefficient .lt. 14.0 - epsilon(14.0) .or. o%orifice_coefficient .gt. 14.0 + epsilon(14.0) ) then
+        if ( o%orifice_coefficient(1) .lt. 14.0 - epsilon(14.0) .or. o%orifice_coefficient(1) .gt. 14.0 + epsilon(14.0) ) then
             rv = .false.
             print *, "FAILED"
         end if
