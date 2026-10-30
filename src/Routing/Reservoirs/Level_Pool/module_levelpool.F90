@@ -22,7 +22,7 @@ module module_levelpool
     use module_reservoir, only: reservoir, reservoir_input, &
                                      reservoir_output
     use module_hydro_stop, only: HYDRO_stop
-    use iso_fortran_env, only: int64
+    use iso_fortran_env, only: int64, real64
 
 #ifdef RESERVOIR_D
     use module_reservoir_utilities, only: create_levelpool_diagnostic_log_file, &
@@ -60,7 +60,7 @@ contains
 
         implicit none
         class(levelpool), intent(inout) :: this ! object being initialized
-        real, intent(inout) :: water_elevation           ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation  ! meters AMSL
         real, intent(in)    :: lake_area                 ! area of lake (km^2)
         real, intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real, intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -156,7 +156,7 @@ contains
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
+        real(kind=real64), intent(inout) :: water_elevation  ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
@@ -212,7 +212,7 @@ contains
 
 #ifdef RESERVOIR_D
         ! Log diagnostic data only for development/debugging purposes
-        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, water_elevation, outflow)
+        call log_levelpool_diagnostic_data(this%properties%lake_number, inflow, real(water_elevation), outflow)
 #endif
 
     end subroutine run_levelpool_reservoir
@@ -226,7 +226,7 @@ contains
         !! ----------------------------  argument variables
         !! All elevations should be relative to a common base (often belev(k))
 
-        real, intent(INOUT) :: H       ! water elevation height (m)
+        real(kind=real64), intent(INOUT) :: H  ! water elevation height (m)
         real, intent(IN)    :: dt      ! routing period [s]
         real, intent(IN)    :: qi0     ! inflow at previous timestep (cms)
         real, intent(IN)    :: qi1     ! inflow at current timestep (cms)
@@ -244,15 +244,15 @@ contains
         integer(kind=int64), intent(IN) :: ln      ! lake number
         integer, intent(in) :: lake_opt ! reservoir physics options (1: levelpool, 2: passthrough)
 
-        real    :: Htmp                ! Temporary assign of incoming lake el. (m)
+        real(kind=real64) :: Htmp      ! Temporary assign of incoming lake el. (m)
 
         !! ----------------------------  local variables
-        real :: sap                    ! local surface area values
-        real :: discharge              ! storage discharge m^3/s
-        real :: tmp1, tmp2
-        real :: dh, dh1, dh2, dh3      ! Depth in weir, and height function for 3 order RK
-        real :: It, Itdt_3, Itdt_2_3   ! inflow hydrographs
-        real :: maxWeirDepth           !maximum capacity of weir
+        real(kind=real64) :: sap       ! local surface area values
+        real(kind=real64) :: discharge ! storage discharge m^3/s
+        real(kind=real64) :: tmp1, tmp2
+        real(kind=real64) :: dh, dh1, dh2, dh3  ! Depth in weir, and height function for 3 order RK
+        real(kind=real64) :: It, Itdt_3, Itdt_2_3  ! inflow hydrographs
+        real(kind=real64) :: maxWeirDepth  !maximum capacity of weir
         !real :: hdiff_vol, qdiff_vol   ! water balance check variables
         !! ----------------------------  subroutine body: from chow, mad mays. pg. 252
         !! -- determine from inflow hydrograph

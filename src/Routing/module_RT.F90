@@ -6,7 +6,7 @@ MODULE module_Routing
    use MODULE_mpp_ReachLS, only: ReachLS_ini, getlocalindx,  getToInd
    USE module_mpp_land, only : left_id, up_id, right_id, down_id, mpp_land_com_integer, &
                                mpp_land_bcast_int, mpp_land_bcast_int1, &
-                               updateLake_seq
+                               updateLake_seq8
    use module_mpp_GWBUCKET, only : collectSizeInd
 #else
    !yw use module_HYDRO_io, only: read_routedim, read_routing_old, read_chrouting,read_simp_gw
@@ -21,7 +21,7 @@ MODULE module_Routing
    use module_rfc_forecasts, only: rfc_forecasts
    use module_hydro_stop, only: HYDRO_stop
    use hashtable
-   use iso_fortran_env, only: int64
+   use iso_fortran_env, only: int64, real64
 #ifdef OUTPUT_CHAN_CONN
 #ifdef MPP_LAND
    use mpi
@@ -674,7 +674,7 @@ subroutine LandRT_ini(did)
   integer, allocatable, dimension(:) :: tmp_int
   real, allocatable, dimension(:) :: tmp_real
   integer, allocatable, dimension(:) :: buf
-  real, allocatable, dimension(:) :: tmpRESHT
+  real(kind=real64), allocatable, dimension(:) :: tmpRESHT
   integer :: new_start_i, new_start_j, new_end_i, new_end_j
 
 #ifdef OUTPUT_CHAN_CONN
@@ -1446,7 +1446,7 @@ subroutine LandRT_ini(did)
 #endif
 
 #ifdef MPP_LAND
-        call updateLake_seq(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
+        call updateLake_seq8(rt_domain(did)%RESHT, rt_domain(did)%NLAKES,tmpRESHT)
         if(my_id .eq. io_id) then
            if(allocated(tmpRESHT)) deallocate(tmpRESHT)
         endif

@@ -6,6 +6,8 @@
 ! for running a reservoir.
 module module_reservoir
 
+    use iso_fortran_env, only: real64
+
     ! Defines the reservoir base state type that sub-types of
     ! reservoirs will derive from. Since this is abstract, an instance
     ! of reservoir state cannot be created but only derived to sub-types
@@ -94,12 +96,12 @@ module module_reservoir
         subroutine run_reservoir_interface(this, previous_timestep_inflow, inflow, &
             lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
             assimilated_value, assimilated_source_file)
-            import reservoir
+            import reservoir, real64
             class(reservoir), intent(inout) :: this
             real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
             real, intent(in)    :: inflow                   ! cubic meters per second (cms)
             real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-            real, intent(inout) :: water_elevation          ! meters AMSL
+            real(kind=real64), intent(inout) :: water_elevation  ! meters AMSL
             real, intent(out)   :: outflow                  ! cubic meters per second (cms)
             real, intent(in)    :: routing_period           ! seconds
             integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files

@@ -3,7 +3,7 @@ MODULE MODULE_MPP_LAND
 
    use MODULE_CPL_LAND
    use mpi
-   use iso_fortran_env, only: int64
+   use iso_fortran_env, only: int64, real64
 
    IMPLICIT NONE
    !integer, public :: HYDRO_COMM_WORLD ! communicator for WRF-Hydro - moved to MODULE_CPL_LAND
@@ -2155,6 +2155,43 @@ contains
       end if
    end subroutine write_lake_real
 
+   subroutine write_lake_real8(v,nodelist_in,nlakes)
+      implicit none
+      real(kind=real64) recv(nlakes), v(nlakes)
+      integer nodelist(nlakes), nlakes, nodelist_in(nlakes)
+      integer i, ierr, tag, k
+      integer length, node
+
+      nodelist = nodelist_in
+      if(my_id .eq. IO_id) then
+         do i = 0, numprocs - 1
+            if(i .ne. my_id) then
+               !block receive  from other node.
+               tag = 129
+               call MPI_Recv(nodelist,nlakes,MPI_INTEGER,i, &
+                  tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+               tag = 139
+               call MPI_Recv(recv(:),nlakes,MPI_DOUBLE_PRECISION,i,  &
+                  tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+
+               do k = 1,nlakes
+                  if(nodelist(k) .gt. -99) then
+                     node = nodelist(k)
+                     v(node) = recv(node)
+                  endif
+               enddo
+            end if
+         end do
+      else
+         tag =  129
+         call MPI_Send(nodelist,nlakes,MPI_INTEGER, IO_id,     &
+            tag,HYDRO_COMM_WORLD,ierr)
+         tag = 139
+         call MPI_Send(v,nlakes,MPI_DOUBLE_PRECISION,IO_id,   &
+            tag,HYDRO_COMM_WORLD,ierr)
+      end if
+   end subroutine write_lake_real8
+
 
    subroutine write_lake_char(v,nodelist_in,nlakes)
       implicit none
@@ -2650,6 +2687,39 @@ contains
    end subroutine updateLake_seq
 
 
+   subroutine updateLake_seq8(in,nsize,in0)
+      implicit none
+
+      integer :: nsize
+      real(kind=real64), dimension(:), intent(inout), asynchronous :: in
+      real(kind=real64), dimension(:), intent(in) :: in0
+
+      real(kind=real64), dimension(:), allocatable, asynchronous :: prev
+      real(kind=real64), dimension(:), allocatable :: adjustment
+      integer ierr
+
+      if (nsize .le. 0) return
+
+      allocate(adjustment(nsize))
+      allocate(prev(nsize))
+
+      if (my_id == IO_id) prev = in0
+      call MPI_Bcast(prev, nsize, MPI_DOUBLE_PRECISION, IO_id, HYDRO_COMM_WORLD, ierr)
+
+      if (my_id == IO_id) then
+         adjustment = in
+      else
+         adjustment = in - prev
+      end if
+
+      call MPI_Allreduce(adjustment, in, nsize, MPI_DOUBLE_PRECISION, MPI_SUM, HYDRO_COMM_WORLD, ierr)
+
+      deallocate(adjustment)
+      deallocate(prev)
+
+   end subroutine updateLake_seq8
+
+
    subroutine updateLake_seq_char(in,nsize,in0)
       implicit none
       integer :: nsize
@@ -2715,6 +2785,42 @@ contains
       call mpp_land_bcast_real_1d(in)
 
    end subroutine updateLake_grid
+
+
+   subroutine updateLake_grid8(in,nsize,lake_index)
+      implicit none
+      integer :: nsize
+      real(kind=real64), dimension(nsize) :: in
+      integer, dimension(nsize) :: lake_index
+      real(kind=real64), dimension(nsize) :: tmp
+      integer tag, i, status, ierr, k
+      if(nsize .le. 0) return
+
+      if(my_id .ne. IO_id) then
+         tag = 29
+         call MPI_Send(in,nsize,MPI_DOUBLE_PRECISION, IO_id,     &
+            tag,HYDRO_COMM_WORLD,ierr)
+         tag = 30
+         call MPI_Send(lake_index,nsize,MPI_INTEGER, IO_id,     &
+            tag,HYDRO_COMM_WORLD,ierr)
+      else
+         do i = 0, numprocs - 1
+            if(i .ne. IO_id) then
+               tag = 29
+               call MPI_Recv(tmp,nsize,&
+                  MPI_DOUBLE_PRECISION,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+               tag = 30
+               call MPI_Recv(lake_index,nsize,&
+                  MPI_INTEGER,i,tag,HYDRO_COMM_WORLD,mpp_status,ierr)
+               do k = 1, nsize
+                  if(lake_index(k) .gt. 0) in(k) = tmp(k)
+               end do
+            end if
+         end do
+      end if
+      call mpp_land_bcast_real8_1d(in)
+
+   end subroutine updateLake_grid8
 
 
 !subroutine match1dLake:
