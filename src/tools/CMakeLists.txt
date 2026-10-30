@@ -20,7 +20,7 @@ target_link_libraries(wrf_hydro_tools_bind_c
 
 add_custom_command(TARGET print_domain_decomposition
   POST_BUILD
-  COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/print_domain_decomposition ${CMAKE_BINARY_DIR}/Run/print_domain_decomposition)
+  COMMAND cp $<TARGET_FILE:print_domain_decomposition> ${CMAKE_BINARY_DIR}/Run/print_domain_decomposition)
 
 file(CREATE_LINK
   "${CMAKE_CURRENT_SOURCE_DIR}/wrf_hydro_decomposition.py"

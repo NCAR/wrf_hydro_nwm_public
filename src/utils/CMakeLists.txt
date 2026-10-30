@@ -10,8 +10,8 @@ endif()
 
 # add the preprocessor definitions for NWM_VERSION and WRF_HYDRO_VERSION
 # needed to compile module_version.F90
-add_definitions(-DNWM_VERSION="${NWM_VERSION}")
-add_definitions(-DWRF_HYDRO_VERSION="${WRF_HYDRO_VERSION}")
+add_compile_definitions(NWM_VERSION="${NWM_VERSION}")
+add_compile_definitions(WRF_HYDRO_VERSION="${WRF_HYDRO_VERSION}")
 
 # build the version static library
 add_library(hydro_utils STATIC

@@ -3,9 +3,9 @@ if(${PROJECT_NAME} STREQUAL "WRF")
         add_compile_options( "${PROJECT_COMPILE_OPTIONS}" )
         add_compile_definitions( "${PROJECT_COMPILE_DEFINITIONS}" )
         set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/hydro/mods)
-        add_definitions(-DMPP_LAND)
+        add_compile_definitions(MPP_LAND)
         if (WRF_HYDRO_NUDGING STREQUAL "1")
-                add_definitions(-DWRF_HYDRO_NUDGING=1)
+                add_compile_definitions(WRF_HYDRO_NUDGING=1)
         endif()
 endif()
 
@@ -201,21 +201,20 @@ if (HYDRO_LSM MATCHES "NoahMP")
                 # copy and setup executables
                 COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro
                 COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP
-                COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro
+                COMMAND cp $<TARGET_FILE:wrfhydro> ${CMAKE_BINARY_DIR}/Run/wrf_hydro
                 COMMAND ln -sf ${CMAKE_BINARY_DIR}/Run/wrf_hydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_NoahMP
-                COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
+                COMMAND rm $<TARGET_FILE:wrfhydro>
         )
         if (BMI)
                 add_custom_command(TARGET wrfhydro POST_BUILD
-                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/BMI_cpl/wrf_hydro_bmi ${CMAKE_BINARY_DIR}/Run/
-                        # COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/BMI_cpl/wrf_hydro_bmi_cpp ${CMAKE_BINARY_DIR}/Run/
+                        COMMAND cp $<TARGET_FILE:wrf_hydro_bmi> ${CMAKE_BINARY_DIR}/Run/
                 )
         endif()
         if (MODFLOW)
                 add_custom_command(TARGET wrfhydro POST_BUILD
-                        COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow ${CMAKE_BINARY_DIR}/Run/
+                        COMMAND cp $<TARGET_FILE:wrfhydro_modflow> ${CMAKE_BINARY_DIR}/Run/
                         # parallel needs more testing
-                        # COMMAND cp ${PROJECT_BINARY_DIR}/src/CPL/MODFLOW_cpl/wrfhydro_modflow_parallel ${CMAKE_BINARY_DIR}/Run/
+                        # COMMAND cp $<TARGET_FILE:wrfhydro_modflow_parallel> ${CMAKE_BINARY_DIR}/Run/
                 )
         endif()
         if(WRF_HYDRO_CREATE_EXE_SYMLINK)
@@ -287,14 +286,14 @@ elseif (HYDRO_LSM MATCHES "Noah")
         add_custom_command(TARGET wrfhydro POST_BUILD
             COMMAND mkdir -p ${CMAKE_BINARY_DIR}/Run
             COMMAND rm -f ${CMAKE_BINARY_DIR}/Run/*
-            COMMAND cp ${PROJECT_BINARY_DIR}/src/wrfhydro ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah
+            COMMAND cp $<TARGET_FILE:wrfhydro> ${CMAKE_BINARY_DIR}/Run/wrf_hydro_Noah
             COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/Noah/* ${CMAKE_BINARY_DIR}/Run
             COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/CHANPARM.TBL ${CMAKE_BINARY_DIR}/Run
             COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/hydro.namelist ${CMAKE_BINARY_DIR}/Run
             COMMAND cp ${PROJECT_SOURCE_DIR}/src/template/HYDRO/HYDRO.TBL ${CMAKE_BINARY_DIR}/Run
             COMMAND cp ${PROJECT_SOURCE_DIR}/src/Land_models/Noah/Run/*.TBL ${CMAKE_BINARY_DIR}/Run
             COMMAND ln -s wrf_hydro_Noah ${CMAKE_BINARY_DIR}/Run/wrf_hydro
-            COMMAND rm ${PROJECT_BINARY_DIR}/src/wrfhydro
+            COMMAND rm $<TARGET_FILE:wrfhydro>
         )
 
 
