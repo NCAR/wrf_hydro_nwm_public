@@ -14,8 +14,10 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
                        model output directory
         testname: The name of the test being run. Plots will be placed in this
                        named directory
-        feature_ids: A dict containing a list of channels and lake ids to create diff
-                       plots for, or None. If defined, should be {'channels': [], 'lakes': []}
+        feature_ids: A dict containing lists of channel, lake, and groundwater bucket ids
+                       to also plot timeseries for, or None. If defined, should be
+                       {'channels': [], 'lakes': [], 'gwout': []}. Difference statistics
+                       plots for CHRTOUT, LAKEOUT and GWOUT are made either way.
     """
     output_dir = Path(output_dir)
     candidatename = Path(candidatename)
@@ -39,27 +41,29 @@ def plot_diffs(output_dir, candidatename, referencename, testname, feature_ids=N
         f"-b {reference} -B {referencename} -c {candidate} -C {candidatename} " + \
         f"-n -t {thresholds}"
 
-    ldas_vars = ['ACCET','SFCRNOF','UGDRNOFF','SOIL_M','SNEQV','FSA','FIRA','TRAD','GRDFLX','LH','HFX']
+    ldas_vars = ['ACCET','SFCRNOFF','UGDRNOFF','SOIL_M','SNEQV','FSA','FIRA','TRAD','GRDFLX','LH','HFX']
 
-    cmd_gridded = cmd + " -f ldas:" + (",".join(ldas_vars)) + " -f rtout"
+    # (-f argument, filename pattern, feature_ids key for timeseries plots)
+    file_types = [
+        ("ldas:" + ",".join(ldas_vars), ".LDASOUT_DOMAIN", None),
+        ("rtout", ".RTOUT_DOMAIN", None),
+        ("chrtout", ".CHRTOUT_DOMAIN", "channels"),
+        ("lakeout", ".LAKEOUT_DOMAIN", "lakes"),
+        ("gwout", ".GWOUT_DOMAIN", "gwout"),
+    ]
 
-    print("\nPlotting gridded model diffs...")
-    os.system(cmd_gridded)
+    # One call per file type: generate_diff_plots.py aborts the whole run if
+    # any requested type has no files, and not every configuration writes
+    # every type (e.g. LAKEOUT needs lakes).
+    for file_type, pattern, ids_key in file_types:
+        name = file_type.split(":")[0]
+        if not any(reference.glob(f"*{pattern}*")):
+            print(f"\nNo *{pattern}* files in {reference}, skipping {name} plots")
+            continue
 
-    if feature_ids is None:
-        return
+        cmd_type = cmd + f" -f {file_type}"
+        if feature_ids and ids_key in feature_ids:
+            cmd_type += " -i '" + ",".join(feature_ids[ids_key]) + "'"
 
-    if 'channels' in feature_ids:
-        cmd_feature = cmd + " -f chrtout -i '" + ",".join(feature_ids['channels']) + "'"
-        print("\nPlotting channel model diffs...")
-        os.system(cmd_feature)
-
-    if 'lakes' in feature_ids:
-        cmd_feature = cmd + " -f lakeout -i '" + ",".join(feature_ids['lakes']) + "'"
-        print("\nPlotting lake model diffs...")
-        os.system(cmd_feature)
-
-    if 'gwout' in feature_ids:
-        cmd_feature = cmd + " -f gwout -i '" + ",".join(feature_ids['gwout']) + "'"
-        print("\nPlotting gwout model diffs...")
-        os.system(cmd_feature)
+        print(f"\nPlotting {name} model diffs...")
+        os.system(cmd_type)

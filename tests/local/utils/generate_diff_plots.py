@@ -74,7 +74,7 @@ FILE_TYPES = {
     },
     'chrtout': {
         'datatype': FEATURE,
-        'pattern': ".CHRTOUT_"
+        'pattern': ".CHRTOUT_DOMAIN"
     },
     'lakeout': {
         'datatype': FEATURE,
@@ -329,9 +329,7 @@ def get_stat(dataset, variable, stat):
     elif stat == "sum":
         da = dataset[variable].sum(dim=TIME, min_count=times)
     elif stat == "abssum":
-        da = dataset[variable]
-        da.data = np.abs(da.data)
-        da = da.sum(dim=TIME, min_count=times)
+        da = abs(dataset[variable]).sum(dim=TIME, min_count=times)
     elif stat == "mean":
         da = dataset[variable].mean(dim=TIME)
     elif stat == "std":
@@ -393,7 +391,7 @@ def plot_diffs(dataset, file_type, variable, var_label, outpath, type=GRIDDED, b
         start, end = (range[0], range[1])
         title += f"\n{start} to {end}"
     if value_range and value_range[1] != value_range[0]:
-        df = float(dataset[varname].max().compute())
+        df = float(abs(dataset[varname]).max().compute())
         max_err = "{0:.4f}".format(df / (value_range[1] - value_range[0]) * 100)
         title += f"\nValue range {value_range[0]} to {value_range[1]}, Max error {max_err}%"
     plt.suptitle(title, fontsize=40, weight='bold')
@@ -493,7 +491,8 @@ def process_variable(type, variable, datasets, outdir, base_label, comp_label, i
 
     diff = create_diff(datasets, variable, threshold)
 
-    df = diff[f"{variable}_diff"].max().compute()
+    # base - comp can be <= 0 everywhere, so check the magnitude, not the max
+    df = abs(diff[f"{variable}_diff"]).max().compute()
     if df == 0:
         logger.info(f"No differences found for type {type}, variable {variable}. Skipping plots")
         return True
