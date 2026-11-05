@@ -26,4 +26,7 @@ cd $diffs
 if [[ `ls -1 ./` ]]
 then
     python $cwd/attach_plots_to_pr.py -r $REPO -p $PR -d -t "$TOKEN" --title "$title" ./*
+else
+    echo "::warning title=No diff plots::No difference plots were made for configuration '$CONFIG' ($TEST_TYPE test)." \
+         "Any differences are in output that isn't plotted (e.g. restart files) or below the thresholds in thresholds.csv."
 fi
