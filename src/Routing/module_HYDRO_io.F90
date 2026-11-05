@@ -8983,6 +8983,8 @@ if(nlst(did)%compound_channel) then
 else
    print*, "compound_channel is FALSE in hydro.namelist."
    Tw = 0.0  !force top width to 0.0, this deactivates the compound channel formulation.
+   Tw_CC = 0.0
+   n_CC  = 0.0
 end if
 
 
