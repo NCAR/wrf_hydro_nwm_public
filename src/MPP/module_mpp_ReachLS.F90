@@ -984,7 +984,7 @@ MODULE MODULE_mpp_ReachLS
 
     ToInd(my_id+1) = kk
     do i = 0, numprocs - 1
-       call MPI_Bcast(ToInd(i+1),1,MPI_INTEGER8,   &
+       call MPI_Bcast(ToInd(i+1),1,MPI_INTEGER,   &
             i,HYDRO_COMM_WORLD,ierr)
     end do
 
