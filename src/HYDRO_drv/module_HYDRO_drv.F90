@@ -132,8 +132,8 @@ contains
         integer rstflag
         character(len=19) out_date
         integer :: Kt, ounit, i
-        real, dimension(RT_DOMAIN(did)%NLINKS,2) :: str_out
-        real, dimension(RT_DOMAIN(did)%NLINKS) :: vel_out
+        real, dimension(RT_DOMAIN(did)%nlinksize,2) :: str_out
+        real, dimension(RT_DOMAIN(did)%nlinksize) :: vel_out
 
 !    real, dimension(RT_DOMAIN(did)%ix,RT_DOMAIN(did)%jx):: soilmx_tmp, &
 !           runoff1x_tmp, runoff2x_tmp, runoff3x_tmp,etax_tmp, &
@@ -950,7 +950,10 @@ contains
                     nlst(did)%SUBRTSWCRT, rt_domain(did)%subsurface%state%qsubrt, &
                     RT_DOMAIN(did)%LAKE_INFLORT_TS, RT_DOMAIN(did)%QSTRMVOLRT_TS,&
                     RT_DOMAIN(did)%TO_NODE, RT_DOMAIN(did)%FROM_NODE, RT_DOMAIN(did)%TYPEL,&
-                    RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, RT_DOMAIN(did)%NLINKS,&
+                    RT_DOMAIN(did)%ORDER, RT_DOMAIN(did)%MAXORDER, &
+                    ! reach-based arrays are sized nlinksize = max(NLINKS, NLINKSL); NLINKS
+                    ! (local channel grid cells) can be < NLINKSL on some ranks
+                    merge(RT_DOMAIN(did)%nlinksize, RT_DOMAIN(did)%NLINKS, nlst(did)%channel_option /= 3), &
                     RT_DOMAIN(did)%CH_NETLNK, rt_domain(did)%overland%streams_and_lakes%ch_netrt,RT_DOMAIN(did)%CH_LNKRT,&
                     rt_domain(did)%overland%streams_and_lakes%lake_mask, nlst(did)%DT, nlst(did)%DTCT, nlst(did)%DTRT_CH,&
                     RT_DOMAIN(did)%MUSK, RT_DOMAIN(did)%MUSX,  RT_DOMAIN(did)%QLINK, &
