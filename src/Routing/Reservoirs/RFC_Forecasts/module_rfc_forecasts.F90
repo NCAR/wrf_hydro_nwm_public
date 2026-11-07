@@ -21,7 +21,7 @@ module module_rfc_forecasts
     use module_reservoir, only: reservoir, reservoir_input, reservoir_output
     use module_reservoir_read_rfc_time_series_data, only: time_series_data
     use module_hydro_stop, only: HYDRO_stop
-    use iso_fortran_env, only: int64
+    use iso_fortran_env, only: int64, real64
     implicit none
 
     ! Extend/derive rfc forecasts type from the abstract base
@@ -61,7 +61,7 @@ contains
 
         implicit none
         class(rfc_forecasts), intent(inout) :: this ! object being initialized
-        real,    intent(inout) :: water_elevation           ! meters AMSL
+        real(kind=real64), intent(inout) :: water_elevation ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
         real,    intent(in)    :: weir_coeffecient          ! weir coefficient
@@ -209,7 +209,7 @@ contains
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
         real, intent(in)    :: inflow                   ! cubic meters per second (cms)
         real, intent(in)    :: lateral_inflow           ! cubic meters per second (cms)
-        real, intent(inout) :: water_elevation          ! meters
+        real(kind=real64), intent(inout) :: water_elevation  ! meters
         real, intent(out)   :: outflow                  ! cubic meters per second (cms)
         real, intent(in)    :: routing_period           ! seconds
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
@@ -424,7 +424,7 @@ contains
         ! Log diagnostic data only for development/debugging purposes
         call log_rfc_forecasts_diagnostic_data(this%properties%lake_number, this%state%current_time, &
         this%properties%time_step_seconds, this%state%time_series_update_time, this%properties%lookback_seconds, &
-        this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, this%state%water_elevation, &
+        this%state%time_series_index, this%properties%rfc_gage_id, this%input%inflow, real(this%state%water_elevation), &
         levelpool_outflow, this%output%outflow)
 #endif
 
