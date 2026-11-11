@@ -2240,7 +2240,7 @@ Variables within the `LAKEPARM.nc` file are described in the tables below.
    | lake_id            | Lake index (consecutively from 1 to n # of      |
    |                    | lakes)                                          |
    +--------------------+-------------------------------------------------+
-   | LkArea             | Area [:math:`m^2`]                              |
+   | LkArea             | Area [:math:`km^2`]                              |
    +--------------------+-------------------------------------------------+
    | LkMxE              | Elevation of maximum lake height [:math:`m`,    |
    |                    | AMSL]                                           |
