@@ -64,11 +64,11 @@ contains
         real,    intent(inout) :: water_elevation           ! meters AMSL
         real,    intent(in)    :: lake_area      		    ! area of lake (km^2)
         real,    intent(in)    :: weir_elevation            ! bottom of weir elevation (meters AMSL)
-        real,    intent(in)    :: weir_coeffecient          ! weir coefficient
+        real,    intent(in)    :: weir_coeffecient(:)       ! weir coefficient
         real,    intent(in)    :: weir_length               ! weir length (meters)
         real,    intent(in)    :: dam_length                ! dam length (meters)
         real,    intent(in)    :: orifice_elevation         ! orifice elevation (meters AMSL)
-        real,    intent(in)    :: orifice_coefficient       ! orifice coefficient
+        real,    intent(in)    :: orifice_coefficient(:)    ! orifice coefficient
         real,    intent(in)    :: orifice_area              ! orifice area (meters^2)
         real,    intent(in)    :: lake_max_water_elevation  ! max water elevation (meters)
         real,    intent(in)    :: initial_fractional_depth  ! initial fraction water depth
@@ -203,7 +203,7 @@ contains
     ! Subroutine for running reservoir for a rfc forecasts reservoir
     subroutine run_rfc_forecasts_reservoir(this, previous_timestep_inflow, inflow, &
         lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
-        assimilated_value, assimilated_source_file)
+        assimilated_value, assimilated_source_file, param_index)
         implicit none
         class(rfc_forecasts), intent(inout) :: this
         real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -215,6 +215,8 @@ contains
         integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
         real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
         character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
+        integer, intent(in) :: param_index              ! time index for time-varying reservoirs
+
         real                :: levelpool_outflow        ! cubic meters per second (cms)
         integer		        :: missing_outflow_index
         character(len=15)   :: lake_number_string
@@ -281,7 +283,7 @@ contains
         ! Run levelpool reservoir
         call this%state%levelpool_ptr%run(previous_timestep_inflow, inflow, &
         lateral_inflow, this%state%levelpool_water_elevation, levelpool_outflow, routing_period, this%state%levelpool_reservoir_type, &
-        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file)
+        this%state%levelpool_assimilated_value, this%state%levelpool_assimilated_source_file, param_index)
 
         ! Check if Routing Period is greater than 1 hour, and if true, set forecast_found to false.
         if (routing_period .gt. 3600) then

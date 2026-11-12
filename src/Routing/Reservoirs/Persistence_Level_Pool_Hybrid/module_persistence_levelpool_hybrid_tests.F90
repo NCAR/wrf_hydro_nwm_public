@@ -515,7 +515,7 @@ contains
 
         print *, "Checking read on weir_coeffecient"
         print *, o%levelpool_ptr%properties%weir_coeffecient
-        if ( o%levelpool_ptr%properties%weir_coeffecient .lt. 0.400000006 - epsilon(0.400000006) .or. o%levelpool_ptr%properties%weir_coeffecient .gt. 0.400000006 + epsilon(0.400000006) ) then
+        if ( o%levelpool_ptr%properties%weir_coeffecient(1) .lt. 0.400000006 - epsilon(0.400000006) .or. o%levelpool_ptr%properties%weir_coeffecient(1) .gt. 0.400000006 + epsilon(0.400000006) ) then
             rv = .false.
             print *, "FAILED"
         end if
@@ -539,7 +539,7 @@ contains
 
         print *, "Checking read on orifice_coefficient"
         print *, o%levelpool_ptr%properties%orifice_coefficient
-        if ( o%levelpool_ptr%properties%orifice_coefficient .lt. 0.100000001 - epsilon(0.100000001) .or. o%levelpool_ptr%properties%orifice_coefficient .gt. 0.100000001 + epsilon(0.100000001) ) then
+        if ( o%levelpool_ptr%properties%orifice_coefficient(1) .lt. 0.100000001 - epsilon(0.100000001) .or. o%levelpool_ptr%properties%orifice_coefficient(1) .gt. 0.100000001 + epsilon(0.100000001) ) then
             rv = .false.
             print *, "FAILED"
         end if

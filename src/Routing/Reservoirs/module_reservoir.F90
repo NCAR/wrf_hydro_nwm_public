@@ -93,7 +93,7 @@ module module_reservoir
     abstract interface
         subroutine run_reservoir_interface(this, previous_timestep_inflow, inflow, &
             lateral_inflow, water_elevation, outflow, routing_period, dynamic_reservoir_type, &
-            assimilated_value, assimilated_source_file)
+            assimilated_value, assimilated_source_file, param_index)
             import reservoir
             class(reservoir), intent(inout) :: this
             real, intent(in)    :: previous_timestep_inflow ! cubic meters per second (cms)
@@ -105,7 +105,7 @@ module module_reservoir
             integer, intent(out):: dynamic_reservoir_type   ! dynamic reservoir type sent to lake out files
             real, intent(out)   :: assimilated_value        ! value assimilated from observation or forecast
             character(len=256), intent(out) :: assimilated_source_file ! source file of assimilated value
-
+            integer, intent(in) :: param_index              ! time index for time-varying reservoirs
         end subroutine run_reservoir_interface
 
     end interface
