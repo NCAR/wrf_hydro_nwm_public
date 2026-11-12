@@ -10,7 +10,7 @@ use module_reservoir, only: reservoir
 use module_RT_data, only: rt_domain
 use module_hydro_stop, only: HYDRO_stop
 
-use iso_fortran_env, only: int64
+use iso_fortran_env, only: int64, real64
 
 #endif
 implicit none
@@ -628,7 +628,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
-        REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
+        real(kind=real64), INTENT(INOUT), DIMENSION(NLAKES) :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: QLAKEI   !-- lake inflow (cms)
         REAL,                DIMENSION(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
@@ -668,7 +668,8 @@ END SUBROUTINE SUBMUSKINGCUNGE
         integer(kind=int64), dimension(:,:) ::  gtoNode
         integer  :: nToNodeInd
         real, dimension(nToNodeInd,2) :: gQLINK
-        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+        real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
+        real(kind=real64), allocatable,dimension(:) :: tmpRESHT
 #else
         real(kind=8), dimension(NLINKS)                   :: LQLateral !--lateral flow
 #endif
@@ -859,7 +860,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
          end do       !--k links
 
 #ifdef MPP_LAND
-         call updateLake_seq(RESHT,nlakes,tmpRESHT)
+         call updateLake_seq8(RESHT,nlakes,tmpRESHT)
          call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
          call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
 #endif
@@ -1267,7 +1268,7 @@ gwOption:   if(gwBaseSwCRT == 3) then
          ! TODO: Change updateLake_grid calls below to updated distributed reservoir
          !       objects and not arrays as currently implemented.
          call updateLake_grid(QLLAKE, nlakes,lake_index)
-         call updateLake_grid(RESHT,  nlakes,lake_index)
+         call updateLake_grid8(RESHT,  nlakes,lake_index)
          call updateLake_grid(QLAKEO, nlakes,lake_index)
          call updateLake_grid(QLAKEI, nlakes,lake_index)
          call updateLake_grid(QLAKEIP,nlakes,lake_index)
@@ -1704,7 +1705,7 @@ end subroutine drive_CHANNEL
        !-- lake params
        integer(kind=int64), intent(IN), dimension(:)    :: LAKEIDM  !-- NHDPLUS lakeid for lakes to be modeled
 
-       real, intent(INOUT), dimension(:)    :: RESHT    !-- reservoir height (m)
+       real(kind=real64), intent(INOUT), dimension(:) :: RESHT    !-- reservoir height (m)
        real, intent(INOUT), dimension(:)    :: QLAKEI   !-- lake inflow (cms)
        real,                dimension(NLAKES)    :: QLAKEIP  !-- lake inflow previous timestep (cms)
        real, intent(INOUT), dimension(NLAKES)    :: QLAKEO   !-- outflow from lake used in diffusion scheme
@@ -1752,7 +1753,8 @@ end subroutine drive_CHANNEL
 
        integer :: n, kk2, nt, nsteps  ! tmp
        real, intent(in), dimension(:) :: qout_gwsubbas
-       real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI, tmpRESHT
+       real, allocatable,dimension(:) :: tmpQLAKEO, tmpQLAKEI
+       real(kind=real64), allocatable,dimension(:) :: tmpRESHT
        integer, allocatable, dimension(:) :: tmpFinalResType
        real, allocatable,dimension(:) :: tmpAssimilatedValue
        character(len=256), allocatable,dimension(:) :: tmpAssimilatedSourceFile
@@ -2067,7 +2069,7 @@ do nt = 1, nsteps
 #ifdef MPP_LAND
    call updateLake_seq(QLAKEO,nlakes,tmpQLAKEO)
    call updateLake_seq(QLAKEI,nlakes,tmpQLAKEI)
-   call updateLake_seq(RESHT,nlakes,tmpRESHT)
+   call updateLake_seq8(RESHT,nlakes,tmpRESHT)
    call updateLake_seqInt(rt_domain(did)%final_reservoir_type, nlakes, tmpFinalResType)
    call updateLake_seq(rt_domain(did)%reservoir_assimilated_value, nlakes, tmpAssimilatedValue)
    !call updateLake_seq_char(rt_domain(did)%reservoir_assimilated_source_file, nlakes, tmpAssimilatedSourceFile)
