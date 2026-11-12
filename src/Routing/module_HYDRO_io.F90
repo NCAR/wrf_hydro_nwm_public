@@ -8293,12 +8293,12 @@ subroutine read_routelink(&
      CHLON,        NLINKSL,      LINKID,   GNLINKSL,   &
      NLINKS,       gages,        gageMiss               )
 
-integer, intent(INOUT),  dimension(NLINKS) :: TYPEL, ORDER
+integer, intent(INOUT),  dimension(:)      :: TYPEL, ORDER
 integer, intent(INOUT)                     :: MAXORDER
 integer                                    :: NLAKES
-real,    intent(INOUT),  dimension(NLINKS) :: MUSK, MUSX
+real,    intent(INOUT),  dimension(:)      :: MUSK, MUSX
 real,    intent(INOUT),  dimension(:,:)    :: QLINK  !channel flow
-real,    intent(INOUT),  dimension(NLINKS) :: CHANLEN, MannN, So
+real,    intent(INOUT),  dimension(:)      :: CHANLEN, MannN, So
 real,    intent(INOUT),  dimension(:)      :: ChSSlp, Bw, Tw !added Top Width LKR/DY
 real,    intent(INOUT),  dimension(:)      :: Tw_CC, n_CC !compound chnannel params
 real,    intent(INOUT),  dimension(:)      :: ChannK !added ChanLoss
@@ -8313,11 +8313,11 @@ integer(kind=int64), intent(INOUT), dimension(:)  :: LAKEIDM !lake id in LAKEPAR
 integer(kind=int64), intent(INOUT), dimension(:)  :: LAKEIDA !lake COMid 4all link on full nlinks database
 integer, intent(INOUT),  dimension(:)      :: LAKEIDX !seq index of lakes(1:Nlakes) mapped to COMID
 character(len=256)                         :: route_link_f, route_lake_f
-real,    intent(INOUT),  dimension(NLINKS) :: ZELEV, CHLAT, CHLON
+real,    intent(INOUT),  dimension(:)      :: ZELEV, CHLAT, CHLON
 integer                                    :: NLINKS, NLINKSL
-integer(kind=int64), intent(INOUT),  dimension(NLINKS) :: TO_NODE, LINKID   !  which nodes pour into which lakes
+integer(kind=int64), intent(INOUT),  dimension(:)      :: TO_NODE, LINKID   !  which nodes pour into which lakes
 integer                                    :: GNLINKSL
-character(len=15), intent(inout), dimension(nlinks) :: gages  !! need to respect the default values
+character(len=15), intent(inout), dimension(:) :: gages  !! need to respect the default values
 character(len=15), intent(in)              :: gageMiss
 integer :: did
 
@@ -8983,6 +8983,8 @@ if(nlst(did)%compound_channel) then
 else
    print*, "compound_channel is FALSE in hydro.namelist."
    Tw = 0.0  !force top width to 0.0, this deactivates the compound channel formulation.
+   Tw_CC = 0.0
+   n_CC  = 0.0
 end if
 
 
