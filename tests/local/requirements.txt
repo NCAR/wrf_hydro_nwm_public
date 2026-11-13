@@ -29,7 +29,7 @@ pytz==2019.2
 requests==2.33.0
 setuptools==84.1.0
 six==1.12.0
-soupsieve==2.9
+soupsieve==4.0
 toolz==0.10.0
 urllib3==2.8.0
 wrfhydropy==0.0.19
