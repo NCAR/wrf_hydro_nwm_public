@@ -9280,31 +9280,6 @@ if (iret /= nf90_NoErr) then
 end if
 end subroutine get_1d_netcdf_text
 
-! subroutine get_1d_or_2d_netcdf_real(ncid, varName, var, fillCount1D, callingRoutine, fatal_if_error)
-!    integer,              intent(in)  :: ncid !! the file identifier
-!    character(len=*),     intent(in)  :: varName
-!    real, dimension(:,:), intent(out) :: var
-!    integer,              intent(in)  :: fillCount1D
-!    character(len=*),     intent(in)  :: callingRoutine
-!    logical,              intent(in)  :: fatal_if_error
-
-!    integer :: iret, varid, ndims
-
-!    continue
-
-!    iret = nf90_inq_varid(ncid, varName, varid)
-!    iret = nf90_inquire_variable(ncid, varid, ndims=ndims)
-
-!    if (ndims == 1) then
-
-!    else if (ndims == 2) then
-!    else
-!       ! ERR-ROR
-!    end if
-
-
-! end subroutine
-
 
 !===================================================================================================
 ! Program Names:
