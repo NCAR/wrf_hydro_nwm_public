@@ -683,10 +683,12 @@ end subroutine get_albedo12m_netcdf
          character(len=*),     intent(in)  :: callingRoutine
          logical,              intent(in)  :: fatal_if_error
 
-         integer :: varid, iret, ndims, dimLen1, dimLen2
+         integer :: varid, iret, ndims, dimLen1, dimLen2, i
          integer, dimension(nf90_max_var_dims) :: dimids
-         real, dimension(size(var,2),size(var,1)) :: tempTranspose
-         real, dimension(size(var,2)) :: tempFlat
+         ! Allocatable (heap) rather than automatic (stack) temporaries: at
+         ! (reservoirs,365) these exceed an 8 MB stack limit above ~3000 lakes.
+         real, dimension(:,:), allocatable :: tempTranspose
+         real, dimension(:), allocatable :: tempFlat
 
          iRet = nf90_inq_varid(ncid, varName, varid)
          if (iret /= nf90_noErr) then
@@ -715,22 +717,30 @@ end subroutine get_albedo12m_netcdf
                return
             end if
 
+            allocate(tempTranspose(size(var,2), size(var,1)))
             iRet = nf90_get_var(ncid, varid, tempTranspose)
             if (iRet /= nf90_NoErr) then
                print*, trim(callingRoutine) // ": get_2d_netcdf_real: values: " // trim(varName) // " error: " // nf90_strerror(iRet)
                if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
             end if
-            var = transpose(tempTranspose)
+            ! explicit loop instead of transpose() to avoid a stack temporary
+            do i = 1, size(var,2)
+               var(:,i) = tempTranspose(i,:)
+            end do
          else if (ndims == 1) then
             ! Expand traditional 1D variable to 2D
 
+            allocate(tempFlat(size(var,2)))
             iRet = nf90_get_var(ncid, varid, tempFlat)
             if (iRet /= nf90_NoErr) then
                print*, trim(callingRoutine) // ": get_2d_netcdf_real: expand-1D values: " // trim(varName) // " error: " // nf90_strerror(iRet)
                if (fatal_IF_ERROR) call hydro_stop("get_2d_netcdf_real")
             end if
 
-            var = spread(tempFlat, 1, size(var,1))
+            ! explicit loop instead of spread() to avoid a stack temporary
+            do i = 1, size(var,2)
+               var(:,i) = tempFlat(i)
+            end do
 
          else
             print*, trim(callingRoutine) // ": get_2d_netcdf_real: variable: " // trim(varName) // " has more than 2 dimensions"
