@@ -115,7 +115,7 @@ program reservoir_unit_tests
         call_status = .false.
 
         print *, "calling init for levelpool"
-        call levelpool_reservoir_data%init(water_elevation, 4., 6., [8.], 10., 11., 12., [14.], 16., 18., lake_number)
+        call levelpool_reservoir_data%init(water_elevation, 4., 6., [8.], 10., 11., 12., [14.], 16., 18., lake_number, 1)
 
         print *, "testing data in levelpool"
         call_status = levelpool_data_info(levelpool_reservoir_data)
@@ -549,7 +549,7 @@ program reservoir_unit_tests
         209.53554, 205.97734, 202.51857, 199.1559, 195.88605, 192.70595, 189.61255 /)
 
         call levelpool_reservoir_data%init(water_elevation, lake_area, weir_elevation, &
-        [weir_coefficient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, lake_number)
+        [weir_coefficient], weir_length, dam_length, orifice_elevation, [orifice_coefficient], orifice_area, max_depth, lake_number, 1)
 
         water_elevation = 9.73733330
 
