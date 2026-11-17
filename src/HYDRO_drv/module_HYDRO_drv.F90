@@ -962,8 +962,6 @@ contains
                     RT_DOMAIN(did)%ChannK, &
                     RT_DOMAIN(did)%RESHT, &
                     RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, &
-                    RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, &
-                    RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, RT_DOMAIN(did)%ORIFICEE, &
                     RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
                     RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
                     RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &

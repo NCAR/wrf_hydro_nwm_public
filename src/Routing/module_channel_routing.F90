@@ -547,7 +547,7 @@ END SUBROUTINE SUBMUSKINGCUNGE
        LAKE_MSKRT, DT, DTCT, DTRT_CH,MUSK, MUSX, QLINK, &
        QLateral, &
        HLINK, ELRT, CHANLEN, MannN, So, ChSSlp, Bw, Tw, Tw_CC, n_CC,  &
-       ChannK, RESHT, HRZAREA, LAKEMAXH, WEIRH, WEIRC, WEIRL, ORIFICEC, ORIFICEA, ORIFICEE, &
+       ChannK, RESHT, HRZAREA, LAKEMAXH, &
        ZELEV, CVOL, NLAKES, QLAKEI, QLAKEO, LAKENODE, &
        dist, QINFLOWBASE, CHANXI, CHANYJ, channel_option, RETDEP_CHAN, &
        NLINKSL, LINKID, node_area, lake_lookup  &
@@ -622,12 +622,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
         !-- lake params
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: HRZAREA  !-- horizontal area (km^2)
         REAL, INTENT(IN), DIMENSION(NLAKES)       :: LAKEMAXH !-- maximum lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRH    !-- lake depth  (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRC    !-- weir coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: WEIRL    !-- weir length (m)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEC !-- orrifice coefficient
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEA !-- orrifice area (m^2)
-        REAL, INTENT(IN), DIMENSION(NLAKES)       :: ORIFICEE !-- orrifce elevation (m)
 
         REAL, INTENT(INOUT), DIMENSION(NLAKES)    :: RESHT    !-- reservoir height (m)
         REAL*8,  DIMENSION(NLAKES)    :: QLAKEI8   !-- lake inflow (cms)
@@ -763,33 +757,6 @@ END SUBROUTINE SUBMUSKINGCUNGE
 !       QLateral = QLateral / nsteps
 
    do nt = 1, nsteps
-
-!Per Yates, this check is not needed. Commenting out for now.
-!----------  route order 1 reaches which have no upstream inflow
-!        do k=1, NLINKSL
-!           if (ORDER(k) .eq. 1) then  !-- first order stream has no headflow
-
-
-!              if(TYPEL(k) .eq. 1) then    !-- level pool route of reservoir
-!                  !CALL LEVELPOOL(1,0.0, 0.0, qd, QLINK(k,2), QLateral(k), &
-!                  ! DT, RESHT(k), HRZAREA(k), LAKEMAXH(k), &
-!                  ! WEIRC(k), WEIRL(k), ORIFICEE(i), ORIFICEC(k), ORIFICEA(k) )
-!              elseif (channel_option .eq. 1) then
-!                   Km  = MUSK(k)
-!                   X   = MUSX(k)
-!                   QLINK(k,2) = MUSKING(k,0.0, QLateral(k), QLINK(k,1), DTRT_CH, Km, X) !--current outflow
-!              elseif (channel_option .eq. 2) then !-- upstream is assumed constant initial condition
-
-!                   call SUBMUSKINGCUNGE(QLINK(k,2), velocity(k), k,  &
-!                    0.0,0.0, QLINK(k,1), QLateral(k),   DTRT_CH, So(k), &
-!                    CHANLEN(k), MannN(k), ChSSlp(k), Bw(k), Tw(k) )
-
-!              else
-!                  print *, "FATAL ERROR: No channel option selected"
-!                  call hydro_stop("In drive_CHANNEL() -No channel option selected ")
-!              endif
-!           endif
-!        end do
 
 #ifdef MPP_LAND
        gQLINK = 0.000
