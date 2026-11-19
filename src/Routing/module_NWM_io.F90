@@ -312,17 +312,17 @@ subroutine output_chrt_NWM(domainId)
       ! Allocate local streamflow and velocity arrays. We need to do a check to
       ! for lake_type 2. However, we cannot set the values in the global array
       ! to missing as this causes the model to crash.
-      allocate(strFlowLocal(RT_DOMAIN(domainId)%NLINKS))
-      allocate(velocityLocal(RT_DOMAIN(domainId)%NLINKS))
-      if (RT_DOMAIN(domainId)%NLINKS > 0) then
+      allocate(strFlowLocal(RT_DOMAIN(domainId)%nlinksize))
+      allocate(velocityLocal(RT_DOMAIN(domainId)%nlinksize))
+      if (RT_DOMAIN(domainId)%nlinksize > 0) then
          strFlowLocal = RT_DOMAIN(domainId)%QLINK(:,1)
          velocityLocal = RT_DOMAIN(domainId)%velocity
       endif
       ! TML: Add qloss allocation and compute variable, only for channel
       ! option #2, where qloss is active (muskingum-cunge).
       if(nlst(domainId)%channel_option == 2 .and. nlst(domainId)%channel_loss_option > 0) then
-         allocate(qlossLocal(RT_DOMAIN(domainId)%NLINKS))
-         if (RT_DOMAIN(domainId)%NLINKS > 0) then
+         allocate(qlossLocal(RT_DOMAIN(domainId)%nlinksize))
+         if (RT_DOMAIN(domainId)%nlinksize > 0) then
             qlossLocal = RT_DOMAIN(domainId)%qloss !TML temp fix to test code
          endif
       endif
