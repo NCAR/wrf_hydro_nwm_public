@@ -15,11 +15,11 @@ module module_levelpool_properties
     type, extends(reservoir_properties) :: levelpool_properties_interface
         real :: lake_area                ! area of lake (km^2)
         real :: weir_elevation           ! bottom of weir elevation (meters AMSL)
-        real :: weir_coeffecient         ! weir coefficient
+        real, allocatable :: weir_coeffecient(:)      ! weir coefficient
         real :: weir_length              ! weir length (meters)
         real :: dam_length               ! dam length (meters)
         real :: orifice_elevation        ! orifice elevation (meters AMSL)
-        real :: orifice_coefficient      ! orifice coefficient
+        real, allocatable :: orifice_coefficient(:)      ! orifice coefficient
         real :: orifice_area             ! orifice area (meters^2)
         real :: max_depth                ! max depth of reservoir before overtop (meters)
         integer(kind=int64) :: lake_number           ! lake number
@@ -42,11 +42,11 @@ contains
         class(levelpool_properties_interface), intent(inout) :: this ! the type object being initialized
         real, intent(in)    :: lake_area      	        ! area of lake (km^2)
         real, intent(in)    :: weir_elevation           ! bottom of weir elevation (meters AMSL)
-        real, intent(in)    :: weir_coeffecient         ! weir coefficient
+        real, intent(in)    :: weir_coeffecient(:)      ! weir coefficient
         real, intent(in)    :: weir_length              ! weir length (meters)
         real, intent(in)    :: dam_length               ! dam length (meters)
         real, intent(in)    :: orifice_elevation        ! orifice elevation (meters AMSL)
-        real, intent(in)    :: orifice_coefficient      ! orifice coefficient
+        real, intent(in)    :: orifice_coefficient(:)   ! orifice coefficient
         real, intent(in)    :: orifice_area             ! orifice area (meters^2)
         real, intent(in)    :: max_depth                ! max depth of reservoir before overtop (meters)
         integer(kind=int64), intent(in) :: lake_number              ! lake number
@@ -56,15 +56,19 @@ contains
         ! properties object's variables.
         this%lake_area = lake_area
         this%weir_elevation = weir_elevation
-        this%weir_coeffecient = weir_coeffecient
         this%weir_length = weir_length
         this%orifice_elevation = orifice_elevation
-        this%orifice_coefficient = orifice_coefficient
         this%orifice_area = orifice_area
         this%max_depth = max_depth
         this%lake_number = lake_number
         this%dam_length = dam_length
         this%lake_opt = lake_opt
+
+        ! time-varying parameters
+        allocate(this%weir_coeffecient(size(weir_coeffecient)))
+        allocate(this%orifice_coefficient(size(orifice_coefficient)))
+        this%weir_coeffecient = weir_coeffecient
+        this%orifice_coefficient = orifice_coefficient
 
     end subroutine levelpool_properties_init
 

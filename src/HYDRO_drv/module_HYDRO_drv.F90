@@ -23,6 +23,7 @@ module module_HYDRO_drv
     use config_base, only: nlst, noah_lsm
     use module_routing, only: getChanDim, landrt_ini
     use module_HYDRO_utils
+    use module_date_utilities_rt, only: day_of_year
     use module_lsm_forcing, only: geth_newdate
 #ifdef WRF_HYDRO_NUDGING
     use module_stream_nudging,  only: init_stream_nudging
@@ -548,7 +549,7 @@ contains
             nlst(did)%olddate = newdate
 #ifdef HYDRO_D
 #ifndef NCEP_WCOSS
-            write(6,*) "current time is ",newdate
+            write(6,*) "current time/DOY is ",newdate, day_of_year(newdate)
 #else
             write(78,*) "current time is ",newdate
 #endif
@@ -961,8 +962,6 @@ contains
                     RT_DOMAIN(did)%ChannK, &
                     RT_DOMAIN(did)%RESHT, &
                     RT_DOMAIN(did)%HRZAREA, RT_DOMAIN(did)%LAKEMAXH, &
-                    RT_DOMAIN(did)%WEIRH, RT_DOMAIN(did)%WEIRC, RT_DOMAIN(did)%WEIRL, &
-                    RT_DOMAIN(did)%ORIFICEC, RT_DOMAIN(did)%ORIFICEA, RT_DOMAIN(did)%ORIFICEE, &
                     RT_DOMAIN(did)%ZELEV, RT_DOMAIN(did)%CVOL, &
                     RT_DOMAIN(did)%NLAKES, RT_DOMAIN(did)%QLAKEI, RT_DOMAIN(did)%QLAKEO,&
                     RT_DOMAIN(did)%LAKENODE, rt_domain(did)%overland%properties%distance_to_neighbor, &
